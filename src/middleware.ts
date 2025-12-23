@@ -33,6 +33,25 @@ const AUTH_ONLY_ROUTES = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Special handling for root route - smart redirect based on auth status
+  if (pathname === '/') {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    if (token) {
+      // Authenticated user - redirect based on org status
+      if (token.organizationId) {
+        return NextResponse.redirect(new URL('/admin', request.url));
+      } else {
+        return NextResponse.redirect(new URL('/onboarding', request.url));
+      }
+    }
+    // Not authenticated - show landing page
+    return NextResponse.next();
+  }
+
   // Skip public routes
   if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();

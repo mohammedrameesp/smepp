@@ -75,7 +75,8 @@ function LoginForm() {
   const handleOAuthSignIn = async (provider: string) => {
     setOauthLoading(provider);
     try {
-      await signIn(provider, { callbackUrl: '/admin' });
+      // Redirect to a page that will check org status and route appropriately
+      await signIn(provider, { callbackUrl: '/' });
     } catch (err) {
       console.error(`${provider} sign in error:`, err);
       setError(`Failed to sign in with ${provider}`);

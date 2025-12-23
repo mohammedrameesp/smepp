@@ -11,43 +11,10 @@ const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  organizationName: z.string().min(2, 'Organization name must be at least 2 characters'),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Generate a URL-friendly slug from organization name
- */
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '') // Remove special characters
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/-+/g, '-') // Remove duplicate hyphens
-    .substring(0, 50); // Limit length
-}
-
-/**
- * Ensure slug is unique by appending a number if needed
- */
-async function ensureUniqueSlug(baseSlug: string): Promise<string> {
-  let slug = baseSlug;
-  let counter = 1;
-
-  while (await prisma.organization.findUnique({ where: { slug } })) {
-    slug = `${baseSlug}-${counter}`;
-    counter++;
-  }
-
-  return slug;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// POST /api/auth/signup - Create new user and organization
+// POST /api/auth/signup - Create new user account
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export async function POST(request: NextRequest) {
@@ -63,7 +30,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, password, organizationName } = result.data;
+    const { name, email, password } = result.data;
     const normalizedEmail = email.toLowerCase().trim();
 
     // Check if email already exists
@@ -81,44 +48,14 @@ export async function POST(request: NextRequest) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Generate unique slug for organization
-    const baseSlug = generateSlug(organizationName);
-    const slug = await ensureUniqueSlug(baseSlug);
-
-    // Create user and organization in a transaction
-    const { user, organization } = await prisma.$transaction(async (tx) => {
-      // Create user
-      const newUser = await tx.user.create({
-        data: {
-          name,
-          email: normalizedEmail,
-          passwordHash,
-          role: 'ADMIN', // First user is admin of their org
-        },
-      });
-
-      // Create organization
-      const newOrg = await tx.organization.create({
-        data: {
-          name: organizationName,
-          slug,
-          subscriptionTier: 'FREE',
-          maxUsers: 5,
-          maxAssets: 50,
-        },
-      });
-
-      // Create organization membership (user is owner)
-      await tx.organizationUser.create({
-        data: {
-          organizationId: newOrg.id,
-          userId: newUser.id,
-          role: 'OWNER',
-          isOwner: true,
-        },
-      });
-
-      return { user: newUser, organization: newOrg };
+    // Create user (organization will be created during onboarding)
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email: normalizedEmail,
+        passwordHash,
+        role: 'ADMIN', // Will be admin of their org once created
+      },
     });
 
     return NextResponse.json(
@@ -129,11 +66,6 @@ export async function POST(request: NextRequest) {
           id: user.id,
           name: user.name,
           email: user.email,
-        },
-        organization: {
-          id: organization.id,
-          name: organization.name,
-          slug: organization.slug,
         },
       },
       { status: 201 }

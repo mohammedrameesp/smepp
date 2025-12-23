@@ -20,7 +20,6 @@ export default function SignupPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    organizationName: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,7 +57,6 @@ export default function SignupPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          organizationName: formData.organizationName,
         }),
       });
 
@@ -79,8 +77,8 @@ export default function SignupPage() {
         // Account created but sign-in failed - redirect to login
         router.push('/login?message=Account created. Please sign in.');
       } else {
-        // Success - redirect to dashboard or onboarding
-        router.push('/admin');
+        // Success - redirect to onboarding to create organization
+        router.push('/onboarding');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -90,11 +88,11 @@ export default function SignupPage() {
   };
 
   const handleOAuthSignup = (provider: string) => {
-    signIn(provider, { callbackUrl: '/onboarding' });
+    signIn(provider, { callbackUrl: '/' });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
@@ -203,24 +201,6 @@ export default function SignupPage() {
                   type="email"
                   placeholder="you@company.com"
                   value={formData.email}
-                  onChange={handleChange}
-                  className="pl-10"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="organizationName">Company Name</Label>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="organizationName"
-                  name="organizationName"
-                  type="text"
-                  placeholder="Acme Inc."
-                  value={formData.organizationName}
                   onChange={handleChange}
                   className="pl-10"
                   required
