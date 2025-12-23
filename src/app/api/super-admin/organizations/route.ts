@@ -5,6 +5,7 @@ import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import { validateSlug, isSlugAvailable } from '@/lib/multi-tenant/subdomain';
 import { randomBytes } from 'crypto';
+import { sendEmail } from '@/lib/core/email';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION
@@ -116,13 +117,26 @@ export async function POST(request: NextRequest) {
       return org;
     });
 
-    // TODO: Send invitation email
-    // For now, return the invite URL so super admin can share it manually
     const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${inviteToken}`;
+
+    // Send invitation email
+    const emailResult = await sendEmail({
+      to: adminEmail,
+      subject: `You're invited to manage ${name} on SME++`,
+      html: `
+        <h2>Welcome to SME++!</h2>
+        <p>You've been invited to be the administrator of <strong>${name}</strong>.</p>
+        <p><a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px;">Accept Invitation</a></p>
+        <p>Or copy this link: ${inviteUrl}</p>
+        <p>This invitation expires in 7 days.</p>
+      `,
+      text: `Welcome to SME++! You've been invited to manage ${name}. Accept here: ${inviteUrl}`,
+    });
 
     return NextResponse.json(
       {
         success: true,
+        emailSent: emailResult.success,
         organization: {
           id: organization.id,
           name: organization.name,
@@ -130,7 +144,7 @@ export async function POST(request: NextRequest) {
         },
         invitation: {
           email: adminEmail,
-          inviteUrl, // Always return so super admin can copy/share
+          inviteUrl,
           expiresAt: expiresAt.toISOString(),
         },
       },

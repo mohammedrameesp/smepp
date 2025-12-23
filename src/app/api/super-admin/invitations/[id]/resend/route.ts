@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { randomBytes } from 'crypto';
+import { sendEmail } from '@/lib/core/email';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/super-admin/invitations/[id]/resend - Resend/regenerate invitation
@@ -60,8 +61,23 @@ export async function POST(
 
     const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${newToken}`;
 
+    // Send invitation email
+    const emailResult = await sendEmail({
+      to: invitation.email,
+      subject: `You're invited to join ${invitation.organization.name} on SME++`,
+      html: `
+        <h2>You've been invited!</h2>
+        <p>You've been invited to join <strong>${invitation.organization.name}</strong> on SME++.</p>
+        <p><a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px;">Accept Invitation</a></p>
+        <p>Or copy this link: ${inviteUrl}</p>
+        <p>This invitation expires in 7 days.</p>
+      `,
+      text: `You've been invited to join ${invitation.organization.name} on SME++. Accept here: ${inviteUrl}`,
+    });
+
     return NextResponse.json({
       success: true,
+      emailSent: emailResult.success,
       invitation: {
         id: updatedInvitation.id,
         email: updatedInvitation.email,

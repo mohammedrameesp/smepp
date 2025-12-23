@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { sendEmail } from '@/lib/core/email';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION
@@ -171,14 +172,26 @@ export async function POST(
       },
     });
 
-    // TODO: Send invitation email
-    // await sendInvitationEmail(normalizedEmail, token, membership.organization.name);
+    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${token}`;
 
-    const inviteUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/invite/${token}`;
+    // Send invitation email
+    const emailResult = await sendEmail({
+      to: normalizedEmail,
+      subject: `You're invited to join ${membership.organization.name} on SME++`,
+      html: `
+        <h2>You've been invited!</h2>
+        <p>You've been invited to join <strong>${membership.organization.name}</strong> on SME++.</p>
+        <p><a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px;">Accept Invitation</a></p>
+        <p>Or copy this link: ${inviteUrl}</p>
+        <p>This invitation expires in 7 days.</p>
+      `,
+      text: `You've been invited to join ${membership.organization.name} on SME++. Accept here: ${inviteUrl}`,
+    });
 
     return NextResponse.json(
       {
         success: true,
+        emailSent: emailResult.success,
         invitation: {
           id: invitation.id,
           email: invitation.email,
