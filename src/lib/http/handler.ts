@@ -35,14 +35,17 @@ export interface HandlerOptions {
   rateLimit?: boolean;
 }
 
-// Next.js 15 route context with async params
-type RouteContext = { params: Promise<Record<string, string>> };
+// Next.js 15 route handler type
+type NextRouteHandler = (
+  request: NextRequest,
+  context: { params: Promise<Record<string, string>> }
+) => Promise<Response>;
 
 export function withErrorHandler(
   handler: APIHandler,
   options: HandlerOptions = {}
-): (request: NextRequest, context: RouteContext) => Promise<NextResponse> {
-  return async (request: NextRequest, routeContext: RouteContext) => {
+): NextRouteHandler {
+  return async (request: NextRequest, routeContext: { params: Promise<Record<string, string>> }): Promise<Response> => {
     const startTime = Date.now();
     const requestId = request.headers.get('x-request-id') || generateRequestId();
 
