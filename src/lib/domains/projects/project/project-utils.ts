@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 
 /**
  * Generate next project code in format PRJ-YYYY-NNNN

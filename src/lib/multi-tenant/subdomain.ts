@@ -6,7 +6,7 @@
  * future custom domain support.
  */
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONFIGURATION

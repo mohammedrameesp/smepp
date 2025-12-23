@@ -1,8 +1,8 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { unstable_cache } from 'next/cache';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { authOptions } from '@/lib/core/auth';
+import { prisma } from '@/lib/core/prisma';
 import { AdminLayoutClient } from './layout-client';
 
 // Cache badge counts for 60 seconds to reduce database load

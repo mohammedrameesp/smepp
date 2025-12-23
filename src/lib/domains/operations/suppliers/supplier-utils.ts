@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 
 /**
  * Generates the next unique supplier code in the format SUPP-XXXX

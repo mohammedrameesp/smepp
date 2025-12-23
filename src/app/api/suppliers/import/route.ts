@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { authOptions } from '@/lib/core/auth';
+import { prisma } from '@/lib/core/prisma';
 import { csvToArray } from '@/lib/csv-utils';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { Role, SupplierStatus } from '@prisma/client';

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { authOptions } from '@/lib/core/auth';
+import { prisma } from '@/lib/core/prisma';
 
 // GET /api/users/me/expiry-alerts - Get current user's document expiry alerts
 export async function GET(request: NextRequest) {

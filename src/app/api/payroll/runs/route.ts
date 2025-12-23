@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/core/auth';
 import { Role, PayrollStatus } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 import { createPayrollRunSchema, payrollRunQuerySchema } from '@/lib/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/activity';
 import {

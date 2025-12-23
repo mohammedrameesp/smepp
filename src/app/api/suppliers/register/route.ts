@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 import { createSupplierSchema } from '@/lib/validations/suppliers';
 import { checkRateLimit } from '@/lib/security/rateLimit';
 import { logAction } from '@/lib/activity';

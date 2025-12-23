@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 import { AssetHistoryAction, AssetStatus } from '@prisma/client';
 
 interface RecordAssetHistoryParams {

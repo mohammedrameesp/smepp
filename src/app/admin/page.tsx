@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 import { getNextRenewalDate, getDaysUntilRenewal } from '@/lib/utils/renewal-date';
 import { redirect } from 'next/navigation';
 

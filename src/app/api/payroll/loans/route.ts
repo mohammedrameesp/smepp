@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/core/auth';
 import { Role, LoanStatus } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 import { createLoanSchema, loanQuerySchema } from '@/lib/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { generateLoanNumber, calculateLoanEndDate, parseDecimal } from '@/lib/payroll/utils';

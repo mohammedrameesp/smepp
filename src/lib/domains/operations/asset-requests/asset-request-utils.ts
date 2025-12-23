@@ -1,4 +1,4 @@
-import { prisma, PrismaTransactionClient } from '@/lib/prisma';
+import { prisma, PrismaTransactionClient } from '@/lib/core/prisma';
 import { AssetStatus, AssetRequestStatus, AssetRequestType } from '@prisma/client';
 
 /**

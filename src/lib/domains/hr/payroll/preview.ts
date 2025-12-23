@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 import { LoanStatus } from '@prisma/client';
 import { parseDecimal, calculateDailySalary } from './utils';
 import { calculateUnpaidLeaveDeductions, UnpaidLeaveDeduction } from './leave-deduction';

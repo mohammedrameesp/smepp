@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/core/auth';
 import { validateUploadedFile } from '@/lib/files/sanity';
 import { storageUpload, storagePublicUrl } from '@/lib/storage';
 import { logAction } from '@/lib/activity';

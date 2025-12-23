@@ -4,7 +4,7 @@
  * Utilities for checking and enforcing usage limits based on subscription tier.
  */
 
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 import { SubscriptionTier } from '@prisma/client';
 import { TIER_CONFIG } from './feature-flags';
 

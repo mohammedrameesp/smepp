@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/core/auth';
 import { formatError } from './errors';
 import { logRequest, generateRequestId } from '@/lib/log';
 import { checkRateLimit } from '@/lib/security/rateLimit';

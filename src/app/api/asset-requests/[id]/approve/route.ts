@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/core/auth';
 import { Role, AssetRequestStatus, AssetRequestType, AssetStatus, AssetHistoryAction } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 import { approveAssetRequestSchema } from '@/lib/validations/operations/asset-request';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { canAdminProcess } from '@/lib/domains/operations/asset-requests/asset-request-utils';

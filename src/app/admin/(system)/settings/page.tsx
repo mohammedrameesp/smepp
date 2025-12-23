@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
 import { Role } from '@prisma/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,7 @@ import { BackupDownload } from '@/components/settings/backup-download';
 import { PayrollSettings } from '@/components/settings/payroll-settings';
 import { DocumentTypeSettings } from '@/components/domains/system/settings/DocumentTypeSettings';
 import { OrganizationSettings, TeamMembers } from '@/components/domains/system/organization';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions);

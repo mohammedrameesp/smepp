@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@/lib/core/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,7 @@ import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { EmployeeListTable } from '@/components/employees';
 import { ExpiryAlertsWidget, CelebrationsWidget } from '@/components/dashboard';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 
 export default async function AdminEmployeesPage() {
   const session = await getServerSession(authOptions);

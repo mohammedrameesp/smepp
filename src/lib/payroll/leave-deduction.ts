@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 import { LeaveStatus } from '@prisma/client';
 import { parseDecimal } from './utils';
 
