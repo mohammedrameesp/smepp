@@ -4,11 +4,29 @@ import { getToken } from 'next-auth/jwt';
 /**
  * Multi-Tenant Middleware
  *
- * Extracts tenant context from the authenticated session and injects it into
- * request headers for downstream API routes to use.
+ * Handles:
+ * 1. Subdomain-based tenant routing (acme.smepp.com)
+ * 2. Authentication and session validation
+ * 3. Smart redirects based on auth/org status
+ * 4. Tenant context injection via headers
  */
 
-// Routes that don't require authentication
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+
+// Reserved subdomains that cannot be used by organizations
+const RESERVED_SUBDOMAINS = new Set([
+  'www', 'app', 'api', 'admin', 'dashboard', 'help', 'support', 'docs',
+  'blog', 'status', 'mail', 'cdn', 'assets', 'static', 'media', 'dev',
+  'staging', 'test', 'demo', 'beta', 'login', 'signup', 'auth', 'sso',
+  'account', 'billing', 'pricing', 'enterprise', 'team', 'org', 'about',
+  'contact', 'legal', 'privacy', 'terms',
+]);
+
+// Routes that don't require authentication (on main domain)
 const PUBLIC_ROUTES = [
   '/',
   '/login',
@@ -22,18 +40,137 @@ const PUBLIC_ROUTES = [
   '/about',
   '/_next',
   '/favicon.ico',
+  '/logo.png',
+  '/manifest.json',
 ];
 
 // Routes that require authentication but not organization
 const AUTH_ONLY_ROUTES = [
   '/onboarding',
-  '/api/organizations', // Creating first org
+  '/api/organizations',
+  '/api/subdomains', // Subdomain availability check
 ];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUBDOMAIN EXTRACTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface SubdomainInfo {
+  subdomain: string | null;
+  isMainDomain: boolean;
+  isReserved: boolean;
+}
+
+function extractSubdomain(host: string): SubdomainInfo {
+  const hostWithoutPort = host.split(':')[0];
+  const appDomainWithoutPort = APP_DOMAIN.split(':')[0];
+
+  // Check if this is the main domain
+  if (hostWithoutPort === appDomainWithoutPort || host === APP_DOMAIN) {
+    return { subdomain: null, isMainDomain: true, isReserved: false };
+  }
+
+  // Check if host ends with the app domain (subdomain.domain.com)
+  const suffix = `.${appDomainWithoutPort}`;
+  if (hostWithoutPort.endsWith(suffix)) {
+    const subdomain = hostWithoutPort.slice(0, -suffix.length).split('.')[0];
+    return {
+      subdomain,
+      isMainDomain: false,
+      isReserved: RESERVED_SUBDOMAINS.has(subdomain.toLowerCase()),
+    };
+  }
+
+  // Handle localhost development: acme.localhost
+  if (hostWithoutPort.endsWith('.localhost')) {
+    const subdomain = hostWithoutPort.replace('.localhost', '');
+    return {
+      subdomain,
+      isMainDomain: false,
+      isReserved: RESERVED_SUBDOMAINS.has(subdomain.toLowerCase()),
+    };
+  }
+
+  // Unknown domain - treat as main domain
+  return { subdomain: null, isMainDomain: true, isReserved: false };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MIDDLEWARE
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = request.headers.get('host') || APP_DOMAIN;
 
-  // Special handling for root route - smart redirect based on auth status
+  // Extract subdomain info
+  const { subdomain, isMainDomain, isReserved } = extractSubdomain(host);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SUBDOMAIN ROUTING
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  if (!isMainDomain && subdomain) {
+    // Reserved subdomain - redirect to main domain
+    if (isReserved) {
+      const mainUrl = new URL(pathname, `${request.nextUrl.protocol}//${APP_DOMAIN}`);
+      return NextResponse.redirect(mainUrl);
+    }
+
+    // Subdomain request - this is a tenant-specific request
+    // Get token to verify user belongs to this tenant
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    // Allow public routes on subdomains (for login redirects)
+    if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
+      const response = NextResponse.next();
+      response.headers.set('x-subdomain', subdomain);
+      return response;
+    }
+
+    // Unauthenticated on subdomain - redirect to main login
+    if (!token) {
+      const loginUrl = new URL('/login', `${request.nextUrl.protocol}//${APP_DOMAIN}`);
+      loginUrl.searchParams.set('callbackUrl', request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Check if user's org slug matches the subdomain
+    const userOrgSlug = token.organizationSlug as string | undefined;
+
+    if (!userOrgSlug) {
+      // User has no org - redirect to onboarding on main domain
+      const onboardingUrl = new URL('/onboarding', `${request.nextUrl.protocol}//${APP_DOMAIN}`);
+      return NextResponse.redirect(onboardingUrl);
+    }
+
+    if (userOrgSlug.toLowerCase() !== subdomain.toLowerCase()) {
+      // User doesn't belong to this subdomain's org
+      // Redirect to their own subdomain
+      const correctUrl = new URL(pathname, `${request.nextUrl.protocol}//${userOrgSlug}.${APP_DOMAIN}`);
+      return NextResponse.redirect(correctUrl);
+    }
+
+    // User belongs to this subdomain - allow access
+    const response = NextResponse.next();
+    response.headers.set('x-subdomain', subdomain);
+    response.headers.set('x-tenant-id', token.organizationId as string);
+    response.headers.set('x-tenant-slug', userOrgSlug);
+    response.headers.set('x-user-id', token.id as string);
+    response.headers.set('x-user-role', token.role as string || '');
+    response.headers.set('x-org-role', token.orgRole as string || '');
+    response.headers.set('x-subscription-tier', token.subscriptionTier as string || 'FREE');
+    return response;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // MAIN DOMAIN ROUTING
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // Smart redirect for root on main domain
   if (pathname === '/') {
     const token = await getToken({
       req: request,
@@ -41,10 +178,14 @@ export async function middleware(request: NextRequest) {
     });
 
     if (token) {
-      // Authenticated user - redirect based on org status
-      if (token.organizationId) {
-        return NextResponse.redirect(new URL('/admin', request.url));
+      const orgSlug = token.organizationSlug as string | undefined;
+
+      if (orgSlug) {
+        // User has org - redirect to their subdomain
+        const subdomainUrl = new URL('/admin', `${request.nextUrl.protocol}//${orgSlug}.${APP_DOMAIN}`);
+        return NextResponse.redirect(subdomainUrl);
       } else {
+        // User has no org - go to onboarding
         return NextResponse.redirect(new URL('/onboarding', request.url));
       }
     }
@@ -52,7 +193,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Skip public routes
+  // Skip public routes on main domain
   if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
@@ -70,23 +211,34 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Create response with tenant headers
-  const response = NextResponse.next();
+  // Check for auth-only routes (onboarding, etc.)
+  if (AUTH_ONLY_ROUTES.some((route) => pathname.startsWith(route))) {
+    return NextResponse.next();
+  }
 
-  // Inject tenant context headers for API routes
+  // For authenticated users on main domain trying to access /admin, /employee, etc.
+  // Redirect them to their subdomain
+  const orgSlug = token.organizationSlug as string | undefined;
+
+  if (orgSlug && (pathname.startsWith('/admin') || pathname.startsWith('/employee'))) {
+    const subdomainUrl = new URL(pathname, `${request.nextUrl.protocol}//${orgSlug}.${APP_DOMAIN}`);
+    return NextResponse.redirect(subdomainUrl);
+  }
+
+  if (!orgSlug) {
+    // User has no org - redirect to onboarding
+    return NextResponse.redirect(new URL('/onboarding', request.url));
+  }
+
+  // Default: inject tenant headers and continue
+  const response = NextResponse.next();
   if (token.organizationId) {
     response.headers.set('x-tenant-id', token.organizationId as string);
-    response.headers.set('x-tenant-slug', token.organizationSlug as string || '');
+    response.headers.set('x-tenant-slug', orgSlug);
     response.headers.set('x-user-id', token.id as string);
     response.headers.set('x-user-role', token.role as string || '');
     response.headers.set('x-org-role', token.orgRole as string || '');
     response.headers.set('x-subscription-tier', token.subscriptionTier as string || 'FREE');
-  } else {
-    // User is authenticated but has no organization
-    // Redirect to onboarding unless already on auth-only routes
-    if (!AUTH_ONLY_ROUTES.some((route) => pathname.startsWith(route))) {
-      return NextResponse.redirect(new URL('/onboarding', request.url));
-    }
   }
 
   return response;

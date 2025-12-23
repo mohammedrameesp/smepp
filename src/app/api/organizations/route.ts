@@ -3,6 +3,12 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import {
+  generateUniqueSlug,
+  validateSlug,
+  isSlugAvailable,
+  getOrganizationUrl,
+} from '@/lib/multi-tenant/subdomain';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION
@@ -10,35 +16,10 @@ import { z } from 'zod';
 
 const createOrgSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
+  slug: z.string().min(3).max(63).optional(), // Optional custom slug
   timezone: z.string().optional().default('UTC'),
   currency: z.string().optional().default('USD'),
 });
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .substring(0, 50);
-}
-
-async function ensureUniqueSlug(baseSlug: string): Promise<string> {
-  let slug = baseSlug;
-  let counter = 1;
-
-  while (await prisma.organization.findUnique({ where: { slug } })) {
-    slug = `${baseSlug}-${counter}`;
-    counter++;
-  }
-
-  return slug;
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/organizations - Get user's organizations
@@ -105,11 +86,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, timezone, currency } = result.data;
+    const { name, slug: customSlug, timezone, currency } = result.data;
 
-    // Generate unique slug
-    const baseSlug = generateSlug(name);
-    const slug = await ensureUniqueSlug(baseSlug);
+    // Determine slug: use custom if provided and valid, otherwise generate
+    let slug: string;
+
+    if (customSlug) {
+      // Validate custom slug
+      const validation = validateSlug(customSlug);
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: validation.error },
+          { status: 400 }
+        );
+      }
+
+      // Check availability
+      const available = await isSlugAvailable(customSlug);
+      if (!available) {
+        return NextResponse.json(
+          { error: 'This subdomain is already taken' },
+          { status: 409 }
+        );
+      }
+
+      slug = customSlug.toLowerCase();
+    } else {
+      // Generate unique slug from name
+      slug = await generateUniqueSlug(name);
+    }
 
     // Create organization and membership
     const organization = await prisma.$transaction(async (tx) => {
@@ -137,6 +142,9 @@ export async function POST(request: NextRequest) {
       return org;
     });
 
+    // Get the subdomain URL for the new organization
+    const subdomainUrl = getOrganizationUrl(organization.slug);
+
     return NextResponse.json(
       {
         success: true,
@@ -144,6 +152,7 @@ export async function POST(request: NextRequest) {
           id: organization.id,
           name: organization.name,
           slug: organization.slug,
+          url: subdomainUrl,
         },
       },
       { status: 201 }
