@@ -145,6 +145,24 @@ enum ApprovalStepStatus {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// MULTI-TENANT SAAS ENUMS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+enum SubscriptionTier {
+  FREE
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum OrgRole {
+  OWNER // Full control, billing access
+  ADMIN // Manage users, settings
+  MANAGER // Approve requests, view reports
+  MEMBER // Basic access
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // PROJECT MODULE ENUMS
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -195,6 +213,7 @@ model User {
   email                        String                @unique
   emailVerified                DateTime?
   image                        String?
+  passwordHash                 String? // For email/password auth
   role                         Role                  @default(EMPLOYEE)
   isSystemAccount              Boolean               @default(false) // For shared assets and system users
   accounts                     Account[]
@@ -260,6 +279,9 @@ model User {
   delegationsAsFrom ApproverDelegation[] @relation("DelegatorUser")
   delegationsAsTo   ApproverDelegation[] @relation("DelegateeUser")
 
+  // Organization membership (multi-tenant)
+  organizationMemberships OrganizationUser[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -272,11 +294,116 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// MULTI-TENANT ORGANIZATION MODELS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model Organization {
+  id   String @id @default(cuid())
+  name String
+  slug String @unique // URL-friendly identifier (e.g., "acme-corp")
+
+  // Branding
+  logoUrl      String?
+  primaryColor String  @default("#3B82F6")
+
+  // Settings
+  timezone String @default("UTC")
+  currency String @default("USD")
+
+  // Subscription & Billing
+  subscriptionTier SubscriptionTier @default(FREE)
+  stripeCustomerId String?          @unique
+  stripePriceId    String? // Current subscription price
+  stripeSubEnd     DateTime? // Subscription end date
+
+  // Usage Limits (can be overridden from tier defaults)
+  maxUsers  Int @default(5)
+  maxAssets Int @default(50)
+
+  // Core Relations
+  members     OrganizationUser[]
+  invitations OrganizationInvitation[]
+
+  // Tenant-scoped data relations
+  assets                Asset[]
+  subscriptions         Subscription[]
+  activityLogs          ActivityLog[]
+  notifications         Notification[]
+  approvalPolicies      ApprovalPolicy[]
+  approvalSteps         ApprovalStep[]
+  approverDelegations   ApproverDelegation[]
+  maintenanceRecords    MaintenanceRecord[]
+  suppliers             Supplier[]
+  supplierEngagements   SupplierEngagement[]
+  systemSettings        SystemSettings[]
+  hrProfiles            HRProfile[]
+  profileChangeRequests ProfileChangeRequest[]
+  purchaseRequests      PurchaseRequest[]
+  leaveTypes            LeaveType[]
+  leaveBalances         LeaveBalance[]
+  leaveRequests         LeaveRequest[]
+  salaryStructures      SalaryStructure[]
+  payrollRuns           PayrollRun[]
+  payslips              Payslip[]
+  employeeLoans         EmployeeLoan[]
+  projects              Project[]
+  assetRequests         AssetRequest[]
+  companyDocumentTypes  CompanyDocumentType[]
+  companyDocuments      CompanyDocument[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([stripeCustomerId])
+}
+
+model OrganizationUser {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role    OrgRole @default(MEMBER)
+  isOwner Boolean @default(false) // Original creator
+
+  joinedAt DateTime @default(now())
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+model OrganizationInvitation {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  email String
+  role  OrgRole @default(MEMBER)
+  token String  @unique @default(cuid())
+
+  invitedById String? // User who sent the invitation
+
+  expiresAt  DateTime
+  acceptedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([organizationId, email])
+  @@index([token])
+  @@index([email])
+}
+
 // Project model removed - projects are now handled separately by accreditation module
 
 model Asset {
   id              String          @id @default(cuid())
-  assetTag        String?         @unique // #1 Asset ID/Tag
+  tenantId        String
+  tenant          Organization    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assetTag        String? // #1 Asset ID/Tag
   type            String // #2 Asset Type (Laptop, Mouse, Monitor, etc.)
   category        String? // #3 Category/Department (IT, Marketing, Engineering, etc.)
   brand           String? // #4 Brand/Manufacturer (Apple, Dell, HP, etc.)
@@ -309,12 +436,14 @@ model Asset {
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
+  @@unique([tenantId, assetTag])
   @@index([warrantyExpiry])
   @@index([brand])
   @@index([model])
   @@index([type])
   @@index([serial])
   @@index([assetTag])
+  @@index([tenantId])
 }
 
 enum AssetHistoryAction {
@@ -353,6 +482,8 @@ model AssetHistory {
 
 model Subscription {
   id                    String                @id @default(cuid())
+  tenantId              String
+  tenant                Organization          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   serviceName           String
   category              String?
   accountId             String?
@@ -382,6 +513,7 @@ model Subscription {
   @@index([serviceName])
   @@index([vendor])
   @@index([accountId])
+  @@index([tenantId])
 }
 
 enum SubscriptionHistoryAction {
@@ -417,17 +549,20 @@ model SubscriptionHistory {
 }
 
 model ActivityLog {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   actorUserId String?
-  actorUser   User?    @relation(fields: [actorUserId], references: [id])
+  actorUser   User?        @relation(fields: [actorUserId], references: [id])
   action      String
   entityType  String?
   entityId    String?
   payload     Json?
-  at          DateTime @default(now())
+  at          DateTime     @default(now())
 
   @@index([actorUserId])
   @@index([at])
+  @@index([tenantId])
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -435,9 +570,11 @@ model ActivityLog {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model Notification {
-  id          String @id @default(cuid())
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   recipientId String
-  recipient   User   @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipient   User         @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
 
   type    NotificationType
   title   String
@@ -455,6 +592,7 @@ model Notification {
   @@index([recipientId])
   @@index([recipientId, isRead])
   @@index([createdAt])
+  @@index([tenantId])
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -463,6 +601,8 @@ model Notification {
 
 model ApprovalPolicy {
   id        String         @id @default(cuid())
+  tenantId  String
+  tenant    Organization   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name      String
   module    ApprovalModule
   isActive  Boolean        @default(true)
@@ -479,6 +619,7 @@ model ApprovalPolicy {
 
   @@index([module, isActive])
   @@index([priority])
+  @@index([tenantId])
 }
 
 model ApprovalLevel {
@@ -494,6 +635,8 @@ model ApprovalLevel {
 
 model ApprovalStep {
   id           String         @id @default(cuid())
+  tenantId     String
+  tenant       Organization   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   entityType   ApprovalModule // Which module (LEAVE_REQUEST, PURCHASE_REQUEST, ASSET_REQUEST)
   entityId     String // The ID of the request being approved
   levelOrder   Int // Which level in the chain
@@ -511,14 +654,17 @@ model ApprovalStep {
   @@index([entityType, entityId])
   @@index([requiredRole, status])
   @@index([approverId])
+  @@index([tenantId])
 }
 
 model ApproverDelegation {
-  id          String @id @default(cuid())
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   delegatorId String // User who is delegating
-  delegator   User   @relation("DelegatorUser", fields: [delegatorId], references: [id])
+  delegator   User         @relation("DelegatorUser", fields: [delegatorId], references: [id])
   delegateeId String // User receiving delegation
-  delegatee   User   @relation("DelegateeUser", fields: [delegateeId], references: [id])
+  delegatee   User         @relation("DelegateeUser", fields: [delegateeId], references: [id])
 
   startDate DateTime
   endDate   DateTime
@@ -530,25 +676,31 @@ model ApproverDelegation {
   @@index([delegatorId, isActive])
   @@index([delegateeId, isActive])
   @@index([startDate, endDate])
+  @@index([tenantId])
 }
 
 model MaintenanceRecord {
-  id              String   @id @default(cuid())
+  id              String       @id @default(cuid())
+  tenantId        String
+  tenant          Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assetId         String
-  asset           Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  asset           Asset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
   maintenanceDate DateTime
   notes           String?
   performedBy     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   @@index([assetId])
   @@index([maintenanceDate])
+  @@index([tenantId])
 }
 
 model Supplier {
   id                     String               @id @default(cuid())
-  suppCode               String?              @unique // Auto-generated SUPP-XXXX on approval
+  tenantId               String
+  tenant                 Organization         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  suppCode               String? // Auto-generated SUPP-XXXX on approval
   name                   String
   category               String // Material category
   address                String?
@@ -576,26 +728,31 @@ model Supplier {
   createdAt              DateTime             @default(now())
   updatedAt              DateTime             @updatedAt
 
+  @@unique([tenantId, suppCode])
   @@index([status])
   @@index([suppCode])
   @@index([createdAt])
   @@index([name])
   @@index([category])
+  @@index([tenantId])
 }
 
 model SupplierEngagement {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   supplierId  String
-  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplier    Supplier     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   date        DateTime
   notes       String
   rating      Int? // 1-5 star rating (optional)
   createdById String
-  createdBy   User     @relation(fields: [createdById], references: [id])
-  createdAt   DateTime @default(now())
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  createdAt   DateTime     @default(now())
 
   @@index([supplierId])
   @@index([date])
+  @@index([tenantId])
 }
 
 model AppSetting {
@@ -605,21 +762,26 @@ model AppSetting {
 }
 
 model SystemSettings {
-  id        String   @id @default(cuid())
-  key       String   @unique
+  id        String       @id @default(cuid())
+  tenantId  String
+  tenant    Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  key       String       @unique
   value     String
   updatedBy String?
-  updater   User?    @relation("SystemSettingsUpdater", fields: [updatedBy], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updater   User?        @relation("SystemSettingsUpdater", fields: [updatedBy], references: [id])
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   @@index([key])
+  @@index([tenantId])
 }
 
 model HRProfile {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id       String       @id @default(cuid())
+  tenantId String
+  tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId   String       @unique
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Personal Information
   dateOfBirth   DateTime?
@@ -704,6 +866,7 @@ model HRProfile {
   @@index([qidNumber])
   @@index([passportNumber])
   @@index([employeeId])
+  @@index([tenantId])
 }
 
 enum ProfileChangeRequestStatus {
@@ -754,9 +917,11 @@ enum PaymentMode {
 }
 
 model ProfileChangeRequest {
-  id          String    @id @default(cuid())
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   hrProfileId String
-  hrProfile   HRProfile @relation(fields: [hrProfileId], references: [id], onDelete: Cascade)
+  hrProfile   HRProfile    @relation(fields: [hrProfileId], references: [id], onDelete: Cascade)
 
   // Request details
   description String // What changes the user is requesting
@@ -773,12 +938,15 @@ model ProfileChangeRequest {
   @@index([hrProfileId])
   @@index([status])
   @@index([createdAt])
+  @@index([tenantId])
 }
 
 // ===== Purchase Request Module Models =====
 
 model PurchaseRequest {
   id              String                  @id @default(cuid())
+  tenantId        String
+  tenant          Organization            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   referenceNumber String                  @unique // BCE-PR-YYMM-XXXX
   requestDate     DateTime                @default(now())
   status          PurchaseRequestStatus   @default(PENDING)
@@ -844,6 +1012,7 @@ model PurchaseRequest {
   @@index([purchaseType])
   @@index([costType])
   @@index([projectId])
+  @@index([tenantId])
 }
 
 model PurchaseRequestItem {
@@ -903,18 +1072,20 @@ model PurchaseRequestHistory {
 // ===== Leave Management Module Models =====
 
 model LeaveType {
-  id                  String  @id @default(cuid())
-  name                String  @unique // Annual, Sick, Maternity, Hajj, Paternity, Unpaid, Compassionate
+  id                  String       @id @default(cuid())
+  tenantId            String
+  tenant              Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name                String // Annual, Sick, Maternity, Hajj, Paternity, Unpaid, Compassionate
   description         String?
-  color               String  @default("#3B82F6") // For calendar display
-  defaultDays         Int     @default(0) // Default annual entitlement
-  requiresApproval    Boolean @default(true)
-  requiresDocument    Boolean @default(false) // Medical certificate etc.
-  isPaid              Boolean @default(true)
-  isActive            Boolean @default(true)
+  color               String       @default("#3B82F6") // For calendar display
+  defaultDays         Int          @default(0) // Default annual entitlement
+  requiresApproval    Boolean      @default(true)
+  requiresDocument    Boolean      @default(false) // Medical certificate etc.
+  isPaid              Boolean      @default(true)
+  isActive            Boolean      @default(true)
   maxConsecutiveDays  Int? // Max consecutive days allowed
-  minNoticeDays       Int     @default(0) // Advance notice required
-  allowCarryForward   Boolean @default(false)
+  minNoticeDays       Int          @default(0) // Advance notice required
+  allowCarryForward   Boolean      @default(false)
   maxCarryForwardDays Int?
 
   // Qatar Labor Law Fields
@@ -932,22 +1103,26 @@ model LeaveType {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([tenantId, name])
   @@index([isActive])
   @@index([category])
+  @@index([tenantId])
 }
 
 model LeaveBalance {
-  id              String    @id @default(cuid())
+  id              String       @id @default(cuid())
+  tenantId        String
+  tenant          Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   leaveTypeId     String
-  leaveType       LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+  leaveType       LeaveType    @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
   year            Int // Year for balance
-  entitlement     Decimal   @default(0) // Total days entitled
-  used            Decimal   @default(0) // Days used
-  pending         Decimal   @default(0) // Days in pending requests
-  carriedForward  Decimal   @default(0) // From previous year
-  adjustment      Decimal   @default(0) // Manual adjustments (+/-)
+  entitlement     Decimal      @default(0) // Total days entitled
+  used            Decimal      @default(0) // Days used
+  pending         Decimal      @default(0) // Days in pending requests
+  carriedForward  Decimal      @default(0) // From previous year
+  adjustment      Decimal      @default(0) // Manual adjustments (+/-)
   adjustmentNotes String?
 
   createdAt DateTime @default(now())
@@ -957,10 +1132,13 @@ model LeaveBalance {
   @@index([userId])
   @@index([leaveTypeId])
   @@index([year])
+  @@index([tenantId])
 }
 
 model LeaveRequest {
   id            String           @id @default(cuid())
+  tenantId      String
+  tenant        Organization     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   requestNumber String           @unique // Auto-generated LR-XXXXX
   userId        String
   user          User             @relation("LeaveRequests", fields: [userId], references: [id], onDelete: Cascade)
@@ -1003,6 +1181,7 @@ model LeaveRequest {
   @@index([status])
   @@index([startDate])
   @@index([endDate])
+  @@index([tenantId])
 }
 
 model LeaveRequestHistory {
@@ -1053,9 +1232,11 @@ enum DeductionType {
 // ===== Payroll Management Module Models =====
 
 model SalaryStructure {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id       String       @id @default(cuid())
+  tenantId String
+  tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId   String       @unique
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Core salary components (all stored in QAR)
   basicSalary            Decimal @db.Decimal(12, 2)
@@ -1086,6 +1267,7 @@ model SalaryStructure {
   @@index([userId])
   @@index([effectiveFrom])
   @@index([isActive])
+  @@index([tenantId])
 }
 
 model SalaryStructureHistory {
@@ -1108,8 +1290,10 @@ model SalaryStructureHistory {
 }
 
 model PayrollRun {
-  id              String @id @default(cuid())
-  referenceNumber String @unique // PAY-YYYY-MM-XXX
+  id              String       @id @default(cuid())
+  tenantId        String
+  tenant          Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  referenceNumber String       @unique // PAY-YYYY-MM-XXX
 
   // Period
   year        Int
@@ -1163,6 +1347,7 @@ model PayrollRun {
   @@index([status])
   @@index([year, month])
   @@index([referenceNumber])
+  @@index([tenantId])
 }
 
 model PayrollHistory {
@@ -1186,8 +1371,10 @@ model PayrollHistory {
 }
 
 model Payslip {
-  id            String @id @default(cuid())
-  payslipNumber String @unique // PS-YYYY-MM-XXXXX
+  id            String       @id @default(cuid())
+  tenantId      String
+  tenant        Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payslipNumber String       @unique // PS-YYYY-MM-XXXXX
 
   payrollRunId String
   payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
@@ -1232,6 +1419,7 @@ model Payslip {
   @@index([payrollRunId])
   @@index([userId])
   @@index([payslipNumber])
+  @@index([tenantId])
 }
 
 model PayslipDeduction {
@@ -1255,8 +1443,10 @@ model PayslipDeduction {
 }
 
 model EmployeeLoan {
-  id         String @id @default(cuid())
-  loanNumber String @unique // LOAN-XXXXX
+  id         String       @id @default(cuid())
+  tenantId   String
+  tenant     Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  loanNumber String       @unique // LOAN-XXXXX
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1300,6 +1490,7 @@ model EmployeeLoan {
   @@index([userId])
   @@index([status])
   @@index([loanNumber])
+  @@index([tenantId])
 }
 
 model LoanRepayment {
@@ -1332,6 +1523,8 @@ model LoanRepayment {
 
 model Project {
   id          String        @id @default(cuid())
+  tenantId    String
+  tenant      Organization  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   code        String        @unique // "PRJ-2025-0001" or custom like "MCITFN25"
   name        String
   description String?
@@ -1366,6 +1559,7 @@ model Project {
   @@index([code])
   @@index([managerId])
   @@index([startDate, endDate])
+  @@index([tenantId])
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1374,6 +1568,8 @@ model Project {
 
 model AssetRequest {
   id            String             @id @default(cuid())
+  tenantId      String
+  tenant        Organization       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   requestNumber String             @unique // AR-XXXXX
   type          AssetRequestType
   status        AssetRequestStatus
@@ -1413,6 +1609,7 @@ model AssetRequest {
   @@index([status])
   @@index([type])
   @@index([createdAt])
+  @@index([tenantId])
 }
 
 model AssetRequestHistory {
@@ -1437,13 +1634,15 @@ model AssetRequestHistory {
 // ===== Company Document Management =====
 
 model CompanyDocumentType {
-  id          String  @id @default(cuid())
-  name        String  @unique // e.g., "Commercial Registration", "Trade License"
-  code        String  @unique // e.g., "CR", "TRADE_LICENSE" (for system use)
-  category    String  @default("COMPANY") // COMPANY or VEHICLE
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String // e.g., "Commercial Registration", "Trade License"
+  code        String // e.g., "CR", "TRADE_LICENSE" (for system use)
+  category    String       @default("COMPANY") // COMPANY or VEHICLE
   description String?
-  isActive    Boolean @default(true)
-  sortOrder   Int     @default(0)
+  isActive    Boolean      @default(true)
+  sortOrder   Int          @default(0)
 
   // Relations
   documents CompanyDocument[]
@@ -1453,10 +1652,13 @@ model CompanyDocumentType {
 
   @@index([category])
   @@index([isActive])
+  @@index([tenantId])
 }
 
 model CompanyDocument {
-  id String @id @default(cuid())
+  id       String       @id @default(cuid())
+  tenantId String
+  tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Document Classification (linked to admin-managed types)
   documentTypeId  String
@@ -1488,4 +1690,5 @@ model CompanyDocument {
   @@index([expiryDate])
   @@index([documentTypeId])
   @@index([assetId])
+  @@index([tenantId])
 }
