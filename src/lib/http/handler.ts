@@ -4,26 +4,42 @@ import { authOptions } from '@/lib/auth';
 import { formatError } from './errors';
 import { logRequest, generateRequestId } from '@/lib/log';
 import { checkRateLimit } from '@/lib/security/rateLimit';
+import {
+  TenantContext,
+  TenantPrismaClient,
+  getTenantContextFromHeaders,
+  createTenantPrismaClient,
+} from '@/lib/core/prisma-tenant';
+import { prisma } from '@/lib/core/prisma';
 
- 
+// ═══════════════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface APIContext {
+  params?: Record<string, string>;
+  tenant?: TenantContext;
+  prisma: TenantPrismaClient | typeof prisma;
+}
+
 export type APIHandler = (
   request: NextRequest,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  context?: any
+  context: APIContext
 ) => Promise<NextResponse>;
 
 export interface HandlerOptions {
   requireAuth?: boolean;
   requireAdmin?: boolean;
+  requireTenant?: boolean; // Require tenant context (default: true for auth routes)
   skipLogging?: boolean;
-  rateLimit?: boolean; // Enable rate limiting for this endpoint
+  rateLimit?: boolean;
 }
 
 export function withErrorHandler(
   handler: APIHandler,
   options: HandlerOptions = {}
-): APIHandler {
-  return async (request: NextRequest, context?: { params?: any }) => {
+): (request: NextRequest, context?: { params?: Record<string, string> }) => Promise<NextResponse> {
+  return async (request: NextRequest, routeContext?: { params?: Record<string, string> }) => {
     const startTime = Date.now();
     const requestId = request.headers.get('x-request-id') || generateRequestId();
 
@@ -101,7 +117,7 @@ export function withErrorHandler(
             { error: 'Admin access required', requestId },
             { status: 403 }
           );
-          
+
           if (!options.skipLogging) {
             logRequest(
               request.method,
@@ -113,13 +129,50 @@ export function withErrorHandler(
               session.user.email
             );
           }
-          
+
           return response;
         }
       }
 
-      // Execute the handler
-      const response = await handler(enhancedRequest, context);
+      // Extract tenant context from headers (set by middleware)
+      const tenantContext = getTenantContextFromHeaders(enhancedRequest.headers);
+
+      // Check if tenant context is required (default: true for auth routes)
+      const requireTenant = options.requireTenant ?? (options.requireAuth || options.requireAdmin);
+
+      if (requireTenant && !tenantContext) {
+        const response = NextResponse.json(
+          { error: 'Organization context required', requestId },
+          { status: 403 }
+        );
+
+        if (!options.skipLogging) {
+          logRequest(
+            request.method,
+            request.url,
+            403,
+            Date.now() - startTime,
+            requestId
+          );
+        }
+
+        return response;
+      }
+
+      // Create tenant-scoped Prisma client or use global client
+      const tenantPrisma = tenantContext
+        ? createTenantPrismaClient(tenantContext)
+        : prisma;
+
+      // Build API context
+      const apiContext: APIContext = {
+        params: routeContext?.params,
+        tenant: tenantContext || undefined,
+        prisma: tenantPrisma,
+      };
+
+      // Execute the handler with tenant context
+      const response = await handler(enhancedRequest, apiContext);
       
       // Add request ID to response headers
       response.headers.set('x-request-id', requestId);
