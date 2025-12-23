@@ -4,7 +4,6 @@ import { signIn, getSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -88,17 +87,6 @@ function LoginForm() {
         <div className="absolute inset-0 bg-black/10" />
         <div className="relative z-10 flex flex-col justify-center px-16 py-24">
           <div className="max-w-md">
-            <div className="mb-8">
-              <Image
-                src="/logo.png"
-                alt="SME++ Logo"
-                width={180}
-                height={60}
-                className="h-16 w-auto brightness-0 invert"
-                priority
-              />
-            </div>
-
             <h1 className="text-4xl font-bold text-white mb-4">
               SME++
             </h1>

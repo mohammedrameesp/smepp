@@ -233,22 +233,18 @@ export default function InvitePage() {
               <>
                 <Button
                   className="w-full"
-                  onClick={handleAccept}
+                  onClick={() => {
+                    // Redirect to signup with pre-filled email
+                    router.push(`/signup?email=${encodeURIComponent(invitation?.email || '')}&invite=${token}`);
+                  }}
                   disabled={accepting}
                 >
-                  {accepting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Redirecting...
-                    </>
-                  ) : (
-                    'Sign in to Accept'
-                  )}
+                  Create Account & Join
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">
-                  Don&apos;t have an account?{' '}
-                  <Link href={`/signup?email=${encodeURIComponent(invitation?.email || '')}&invite=${token}`} className="text-primary hover:underline">
-                    Sign up
+                  Already have an account?{' '}
+                  <Link href={`/login?callbackUrl=/invite/${token}`} className="text-primary hover:underline">
+                    Sign in
                   </Link>
                 </p>
               </>
