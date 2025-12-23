@@ -1,230 +1,318 @@
 'use client';
 
 import { signIn, getSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Image from 'next/image';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Mail, Lock, AlertCircle } from 'lucide-react';
 
-// Check if dev auth is enabled (set via environment variable)
 const DEV_AUTH_ENABLED = process.env.NEXT_PUBLIC_DEV_AUTH_ENABLED === 'true';
 
-// Color scheme for login page
-// Modify these values to customize the appearance
-const colorScheme = {
-  gradient: 'from-slate-900 via-blue-950 to-slate-950',
-  textPrimary: 'text-blue-50',
-  textSecondary: 'text-blue-200',
-  textTertiary: 'text-blue-300',
-  button: 'bg-slate-600 hover:bg-slate-700',
-  focusRing: 'focus:border-slate-400 focus:ring-slate-400',
-};
-
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const [devEmail, setDevEmail] = useState('');
-  const [devPassword, setDevPassword] = useState('');
-  const [devError, setDevError] = useState('');
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
+    // Check for message in URL (e.g., after signup)
+    const msg = searchParams.get('message');
+    if (msg) {
+      setMessage(msg);
+    }
+
     // Check if user is already logged in
     getSession().then((session) => {
       if (session) {
-        router.push('/');
+        if (session.user.organizationId) {
+          router.push('/admin');
+        } else {
+          router.push('/onboarding');
+        }
       }
     });
-  }, [router]);
+  }, [router, searchParams]);
 
-  const handleAzureSignIn = async () => {
-    setIsLoading(true);
-    try {
-      await signIn('azure-ad', { callbackUrl: '/' });
-    } catch (error) {
-      console.error('Azure sign in error:', error);
-      toast.error('Failed to sign in. Please try again.', { duration: 10000 });
-    }
-    setIsLoading(false);
-  };
-
-  const handleDevSignIn = async (e: React.FormEvent) => {
+  const handleCredentialsSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setDevError('');
+    setError('');
     setIsLoading(true);
 
     try {
-      const result = await signIn('dev-credentials', {
-        email: devEmail,
-        password: devPassword,
+      const result = await signIn('credentials', {
+        email,
+        password,
         redirect: false,
       });
 
       if (result?.error) {
-        setDevError('Invalid email or password');
+        setError('Invalid email or password');
       } else if (result?.ok) {
-        router.push('/');
+        const session = await getSession();
+        if (session?.user?.organizationId) {
+          router.push('/admin');
+        } else {
+          router.push('/onboarding');
+        }
       }
-    } catch (error) {
-      console.error('Dev sign in error:', error);
-      setDevError('Failed to sign in');
+    } catch (err) {
+      console.error('Sign in error:', err);
+      setError('Failed to sign in. Please try again.');
     }
 
     setIsLoading(false);
+  };
+
+  const handleOAuthSignIn = async (provider: string) => {
+    setOauthLoading(provider);
+    try {
+      await signIn(provider, { callbackUrl: '/admin' });
+    } catch (err) {
+      console.error(`${provider} sign in error:`, err);
+      setError(`Failed to sign in with ${provider}`);
+      setOauthLoading(null);
+    }
   };
 
   return (
     <div className="min-h-screen flex">
       {/* Left Column - Branding */}
-      <div className={`hidden lg:flex lg:w-1/2 bg-gradient-to-br ${colorScheme.gradient} relative overflow-hidden`}>
-        <div className="absolute inset-0 bg-black/5" />
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10" />
         <div className="relative z-10 flex flex-col justify-center px-16 py-24">
           <div className="max-w-md">
-            {/* Logo */}
             <div className="mb-8">
               <Image
                 src="/logo.png"
                 alt="SME++ Logo"
                 width={180}
                 height={60}
-                className="h-16 w-auto"
+                className="h-16 w-auto brightness-0 invert"
                 priority
               />
             </div>
 
-            <h1 className={`text-4xl font-bold ${colorScheme.textPrimary} mb-4`}>
+            <h1 className="text-4xl font-bold text-white mb-4">
               SME++
             </h1>
-            <p className={`text-lg ${colorScheme.textSecondary} mb-6`}>
+            <p className="text-xl text-blue-100 mb-6">
               All-in-one Business Management
             </p>
-            <p className={`${colorScheme.textTertiary} text-base leading-relaxed`}>
-              Manage assets, HR, suppliers, subscriptions, and operations—all in one unified platform built for SMBs.
+            <p className="text-blue-200 text-base leading-relaxed">
+              Manage assets, employees, suppliers, subscriptions, and operations in one unified platform built for growing businesses.
             </p>
+
+            <div className="mt-12 grid grid-cols-2 gap-4 text-blue-100 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-400" />
+                Asset Tracking
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-400" />
+                HR Management
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-400" />
+                Leave Requests
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-400" />
+                Approval Workflows
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Right Column - Login Form */}
-      <div className="flex-1 flex items-center justify-center bg-white px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-lg">
-          {/* Welcome Section */}
-          <div className="text-center mb-10">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Welcome Back
-            </h2>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              Sign in to access your workspace and manage your digital resources seamlessly.
-            </p>
+      <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="lg:hidden text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">SME++</h1>
+            <p className="text-gray-600 dark:text-gray-400">Business Management Platform</p>
           </div>
 
-          {/* Login Options */}
-          <div className="space-y-6">
-            {/* Development Login Form - Only shown when DEV_AUTH_ENABLED */}
-            {DEV_AUTH_ENABLED && (
-              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-amber-600 font-semibold text-sm">🛠️ Development Mode</span>
-                </div>
-                <form onSubmit={handleDevSignIn} className="space-y-3">
-                  <div>
-                    <Label htmlFor="dev-email" className="text-sm text-gray-700">Email</Label>
-                    <Input
-                      id="dev-email"
-                      type="email"
-                      value={devEmail}
-                      onChange={(e) => setDevEmail(e.target.value)}
-                      placeholder="admin@test.local"
-                      className="mt-1"
-                      disabled={isLoading}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Welcome back
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">
+                Sign in to your account
+              </p>
+            </div>
+
+            {/* Success/Info Message */}
+            {message && (
+              <Alert className="mb-4 bg-green-50 border-green-200">
+                <AlertDescription className="text-green-800">{message}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Error Message */}
+            {error && (
+              <Alert variant="error" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* OAuth Buttons */}
+            <div className="space-y-3 mb-6">
+              <Button
+                variant="outline"
+                className="w-full h-12"
+                onClick={() => handleOAuthSignIn('google')}
+                disabled={!!oauthLoading}
+              >
+                {oauthLoading === 'google' ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
+                    <path
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      fill="#4285F4"
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="dev-password" className="text-sm text-gray-700">Password</Label>
-                    <Input
-                      id="dev-password"
-                      type="password"
-                      value={devPassword}
-                      onChange={(e) => setDevPassword(e.target.value)}
-                      placeholder="admin123"
-                      className="mt-1"
-                      disabled={isLoading}
+                    <path
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      fill="#34A853"
                     />
-                  </div>
-                  {devError && (
-                    <p className="text-sm text-red-600">{devError}</p>
-                  )}
-                  <Button
-                    type="submit"
+                    <path
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                      fill="#FBBC05"
+                    />
+                    <path
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      fill="#EA4335"
+                    />
+                  </svg>
+                )}
+                Continue with Google
+              </Button>
+
+              <Button
+                variant="outline"
+                className="w-full h-12"
+                onClick={() => handleOAuthSignIn('azure-ad')}
+                disabled={!!oauthLoading}
+              >
+                {oauthLoading === 'azure-ad' ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <svg className="mr-2 h-5 w-5" viewBox="0 0 23 23">
+                    <path fill="#f3f3f3" d="M0 0h23v23H0z" />
+                    <path fill="#f35325" d="M1 1h10v10H1z" />
+                    <path fill="#81bc06" d="M12 1h10v10H12z" />
+                    <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                    <path fill="#ffba08" d="M12 12h10v10H12z" />
+                  </svg>
+                )}
+                Continue with Microsoft
+              </Button>
+            </div>
+
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white dark:bg-gray-800 px-2 text-muted-foreground">
+                  Or continue with email
+                </span>
+              </div>
+            </div>
+
+            {/* Email/Password Form */}
+            <form onSubmit={handleCredentialsSignIn} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                    required
                     disabled={isLoading}
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white"
-                  >
-                    {isLoading ? 'Signing in...' : 'Dev Login'}
-                  </Button>
-                </form>
-                <div className="mt-3 text-xs text-gray-500">
-                  <p className="font-medium mb-1">Test accounts:</p>
-                  <ul className="space-y-0.5">
-                    <li>admin@test.local / admin123</li>
-                    <li>employee@test.local / employee123</li>
-                    <li>validator@test.local / validator123</li>
-                  </ul>
+                  />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full h-12" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign in'
+                )}
+              </Button>
+            </form>
+
+            {/* Dev Mode Notice */}
+            {DEV_AUTH_ENABLED && (
+              <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                <p className="text-xs text-amber-800 dark:text-amber-200 font-medium mb-1">
+                  Development Mode
+                </p>
+                <p className="text-xs text-amber-600 dark:text-amber-300">
+                  admin@test.local / admin123
+                </p>
               </div>
             )}
 
-            {/* Azure AD Login Button */}
-            <Button
-              onClick={handleAzureSignIn}
-              disabled={isLoading}
-              className="w-full h-14 bg-[#2F2F2F] hover:bg-[#1a1a1a] text-white font-semibold text-base rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              {isLoading ? (
-                <span className="flex items-center justify-center gap-3">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Signing in...
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-3">
-                  {/* Microsoft Logo - Colorful 4 squares */}
-                  <svg className="w-5 h-5" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="10" height="10" fill="#F25022"/>
-                    <rect x="11" width="10" height="10" fill="#7FBA00"/>
-                    <rect y="11" width="10" height="10" fill="#00A4EF"/>
-                    <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
-                  </svg>
-                  Sign in with Microsoft
-                </span>
-              )}
-            </Button>
-
-            {/* Access Notice - Below button */}
-            {!DEV_AUTH_ENABLED && (
-              <p className="text-center text-sm text-gray-500">
-                Don&apos;t have an account? <a href="/signup" className="text-blue-600 hover:underline font-medium">Sign up free</a>
-              </p>
-            )}
-
-            {/* Supplier Registration Link */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <p className="text-center text-sm text-gray-600 mb-3">
-                Are you a supplier?
-              </p>
-              <a
-                href="/suppliers/register"
-                className="block w-full text-center py-3 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
-              >
-                Register as a Supplier
-              </a>
-            </div>
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Don&apos;t have an account?{' '}
+              <Link href="/signup" className="text-primary font-medium hover:underline">
+                Sign up free
+              </Link>
+            </p>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

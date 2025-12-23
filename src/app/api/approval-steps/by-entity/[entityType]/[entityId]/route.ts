@@ -8,7 +8,7 @@ interface RouteParams {
   params: Promise<{ entityType: string; entityId: string }>;
 }
 
-// GET /api/approval-steps/[entityType]/[entityId] - Get approval chain for an entity
+// GET /api/approval-steps/by-entity/[entityType]/[entityId] - Get approval chain for an entity
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
