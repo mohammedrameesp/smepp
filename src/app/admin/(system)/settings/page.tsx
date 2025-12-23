@@ -11,6 +11,7 @@ import { DataDeletion } from '@/components/settings/data-deletion';
 import { BackupDownload } from '@/components/settings/backup-download';
 import { PayrollSettings } from '@/components/settings/payroll-settings';
 import { DocumentTypeSettings } from '@/components/domains/system/settings/DocumentTypeSettings';
+import { OrganizationSettings, TeamMembers } from '@/components/domains/system/organization';
 import { prisma } from '@/lib/prisma';
 
 export default async function SettingsPage() {
@@ -51,6 +52,81 @@ export default async function SettingsPage() {
     projects: projectCount,
     activityLogs: activityLogCount,
   };
+
+  // Fetch organization data if user has one
+  let organization = null;
+  let members: {
+    id: string;
+    role: 'OWNER' | 'ADMIN' | 'MANAGER' | 'MEMBER';
+    isOwner: boolean;
+    joinedAt: string;
+    user: { id: string; name: string | null; email: string; image: string | null };
+  }[] = [];
+  let invitations: {
+    id: string;
+    email: string;
+    role: 'OWNER' | 'ADMIN' | 'MANAGER' | 'MEMBER';
+    expiresAt: string;
+  }[] = [];
+  let currentMembership = null;
+
+  if (session.user.organizationId) {
+    const [orgData, memberData, inviteData, membershipData] = await Promise.all([
+      prisma.organization.findUnique({
+        where: { id: session.user.organizationId },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          logoUrl: true,
+          subscriptionTier: true,
+          maxUsers: true,
+          maxAssets: true,
+          _count: { select: { members: true } },
+        },
+      }),
+      prisma.organizationUser.findMany({
+        where: { organizationId: session.user.organizationId },
+        include: {
+          user: {
+            select: { id: true, name: true, email: true, image: true },
+          },
+        },
+        orderBy: [{ isOwner: 'desc' }, { role: 'asc' }, { joinedAt: 'asc' }],
+      }),
+      prisma.organizationInvitation.findMany({
+        where: {
+          organizationId: session.user.organizationId,
+          expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.organizationUser.findUnique({
+        where: {
+          organizationId_userId: {
+            organizationId: session.user.organizationId,
+            userId: session.user.id,
+          },
+        },
+      }),
+    ]);
+
+    organization = orgData;
+    members = memberData.map((m) => ({
+      id: m.id,
+      role: m.role,
+      isOwner: m.isOwner,
+      joinedAt: m.joinedAt.toISOString(),
+      user: m.user,
+    }));
+    invitations = inviteData.map((i) => ({
+      id: i.id,
+      email: i.email,
+      role: i.role,
+      expiresAt: i.expiresAt.toISOString(),
+    }));
+    currentMembership = membershipData;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -101,19 +177,32 @@ export default async function SettingsPage() {
 
             {/* Organization Tab */}
             <TabsContent value="organization" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Organization Settings</CardTitle>
-                  <CardDescription>
-                    Configure company information and branding
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-gray-500">
-                    Coming soon - Organization settings will be available here
-                  </div>
-                </CardContent>
-              </Card>
+              {organization && currentMembership ? (
+                <>
+                  <OrganizationSettings organization={organization} />
+                  <TeamMembers
+                    organizationId={organization.id}
+                    members={members}
+                    invitations={invitations}
+                    currentUserOrgRole={currentMembership.role}
+                    isOwner={currentMembership.isOwner}
+                  />
+                </>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>No Organization</CardTitle>
+                    <CardDescription>
+                      You are not part of any organization yet.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-500">
+                      Create or join an organization to access these settings.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             {/* System Config Tab */}
