@@ -201,8 +201,12 @@ export const authOptions: NextAuthOptions = {
       try {
         // For OAuth providers, link accounts with same email if exists
         if (account?.provider && account.provider !== 'credentials' && user.email) {
+          const normalizedEmail = user.email.toLowerCase().trim();
+          const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.toLowerCase().trim();
+          const isSuperAdmin = superAdminEmail === normalizedEmail;
+
           const existingUser = await prisma.user.findUnique({
-            where: { email: user.email },
+            where: { email: normalizedEmail },
             include: { accounts: true },
           });
 
@@ -230,6 +234,14 @@ export const authOptions: NextAuthOptions = {
                   session_state: account.session_state as string | null,
                   token_type: account.token_type,
                 },
+              });
+            }
+
+            // Auto-promote to super admin if matching email
+            if (isSuperAdmin && !existingUser.isSuperAdmin) {
+              await prisma.user.update({
+                where: { id: existingUser.id },
+                data: { isSuperAdmin: true },
               });
             }
           }

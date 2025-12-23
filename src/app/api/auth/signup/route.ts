@@ -48,6 +48,10 @@ export async function POST(request: NextRequest) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 12);
 
+    // Check if this is the super admin
+    const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.toLowerCase().trim();
+    const isSuperAdmin = superAdminEmail === normalizedEmail;
+
     // Create user (organization will be created during onboarding)
     const user = await prisma.user.create({
       data: {
@@ -55,6 +59,7 @@ export async function POST(request: NextRequest) {
         email: normalizedEmail,
         passwordHash,
         role: 'ADMIN', // Will be admin of their org once created
+        isSuperAdmin,
       },
     });
 
