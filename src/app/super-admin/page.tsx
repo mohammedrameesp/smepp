@@ -1,5 +1,8 @@
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
+
+// Prevent static pre-rendering (requires database)
+export const dynamic = 'force-dynamic';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
