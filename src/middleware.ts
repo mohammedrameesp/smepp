@@ -46,9 +46,15 @@ const PUBLIC_ROUTES = [
 
 // Routes that require authentication but not organization
 const AUTH_ONLY_ROUTES = [
-  '/onboarding',
+  '/setup', // Org setup for invited admins
+  '/pending', // Waiting for invitation
   '/api/organizations',
   '/api/subdomains', // Subdomain availability check
+];
+
+// Super admin routes (require isSuperAdmin flag)
+const SUPER_ADMIN_ROUTES = [
+  '/super-admin',
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -142,9 +148,9 @@ export async function middleware(request: NextRequest) {
     const userOrgSlug = token.organizationSlug as string | undefined;
 
     if (!userOrgSlug) {
-      // User has no org - redirect to onboarding on main domain
-      const onboardingUrl = new URL('/onboarding', `${request.nextUrl.protocol}//${APP_DOMAIN}`);
-      return NextResponse.redirect(onboardingUrl);
+      // User has no org - redirect to pending page on main domain
+      const pendingUrl = new URL('/pending', `${request.nextUrl.protocol}//${APP_DOMAIN}`);
+      return NextResponse.redirect(pendingUrl);
     }
 
     if (userOrgSlug.toLowerCase() !== subdomain.toLowerCase()) {
@@ -179,14 +185,20 @@ export async function middleware(request: NextRequest) {
 
     if (token) {
       const orgSlug = token.organizationSlug as string | undefined;
+      const isSuperAdmin = token.isSuperAdmin as boolean | undefined;
+
+      // Super admins go to super admin dashboard
+      if (isSuperAdmin) {
+        return NextResponse.redirect(new URL('/super-admin', request.url));
+      }
 
       if (orgSlug) {
         // User has org - redirect to their subdomain
         const subdomainUrl = new URL('/admin', `${request.nextUrl.protocol}//${orgSlug}.${APP_DOMAIN}`);
         return NextResponse.redirect(subdomainUrl);
       } else {
-        // User has no org - go to onboarding
-        return NextResponse.redirect(new URL('/onboarding', request.url));
+        // User has no org - go to pending (waiting for invitation)
+        return NextResponse.redirect(new URL('/pending', request.url));
       }
     }
     // Not authenticated - show landing page
@@ -211,7 +223,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Check for auth-only routes (onboarding, etc.)
+  // Check for super admin routes
+  if (SUPER_ADMIN_ROUTES.some((route) => pathname.startsWith(route))) {
+    const isSuperAdmin = token.isSuperAdmin as boolean | undefined;
+    if (!isSuperAdmin) {
+      // Not a super admin - redirect to home
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+    // Super admin accessing super admin routes - allow
+    return NextResponse.next();
+  }
+
+  // Check for auth-only routes (setup, pending, etc.)
   if (AUTH_ONLY_ROUTES.some((route) => pathname.startsWith(route))) {
     return NextResponse.next();
   }
@@ -226,8 +249,8 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!orgSlug) {
-    // User has no org - redirect to onboarding
-    return NextResponse.redirect(new URL('/onboarding', request.url));
+    // User has no org - redirect to pending (waiting for invitation)
+    return NextResponse.redirect(new URL('/pending', request.url));
   }
 
   // Default: inject tenant headers and continue

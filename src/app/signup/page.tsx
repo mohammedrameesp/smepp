@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -11,16 +11,29 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Building2, Mail, Lock, User, AlertCircle } from 'lucide-react';
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Get invite token and pre-filled email from URL
+  const inviteToken = searchParams.get('invite');
+  const prefilledEmail = searchParams.get('email');
+
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
+    email: prefilledEmail || '',
     password: '',
     confirmPassword: '',
   });
+
+  // Update email if prefilled from URL
+  useEffect(() => {
+    if (prefilledEmail && !formData.email) {
+      setFormData(prev => ({ ...prev, email: prefilledEmail }));
+    }
+  }, [prefilledEmail, formData.email]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -76,9 +89,12 @@ export default function SignupPage() {
       if (signInResult?.error) {
         // Account created but sign-in failed - redirect to login
         router.push('/login?message=Account created. Please sign in.');
+      } else if (inviteToken) {
+        // If there's an invite token, redirect to accept it
+        router.push(`/invite/${inviteToken}`);
       } else {
-        // Success - redirect to onboarding to create organization
-        router.push('/onboarding');
+        // Success - redirect to pending (user needs org invitation)
+        router.push('/pending');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -88,7 +104,7 @@ export default function SignupPage() {
   };
 
   const handleOAuthSignup = (provider: string) => {
-    signIn(provider, { callbackUrl: '/' });
+    signIn(provider, { callbackUrl: '/pending' });
   };
 
   return (
@@ -280,5 +296,17 @@ export default function SignupPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }

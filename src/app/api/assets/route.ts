@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { Role, AssetStatus, Prisma } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
 import { createAssetSchema, assetQuerySchema } from '@/lib/validations/assets';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { generateAssetTag } from '@/lib/asset-utils';
-import { recordAssetCreation } from '@/lib/asset-history';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // Type for asset list filters
 interface AssetFilters {
@@ -18,12 +16,8 @@ interface AssetFilters {
   category?: string;
 }
 
-async function getAssetsHandler(request: NextRequest) {
-  // Check authentication
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+async function getAssetsHandler(request: NextRequest, context: APIContext) {
+  const { prisma } = context;
 
   // Parse query parameters
   const { searchParams } = new URL(request.url);
@@ -55,7 +49,7 @@ async function getAssetsHandler(request: NextRequest) {
   // Calculate pagination
   const skip = (p - 1) * ps;
 
-  // Fetch assets
+  // Fetch assets (tenant filtering handled by context.prisma)
   const [assets, total] = await Promise.all([
     prisma.asset.findMany({
       where,
@@ -89,10 +83,12 @@ async function getAssetsHandler(request: NextRequest) {
 
 export const GET = withErrorHandler(getAssetsHandler, { requireAuth: true, rateLimit: true });
 
-async function createAssetHandler(request: NextRequest) {
-  // Check authentication and authorization
+async function createAssetHandler(request: NextRequest, context: APIContext) {
+  const { prisma } = context;
+
+  // Get session for user info (auth already checked by withErrorHandler)
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== Role.ADMIN) {
+  if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -132,73 +128,56 @@ async function createAssetHandler(request: NextRequest) {
     }
   }
 
-  // Build asset data with proper typing
-  const assetData: Prisma.AssetCreateInput = {
-    assetTag,
-    type: data.type,
-    category: data.category || null,
-    brand: data.brand || null,
-    model: data.model,
-    serial: data.serial || null,
-    configuration: data.configuration || null,
-    purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : null,
-    warrantyExpiry: data.warrantyExpiry ? new Date(data.warrantyExpiry) : null,
-    supplier: data.supplier || null,
-    invoiceNumber: data.invoiceNumber || null,
-    price: data.price || null,
-    priceCurrency: currency,
-    priceQAR: priceQAR || null,
-    status: data.status,
-    acquisitionType: data.acquisitionType,
-    transferNotes: data.transferNotes || null,
-    notes: data.notes || null,
-    location: data.location || null,
-    ...(data.assignedUserId && {
-      assignedUser: { connect: { id: data.assignedUserId } }
-    }),
-  };
-
+  // Create asset (tenantId auto-injected by context.prisma)
   try {
-    // Use transaction to ensure atomic creation of asset + history + activity log
-    const asset = await prisma.$transaction(async (tx) => {
-      // Create asset - unique constraint will handle duplicate tags
-      const newAsset = await tx.asset.create({
-        data: assetData,
-        include: {
-          assignedUser: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
+    const asset = await prisma.asset.create({
+      data: {
+        assetTag,
+        type: data.type,
+        category: data.category || null,
+        brand: data.brand || null,
+        model: data.model,
+        serial: data.serial || null,
+        configuration: data.configuration || null,
+        purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : null,
+        warrantyExpiry: data.warrantyExpiry ? new Date(data.warrantyExpiry) : null,
+        supplier: data.supplier || null,
+        invoiceNumber: data.invoiceNumber || null,
+        price: data.price || null,
+        priceCurrency: currency,
+        priceQAR: priceQAR || null,
+        status: data.status,
+        acquisitionType: data.acquisitionType,
+        transferNotes: data.transferNotes || null,
+        notes: data.notes || null,
+        location: data.location || null,
+        ...(data.assignedUserId && {
+          assignedUser: { connect: { id: data.assignedUserId } }
+        }),
+      },
+      include: {
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
-      });
-
-      // Record asset history within the same transaction
-      await tx.assetHistory.create({
-        data: {
-          assetId: newAsset.id,
-          action: 'CREATED',
-          toUserId: newAsset.assignedUserId,
-          toStatus: newAsset.status,
-          toLocation: newAsset.location,
-          performedBy: session.user.id,
-          notes: 'Asset created',
-        },
-      });
-
-      return newAsset;
+      },
     });
 
-    // Log activity (outside transaction - non-critical)
-    await logAction(
-      session.user.id,
-      ActivityActions.ASSET_CREATED,
-      'Asset',
-      asset.id,
-      { assetModel: asset.model, assetType: asset.type, assetTag: asset.assetTag }
-    );
+    // Log activity (non-critical, don't fail if this errors)
+    try {
+      await logAction(
+        session.user.id,
+        ActivityActions.ASSET_CREATED,
+        'Asset',
+        asset.id,
+        { assetModel: asset.model, assetType: asset.type, assetTag: asset.assetTag }
+      );
+    } catch {
+      // Ignore activity log errors
+    }
 
     return NextResponse.json(asset, { status: 201 });
   } catch (error) {

@@ -36,7 +36,7 @@ function LoginForm() {
         if (session.user.organizationId) {
           router.push('/admin');
         } else {
-          router.push('/onboarding');
+          router.push('/pending');
         }
       }
     });
@@ -57,12 +57,9 @@ function LoginForm() {
       if (result?.error) {
         setError('Invalid email or password');
       } else if (result?.ok) {
-        const session = await getSession();
-        if (session?.user?.organizationId) {
-          router.push('/admin');
-        } else {
-          router.push('/onboarding');
-        }
+        // Force full page reload to get fresh session data
+        // This ensures the JWT token is fully propagated
+        window.location.href = '/';
       }
     } catch (err) {
       console.error('Sign in error:', err);
@@ -253,7 +250,15 @@ function LoginForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input

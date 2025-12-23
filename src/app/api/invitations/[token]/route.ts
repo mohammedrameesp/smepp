@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { authOptions } from '@/lib/core/auth';
+import { prisma } from '@/lib/core/prisma';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/invitations/[token] - Get invitation details
@@ -31,6 +31,13 @@ export async function GET(
       return NextResponse.json(
         { error: 'Invitation not found' },
         { status: 404 }
+      );
+    }
+
+    if (invitation.acceptedAt) {
+      return NextResponse.json(
+        { error: 'This invitation has already been used' },
+        { status: 410 }
       );
     }
 
@@ -89,6 +96,13 @@ export async function POST(
       );
     }
 
+    if (invitation.acceptedAt) {
+      return NextResponse.json(
+        { error: 'This invitation has already been used' },
+        { status: 410 }
+      );
+    }
+
     if (invitation.expiresAt < new Date()) {
       return NextResponse.json(
         { error: 'Invitation has expired' },
@@ -132,18 +146,22 @@ export async function POST(
     }
 
     // Accept invitation: create membership and delete invitation
+    // If role is OWNER, set isOwner=true (first admin of org)
+    const isOwner = invitation.role === 'OWNER';
+
     await prisma.$transaction(async (tx) => {
       await tx.organizationUser.create({
         data: {
           organizationId: invitation.organizationId,
           userId: session.user.id,
           role: invitation.role,
-          isOwner: false,
+          isOwner,
         },
       });
 
-      await tx.organizationInvitation.delete({
+      await tx.organizationInvitation.update({
         where: { id: invitation.id },
+        data: { acceptedAt: new Date() },
       });
     });
 

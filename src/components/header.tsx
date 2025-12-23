@@ -16,9 +16,12 @@ export default function Header({ badgeCounts = {} }: HeaderProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
 
-  // Hide header on public/marketing pages (they have their own layouts)
-  const publicRoutes = ['/', '/login', '/signup', '/pricing', '/onboarding', '/verify', '/invite'];
-  const isPublicRoute = publicRoutes.some(route =>
+  // Hide header on pages that have their own layouts
+  const routesWithOwnHeader = [
+    '/', '/login', '/signup', '/pricing', '/onboarding', '/verify', '/invite',
+    '/super-admin', '/setup', '/pending', '/forgot-password', '/reset-password',
+  ];
+  const isPublicRoute = routesWithOwnHeader.some(route =>
     route === '/' ? pathname === '/' : pathname?.startsWith(route)
   );
 
@@ -42,12 +45,25 @@ export default function Header({ badgeCounts = {} }: HeaderProps) {
             {showMobileSidebar && (
               <MobileSidebar config={sidebarConfig} badgeCounts={badgeCounts} />
             )}
-            <Link href="/" className="flex items-center">
-              <img
-                src="/logo.png"
-                alt="Logo"
-                className="h-12 w-auto"
-              />
+            <Link href="/" className="flex items-center gap-2">
+              {session?.user?.organizationLogoUrl ? (
+                <img
+                  src={session.user.organizationLogoUrl}
+                  alt={session.user.organizationName || 'Organization'}
+                  className="h-10 w-auto max-w-[120px] object-contain"
+                />
+              ) : (
+                <>
+                  <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">S++</span>
+                  </div>
+                  {session?.user?.organizationName && (
+                    <span className="text-white font-semibold text-lg hidden sm:inline">
+                      {session.user.organizationName}
+                    </span>
+                  )}
+                </>
+              )}
             </Link>
           </div>
 

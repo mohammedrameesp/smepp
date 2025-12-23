@@ -6,7 +6,7 @@ import { useSession, signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Building2, Check, X, Mail, AlertCircle } from 'lucide-react';
+import { Loader2, Building2, Check, X, Mail, AlertCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 interface InvitationData {
@@ -84,9 +84,9 @@ export default function InvitePage() {
 
       setSuccess(true);
 
-      // Redirect to admin after a short delay
+      // Redirect through home to let middleware handle routing
       setTimeout(() => {
-        router.push('/admin');
+        router.push('/');
       }, 2000);
     } catch (err) {
       console.error('Accept invitation error:', err);
@@ -199,14 +199,30 @@ export default function InvitePage() {
             </Alert>
           )}
 
+          {/* Expiry warning if less than 24 hours */}
+          {invitation?.expiresAt && (() => {
+            const hoursLeft = (new Date(invitation.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60);
+            if (hoursLeft > 0 && hoursLeft < 24) {
+              return (
+                <Alert className="border-amber-200 bg-amber-50 text-amber-800">
+                  <Clock className="h-4 w-4" />
+                  <AlertDescription>
+                    This invitation expires in {Math.ceil(hoursLeft)} hour{Math.ceil(hoursLeft) !== 1 ? 's' : ''}. Accept it soon!
+                  </AlertDescription>
+                </Alert>
+              );
+            }
+            return null;
+          })()}
+
           {/* Email mismatch warning */}
           {session?.user?.email && invitation?.email &&
             session.user.email.toLowerCase() !== invitation.email.toLowerCase() && (
-              <Alert>
+              <Alert variant="error">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   You&apos;re signed in as <strong>{session.user.email}</strong>, but this invitation was sent to{' '}
-                  <strong>{invitation.email}</strong>. Please sign in with the correct account.
+                  <strong>{invitation.email}</strong>. Please sign out and sign in with the correct email.
                 </AlertDescription>
               </Alert>
             )}

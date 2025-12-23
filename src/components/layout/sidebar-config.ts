@@ -31,6 +31,8 @@ import {
   ClipboardCheck,
   GitBranch,
   UserCheck,
+  UsersRound,
+  Building2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -123,6 +125,8 @@ export const adminSidebarConfig: SidebarConfig = {
       collapsible: true,
       defaultOpen: false,
       items: [
+        { label: 'Organization', href: '/admin/organization', icon: Building2 },
+        { label: 'Team', href: '/admin/team', icon: UsersRound },
         { label: 'Users', href: '/admin/users', icon: Users },
         { label: 'Company Documents', href: '/admin/company-documents', icon: FileCheck },
         { label: 'Approval Policies', href: '/admin/settings/approvals', icon: GitBranch },

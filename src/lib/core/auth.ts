@@ -15,6 +15,7 @@ export interface OrganizationInfo {
   id: string;
   name: string;
   slug: string;
+  logoUrl: string | null;
   role: OrgRole;
   tier: SubscriptionTier;
 }
@@ -167,6 +168,7 @@ async function getUserOrganization(userId: string): Promise<OrganizationInfo | n
           id: true,
           name: true,
           slug: true,
+          logoUrl: true,
           subscriptionTier: true,
         },
       },
@@ -181,6 +183,7 @@ async function getUserOrganization(userId: string): Promise<OrganizationInfo | n
     id: membership.organization.id,
     name: membership.organization.name,
     slug: membership.organization.slug,
+    logoUrl: membership.organization.logoUrl,
     role: membership.role,
     tier: membership.organization.subscriptionTier,
   };
@@ -247,18 +250,18 @@ export const authOptions: NextAuthOptions = {
           token.email = user.email;
           token.name = user.name;
 
-          // Get role from user object or database
-          if ('role' in user && user.role) {
+          // Get role and super admin status from database
+          const dbUser = await prisma.user.findUnique({
+            where: { email: user.email! },
+            select: { id: true, role: true, isSuperAdmin: true },
+          });
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.role = dbUser.role;
+            token.isSuperAdmin = dbUser.isSuperAdmin;
+          } else if ('role' in user && user.role) {
             token.role = user.role;
-          } else {
-            const dbUser = await prisma.user.findUnique({
-              where: { email: user.email! },
-              select: { id: true, role: true },
-            });
-            if (dbUser) {
-              token.id = dbUser.id;
-              token.role = dbUser.role;
-            }
+            token.isSuperAdmin = false;
           }
 
           // Get organization info
@@ -267,6 +270,7 @@ export const authOptions: NextAuthOptions = {
             token.organizationId = org.id;
             token.organizationSlug = org.slug;
             token.organizationName = org.name;
+            token.organizationLogoUrl = org.logoUrl;
             token.orgRole = org.role;
             token.subscriptionTier = org.tier;
           }
@@ -288,6 +292,7 @@ export const authOptions: NextAuthOptions = {
                     id: true,
                     name: true,
                     slug: true,
+                    logoUrl: true,
                     subscriptionTier: true,
                   },
                 },
@@ -298,6 +303,7 @@ export const authOptions: NextAuthOptions = {
               token.organizationId = membership.organization.id;
               token.organizationSlug = membership.organization.slug;
               token.organizationName = membership.organization.name;
+              token.organizationLogoUrl = membership.organization.logoUrl;
               token.orgRole = membership.role;
               token.subscriptionTier = membership.organization.subscriptionTier;
             }
@@ -311,6 +317,7 @@ export const authOptions: NextAuthOptions = {
             token.organizationId = org.id;
             token.organizationSlug = org.slug;
             token.organizationName = org.name;
+            token.organizationLogoUrl = org.logoUrl;
             token.orgRole = org.role;
             token.subscriptionTier = org.tier;
           }
@@ -330,12 +337,14 @@ export const authOptions: NextAuthOptions = {
           session.user.email = token.email as string;
           session.user.name = token.name as string;
           session.user.role = token.role as Role;
+          session.user.isSuperAdmin = token.isSuperAdmin as boolean || false;
 
           // Organization info
           if (token.organizationId) {
             session.user.organizationId = token.organizationId as string;
             session.user.organizationSlug = token.organizationSlug as string;
             session.user.organizationName = token.organizationName as string;
+            session.user.organizationLogoUrl = token.organizationLogoUrl as string | undefined;
             session.user.orgRole = token.orgRole as OrgRole;
             session.user.subscriptionTier = token.subscriptionTier as SubscriptionTier;
           }
@@ -363,7 +372,7 @@ export const authOptions: NextAuthOptions = {
 
   pages: {
     signIn: '/login',
-    newUser: '/onboarding', // Redirect new users to onboarding
+    // newUser not needed - middleware handles redirects based on org membership
   },
 
   session: {
@@ -386,10 +395,12 @@ declare module 'next-auth' {
       name?: string | null;
       image?: string | null;
       role: Role;
+      isSuperAdmin: boolean;
       // Organization context
       organizationId?: string;
       organizationSlug?: string;
       organizationName?: string;
+      organizationLogoUrl?: string;
       orgRole?: OrgRole;
       subscriptionTier?: SubscriptionTier;
     };
@@ -404,9 +415,11 @@ declare module 'next-auth/jwt' {
   interface JWT {
     id?: string;
     role?: Role;
+    isSuperAdmin?: boolean;
     organizationId?: string;
     organizationSlug?: string;
     organizationName?: string;
+    organizationLogoUrl?: string | null;
     orgRole?: OrgRole;
     subscriptionTier?: SubscriptionTier;
   }

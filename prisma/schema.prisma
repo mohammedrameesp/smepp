@@ -216,6 +216,12 @@ model User {
   passwordHash                 String? // For email/password auth
   role                         Role                  @default(EMPLOYEE)
   isSystemAccount              Boolean               @default(false) // For shared assets and system users
+  isSuperAdmin                 Boolean               @default(false) // Platform-level admin (can manage all orgs)
+
+  // Password reset
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+
   accounts                     Account[]
   sessions                     Session[]
   assets                       Asset[]
