@@ -14,7 +14,7 @@ const resolveSchema = z.object({
 // PATCH /api/admin/change-requests/[id] - Resolve a change request
 async function resolveChangeRequestHandler(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params?: Record<string, string> }
 ) {
   const session = await getServerSession(authOptions);
 
@@ -22,7 +22,7 @@ async function resolveChangeRequestHandler(
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
-  const { id } = await context.params;
+  const id = context.params?.id;
   const body = await request.json();
   const validation = resolveSchema.safeParse(body);
 
@@ -80,7 +80,7 @@ export const PATCH = withErrorHandler(resolveChangeRequestHandler, { requireAuth
 // GET /api/admin/change-requests/[id] - Get a single change request
 async function getChangeRequestHandler(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params?: Record<string, string> }
 ) {
   const session = await getServerSession(authOptions);
 
@@ -88,7 +88,7 @@ async function getChangeRequestHandler(
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
-  const { id } = await context.params;
+  const id = context.params?.id;
 
   const changeRequest = await prisma.profileChangeRequest.findUnique({
     where: { id },

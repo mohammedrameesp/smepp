@@ -35,11 +35,14 @@ export interface HandlerOptions {
   rateLimit?: boolean;
 }
 
+// Next.js 15 route context with async params
+type RouteContext = { params: Promise<Record<string, string>> };
+
 export function withErrorHandler(
   handler: APIHandler,
   options: HandlerOptions = {}
-): (request: NextRequest, context?: { params?: Record<string, string> }) => Promise<NextResponse> {
-  return async (request: NextRequest, routeContext?: { params?: Record<string, string> }) => {
+): (request: NextRequest, context: RouteContext) => Promise<NextResponse> {
+  return async (request: NextRequest, routeContext: RouteContext) => {
     const startTime = Date.now();
     const requestId = request.headers.get('x-request-id') || generateRequestId();
 
@@ -164,9 +167,12 @@ export function withErrorHandler(
         ? createTenantPrismaClient(tenantContext)
         : prisma;
 
+      // Await params from Next.js 15 route context
+      const params = routeContext?.params ? await routeContext.params : undefined;
+
       // Build API context
       const apiContext: APIContext = {
-        params: routeContext?.params,
+        params,
         tenant: tenantContext || undefined,
         prisma: tenantPrisma,
       };
