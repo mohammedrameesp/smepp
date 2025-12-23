@@ -4,18 +4,32 @@ import { usePathname } from 'next/navigation';
 
 export default function MainContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isVerifyPage = pathname?.startsWith('/verify');
-  const isAdminPage = pathname?.startsWith('/admin');
-  const isEmployeePage = pathname?.startsWith('/employee');
 
-  // Admin and employee pages have their own AppShell layout with sidebar
-  // Don't apply wrapper styles to these pages
-  if (isAdminPage || isEmployeePage) {
+  // Routes that have their own complete layouts
+  const customLayoutRoutes = [
+    '/admin',
+    '/employee',
+    '/verify',
+    '/login',
+    '/signup',
+    '/pricing',
+    '/onboarding',
+    '/invite',
+  ];
+
+  // Check if current route has custom layout (including root marketing page)
+  const hasCustomLayout =
+    pathname === '/' ||
+    customLayoutRoutes.some((route) => pathname?.startsWith(route));
+
+  // Pages with custom layouts render children directly
+  if (hasCustomLayout) {
     return <>{children}</>;
   }
 
+  // Default wrapper for other pages
   return (
-    <main className={isVerifyPage ? '' : 'min-h-screen bg-gray-50'}>
+    <main className="min-h-screen bg-gray-50">
       {children}
     </main>
   );

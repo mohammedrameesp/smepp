@@ -16,8 +16,13 @@ export default function Header({ badgeCounts = {} }: HeaderProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
 
-  // Hide header on verification and login pages
-  if (pathname?.startsWith('/verify') || pathname === '/login') {
+  // Hide header on public/marketing pages (they have their own layouts)
+  const publicRoutes = ['/', '/login', '/signup', '/pricing', '/onboarding', '/verify', '/invite'];
+  const isPublicRoute = publicRoutes.some(route =>
+    route === '/' ? pathname === '/' : pathname?.startsWith(route)
+  );
+
+  if (isPublicRoute) {
     return null;
   }
 
