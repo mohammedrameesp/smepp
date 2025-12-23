@@ -1,0 +1,445 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Users, AlertTriangle, XCircle, Download, User, Package, CreditCard, Clock, RefreshCw, CheckCircle2, Circle } from 'lucide-react';
+import { EmployeeActions } from './employee-actions';
+import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
+import { calculateTenure } from '@/lib/hr-utils';
+
+interface Employee {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+  role: string;
+  createdAt: string;
+  _count: {
+    assets: number;
+    subscriptions: number;
+  };
+  hrProfile: {
+    employeeId: string | null;
+    designation: string | null;
+    qidNumber: string | null;
+    qidExpiry: string | null;
+    passportExpiry: string | null;
+    healthCardExpiry: string | null;
+    sponsorshipType: string | null;
+    photoUrl: string | null;
+    dateOfJoining: string | null;
+    onboardingComplete: boolean | null;
+    onboardingStep: number | null;
+  } | null;
+  profileStatus: {
+    isComplete: boolean;
+    completionPercentage: number;
+  };
+  expiryStatus: {
+    qid: 'expired' | 'expiring' | 'valid' | null;
+    passport: 'expired' | 'expiring' | 'valid' | null;
+    healthCard: 'expired' | 'expiring' | 'valid' | null;
+    overall: 'expired' | 'expiring' | 'valid' | null;
+  };
+}
+
+interface Stats {
+  total: number;
+  incomplete: number;
+  expiringSoon: number;
+  expired: number;
+}
+
+interface PaginationInfo {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
+export function EmployeeListTable() {
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [stats, setStats] = useState<Stats>({ total: 0, incomplete: 0, expiringSoon: 0, expired: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [profileStatus, setProfileStatus] = useState<string>('all');
+  const [expiryStatus, setExpiryStatus] = useState<string>('all');
+  const [sponsorshipFilter, setSponsorshipFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    pageSize: 50,
+    total: 0,
+    totalPages: 0,
+    hasMore: false,
+  });
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPagination((prev) => ({ ...prev, page: 1 }));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  }, [profileStatus, expiryStatus, sponsorshipFilter]);
+
+  // Fetch employees from API
+  const fetchEmployees = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({
+        p: pagination.page.toString(),
+        ps: pagination.pageSize.toString(),
+        sort: sortBy,
+        order: sortOrder,
+      });
+
+      if (debouncedSearch) params.append('q', debouncedSearch);
+      if (profileStatus !== 'all') params.append('profileStatus', profileStatus);
+      if (expiryStatus !== 'all') params.append('expiryStatus', expiryStatus);
+      if (sponsorshipFilter !== 'all') params.append('sponsorshipType', sponsorshipFilter);
+
+      const response = await fetch(`/api/employees?${params}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to fetch employees');
+      }
+
+      const data = await response.json();
+      setEmployees(data.employees);
+      setStats(data.stats);
+      setPagination(data.pagination);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch employees';
+      setError(message);
+      console.error('Error fetching employees:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.page, pagination.pageSize, debouncedSearch, profileStatus, expiryStatus, sponsorshipFilter, sortBy, sortOrder]);
+
+  useEffect(() => {
+    fetchEmployees();
+  }, [fetchEmployees]);
+
+  const toggleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortOrder('asc');
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const response = await fetch('/api/employees/export');
+      if (!response.ok) throw new Error('Export failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `employees-${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (error) {
+      console.error('Export error:', error);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <Alert variant="error">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>{error}</span>
+            <Button variant="outline" size="sm" onClick={fetchEmployees} className="ml-4">
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Retry
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Stats Banner */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className={profileStatus === 'all' ? 'ring-2 ring-blue-500' : 'cursor-pointer hover:ring-2 hover:ring-gray-200'} onClick={() => setProfileStatus('all')}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Total Employees
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+          </CardContent>
+        </Card>
+
+        <Card className={profileStatus === 'incomplete' ? 'ring-2 ring-orange-500' : 'cursor-pointer hover:ring-2 hover:ring-gray-200'} onClick={() => setProfileStatus('incomplete')}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-orange-600 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Incomplete Profiles
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{stats.incomplete}</div>
+          </CardContent>
+        </Card>
+
+        <Card className={expiryStatus === 'expiring' ? 'ring-2 ring-yellow-500' : 'cursor-pointer hover:ring-2 hover:ring-gray-200'} onClick={() => setExpiryStatus(expiryStatus === 'expiring' ? 'all' : 'expiring')}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-yellow-600 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Expiring Soon
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">{stats.expiringSoon}</div>
+            <p className="text-xs text-gray-500">Within 30 days</p>
+          </CardContent>
+        </Card>
+
+        <Card className={expiryStatus === 'expired' ? 'ring-2 ring-red-500' : 'cursor-pointer hover:ring-2 hover:ring-gray-200'} onClick={() => setExpiryStatus(expiryStatus === 'expired' ? 'all' : 'expired')}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-red-600 flex items-center gap-2">
+              <XCircle className="h-4 w-4" />
+              Expired Documents
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{stats.expired}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="md:col-span-2">
+          <Input
+            placeholder="Search by name, email, employee ID, or QID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full"
+          />
+        </div>
+        <Select value={profileStatus} onValueChange={setProfileStatus}>
+          <SelectTrigger>
+            <SelectValue placeholder="Profile Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Profiles</SelectItem>
+            <SelectItem value="complete">Complete</SelectItem>
+            <SelectItem value="incomplete">Incomplete</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={expiryStatus} onValueChange={setExpiryStatus}>
+          <SelectTrigger>
+            <SelectValue placeholder="Expiry Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="expired">Expired</SelectItem>
+            <SelectItem value="expiring">Expiring Soon</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sponsorshipFilter} onValueChange={setSponsorshipFilter}>
+          <SelectTrigger>
+            <SelectValue placeholder="Sponsorship" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Sponsorships</SelectItem>
+            {SPONSORSHIP_TYPES.map((type) => (
+              <SelectItem key={type} value={type}>{type}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Results and Export */}
+      <div className="flex justify-between items-center text-sm text-gray-600">
+        <div>
+          Showing {employees.length > 0 ? ((pagination.page - 1) * pagination.pageSize) + 1 : 0} - {Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total} employees
+        </div>
+        <div className="flex items-center gap-2">
+          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-1" />
+            Export
+          </Button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Employee</TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-gray-100"
+                onClick={() => toggleSort('employeeId')}
+              >
+                Employee ID {sortBy === 'employeeId' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </TableHead>
+              <TableHead>Designation</TableHead>
+              <TableHead className="text-center w-24">Assets</TableHead>
+              <TableHead className="text-center w-24">Subs</TableHead>
+              <TableHead className="text-center w-32">Tenure</TableHead>
+              <TableHead className="text-center w-28">Onboarding</TableHead>
+              <TableHead className="text-center w-24">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading && employees.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                  <p className="text-gray-500 mt-2">Loading employees...</p>
+                </TableCell>
+              </TableRow>
+            ) : employees.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                  {debouncedSearch || profileStatus !== 'all' || expiryStatus !== 'all'
+                    ? 'No employees match your filters'
+                    : 'No employees found'}
+                </TableCell>
+              </TableRow>
+            ) : (
+              employees.map((employee) => (
+                <TableRow
+                  key={employee.id}
+                  className={
+                    employee.expiryStatus.overall === 'expired'
+                      ? 'bg-red-50'
+                      : employee.expiryStatus.overall === 'expiring'
+                      ? 'bg-yellow-50'
+                      : ''
+                  }
+                >
+                  <TableCell>
+                    <Link href={`/admin/employees/${employee.id}`} className="flex items-center gap-3 hover:opacity-80">
+                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                        {employee.hrProfile?.photoUrl || employee.image ? (
+                          <img
+                            src={employee.hrProfile?.photoUrl || employee.image || ''}
+                            alt={employee.name || employee.email}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <User className="h-5 w-5 text-gray-400" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {employee.name || 'No name'}
+                        </div>
+                        <div className="text-sm text-gray-500">{employee.email}</div>
+                      </div>
+                    </Link>
+                  </TableCell>
+                  <TableCell className="font-mono text-sm">
+                    {employee.hrProfile?.employeeId || <span className="text-gray-400">-</span>}
+                  </TableCell>
+                  <TableCell>
+                    {employee.hrProfile?.designation || <span className="text-gray-400">-</span>}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-50 text-blue-700">
+                      <Package className="h-3.5 w-3.5" />
+                      <span className="font-semibold">{employee._count.assets}</span>
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-purple-50 text-purple-700">
+                      <CreditCard className="h-3.5 w-3.5" />
+                      <span className="font-semibold">{employee._count.subscriptions}</span>
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-100 text-gray-700">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span className="font-medium text-sm">
+                        {calculateTenure(employee.hrProfile?.dateOfJoining || null)}
+                      </span>
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {employee.hrProfile?.onboardingComplete ? (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-green-50 text-green-700">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span className="font-medium text-sm">Complete</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-orange-50 text-orange-700">
+                        <Circle className="h-3.5 w-3.5" />
+                        <span className="font-medium text-sm">
+                          {employee.hrProfile?.onboardingStep
+                            ? `Step ${employee.hrProfile.onboardingStep}/8`
+                            : 'Not Started'}
+                        </span>
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <EmployeeActions employeeId={employee.id} />
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Page {pagination.page} of {pagination.totalPages}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
+              disabled={pagination.page === 1 || loading}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
+              disabled={!pagination.hasMore || loading}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

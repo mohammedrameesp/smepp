@@ -1,0 +1,2038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SME++ - Operations, Upgraded. The all-in-one business operations platform for Qatar SMEs. Track assets, subscriptions, employees, and compliance in one place.">
+    <title>SME++ | Operations, Upgraded | Business Operations Platform for Qatar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f766e;
+            --primary-light: #14b8a6;
+            --primary-dark: #115e59;
+            --primary-50: #f0fdfa;
+            --primary-100: #ccfbf1;
+            --secondary: #6366f1;
+            --secondary-light: #818cf8;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --gradient-primary: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+            --gradient-hero: linear-gradient(135deg, #0f766e 0%, #115e59 50%, #0f766e 100%);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--gray-900);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--gray-200);
+            transition: all 0.3s ease;
+        }
+
+        .nav.scrolled {
+            box-shadow: var(--shadow-md);
+        }
+
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 72px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 900;
+            font-size: 1.25rem;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-cta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(15, 118, 110, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px 0 rgba(15, 118, 110, 0.5);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-50);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--gray-700);
+        }
+
+        .btn-ghost:hover {
+            background: var(--gray-100);
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 8rem 0 4rem;
+            background: linear-gradient(180deg, var(--primary-50) 0%, white 100%);
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(15, 118, 110, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-text {
+            max-width: 600px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-100);
+            color: var(--primary-dark);
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-badge svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-700) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero h1 span {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-description {
+            font-size: 1.25rem;
+            color: var(--gray-600);
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 3rem;
+        }
+
+        .stat {
+            text-align: left;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+
+        .hero-visual {
+            position: relative;
+        }
+
+        .hero-image {
+            position: relative;
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-2xl);
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+        }
+
+        .dashboard-preview {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: linear-gradient(180deg, var(--gray-50) 0%, white 100%);
+            padding: 1.5rem;
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .dashboard-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dashboard-dot.red { background: #ef4444; }
+        .dashboard-dot.yellow { background: #f59e0b; }
+        .dashboard-dot.green { background: #10b981; }
+
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .mini-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .mini-card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .mini-card-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .mini-card-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .dashboard-chart {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid var(--gray-200);
+            height: 120px;
+            display: flex;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: var(--primary-100);
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+        }
+
+        .chart-bar:hover {
+            background: var(--primary);
+        }
+
+        .floating-card {
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--gray-200);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-card.alert {
+            top: 10%;
+            right: -40px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .floating-card.alert .icon {
+            width: 36px;
+            height: 36px;
+            background: #fef3c7;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .floating-card.stats {
+            bottom: 15%;
+            left: -30px;
+            animation-delay: -3s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        /* Trusted By */
+        .trusted-by {
+            padding: 3rem 0;
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .trusted-by-inner {
+            text-align: center;
+        }
+
+        .trusted-by-label {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1.5rem;
+        }
+
+        .trusted-logos {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4rem;
+            flex-wrap: wrap;
+            opacity: 0.6;
+        }
+
+        .trusted-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-400);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 0;
+            background: white;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 4rem;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--gray-900);
+        }
+
+        .section-description {
+            font-size: 1.125rem;
+            color: var(--gray-600);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: var(--gray-50);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .feature-card:hover {
+            background: white;
+            border-color: var(--primary-light);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-icon.teal { background: var(--primary-100); }
+        .feature-icon.blue { background: #dbeafe; }
+        .feature-icon.purple { background: #ede9fe; }
+        .feature-icon.amber { background: #fef3c7; }
+        .feature-icon.emerald { background: #d1fae5; }
+        .feature-icon.rose { background: #ffe4e6; }
+        .feature-icon.cyan { background: #cffafe; }
+        .feature-icon.indigo { background: #e0e7ff; }
+        .feature-icon.orange { background: #ffedd5; }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: var(--gray-900);
+        }
+
+        .feature-description {
+            font-size: 0.95rem;
+            color: var(--gray-600);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            padding: 0.25rem 0;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* Domains Section */
+        .domains {
+            padding: 6rem 0;
+            background: var(--gray-50);
+        }
+
+        .domains-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .domain-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            transition: all 0.3s ease;
+        }
+
+        .domain-card:hover {
+            box-shadow: var(--shadow-xl);
+            transform: translateY(-4px);
+        }
+
+        .domain-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .domain-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .domain-icon.hr { background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%); }
+        .domain-icon.ops { background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%); }
+        .domain-icon.projects { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .domain-icon.system { background: linear-gradient(135deg, #64748b 0%, #475569 100%); }
+
+        .domain-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--gray-900);
+        }
+
+        .domain-subtitle {
+            color: var(--gray-500);
+            font-size: 0.95rem;
+        }
+
+        .domain-features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .domain-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: var(--gray-50);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }
+
+        .domain-feature-icon {
+            font-size: 1.25rem;
+        }
+
+        /* Qatar Section */
+        .qatar {
+            padding: 6rem 0;
+            background: var(--gradient-hero);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .qatar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .qatar-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .qatar-text h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .qatar-text p {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .qatar-features {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .qatar-feature {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .qatar-feature-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .qatar-feature-text h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .qatar-feature-text p {
+            font-size: 0.875rem;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .qatar-visual {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .qatar-stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .qatar-stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .qatar-stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+
+        .qatar-stat-label {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        /* Security Section */
+        .security {
+            padding: 6rem 0;
+            background: white;
+        }
+
+        .security-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .security-visual {
+            position: relative;
+        }
+
+        .security-card {
+            background: var(--gray-900);
+            border-radius: 20px;
+            padding: 2rem;
+            color: white;
+        }
+
+        .security-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .security-shield {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .security-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .security-status {
+            font-size: 0.875rem;
+            color: var(--success);
+        }
+
+        .security-items {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .security-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+
+        .security-item-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(16, 185, 129, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--success);
+            font-size: 1rem;
+        }
+
+        .security-item-text {
+            flex: 1;
+        }
+
+        .security-item-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .security-item-desc {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .security-check {
+            color: var(--success);
+            font-size: 1rem;
+        }
+
+        .security-text h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--gray-900);
+        }
+
+        .security-text p {
+            font-size: 1.125rem;
+            color: var(--gray-600);
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .security-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .security-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: var(--gray-100);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .security-badge-icon {
+            font-size: 1.25rem;
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 6rem 0;
+            background: var(--gray-50);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            border: 2px solid var(--gray-200);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .pricing-card:hover {
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .pricing-card.popular {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .pricing-card.popular::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gradient-primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .pricing-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .pricing-desc {
+            font-size: 0.9rem;
+            color: var(--gray-500);
+            margin-bottom: 1.5rem;
+        }
+
+        .pricing-price {
+            margin-bottom: 2rem;
+        }
+
+        .pricing-amount {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--gray-900);
+        }
+
+        .pricing-currency {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--gray-500);
+        }
+
+        .pricing-period {
+            font-size: 1rem;
+            color: var(--gray-500);
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 0.95rem;
+            color: var(--gray-700);
+        }
+
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+
+        .pricing-features .check {
+            color: var(--success);
+            font-size: 1rem;
+        }
+
+        .pricing-btn {
+            width: 100%;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 6rem 0;
+            background: white;
+        }
+
+        .cta-card {
+            background: var(--gradient-hero);
+            border-radius: 24px;
+            padding: 4rem;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-card::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .cta-card::after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            left: -50px;
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .cta .btn-primary {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .cta .btn-primary:hover {
+            background: var(--gray-100);
+        }
+
+        .cta .btn-secondary {
+            background: transparent;
+            border-color: white;
+            color: white;
+        }
+
+        .cta .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--gray-900);
+            color: white;
+            padding: 4rem 0 2rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-brand p {
+            color: var(--gray-400);
+            font-size: 0.95rem;
+            margin-top: 1rem;
+            line-height: 1.7;
+        }
+
+        .footer-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1.5rem;
+            color: var(--gray-300);
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links a {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-copyright {
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        .footer-social {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: all 0.2s ease;
+            font-size: 1.25rem;
+        }
+
+        .footer-social a:hover {
+            background: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-text {
+                max-width: 100%;
+            }
+
+            .hero-cta {
+                justify-content: center;
+            }
+
+            .hero-stats {
+                justify-content: center;
+            }
+
+            .hero-visual {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .domains-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .qatar-content,
+            .security-content {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .footer-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .qatar-visual {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-card {
+                padding: 3rem 1.5rem;
+            }
+
+            .cta h2 {
+                font-size: 1.75rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        .delay-400 { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav" id="nav">
+        <div class="container">
+            <div class="nav-inner">
+                <a href="#" class="logo">
+                    SME<span style="color: var(--primary-light);">++</span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#domains">Modules</a></li>
+                    <li><a href="#qatar">Why Qatar</a></li>
+                    <li><a href="#security">Security</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
+                </ul>
+                <div class="nav-cta">
+                    <a href="#" class="btn btn-ghost">Sign In</a>
+                    <a href="#" class="btn btn-primary">Get Started</a>
+                </div>
+                <button class="mobile-menu-btn" aria-label="Menu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12h18M3 6h18M3 18h18"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <div class="hero-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                        Built for Qatar SMEs
+                    </div>
+                    <h1>Track Everything. <span>Miss Nothing.</span></h1>
+                    <p class="hero-description">
+                        From asset assignments to leave approvals, from expiring documents to pending
+                        purchases — manage every request and track every deadline in one place.
+                    </p>
+                    <div class="hero-cta">
+                        <a href="#" class="btn btn-primary btn-large">Start Free Trial</a>
+                        <a href="#" class="btn btn-secondary btn-large">Watch Demo</a>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <div class="stat-value">Zero</div>
+                            <div class="stat-label">Fines</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">Zero</div>
+                            <div class="stat-label">Surprises</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">Zero</div>
+                            <div class="stat-label">Spreadsheets</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="hero-image">
+                        <div class="dashboard-preview">
+                            <div class="dashboard-header">
+                                <span class="dashboard-dot red"></span>
+                                <span class="dashboard-dot yellow"></span>
+                                <span class="dashboard-dot green"></span>
+                            </div>
+                            <div class="dashboard-cards">
+                                <div class="mini-card">
+                                    <div class="mini-card-icon" style="background: var(--primary-100);">📦</div>
+                                    <div class="mini-card-value">248</div>
+                                    <div class="mini-card-label">Total Assets</div>
+                                </div>
+                                <div class="mini-card">
+                                    <div class="mini-card-icon" style="background: #dbeafe;">💳</div>
+                                    <div class="mini-card-value">32</div>
+                                    <div class="mini-card-label">Subscriptions</div>
+                                </div>
+                                <div class="mini-card">
+                                    <div class="mini-card-icon" style="background: #ede9fe;">👥</div>
+                                    <div class="mini-card-value">45</div>
+                                    <div class="mini-card-label">Employees</div>
+                                </div>
+                            </div>
+                            <div class="dashboard-chart">
+                                <div class="chart-bar" style="height: 40%;"></div>
+                                <div class="chart-bar" style="height: 60%;"></div>
+                                <div class="chart-bar" style="height: 45%;"></div>
+                                <div class="chart-bar" style="height: 80%;"></div>
+                                <div class="chart-bar" style="height: 65%;"></div>
+                                <div class="chart-bar" style="height: 90%;"></div>
+                                <div class="chart-bar" style="height: 55%;"></div>
+                                <div class="chart-bar" style="height: 70%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="floating-card alert">
+                        <div class="icon">⚠️</div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 0.9rem;">3 Documents Expiring</div>
+                            <div style="font-size: 0.8rem; color: var(--gray-500);">Next 30 days</div>
+                        </div>
+                    </div>
+                    <div class="floating-card stats">
+                        <div style="font-size: 0.8rem; color: var(--gray-500);">Monthly Spend</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">QAR 45,280</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trusted By -->
+    <section class="trusted-by">
+        <div class="container">
+            <div class="trusted-by-inner">
+                <div class="trusted-by-label">Trusted by businesses across Qatar</div>
+                <div class="trusted-logos">
+                    <span class="trusted-logo">TechCorp</span>
+                    <span class="trusted-logo">MediaHouse</span>
+                    <span class="trusted-logo">BuildQatar</span>
+                    <span class="trusted-logo">FinanceGulf</span>
+                    <span class="trusted-logo">CreativeStudio</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                    Powerful Features
+                </div>
+                <h2 class="section-title">Everything You Need to Run Your Business</h2>
+                <p class="section-description">
+                    From asset tracking to payroll management, SME++ provides a comprehensive suite
+                    of tools designed specifically for SMEs in Qatar.
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon teal">📦</div>
+                    <h3 class="feature-title">Asset Management</h3>
+                    <p class="feature-description">
+                        Track all your hardware and equipment with complete lifecycle management.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Assignment history tracking</li>
+                        <li>Warranty & maintenance alerts</li>
+                        <li>QR code asset labels</li>
+                        <li>Depreciation calculations</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon blue">💳</div>
+                    <h3 class="feature-title">Subscription Tracking</h3>
+                    <p class="feature-description">
+                        Never miss a renewal. Monitor all your SaaS and service subscriptions.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Renewal date alerts</li>
+                        <li>Cost analysis dashboard</li>
+                        <li>License utilization</li>
+                        <li>Spending trends</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon purple">👥</div>
+                    <h3 class="feature-title">HR & Employees</h3>
+                    <p class="feature-description">
+                        Manage employee profiles with comprehensive document tracking.
+                    </p>
+                    <ul class="feature-list">
+                        <li>QID & passport expiry alerts</li>
+                        <li>Visa tracking</li>
+                        <li>Employee onboarding</li>
+                        <li>Profile management</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon amber">🏖️</div>
+                    <h3 class="feature-title">Leave Management</h3>
+                    <p class="feature-description">
+                        Complete leave request and approval workflow for your team.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Multiple leave types</li>
+                        <li>Balance tracking</li>
+                        <li>Team calendar view</li>
+                        <li>Approval workflow</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon emerald">💰</div>
+                    <h3 class="feature-title">Payroll Processing</h3>
+                    <p class="feature-description">
+                        Qatar-compliant payroll with WPS file generation.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Salary structures</li>
+                        <li>WPS file generation</li>
+                        <li>Gratuity calculations</li>
+                        <li>Loans & advances</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon rose">🚚</div>
+                    <h3 class="feature-title">Supplier Management</h3>
+                    <p class="feature-description">
+                        Manage your vendors with a complete registration and approval workflow.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Supplier registration</li>
+                        <li>Approval workflow</li>
+                        <li>Engagement tracking</li>
+                        <li>Contact management</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon cyan">🛒</div>
+                    <h3 class="feature-title">Purchase Requests</h3>
+                    <p class="feature-description">
+                        Streamline procurement with approval workflows and cost tracking.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Request submission</li>
+                        <li>Multi-level approval</li>
+                        <li>Cost categorization</li>
+                        <li>Multi-currency support</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon indigo">📄</div>
+                    <h3 class="feature-title">Company Documents</h3>
+                    <p class="feature-description">
+                        Track all your business licenses and compliance documents.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Trade license (CR) tracking</li>
+                        <li>Municipality licenses</li>
+                        <li>Insurance policies</li>
+                        <li>Expiry alerts</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon orange">📊</div>
+                    <h3 class="feature-title">Reports & Analytics</h3>
+                    <p class="feature-description">
+                        Comprehensive reporting with Excel exports and activity logs.
+                    </p>
+                    <ul class="feature-list">
+                        <li>Dashboard insights</li>
+                        <li>Excel exports</li>
+                        <li>Activity audit trail</li>
+                        <li>Cost analysis</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Domains Section -->
+    <section class="domains" id="domains">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    Organized by Domain
+                </div>
+                <h2 class="section-title">Three Integrated Business Domains</h2>
+                <p class="section-description">
+                    Our modular architecture organizes features into logical business domains,
+                    making it easy to find what you need.
+                </p>
+            </div>
+            <div class="domains-grid">
+                <div class="domain-card">
+                    <div class="domain-header">
+                        <div class="domain-icon hr">👥</div>
+                        <div>
+                            <h3 class="domain-title">HR Management</h3>
+                            <p class="domain-subtitle">Human resources, leave, and payroll</p>
+                        </div>
+                    </div>
+                    <div class="domain-features">
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">👤</span>
+                            Employee Profiles
+                        </div>
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">📋</span>
+                            Document Expiry
+                        </div>
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">🏖️</span>
+                            Leave Requests
+                        </div>
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">📅</span>
+                            Team Calendar
+                        </div>
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">💰</span>
+                            Payroll Runs
+                        </div>
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">🎁</span>
+                            Gratuity Calculator
+                        </div>
+                    </div>
+                </div>
+                <div class="domain-card">
+                    <div class="domain-header">
+                        <div class="domain-icon ops">📦</div>
+                        <div>
+                            <h3 class="domain-title">Operations</h3>
+                            <p class="domain-subtitle">Assets, subscriptions, suppliers & procurement</p>
+                        </div>
+                    </div>
+                    <div class="domain-features">
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">💻</span>
+                            Asset Registry
+                        </div>
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">💳</span>
+                            Subscriptions
+                        </div>
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">🚚</span>
+                            Suppliers
+                        </div>
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">🛒</span>
+                            Purchase Requests
+                        </div>
+                    </div>
+                </div>
+                <div class="domain-card">
+                    <div class="domain-header">
+                        <div class="domain-icon system">⚙️</div>
+                        <div>
+                            <h3 class="domain-title">System</h3>
+                            <p class="domain-subtitle">Administration and configuration</p>
+                        </div>
+                    </div>
+                    <div class="domain-features">
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">👥</span>
+                            User Management
+                        </div>
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">📄</span>
+                            Company Documents
+                        </div>
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">📈</span>
+                            Reports
+                        </div>
+                        <div class="domain-feature">
+                            <span class="domain-feature-icon">📜</span>
+                            Activity Log
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Qatar Section -->
+    <section class="qatar" id="qatar">
+        <div class="container">
+            <div class="qatar-content">
+                <div class="qatar-text">
+                    <h2>Built Specifically for Qatar</h2>
+                    <p>
+                        SME++ is designed from the ground up for businesses operating in Qatar.
+                        From QAR currency handling to WPS compliance, every feature understands
+                        the local business landscape.
+                    </p>
+                    <div class="qatar-features">
+                        <div class="qatar-feature">
+                            <div class="qatar-feature-icon">🇶🇦</div>
+                            <div class="qatar-feature-text">
+                                <h4>Qatar Labor Law Compliance</h4>
+                                <p>Gratuity calculations, leave entitlements, and WPS file generation</p>
+                            </div>
+                        </div>
+                        <div class="qatar-feature">
+                            <div class="qatar-feature-icon">💵</div>
+                            <div class="qatar-feature-text">
+                                <h4>QAR as Default Currency</h4>
+                                <p>Multi-currency support with automatic QAR conversion</p>
+                            </div>
+                        </div>
+                        <div class="qatar-feature">
+                            <div class="qatar-feature-icon">📋</div>
+                            <div class="qatar-feature-text">
+                                <h4>Document Tracking</h4>
+                                <p>QID, passport, visa, and trade license expiry alerts</p>
+                            </div>
+                        </div>
+                        <div class="qatar-feature">
+                            <div class="qatar-feature-icon">🕐</div>
+                            <div class="qatar-feature-text">
+                                <h4>Qatar Timezone</h4>
+                                <p>All dates display in Asia/Qatar (UTC+3) timezone</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="qatar-visual">
+                    <div class="qatar-stat-card">
+                        <div class="qatar-stat-icon">📄</div>
+                        <div class="qatar-stat-value">WPS</div>
+                        <div class="qatar-stat-label">File Generation</div>
+                    </div>
+                    <div class="qatar-stat-card">
+                        <div class="qatar-stat-icon">🎁</div>
+                        <div class="qatar-stat-value">Auto</div>
+                        <div class="qatar-stat-label">Gratuity Calc</div>
+                    </div>
+                    <div class="qatar-stat-card">
+                        <div class="qatar-stat-icon">📅</div>
+                        <div class="qatar-stat-value">30+</div>
+                        <div class="qatar-stat-label">Day Alerts</div>
+                    </div>
+                    <div class="qatar-stat-card">
+                        <div class="qatar-stat-icon">💳</div>
+                        <div class="qatar-stat-value">QAR</div>
+                        <div class="qatar-stat-label">Native Currency</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Section -->
+    <section class="security" id="security">
+        <div class="container">
+            <div class="security-content">
+                <div class="security-visual">
+                    <div class="security-card">
+                        <div class="security-header">
+                            <div class="security-shield">🛡️</div>
+                            <div>
+                                <div class="security-title">Security Status</div>
+                                <div class="security-status">● All Systems Operational</div>
+                            </div>
+                        </div>
+                        <div class="security-items">
+                            <div class="security-item">
+                                <div class="security-item-icon">🔐</div>
+                                <div class="security-item-text">
+                                    <div class="security-item-title">Azure AD Authentication</div>
+                                    <div class="security-item-desc">Enterprise-grade SSO integration</div>
+                                </div>
+                                <span class="security-check">✓</span>
+                            </div>
+                            <div class="security-item">
+                                <div class="security-item-icon">⚡</div>
+                                <div class="security-item-text">
+                                    <div class="security-item-title">Rate Limiting</div>
+                                    <div class="security-item-desc">Token bucket algorithm protection</div>
+                                </div>
+                                <span class="security-check">✓</span>
+                            </div>
+                            <div class="security-item">
+                                <div class="security-item-icon">📝</div>
+                                <div class="security-item-text">
+                                    <div class="security-item-title">Audit Trail</div>
+                                    <div class="security-item-desc">Complete activity logging</div>
+                                </div>
+                                <span class="security-check">✓</span>
+                            </div>
+                            <div class="security-item">
+                                <div class="security-item-icon">📁</div>
+                                <div class="security-item-text">
+                                    <div class="security-item-title">Secure File Storage</div>
+                                    <div class="security-item-desc">Magic number verification</div>
+                                </div>
+                                <span class="security-check">✓</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="security-text">
+                    <h2>Enterprise-Grade Security</h2>
+                    <p>
+                        Your business data deserves the highest level of protection. SME++ implements
+                        industry-leading security measures to keep your information safe.
+                    </p>
+                    <div class="security-badges">
+                        <div class="security-badge">
+                            <span class="security-badge-icon">🔒</span>
+                            HTTPS Encryption
+                        </div>
+                        <div class="security-badge">
+                            <span class="security-badge-icon">🛡️</span>
+                            CSRF Protection
+                        </div>
+                        <div class="security-badge">
+                            <span class="security-badge-icon">✅</span>
+                            Input Validation
+                        </div>
+                        <div class="security-badge">
+                            <span class="security-badge-icon">👥</span>
+                            Role-Based Access
+                        </div>
+                        <div class="security-badge">
+                            <span class="security-badge-icon">🔍</span>
+                            IDOR Protection
+                        </div>
+                        <div class="security-badge">
+                            <span class="security-badge-icon">📋</span>
+                            Security Headers
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-label">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    Simple Pricing
+                </div>
+                <h2 class="section-title">Choose the Right Plan for Your Business</h2>
+                <p class="section-description">
+                    Start with a free trial and upgrade as your business grows.
+                    All plans include core features.
+                </p>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="pricing-name">Starter</div>
+                    <div class="pricing-desc">For small teams getting started</div>
+                    <div class="pricing-price">
+                        <span class="pricing-currency">QAR</span>
+                        <span class="pricing-amount">499</span>
+                        <span class="pricing-period">/month</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><span class="check">✓</span> Up to 10 employees</li>
+                        <li><span class="check">✓</span> Asset management</li>
+                        <li><span class="check">✓</span> Subscription tracking</li>
+                        <li><span class="check">✓</span> Leave management</li>
+                        <li><span class="check">✓</span> Basic reports</li>
+                        <li><span class="check">✓</span> Email support</li>
+                    </ul>
+                    <a href="#" class="btn btn-secondary pricing-btn">Get Started</a>
+                </div>
+                <div class="pricing-card popular">
+                    <div class="pricing-name">Professional</div>
+                    <div class="pricing-desc">For growing businesses</div>
+                    <div class="pricing-price">
+                        <span class="pricing-currency">QAR</span>
+                        <span class="pricing-amount">999</span>
+                        <span class="pricing-period">/month</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><span class="check">✓</span> Up to 50 employees</li>
+                        <li><span class="check">✓</span> Everything in Starter</li>
+                        <li><span class="check">✓</span> Payroll & WPS</li>
+                        <li><span class="check">✓</span> Supplier management</li>
+                        <li><span class="check">✓</span> Purchase requests</li>
+                        <li><span class="check">✓</span> Company documents</li>
+                        <li><span class="check">✓</span> Priority support</li>
+                    </ul>
+                    <a href="#" class="btn btn-primary pricing-btn">Get Started</a>
+                </div>
+                <div class="pricing-card">
+                    <div class="pricing-name">Enterprise</div>
+                    <div class="pricing-desc">For large organizations</div>
+                    <div class="pricing-price">
+                        <span class="pricing-amount">Custom</span>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><span class="check">✓</span> Unlimited employees</li>
+                        <li><span class="check">✓</span> Everything in Professional</li>
+                        <li><span class="check">✓</span> Custom integrations</li>
+                        <li><span class="check">✓</span> Dedicated support</li>
+                        <li><span class="check">✓</span> On-premise option</li>
+                        <li><span class="check">✓</span> SLA guarantee</li>
+                        <li><span class="check">✓</span> Training included</li>
+                    </ul>
+                    <a href="#" class="btn btn-secondary pricing-btn">Contact Sales</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-card">
+                <div class="cta-content">
+                    <h2>Ready to Streamline Your Operations?</h2>
+                    <p>
+                        Join hundreds of Qatar businesses already using SME++ to manage their
+                        assets, subscriptions, and employees.
+                    </p>
+                    <div class="cta-buttons">
+                        <a href="#" class="btn btn-primary btn-large">Start Free Trial</a>
+                        <a href="#" class="btn btn-secondary btn-large">Schedule Demo</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo" style="color: white;">
+                        SME<span style="color: var(--primary-light);">++</span>
+                    </a>
+                    <p>
+                        Operations, Upgraded. The all-in-one business operations platform for Qatar SMEs.
+                        Track assets, subscriptions, employees, and compliance — all in one place.
+                    </p>
+                </div>
+                <div>
+                    <div class="footer-title">Product</div>
+                    <ul class="footer-links">
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                        <li><a href="#">Integrations</a></li>
+                        <li><a href="#">API Docs</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="footer-title">Company</div>
+                    <ul class="footer-links">
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="footer-title">Support</div>
+                    <ul class="footer-links">
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">Status Page</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-copyright">
+                    © 2024 SME++. All rights reserved. Built with ❤️ in Qatar.
+                </div>
+                <div class="footer-social">
+                    <a href="#" aria-label="Twitter">𝕏</a>
+                    <a href="#" aria-label="LinkedIn">in</a>
+                    <a href="#" aria-label="GitHub">⌨</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Navigation scroll effect
+        const nav = document.getElementById('nav');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Animate chart bars on hover
+        const chartBars = document.querySelectorAll('.chart-bar');
+        chartBars.forEach(bar => {
+            const originalHeight = bar.style.height;
+            bar.addEventListener('mouseenter', () => {
+                bar.style.height = '100%';
+            });
+            bar.addEventListener('mouseleave', () => {
+                bar.style.height = originalHeight;
+            });
+        });
+    </script>
+</body>
+</html>

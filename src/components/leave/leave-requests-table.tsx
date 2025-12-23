@@ -1,0 +1,286 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Eye, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
+import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays, getRequestTypeText } from '@/lib/leave-utils';
+import { LeaveStatus } from '@prisma/client';
+
+interface LeaveRequest {
+  id: string;
+  requestNumber: string;
+  startDate: string;
+  endDate: string;
+  requestType: string;
+  totalDays: number | string;
+  status: LeaveStatus;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+  leaveType: {
+    id: string;
+    name: string;
+    color: string;
+  };
+  approver?: {
+    id: string;
+    name: string | null;
+  } | null;
+}
+
+interface LeaveRequestsTableProps {
+  showUser?: boolean;
+  userId?: string;
+  basePath?: string;
+}
+
+export function LeaveRequestsTable({ showUser = true, userId, basePath = '/admin/leave/requests' }: LeaveRequestsTableProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [requests, setRequests] = useState<LeaveRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    totalPages: 0,
+  });
+
+  const [search, setSearch] = useState(searchParams.get('q') || '');
+  const [statusFilter, setStatusFilter] = useState<string>(searchParams.get('status') || 'all');
+  const [yearFilter, setYearFilter] = useState<string>(searchParams.get('year') || new Date().getFullYear().toString());
+
+  const fetchRequests = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('p', pagination.page.toString());
+      params.set('ps', pagination.pageSize.toString());
+
+      if (search) params.set('q', search);
+      if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
+      if (yearFilter) params.set('year', yearFilter);
+      if (userId) params.set('userId', userId);
+
+      const response = await fetch(`/api/leave/requests?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        setRequests(data.requests);
+        setPagination(prev => ({
+          ...prev,
+          total: data.pagination.total,
+          totalPages: data.pagination.totalPages,
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch leave requests:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.page, pagination.pageSize, search, statusFilter, yearFilter, userId]);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPagination(prev => ({ ...prev, page: 1 }));
+    fetchRequests();
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatusFilter(value);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const handleYearChange = (value: string) => {
+    setYearFilter(value);
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+
+  return (
+    <div className="space-y-4">
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 items-center">
+        <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-[200px]">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search by request # or employee..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Button type="submit" variant="secondary">Search</Button>
+        </form>
+
+        <Select value={statusFilter} onValueChange={handleStatusChange}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="PENDING">Pending</SelectItem>
+            <SelectItem value="APPROVED">Approved</SelectItem>
+            <SelectItem value="REJECTED">Rejected</SelectItem>
+            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={yearFilter} onValueChange={handleYearChange}>
+          <SelectTrigger className="w-[100px]">
+            <SelectValue placeholder="Year" />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map(year => (
+              <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Table */}
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Request #</TableHead>
+              {showUser && <TableHead>Employee</TableHead>}
+              <TableHead>Leave Type</TableHead>
+              <TableHead>Dates</TableHead>
+              <TableHead>Duration</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Submitted</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={showUser ? 8 : 7} className="text-center py-8">
+                  Loading...
+                </TableCell>
+              </TableRow>
+            ) : requests.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={showUser ? 8 : 7} className="text-center py-8 text-gray-500">
+                  No leave requests found
+                </TableCell>
+              </TableRow>
+            ) : (
+              requests.map((request) => (
+                <TableRow key={request.id}>
+                  <TableCell className="font-mono text-sm">
+                    {request.requestNumber}
+                  </TableCell>
+                  {showUser && (
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{request.user.name || 'N/A'}</div>
+                        <div className="text-xs text-gray-500">{request.user.email}</div>
+                      </div>
+                    </TableCell>
+                  )}
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: request.leaveType.color }}
+                      />
+                      {request.leaveType.name}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {getDateRangeText(new Date(request.startDate), new Date(request.endDate))}
+                    </div>
+                    {request.requestType !== 'FULL_DAY' && (
+                      <div className="text-xs text-gray-500">
+                        {getRequestTypeText(request.requestType as 'FULL_DAY' | 'HALF_DAY_AM' | 'HALF_DAY_PM')}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {formatLeaveDays(request.totalDays)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getLeaveStatusVariant(request.status)}>
+                      {request.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-500">
+                    {new Date(request.createdAt).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Link href={`${basePath}/${request.id}`}>
+                      <Button variant="ghost" size="sm">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Showing {((pagination.page - 1) * pagination.pageSize) + 1} to{' '}
+            {Math.min(pagination.page * pagination.pageSize, pagination.total)} of{' '}
+            {pagination.total} results
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+              disabled={pagination.page === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+              disabled={pagination.page >= pagination.totalPages}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

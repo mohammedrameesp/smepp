@@ -1,0 +1,340 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { Role } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { updateLeaveRequestSchema } from '@/lib/validations/leave';
+import { logAction, ActivityActions } from '@/lib/activity';
+import {
+  calculateWorkingDays,
+  canEditLeaveRequest,
+} from '@/lib/leave-utils';
+
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const leaveRequest = await prisma.leaveRequest.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        leaveType: {
+          select: {
+            id: true,
+            name: true,
+            color: true,
+            requiresDocument: true,
+            accrualBased: true,
+          },
+        },
+        approver: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        history: {
+          include: {
+            performedBy: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!leaveRequest) {
+      return NextResponse.json({ error: 'Leave request not found' }, { status: 404 });
+    }
+
+    // Non-admin users can only see their own requests
+    if (session.user.role !== Role.ADMIN && leaveRequest.userId !== session.user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    return NextResponse.json(leaveRequest);
+  } catch (error) {
+    console.error('Leave request GET error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch leave request' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const body = await request.json();
+    const validation = updateLeaveRequestSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json({
+        error: 'Invalid request body',
+        details: validation.error.issues,
+      }, { status: 400 });
+    }
+
+    const data = validation.data;
+
+    // Get existing request
+    const existing = await prisma.leaveRequest.findUnique({
+      where: { id },
+      include: {
+        leaveType: true,
+      },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Leave request not found' }, { status: 404 });
+    }
+
+    // Only owner can edit their request
+    if (existing.userId !== session.user.id && session.user.role !== Role.ADMIN) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check if can be edited
+    if (!canEditLeaveRequest(existing.status, existing.startDate)) {
+      return NextResponse.json({
+        error: 'Only pending requests with future start dates can be edited',
+      }, { status: 400 });
+    }
+
+    // Calculate changes
+    const startDate = data.startDate ? new Date(data.startDate) : existing.startDate;
+    const endDate = data.endDate ? new Date(data.endDate) : existing.endDate;
+    const requestType = data.requestType ?? existing.requestType;
+
+    // Validate date range
+    if (startDate > endDate) {
+      return NextResponse.json({
+        error: 'End date must be on or after start date',
+      }, { status: 400 });
+    }
+
+    // Validate half-day requests must be single day
+    if (requestType !== 'FULL_DAY') {
+      if (startDate.toDateString() !== endDate.toDateString()) {
+        return NextResponse.json({
+          error: 'Half-day requests must be for a single day',
+        }, { status: 400 });
+      }
+    }
+
+    // Check for overlapping requests (excluding current request)
+    const overlappingRequests = await prisma.leaveRequest.findMany({
+      where: {
+        id: { not: id },
+        userId: existing.userId,
+        status: { in: ['PENDING', 'APPROVED'] },
+        OR: [
+          {
+            AND: [
+              { startDate: { lte: endDate } },
+              { endDate: { gte: startDate } },
+            ],
+          },
+        ],
+      },
+    });
+
+    if (overlappingRequests.length > 0) {
+      return NextResponse.json({
+        error: 'These dates overlap with another pending or approved leave request',
+      }, { status: 400 });
+    }
+
+    // Calculate new working days (include weekends for accrual-based leave like Annual Leave)
+    const includeWeekends = existing.leaveType.accrualBased === true;
+    const newTotalDays = calculateWorkingDays(startDate, endDate, requestType, includeWeekends);
+    const oldTotalDays = Number(existing.totalDays);
+    const daysDiff = newTotalDays - oldTotalDays;
+
+    if (newTotalDays === 0) {
+      return NextResponse.json({
+        error: 'No working days in the selected date range',
+      }, { status: 400 });
+    }
+
+    // Update in transaction
+    const leaveRequest = await prisma.$transaction(async (tx) => {
+      // Update the request
+      const request = await tx.leaveRequest.update({
+        where: { id },
+        data: {
+          startDate,
+          endDate,
+          requestType,
+          totalDays: newTotalDays,
+          reason: data.reason !== undefined ? data.reason : existing.reason,
+          documentUrl: data.documentUrl !== undefined ? data.documentUrl : existing.documentUrl,
+          emergencyContact: data.emergencyContact !== undefined ? data.emergencyContact : existing.emergencyContact,
+          emergencyPhone: data.emergencyPhone !== undefined ? data.emergencyPhone : existing.emergencyPhone,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          leaveType: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+            },
+          },
+        },
+      });
+
+      // Update balance pending if days changed
+      if (daysDiff !== 0) {
+        const year = startDate.getFullYear();
+        await tx.leaveBalance.update({
+          where: {
+            userId_leaveTypeId_year: {
+              userId: existing.userId,
+              leaveTypeId: existing.leaveTypeId,
+              year,
+            },
+          },
+          data: {
+            pending: {
+              increment: daysDiff,
+            },
+          },
+        });
+      }
+
+      // Create history entry
+      await tx.leaveRequestHistory.create({
+        data: {
+          leaveRequestId: id,
+          action: 'UPDATED',
+          oldStatus: existing.status,
+          newStatus: existing.status,
+          changes: data,
+          performedById: session.user.id,
+        },
+      });
+
+      return request;
+    });
+
+    await logAction(
+      session.user.id,
+      ActivityActions.LEAVE_REQUEST_UPDATED,
+      'LeaveRequest',
+      leaveRequest.id,
+      { requestNumber: leaveRequest.requestNumber, changes: data }
+    );
+
+    return NextResponse.json(leaveRequest);
+  } catch (error) {
+    console.error('Leave request PUT error:', error);
+    return NextResponse.json(
+      { error: 'Failed to update leave request' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    // Get existing request
+    const existing = await prisma.leaveRequest.findUnique({
+      where: { id },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Leave request not found' }, { status: 404 });
+    }
+
+    // Only admin can delete requests (or owner if draft/pending)
+    const isOwner = existing.userId === session.user.id;
+    const isAdmin = session.user.role === Role.ADMIN;
+
+    if (!isAdmin && (!isOwner || existing.status !== 'PENDING')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Delete in transaction
+    await prisma.$transaction(async (tx) => {
+      // If pending, restore balance
+      if (existing.status === 'PENDING') {
+        const year = existing.startDate.getFullYear();
+        await tx.leaveBalance.update({
+          where: {
+            userId_leaveTypeId_year: {
+              userId: existing.userId,
+              leaveTypeId: existing.leaveTypeId,
+              year,
+            },
+          },
+          data: {
+            pending: {
+              decrement: Number(existing.totalDays),
+            },
+          },
+        });
+      }
+
+      // Delete the request (this will cascade delete history)
+      await tx.leaveRequest.delete({
+        where: { id },
+      });
+    });
+
+    await logAction(
+      session.user.id,
+      ActivityActions.LEAVE_REQUEST_DELETED,
+      'LeaveRequest',
+      id,
+      { requestNumber: existing.requestNumber }
+    );
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Leave request DELETE error:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete leave request' },
+      { status: 500 }
+    );
+  }
+}

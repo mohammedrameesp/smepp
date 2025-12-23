@@ -1,0 +1,340 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+**SME++** (Small & Medium Enterprise Plus Plus) is a multi-tenant SaaS platform for business management, targeting small and medium businesses. It provides comprehensive asset management, HR, operations, and project management capabilities.
+
+**Key Differentiators from internal tools:**
+- Multi-tenant architecture with tenant isolation
+- Self-service signup and onboarding
+- Freemium billing model with Stripe integration
+- Social authentication (Google, Microsoft) + email/password
+- Organization-scoped data access
+
+Built with Next.js 15 App Router, React 19, TypeScript, Prisma ORM, and PostgreSQL.
+
+## Common Commands
+
+```bash
+# Development
+npm run dev              # Start dev server with Turbopack
+npm run build            # Build for production (includes Prisma generate + migrate)
+npm run typecheck        # TypeScript type checking
+npm run lint             # ESLint
+
+# Database
+npm run db:generate      # Generate Prisma client
+npm run db:migrate       # Run migrations (dev)
+npm run db:seed          # Seed database
+npx prisma format        # Format schema.prisma
+
+# Testing
+npm test                 # Run Jest unit tests
+npm run test:watch       # Jest watch mode
+npm run test:e2e         # Run Playwright E2E tests
+npm run test:all         # Run all tests (unit + E2E)
+```
+
+## Multi-Tenant Architecture
+
+### Tenant Model
+
+Every business using SME++ is an **Organization** (tenant). Data is isolated using a `tenantId` column on all business entities.
+
+```prisma
+model Organization {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  subscriptionTier  SubscriptionTier @default(FREE)
+  stripeCustomerId  String?  @unique
+  // ... settings, limits
+}
+
+model OrganizationUser {
+  organizationId  String
+  userId          String
+  role            OrgRole  @default(MEMBER)
+  isOwner         Boolean  @default(false)
+  @@unique([organizationId, userId])
+}
+```
+
+### Subscription Tiers
+
+| Tier | Users | Assets | Modules | Price |
+|------|-------|--------|---------|-------|
+| FREE | 5 | 50 | Assets, Subscriptions, Suppliers | $0 |
+| STARTER | 15 | 200 | + Employees, Leave | $29/mo |
+| PROFESSIONAL | 50 | 1000 | All modules | $99/mo |
+| ENTERPRISE | Unlimited | Unlimited | All + Priority support | Custom |
+
+Feature flags: `src/lib/multi-tenant/feature-flags.ts`
+
+### Tenant Context
+
+The tenant context flows through the application:
+
+1. **Middleware** (`src/middleware.ts`) extracts `organizationId` from session
+2. **Prisma Extension** (`src/lib/core/prisma-tenant.ts`) auto-filters all queries
+3. **API Handler** (`src/lib/http/handler.ts`) injects tenant-scoped Prisma client
+
+```typescript
+// src/lib/core/prisma-tenant.ts
+export function createTenantPrismaClient(tenantId: string) {
+  return prisma.$extends({
+    query: {
+      $allModels: {
+        async findMany({ args, query }) {
+          args.where = { ...args.where, tenantId };
+          return query(args);
+        },
+        async create({ args, query }) {
+          args.data = { ...args.data, tenantId };
+          return query(args);
+        },
+      },
+    },
+  });
+}
+```
+
+## Authentication
+
+### Providers
+
+- **Google OAuth** - Primary social login
+- **Microsoft/Azure AD** - Enterprise customers
+- **Email/Password** - Credentials provider with verification
+
+Configuration: `src/lib/core/auth.ts`
+
+### Session Structure
+
+```typescript
+interface Session {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    organizationId: string;
+    organizationSlug: string;
+    orgRole: OrgRole; // OWNER, ADMIN, MANAGER, MEMBER
+    subscriptionTier: SubscriptionTier;
+  };
+}
+```
+
+### User Flows
+
+- `/signup` - Create account + create organization
+- `/login` - Multi-provider login
+- `/invite/[token]` - Join existing organization via invite
+- `/onboarding` - Post-signup setup wizard
+
+## Domain Organization
+
+The codebase is organized by business domain:
+
+| Domain | Modules | Description |
+|--------|---------|-------------|
+| **HR** | Employees, Leave, Payroll | Human resources, leave management, payroll processing |
+| **Operations** | Assets, Subscriptions, Suppliers | Physical/digital assets, SaaS tracking, vendor management |
+| **Projects** | Tasks, Purchase Requests | Kanban boards, procurement |
+| **System** | Users, Settings, Reports, Billing | Administration and configuration |
+
+### Route Structure
+
+```
+src/app/
+├── (marketing)/             # Public landing, pricing
+│   ├── page.tsx            # Landing page
+│   ├── pricing/
+│   └── features/
+├── (auth)/                  # Authentication
+│   ├── login/
+│   ├── signup/
+│   └── invite/[token]/
+├── onboarding/              # Post-signup wizard
+├── admin/                   # Admin dashboard
+│   ├── (hr)/
+│   ├── (operations)/
+│   ├── (projects)/
+│   └── (system)/
+│       └── billing/        # Subscription management
+├── employee/                # Employee self-service
+└── api/                     # API routes
+```
+
+## Billing Integration (Stripe)
+
+### Price Configuration
+
+```typescript
+// src/lib/billing/stripe.ts
+export const STRIPE_PRICES = {
+  STARTER_MONTHLY: 'price_xxx',
+  STARTER_YEARLY: 'price_xxx',
+  PROFESSIONAL_MONTHLY: 'price_xxx',
+  PROFESSIONAL_YEARLY: 'price_xxx',
+};
+```
+
+### Billing APIs
+
+- `POST /api/billing/create-checkout` - Start subscription checkout
+- `GET /api/billing/portal` - Redirect to Stripe customer portal
+- `POST /api/webhooks/stripe` - Handle Stripe webhooks
+
+### Usage Limits
+
+Enforced at API level:
+
+```typescript
+// src/lib/multi-tenant/limits.ts
+export async function checkLimit(tenantId: string, resource: 'users' | 'assets') {
+  const org = await prisma.organization.findUnique({ where: { id: tenantId } });
+  const limits = TIER_LIMITS[org.subscriptionTier];
+  // ... check current usage vs limit
+}
+```
+
+## API Pattern
+
+All API routes use the `withErrorHandler` wrapper:
+
+```typescript
+export const GET = withErrorHandler(async (request, { prisma, tenantId }) => {
+  // prisma is already tenant-scoped
+  const assets = await prisma.asset.findMany();
+  return NextResponse.json(assets);
+}, { requireAuth: true });
+```
+
+Options: `requireAuth`, `requireOrgRole`, `requireTier`, `rateLimit`
+
+## Key Libraries
+
+- **Prisma** - Database ORM with tenant extension
+- **Stripe** - Billing and subscriptions
+- **NextAuth.js** - Multi-provider authentication
+- **Zod** - Runtime validation
+- **shadcn/ui** - UI components
+- **Supabase** - File storage
+
+## Database Schema Notes
+
+### Multi-Tenant Models
+
+All business entities include:
+```prisma
+model Asset {
+  id        String @id @default(cuid())
+  tenantId  String
+  tenant    Organization @relation(fields: [tenantId], references: [id])
+  // ... other fields
+
+  @@index([tenantId])
+}
+```
+
+### Key Models
+
+- `Organization` - Tenant with settings and billing
+- `OrganizationUser` - User membership in organizations
+- `OrganizationInvitation` - Pending team invites
+- `User` - Global user profile (can belong to multiple orgs)
+- `Asset`, `Subscription`, `Supplier` - Core business entities
+- `LeaveType`, `LeaveBalance`, `LeaveRequest` - HR module
+- `PayrollRun`, `Payslip` - Payroll module
+
+## Environment Variables
+
+See `.env.example` for full list. Key variables:
+
+```env
+# Database
+DATABASE_URL=
+DIRECT_URL=
+
+# Auth
+NEXTAUTH_SECRET=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# Stripe
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+## Security Considerations
+
+### Tenant Isolation
+
+- **Query filtering**: All database queries filtered by `tenantId`
+- **IDOR prevention**: Entity access validated against tenant
+- **Cross-tenant blocking**: Middleware rejects cross-tenant requests
+
+### Rate Limiting
+
+Token bucket algorithm per tenant: `src/lib/security/rateLimit.ts`
+
+### File Storage
+
+Tenant-scoped buckets in Supabase with signed URLs.
+
+## Development vs Production
+
+| Aspect | Development | Production |
+|--------|-------------|------------|
+| Auth | DEV_AUTH_ENABLED for test users | Real OAuth providers |
+| Database | Local PostgreSQL or SQLite | Supabase PostgreSQL |
+| Stripe | Test mode keys | Live keys |
+| Storage | Local or Supabase dev | Supabase production |
+
+## Component Patterns
+
+### Tenant-Aware Components
+
+```tsx
+// Server component with tenant context
+async function AssetList() {
+  const session = await getServerSession(authOptions);
+  const assets = await getTenantPrisma(session.user.organizationId)
+    .asset.findMany();
+  return <AssetTable assets={assets} />;
+}
+```
+
+### Feature Gates
+
+```tsx
+import { useFeatureAccess } from '@/hooks/use-feature-access';
+
+function PayrollModule() {
+  const { hasAccess, tier } = useFeatureAccess('payroll');
+
+  if (!hasAccess) {
+    return <UpgradePrompt feature="payroll" currentTier={tier} />;
+  }
+
+  return <PayrollDashboard />;
+}
+```
+
+## Onboarding Flow
+
+1. User signs up (creates account)
+2. User creates organization (name, slug)
+3. Onboarding wizard:
+   - Company details (timezone, currency)
+   - Invite team members
+   - Select enabled modules
+   - Optional data import
+4. Redirect to dashboard
