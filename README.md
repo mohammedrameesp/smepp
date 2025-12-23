@@ -130,3 +130,4 @@ See [CLAUDE.md](./CLAUDE.md) for detailed architecture documentation.
 ## License
 
 Proprietary - All rights reserved.
+# Trigger rebuild
