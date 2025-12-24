@@ -110,15 +110,30 @@ export default function SetupPage() {
       }
 
       // Refresh session to get updated org info
-      await update();
+      const updatedSession = await update();
 
       setSuccess(true);
 
-      // Use full page reload to ensure session is propagated
-      // Let middleware handle the subdomain routing
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1500);
+      // Wait for session to confirm update, then redirect
+      // Poll session to ensure logo URL is set before redirecting
+      const maxAttempts = 10;
+      let attempts = 0;
+
+      const checkAndRedirect = async () => {
+        attempts++;
+        const currentSession = await update();
+
+        // If session has logo URL or we've tried enough times, redirect
+        if (currentSession?.user?.organizationLogoUrl || attempts >= maxAttempts || !logoFile) {
+          window.location.href = '/';
+        } else {
+          // Wait 300ms and try again
+          setTimeout(checkAndRedirect, 300);
+        }
+      };
+
+      // Start checking after a brief delay for UX
+      setTimeout(checkAndRedirect, 500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {

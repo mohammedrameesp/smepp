@@ -83,35 +83,35 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex">
       {/* Left Column - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-teal-700 via-teal-800 to-teal-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10" />
         <div className="relative z-10 flex flex-col justify-center px-16 py-24">
           <div className="max-w-md">
-            <h1 className="text-4xl font-bold text-white mb-4">
-              SME++
+            <h1 className="text-5xl font-extrabold text-white mb-4">
+              SME<span className="text-teal-300">++</span>
             </h1>
-            <p className="text-xl text-blue-100 mb-6">
-              All-in-one Business Management
+            <p className="text-xl text-teal-100 mb-6">
+              Operations, Upgraded
             </p>
-            <p className="text-blue-200 text-base leading-relaxed">
-              Manage assets, employees, suppliers, subscriptions, and operations in one unified platform built for growing businesses.
+            <p className="text-teal-200 text-base leading-relaxed">
+              From asset assignments to leave approvals, from expiring documents to pending purchases — manage every request and track every deadline in one place.
             </p>
 
-            <div className="mt-12 grid grid-cols-2 gap-4 text-blue-100 text-sm">
+            <div className="mt-12 grid grid-cols-2 gap-4 text-teal-100 text-sm">
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-400" />
+                <div className="h-2 w-2 rounded-full bg-teal-400" />
                 Asset Tracking
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-400" />
+                <div className="h-2 w-2 rounded-full bg-teal-400" />
                 HR Management
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-400" />
+                <div className="h-2 w-2 rounded-full bg-teal-400" />
                 Leave Requests
               </div>
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-400" />
+                <div className="h-2 w-2 rounded-full bg-teal-400" />
                 Approval Workflows
               </div>
             </div>
@@ -124,8 +124,10 @@ function LoginForm() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">SME++</h1>
-            <p className="text-gray-600 dark:text-gray-400">Business Management Platform</p>
+            <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
+              SME<span className="text-teal-500">++</span>
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">Operations, Upgraded</p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
@@ -242,7 +244,7 @@ function LoginForm() {
                   <Label htmlFor="password">Password</Label>
                   <Link
                     href="/forgot-password"
-                    className="text-sm text-primary hover:underline"
+                    className="text-sm text-teal-600 hover:text-teal-700 hover:underline"
                   >
                     Forgot password?
                   </Link>
@@ -262,7 +264,11 @@ function LoginForm() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full h-12" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="w-full h-12 bg-gradient-to-r from-teal-700 to-teal-500 hover:from-teal-800 hover:to-teal-600 text-white shadow-lg shadow-teal-700/40"
+                disabled={isLoading}
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -288,7 +294,7 @@ function LoginForm() {
 
             <p className="text-center text-sm text-muted-foreground mt-6">
               Don&apos;t have an account?{' '}
-              <Link href="/signup" className="text-primary font-medium hover:underline">
+              <Link href="/signup" className="text-teal-600 font-medium hover:text-teal-700 hover:underline">
                 Sign up free
               </Link>
             </p>

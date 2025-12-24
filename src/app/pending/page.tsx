@@ -26,11 +26,28 @@ export default function PendingPage() {
     setChecking(true);
     try {
       // Refresh the session to get latest org membership
-      await update();
-      // Give a moment for session to propagate
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // Reload to let useEffect handle redirect if org found
-      window.location.reload();
+      const updatedSession = await update();
+
+      // Check if user now has an organization
+      if (updatedSession?.user?.organizationId) {
+        // User has been added to an org - redirect via home to let middleware route properly
+        window.location.href = '/';
+        return;
+      }
+
+      // Also check for pending invitations via API
+      const response = await fetch('/api/invitations/pending');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.invitations?.length > 0) {
+          // User has pending invitations - redirect to the first one
+          router.push(`/invite/${data.invitations[0].token}`);
+          return;
+        }
+      }
+
+      // No org and no pending invitations - just show a message
+      // The button will return to normal state
     } finally {
       setChecking(false);
     }

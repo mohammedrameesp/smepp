@@ -169,6 +169,7 @@ export async function POST(
         role,
         token,
         expiresAt,
+        invitedById: session.user.id,
       },
     });
 
