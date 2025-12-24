@@ -14,13 +14,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     const { searchParams } = new URL(request.url);
     const queryResult = listPoliciesQuerySchema.safeParse({
       module: searchParams.get('module') || undefined,
       isActive: searchParams.get('isActive') || undefined,
     });
 
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = { tenantId };
     if (queryResult.success) {
       if (queryResult.data.module) {
         filter.module = queryResult.data.module;

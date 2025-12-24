@@ -336,7 +336,7 @@ export async function POST(request: NextRequest) {
         const assetValue = assetWithPrice?.priceQAR ? Number(assetWithPrice.priceQAR) : 0;
 
         // Check for multi-level approval policy
-        const approvalPolicy = await findApplicablePolicy('ASSET_REQUEST', { amount: assetValue });
+        const approvalPolicy = await findApplicablePolicy('ASSET_REQUEST', { amount: assetValue, tenantId });
 
         if (approvalPolicy && approvalPolicy.levels.length > 0) {
           // Initialize approval chain

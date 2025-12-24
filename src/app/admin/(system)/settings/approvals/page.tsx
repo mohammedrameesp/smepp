@@ -34,7 +34,15 @@ export default async function ApprovalPoliciesPage() {
     redirect('/');
   }
 
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    redirect('/');
+  }
+
+  const tenantId = session.user.organizationId;
+
   const policies = await prisma.approvalPolicy.findMany({
+    where: { tenantId },
     include: {
       levels: {
         orderBy: { levelOrder: 'asc' },

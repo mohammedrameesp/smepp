@@ -287,7 +287,7 @@ export async function POST(request: NextRequest) {
 
     // Check for multi-level approval policy
     try {
-      const approvalPolicy = await findApplicablePolicy('PURCHASE_REQUEST', { amount: totalAmountQAR });
+      const approvalPolicy = await findApplicablePolicy('PURCHASE_REQUEST', { amount: totalAmountQAR, tenantId: session.user.organizationId! });
 
       if (approvalPolicy && approvalPolicy.levels.length > 0) {
         // Initialize approval chain
@@ -376,7 +376,7 @@ export async function POST(request: NextRequest) {
               purchaseRequest.id
             )
           );
-          await createBulkNotifications(notifications);
+          await createBulkNotifications(notifications, session.user.organizationId!);
         }
       }
     } catch (emailError) {

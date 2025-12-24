@@ -52,16 +52,24 @@ export interface ApprovalStepWithApprover {
 /**
  * Find the applicable approval policy for a request based on module and thresholds.
  * Policies are sorted by priority (higher first), then by specificity.
+ * IMPORTANT: tenantId is required for proper tenant isolation.
  */
 export async function findApplicablePolicy(
   module: ApprovalModule,
-  options?: { amount?: number; days?: number }
+  options?: { amount?: number; days?: number; tenantId?: string }
 ): Promise<ApprovalPolicyWithLevels | null> {
+  // Build where clause with tenant filter if provided
+  const where: { module: ApprovalModule; isActive: boolean; tenantId?: string } = {
+    module,
+    isActive: true,
+  };
+
+  if (options?.tenantId) {
+    where.tenantId = options.tenantId;
+  }
+
   const policies = await prisma.approvalPolicy.findMany({
-    where: {
-      module,
-      isActive: true,
-    },
+    where,
     include: {
       levels: {
         orderBy: { levelOrder: 'asc' },
@@ -406,9 +414,11 @@ export async function adminBypassApproval(
 /**
  * Get all pending approval steps for a user based on their role.
  * Includes steps where user has delegation authority.
+ * IMPORTANT: tenantId is required for proper tenant isolation.
  */
 export async function getPendingApprovalsForUser(
-  userId: string
+  userId: string,
+  tenantId?: string
 ): Promise<ApprovalStepWithApprover[]> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -417,10 +427,16 @@ export async function getPendingApprovalsForUser(
 
   if (!user) return [];
 
-  // ADMIN can see all pending approvals
+  // Build base where clause with tenant filter if provided
+  const baseWhere: { status: 'PENDING'; tenantId?: string } = { status: 'PENDING' };
+  if (tenantId) {
+    baseWhere.tenantId = tenantId;
+  }
+
+  // ADMIN can see all pending approvals (within tenant)
   if (user.role === 'ADMIN') {
     return prisma.approvalStep.findMany({
-      where: { status: 'PENDING' },
+      where: baseWhere,
       include: {
         approver: {
           select: { id: true, name: true, email: true },
@@ -456,12 +472,17 @@ export async function getPendingApprovalsForUser(
   }
 
   // Get pending steps where this is the current step (lowest pending levelOrder)
-  // and the required role matches user's roles
+  // and the required role matches user's roles (with tenant filter if provided)
+  const pendingStepsWhere: { status: 'PENDING'; requiredRole: { in: Role[] }; tenantId?: string } = {
+    status: 'PENDING',
+    requiredRole: { in: rolesCanApprove },
+  };
+  if (tenantId) {
+    pendingStepsWhere.tenantId = tenantId;
+  }
+
   const allPendingSteps = await prisma.approvalStep.findMany({
-    where: {
-      status: 'PENDING',
-      requiredRole: { in: rolesCanApprove },
-    },
+    where: pendingStepsWhere,
     include: {
       approver: {
         select: { id: true, name: true, email: true },

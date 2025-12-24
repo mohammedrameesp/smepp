@@ -18,14 +18,22 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const thirtyDaysFromNow = new Date(today);
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-    // Find all HR profiles with expiring or expired documents
+    // Find all HR profiles with expiring or expired documents (tenant-scoped)
     const hrProfiles = await prisma.hRProfile.findMany({
       where: {
+        tenantId,
         OR: [
           { qidExpiry: { lte: thirtyDaysFromNow } },
           { passportExpiry: { lte: thirtyDaysFromNow } },

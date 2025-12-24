@@ -11,7 +11,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const pendingSteps = await getPendingApprovalsForUser(session.user.id);
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const pendingSteps = await getPendingApprovalsForUser(session.user.id, session.user.organizationId);
 
     // Enrich with entity details
     const enrichedSteps = await Promise.all(

@@ -482,7 +482,7 @@ export async function POST(request: NextRequest) {
 
     // Check for multi-level approval policy
     try {
-      const approvalPolicy = await findApplicablePolicy('LEAVE_REQUEST', { days: totalDays });
+      const approvalPolicy = await findApplicablePolicy('LEAVE_REQUEST', { days: totalDays, tenantId: session.user.organizationId! });
 
       if (approvalPolicy && approvalPolicy.levels.length > 0) {
         // Initialize approval chain

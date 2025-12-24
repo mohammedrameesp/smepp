@@ -41,9 +41,30 @@ async function checkEmployeeDocumentExpiry() {
   const alertThreshold = new Date(today);
   alertThreshold.setDate(alertThreshold.getDate() + maxWindow);
 
-  // Find all HR profiles with documents expiring soon or already expired
+  // Get all active organizations for tenant isolation
+  const organizations = await prisma.organization.findMany({
+    select: { id: true, name: true },
+  });
+
+  console.log(`🏢 Processing ${organizations.length} organization(s)`);
+
+  // Process each organization separately (tenant isolation)
+  for (const org of organizations) {
+    console.log(`\n📁 Processing organization: ${org.name}`);
+    await processOrganizationEmployees(org.id, org.name, alertThreshold, maxWindow);
+  }
+}
+
+async function processOrganizationEmployees(
+  orgId: string,
+  orgName: string,
+  alertThreshold: Date,
+  maxWindow: number
+) {
+  // Find all HR profiles with documents expiring soon or already expired (tenant-scoped)
   const profiles = await prisma.hRProfile.findMany({
     where: {
+      tenantId: orgId,
       OR: [
         { qidExpiry: { lte: alertThreshold } },
         { passportExpiry: { lte: alertThreshold } },
@@ -157,7 +178,7 @@ async function checkEmployeeDocumentExpiry() {
     }
   }
 
-  console.log(`📧 Sending alerts to ${usersToAlert.length} employees`);
+  console.log(`   📧 Sending alerts to ${usersToAlert.length} employees`);
 
   // Send emails to each user
   let successCount = 0;
@@ -177,24 +198,24 @@ async function checkEmployeeDocumentExpiry() {
         text: emailContent.text,
       });
 
-      console.log(`✅ Alert sent to ${user.userEmail} for ${user.documents.length} document(s)`);
+      console.log(`   ✅ Alert sent to ${user.userEmail} for ${user.documents.length} document(s)`);
       successCount++;
     } catch (error) {
-      console.error(`❌ Failed to send alert to ${user.userEmail}:`, error);
+      console.error(`   ❌ Failed to send alert to ${user.userEmail}:`, error);
       failCount++;
     }
   }
 
-  console.log(`\n📊 Summary:`);
-  console.log(`   - Profiles checked: ${profiles.length}`);
-  console.log(`   - Alerts sent: ${successCount}`);
-  console.log(`   - Alerts failed: ${failCount}`);
+  console.log(`   📊 Org Summary:`);
+  console.log(`      - Profiles checked: ${profiles.length}`);
+  console.log(`      - Alerts sent: ${successCount}`);
+  console.log(`      - Alerts failed: ${failCount}`);
 
-  // Send consolidated alert to admins
-  await sendAdminConsolidatedAlert(usersToAlert);
+  // Send consolidated alert to admins of THIS organization (tenant-scoped)
+  await sendAdminConsolidatedAlert(usersToAlert, orgId, orgName);
 }
 
-async function sendAdminConsolidatedAlert(usersToAlert: UserWithExpiringDocs[]) {
+async function sendAdminConsolidatedAlert(usersToAlert: UserWithExpiringDocs[], orgId: string, orgName: string) {
   // Collect all expiring documents for admin summary
   const allDocuments: Array<{
     employeeName: string;
@@ -219,18 +240,21 @@ async function sendAdminConsolidatedAlert(usersToAlert: UserWithExpiringDocs[]) 
   }
 
   if (allDocuments.length === 0) {
-    console.log('📭 No expiring documents to report to admins');
+    console.log(`   📭 No expiring documents to report to admins for ${orgName}`);
     return;
   }
 
-  // Get all admin users
+  // Get admin users for THIS organization only (tenant-scoped)
   const admins = await prisma.user.findMany({
-    where: { role: Role.ADMIN },
+    where: {
+      role: Role.ADMIN,
+      organizationMemberships: { some: { organizationId: orgId } },
+    },
     select: { id: true, email: true, name: true },
   });
 
   if (admins.length === 0) {
-    console.log('⚠️ No admin users found to send consolidated alert');
+    console.log(`   ⚠️ No admin users found for ${orgName}`);
     return;
   }
 
@@ -238,9 +262,9 @@ async function sendAdminConsolidatedAlert(usersToAlert: UserWithExpiringDocs[]) 
   const expiringCount = allDocuments.filter((d) => d.status === 'expiring').length;
   const uniqueEmployees = new Set(usersToAlert.map((u) => u.userId)).size;
 
-  console.log(`\n📨 Sending consolidated alert to ${admins.length} admin(s)...`);
+  console.log(`   📨 Sending consolidated alert to ${admins.length} admin(s) for ${orgName}...`);
 
-  // Send consolidated email to each admin
+  // Send consolidated email to each admin in this organization
   for (const admin of admins) {
     try {
       const emailContent = adminDocumentExpiryAlertEmail({
@@ -257,9 +281,9 @@ async function sendAdminConsolidatedAlert(usersToAlert: UserWithExpiringDocs[]) 
         text: emailContent.text,
       });
 
-      console.log(`✅ Consolidated alert sent to admin: ${admin.email}`);
+      console.log(`   ✅ Consolidated alert sent to admin: ${admin.email}`);
     } catch (error) {
-      console.error(`❌ Failed to send consolidated alert to admin ${admin.email}:`, error);
+      console.error(`   ❌ Failed to send consolidated alert to admin ${admin.email}:`, error);
     }
   }
 }

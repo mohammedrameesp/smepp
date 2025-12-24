@@ -21,6 +21,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     const { id } = await context.params;
     const body = await request.json();
 
@@ -34,8 +41,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const { notes } = validation.data;
 
-    const assetRequest = await prisma.assetRequest.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent IDOR attacks
+    const assetRequest = await prisma.assetRequest.findFirst({
+      where: { id, tenantId },
       include: {
         asset: true,
         user: { select: { id: true, name: true, email: true } },
@@ -127,10 +135,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
     );
 
-    // Send email and in-app notifications to admins
+    // Send email and in-app notifications to admins (tenant-scoped)
     try {
       const admins = await prisma.user.findMany({
-        where: { role: Role.ADMIN },
+        where: {
+          role: Role.ADMIN,
+          organizationMemberships: { some: { organizationId: tenantId } },
+        },
         select: { id: true, email: true },
       });
       const emailData = assetAssignmentAcceptedEmail({
@@ -155,7 +166,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           id
         )
       );
-      await createBulkNotifications(notifications);
+      await createBulkNotifications(notifications, tenantId);
     } catch (emailError) {
       console.error('Failed to send notification:', emailError);
     }
