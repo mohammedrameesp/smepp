@@ -22,12 +22,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    const tenantId = session.user.organizationId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const dryRun = searchParams.get('dryRun') === 'true';
 
-    // Get all PARENTAL and RELIGIOUS leave types
+    // Get all PARENTAL and RELIGIOUS leave types (tenant-scoped)
     const specialLeaveTypes = await prisma.leaveType.findMany({
       where: {
+        tenantId,
         category: { in: ['PARENTAL', 'RELIGIOUS'] },
       },
       select: {
@@ -47,9 +54,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Get all balances for these special leave types
+    // Get all balances for these special leave types (tenant-scoped)
     const balancesToCheck = await prisma.leaveBalance.findMany({
       where: {
+        tenantId,
         leaveTypeId: { in: specialLeaveTypes.map(lt => lt.id) },
       },
       include: {
@@ -126,6 +134,7 @@ export async function POST(request: NextRequest) {
     if (!dryRun && balancesToDelete.length > 0) {
       const result = await prisma.leaveBalance.deleteMany({
         where: {
+          tenantId,
           id: { in: balancesToDelete },
         },
       });

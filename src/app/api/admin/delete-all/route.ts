@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Role } from '@prisma/client';
 
-// DELETE ALL DATA - FOR TESTING ONLY
+// DELETE ALL DATA FOR CURRENT ORGANIZATION ONLY
 export async function DELETE(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -13,7 +13,13 @@ export async function DELETE(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('🚨 DELETING ALL DATA FROM DATABASE...');
+    // Require organization context for tenant isolation
+    const tenantId = session.user.organizationId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    console.log(`🚨 DELETING ALL DATA FOR ORGANIZATION: ${tenantId}...`);
 
     // Delete in order to respect foreign key constraints
     const deletedCounts = {
@@ -25,37 +31,27 @@ export async function DELETE(_request: NextRequest) {
       supplierEngagements: 0,
       suppliers: 0,
       activityLogs: 0,
-      sessions: 0,
-      accounts: 0,
-      users: 0,
     };
 
-    // Delete Asset data
-    deletedCounts.maintenanceRecords = (await prisma.maintenanceRecord.deleteMany({})).count;
-    deletedCounts.assetHistory = (await prisma.assetHistory.deleteMany({})).count;
-    deletedCounts.assets = (await prisma.asset.deleteMany({})).count;
+    // Delete Asset data (tenant-scoped)
+    deletedCounts.maintenanceRecords = (await prisma.maintenanceRecord.deleteMany({ where: { tenantId } })).count;
+    const orgAssets = await prisma.asset.findMany({ where: { tenantId }, select: { id: true } });
+    const assetIds = orgAssets.map(a => a.id);
+    deletedCounts.assetHistory = (await prisma.assetHistory.deleteMany({ where: { assetId: { in: assetIds } } })).count;
+    deletedCounts.assets = (await prisma.asset.deleteMany({ where: { tenantId } })).count;
 
-    // Delete Subscription data
-    deletedCounts.subscriptionHistory = (await prisma.subscriptionHistory.deleteMany({})).count;
-    deletedCounts.subscriptions = (await prisma.subscription.deleteMany({})).count;
+    // Delete Subscription data (tenant-scoped)
+    const orgSubs = await prisma.subscription.findMany({ where: { tenantId }, select: { id: true } });
+    const subIds = orgSubs.map(s => s.id);
+    deletedCounts.subscriptionHistory = (await prisma.subscriptionHistory.deleteMany({ where: { subscriptionId: { in: subIds } } })).count;
+    deletedCounts.subscriptions = (await prisma.subscription.deleteMany({ where: { tenantId } })).count;
 
-    // Delete Supplier data
-    deletedCounts.supplierEngagements = (await prisma.supplierEngagement.deleteMany({})).count;
-    deletedCounts.suppliers = (await prisma.supplier.deleteMany({})).count;
+    // Delete Supplier data (tenant-scoped)
+    deletedCounts.supplierEngagements = (await prisma.supplierEngagement.deleteMany({ where: { tenantId } })).count;
+    deletedCounts.suppliers = (await prisma.supplier.deleteMany({ where: { tenantId } })).count;
 
-    // Delete Activity logs
-    deletedCounts.activityLogs = (await prisma.activityLog.deleteMany({})).count;
-
-    // Delete Auth data
-    deletedCounts.sessions = (await prisma.session.deleteMany({})).count;
-    deletedCounts.accounts = (await prisma.account.deleteMany({})).count;
-
-    // Delete Users (except system accounts)
-    deletedCounts.users = (await prisma.user.deleteMany({
-      where: {
-        isSystemAccount: false,
-      },
-    })).count;
+    // Delete Activity logs (tenant-scoped)
+    deletedCounts.activityLogs = (await prisma.activityLog.deleteMany({ where: { tenantId } })).count;
 
     console.log('✅ ALL DATA DELETED:', deletedCounts);
 

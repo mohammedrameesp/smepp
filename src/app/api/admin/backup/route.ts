@@ -7,22 +7,28 @@ import logger from '@/lib/log';
 
 const BACKUP_BUCKET = 'database-backups';
 
-// GET - Download full backup as JSON file
+// GET - Download full backup as JSON file (TENANT-SCOPED)
 export async function GET(request: NextRequest) {
   // Check if it's a cron job or admin user
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
   const isCronJob = cronSecret && authHeader === `Bearer ${cronSecret}`;
 
+  let tenantId: string | undefined;
+
   if (!isCronJob) {
     const session = await getServerSession(authOptions);
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    tenantId = session.user.organizationId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
   }
 
   try {
-    logger.info('🚀 Starting full database backup');
+    logger.info(`🚀 Starting database backup for organization: ${tenantId || 'ALL (cron)'}`);
 
     // Helper to safely query tables that might not exist
     const safeQuery = async <T>(query: Promise<T>, fallback: T): Promise<T> => {
@@ -33,7 +39,14 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    // Export ALL data from ALL tables
+    // For cron jobs (system backup), export all data
+    // For user requests, export only their organization's data
+    const tenantFilter = tenantId ? { tenantId } : {};
+    const userFilter = tenantId ? {
+      organizations: { some: { organizationId: tenantId } }
+    } : {};
+
+    // Export data (tenant-scoped for user requests)
     const [
       users,
       assets,
@@ -47,36 +60,35 @@ export async function GET(request: NextRequest) {
       activityLogs,
       systemSettings,
       maintenanceRecords,
-      // Purchase Requests
       purchaseRequests,
-      purchaseRequestItems,
-      purchaseRequestHistory,
     ] = await Promise.all([
-      prisma.user.findMany(),
-      prisma.asset.findMany(),
-      prisma.assetHistory.findMany(),
-      prisma.subscription.findMany(),
-      safeQuery(prisma.subscriptionHistory.findMany(), []),
-      prisma.supplier.findMany(),
-      prisma.supplierEngagement.findMany(),
-      safeQuery(prisma.hRProfile.findMany(), []),
-      safeQuery(prisma.profileChangeRequest.findMany(), []),
-      prisma.activityLog.findMany(),
-      safeQuery(prisma.systemSettings.findMany(), []),
-      safeQuery(prisma.maintenanceRecord.findMany(), []),
-      // Purchase Requests
-      safeQuery(prisma.purchaseRequest.findMany(), []),
-      safeQuery(prisma.purchaseRequestItem.findMany(), []),
-      safeQuery(prisma.purchaseRequestHistory.findMany(), []),
+      prisma.user.findMany({ where: userFilter }),
+      prisma.asset.findMany({ where: tenantFilter }),
+      tenantId
+        ? prisma.assetHistory.findMany({ where: { asset: { tenantId } } })
+        : prisma.assetHistory.findMany(),
+      prisma.subscription.findMany({ where: tenantFilter }),
+      tenantId
+        ? safeQuery(prisma.subscriptionHistory.findMany({ where: { subscription: { tenantId } } }), [])
+        : safeQuery(prisma.subscriptionHistory.findMany(), []),
+      prisma.supplier.findMany({ where: tenantFilter }),
+      prisma.supplierEngagement.findMany({ where: tenantFilter }),
+      safeQuery(prisma.hRProfile.findMany({ where: tenantFilter }), []),
+      safeQuery(prisma.profileChangeRequest.findMany({ where: tenantFilter }), []),
+      prisma.activityLog.findMany({ where: tenantFilter }),
+      safeQuery(prisma.systemSettings.findMany({ where: tenantFilter }), []),
+      safeQuery(prisma.maintenanceRecord.findMany({ where: tenantFilter }), []),
+      safeQuery(prisma.purchaseRequest.findMany({ where: tenantFilter }), []),
     ]);
 
     const timestamp = new Date().toISOString();
     const backupData = {
       _metadata: {
-        version: '2.0',
-        application: 'DAMP',
+        version: '2.1',
+        application: 'SME++',
         createdAt: timestamp,
-        description: 'Full database backup - use this to restore all data',
+        organizationId: tenantId || 'ALL',
+        description: tenantId ? 'Organization backup' : 'Full platform backup (cron)',
       },
       _counts: {
         users: users.length,
@@ -91,10 +103,7 @@ export async function GET(request: NextRequest) {
         activityLogs: activityLogs.length,
         systemSettings: systemSettings.length,
         maintenanceRecords: maintenanceRecords.length,
-        // Purchase Requests
         purchaseRequests: purchaseRequests.length,
-        purchaseRequestItems: purchaseRequestItems.length,
-        purchaseRequestHistory: purchaseRequestHistory.length,
       },
       users,
       assets,
@@ -108,14 +117,12 @@ export async function GET(request: NextRequest) {
       activityLogs,
       systemSettings,
       maintenanceRecords,
-      // Purchase Requests
       purchaseRequests,
-      purchaseRequestItems,
-      purchaseRequestHistory,
     };
 
     const backupJson = JSON.stringify(backupData, null, 2);
-    const filename = `damp-full-backup-${timestamp.replace(/[:.]/g, '-')}.json`;
+    const orgSlug = tenantId ? `-org-${tenantId.substring(0, 8)}` : '';
+    const filename = `smepp-backup${orgSlug}-${timestamp.replace(/[:.]/g, '-')}.json`;
 
     // If cron job, save to Supabase Storage
     if (isCronJob) {
