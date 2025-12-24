@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         in: [Role.EMPLOYEE, Role.TEMP_STAFF, Role.ADMIN],
       },
       // Filter by organization membership
-      organizations: {
+      organizationMemberships: {
         some: {
           organizationId: session.user.organizationId,
         },
@@ -186,7 +186,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Get employees error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch employees' },
+      { error: 'Failed to fetch employees', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
