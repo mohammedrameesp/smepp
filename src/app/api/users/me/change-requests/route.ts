@@ -95,10 +95,13 @@ async function createChangeRequestHandler(request: NextRequest) {
     },
   });
 
-  // Send email notification to all admins (non-blocking)
+  // Send email notification to all admins in the same organization (non-blocking)
   try {
     const admins = await prisma.user.findMany({
-      where: { role: Role.ADMIN },
+      where: {
+        role: Role.ADMIN,
+        organizationMemberships: { some: { organizationId: session.user.organizationId! } },
+      },
       select: { email: true },
     });
 

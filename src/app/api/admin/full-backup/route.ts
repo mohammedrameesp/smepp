@@ -12,6 +12,13 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     // Helper to safely query tables that might not exist
     const safeQuery = async <T>(query: Promise<T>, fallback: T): Promise<T> => {
       try {
@@ -21,7 +28,7 @@ export async function GET(_request: NextRequest) {
       }
     };
 
-    // Fetch all data from all tables
+    // Fetch all data from all tables (tenant-scoped)
     const [
       users,
       assets,
@@ -38,6 +45,9 @@ export async function GET(_request: NextRequest) {
       purchaseRequestItems,
     ] = await Promise.all([
       prisma.user.findMany({
+        where: {
+          organizationMemberships: { some: { organizationId: tenantId } },
+        },
         select: {
           id: true,
           name: true,
@@ -51,11 +61,13 @@ export async function GET(_request: NextRequest) {
         },
       }),
       prisma.asset.findMany({
+        where: { tenantId },
         include: {
           assignedUser: { select: { email: true, name: true } },
         },
       }),
       prisma.assetHistory.findMany({
+        where: { asset: { tenantId } },
         include: {
           asset: { select: { assetTag: true, model: true } },
           fromUser: { select: { email: true, name: true } },
@@ -64,16 +76,19 @@ export async function GET(_request: NextRequest) {
         },
       }),
       prisma.maintenanceRecord.findMany({
+        where: { tenantId },
         include: {
           asset: { select: { assetTag: true, model: true } },
         },
       }),
       prisma.subscription.findMany({
+        where: { tenantId },
         include: {
           assignedUser: { select: { email: true, name: true } },
         },
       }),
       prisma.subscriptionHistory.findMany({
+        where: { subscription: { tenantId } },
         include: {
           subscription: { select: { serviceName: true } },
           oldUser: { select: { email: true, name: true } },
@@ -82,22 +97,26 @@ export async function GET(_request: NextRequest) {
         },
       }),
       prisma.activityLog.findMany({
+        where: { tenantId },
         include: {
           actorUser: { select: { email: true, name: true } },
         },
       }),
-      prisma.supplier.findMany(),
+      prisma.supplier.findMany({ where: { tenantId } }),
       prisma.supplierEngagement.findMany({
+        where: { tenantId },
         include: {
           supplier: { select: { name: true } },
         },
       }),
       safeQuery(prisma.hRProfile.findMany({
+        where: { tenantId },
         include: {
           user: { select: { email: true, name: true } },
         },
       }), []),
       safeQuery(prisma.profileChangeRequest.findMany({
+        where: { tenantId },
         include: {
           hrProfile: {
             include: { user: { select: { email: true, name: true } } },
@@ -105,11 +124,13 @@ export async function GET(_request: NextRequest) {
         },
       }), []),
       safeQuery(prisma.purchaseRequest.findMany({
+        where: { tenantId },
         include: {
           requester: { select: { email: true, name: true } },
         },
       }), []),
       safeQuery(prisma.purchaseRequestItem.findMany({
+        where: { purchaseRequest: { tenantId } },
         include: {
           purchaseRequest: { select: { referenceNumber: true } },
         },

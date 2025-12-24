@@ -26,6 +26,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
 
@@ -43,8 +48,10 @@ export async function GET(request: NextRequest) {
     const isAdmin = session.user.role === Role.ADMIN;
     const effectiveUserId = isAdmin ? userId : session.user.id;
 
-    // Build where clause
-    const where: Record<string, unknown> = {};
+    // Build where clause with tenant filtering
+    const where: Record<string, unknown> = {
+      tenantId: session.user.organizationId,
+    };
 
     if (effectiveUserId) {
       where.userId = effectiveUserId;
@@ -485,7 +492,10 @@ export async function POST(request: NextRequest) {
         const firstStep = steps[0];
         if (firstStep) {
           const approvers = await prisma.user.findMany({
-            where: { role: firstStep.requiredRole },
+            where: {
+              role: firstStep.requiredRole,
+              organizationMemberships: { some: { organizationId: session.user.organizationId! } },
+            },
             select: { id: true },
           });
 
@@ -502,9 +512,12 @@ export async function POST(request: NextRequest) {
           }
         }
       } else {
-        // No policy - fall back to notifying all admins
+        // No policy - fall back to notifying all admins in the same organization
         const admins = await prisma.user.findMany({
-          where: { role: Role.ADMIN },
+          where: {
+            role: Role.ADMIN,
+            organizationMemberships: { some: { organizationId: session.user.organizationId! } },
+          },
           select: { id: true },
         });
 

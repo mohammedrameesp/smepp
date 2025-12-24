@@ -12,8 +12,18 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch all users with related data
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    // Fetch all users with related data (tenant-scoped)
     const users = await prisma.user.findMany({
+      where: {
+        organizationMemberships: {
+          some: { organizationId: session.user.organizationId },
+        },
+      },
       include: {
         _count: {
           select: {

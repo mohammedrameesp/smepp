@@ -11,14 +11,25 @@ import { welcomeUserEmail } from '@/lib/email-templates';
 import { initializeUserLeaveBalances } from '@/lib/leave-balance-init';
 
 async function getUsersHandler(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+
+  // Require organization context for tenant isolation
+  if (!session?.user?.organizationId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
+
   // Parse query parameters
   const { searchParams } = new URL(request.url);
   const role = searchParams.get('role');
   const includeHrProfile = searchParams.get('includeHrProfile') === 'true';
   const includeAll = searchParams.get('includeAll') === 'true';
 
-  // Build where clause
-  const where: any = {};
+  // Build where clause with tenant filtering
+  const where: any = {
+    organizationMemberships: {
+      some: { organizationId: session.user.organizationId },
+    },
+  };
   if (role) where.role = role;
 
   // Build include clause

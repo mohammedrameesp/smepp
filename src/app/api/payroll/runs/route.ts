@@ -24,6 +24,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
 
@@ -39,8 +44,10 @@ export async function GET(request: NextRequest) {
     const page = p;
     const pageSize = ps;
 
-    // Build where clause
-    const where: Record<string, unknown> = {};
+    // Build where clause with tenant filtering
+    const where: Record<string, unknown> = {
+      tenantId: session.user.organizationId,
+    };
 
     if (year) {
       where.year = year;
@@ -102,6 +109,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     const body = await request.json();
     const validation = createPayrollRunSchema.safeParse(body);
 
@@ -114,9 +126,9 @@ export async function POST(request: NextRequest) {
 
     const { year, month } = validation.data;
 
-    // Check if payroll run already exists for this period
-    const existing = await prisma.payrollRun.findUnique({
-      where: { year_month: { year, month } },
+    // Check if payroll run already exists for this period (tenant-scoped)
+    const existing = await prisma.payrollRun.findFirst({
+      where: { year, month, tenantId: session.user.organizationId },
     });
 
     if (existing) {
@@ -126,9 +138,12 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Get all employees with active salary structures
+    // Get all employees with active salary structures (tenant-scoped)
     const salaryStructures = await prisma.salaryStructure.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        tenantId: session.user.organizationId,
+      },
       include: {
         user: {
           select: {
@@ -163,9 +178,9 @@ export async function POST(request: NextRequest) {
 
     const totalNet = totalGross - totalDeductions;
 
-    // Generate reference number
+    // Generate reference number (tenant-scoped)
     const lastPayroll = await prisma.payrollRun.findFirst({
-      where: { year, month },
+      where: { year, tenantId: session.user.organizationId },
       orderBy: { referenceNumber: 'desc' },
     });
 

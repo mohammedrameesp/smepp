@@ -25,12 +25,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    // Fetch all employees with HR profiles
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    // Fetch all employees with HR profiles (tenant-scoped)
     const employees = await prisma.user.findMany({
       where: {
         isSystemAccount: false,
         role: {
           in: [Role.EMPLOYEE, Role.TEMP_STAFF, Role.ADMIN],
+        },
+        organizationMemberships: {
+          some: { organizationId: session.user.organizationId },
         },
       },
       include: {

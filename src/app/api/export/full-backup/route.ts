@@ -15,7 +15,14 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch all data from database
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
+    // Fetch all data from database (tenant-scoped)
     const [
       users,
       assets,
@@ -33,8 +40,11 @@ export async function GET() {
       purchaseRequestItems,
       purchaseRequestHistory,
     ] = await Promise.all([
-      prisma.user.findMany(),
+      prisma.user.findMany({
+        where: { organizationMemberships: { some: { organizationId: tenantId } } },
+      }),
       prisma.asset.findMany({
+        where: { tenantId },
         include: {
           assignedUser: {
             select: {
@@ -46,6 +56,7 @@ export async function GET() {
         },
       }),
       prisma.subscription.findMany({
+        where: { tenantId },
         include: {
           assignedUser: {
             select: {
@@ -57,6 +68,7 @@ export async function GET() {
         },
       }),
       prisma.supplier.findMany({
+        where: { tenantId },
         include: {
           approvedBy: {
             select: {
@@ -68,6 +80,7 @@ export async function GET() {
         },
       }),
       prisma.assetHistory.findMany({
+        where: { asset: { tenantId } },
         include: {
           asset: {
             select: {
@@ -101,6 +114,7 @@ export async function GET() {
         },
       }),
       prisma.subscriptionHistory.findMany({
+        where: { subscription: { tenantId } },
         include: {
           subscription: {
             select: {
@@ -132,6 +146,7 @@ export async function GET() {
         },
       }),
       prisma.supplierEngagement.findMany({
+        where: { tenantId },
         include: {
           supplier: {
             select: {
@@ -150,6 +165,7 @@ export async function GET() {
         },
       }),
       prisma.activityLog.findMany({
+        where: { tenantId },
         include: {
           actorUser: {
             select: {
@@ -161,6 +177,7 @@ export async function GET() {
         },
       }),
       prisma.maintenanceRecord.findMany({
+        where: { tenantId },
         include: {
           asset: {
             select: {
@@ -173,6 +190,7 @@ export async function GET() {
         },
       }),
       prisma.hRProfile.findMany({
+        where: { tenantId },
         include: {
           user: {
             select: {
@@ -184,6 +202,7 @@ export async function GET() {
         },
       }),
       prisma.profileChangeRequest.findMany({
+        where: { tenantId },
         include: {
           hrProfile: {
             select: {
@@ -195,6 +214,7 @@ export async function GET() {
       }),
       // Purchase Requests
       prisma.purchaseRequest.findMany({
+        where: { tenantId },
         include: {
           requester: {
             select: {
@@ -212,8 +232,11 @@ export async function GET() {
           },
         },
       }),
-      prisma.purchaseRequestItem.findMany(),
+      prisma.purchaseRequestItem.findMany({
+        where: { purchaseRequest: { tenantId } },
+      }),
       prisma.purchaseRequestHistory.findMany({
+        where: { purchaseRequest: { tenantId } },
         include: {
           performedBy: {
             select: {
