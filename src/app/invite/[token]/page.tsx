@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Building2, Check, X, Mail, AlertCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 
+const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+
 interface InvitationData {
   id: string;
   email: string;
@@ -84,9 +86,16 @@ export default function InvitePage() {
 
       setSuccess(true);
 
-      // Redirect through home to let middleware handle routing
+      // Redirect to the organization's subdomain
       setTimeout(() => {
-        router.push('/');
+        const orgSlug = data.organization?.slug;
+        if (orgSlug) {
+          // Redirect to org subdomain
+          window.location.href = `${window.location.protocol}//${orgSlug}.${APP_DOMAIN}/admin`;
+        } else {
+          // Fallback to home
+          router.push('/');
+        }
       }, 2000);
     } catch (err) {
       console.error('Accept invitation error:', err);
