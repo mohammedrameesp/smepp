@@ -22,7 +22,27 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
+
+    // Verify target user belongs to the same organization
+    const membership = await prisma.organizationUser.findUnique({
+      where: {
+        organizationId_userId: {
+          organizationId: tenantId,
+          userId: id,
+        },
+      },
+    });
+
+    if (!membership) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
     const user = await prisma.user.findUnique({
       where: { id },
@@ -70,12 +90,32 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
+
+    // Verify target user belongs to the same organization
+    const membership = await prisma.organizationUser.findUnique({
+      where: {
+        organizationId_userId: {
+          organizationId: tenantId,
+          userId: id,
+        },
+      },
+    });
+
+    if (!membership) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
     // Parse and validate request body
     const body = await request.json();
     const validation = updateUserSchema.safeParse(body);
-    
+
     if (!validation.success) {
       return NextResponse.json({
         error: 'Invalid request body',
@@ -133,6 +173,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
     // Prevent self-deletion
@@ -141,6 +187,20 @@ export async function DELETE(
         { error: 'Cannot delete your own account' },
         { status: 400 }
       );
+    }
+
+    // Verify target user belongs to the same organization
+    const membership = await prisma.organizationUser.findUnique({
+      where: {
+        organizationId_userId: {
+          organizationId: tenantId,
+          userId: id,
+        },
+      },
+    });
+
+    if (!membership) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Get user details before deletion for logging

@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Building2, Check, X, Mail, AlertCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 
 interface InvitationData {
@@ -28,7 +30,7 @@ export default function InvitePage() {
   const router = useRouter();
   const params = useParams();
   const token = params.token as string;
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
 
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,6 +89,12 @@ export default function InvitePage() {
 
       setSuccess(true);
 
+      // Update the session with the new organization ID
+      // This refreshes the JWT token with organization info
+      if (data.organization?.id) {
+        await update({ organizationId: data.organization.id });
+      }
+
       // Redirect to the organization's subdomain
       setTimeout(() => {
         const orgSlug = data.organization?.slug;
@@ -94,10 +102,10 @@ export default function InvitePage() {
           // Redirect to org subdomain
           window.location.href = `${window.location.protocol}//${orgSlug}.${APP_DOMAIN}/admin`;
         } else {
-          // Fallback to home
-          router.push('/');
+          // Fallback - just go to home which will redirect properly
+          window.location.href = APP_URL;
         }
-      }, 2000);
+      }, 1500);
     } catch (err) {
       console.error('Accept invitation error:', err);
       setError('Failed to accept invitation');

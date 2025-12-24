@@ -17,10 +17,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    const leaveType = await prisma.leaveType.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent IDOR attacks
+    const leaveType = await prisma.leaveType.findFirst({
+      where: { id, tenantId },
       include: {
         _count: {
           select: {
@@ -52,6 +59,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
     const body = await request.json();
@@ -66,19 +79,19 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const data = validation.data;
 
-    // Check if leave type exists
-    const existing = await prisma.leaveType.findUnique({
-      where: { id },
+    // Check if leave type exists within tenant
+    const existing = await prisma.leaveType.findFirst({
+      where: { id, tenantId },
     });
 
     if (!existing) {
       return NextResponse.json({ error: 'Leave type not found' }, { status: 404 });
     }
 
-    // If name is being changed, check for duplicates
+    // If name is being changed, check for duplicates within tenant
     if (data.name && data.name !== existing.name) {
       const duplicate = await prisma.leaveType.findFirst({
-        where: { name: data.name },
+        where: { name: data.name, tenantId },
       });
 
       if (duplicate) {
@@ -125,11 +138,17 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Check if leave type exists and has no associated requests
-    const leaveType = await prisma.leaveType.findUnique({
-      where: { id },
+    // Check if leave type exists within tenant and has no associated requests
+    const leaveType = await prisma.leaveType.findFirst({
+      where: { id, tenantId },
       include: {
         _count: {
           select: {

@@ -19,8 +19,16 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supplier = await prisma.supplier.findUnique({
-      where: { id },
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
+    // Use findFirst with tenantId to prevent IDOR attacks
+    const supplier = await prisma.supplier.findFirst({
+      where: { id, tenantId },
       include: {
         approvedBy: {
           select: {
@@ -81,9 +89,16 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Check if supplier exists
-    const existingSupplier = await prisma.supplier.findUnique({
-      where: { id },
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
+    // Check if supplier exists within tenant
+    const existingSupplier = await prisma.supplier.findFirst({
+      where: { id, tenantId },
     });
 
     if (!existingSupplier) {
@@ -176,9 +191,16 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Check if supplier exists
-    const supplier = await prisma.supplier.findUnique({
-      where: { id },
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
+    // Check if supplier exists within tenant
+    const supplier = await prisma.supplier.findFirst({
+      where: { id, tenantId },
     });
 
     if (!supplier) {

@@ -19,16 +19,24 @@ export default async function AdminProjectsPage() {
     redirect('/forbidden');
   }
 
-  // Fetch stats
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    redirect('/forbidden');
+  }
+
+  const tenantId = session.user.organizationId;
+
+  // Fetch stats (filtered by tenant)
   const [
     totalProjects,
     activeProjects,
     statusCounts,
   ] = await Promise.all([
-    prisma.project.count(),
-    prisma.project.count({ where: { status: 'ACTIVE' } }),
+    prisma.project.count({ where: { tenantId } }),
+    prisma.project.count({ where: { tenantId, status: 'ACTIVE' } }),
     prisma.project.groupBy({
       by: ['status'],
+      where: { tenantId },
       _count: { _all: true },
     }),
   ]);

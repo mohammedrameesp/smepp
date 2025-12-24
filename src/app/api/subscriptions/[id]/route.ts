@@ -18,10 +18,17 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    const subscription = await prisma.subscription.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent IDOR attacks
+    const subscription = await prisma.subscription.findFirst({
+      where: { id, tenantId },
       include: {
         assignedUser: {
           select: { id: true, name: true, email: true },
@@ -59,6 +66,12 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
     const body = await request.json();
@@ -73,9 +86,9 @@ export async function PUT(
 
     const data = validation.data;
 
-    // Get current subscription to check for assignment changes
-    const currentSubscription = await prisma.subscription.findUnique({
-      where: { id },
+    // Get current subscription within tenant
+    const currentSubscription = await prisma.subscription.findFirst({
+      where: { id, tenantId },
       include: {
         assignedUser: { select: { id: true, name: true, email: true } },
       },
@@ -205,10 +218,17 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    const subscription = await prisma.subscription.findUnique({
-      where: { id },
+    // Get subscription within tenant
+    const subscription = await prisma.subscription.findFirst({
+      where: { id, tenantId },
       select: { id: true, serviceName: true },
     });
 

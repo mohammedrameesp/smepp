@@ -10,6 +10,12 @@ import { Prisma } from '@prisma/client';
 
 // GET /api/company-documents - List documents with filtering
 export const GET = withErrorHandler(async (request: NextRequest) => {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.organizationId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
+
+  const tenantId = session.user.organizationId;
   const { searchParams } = new URL(request.url);
 
   const query = companyDocumentQuerySchema.parse({
@@ -29,8 +35,8 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const warningDate = new Date(today);
   warningDate.setDate(warningDate.getDate() + DOCUMENT_EXPIRY_WARNING_DAYS);
 
-  // Build where clause
-  const where: Prisma.CompanyDocumentWhereInput = {};
+  // Build where clause with tenant filter
+  const where: Prisma.CompanyDocumentWhereInput = { tenantId };
 
   if (query.documentTypeId) {
     where.documentTypeId = query.documentTypeId;
@@ -132,12 +138,13 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
   }
 
+  const tenantId = session.user.organizationId;
   const body = await request.json();
   const validatedData = companyDocumentSchema.parse(body);
 
-  // Validate document type exists
-  const documentType = await prisma.companyDocumentType.findUnique({
-    where: { id: validatedData.documentTypeId },
+  // Validate document type exists within tenant
+  const documentType = await prisma.companyDocumentType.findFirst({
+    where: { id: validatedData.documentTypeId, tenantId },
   });
 
   if (!documentType) {
@@ -147,10 +154,10 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     );
   }
 
-  // If asset is specified, validate it exists
+  // If asset is specified, validate it exists within tenant
   if (validatedData.assetId) {
-    const asset = await prisma.asset.findUnique({
-      where: { id: validatedData.assetId },
+    const asset = await prisma.asset.findFirst({
+      where: { id: validatedData.assetId, tenantId },
     });
 
     if (!asset) {

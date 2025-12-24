@@ -44,10 +44,17 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    const asset = await prisma.asset.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent IDOR attacks
+    const asset = await prisma.asset.findFirst({
+      where: { id, tenantId },
       include: {
         assignedUser: {
           select: {
@@ -108,6 +115,12 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
     // Parse and validate request body
@@ -129,9 +142,9 @@ export async function PUT(
       data.assetTag = data.assetTag.toUpperCase();
     }
 
-    // Get current asset state to check for changes
-    const currentAsset = await prisma.asset.findUnique({
-      where: { id },
+    // Get current asset state within tenant
+    const currentAsset = await prisma.asset.findFirst({
+      where: { id, tenantId },
       include: {
         assignedUser: {
           select: { id: true, name: true, email: true },
@@ -143,11 +156,12 @@ export async function PUT(
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
     }
 
-    // Check if asset tag is being changed and if the new tag already exists
+    // Check if asset tag is being changed and if the new tag already exists within tenant
     if (data.assetTag && data.assetTag !== currentAsset.assetTag) {
       const existingAsset = await prisma.asset.findFirst({
         where: {
           assetTag: data.assetTag,
+          tenantId,
           id: { not: id }, // Exclude current asset
         },
       });
@@ -459,11 +473,17 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Get asset details before deletion for logging
-    const asset = await prisma.asset.findUnique({
-      where: { id },
+    // Get asset details within tenant before deletion for logging
+    const asset = await prisma.asset.findFirst({
+      where: { id, tenantId },
       select: { id: true, model: true, brand: true, type: true, assetTag: true },
     });
 

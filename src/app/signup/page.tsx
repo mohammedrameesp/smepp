@@ -101,6 +101,8 @@ function SignupForm() {
         router.push('/login?message=Account created. Please sign in.');
       } else if (data.organization?.slug) {
         // If signup included invitation, redirect directly to org subdomain
+        // Wait a moment for the session cookie to be fully established
+        await new Promise(resolve => setTimeout(resolve, 500));
         const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
         window.location.href = `${window.location.protocol}//${data.organization.slug}.${appDomain}/admin`;
       } else if (inviteToken) {

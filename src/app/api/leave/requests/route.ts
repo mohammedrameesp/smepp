@@ -166,13 +166,15 @@ export async function POST(request: NextRequest) {
     const data = validation.data;
     const userId = session.user.id;
 
+    const tenantId = session.user.organizationId;
+
     // Parse dates
     const startDate = new Date(data.startDate);
     const endDate = new Date(data.endDate);
 
-    // Validate leave type exists and is active
-    const leaveType = await prisma.leaveType.findUnique({
-      where: { id: data.leaveTypeId },
+    // Validate leave type exists, is active, and belongs to this tenant
+    const leaveType = await prisma.leaveType.findFirst({
+      where: { id: data.leaveTypeId, tenantId },
     });
 
     if (!leaveType) {

@@ -18,10 +18,17 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    const project = await prisma.project.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent IDOR attacks
+    const project = await prisma.project.findFirst({
+      where: { id, tenantId },
       include: {
         manager: { select: { id: true, name: true, email: true } },
         createdBy: { select: { id: true, name: true, email: true } },
@@ -53,12 +60,19 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
     const body = await request.json();
     const data = projectUpdateSchema.parse({ ...body, id });
 
-    const existing = await prisma.project.findUnique({
-      where: { id },
+    // Check if project exists within tenant
+    const existing = await prisma.project.findFirst({
+      where: { id, tenantId },
     });
 
     if (!existing) {
@@ -103,10 +117,17 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    const existing = await prisma.project.findUnique({
-      where: { id },
+    // Check if project exists within tenant
+    const existing = await prisma.project.findFirst({
+      where: { id, tenantId },
       include: {
         _count: {
           select: {

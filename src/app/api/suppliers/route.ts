@@ -14,6 +14,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -28,8 +35,8 @@ export async function GET(request: NextRequest) {
 
     const { q, status, category, p, ps, sort, order } = validation.data;
 
-    // Build where clause using reusable search filter
-    const filters: Record<string, any> = {};
+    // Build where clause with tenant filter
+    const filters: Record<string, any> = { tenantId };
 
     // EMPLOYEE can only see APPROVED suppliers
     // ADMIN can see all suppliers

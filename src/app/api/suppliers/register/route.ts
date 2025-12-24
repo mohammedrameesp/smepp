@@ -3,9 +3,6 @@ import { prisma } from '@/lib/core/prisma';
 import { createSupplierSchema } from '@/lib/validations/suppliers';
 import { checkRateLimit } from '@/lib/security/rateLimit';
 import { logAction } from '@/lib/activity';
-import { sendBatchEmails } from '@/lib/email';
-import { newSupplierRegistrationEmail } from '@/lib/email-templates';
-import { Role } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -87,37 +84,11 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // Send email notification to all admins
-    try {
-      const admins = await prisma.user.findMany({
-        where: { role: Role.ADMIN },
-        select: { email: true, name: true },
-      });
-
-      if (admins.length > 0) {
-        const emailContent = newSupplierRegistrationEmail({
-          companyName: supplier.name,
-          category: supplier.category,
-          contactName: supplier.primaryContactName,
-          contactEmail: supplier.primaryContactEmail,
-          country: supplier.country,
-          registrationDate: new Date(),
-        });
-
-        await sendBatchEmails(
-          admins.map((admin) => ({
-            to: admin.email,
-            subject: emailContent.subject,
-            html: emailContent.html,
-            text: emailContent.text,
-          }))
-        );
-        console.log(`[Supplier Registration] Notified ${admins.length} admin(s) about new supplier: ${supplier.name}`);
-      }
-    } catch (emailError) {
-      console.error('[Supplier Registration] Failed to send admin notification:', emailError);
-      // Don't fail the registration if email fails
-    }
+    // NOTE: Admin notification is skipped for public registration.
+    // Since this is a public route without tenant context, we cannot notify
+    // tenant-specific admins. Notifications will be handled during approval
+    // when the supplier is associated with a specific tenant.
+    console.log(`[Supplier Registration] New supplier registered: ${supplier.name} (pending approval)`)
 
     return NextResponse.json({
       message: 'Thank you! Your registration is pending approval.',

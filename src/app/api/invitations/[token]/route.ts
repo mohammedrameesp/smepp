@@ -83,87 +83,76 @@ export async function POST(
 
     const { token } = await params;
 
-    const invitation = await prisma.organizationInvitation.findUnique({
-      where: { token },
-      include: {
-        organization: true,
-      },
-    });
-
-    if (!invitation) {
-      return NextResponse.json(
-        { error: 'Invitation not found' },
-        { status: 404 }
-      );
-    }
-
-    if (invitation.acceptedAt) {
-      return NextResponse.json(
-        { error: 'This invitation has already been used' },
-        { status: 410 }
-      );
-    }
-
-    if (invitation.expiresAt < new Date()) {
-      return NextResponse.json(
-        { error: 'Invitation has expired' },
-        { status: 410 }
-      );
-    }
-
-    // Check if user email matches invitation
-    if (invitation.email.toLowerCase() !== session.user.email?.toLowerCase()) {
-      return NextResponse.json(
-        { error: 'This invitation was sent to a different email address' },
-        { status: 403 }
-      );
-    }
-
-    // Verify user still exists in database (handles stale sessions after reset)
-    const userExists = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { id: true },
-    });
-
-    if (!userExists) {
-      return NextResponse.json(
-        { error: 'Your session is invalid. Please sign out and sign in again.' },
-        { status: 401 }
-      );
-    }
-
-    // Check if user is already a member
-    const existingMembership = await prisma.organizationUser.findUnique({
-      where: {
-        organizationId_userId: {
-          organizationId: invitation.organizationId,
-          userId: session.user.id,
-        },
-      },
-    });
-
-    if (existingMembership) {
-      // Delete the invitation since user is already a member
-      await prisma.organizationInvitation.delete({
-        where: { id: invitation.id },
-      });
-
-      return NextResponse.json({
-        success: true,
-        message: 'You are already a member of this organization',
-        organization: {
-          id: invitation.organization.id,
-          name: invitation.organization.name,
-          slug: invitation.organization.slug,
+    // Use a transaction with all validation and creation inside to prevent race conditions
+    // This ensures atomic check-and-create behavior
+    const result = await prisma.$transaction(async (tx) => {
+      // Find and lock the invitation row to prevent concurrent acceptance
+      const invitation = await tx.organizationInvitation.findUnique({
+        where: { token },
+        include: {
+          organization: true,
         },
       });
-    }
 
-    // Accept invitation: create membership and delete invitation
-    // If role is OWNER, set isOwner=true (first admin of org)
-    const isOwner = invitation.role === 'OWNER';
+      if (!invitation) {
+        return { error: 'Invitation not found', status: 404 };
+      }
 
-    await prisma.$transaction(async (tx) => {
+      if (invitation.acceptedAt) {
+        return { error: 'This invitation has already been used', status: 410 };
+      }
+
+      if (invitation.expiresAt < new Date()) {
+        return { error: 'Invitation has expired', status: 410 };
+      }
+
+      // Check if user email matches invitation
+      if (invitation.email.toLowerCase() !== session.user.email?.toLowerCase()) {
+        return { error: 'This invitation was sent to a different email address', status: 403 };
+      }
+
+      // Verify user still exists in database
+      const userExists = await tx.user.findUnique({
+        where: { id: session.user.id },
+        select: { id: true },
+      });
+
+      if (!userExists) {
+        return { error: 'Your session is invalid. Please sign out and sign in again.', status: 401 };
+      }
+
+      // Check if user is already a member
+      const existingMembership = await tx.organizationUser.findUnique({
+        where: {
+          organizationId_userId: {
+            organizationId: invitation.organizationId,
+            userId: session.user.id,
+          },
+        },
+      });
+
+      if (existingMembership) {
+        // Mark invitation as accepted since user is already a member
+        await tx.organizationInvitation.update({
+          where: { id: invitation.id },
+          data: { acceptedAt: new Date() },
+        });
+
+        return {
+          success: true,
+          alreadyMember: true,
+          message: 'You are already a member of this organization',
+          organization: {
+            id: invitation.organization.id,
+            name: invitation.organization.name,
+            slug: invitation.organization.slug,
+          },
+        };
+      }
+
+      // Accept invitation: create membership and mark as accepted
+      const isOwner = invitation.role === 'OWNER';
+
       await tx.organizationUser.create({
         data: {
           organizationId: invitation.organizationId,
@@ -177,19 +166,41 @@ export async function POST(
         where: { id: invitation.id },
         data: { acceptedAt: new Date() },
       });
+
+      return {
+        success: true,
+        message: 'Successfully joined organization',
+        organization: {
+          id: invitation.organization.id,
+          name: invitation.organization.name,
+          slug: invitation.organization.slug,
+        },
+      };
+    }, {
+      // Use serializable isolation level to prevent race conditions
+      isolationLevel: 'Serializable',
     });
 
-    return NextResponse.json({
-      success: true,
-      message: 'Successfully joined organization',
-      organization: {
-        id: invitation.organization.id,
-        name: invitation.organization.name,
-        slug: invitation.organization.slug,
-      },
-    });
+    // Handle error responses from transaction
+    if ('error' in result) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: result.status }
+      );
+    }
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Accept invitation error:', error);
+
+    // Handle unique constraint violations (concurrent acceptance)
+    if (error instanceof Error && error.message.includes('Unique constraint')) {
+      return NextResponse.json(
+        { error: 'This invitation has already been accepted' },
+        { status: 410 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Failed to accept invitation' },
       { status: 500 }

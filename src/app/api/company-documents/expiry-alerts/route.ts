@@ -1,18 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
 import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/lib/domains/system/company-documents/document-utils';
 
 // GET /api/company-documents/expiry-alerts - Get documents expiring soon or expired
 export const GET = withErrorHandler(async (_request: NextRequest) => {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.organizationId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
+
+  const tenantId = session.user.organizationId;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const warningDate = new Date(today);
   warningDate.setDate(warningDate.getDate() + DOCUMENT_EXPIRY_WARNING_DAYS);
 
-  // Get all documents expiring within warning period or already expired
+  // Get documents expiring within warning period or already expired (within tenant)
   const documents = await prisma.companyDocument.findMany({
     where: {
+      tenantId,
       expiryDate: { lte: warningDate },
     },
     orderBy: { expiryDate: 'asc' },

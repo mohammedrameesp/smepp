@@ -14,10 +14,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { searchParams } = new URL(request.url);
     const query = projectModuleQuerySchema.parse(Object.fromEntries(searchParams));
 
-    const where: any = {};
+    // Build where clause with tenant filter
+    const where: any = { tenantId };
 
     if (query.search) {
       where.OR = [
@@ -77,6 +84,11 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const body = await request.json();

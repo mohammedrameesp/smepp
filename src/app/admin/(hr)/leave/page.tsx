@@ -21,12 +21,18 @@ export default async function AdminLeavePage() {
     redirect('/forbidden');
   }
 
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    redirect('/forbidden');
+  }
+
+  const tenantId = session.user.organizationId;
   const currentYear = new Date().getFullYear();
   const now = new Date();
   const sevenDaysFromNow = new Date(now);
   sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
-  // Fetch statistics
+  // Fetch statistics (filtered by tenant)
   const [
     pendingCount,
     approvedThisYear,
@@ -36,10 +42,11 @@ export default async function AdminLeavePage() {
     upcomingLeaves,
   ] = await Promise.all([
     prisma.leaveRequest.count({
-      where: { status: 'PENDING' },
+      where: { tenantId, status: 'PENDING' },
     }),
     prisma.leaveRequest.count({
       where: {
+        tenantId,
         status: 'APPROVED',
         startDate: {
           gte: new Date(`${currentYear}-01-01`),
@@ -49,6 +56,7 @@ export default async function AdminLeavePage() {
     }),
     prisma.leaveRequest.count({
       where: {
+        tenantId,
         status: 'REJECTED',
         createdAt: {
           gte: new Date(`${currentYear}-01-01`),
@@ -57,10 +65,10 @@ export default async function AdminLeavePage() {
       },
     }),
     prisma.leaveType.count({
-      where: { isActive: true },
+      where: { tenantId, isActive: true },
     }),
     prisma.leaveRequest.findMany({
-      where: { status: 'PENDING' },
+      where: { tenantId, status: 'PENDING' },
       include: {
         user: {
           select: { id: true, name: true, email: true },
@@ -74,6 +82,7 @@ export default async function AdminLeavePage() {
     }),
     prisma.leaveRequest.findMany({
       where: {
+        tenantId,
         status: 'APPROVED',
         startDate: {
           gte: now,

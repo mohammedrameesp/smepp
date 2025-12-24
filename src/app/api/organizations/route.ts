@@ -4,9 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import {
-  generateUniqueSlug,
   validateSlug,
-  isSlugAvailable,
   getOrganizationUrl,
 } from '@/lib/multi-tenant/subdomain';
 
@@ -88,11 +86,8 @@ export async function POST(request: NextRequest) {
 
     const { name, slug: customSlug, timezone, currency } = result.data;
 
-    // Determine slug: use custom if provided and valid, otherwise generate
-    let slug: string;
-
+    // Validate custom slug format if provided (before transaction)
     if (customSlug) {
-      // Validate custom slug
       const validation = validateSlug(customSlug);
       if (!validation.valid) {
         return NextResponse.json(
@@ -100,24 +95,58 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-
-      // Check availability
-      const available = await isSlugAvailable(customSlug);
-      if (!available) {
-        return NextResponse.json(
-          { error: 'This subdomain is already taken' },
-          { status: 409 }
-        );
-      }
-
-      slug = customSlug.toLowerCase();
-    } else {
-      // Generate unique slug from name
-      slug = await generateUniqueSlug(name);
     }
 
-    // Create organization and membership
+    // Create organization and membership in a serializable transaction
+    // This prevents race conditions with slug uniqueness
     const organization = await prisma.$transaction(async (tx) => {
+      // Determine slug inside transaction for atomicity
+      let slug: string;
+
+      if (customSlug) {
+        // Check availability inside transaction
+        const existingOrg = await tx.organization.findUnique({
+          where: { slug: customSlug.toLowerCase() },
+          select: { id: true },
+        });
+
+        if (existingOrg) {
+          throw new Error('SLUG_TAKEN');
+        }
+
+        slug = customSlug.toLowerCase();
+      } else {
+        // Generate unique slug from name - check inside transaction
+        const baseSlug = name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '')
+          .substring(0, 50);
+
+        // Find all existing slugs that match the pattern
+        const existingSlugs = await tx.organization.findMany({
+          where: {
+            slug: {
+              startsWith: baseSlug,
+            },
+          },
+          select: { slug: true },
+        });
+
+        const existingSlugSet = new Set(existingSlugs.map(o => o.slug));
+
+        // Find first available slug
+        if (!existingSlugSet.has(baseSlug)) {
+          slug = baseSlug;
+        } else {
+          let counter = 1;
+          while (existingSlugSet.has(`${baseSlug}-${counter}`)) {
+            counter++;
+          }
+          slug = `${baseSlug}-${counter}`;
+        }
+      }
+
       const org = await tx.organization.create({
         data: {
           name,
@@ -140,6 +169,8 @@ export async function POST(request: NextRequest) {
       });
 
       return org;
+    }, {
+      isolationLevel: 'Serializable',
     });
 
     // Get the subdomain URL for the new organization
@@ -159,6 +190,23 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Create organization error:', error);
+
+    // Handle slug taken error
+    if (error instanceof Error && error.message === 'SLUG_TAKEN') {
+      return NextResponse.json(
+        { error: 'This subdomain is already taken' },
+        { status: 409 }
+      );
+    }
+
+    // Handle unique constraint violations (concurrent creation)
+    if (error instanceof Error && error.message.includes('Unique constraint')) {
+      return NextResponse.json(
+        { error: 'This subdomain was just taken. Please try a different one.' },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Failed to create organization' },
       { status: 500 }

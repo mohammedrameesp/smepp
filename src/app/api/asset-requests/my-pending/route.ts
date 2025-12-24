@@ -11,9 +11,17 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     // Get user's pending assignments (waiting for them to accept/decline)
     const pendingAssignments = await prisma.assetRequest.findMany({
       where: {
+        tenantId,
         userId: session.user.id,
         status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
       },
@@ -42,6 +50,7 @@ export async function GET(_request: NextRequest) {
     // Get user's pending requests (their requests waiting for admin)
     const pendingRequests = await prisma.assetRequest.findMany({
       where: {
+        tenantId,
         userId: session.user.id,
         status: {
           in: [
