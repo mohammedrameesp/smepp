@@ -222,6 +222,11 @@ model User {
   resetToken       String?   @unique
   resetTokenExpiry DateTime?
 
+  // Two-Factor Authentication (for super admins)
+  twoFactorSecret      String?   // Encrypted TOTP secret
+  twoFactorEnabled     Boolean   @default(false)
+  twoFactorBackupCodes String[]  // Hashed backup codes
+
   accounts                     Account[]
   sessions                     Session[]
   assets                       Asset[]
@@ -318,8 +323,19 @@ model Organization {
   welcomeSubtitle    String?  // Custom welcome subtitle/tagline
 
   // Settings
-  timezone String @default("UTC")
-  currency String @default("USD")
+  timezone String @default("Asia/Qatar") // Hardcoded to Qatar timezone (UTC+3)
+  currency String @default("QAR") // Primary currency always QAR
+
+  // Module configuration (client chooses which to enable)
+  enabledModules String[] @default(["assets", "subscriptions", "suppliers"])
+
+  // Additional currencies beyond QAR (e.g., ["USD", "EUR"])
+  additionalCurrencies String[] @default([])
+
+  // Onboarding tracking
+  onboardingCompleted   Boolean   @default(false)
+  onboardingCompletedAt DateTime?
+  onboardingStep        Int       @default(0) // Current step in wizard (0-5)
 
   // Subscription & Billing
   subscriptionTier SubscriptionTier @default(FREE)
@@ -332,8 +348,9 @@ model Organization {
   maxAssets Int @default(50)
 
   // Core Relations
-  members     OrganizationUser[]
-  invitations OrganizationInvitation[]
+  members       OrganizationUser[]
+  invitations   OrganizationInvitation[]
+  setupProgress OrganizationSetupProgress?
 
   // Tenant-scoped data relations
   assets                Asset[]
@@ -406,6 +423,29 @@ model OrganizationInvitation {
   @@unique([organizationId, email])
   @@index([token])
   @@index([email])
+}
+
+model OrganizationSetupProgress {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Checklist items
+  profileComplete        Boolean @default(false) // Org name and basic info configured
+  logoUploaded           Boolean @default(false) // Logo has been uploaded
+  brandingConfigured     Boolean @default(false) // Primary color customized
+  firstAssetAdded        Boolean @default(false) // At least one asset created
+  firstTeamMemberInvited Boolean @default(false) // At least one invitation sent
+  firstEmployeeAdded     Boolean @default(false) // At least one HR profile created
+  firstProjectCreated    Boolean @default(false) // At least one project created
+
+  // Allow users to dismiss the checklist
+  isDismissed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
 }
 
 // Project model removed - projects are now handled separately by accreditation module

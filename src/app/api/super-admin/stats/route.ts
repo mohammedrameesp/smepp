@@ -1,0 +1,31 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/core/prisma';
+
+// GET /api/super-admin/stats - Platform stats (public for login page)
+export async function GET() {
+  try {
+    // Get counts
+    const [organizationCount, userCount] = await Promise.all([
+      prisma.organization.count(),
+      prisma.user.count({
+        where: {
+          isSystemAccount: false,
+        },
+      }),
+    ]);
+
+    return NextResponse.json({
+      organizations: organizationCount,
+      users: userCount,
+      uptime: '99.9%', // Static for now, could be dynamic with monitoring
+    });
+  } catch (error) {
+    console.error('Stats fetch error:', error);
+    // Return default values on error
+    return NextResponse.json({
+      organizations: 0,
+      users: 0,
+      uptime: '99.9%',
+    });
+  }
+}
