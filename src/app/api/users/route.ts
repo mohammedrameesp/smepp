@@ -119,7 +119,7 @@ async function createUserHandler(request: NextRequest) {
     finalEmployeeId = `${prefix}-${String(count + 1).padStart(3, '0')}`;
   }
 
-  // Create user with HR profile in a transaction
+  // Create user with HR profile and organization membership in a transaction
   // Note: Password is not stored as users authenticate via Azure AD or OAuth
   // emailVerified is set to null - they'll verify on first login
   const session = await getServerSession(authOptions);
@@ -136,6 +136,13 @@ async function createUserHandler(request: NextRequest) {
           onboardingComplete: false,
           onboardingStep: 0,
           tenantId: session?.user.organizationId!,
+        }
+      },
+      // Create organization membership so user appears in tenant-filtered queries
+      organizationMemberships: {
+        create: {
+          organizationId: session?.user.organizationId!,
+          role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
         }
       }
     },
