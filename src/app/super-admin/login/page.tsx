@@ -187,10 +187,10 @@ export default function SuperAdminLoginPage() {
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-800 to-slate-900 p-12 flex-col justify-between">
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-lg">S+</span>
+          <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center">
+            <Shield className="w-5 h-5 text-amber-400" />
           </div>
-          <span className="text-white font-semibold text-xl">SME++</span>
+          <span className="text-white font-semibold text-xl">SME++ Admin</span>
         </div>
 
         {/* Center Content */}
@@ -249,8 +249,8 @@ export default function SuperAdminLoginPage() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-slate-800 rounded-xl mb-4">
-              <span className="text-white font-bold text-lg">S+</span>
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-500 rounded-xl mb-4">
+              <Shield className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-slate-800 text-xl font-semibold">SME++ Admin Portal</h1>
           </div>
