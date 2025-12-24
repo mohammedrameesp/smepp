@@ -220,7 +220,7 @@ export async function middleware(request: NextRequest) {
       }
     }
     // Not authenticated - redirect to super admin login
-    return NextResponse.redirect(new URL('/platform-login', request.url));
+    return NextResponse.redirect(new URL('/super-admin/login', request.url));
   }
 
   // Skip public routes on main domain
