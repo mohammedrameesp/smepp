@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Plus, Building2, Users, Calendar, Mail } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { ResetPlatformButton } from './components/ResetPlatformButton';
 
 async function getOrganizations() {
   const organizations = await prisma.organization.findMany({
@@ -101,6 +102,19 @@ export default async function SuperAdminDashboard() {
           </CardHeader>
         </Card>
       </div>
+
+      {/* Testing Tools - Remove in production */}
+      <Card className="border-red-200 bg-red-50">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm text-red-800">Testing Tools</CardTitle>
+          <CardDescription className="text-red-600">
+            These tools are for development/testing only. Remove before production.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResetPlatformButton />
+        </CardContent>
+      </Card>
 
       {/* Organizations List */}
       <div>
