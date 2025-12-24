@@ -18,7 +18,7 @@
 - [x] Super admin user created and verified in database (`isSuperAdmin: true`)
 
 ### Email Setup (Resend)
-- [x] Resend API key configured: `re_41E8svw3_5RW1YPYFN7sFo2Kat6sXPZYn`
+- [x] Resend API key configured (stored in Vercel env vars)
 - [x] Domain added: `quriosityhub.com`
 - [x] DNS records added in Vercel:
   - CNAME: `resend._domainkey`
@@ -101,15 +101,9 @@
 
 ## Environment Variables (Vercel)
 
-```
-DATABASE_URL="postgresql://postgres.bwgsqpvbfyehbgzeldvu:MrpCkraPkl%40053@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres"
-DIRECT_URL="postgresql://postgres.bwgsqpvbfyehbgzeldvu:MrpCkraPkl%40053@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres"
-RESEND_API_KEY="re_41E8svw3_5RW1YPYFN7sFo2Kat6sXPZYn"
-RESEND_FROM_EMAIL="SME++ <noreply@quriosityhub.com>"
-SUPER_ADMIN_EMAIL="mohammedramees@outlook.in"
-NEXTAUTH_URL="https://smepp.vercel.app"
-NEXTAUTH_SECRET=(configured)
-```
+All environment variables are configured in Vercel dashboard. See `.env.example` for the list of required variables.
+
+**NEVER commit secrets to this file or any tracked file.**
 
 ---
 
