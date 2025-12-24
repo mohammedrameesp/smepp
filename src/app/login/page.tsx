@@ -105,7 +105,7 @@ function LoginForm() {
             The organization &quot;{subdomain}&quot; does not exist.
           </p>
           <a
-            href={`${window.location.protocol}//${process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000'}/login`}
+            href={`https://${process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000'}/login`}
             className="text-blue-600 hover:text-blue-700 hover:underline"
           >
             Go to main login
