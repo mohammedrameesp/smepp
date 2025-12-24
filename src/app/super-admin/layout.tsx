@@ -70,7 +70,7 @@ export default function SuperAdminLayout({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => signOut({ callbackUrl: '/login' })}
+                onClick={() => signOut({ callbackUrl: '/super-admin/login' })}
                 className="text-slate-300 hover:text-white hover:bg-slate-800"
               >
                 <LogOut className="h-4 w-4 mr-2" />
