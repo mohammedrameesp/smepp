@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -15,14 +15,25 @@ export default function SuperAdminLayout({
 }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Skip auth check for login page
+  const isLoginPage = pathname === '/super-admin/login';
 
   useEffect(() => {
+    if (isLoginPage) return; // Don't redirect on login page
+
     if (status === 'unauthenticated') {
-      router.push('/login');
+      router.push('/super-admin/login');
     } else if (status === 'authenticated' && !session?.user?.isSuperAdmin) {
       router.push('/');
     }
-  }, [status, session, router]);
+  }, [status, session, router, isLoginPage]);
+
+  // Login page renders without auth check
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
 
   if (status === 'loading') {
     return (
