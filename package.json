@@ -7,7 +7,7 @@
     "dev": "next dev --turbopack",
     "dev:network": "next dev --turbopack -H 0.0.0.0",
     "build": "prisma generate && prisma migrate deploy && next build",
-    "build:vercel": "prisma generate && prisma db push --skip-generate && next build",
+    "build:vercel": "prisma generate && prisma db push --skip-generate --accept-data-loss && next build",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",
