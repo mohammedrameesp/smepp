@@ -1,19 +1,29 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const bucketName = process.env.SUPABASE_BUCKET || 'storage';
 
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables');
-}
+// Lazy-initialized Supabase client to avoid build-time errors
+let supabase: SupabaseClient | null = null;
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+function getSupabaseClient(): SupabaseClient {
+  if (supabase) return supabase;
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase environment variables');
+  }
+
+  supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  return supabase;
+}
 
 export interface UploadParams {
   path: string;
@@ -22,7 +32,8 @@ export interface UploadParams {
 }
 
 export async function sbUpload({ path, bytes, contentType }: UploadParams) {
-  const { data, error } = await supabase.storage
+  const client = getSupabaseClient();
+  const { data, error } = await client.storage
     .from(bucketName)
     .upload(path, bytes, {
       contentType,
@@ -38,7 +49,8 @@ export async function sbUpload({ path, bytes, contentType }: UploadParams) {
 }
 
 export async function sbPublicUrl(path: string) {
-  const { data } = supabase.storage
+  const client = getSupabaseClient();
+  const { data } = client.storage
     .from(bucketName)
     .getPublicUrl(path);
 
@@ -46,7 +58,8 @@ export async function sbPublicUrl(path: string) {
 }
 
 export async function sbSignedUrl(path: string, expiresInSec: number = 3600) {
-  const { data, error } = await supabase.storage
+  const client = getSupabaseClient();
+  const { data, error } = await client.storage
     .from(bucketName)
     .createSignedUrl(path, expiresInSec);
 
@@ -59,7 +72,8 @@ export async function sbSignedUrl(path: string, expiresInSec: number = 3600) {
 }
 
 export async function sbRemove(path: string) {
-  const { data, error } = await supabase.storage
+  const client = getSupabaseClient();
+  const { data, error } = await client.storage
     .from(bucketName)
     .remove([path]);
 
@@ -72,7 +86,8 @@ export async function sbRemove(path: string) {
 }
 
 export async function sbList(prefix?: string) {
-  const { data, error } = await supabase.storage
+  const client = getSupabaseClient();
+  const { data, error } = await client.storage
     .from(bucketName)
     .list(prefix);
 

@@ -117,6 +117,7 @@ export async function POST(
         notes: data.notes,
         rating: data.rating,
         createdById: data.createdById,
+        tenantId: session.user.organizationId!,
       },
       include: {
         createdBy: {

@@ -340,6 +340,7 @@ export async function POST(request: NextRequest) {
                   billingCycle: sub.billingCycle,
                   source: 'CSV Import',
                 },
+                tenantId: session.user.organizationId!,
               },
             });
 
@@ -391,6 +392,7 @@ export async function POST(request: NextRequest) {
                     billingCycle: sub.billingCycle,
                     source: 'CSV Import',
                   },
+                  tenantId: session.user.organizationId!,
                 },
               });
 
@@ -420,6 +422,7 @@ export async function POST(request: NextRequest) {
                 billingCycle: sub.billingCycle,
                 source: 'CSV Import',
               },
+              tenantId: session.user.organizationId!,
             },
           });
 

@@ -9,8 +9,8 @@ export interface BrandingSettings {
 
 const DEFAULT_BRANDING: BrandingSettings = {
   logoUrl: null,
-  primaryColor: '#0F766E', // Teal - brand primary
-  secondaryColor: '#14B8A6', // Teal light - brand accent
+  primaryColor: '#1E40AF', // Deep Blue - brand primary
+  secondaryColor: '#3B82F6', // Blue - brand accent
   companyName: 'SME++',
 };
 

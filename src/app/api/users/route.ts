@@ -111,6 +111,7 @@ async function createUserHandler(request: NextRequest) {
   // Create user with HR profile in a transaction
   // Note: Password is not stored as users authenticate via Azure AD or OAuth
   // emailVerified is set to null - they'll verify on first login
+  const session = await getServerSession(authOptions);
   const user = await prisma.user.create({
     data: {
       name,
@@ -123,6 +124,7 @@ async function createUserHandler(request: NextRequest) {
           designation: designation || null,
           onboardingComplete: false,
           onboardingStep: 0,
+          tenantId: session?.user.organizationId!,
         }
       }
     },
@@ -142,8 +144,7 @@ async function createUserHandler(request: NextRequest) {
     },
   });
 
-  // Log activity (need session for user ID)
-  const session = await getServerSession(authOptions);
+  // Log activity (session already fetched above)
   if (session) {
     await logAction(
       session.user.id,

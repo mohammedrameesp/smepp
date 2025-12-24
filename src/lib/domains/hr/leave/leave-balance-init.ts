@@ -31,7 +31,8 @@ function getAnnualLeaveEntitlement(serviceMonths: number): number {
  */
 export async function initializeUserLeaveBalances(
   userId: string,
-  year: number = new Date().getFullYear()
+  year: number = new Date().getFullYear(),
+  tenantId?: string
 ): Promise<{ created: number; skipped: number }> {
   const now = new Date();
 
@@ -62,11 +63,29 @@ export async function initializeUserLeaveBalances(
   let created = 0;
   let skipped = 0;
 
+  // Get tenantId from user if not provided (using organizationMemberships relation)
+  let effectiveTenantId: string;
+  if (tenantId) {
+    effectiveTenantId = tenantId;
+  } else {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        organizationMemberships: {
+          select: { organizationId: true },
+          take: 1,
+        },
+      },
+    });
+    effectiveTenantId = user?.organizationMemberships[0]?.organizationId || 'SYSTEM';
+  }
+
   const balancesToCreate: {
     userId: string;
     leaveTypeId: string;
     year: number;
     entitlement: number;
+    tenantId: string;
   }[] = [];
 
   for (const leaveType of leaveTypes) {
@@ -104,6 +123,7 @@ export async function initializeUserLeaveBalances(
       leaveTypeId: leaveType.id,
       year,
       entitlement,
+      tenantId: effectiveTenantId,
     });
   }
 
@@ -128,7 +148,8 @@ export async function initializeUserLeaveBalances(
  */
 export async function reinitializeUserLeaveBalances(
   userId: string,
-  year: number = new Date().getFullYear()
+  year: number = new Date().getFullYear(),
+  tenantId?: string
 ): Promise<{ created: number; updated: number; deleted: number }> {
   const now = new Date();
 
@@ -143,6 +164,23 @@ export async function reinitializeUserLeaveBalances(
 
   const dateOfJoining = hrProfile?.dateOfJoining;
   const serviceMonths = dateOfJoining ? getServiceMonths(dateOfJoining, now) : 0;
+
+  // Get tenantId from user if not provided (using organizationMemberships relation)
+  let effectiveTenantId: string;
+  if (tenantId) {
+    effectiveTenantId = tenantId;
+  } else {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        organizationMemberships: {
+          select: { organizationId: true },
+          take: 1,
+        },
+      },
+    });
+    effectiveTenantId = user?.organizationMemberships[0]?.organizationId || 'SYSTEM';
+  }
 
   // Get all active leave types
   const leaveTypes = await prisma.leaveType.findMany({
@@ -197,6 +235,7 @@ export async function reinitializeUserLeaveBalances(
             leaveTypeId: leaveType.id,
             year,
             entitlement,
+            tenantId: effectiveTenantId,
           },
         });
         created++;

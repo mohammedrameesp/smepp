@@ -60,15 +60,11 @@ export async function PUT(request: NextRequest) {
         key: EXCHANGE_RATE_KEY,
         value: rateNum.toString(),
         updatedBy: session.user.id,
+        tenantId: session.user.organizationId!,
       },
       update: {
         value: rateNum.toString(),
         updatedBy: session.user.id,
-      },
-      include: {
-        updater: {
-          select: { name: true, email: true },
-        },
       },
     });
 
@@ -83,14 +79,21 @@ export async function PUT(request: NextRequest) {
           oldRate: rate,
           newRate: rateNum,
         },
+        tenantId: session.user.organizationId!,
       },
     });
+
+    // Fetch updater info separately
+    const updater = setting.updatedBy ? await prisma.user.findUnique({
+      where: { id: setting.updatedBy },
+      select: { name: true, email: true },
+    }) : null;
 
     return NextResponse.json({
       success: true,
       rate: parseFloat(setting.value),
       lastUpdated: setting.updatedAt,
-      updatedBy: setting.updater?.name || setting.updater?.email,
+      updatedBy: updater?.name || updater?.email,
     });
   } catch (error) {
     console.error('Update exchange rate error:', error);

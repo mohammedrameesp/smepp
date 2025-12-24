@@ -112,6 +112,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     const body = await request.json();
     const validation = createLeaveTypeSchema.safeParse(body);
 
@@ -125,7 +129,7 @@ export async function POST(request: NextRequest) {
     const data = validation.data;
 
     // Check if leave type with same name already exists
-    const existing = await prisma.leaveType.findUnique({
+    const existing = await prisma.leaveType.findFirst({
       where: { name: data.name },
     });
 
@@ -143,7 +147,10 @@ export async function POST(request: NextRequest) {
     };
 
     const leaveType = await prisma.leaveType.create({
-      data: createData,
+      data: {
+        ...createData,
+        tenantId: session.user.organizationId,
+      },
     });
 
     await logAction(

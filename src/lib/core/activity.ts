@@ -5,7 +5,8 @@ export async function logAction(
   action: string,
   entityType?: string,
   entityId?: string,
-  payload?: unknown
+  payload?: unknown,
+  tenantId?: string
 ) {
   try {
     const activity = await prisma.activityLog.create({
@@ -15,6 +16,7 @@ export async function logAction(
         entityType,
         entityId,
         payload: payload ? JSON.parse(JSON.stringify(payload)) : null,
+        tenantId: tenantId || 'SYSTEM',
       },
     });
 

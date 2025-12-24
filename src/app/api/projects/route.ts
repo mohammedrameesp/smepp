@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
         ...data,
         code,
         createdById: session.user.id,
+        tenantId: session.user.organizationId!,
       },
       include: {
         manager: { select: { id: true, name: true, email: true } },

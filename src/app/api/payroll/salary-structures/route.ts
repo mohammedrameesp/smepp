@@ -178,6 +178,7 @@ export async function POST(request: NextRequest) {
           grossSalary,
           effectiveFrom: new Date(data.effectiveFrom),
           isActive: true,
+          tenantId: session.user.organizationId!,
         },
         include: {
           user: {

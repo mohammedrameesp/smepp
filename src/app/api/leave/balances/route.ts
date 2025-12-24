@@ -106,6 +106,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     const body = await request.json();
     const validation = initializeLeaveBalanceSchema.safeParse(body);
 
@@ -160,6 +164,7 @@ export async function POST(request: NextRequest) {
         year,
         entitlement: entitlement ?? leaveType.defaultDays,
         carriedForward: carriedForward ?? 0,
+        tenantId: session.user.organizationId,
       },
       include: {
         user: {

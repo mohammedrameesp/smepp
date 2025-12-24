@@ -46,8 +46,8 @@ export async function generateUniqueSupplierCode(): Promise<string> {
   while (attempts < maxAttempts) {
     const code = await generateSupplierCode();
 
-    // Check if this code already exists
-    const existing = await prisma.supplier.findUnique({
+    // Check if this code already exists (use findFirst instead of findUnique for non-unique field)
+    const existing = await prisma.supplier.findFirst({
       where: { suppCode: code },
     });
 

@@ -92,3 +92,5 @@ nul
 
 .vercel
 .env*.local
+
+.vercel

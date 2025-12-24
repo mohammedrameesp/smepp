@@ -783,7 +783,7 @@ export default async function AdminDashboard() {
                 </Card>
 
                 {/* Company Documents */}
-                <Card className="bg-white border-l-4 border-l-teal-500 hover:shadow-lg transition-all">
+                <Card className="bg-white border-l-4 border-l-blue-500 hover:shadow-lg transition-all">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base font-semibold text-gray-900">Company Documents</CardTitle>

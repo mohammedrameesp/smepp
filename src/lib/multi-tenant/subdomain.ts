@@ -76,6 +76,7 @@ export const RESERVED_SUBDOMAINS = [
   'privacy',
   'terms',
   'tos',
+  'platform',
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════

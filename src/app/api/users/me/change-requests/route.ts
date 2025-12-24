@@ -64,7 +64,10 @@ async function createChangeRequestHandler(request: NextRequest) {
 
   if (!hrProfile) {
     hrProfile = await prisma.hRProfile.create({
-      data: { userId: session.user.id },
+      data: {
+        userId: session.user.id,
+        tenantId: session.user.organizationId!,
+      },
     });
   }
 
@@ -88,6 +91,7 @@ async function createChangeRequestHandler(request: NextRequest) {
     data: {
       hrProfileId: hrProfile.id,
       description: validation.data.description,
+      tenantId: session.user.organizationId!,
     },
   });
 

@@ -235,8 +235,12 @@ export async function POST(request: NextRequest) {
         totalOneTime: totalOneTime > 0 ? totalOneTime : null,
         totalMonthly: totalMonthly > 0 ? totalMonthly : null,
         totalContractValue: totalContractValue > 0 ? totalContractValue : null,
+        tenantId: session.user.organizationId!,
         items: {
-          create: itemsWithCalculations,
+          create: itemsWithCalculations.map(item => ({
+            ...item,
+            tenantId: session.user.organizationId!,
+          })),
         },
         history: {
           create: {

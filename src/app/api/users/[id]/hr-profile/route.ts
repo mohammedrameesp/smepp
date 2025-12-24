@@ -51,6 +51,7 @@ export async function GET(
       hrProfile = await prisma.hRProfile.create({
         data: {
           userId: id,
+          tenantId: session.user.organizationId!,
         },
       });
     }
@@ -153,6 +154,7 @@ export async function PATCH(
       create: {
         userId: id,
         ...processedData,
+        tenantId: session.user.organizationId!,
       },
     });
 

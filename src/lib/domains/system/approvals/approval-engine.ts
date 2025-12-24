@@ -115,7 +115,8 @@ export async function findApplicablePolicy(
 export async function initializeApprovalChain(
   entityType: ApprovalModule,
   entityId: string,
-  policy: ApprovalPolicyWithLevels
+  policy: ApprovalPolicyWithLevels,
+  tenantId?: string
 ): Promise<ApprovalStepWithApprover[]> {
   // Create approval steps for each level
   const stepsData = policy.levels.map((level) => ({
@@ -124,6 +125,7 @@ export async function initializeApprovalChain(
     levelOrder: level.levelOrder,
     requiredRole: level.approverRole,
     status: 'PENDING' as ApprovalStepStatus,
+    tenantId: tenantId || 'SYSTEM',
   }));
 
   // Use createMany for efficiency

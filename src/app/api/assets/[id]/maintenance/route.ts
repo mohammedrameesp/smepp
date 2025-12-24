@@ -48,6 +48,10 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     const { id } = await params;
 
     const body = await request.json();
@@ -68,6 +72,7 @@ export async function POST(
         maintenanceDate: new Date(maintenanceDate),
         notes: notes || null,
         performedBy: session.user.id,
+        tenantId: session.user.organizationId,
       },
     });
 

@@ -74,6 +74,10 @@ export async function POST(request: NextRequest) {
 
     const { levels, ...policyData } = validation.data;
 
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     // Create policy with levels in a transaction
     const policy = await prisma.$transaction(async (tx) => {
       const createdPolicy = await tx.approvalPolicy.create({
@@ -86,10 +90,12 @@ export async function POST(request: NextRequest) {
           minDays: policyData.minDays,
           maxDays: policyData.maxDays,
           priority: policyData.priority,
+          tenantId: session.user.organizationId!,
           levels: {
             create: levels.map((level) => ({
               levelOrder: level.levelOrder,
               approverRole: level.approverRole,
+              tenantId: session.user.organizationId!,
             })),
           },
         },

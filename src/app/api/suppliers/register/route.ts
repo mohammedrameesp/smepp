@@ -47,6 +47,9 @@ export async function POST(request: NextRequest) {
       : null;
 
     // Create supplier with PENDING status (suppCode will be assigned on approval)
+    // NOTE: This is a public registration route - tenantId should come from the registration context
+    // For now, we'll use a default system tenant or handle this differently
+    // This route may need special handling as it's for new supplier registration (public)
     const supplier = await prisma.supplier.create({
       data: {
         suppCode: null, // Will be assigned when approved
@@ -68,6 +71,7 @@ export async function POST(request: NextRequest) {
         paymentTerms: data.paymentTerms || null,
         additionalInfo: data.additionalInfo || null,
         status: 'PENDING',
+        tenantId: 'SYSTEM', // Public registration - will be associated with tenant on approval
       },
     });
 

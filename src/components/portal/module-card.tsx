@@ -17,7 +17,7 @@ interface ModuleCardProps {
     label: string;
     value: string | number;
   }[];
-  color?: 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'teal' | 'indigo';
+  color?: 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'indigo';
   comingSoon?: boolean;
 }
 
@@ -27,7 +27,6 @@ const colorClasses = {
   purple: 'from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 border-purple-200',
   orange: 'from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 border-orange-200',
   red: 'from-red-50 to-red-100 hover:from-red-100 hover:to-red-200 border-red-200',
-  teal: 'from-teal-50 to-teal-100 hover:from-teal-100 hover:to-teal-200 border-teal-200',
   indigo: 'from-indigo-50 to-indigo-100 hover:from-indigo-100 hover:to-indigo-200 border-indigo-200',
 };
 

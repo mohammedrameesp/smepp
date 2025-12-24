@@ -643,7 +643,7 @@ export default async function AdminReportsPage() {
         {/* Activity Logs */}
         <div id="activity-logs" className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Activity className="h-6 w-6 text-teal-500" />
+            <Activity className="h-6 w-6 text-blue-500" />
             Activity Logs
           </h2>
 
@@ -688,7 +688,7 @@ export default async function AdminReportsPage() {
                 <CardDescription>System-wide events</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold text-teal-600">{activityByAction.reduce((sum, item) => sum + item._count.action, 0)}</div>
+                <div className="text-4xl font-bold text-blue-600">{activityByAction.reduce((sum, item) => sum + item._count.action, 0)}</div>
                 <p className="text-sm text-gray-600 mt-2">All tracked actions</p>
                 <Link href="/admin/activity" className="text-sm text-blue-600 hover:underline mt-2 inline-block">
                   View full log →

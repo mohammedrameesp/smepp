@@ -26,6 +26,7 @@ async function getHRProfileHandler(request: NextRequest) {
     hrProfile = await prisma.hRProfile.create({
       data: {
         userId: session.user.id,
+        tenantId: session.user.organizationId!,
       },
     });
   }
@@ -128,6 +129,7 @@ async function updateHRProfileHandler(request: NextRequest) {
     update: processedData,
     create: {
       userId: session.user.id,
+      tenantId: session.user.organizationId!,
       ...processedData,
     },
   });

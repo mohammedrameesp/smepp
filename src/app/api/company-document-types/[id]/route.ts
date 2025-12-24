@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { companyDocumentTypeSchema } from '@/lib/validations/system/company-documents';
 
 // GET /api/company-document-types/[id] - Get a single document type
 export const GET = withErrorHandler(async (
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: APIContext
 ) => {
-  const { id } = await params;
+  const id = context.params?.id;
+  if (!id) {
+    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+  }
 
   const documentType = await prisma.companyDocumentType.findUnique({
     where: { id },
@@ -38,9 +41,12 @@ export const GET = withErrorHandler(async (
 // PUT /api/company-document-types/[id] - Update a document type
 export const PUT = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: APIContext
 ) => {
-  const { id } = await params;
+  const id = context.params?.id;
+  if (!id) {
+    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+  }
   const body = await request.json();
   const validatedData = companyDocumentTypeSchema.partial().parse(body);
 
@@ -58,7 +64,7 @@ export const PUT = withErrorHandler(async (
 
   // If code is being changed, check it doesn't conflict
   if (validatedData.code && validatedData.code !== existing.code) {
-    const codeExists = await prisma.companyDocumentType.findUnique({
+    const codeExists = await prisma.companyDocumentType.findFirst({
       where: { code: validatedData.code },
     });
 
@@ -81,9 +87,12 @@ export const PUT = withErrorHandler(async (
 // DELETE /api/company-document-types/[id] - Delete a document type
 export const DELETE = withErrorHandler(async (
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: APIContext
 ) => {
-  const { id } = await params;
+  const id = context.params?.id;
+  if (!id) {
+    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+  }
 
   // Check if document type exists
   const existing = await prisma.companyDocumentType.findUnique({

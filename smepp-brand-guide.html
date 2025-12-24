@@ -9,11 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #0f766e;
-            --primary-light: #14b8a6;
-            --primary-dark: #115e59;
-            --primary-50: #f0fdfa;
-            --primary-100: #ccfbf1;
+            --primary: #1e40af;
+            --primary-light: #3b82f6;
+            --primary-dark: #1e3a8a;
+            --primary-50: #eff6ff;
+            --primary-100: #dbeafe;
             --secondary: #6366f1;
             --amber: #f59e0b;
             --emerald: #10b981;
@@ -28,7 +28,7 @@
             --gray-700: #374151;
             --gray-800: #1f2937;
             --gray-900: #111827;
-            --gradient-primary: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+            --gradient-primary: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
         }
 
         * {
@@ -323,12 +323,12 @@
         .btn-primary {
             background: var(--gradient-primary);
             color: white;
-            box-shadow: 0 4px 14px 0 rgba(15, 118, 110, 0.4);
+            box-shadow: 0 4px 14px 0 rgba(30, 64, 175, 0.4);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px 0 rgba(15, 118, 110, 0.5);
+            box-shadow: 0 6px 20px 0 rgba(30, 64, 175, 0.5);
         }
 
         .btn-secondary {
@@ -844,31 +844,31 @@
                 <h3 class="card-title">Primary Colors</h3>
                 <div class="grid-4">
                     <div class="color-swatch">
-                        <div class="color-preview" style="background: #0f766e;"></div>
+                        <div class="color-preview" style="background: #1e40af;"></div>
                         <div class="color-info">
-                            <div class="color-name">Teal (Primary)</div>
-                            <div class="color-hex">#0F766E</div>
+                            <div class="color-name">Deep Blue (Primary)</div>
+                            <div class="color-hex">#1E40AF</div>
                         </div>
                     </div>
                     <div class="color-swatch">
-                        <div class="color-preview" style="background: #14b8a6;"></div>
+                        <div class="color-preview" style="background: #3b82f6;"></div>
                         <div class="color-info">
-                            <div class="color-name">Teal Light</div>
-                            <div class="color-hex">#14B8A6</div>
+                            <div class="color-name">Blue Light</div>
+                            <div class="color-hex">#3B82F6</div>
                         </div>
                     </div>
                     <div class="color-swatch">
-                        <div class="color-preview" style="background: #115e59;"></div>
+                        <div class="color-preview" style="background: #1e3a8a;"></div>
                         <div class="color-info">
-                            <div class="color-name">Teal Dark</div>
-                            <div class="color-hex">#115E59</div>
+                            <div class="color-name">Blue Dark</div>
+                            <div class="color-hex">#1E3A8A</div>
                         </div>
                     </div>
                     <div class="color-swatch">
-                        <div class="color-preview" style="background: #f0fdfa;"></div>
+                        <div class="color-preview" style="background: #eff6ff;"></div>
                         <div class="color-info">
-                            <div class="color-name">Teal 50</div>
-                            <div class="color-hex">#F0FDFA</div>
+                            <div class="color-name">Blue 50</div>
+                            <div class="color-hex">#EFF6FF</div>
                         </div>
                     </div>
                 </div>
@@ -946,14 +946,14 @@
                 <h3 class="card-title">Gradients</h3>
                 <div class="grid-2">
                     <div>
-                        <div style="height: 80px; border-radius: 8px; background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%); margin-bottom: 1rem;"></div>
+                        <div style="height: 80px; border-radius: 8px; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); margin-bottom: 1rem;"></div>
                         <div class="color-name">Primary Gradient</div>
-                        <code>linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)</code>
+                        <code>linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%)</code>
                     </div>
                     <div>
-                        <div style="height: 80px; border-radius: 8px; background: linear-gradient(135deg, #0f766e 0%, #115e59 50%, #0f766e 100%); margin-bottom: 1rem;"></div>
+                        <div style="height: 80px; border-radius: 8px; background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #1e40af 100%); margin-bottom: 1rem;"></div>
                         <div class="color-name">Hero Gradient</div>
-                        <code>linear-gradient(135deg, #0F766E 0%, #115E59 50%, #0F766E 100%)</code>
+                        <code>linear-gradient(135deg, #1E40AF 0%, #1E3A8A 50%, #1E40AF 100%)</code>
                     </div>
                 </div>
             </div>
@@ -991,7 +991,7 @@
                         <span style="font-size: 3rem; font-weight: 800;">SME</span><span style="font-size: 3rem; font-weight: 800; color: var(--primary-light);">++</span>
                     </div>
                     <p style="margin-top: 1rem; color: var(--gray-500); font-size: 0.875rem;">
-                        Inter, Weight 800. The "++" uses Teal Light (#14B8A6)
+                        Inter, Weight 800. The "++" uses Blue Light (#3B82F6)
                     </p>
                 </div>
             </div>
@@ -1140,12 +1140,12 @@
                 </div>
                 <pre><span class="comment">/* Primary Button CSS */</span>
 <span class="property">.btn-primary</span> {
-  <span class="property">background</span>: <span class="value">linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)</span>;
+  <span class="property">background</span>: <span class="value">linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%)</span>;
   <span class="property">color</span>: <span class="value">white</span>;
   <span class="property">padding</span>: <span class="value">0.75rem 1.5rem</span>;
   <span class="property">border-radius</span>: <span class="value">8px</span>;
   <span class="property">font-weight</span>: <span class="value">600</span>;
-  <span class="property">box-shadow</span>: <span class="value">0 4px 14px 0 rgba(15, 118, 110, 0.4)</span>;
+  <span class="property">box-shadow</span>: <span class="value">0 4px 14px 0 rgba(30, 64, 175, 0.4)</span>;
 }</pre>
             </div>
 
@@ -1160,7 +1160,7 @@
                     <div class="icon-item">
                         <div class="icon-preview">📦</div>
                         <div class="icon-name">Operations</div>
-                        <div class="icon-domain">Teal accent</div>
+                        <div class="icon-domain">Blue accent</div>
                     </div>
                     <div class="icon-item">
                         <div class="icon-preview">📁</div>
@@ -1348,11 +1348,11 @@
                     </div>
                     <div class="quick-ref-item">
                         <div class="quick-ref-label">Primary Color</div>
-                        <div class="quick-ref-value">#0F766E</div>
+                        <div class="quick-ref-value">#1E40AF</div>
                     </div>
                     <div class="quick-ref-item">
                         <div class="quick-ref-label">Accent Color</div>
-                        <div class="quick-ref-value">#14B8A6</div>
+                        <div class="quick-ref-value">#3B82F6</div>
                     </div>
                     <div class="quick-ref-item">
                         <div class="quick-ref-label">Font</div>

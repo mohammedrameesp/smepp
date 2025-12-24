@@ -221,6 +221,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             bankName: salary.user.hrProfile?.bankName,
             iban: salary.user.hrProfile?.iban,
             qidNumber: salary.user.hrProfile?.qidNumber,
+            tenantId: session.user.organizationId!,
           },
         });
 

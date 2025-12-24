@@ -6,9 +6,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Note: eslint config moved to eslint.config.js (Next.js 15+ change)
   // Allow larger file uploads (10MB)
   experimental: {
     serverActions: {

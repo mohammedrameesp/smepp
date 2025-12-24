@@ -77,7 +77,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // If name is being changed, check for duplicates
     if (data.name && data.name !== existing.name) {
-      const duplicate = await prisma.leaveType.findUnique({
+      const duplicate = await prisma.leaveType.findFirst({
         where: { name: data.name },
       });
 

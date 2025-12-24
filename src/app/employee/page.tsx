@@ -285,8 +285,8 @@ export default async function EmployeeDashboard() {
               <CardHeader className="pb-0 border-b">
                 <div className="flex items-center justify-between pb-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-teal-100 rounded-lg">
-                      <PalmtreeIcon className="h-5 w-5 text-teal-600" />
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <PalmtreeIcon className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
                       <h2 className="font-semibold text-gray-900">Leave Requests</h2>
@@ -349,12 +349,12 @@ export default async function EmployeeDashboard() {
                 )}
               </CardContent>
               <div className="px-6 py-3 border-t bg-gray-50 rounded-b-lg flex items-center justify-between">
-                <Link href="/employee/leave" className="text-sm text-teal-600 hover:text-teal-700 font-medium flex items-center gap-1">
+                <Link href="/employee/leave" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
                   View All
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link href="/employee/leave/new">
-                  <Button size="sm" className="bg-teal-600 hover:bg-teal-700">
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                     + New Request
                   </Button>
                 </Link>
@@ -551,7 +551,7 @@ export default async function EmployeeDashboard() {
                 Browse Subscriptions
               </Link>
               <span className="text-gray-300">|</span>
-              <Link href="/employee/leave" className="text-gray-700 hover:text-teal-600 flex items-center gap-1">
+              <Link href="/employee/leave" className="text-gray-700 hover:text-blue-600 flex items-center gap-1">
                 <PalmtreeIcon className="h-4 w-4" />
                 Leave Management
               </Link>

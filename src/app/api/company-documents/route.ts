@@ -128,6 +128,10 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  if (!session.user.organizationId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
+
   const body = await request.json();
   const validatedData = companyDocumentSchema.parse(body);
 
@@ -167,6 +171,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       renewalCost: validatedData.renewalCost || null,
       notes: validatedData.notes || null,
       createdById: session.user.id,
+      tenantId: session.user.organizationId,
     },
     include: {
       documentType: true,

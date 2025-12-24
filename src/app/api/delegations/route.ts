@@ -63,6 +63,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     // Only users with approver roles can create delegations
     if (!APPROVER_ROLES.includes(session.user.role as Role)) {
       return NextResponse.json(
@@ -140,6 +144,7 @@ export async function POST(request: NextRequest) {
         endDate: endDateObj,
         reason,
         isActive: true,
+        tenantId: session.user.organizationId,
       },
       include: {
         delegator: {

@@ -196,6 +196,7 @@ export async function POST(request: NextRequest) {
           totalNet,
           employeeCount: salaryStructures.length,
           createdById: session.user.id,
+          tenantId: session.user.organizationId!,
         },
         include: {
           createdBy: { select: { id: true, name: true } },

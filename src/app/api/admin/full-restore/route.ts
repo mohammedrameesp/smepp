@@ -151,11 +151,18 @@ export async function POST(request: NextRequest) {
           let asset;
           if (assetTag) {
             // Try to find existing asset by tag
-            asset = await prisma.asset.upsert({
+            const existing = await prisma.asset.findFirst({
               where: { assetTag: assetTag },
-              update: assetData,
-              create: assetData,
             });
+
+            if (existing) {
+              asset = await prisma.asset.update({
+                where: { id: existing.id },
+                data: assetData,
+              });
+            } else {
+              asset = await prisma.asset.create({ data: assetData });
+            }
             results.assets.updated++;
           } else {
             // Create new asset without tag

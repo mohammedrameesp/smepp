@@ -310,8 +310,12 @@ model Organization {
   slug String @unique // URL-friendly identifier (e.g., "acme-corp")
 
   // Branding
-  logoUrl      String?
-  primaryColor String  @default("#3B82F6")
+  logoUrl            String?
+  primaryColor       String   @default("#1E40AF") // Deep Blue - brand primary
+  secondaryColor     String?  // Accent color
+  loginBackgroundUrl String?  // Background image for login page
+  welcomeTitle       String?  // Custom welcome title (e.g., "Welcome to Acme")
+  welcomeSubtitle    String?  // Custom welcome subtitle/tagline
 
   // Settings
   timezone String @default("UTC")

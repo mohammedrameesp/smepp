@@ -249,12 +249,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
     }
 
+    // Get tenantId from session
+    const tenantId = session.user.organizationId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     // Create the request in a transaction
     const assetRequest = await prisma.$transaction(async (tx) => {
       const requestNumber = await generateRequestNumber(tx);
 
       const newRequest = await tx.assetRequest.create({
         data: {
+          tenantId,
           requestNumber,
           type,
           status,

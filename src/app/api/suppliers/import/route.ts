@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
         // No ID provided - check for duplicate by suppCode or name
         let existingSupplier = null;
         if (suppCode) {
-          existingSupplier = await prisma.supplier.findUnique({
+          existingSupplier = await prisma.supplier.findFirst({
             where: { suppCode },
           });
         }

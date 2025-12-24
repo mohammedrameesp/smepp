@@ -17,6 +17,10 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     const { id } = await params;
 
     // Get the original asset
@@ -82,6 +86,7 @@ export async function POST(
         assignedUserId: null, // Clear assignment
         notes: originalAsset.notes,
         location: originalAsset.location,
+        tenantId: session.user.organizationId,
       },
       include: {
         assignedUser: {

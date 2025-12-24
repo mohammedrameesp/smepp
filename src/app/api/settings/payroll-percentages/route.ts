@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
         key: SETTINGS_KEY,
         value: JSON.stringify(percentages),
         updatedBy: session.user.id,
+        tenantId: session.user.organizationId!,
       },
     });
 

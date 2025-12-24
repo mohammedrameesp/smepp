@@ -16,7 +16,8 @@ export interface CreateNotificationInput {
  * Non-blocking: failures are logged but don't break operations.
  */
 export async function createNotification(
-  input: CreateNotificationInput
+  input: CreateNotificationInput,
+  tenantId?: string
 ): Promise<boolean> {
   try {
     await prisma.notification.create({
@@ -28,6 +29,7 @@ export async function createNotification(
         link: input.link,
         entityType: input.entityType,
         entityId: input.entityId,
+        tenantId: tenantId || 'SYSTEM',
       },
     });
     return true;
@@ -43,7 +45,8 @@ export async function createNotification(
  * Non-blocking: failures are logged but don't break operations.
  */
 export async function createBulkNotifications(
-  inputs: CreateNotificationInput[]
+  inputs: CreateNotificationInput[],
+  tenantId?: string
 ): Promise<number> {
   try {
     const result = await prisma.notification.createMany({
@@ -55,6 +58,7 @@ export async function createBulkNotifications(
         link: input.link,
         entityType: input.entityType,
         entityId: input.entityId,
+        tenantId: tenantId || 'SYSTEM',
       })),
     });
     return result.count;

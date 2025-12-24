@@ -841,7 +841,7 @@ export const DEFAULT_LEAVE_TYPES = [
   {
     name: 'Compassionate Leave',
     description: 'Leave for bereavement or family emergencies (5 days paid)',
-    color: '#14B8A6', // Teal
+    color: '#3B82F6', // Blue
     defaultDays: 5,
     requiresApproval: true,
     requiresDocument: false,

@@ -142,6 +142,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     const body = await request.json();
     const validation = createLeaveRequestSchema.safeParse(body);
 
@@ -367,6 +371,7 @@ export async function POST(request: NextRequest) {
             leaveTypeId: data.leaveTypeId,
             year,
             entitlement,
+            tenantId: session.user.organizationId!,
           },
         });
       }
@@ -405,6 +410,7 @@ export async function POST(request: NextRequest) {
           emergencyContact: data.emergencyContact,
           emergencyPhone: data.emergencyPhone,
           status: 'PENDING',
+          tenantId: session.user.organizationId!,
         },
         include: {
           user: {

@@ -158,6 +158,7 @@ export async function POST(request: NextRequest) {
         approvedAt: new Date(),
         notes: data.notes,
         createdById: session.user.id,
+        tenantId: session.user.organizationId!,
       },
       include: {
         user: { select: { id: true, name: true, email: true } },

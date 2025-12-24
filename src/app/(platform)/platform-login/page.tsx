@@ -3,19 +3,16 @@
 import { signIn, getSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Mail, Lock, AlertCircle } from 'lucide-react';
-import { useSubdomain } from '@/hooks/use-subdomain';
-import { useTenantBranding } from '@/hooks/use-tenant-branding';
+import { Loader2, Mail, Lock, AlertCircle, ShieldCheck } from 'lucide-react';
 import { TenantBrandedPanel } from '@/components/auth/TenantBrandedPanel';
 
 const DEV_AUTH_ENABLED = process.env.NEXT_PUBLIC_DEV_AUTH_ENABLED === 'true';
 
-function LoginForm() {
+function PlatformLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -23,36 +20,18 @@ function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
-
-  // Get subdomain and tenant branding
-  const { subdomain, isLoading: subdomainLoading } = useSubdomain();
-  const { branding, isLoading: brandingLoading, error: brandingError } = useTenantBranding(subdomain);
-
-  // Dynamic colors based on branding
-  const primaryColor = branding?.primaryColor || '#1E40AF';
-  const orgName = branding?.organizationName || 'SME++';
-  const welcomeTitle = branding?.welcomeTitle || 'Welcome back';
-  const welcomeSubtitle = branding?.welcomeSubtitle || 'Sign in to your account';
 
   useEffect(() => {
-    // Check for message in URL (e.g., after signup)
-    const msg = searchParams.get('message');
-    if (msg) {
-      setMessage(msg);
-    }
-
-    // Check if user is already logged in
+    // Check if user is already logged in as super admin
     getSession().then((session) => {
-      if (session) {
-        if (session.user.organizationId) {
-          router.push('/admin');
-        } else {
-          router.push('/pending');
-        }
+      if (session?.user?.isSuperAdmin) {
+        router.push('/super-admin');
+      } else if (session) {
+        // Logged in but not super admin - show error
+        setError('Access restricted to platform administrators');
       }
     });
-  }, [router, searchParams]);
+  }, [router]);
 
   const handleCredentialsSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,24 +47,32 @@ function LoginForm() {
 
       if (result?.error) {
         setError('Invalid email or password');
-      } else if (result?.ok) {
-        // Force full page reload to get fresh session data
-        // This ensures the JWT token is fully propagated
-        window.location.href = '/';
+        setIsLoading(false);
+        return;
+      }
+
+      if (result?.ok) {
+        // Check if user is super admin
+        const session = await getSession();
+        if (session?.user?.isSuperAdmin) {
+          router.push('/super-admin');
+        } else {
+          setError('Access restricted to platform administrators');
+          setIsLoading(false);
+        }
       }
     } catch (err) {
       console.error('Sign in error:', err);
       setError('Failed to sign in. Please try again.');
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   const handleOAuthSignIn = async (provider: string) => {
     setOauthLoading(provider);
     try {
-      // Redirect to a page that will check org status and route appropriately
-      await signIn(provider, { callbackUrl: '/' });
+      // After OAuth, redirect to this page to validate super admin status
+      await signIn(provider, { callbackUrl: '/platform-login' });
     } catch (err) {
       console.error(`${provider} sign in error:`, err);
       setError(`Failed to sign in with ${provider}`);
@@ -93,76 +80,37 @@ function LoginForm() {
     }
   };
 
-  // Show branding error for invalid subdomain
-  if (subdomain && brandingError && !brandingLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Organization Not Found
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            The organization &quot;{subdomain}&quot; does not exist.
-          </p>
-          <a
-            href={`${window.location.protocol}//${process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000'}/login`}
-            className="text-blue-600 hover:text-blue-700 hover:underline"
-          >
-            Go to main login
-          </a>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex">
-      {/* Left Column - Dynamic Branding */}
-      <TenantBrandedPanel
-        branding={branding}
-        isLoading={subdomainLoading || brandingLoading}
-        variant="tenant"
-      />
+      {/* Left Column - Platform Branding */}
+      <TenantBrandedPanel branding={null} isLoading={false} variant="super-admin" />
 
       {/* Right Column - Login Form */}
       <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8">
-            {branding?.logoUrl ? (
-              <img
-                src={branding.logoUrl}
-                alt={orgName}
-                className="h-12 w-auto mx-auto mb-2"
-              />
-            ) : (
-              <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
-                {subdomain ? orgName : (
-                  <>SME<span className="text-blue-600">++</span></>
-                )}
-              </h1>
-            )}
-            <p className="text-gray-600 dark:text-gray-400">
-              {subdomain ? welcomeTitle : 'Operations, Upgraded'}
-            </p>
+            <div className="flex justify-center mb-4">
+              <ShieldCheck className="h-12 w-12 text-blue-500" />
+            </div>
+            <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
+              SME<span className="text-blue-500">++</span>
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">Platform Administration</p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
             <div className="text-center mb-8">
+              <div className="hidden lg:flex justify-center mb-4">
+                <ShieldCheck className="h-10 w-10 text-blue-500" />
+              </div>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                {welcomeTitle}
+                Admin Portal Access
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mt-2">
-                {welcomeSubtitle}
+                Sign in with your administrator credentials
               </p>
             </div>
-
-            {/* Success/Info Message */}
-            {message && (
-              <Alert className="mb-4 bg-green-50 border-green-200">
-                <AlertDescription className="text-green-800">{message}</AlertDescription>
-              </Alert>
-            )}
 
             {/* Error Message */}
             {error && (
@@ -246,7 +194,7 @@ function LoginForm() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="you@company.com"
+                    placeholder="admin@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
@@ -257,16 +205,7 @@ function LoginForm() {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm hover:underline"
-                    style={{ color: primaryColor }}
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -284,10 +223,7 @@ function LoginForm() {
 
               <Button
                 type="submit"
-                className="w-full h-12 text-white shadow-lg"
-                style={{
-                  background: `linear-gradient(to right, ${primaryColor}, ${branding?.secondaryColor || primaryColor})`,
-                }}
+                className="w-full h-12 bg-gradient-to-r from-gray-800 to-gray-700 hover:from-gray-900 hover:to-gray-800 text-white shadow-lg"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -296,7 +232,10 @@ function LoginForm() {
                     Signing in...
                   </>
                 ) : (
-                  'Sign in'
+                  <>
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    Access Admin Portal
+                  </>
                 )}
               </Button>
             </form>
@@ -308,24 +247,17 @@ function LoginForm() {
                   Development Mode
                 </p>
                 <p className="text-xs text-amber-600 dark:text-amber-300">
-                  admin@test.local / admin123
+                  Use SUPER_ADMIN_EMAIL env var account
                 </p>
               </div>
             )}
 
-            {/* Only show signup link on main domain */}
-            {!subdomain && (
-              <p className="text-center text-sm text-muted-foreground mt-6">
-                Don&apos;t have an account?{' '}
-                <Link
-                  href="/signup"
-                  className="font-medium hover:underline"
-                  style={{ color: primaryColor }}
-                >
-                  Sign up free
-                </Link>
-              </p>
-            )}
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Not an administrator?{' '}
+              <a href="/login" className="text-blue-600 font-medium hover:text-blue-700 hover:underline">
+                Go to regular login
+              </a>
+            </p>
           </div>
         </div>
       </div>
@@ -333,7 +265,7 @@ function LoginForm() {
   );
 }
 
-export default function LoginPage() {
+export default function PlatformLoginPage() {
   return (
     <Suspense
       fallback={
@@ -342,7 +274,7 @@ export default function LoginPage() {
         </div>
       }
     >
-      <LoginForm />
+      <PlatformLoginForm />
     </Suspense>
   );
 }

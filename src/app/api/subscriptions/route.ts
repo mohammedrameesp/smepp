@@ -153,7 +153,10 @@ export async function POST(request: NextRequest) {
 
     // Create subscription
     const subscription = await prisma.subscription.create({
-      data: subscriptionData,
+      data: {
+        ...subscriptionData,
+        tenantId: session.user.organizationId!,
+      },
       include: {
         assignedUser: {
           select: {

@@ -92,6 +92,10 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  if (!session.user.organizationId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
+
   // Parse and validate request body
   const body = await request.json();
   const validation = createAssetSchema.safeParse(body);
@@ -151,9 +155,8 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
         transferNotes: data.transferNotes || null,
         notes: data.notes || null,
         location: data.location || null,
-        ...(data.assignedUserId && {
-          assignedUser: { connect: { id: data.assignedUserId } }
-        }),
+        tenantId: session.user.organizationId,
+        assignedUserId: data.assignedUserId || null,
       },
       include: {
         assignedUser: {

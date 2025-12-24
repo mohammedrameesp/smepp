@@ -23,7 +23,7 @@ const RESERVED_SUBDOMAINS = new Set([
   'blog', 'status', 'mail', 'cdn', 'assets', 'static', 'media', 'dev',
   'staging', 'test', 'demo', 'beta', 'login', 'signup', 'auth', 'sso',
   'account', 'billing', 'pricing', 'enterprise', 'team', 'org', 'about',
-  'contact', 'legal', 'privacy', 'terms',
+  'contact', 'legal', 'privacy', 'terms', 'platform',
 ]);
 
 // Routes that don't require authentication (on main domain)
@@ -31,8 +31,10 @@ const PUBLIC_ROUTES = [
   '/',
   '/login',
   '/signup',
+  '/platform-login', // Super admin login
   '/api/auth',
   '/api/webhooks',
+  '/api/public', // Public APIs (tenant branding, etc.)
   '/verify',
   '/invite',
   '/pricing',
@@ -137,10 +139,10 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    // Unauthenticated on subdomain - redirect to main login
+    // Unauthenticated on subdomain - redirect to subdomain login (not main domain)
     if (!token) {
-      const loginUrl = new URL('/login', `${request.nextUrl.protocol}//${APP_DOMAIN}`);
-      loginUrl.searchParams.set('callbackUrl', request.url);
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('callbackUrl', pathname);
       return NextResponse.redirect(loginUrl);
     }
 

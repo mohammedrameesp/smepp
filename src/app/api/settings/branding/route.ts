@@ -110,6 +110,7 @@ export async function PUT(request: NextRequest) {
         actorUserId: session.user.id,
         action: 'BRANDING_UPDATED',
         payload: validation.data,
+        tenantId: session.user.organizationId!,
       },
     });
 

@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
 
           // Check if asset tag is provided and conflicts
           if (assetTag) {
-            const existingByTag = await prisma.asset.findUnique({
+            const existingByTag = await prisma.asset.findFirst({
               where: { assetTag },
             });
 
@@ -247,7 +247,7 @@ export async function POST(request: NextRequest) {
 
         // Check if asset tag already exists
         if (finalAssetTag) {
-          const existingAsset = await prisma.asset.findUnique({
+          const existingAsset = await prisma.asset.findFirst({
             where: { assetTag: finalAssetTag },
           });
 
@@ -258,7 +258,7 @@ export async function POST(request: NextRequest) {
             } else if (duplicateStrategy === 'update') {
               // Update existing asset
               const asset = await prisma.asset.update({
-                where: { assetTag: finalAssetTag },
+                where: { id: existingAsset.id },
                 data: assetData,
               });
 

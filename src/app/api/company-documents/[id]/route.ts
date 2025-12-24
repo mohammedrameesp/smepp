@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { companyDocumentSchema } from '@/lib/validations/system/company-documents';
 import { getDocumentExpiryInfo } from '@/lib/domains/system/company-documents/document-utils';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -10,9 +10,12 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 // GET /api/company-documents/[id] - Get a single document
 export const GET = withErrorHandler(async (
   _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: APIContext
 ) => {
-  const { id } = await params;
+  const id = context.params?.id;
+  if (!id) {
+    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+  }
 
   const document = await prisma.companyDocument.findUnique({
     where: { id },
@@ -55,14 +58,17 @@ export const GET = withErrorHandler(async (
 // PUT /api/company-documents/[id] - Update a document
 export const PUT = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: APIContext
 ) => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = await params;
+  const id = context.params?.id;
+  if (!id) {
+    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+  }
   const body = await request.json();
   const validatedData = companyDocumentSchema.partial().parse(body);
 
@@ -155,14 +161,17 @@ export const PUT = withErrorHandler(async (
 // DELETE /api/company-documents/[id] - Delete a document
 export const DELETE = withErrorHandler(async (
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: APIContext
 ) => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = await params;
+  const id = context.params?.id;
+  if (!id) {
+    return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+  }
 
   // Check if document exists
   const existing = await prisma.companyDocument.findUnique({
