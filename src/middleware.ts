@@ -146,8 +146,17 @@ export async function middleware(request: NextRequest) {
       secret: process.env.NEXTAUTH_SECRET,
     });
 
-    // Allow public routes on subdomains (for login redirects)
-    if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
+    // Subdomain root - redirect to /admin or /login
+    if (pathname === '/') {
+      if (token && token.organizationSlug?.toString().toLowerCase() === subdomain.toLowerCase()) {
+        return NextResponse.redirect(new URL('/admin', request.url));
+      } else {
+        return NextResponse.redirect(new URL('/login', request.url));
+      }
+    }
+
+    // Allow public routes on subdomains (for login redirects) - but not root
+    if (PUBLIC_ROUTES.some((route) => route !== '/' && pathname.startsWith(route))) {
       const response = NextResponse.next();
       response.headers.set('x-subdomain', subdomain);
       return response;
