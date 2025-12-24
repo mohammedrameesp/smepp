@@ -19,21 +19,31 @@ export default async function AdminAssetsPage() {
     redirect('/forbidden');
   }
 
-  // Fetch stats only (not all assets - the table component fetches its own data)
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
+  // Fetch stats only (not all assets - the table component fetches its own data) - tenant-scoped
   const [totalUsers, assetStats, assignedCount, pendingRequests, pendingReturns] = await Promise.all([
-    prisma.user.count(),
+    prisma.user.count({
+      where: { organizationMemberships: { some: { organizationId: tenantId } } },
+    }),
     prisma.asset.aggregate({
+      where: { tenantId },
       _count: { _all: true },
       _sum: { priceQAR: true },
     }),
     prisma.asset.count({
-      where: { assignedUserId: { not: null } },
+      where: { tenantId, assignedUserId: { not: null } },
     }),
     prisma.assetRequest.count({
-      where: { status: AssetRequestStatus.PENDING_ADMIN_APPROVAL },
+      where: { tenantId, status: AssetRequestStatus.PENDING_ADMIN_APPROVAL },
     }),
     prisma.assetRequest.count({
-      where: { status: AssetRequestStatus.PENDING_RETURN_APPROVAL },
+      where: { tenantId, status: AssetRequestStatus.PENDING_RETURN_APPROVAL },
     }),
   ]);
 

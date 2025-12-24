@@ -20,6 +20,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const priority = searchParams.get('priority');
@@ -27,8 +34,8 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
 
-    // Build where clause
-    const where: any = {};
+    // Build where clause with tenant filtering
+    const where: any = { tenantId };
 
     // Non-admin users can only see their own requests
     if (session.user.role !== Role.ADMIN) {
@@ -286,11 +293,14 @@ export async function POST(request: NextRequest) {
         // Initialize approval chain
         const steps = await initializeApprovalChain('PURCHASE_REQUEST', purchaseRequest.id, approvalPolicy);
 
-        // Notify users with the first level's required role
+        // Notify users with the first level's required role (tenant-scoped)
         const firstStep = steps[0];
         if (firstStep) {
           const approvers = await prisma.user.findMany({
-            where: { role: firstStep.requiredRole },
+            where: {
+              role: firstStep.requiredRole,
+              organizationMemberships: { some: { organizationId: session.user.organizationId! } },
+            },
             select: { id: true, email: true },
           });
 
@@ -328,9 +338,12 @@ export async function POST(request: NextRequest) {
           }
         }
       } else {
-        // No policy - fall back to notifying all admins
+        // No policy - fall back to notifying all admins (tenant-scoped)
         const admins = await prisma.user.findMany({
-          where: { role: Role.ADMIN },
+          where: {
+            role: Role.ADMIN,
+            organizationMemberships: { some: { organizationId: session.user.organizationId! } },
+          },
           select: { id: true, email: true },
         });
 

@@ -152,11 +152,12 @@ async function updateHRProfileHandler(request: NextRequest) {
         select: { name: true, email: true },
       });
 
-      // Get all admin users
+      // Get all admin users (tenant-scoped)
       const admins = await prisma.user.findMany({
         where: {
           role: Role.ADMIN,
           isSystemAccount: false,
+          organizationMemberships: { some: { organizationId: session.user.organizationId! } },
         },
         select: { email: true, name: true },
       });

@@ -49,11 +49,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // If chain is complete and all approved, update the original entity and notify requester
     if (result.isChainComplete && result.allApproved) {
       await handleFinalApproval(result.step.entityType, result.step.entityId, session.user.id);
-    } else if (!result.isChainComplete) {
-      // Notify next approver
+    } else if (!result.isChainComplete && session.user.organizationId) {
+      // Notify next approver (tenant-scoped)
       const nextStep = await getCurrentPendingStep(result.step.entityType, result.step.entityId);
       if (nextStep) {
-        await notifyNextApprover(result.step.entityType, result.step.entityId, nextStep.requiredRole);
+        await notifyNextApprover(result.step.entityType, result.step.entityId, nextStep.requiredRole, session.user.organizationId);
       }
     }
 
@@ -151,10 +151,13 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
   }
 }
 
-async function notifyNextApprover(entityType: string, entityId: string, requiredRole: string) {
-  // Find users with the required role to notify
+async function notifyNextApprover(entityType: string, entityId: string, requiredRole: string, tenantId: string) {
+  // Find users with the required role to notify (tenant-scoped)
   const approvers = await prisma.user.findMany({
-    where: { role: requiredRole as never },
+    where: {
+      role: requiredRole as never,
+      organizationMemberships: { some: { organizationId: tenantId } },
+    },
     select: { id: true },
   });
 

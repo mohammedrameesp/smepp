@@ -33,15 +33,16 @@ const MODULE_CONFIG = {
   },
 };
 
-async function getPendingApprovals(userId: string, userRole: Role) {
+async function getPendingApprovals(userId: string, userRole: Role, tenantId: string) {
   // Get roles the user can approve for (their own role + delegations)
   const rolesCanApprove: Role[] = userRole === 'ADMIN' ? [] : [userRole];
 
-  // For non-admin users, find active delegations
+  // For non-admin users, find active delegations (tenant-scoped)
   if (userRole !== 'ADMIN') {
     const now = new Date();
     const delegations = await prisma.approverDelegation.findMany({
       where: {
+        tenantId,
         delegateeId: userId,
         isActive: true,
         startDate: { lte: now },
@@ -61,10 +62,11 @@ async function getPendingApprovals(userId: string, userRole: Role) {
     }
   }
 
-  // Get all pending steps
+  // Get all pending steps (tenant-scoped)
   const whereClause = userRole === 'ADMIN'
-    ? { status: 'PENDING' as const }
+    ? { tenantId, status: 'PENDING' as const }
     : {
+        tenantId,
         status: 'PENDING' as const,
         requiredRole: { in: rolesCanApprove },
       };
@@ -195,13 +197,18 @@ export default async function MyApprovalsPage() {
     redirect('/');
   }
 
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    redirect('/');
+  }
+
   // Only approver roles and admin can access
   const approverRoles: Role[] = ['ADMIN', 'MANAGER', 'HR_MANAGER', 'FINANCE_MANAGER', 'DIRECTOR'];
   if (!approverRoles.includes(session.user.role)) {
     redirect('/');
   }
 
-  const approvals = await getPendingApprovals(session.user.id, session.user.role);
+  const approvals = await getPendingApprovals(session.user.id, session.user.role, session.user.organizationId);
 
   return (
     <div className="space-y-6">

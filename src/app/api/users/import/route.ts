@@ -18,6 +18,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     // Get file from request
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -133,6 +140,12 @@ export async function POST(request: NextRequest) {
               name,
               role,
               emailVerified: null,
+              organizationMemberships: {
+                create: {
+                  organizationId: tenantId,
+                  role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+                },
+              },
             },
             update: {
               name: name || undefined,
@@ -140,6 +153,15 @@ export async function POST(request: NextRequest) {
               email,
             },
           });
+
+          // Ensure organization membership exists for updated users
+          if (existingUserById) {
+            await prisma.organizationUser.upsert({
+              where: { organizationId_userId: { organizationId: tenantId, userId: user.id } },
+              create: { organizationId: tenantId, userId: user.id, role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER' },
+              update: {},
+            });
+          }
 
           // Log activity
           await logAction(
@@ -182,6 +204,13 @@ export async function POST(request: NextRequest) {
               },
             });
 
+            // Ensure organization membership exists
+            await prisma.organizationUser.upsert({
+              where: { organizationId_userId: { organizationId: tenantId, userId: existingUser.id } },
+              create: { organizationId: tenantId, userId: existingUser.id, role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER' },
+              update: {},
+            });
+
             // Log activity
             await logAction(
               session.user.id,
@@ -196,13 +225,19 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Create new user (no ID provided, doesn't exist)
+        // Create new user (no ID provided, doesn't exist) with organization membership
         const user = await prisma.user.create({
           data: {
             email,
             name,
             role,
             emailVerified: null,
+            organizationMemberships: {
+              create: {
+                organizationId: tenantId,
+                role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+              },
+            },
           },
         });
 

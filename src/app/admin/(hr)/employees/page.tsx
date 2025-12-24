@@ -21,9 +21,16 @@ export default async function AdminEmployeesPage() {
     redirect('/forbidden');
   }
 
-  // Get pending change requests count
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
+  // Get pending change requests count (tenant-scoped)
   const pendingChangeRequests = await prisma.profileChangeRequest.count({
-    where: { status: 'PENDING' }
+    where: { tenantId, status: 'PENDING' }
   });
 
   return (

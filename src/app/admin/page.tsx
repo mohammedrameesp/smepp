@@ -166,7 +166,7 @@ export default async function AdminDashboard() {
   async function getMonthlySpendData() {
     const months = [];
     const currentDate = new Date();
-    const tenantId = session.user.organizationId;
+    const tenantId = session!.user.organizationId;
 
     const allSubscriptions = await prisma.subscription.findMany({
       where: {

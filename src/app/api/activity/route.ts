@@ -22,10 +22,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
-    
+
     const validation = querySchema.safeParse(queryParams);
     if (!validation.success) {
       return NextResponse.json({
@@ -36,8 +43,8 @@ export async function GET(request: NextRequest) {
 
     const { actor, entityType, from, to, limit, offset } = validation.data;
 
-    // Build where clause
-    const where: any = {};
+    // Build where clause with tenant filtering
+    const where: any = { tenantId };
     
     if (actor) {
       where.actorUserId = actor;

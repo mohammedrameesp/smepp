@@ -19,14 +19,22 @@ export default async function AdminSuppliersPage() {
     redirect('/forbidden');
   }
 
-  // Fetch only statistics (not all suppliers - table component fetches its own data)
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
+  // Fetch only statistics (not all suppliers - table component fetches its own data) - tenant-scoped
   const [totalSuppliers, categories, totalEngagements] = await Promise.all([
-    prisma.supplier.count(),
+    prisma.supplier.count({ where: { tenantId } }),
     prisma.supplier.findMany({
+      where: { tenantId },
       select: { category: true },
       distinct: ['category'],
     }),
-    prisma.supplierEngagement.count(),
+    prisma.supplierEngagement.count({ where: { tenantId } }),
   ]);
 
   const uniqueCategories = categories.length;

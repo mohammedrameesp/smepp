@@ -20,12 +20,19 @@ export default async function AdminSubscriptionsPage() {
     redirect('/forbidden');
   }
 
-  // Fetch only statistics (not all subscriptions - table component fetches its own data)
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
+  // Fetch only statistics (not all subscriptions - table component fetches its own data) - tenant-scoped
   const [activeCount, cancelledCount, activeSubscriptions] = await Promise.all([
-    prisma.subscription.count({ where: { status: 'ACTIVE' } }),
-    prisma.subscription.count({ where: { status: 'CANCELLED' } }),
+    prisma.subscription.count({ where: { tenantId, status: 'ACTIVE' } }),
+    prisma.subscription.count({ where: { tenantId, status: 'CANCELLED' } }),
     prisma.subscription.findMany({
-      where: { status: 'ACTIVE' },
+      where: { tenantId, status: 'ACTIVE' },
       select: {
         billingCycle: true,
         renewalDate: true,

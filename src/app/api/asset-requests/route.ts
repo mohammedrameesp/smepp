@@ -32,6 +32,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
 
@@ -49,9 +56,9 @@ export async function GET(request: NextRequest) {
     const isAdmin = session.user.role === Role.ADMIN;
     const effectiveUserId = isAdmin ? userId : session.user.id;
 
-    // Build where clause
+    // Build where clause with tenant filtering
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: Record<string, any> = {};
+    const where: Record<string, any> = { tenantId };
 
     if (effectiveUserId) {
       where.userId = effectiveUserId;
@@ -338,8 +345,12 @@ export async function POST(request: NextRequest) {
           // Notify users with the first level's required role
           const firstStep = steps[0];
           if (firstStep) {
+            // Get approvers within the tenant
             const approvers = await prisma.user.findMany({
-              where: { role: firstStep.requiredRole },
+              where: {
+                role: firstStep.requiredRole,
+                organizationMemberships: { some: { organizationId: tenantId } },
+              },
               select: { id: true, email: true },
             });
 
@@ -370,9 +381,12 @@ export async function POST(request: NextRequest) {
             }
           }
         } else {
-          // No policy - fall back to notifying all admins
+          // No policy - fall back to notifying all admins (tenant-scoped)
           const admins = await prisma.user.findMany({
-            where: { role: Role.ADMIN },
+            where: {
+              role: Role.ADMIN,
+              organizationMemberships: { some: { organizationId: tenantId } },
+            },
             select: { id: true, email: true },
           });
           const emailData = assetRequestSubmittedEmail({
@@ -426,9 +440,12 @@ export async function POST(request: NextRequest) {
           )
         );
       } else if (type === AssetRequestType.RETURN_REQUEST) {
-        // Notify admins about return request
+        // Notify admins about return request (tenant-scoped)
         const admins = await prisma.user.findMany({
-          where: { role: Role.ADMIN },
+          where: {
+            role: Role.ADMIN,
+            organizationMemberships: { some: { organizationId: tenantId } },
+          },
           select: { id: true, email: true },
         });
         const emailData = assetReturnRequestEmail({

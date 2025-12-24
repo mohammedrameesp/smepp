@@ -14,8 +14,16 @@ export default async function EmployeeAllAssetsPage() {
     redirect('/login');
   }
 
-  // Fetch all assets with related data
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
+  // Fetch all assets with related data (tenant-scoped)
   const assetsRaw = await prisma.asset.findMany({
+    where: { tenantId },
     include: {
       assignedUser: {
         select: {
