@@ -27,7 +27,14 @@ export default async function AdminReportsPage() {
     redirect('/forbidden');
   }
 
-  // Get comprehensive stats from ALL modules
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    redirect('/forbidden');
+  }
+
+  const tenantId = session.user.organizationId;
+
+  // Get comprehensive stats from ALL modules (tenant-scoped)
   const [
     // Assets
     totalAssets,
@@ -73,37 +80,44 @@ export default async function AdminReportsPage() {
     activityByAction,
     activityByEntity,
   ] = await Promise.all([
-    // Assets queries
-    prisma.asset.count(),
+    // Assets queries (tenant-scoped)
+    prisma.asset.count({ where: { tenantId } }),
     prisma.asset.groupBy({
       by: ['status'],
+      where: { tenantId },
       _count: { status: true },
     }),
     prisma.asset.groupBy({
       by: ['type'],
+      where: { tenantId },
       _count: { type: true },
       orderBy: { _count: { type: 'desc' } },
       take: 10,
     }),
     prisma.asset.aggregate({
+      where: { tenantId },
       _sum: { priceQAR: true },
     }),
 
-    // Subscriptions queries
-    prisma.subscription.count(),
+    // Subscriptions queries (tenant-scoped)
+    prisma.subscription.count({ where: { tenantId } }),
     prisma.subscription.groupBy({
       by: ['status'],
+      where: { tenantId },
       _count: { status: true },
     }),
     prisma.subscription.groupBy({
       by: ['billingCycle'],
+      where: { tenantId },
       _count: { billingCycle: true },
     }),
     prisma.subscription.aggregate({
+      where: { tenantId },
       _sum: { costQAR: true },
     }),
     prisma.subscription.count({
       where: {
+        tenantId,
         status: 'ACTIVE',
         renewalDate: {
           gte: new Date(),
@@ -112,59 +126,74 @@ export default async function AdminReportsPage() {
       },
     }),
 
-    // Suppliers queries
-    prisma.supplier.count(),
+    // Suppliers queries (tenant-scoped)
+    prisma.supplier.count({ where: { tenantId } }),
     prisma.supplier.groupBy({
       by: ['status'],
+      where: { tenantId },
       _count: { status: true },
     }),
     prisma.supplier.groupBy({
       by: ['category'],
+      where: { tenantId },
       _count: { category: true },
       orderBy: { _count: { category: 'desc' } },
       take: 10,
     }),
-    prisma.supplierEngagement.count(),
+    prisma.supplierEngagement.count({ where: { tenantId } }),
 
-    // Users queries
-    prisma.user.count(),
+    // Users queries (tenant-scoped)
+    prisma.user.count({
+      where: { organizationMemberships: { some: { organizationId: tenantId } } },
+    }),
     prisma.user.groupBy({
       by: ['role'],
+      where: { organizationMemberships: { some: { organizationId: tenantId } } },
       _count: { role: true },
     }),
-    prisma.user.count(),
+    prisma.user.count({
+      where: { organizationMemberships: { some: { organizationId: tenantId } } },
+    }),
 
-    // Purchase Requests queries
-    prisma.purchaseRequest.count(),
+    // Purchase Requests queries (tenant-scoped)
+    prisma.purchaseRequest.count({ where: { tenantId } }),
     prisma.purchaseRequest.groupBy({
       by: ['status'],
+      where: { tenantId },
       _count: { status: true },
     }),
     prisma.purchaseRequest.groupBy({
       by: ['priority'],
+      where: { tenantId },
       _count: { priority: true },
     }),
     prisma.purchaseRequest.groupBy({
       by: ['costType'],
+      where: { tenantId },
       _count: { costType: true },
     }),
     prisma.purchaseRequest.aggregate({
+      where: { tenantId },
       _sum: { totalAmount: true },
     }),
     prisma.purchaseRequest.count({
-      where: { status: 'PENDING' },
+      where: { tenantId, status: 'PENDING' },
     }),
 
-    // Employees/HR queries
+    // Employees/HR queries (tenant-scoped)
     prisma.user.count({
-      where: { role: { in: ['ADMIN', 'EMPLOYEE'] } },
+      where: {
+        role: { in: ['ADMIN', 'EMPLOYEE'] },
+        organizationMemberships: { some: { organizationId: tenantId } },
+      },
     }),
-    prisma.hRProfile.count(),
+    prisma.hRProfile.count({ where: { tenantId } }),
     prisma.profileChangeRequest.count({
-      where: { status: 'PENDING' },
+      where: { tenantId, status: 'PENDING' },
     }),
     prisma.hRProfile.count({
       where: {
+        tenantId,
         OR: [
           { qidExpiry: { lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), gte: new Date() } },
           { passportExpiry: { lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), gte: new Date() } },
@@ -173,11 +202,12 @@ export default async function AdminReportsPage() {
       },
     }),
     prisma.hRProfile.count({
-      where: { onboardingStep: { lt: 10 } },
+      where: { tenantId, onboardingStep: { lt: 10 } },
     }),
 
-    // Activity Logs queries
+    // Activity Logs queries (tenant-scoped)
     prisma.activityLog.findMany({
+      where: { tenantId },
       take: 20,
       orderBy: { at: 'desc' },
       include: {
@@ -188,12 +218,14 @@ export default async function AdminReportsPage() {
     }),
     prisma.activityLog.groupBy({
       by: ['action'],
+      where: { tenantId },
       _count: { action: true },
       orderBy: { _count: { action: 'desc' } },
       take: 10,
     }),
     prisma.activityLog.groupBy({
       by: ['entityType'],
+      where: { tenantId },
       _count: { entityType: true },
       orderBy: { _count: { entityType: 'desc' } },
     }),
