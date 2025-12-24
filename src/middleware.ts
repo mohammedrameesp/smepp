@@ -73,8 +73,12 @@ function extractSubdomain(host: string): SubdomainInfo {
   const hostWithoutPort = host.split(':')[0];
   const appDomainWithoutPort = APP_DOMAIN.split(':')[0];
 
-  // Check if this is the main domain
-  if (hostWithoutPort === appDomainWithoutPort || host === APP_DOMAIN) {
+  // Check if this is the main domain (including www variant)
+  if (
+    hostWithoutPort === appDomainWithoutPort ||
+    host === APP_DOMAIN ||
+    hostWithoutPort === `www.${appDomainWithoutPort}`
+  ) {
     return { subdomain: null, isMainDomain: true, isReserved: false };
   }
 
