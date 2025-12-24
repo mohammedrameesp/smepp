@@ -28,13 +28,15 @@ export default async function AdminDashboard() {
   let adminData = null;
   let statsData = null;
 
-  if (isAdmin) {
+  if (isAdmin && session.user.organizationId) {
+    const tenantId = session.user.organizationId;
+
     // Calculate date thresholds for expiry checks
     const today = new Date();
     const thirtyDaysFromNow = new Date(today);
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-    // Batch 1: Main data queries
+    // Batch 1: Main data queries (tenant-scoped)
     const [
       allSubscriptions,
       recentActivity,
@@ -44,6 +46,7 @@ export default async function AdminDashboard() {
     ] = await Promise.all([
       prisma.subscription.findMany({
         where: {
+          tenantId,
           status: 'ACTIVE',
           renewalDate: { not: null },
         },
@@ -54,6 +57,7 @@ export default async function AdminDashboard() {
         },
       }),
       prisma.activityLog.findMany({
+        where: { tenantId },
         take: 5,
         orderBy: { at: 'desc' },
         include: {
@@ -62,25 +66,30 @@ export default async function AdminDashboard() {
           },
         },
       }),
-      prisma.asset.count(),
-      prisma.user.count({ where: { role: { in: ['ADMIN', 'EMPLOYEE'] } } }),
-      prisma.subscription.count({ where: { status: 'ACTIVE' } }),
+      prisma.asset.count({ where: { tenantId } }),
+      prisma.user.count({
+        where: {
+          role: { in: ['ADMIN', 'EMPLOYEE'] },
+          organizationMemberships: { some: { organizationId: tenantId } },
+        },
+      }),
+      prisma.subscription.count({ where: { tenantId, status: 'ACTIVE' } }),
     ]);
 
-    // Batch 2: Counts and pending items
+    // Batch 2: Counts and pending items (tenant-scoped)
     const [
       totalSuppliers,
       pendingSuppliers,
       pendingPurchaseRequests,
       pendingChangeRequests,
     ] = await Promise.all([
-      prisma.supplier.count(),
-      prisma.supplier.count({ where: { status: 'PENDING' } }),
-      prisma.purchaseRequest.count({ where: { status: 'PENDING' } }),
-      prisma.profileChangeRequest.count({ where: { status: 'PENDING' } }),
+      prisma.supplier.count({ where: { tenantId } }),
+      prisma.supplier.count({ where: { tenantId, status: 'PENDING' } }),
+      prisma.purchaseRequest.count({ where: { tenantId, status: 'PENDING' } }),
+      prisma.profileChangeRequest.count({ where: { tenantId, status: 'PENDING' } }),
     ]);
 
-    // Batch 3: HR, projects, company documents
+    // Batch 3: HR, projects, company documents (tenant-scoped)
     const [
       pendingLeaveRequests,
       expiringDocuments,
@@ -89,9 +98,10 @@ export default async function AdminDashboard() {
       expiringCompanyDocs,
       expiredCompanyDocs,
     ] = await Promise.all([
-      prisma.leaveRequest.count({ where: { status: 'PENDING' } }),
+      prisma.leaveRequest.count({ where: { tenantId, status: 'PENDING' } }),
       prisma.hRProfile.count({
         where: {
+          tenantId,
           OR: [
             { qidExpiry: { lte: thirtyDaysFromNow, gte: today } },
             { passportExpiry: { lte: thirtyDaysFromNow, gte: today } },
@@ -100,14 +110,14 @@ export default async function AdminDashboard() {
         },
       }),
       prisma.hRProfile.count({
-        where: { onboardingComplete: false },
+        where: { tenantId, onboardingComplete: false },
       }),
-      prisma.project.count(),
+      prisma.project.count({ where: { tenantId } }),
       prisma.companyDocument.count({
-        where: { expiryDate: { gte: today, lte: thirtyDaysFromNow } },
+        where: { tenantId, expiryDate: { gte: today, lte: thirtyDaysFromNow } },
       }),
       prisma.companyDocument.count({
-        where: { expiryDate: { lt: today } },
+        where: { tenantId, expiryDate: { lt: today } },
       }),
     ]);
 
@@ -156,9 +166,11 @@ export default async function AdminDashboard() {
   async function getMonthlySpendData() {
     const months = [];
     const currentDate = new Date();
+    const tenantId = session.user.organizationId;
 
     const allSubscriptions = await prisma.subscription.findMany({
       where: {
+        tenantId,
         costPerCycle: { not: null },
         purchaseDate: { not: null },
       },
@@ -183,6 +195,7 @@ export default async function AdminDashboard() {
 
       const assetSpend = await prisma.asset.aggregate({
         where: {
+          tenantId,
           purchaseDate: {
             gte: monthStart,
             lt: monthEnd,
