@@ -119,6 +119,19 @@ export async function POST(
       );
     }
 
+    // Verify user still exists in database (handles stale sessions after reset)
+    const userExists = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true },
+    });
+
+    if (!userExists) {
+      return NextResponse.json(
+        { error: 'Your session is invalid. Please sign out and sign in again.' },
+        { status: 401 }
+      );
+    }
+
     // Check if user is already a member
     const existingMembership = await prisma.organizationUser.findUnique({
       where: {
