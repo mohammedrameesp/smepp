@@ -71,7 +71,7 @@ function SignupForm() {
     setIsLoading(true);
 
     try {
-      // Create account
+      // Create account (with invite token if present - auto-accepts invitation)
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -79,6 +79,7 @@ function SignupForm() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          inviteToken: inviteToken || undefined,
         }),
       });
 
@@ -98,8 +99,12 @@ function SignupForm() {
       if (signInResult?.error) {
         // Account created but sign-in failed - redirect to login
         router.push('/login?message=Account created. Please sign in.');
+      } else if (data.organization?.slug) {
+        // If signup included invitation, redirect directly to org subdomain
+        const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+        window.location.href = `${window.location.protocol}//${data.organization.slug}.${appDomain}/admin`;
       } else if (inviteToken) {
-        // If there's an invite token, redirect to accept it
+        // Fallback: If there's an invite token but no org returned, redirect to accept it
         router.push(`/invite/${inviteToken}`);
       } else {
         // Success - redirect to pending (user needs org invitation)

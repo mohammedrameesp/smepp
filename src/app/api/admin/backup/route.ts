@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     // For user requests, export only their organization's data
     const tenantFilter = tenantId ? { tenantId } : {};
     const userFilter = tenantId ? {
-      organizations: { some: { organizationId: tenantId } }
+      organizationMemberships: { some: { organizationId: tenantId } }
     } : {};
 
     // Export data (tenant-scoped for user requests)

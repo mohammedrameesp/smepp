@@ -52,6 +52,7 @@ export async function GET(
       invitation: {
         id: invitation.id,
         email: invitation.email,
+        name: invitation.name,
         role: invitation.role,
         organization: invitation.organization,
         expiresAt: invitation.expiresAt,

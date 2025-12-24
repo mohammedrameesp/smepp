@@ -14,6 +14,7 @@ const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 interface InvitationData {
   id: string;
   email: string;
+  name: string | null;
   role: string;
   organization: {
     id: string;
@@ -243,8 +244,15 @@ export default function InvitePage() {
                 <Button
                   className="w-full"
                   onClick={() => {
-                    // Redirect to signup with pre-filled email
-                    router.push(`/signup?email=${encodeURIComponent(invitation?.email || '')}&invite=${token}`);
+                    // Redirect to signup with pre-filled email and name
+                    const params = new URLSearchParams({
+                      email: invitation?.email || '',
+                      invite: token,
+                    });
+                    if (invitation?.name) {
+                      params.set('name', invitation.name);
+                    }
+                    router.push(`/signup?${params.toString()}`);
                   }}
                   disabled={accepting}
                 >

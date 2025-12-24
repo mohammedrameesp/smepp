@@ -216,8 +216,8 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/pending', request.url));
       }
     }
-    // Not authenticated - show landing page
-    return NextResponse.next();
+    // Not authenticated - redirect to super admin login
+    return NextResponse.redirect(new URL('/platform-login', request.url));
   }
 
   // Skip public routes on main domain
