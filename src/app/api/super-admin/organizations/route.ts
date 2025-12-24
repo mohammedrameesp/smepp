@@ -239,7 +239,10 @@ If you did not expect this invitation, you can safely ignore this email.
   } catch (error) {
     console.error('Create organization error:', error);
     return NextResponse.json(
-      { error: 'Failed to create organization' },
+      {
+        error: 'Failed to create organization',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }
