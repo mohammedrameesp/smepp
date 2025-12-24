@@ -24,5 +24,5 @@ export const GET = withErrorHandler(
 
     return NextResponse.json({ count });
   },
-  { requireAuth: true, skipLogging: true } // Skip logging for frequent polling
+  { requireAuth: true, requireTenant: false, skipLogging: true } // Skip logging for frequent polling, allow users without org
 );
