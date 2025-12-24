@@ -221,6 +221,21 @@ export async function PUT(
     // Convert empty string to null for assignedUserId (database expects null, not empty string)
     if (data.assignedUserId !== undefined) {
       updateData.assignedUserId = data.assignedUserId === '' ? null : data.assignedUserId;
+
+      // Validate that the assigned user belongs to the same organization
+      if (updateData.assignedUserId) {
+        const assignedUser = await prisma.user.findFirst({
+          where: {
+            id: updateData.assignedUserId,
+            organizationMemberships: { some: { organizationId: tenantId } },
+          },
+          select: { id: true },
+        });
+
+        if (!assignedUser) {
+          return NextResponse.json({ error: 'Assigned user not found in this organization' }, { status: 400 });
+        }
+      }
     }
 
     if (data.purchaseDate !== undefined) {
@@ -355,8 +370,22 @@ export async function PUT(
     const changedFields: string[] = [];
     const changeDetails: string[] = [];
 
-    // Helper function to format values for display
-    const formatValue = async (value: any, fieldKey?: string): Promise<string> => {
+    // Pre-fetch all user data needed for display (fixes N+1 query)
+    const userIdsToFetch = new Set<string>();
+    if (currentAsset.assignedUserId) userIdsToFetch.add(currentAsset.assignedUserId);
+    if (data.assignedUserId && typeof data.assignedUserId === 'string') userIdsToFetch.add(data.assignedUserId);
+
+    const userMap = new Map<string, { name: string | null; email: string }>();
+    if (userIdsToFetch.size > 0) {
+      const users = await prisma.user.findMany({
+        where: { id: { in: Array.from(userIdsToFetch) } },
+        select: { id: true, name: true, email: true },
+      });
+      users.forEach(u => userMap.set(u.id, { name: u.name, email: u.email }));
+    }
+
+    // Helper function to format values for display (uses pre-fetched user data)
+    const formatValue = (value: unknown, fieldKey?: string): string => {
       if (value === null || value === undefined || value === '') {
         // For user field, show "Unassigned" instead of "(empty)"
         if (fieldKey === 'assignedUserId') return 'Unassigned';
@@ -366,21 +395,13 @@ export async function PUT(
       if (typeof value === 'number') return value.toString();
       if (value instanceof Date) return value.toISOString().split('T')[0];
 
-      // For user ID fields, fetch and return user name
+      // For user ID fields, use pre-fetched user data
       if (fieldKey === 'assignedUserId' && typeof value === 'string') {
-        try {
-          const user = await prisma.user.findUnique({
-            where: { id: value },
-            select: { name: true, email: true },
-          });
-          return user?.name || user?.email || value;
-        } catch (error) {
-          console.error('Error fetching user for display:', error);
-          return value.toString();
-        }
+        const user = userMap.get(value);
+        return user?.name || user?.email || value;
       }
 
-      return value.toString();
+      return String(value);
     };
 
     for (const key in data) {
@@ -396,16 +417,16 @@ export async function PUT(
 
       // Convert dates to strings for comparison
       if (oldValue instanceof Date) {
-        oldValue = oldValue.toISOString().split('T')[0] as any;
+        oldValue = oldValue.toISOString().split('T')[0] as unknown as typeof oldValue;
       }
 
       // Convert Decimal to number for comparison
       if (oldValue && typeof oldValue === 'object' && 'toNumber' in oldValue) {
-        oldValue = (oldValue as any).toNumber();
+        oldValue = (oldValue as { toNumber: () => number }).toNumber() as unknown as typeof oldValue;
       }
 
       // Convert numeric strings to numbers for comparison
-      let normalizedNew = newValue;
+      let normalizedNew: unknown = newValue;
       if (typeof newValue === 'string' && !isNaN(parseFloat(newValue)) && isFinite(Number(newValue))) {
         if (typeof oldValue === 'number') {
           normalizedNew = parseFloat(newValue);
@@ -423,8 +444,8 @@ export async function PUT(
         changedFields.push(fieldLabel);
 
         // Create before/after message
-        const beforeText = await formatValue(displayOldValue, key);
-        const afterText = await formatValue(displayNewValue, key);
+        const beforeText = formatValue(displayOldValue, key);
+        const afterText = formatValue(displayNewValue, key);
         changeDetails.push(`${fieldLabel}: ${beforeText} → ${afterText}`);
       }
     }

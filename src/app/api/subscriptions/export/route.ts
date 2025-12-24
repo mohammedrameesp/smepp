@@ -14,23 +14,31 @@ async function exportSubscriptionsHandler(request: NextRequest) {
   }
   console.log('Authentication passed');
 
-    // Fetch all subscriptions with related data including history
-    const subscriptions = await prisma.subscription.findMany({
-      include: {
-        assignedUser: {
-          select: { name: true, email: true },
-        },
-        history: {
-          include: {
-            performer: {
-              select: { name: true, email: true },
-            },
-          },
-          orderBy: { createdAt: 'asc' },
-        },
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
+
+  const tenantId = session.user.organizationId;
+
+  // Fetch subscriptions for current tenant only with related data including history
+  const subscriptions = await prisma.subscription.findMany({
+    where: { tenantId },
+    include: {
+      assignedUser: {
+        select: { name: true, email: true },
       },
-      orderBy: { createdAt: 'desc' },
-    });
+      history: {
+        include: {
+          performer: {
+            select: { name: true, email: true },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
 
     console.log(`Fetched ${subscriptions.length} subscriptions`);
 

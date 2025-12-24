@@ -317,10 +317,11 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Check for overlapping requests (pre-check before transaction)
+    // Check for overlapping requests within tenant (pre-check before transaction)
     const overlappingRequests = await prisma.leaveRequest.findMany({
       where: {
         userId,
+        tenantId,
         status: { in: ['PENDING', 'APPROVED'] },
         OR: [
           {

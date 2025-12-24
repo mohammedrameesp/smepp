@@ -125,6 +125,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     const body = await request.json();
     const validation = createSalaryStructureSchema.safeParse(body);
 
@@ -137,9 +144,12 @@ export async function POST(request: NextRequest) {
 
     const data = validation.data;
 
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: data.userId },
+    // Check if user exists and belongs to the same organization
+    const user = await prisma.user.findFirst({
+      where: {
+        id: data.userId,
+        organizationMemberships: { some: { organizationId: tenantId } },
+      },
       select: { id: true, name: true },
     });
 
@@ -147,9 +157,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Check if user already has an active salary structure
-    const existingSalary = await prisma.salaryStructure.findUnique({
-      where: { userId: data.userId },
+    // Check if user already has an active salary structure within the same tenant
+    const existingSalary = await prisma.salaryStructure.findFirst({
+      where: { userId: data.userId, tenantId },
     });
 
     if (existingSalary) {

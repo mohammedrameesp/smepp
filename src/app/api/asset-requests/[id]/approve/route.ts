@@ -26,6 +26,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await context.params;
     const body = await request.json();
 
@@ -39,8 +45,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     const { notes } = validation.data;
 
-    const assetRequest = await prisma.assetRequest.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent IDOR attacks
+    const assetRequest = await prisma.assetRequest.findFirst({
+      where: { id, tenantId },
       include: {
         asset: true,
         user: { select: { id: true, name: true, email: true } },

@@ -12,8 +12,16 @@ async function exportAssetsHandler(_request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Fetch all assets with related data
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
+
+  const tenantId = session.user.organizationId;
+
+  // Fetch assets for current tenant only
   const assets = await prisma.asset.findMany({
+    where: { tenantId },
     include: {
       assignedUser: {
         select: { name: true, email: true },
