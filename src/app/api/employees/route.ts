@@ -24,6 +24,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
+    // Require organization context
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('p') || '1');
     const pageSize = parseInt(searchParams.get('ps') || '50');
@@ -34,11 +39,17 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sort') || 'createdAt';
     const sortOrder = searchParams.get('order') || 'desc';
 
-    // Build where clause for employees (exclude system accounts)
+    // Build where clause for employees (exclude system accounts, filter by organization)
     const userWhere: Record<string, unknown> = {
       isSystemAccount: false,
       role: {
         in: [Role.EMPLOYEE, Role.TEMP_STAFF, Role.ADMIN],
+      },
+      // Filter by organization membership
+      organizations: {
+        some: {
+          organizationId: session.user.organizationId,
+        },
       },
     };
 
