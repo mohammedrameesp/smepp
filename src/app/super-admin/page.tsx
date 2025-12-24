@@ -48,10 +48,35 @@ async function getStats() {
 }
 
 export default async function SuperAdminDashboard() {
-  const [organizations, stats] = await Promise.all([
-    getOrganizations(),
-    getStats(),
-  ]);
+  let organizations;
+  let stats;
+
+  try {
+    [organizations, stats] = await Promise.all([
+      getOrganizations(),
+      getStats(),
+    ]);
+  } catch (error) {
+    console.error('Super Admin Dashboard Error:', error);
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-red-800 mb-2">Database Connection Error</h2>
+          <p className="text-red-600 mb-4">
+            Failed to load dashboard data. Please check:
+          </p>
+          <ul className="list-disc list-inside text-red-600 text-sm space-y-1">
+            <li>DATABASE_URL environment variable is set correctly</li>
+            <li>Database is accessible from this deployment</li>
+            <li>Prisma migrations are up to date</li>
+          </ul>
+          <p className="text-xs text-red-500 mt-4 font-mono">
+            Error: {error instanceof Error ? error.message : 'Unknown error'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
