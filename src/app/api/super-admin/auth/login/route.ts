@@ -3,6 +3,7 @@ import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { authRateLimitMiddleware } from '@/lib/security/rateLimit';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -13,6 +14,12 @@ const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret';
 const PENDING_2FA_TOKEN_EXPIRY = '5m'; // 5 minutes to enter 2FA code
 
 export async function POST(request: NextRequest) {
+  // Apply strict rate limiting (5 attempts per 15 minutes)
+  const rateLimitResponse = authRateLimitMiddleware(request);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   try {
     const body = await request.json();
     const result = loginSchema.safeParse(body);

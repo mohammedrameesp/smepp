@@ -151,6 +151,75 @@ providers.push(
   })
 );
 
+// Super Admin credentials provider (validates login token with 2FA enforcement)
+providers.push(
+  CredentialsProvider({
+    id: 'super-admin-credentials',
+    name: 'Super Admin',
+    credentials: {
+      loginToken: { label: 'Login Token', type: 'text' },
+    },
+    async authorize(credentials) {
+      if (!credentials?.loginToken) {
+        return null;
+      }
+
+      const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret';
+
+      try {
+        // Verify the login token
+        const jwt = await import('jsonwebtoken');
+        const payload = jwt.default.verify(credentials.loginToken, JWT_SECRET) as {
+          userId: string;
+          email: string;
+          purpose: string;
+          twoFactorVerified?: boolean;
+        };
+
+        // Ensure the token is for super-admin login
+        if (payload.purpose !== 'super-admin-login') {
+          console.error('Invalid token purpose:', payload.purpose);
+          return null;
+        }
+
+        // Get the user and verify super admin status
+        const user = await prisma.user.findUnique({
+          where: { id: payload.userId },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            isSuperAdmin: true,
+            twoFactorEnabled: true,
+          },
+        });
+
+        if (!user || !user.isSuperAdmin) {
+          console.error('User not found or not super admin');
+          return null;
+        }
+
+        // CRITICAL: If 2FA is enabled, the token MUST have twoFactorVerified: true
+        if (user.twoFactorEnabled && !payload.twoFactorVerified) {
+          console.error('2FA required but not verified in token');
+          return null;
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
+      } catch (error) {
+        console.error('Super admin login token verification failed:', error);
+        return null;
+      }
+    },
+  })
+);
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════════

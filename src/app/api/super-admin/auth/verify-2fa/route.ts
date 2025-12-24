@@ -4,6 +4,7 @@ import { z } from 'zod';
 import jwt from 'jsonwebtoken';
 import { verifyTOTPCode } from '@/lib/two-factor/totp';
 import { verifyBackupCode, removeBackupCode } from '@/lib/two-factor/backup-codes';
+import { authRateLimitMiddleware } from '@/lib/security/rateLimit';
 
 const verify2FASchema = z.object({
   pending2faToken: z.string().min(1, 'Token is required'),
@@ -20,6 +21,12 @@ interface Pending2FAPayload {
 }
 
 export async function POST(request: NextRequest) {
+  // Apply strict rate limiting (5 attempts per 15 minutes)
+  const rateLimitResponse = authRateLimitMiddleware(request);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   try {
     const body = await request.json();
     const result = verify2FASchema.safeParse(body);

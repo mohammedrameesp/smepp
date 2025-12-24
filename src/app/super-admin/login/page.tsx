@@ -158,11 +158,12 @@ export default function SuperAdminLoginPage() {
     }
   };
 
-  // Complete login using NextAuth
+  // Complete login using NextAuth with the verified login token
   const completeLogin = async (token: string) => {
-    const result = await signIn('credentials', {
-      email,
-      password,
+    // Use the super-admin-credentials provider with the login token
+    // This token contains proof of successful credential + 2FA verification
+    const result = await signIn('super-admin-credentials', {
+      loginToken: token,
       redirect: false,
     });
 
