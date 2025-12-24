@@ -31,10 +31,13 @@ const PUBLIC_ROUTES = [
   '/',
   '/login',
   '/signup',
-  '/platform-login', // Super admin login
+  '/platform-login', // Super admin login (legacy)
+  '/super-admin/login', // Super admin login with 2FA
   '/api/auth',
   '/api/webhooks',
   '/api/public', // Public APIs (tenant branding, etc.)
+  '/api/super-admin/auth', // Super admin auth APIs (login, verify-2fa)
+  '/api/super-admin/stats', // Platform stats for login page
   '/verify',
   '/invite',
   '/pricing',
