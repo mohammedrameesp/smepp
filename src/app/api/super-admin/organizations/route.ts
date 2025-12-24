@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${inviteToken}`;
     const greeting = adminName ? `Dear ${adminName}` : 'Hello';
 
-    // Send professional invitation email
+    // Send professional invitation email (email-client safe styling)
     const emailResult = await sendEmail({
       to: adminEmail,
       subject: `Welcome to SME++ - Your Organization "${name}" is Ready`,
@@ -132,70 +132,80 @@ export async function POST(request: NextRequest) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7fa;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f7fa; padding: 40px 20px;">
+<body style="margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background-color: #f4f7fa;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f4f7fa;">
     <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+      <td align="center" style="padding: 40px 20px;">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border: 1px solid #e2e8f0;">
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 40px 40px 30px; border-radius: 12px 12px 0 0; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 600;">SME++</h1>
-              <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 14px;">Business Management Platform</p>
+            <td align="center" style="background-color: #2563eb; padding: 40px 40px 30px;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">SME++</h1>
+              <p style="color: #bfdbfe; margin: 8px 0 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Business Management Platform</p>
             </td>
           </tr>
 
           <!-- Content -->
           <tr>
-            <td style="padding: 40px;">
-              <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 22px; font-weight: 600;">Welcome to SME++!</h2>
+            <td style="padding: 40px; background-color: #ffffff;">
+              <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 22px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Welcome to SME++!</h2>
 
-              <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+              <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
                 ${greeting},
               </p>
 
-              <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+              <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
                 Congratulations! Your organization <strong style="color: #1e293b;">"${name}"</strong> has been created on SME++. You have been designated as the Administrator.
               </p>
 
-              <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0 0 30px;">
+              <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 30px; font-family: Arial, Helvetica, sans-serif;">
                 Click the button below to set up your account and start managing your organization:
               </p>
 
               <!-- CTA Button -->
-              <table width="100%" cellpadding="0" cellspacing="0">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center" style="padding: 10px 0 30px;">
-                    <a href="${inviteUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);">
-                      Accept Invitation & Get Started
-                    </a>
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td align="center" style="background-color: #2563eb; border-radius: 6px;">
+                          <a href="${inviteUrl}" target="_blank" style="display: inline-block; padding: 16px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">
+                            Accept Invitation &amp; Get Started
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>
 
               <!-- Alternative Link -->
-              <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 20px;">
-                Or copy and paste this link into your browser:<br>
+              <p style="color: #64748b; font-size: 14px; line-height: 21px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
+                Or copy and paste this link into your browser:<br/>
                 <a href="${inviteUrl}" style="color: #2563eb; word-break: break-all;">${inviteUrl}</a>
               </p>
 
               <!-- Expiry Notice -->
-              <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 0 8px 8px 0; margin: 20px 0;">
-                <p style="color: #92400e; font-size: 14px; margin: 0;">
-                  <strong>Note:</strong> This invitation will expire in 7 days. Please accept it before the expiry date.
-                </p>
-              </div>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
+                <tr>
+                  <td style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px;">
+                    <p style="color: #92400e; font-size: 14px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
+                      <strong>Note:</strong> This invitation will expire in 7 days. Please accept it before the expiry date.
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="background-color: #f8fafc; padding: 30px 40px; border-radius: 0 0 12px 12px; border-top: 1px solid #e2e8f0;">
-              <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 10px;">
+            <td style="background-color: #f8fafc; padding: 30px 40px; border-top: 1px solid #e2e8f0;">
+              <p style="color: #64748b; font-size: 14px; line-height: 21px; margin: 0 0 10px; font-family: Arial, Helvetica, sans-serif;">
                 If you did not expect this invitation, you can safely ignore this email.
               </p>
-              <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-                &copy; ${new Date().getFullYear()} SME++. All rights reserved.
+              <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
+                © ${new Date().getFullYear()} SME++. All rights reserved.
               </p>
             </td>
           </tr>
