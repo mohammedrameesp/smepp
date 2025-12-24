@@ -115,18 +115,8 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get('host') || APP_DOMAIN;
 
-  // Debug logging - remove after fixing
-  console.log('[Middleware Debug]', {
-    pathname,
-    host,
-    APP_DOMAIN,
-    url: request.url,
-  });
-
   // Extract subdomain info
   const { subdomain, isMainDomain, isReserved } = extractSubdomain(host);
-
-  console.log('[Middleware Subdomain]', { subdomain, isMainDomain, isReserved });
 
   // ─────────────────────────────────────────────────────────────────────────────
   // SUBDOMAIN ROUTING
