@@ -6,13 +6,7 @@ import { signIn, useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building2, Users, CheckCircle, ArrowLeft, Lock, Shield, Loader2, Check, Mail } from 'lucide-react';
-
-interface PlatformStats {
-  organizations: number;
-  users: number;
-  uptime: string;
-}
+import { Loader2, Check, ShieldCheck, KeyRound, ClipboardList } from 'lucide-react';
 
 type LoginStep = 'credentials' | '2fa';
 
@@ -34,7 +28,6 @@ export default function SuperAdminLoginPage() {
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [stats, setStats] = useState<PlatformStats>({ organizations: 0, users: 0, uptime: '99.9%' });
 
   // OTP input refs
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -45,14 +38,6 @@ export default function SuperAdminLoginPage() {
       router.push('/super-admin');
     }
   }, [status, session, router]);
-
-  // Fetch platform stats
-  useEffect(() => {
-    fetch('/api/super-admin/stats')
-      .then((res) => res.json())
-      .then((data) => setStats(data))
-      .catch(() => {});
-  }, []);
 
   // Handle OTP input
   const handleOtpChange = (index: number, value: string) => {
@@ -112,7 +97,6 @@ export default function SuperAdminLoginPage() {
         setStep('2fa');
       } else {
         // No 2FA, complete login
-        setLoginToken(data.loginToken);
         await completeLogin(data.loginToken);
       }
     } catch {
@@ -183,104 +167,110 @@ export default function SuperAdminLoginPage() {
 
   return (
     <div className="min-h-screen flex bg-slate-900">
-      {/* Left Panel - Branding & Stats */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-800 to-slate-900 p-12 flex-col justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center">
-            <Shield className="w-5 h-5 text-amber-400" />
-          </div>
-          <span className="text-white font-semibold text-xl">SME++ Admin</span>
-        </div>
+      {/* Left Panel - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-12 flex-col justify-between relative overflow-hidden">
+        {/* Pattern Overlay */}
+        <div
+          className="absolute inset-0 opacity-30"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0)',
+            backgroundSize: '32px 32px'
+          }}
+        />
 
-        {/* Center Content */}
-        <div className="space-y-8">
-          <div>
-            <h1 className="text-4xl font-bold text-white leading-tight">
-              Platform<br />Administration<br />Console
-            </h1>
-            <p className="text-slate-400 text-lg max-w-md mt-4">
-              Manage organizations, configure platform settings, and monitor system health.
-            </p>
+        {/* Decorative Elements */}
+        <div className="absolute top-1/4 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl" />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-between h-full">
+          {/* Logo */}
+          <div className="flex items-baseline gap-0.5">
+            <span className="text-white font-black text-5xl tracking-tighter">SME</span>
+            <span className="text-white font-black text-2xl relative -top-4">++</span>
           </div>
 
-          {/* Platform Stats */}
-          <div className="space-y-6 pt-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-blue-400" />
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-white">{stats.organizations}</div>
-                <div className="text-slate-400 text-sm">Organizations</div>
-              </div>
+          {/* Center Content */}
+          <div className="space-y-8">
+            <div>
+              <p className="text-indigo-400 font-medium text-sm uppercase tracking-widest mb-4">Admin Console</p>
+              <h1 className="text-5xl font-extrabold text-white leading-tight tracking-tight">
+                Platform<br />
+                Control Center
+              </h1>
+              <p className="text-slate-400 text-lg mt-6 max-w-sm leading-relaxed">
+                Manage organizations, users, and platform settings from one secure dashboard.
+              </p>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-emerald-400" />
+            {/* Security Features */}
+            <div className="space-y-4 pt-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center">
+                  <ShieldCheck className="w-4 h-4 text-indigo-400" />
+                </div>
+                <span className="text-slate-400 text-sm">Two-factor authentication</span>
               </div>
-              <div>
-                <div className="text-3xl font-bold text-white">{stats.users}</div>
-                <div className="text-slate-400 text-sm">Total Users</div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center">
+                  <KeyRound className="w-4 h-4 text-indigo-400" />
+                </div>
+                <span className="text-slate-400 text-sm">End-to-end encryption</span>
               </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-purple-400" />
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-white">{stats.uptime}</div>
-                <div className="text-slate-400 text-sm">Platform Uptime</div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center">
+                  <ClipboardList className="w-4 h-4 text-indigo-400" />
+                </div>
+                <span className="text-slate-400 text-sm">Complete audit logging</span>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="text-slate-500 text-sm">
-          &copy; {new Date().getFullYear()} SME++ Platform. All rights reserved.
+          {/* Footer */}
+          <p className="text-slate-600 text-sm">
+            &copy; {new Date().getFullYear()} SME<sup className="text-xs">++</sup> Platform
+          </p>
         </div>
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-slate-50">
-        <div className="w-full max-w-md">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-white">
+        <div className="w-full max-w-sm">
           {/* Mobile Logo */}
-          <div className="lg:hidden text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-500 rounded-xl mb-4">
-              <Shield className="w-6 h-6 text-white" />
+          <div className="lg:hidden text-center mb-10">
+            <div className="flex items-baseline justify-center gap-0.5">
+              <span className="text-slate-900 font-black text-4xl tracking-tighter">SME</span>
+              <span className="text-slate-900 font-black text-xl relative -top-3">++</span>
             </div>
-            <h1 className="text-slate-800 text-xl font-semibold">SME++ Admin Portal</h1>
+            <p className="text-slate-500 text-sm mt-2">Admin Console</p>
           </div>
 
-          {/* Login Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+          {/* Login Form */}
+          <div>
             {/* Step Progress Indicator */}
             <div className="flex items-center justify-center gap-3 mb-6">
               <div className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
                   step === 'credentials'
-                    ? 'bg-slate-800 text-white'
-                    : 'bg-green-500 text-white'
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-indigo-500 text-white'
                 }`}>
                   {step === '2fa' ? <Check className="w-4 h-4" /> : '1'}
                 </div>
-                <span className={`text-sm font-medium ${step === 'credentials' ? 'text-slate-800' : 'text-green-600'}`}>
+                <span className={`text-sm font-medium ${step === 'credentials' ? 'text-slate-900' : 'text-indigo-600'}`}>
                   Credentials
                 </span>
               </div>
-              <div className={`w-12 h-0.5 ${step === '2fa' ? 'bg-green-500' : 'bg-slate-200'}`} />
+              <div className={`w-12 h-0.5 ${step === '2fa' ? 'bg-indigo-500' : 'bg-slate-200'}`} />
               <div className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
                   step === '2fa'
-                    ? 'bg-slate-800 text-white'
+                    ? 'bg-slate-900 text-white'
                     : 'bg-slate-200 text-slate-400'
                 }`}>
                   2
                 </div>
-                <span className={`text-sm font-medium ${step === '2fa' ? 'text-slate-800' : 'text-slate-400'}`}>
+                <span className={`text-sm font-medium ${step === '2fa' ? 'text-slate-900' : 'text-slate-400'}`}>
                   Verify
                 </span>
               </div>
@@ -289,9 +279,9 @@ export default function SuperAdminLoginPage() {
             {step === 'credentials' ? (
               <>
                 {/* Header */}
-                <div className="text-center mb-6">
-                  <h2 className="text-slate-800 text-xl font-semibold">Welcome back</h2>
-                  <p className="text-slate-500 text-sm mt-1">Sign in to access the admin console</p>
+                <div className="mb-8">
+                  <h2 className="text-slate-900 text-2xl font-bold">Sign in</h2>
+                  <p className="text-slate-500 mt-1">Enter your admin credentials</p>
                 </div>
 
                 {/* Error Message */}
@@ -319,8 +309,8 @@ export default function SuperAdminLoginPage() {
                   <div>
                     <div className="flex items-center justify-between">
                       <Label htmlFor="password" className="text-slate-700">Password</Label>
-                      <a href="#" className="text-sm text-blue-600 hover:text-blue-700">
-                        Forgot password?
+                      <a href="#" className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
+                        Forgot?
                       </a>
                     </div>
                     <Input
@@ -350,13 +340,12 @@ export default function SuperAdminLoginPage() {
             ) : (
               <>
                 {/* Verified User Info */}
-                <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-xl mb-6">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <Mail className="w-5 h-5 text-green-600" />
+                <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-xl mb-6">
+                  <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Check className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-green-800">Identity verified</p>
-                    <p className="text-sm text-green-600 truncate">{email}</p>
+                    <p className="text-sm font-medium text-indigo-900 truncate">{email}</p>
                   </div>
                   <button
                     type="button"
@@ -365,21 +354,18 @@ export default function SuperAdminLoginPage() {
                       setError('');
                       setOtpCode(['', '', '', '', '', '']);
                     }}
-                    className="text-xs text-green-700 hover:text-green-800 font-medium"
+                    className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
                   >
                     Change
                   </button>
                 </div>
 
-                <div className="text-center mb-6">
-                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Shield className="w-7 h-7 text-blue-600" />
-                  </div>
-                  <h3 className="text-slate-800 text-lg font-semibold">Two-Factor Authentication</h3>
-                  <p className="text-slate-500 text-sm mt-2">
+                <div className="mb-8">
+                  <h2 className="text-slate-900 text-2xl font-bold">Enter code</h2>
+                  <p className="text-slate-500 mt-1">
                     {isBackupCode
                       ? 'Enter one of your backup codes'
-                      : 'Enter the 6-digit code from your authenticator app'}
+                      : 'Check your authenticator app'}
                   </p>
                 </div>
 
@@ -401,7 +387,7 @@ export default function SuperAdminLoginPage() {
                       required
                     />
                   ) : (
-                    <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
+                    <div className="flex justify-between gap-2" onPaste={handleOtpPaste}>
                       {otpCode.map((digit, index) => (
                         <input
                           key={index}
@@ -412,7 +398,7 @@ export default function SuperAdminLoginPage() {
                           value={digit}
                           onChange={(e) => handleOtpChange(index, e.target.value)}
                           onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                          className="w-12 h-14 text-center text-xl font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                          className="w-12 h-14 text-center text-xl font-bold bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"
                         />
                       ))}
                     </div>
@@ -431,56 +417,25 @@ export default function SuperAdminLoginPage() {
                   </Button>
                 </form>
 
-                <p className="text-center text-sm text-slate-500 mt-4">
-                  {isBackupCode ? (
-                    <>
-                      Have your authenticator?{' '}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsBackupCode(false);
-                          setError('');
-                        }}
-                        className="text-blue-600 hover:text-blue-700"
-                      >
-                        Use authenticator code
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      Lost access?{' '}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsBackupCode(true);
-                          setError('');
-                        }}
-                        className="text-blue-600 hover:text-blue-700"
-                      >
-                        Use backup code
-                      </button>
-                    </>
-                  )}
+                <p className="text-center mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsBackupCode(!isBackupCode);
+                      setError('');
+                    }}
+                    className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+                  >
+                    {isBackupCode ? 'Use authenticator code' : 'Use backup code'}
+                  </button>
                 </p>
               </>
             )}
           </div>
 
           {/* Security Notice */}
-          <div className="mt-6 flex items-center justify-center gap-4 text-xs text-slate-500">
-            <div className="flex items-center gap-1.5">
-              <Lock className="w-4 h-4" />
-              Secure Connection
-            </div>
-            <span className="text-slate-300">|</span>
-            <div className="flex items-center gap-1.5">
-              <Shield className="w-4 h-4" />
-              Access Logged
-            </div>
-          </div>
-
-          <p className="text-center text-xs text-slate-400 mt-4">
-            Restricted to authorized super administrators only
+          <p className="text-center text-slate-400 text-xs mt-8">
+            Secured with two-factor authentication
           </p>
         </div>
       </div>

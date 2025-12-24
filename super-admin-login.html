@@ -3,270 +3,269 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SME++ Super Admin Login - Mockup</title>
+  <title>SME++ Super Admin Login</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    * { font-family: 'Inter', sans-serif; }
+
+    .gradient-bg {
+      background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%);
+    }
+
+    .pattern-overlay {
+      background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0);
+      background-size: 32px 32px;
+    }
+
+    .input-focus:focus {
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .otp-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .logo-pp {
+      position: relative;
+      top: -0.5em;
+      font-size: 0.45em;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+    }
   </style>
 </head>
-<body class="bg-slate-900">
+<body class="bg-slate-100">
 
   <!-- MOCKUP CONTROLS -->
-  <div id="controls" class="fixed top-0 left-0 right-0 z-50 bg-yellow-100 border-b-2 border-yellow-400 p-3">
-    <div class="max-w-4xl mx-auto flex items-center justify-between flex-wrap gap-3">
-      <span class="font-bold text-yellow-800">MOCKUP REVIEW MODE</span>
-      <div class="flex items-center gap-3 flex-wrap">
-        <button onclick="showStep('credentials')" id="btn-credentials" class="px-3 py-1 rounded text-sm bg-yellow-500 text-white">
-          Step 1: Credentials
+  <div id="controls" class="fixed top-0 left-0 right-0 z-50 bg-slate-800 border-b border-slate-700 px-4 py-2">
+    <div class="max-w-4xl mx-auto flex items-center justify-between flex-wrap gap-2">
+      <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Design Preview</span>
+      <div class="flex items-center gap-2">
+        <button onclick="showStep('credentials')" id="btn-credentials" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-500 text-white">
+          Login
         </button>
-        <button onclick="showStep('2fa')" id="btn-2fa" class="px-3 py-1 rounded text-sm bg-white">
-          Step 2: 2FA
+        <button onclick="showStep('2fa')" id="btn-2fa" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-300">
+          2FA
         </button>
-        <button onclick="toggleError()" id="btn-error" class="px-3 py-1 rounded text-sm bg-white">
-          Show Error
+        <button onclick="toggleError()" id="btn-error" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-300">
+          Error
         </button>
       </div>
     </div>
   </div>
 
   <!-- MAIN LAYOUT -->
-  <div class="min-h-screen flex pt-14">
+  <div class="min-h-screen flex pt-11">
 
-    <!-- LEFT PANEL - Branding & Stats -->
-    <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-800 to-slate-900 p-12 flex-col justify-between">
+    <!-- LEFT PANEL -->
+    <div class="hidden lg:flex lg:w-1/2 gradient-bg relative overflow-hidden">
+      <!-- Pattern Overlay -->
+      <div class="absolute inset-0 pattern-overlay"></div>
 
-      <!-- Logo -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-amber-500/20 rounded-xl flex items-center justify-center">
-          <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-          </svg>
-        </div>
-        <span class="text-white font-semibold text-xl">SME++ Admin</span>
-      </div>
+      <!-- Decorative Elements -->
+      <div class="absolute top-1/4 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl"></div>
+      <div class="absolute bottom-0 left-1/4 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl"></div>
 
-      <!-- Center Content -->
-      <div class="space-y-8">
-        <div>
-          <h1 class="text-4xl font-bold text-white leading-tight">
-            Platform<br>Administration<br>Console
-          </h1>
-          <p class="text-slate-400 text-lg max-w-md mt-4">
-            Manage organizations, configure platform settings, and monitor system health.
-          </p>
+      <!-- Content -->
+      <div class="relative z-10 flex flex-col justify-between p-12 w-full">
+
+        <!-- Logo -->
+        <div class="flex items-baseline gap-0.5">
+          <span class="text-white font-black text-5xl tracking-tighter">SME</span>
+          <span class="text-white font-black text-2xl relative -top-4">++</span>
         </div>
 
-        <!-- Platform Stats -->
-        <div class="space-y-6 pt-4">
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-              </svg>
-            </div>
-            <div>
-              <div class="text-3xl font-bold text-white">12</div>
-              <div class="text-slate-400 text-sm">Organizations</div>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-              </svg>
-            </div>
-            <div>
-              <div class="text-3xl font-bold text-white">156</div>
-              <div class="text-slate-400 text-sm">Total Users</div>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <div>
-              <div class="text-3xl font-bold text-white">99.9%</div>
-              <div class="text-slate-400 text-sm">Platform Uptime</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="text-slate-500 text-sm">
-        &copy; 2025 SME++ Platform. All rights reserved.
-      </div>
-    </div>
-
-    <!-- RIGHT PANEL - Login Form -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 bg-slate-50">
-      <div class="w-full max-w-md">
-
-        <!-- Mobile Logo -->
-        <div class="lg:hidden text-center mb-8">
-          <div class="inline-flex items-center justify-center w-12 h-12 bg-amber-500 rounded-xl mb-4">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-            </svg>
-          </div>
-          <h1 class="text-slate-800 text-xl font-semibold">SME++ Admin Portal</h1>
-        </div>
-
-        <!-- Login Card -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-
-          <!-- Step Progress Indicator -->
-          <div class="flex items-center justify-center gap-3 mb-6">
-            <div class="flex items-center gap-2">
-              <div id="step1-circle" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all bg-slate-800 text-white">
-                1
-              </div>
-              <span id="step1-text" class="text-sm font-medium text-slate-800">Credentials</span>
-            </div>
-            <div id="step-line" class="w-12 h-0.5 bg-slate-200"></div>
-            <div class="flex items-center gap-2">
-              <div id="step2-circle" class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all bg-slate-200 text-slate-400">
-                2
-              </div>
-              <span id="step2-text" class="text-sm font-medium text-slate-400">Verify</span>
-            </div>
-          </div>
-
-          <!-- STEP 1: Credentials Form -->
-          <div id="credentials-step">
-            <!-- Header -->
-            <div class="text-center mb-6">
-              <h2 class="text-slate-800 text-xl font-semibold">Welcome back</h2>
-              <p class="text-slate-500 text-sm mt-1">Sign in to access the admin console</p>
-            </div>
-
-            <!-- Error Message -->
-            <div id="error-credentials" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-              Invalid email or password
-            </div>
-
-            <!-- Form -->
-            <form class="space-y-5">
-              <div>
-                <label class="text-slate-700 text-sm font-medium">Email address</label>
-                <input
-                  type="email"
-                  placeholder="admin@smeplus.com"
-                  class="mt-1.5 w-full bg-slate-50 border border-slate-200 rounded-xl h-12 px-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                >
-              </div>
-
-              <div>
-                <div class="flex items-center justify-between">
-                  <label class="text-slate-700 text-sm font-medium">Password</label>
-                  <a href="#" class="text-sm text-blue-600 hover:text-blue-700">Forgot password?</a>
-                </div>
-                <input
-                  type="password"
-                  placeholder="Enter your password"
-                  class="mt-1.5 w-full bg-slate-50 border border-slate-200 rounded-xl h-12 px-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                >
-              </div>
-
-              <button
-                type="button"
-                onclick="showStep('2fa')"
-                class="w-full h-12 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium transition-colors"
-              >
-                Continue
-              </button>
-            </form>
-          </div>
-
-          <!-- STEP 2: 2FA Form -->
-          <div id="2fa-step" class="hidden">
-            <!-- Verified User Info -->
-            <div class="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-xl mb-6">
-              <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-green-800">Identity verified</p>
-                <p class="text-sm text-green-600 truncate">admin@quriosityhub.com</p>
-              </div>
-              <button type="button" onclick="showStep('credentials')" class="text-xs text-green-700 hover:text-green-800 font-medium">
-                Change
-              </button>
-            </div>
-
-            <div class="text-center mb-6">
-              <div class="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                </svg>
-              </div>
-              <h3 class="text-slate-800 text-lg font-semibold">Two-Factor Authentication</h3>
-              <p class="text-slate-500 text-sm mt-2">
-                Enter the 6-digit code from your authenticator app
-              </p>
-            </div>
-
-            <!-- Error Message -->
-            <div id="error-2fa" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-              Invalid verification code
-            </div>
-
-            <!-- OTP Inputs -->
-            <form class="space-y-6">
-              <div class="flex justify-center gap-2">
-                <input type="text" maxlength="1" class="w-12 h-14 text-center text-xl font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <input type="text" maxlength="1" class="w-12 h-14 text-center text-xl font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <input type="text" maxlength="1" class="w-12 h-14 text-center text-xl font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <input type="text" maxlength="1" class="w-12 h-14 text-center text-xl font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <input type="text" maxlength="1" class="w-12 h-14 text-center text-xl font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400">
-                <input type="text" maxlength="1" class="w-12 h-14 text-center text-xl font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400">
-              </div>
-
-              <button
-                type="button"
-                class="w-full h-12 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium transition-colors"
-              >
-                Verify & Sign In
-              </button>
-            </form>
-
-            <p class="text-center text-sm text-slate-500 mt-4">
-              Lost access?
-              <button type="button" class="text-blue-600 hover:text-blue-700 ml-1">Use backup code</button>
+        <!-- Center Content -->
+        <div class="space-y-8">
+          <div>
+            <p class="text-indigo-400 font-medium text-sm uppercase tracking-widest mb-4">Admin Console</p>
+            <h1 class="text-5xl font-extrabold text-white leading-tight tracking-tight">
+              Platform<br>
+              Control Center
+            </h1>
+            <p class="text-slate-400 text-lg mt-6 max-w-sm leading-relaxed">
+              Manage organizations, users, and platform settings from one secure dashboard.
             </p>
           </div>
 
+          <!-- Security Features -->
+          <div class="space-y-4 pt-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+              </div>
+              <span class="text-slate-400 text-sm">Two-factor authentication</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+              </div>
+              <span class="text-slate-400 text-sm">End-to-end encryption</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </div>
+              <span class="text-slate-400 text-sm">Complete audit logging</span>
+            </div>
+          </div>
         </div>
 
-        <!-- Security Notice -->
-        <div class="mt-6 flex items-center justify-center gap-4 text-xs text-slate-500">
-          <div class="flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-            </svg>
-            Secure Connection
-          </div>
-          <span class="text-slate-300">|</span>
-          <div class="flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-            </svg>
-            Access Logged
-          </div>
-        </div>
-
-        <p class="text-center text-xs text-slate-400 mt-4">
-          Restricted to authorized super administrators only
+        <!-- Footer -->
+        <p class="text-slate-600 text-sm">
+          &copy; 2025 SME<sup class="text-xs">++</sup> Platform
         </p>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-white">
+      <div class="w-full max-w-sm">
+
+        <!-- Mobile Logo -->
+        <div class="lg:hidden text-center mb-10">
+          <div class="flex items-baseline justify-center gap-0.5">
+            <span class="text-slate-900 font-black text-4xl tracking-tighter">SME</span>
+            <span class="text-slate-900 font-black text-xl relative -top-3">++</span>
+          </div>
+          <p class="text-slate-500 text-sm mt-2">Admin Console</p>
+        </div>
+
+        <!-- STEP 1: Credentials Form -->
+        <div id="credentials-step" class="fade-in">
+          <!-- Header -->
+          <div class="mb-8">
+            <h2 class="text-slate-900 text-2xl font-bold">Sign in</h2>
+            <p class="text-slate-500 mt-1">Enter your admin credentials</p>
+          </div>
+
+          <!-- Error Message -->
+          <div id="error-credentials" class="hidden mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-center gap-3">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Invalid email or password</span>
+          </div>
+
+          <!-- Form -->
+          <form class="space-y-5">
+            <div>
+              <label class="text-slate-700 text-sm font-medium block mb-2">Email</label>
+              <input
+                type="email"
+                placeholder="you@company.com"
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white input-focus transition-all"
+              >
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="text-slate-700 text-sm font-medium">Password</label>
+                <a href="#" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">Forgot?</a>
+              </div>
+              <input
+                type="password"
+                placeholder="Enter password"
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white input-focus transition-all"
+              >
+            </div>
+
+            <button
+              type="button"
+              onclick="showStep('2fa')"
+              class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold transition-colors"
+            >
+              Continue
+            </button>
+          </form>
+
+          <!-- Footer -->
+          <p class="text-center text-slate-400 text-xs mt-8">
+            Secured with two-factor authentication
+          </p>
+        </div>
+
+        <!-- STEP 2: 2FA Form -->
+        <div id="2fa-step" class="hidden fade-in">
+
+          <!-- Back Button -->
+          <button onclick="showStep('credentials')" class="flex items-center gap-1.5 text-slate-400 hover:text-slate-600 text-sm font-medium mb-6 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back
+          </button>
+
+          <!-- Verified Badge -->
+          <div class="flex items-center gap-3 p-3 bg-indigo-50 rounded-xl mb-6">
+            <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-indigo-900">admin@quriosityhub.com</p>
+            </div>
+          </div>
+
+          <!-- Header -->
+          <div class="mb-8">
+            <h2 class="text-slate-900 text-2xl font-bold">Enter code</h2>
+            <p class="text-slate-500 mt-1">Check your authenticator app</p>
+          </div>
+
+          <!-- Error Message -->
+          <div id="error-2fa" class="hidden mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-center gap-3">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Invalid code. Try again.</span>
+          </div>
+
+          <!-- OTP Inputs -->
+          <form class="space-y-6">
+            <div class="flex justify-between gap-2">
+              <input type="text" maxlength="1" inputmode="numeric" class="otp-input w-12 h-14 text-center text-xl font-bold bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:bg-white transition-all">
+              <input type="text" maxlength="1" inputmode="numeric" class="otp-input w-12 h-14 text-center text-xl font-bold bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:bg-white transition-all">
+              <input type="text" maxlength="1" inputmode="numeric" class="otp-input w-12 h-14 text-center text-xl font-bold bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:bg-white transition-all">
+              <input type="text" maxlength="1" inputmode="numeric" class="otp-input w-12 h-14 text-center text-xl font-bold bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:bg-white transition-all">
+              <input type="text" maxlength="1" inputmode="numeric" class="otp-input w-12 h-14 text-center text-xl font-bold bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:bg-white transition-all">
+              <input type="text" maxlength="1" inputmode="numeric" class="otp-input w-12 h-14 text-center text-xl font-bold bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:bg-white transition-all">
+            </div>
+
+            <button
+              type="button"
+              class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold transition-colors"
+            >
+              Sign in
+            </button>
+          </form>
+
+          <!-- Help Link -->
+          <p class="text-center mt-6">
+            <button type="button" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+              Use backup code
+            </button>
+          </p>
+        </div>
+
       </div>
     </div>
   </div>
@@ -278,61 +277,53 @@
     function showStep(step) {
       currentStep = step;
 
-      // Update buttons
       document.getElementById('btn-credentials').className = step === 'credentials'
-        ? 'px-3 py-1 rounded text-sm bg-yellow-500 text-white'
-        : 'px-3 py-1 rounded text-sm bg-white';
+        ? 'px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-500 text-white'
+        : 'px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-300';
       document.getElementById('btn-2fa').className = step === '2fa'
-        ? 'px-3 py-1 rounded text-sm bg-yellow-500 text-white'
-        : 'px-3 py-1 rounded text-sm bg-white';
+        ? 'px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-500 text-white'
+        : 'px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-300';
 
-      // Update step indicators
-      if (step === 'credentials') {
-        document.getElementById('step1-circle').className = 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all bg-slate-800 text-white';
-        document.getElementById('step1-circle').innerHTML = '1';
-        document.getElementById('step1-text').className = 'text-sm font-medium text-slate-800';
-        document.getElementById('step2-circle').className = 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all bg-slate-200 text-slate-400';
-        document.getElementById('step2-text').className = 'text-sm font-medium text-slate-400';
-        document.getElementById('step-line').className = 'w-12 h-0.5 bg-slate-200';
-      } else {
-        document.getElementById('step1-circle').className = 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all bg-green-500 text-white';
-        document.getElementById('step1-circle').innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
-        document.getElementById('step1-text').className = 'text-sm font-medium text-green-600';
-        document.getElementById('step2-circle').className = 'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all bg-slate-800 text-white';
-        document.getElementById('step2-text').className = 'text-sm font-medium text-slate-800';
-        document.getElementById('step-line').className = 'w-12 h-0.5 bg-green-500';
-      }
+      document.getElementById('credentials-step').className = step === 'credentials' ? 'fade-in' : 'hidden';
+      document.getElementById('2fa-step').className = step === '2fa' ? 'fade-in' : 'hidden';
 
-      // Show/hide steps
-      document.getElementById('credentials-step').className = step === 'credentials' ? '' : 'hidden';
-      document.getElementById('2fa-step').className = step === '2fa' ? '' : 'hidden';
-
-      // Reset errors
-      document.getElementById('error-credentials').className = 'hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm';
-      document.getElementById('error-2fa').className = 'hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm';
-      showingError = false;
-      document.getElementById('btn-error').textContent = 'Show Error';
-      document.getElementById('btn-error').className = 'px-3 py-1 rounded text-sm bg-white';
+      hideErrors();
     }
 
     function toggleError() {
       showingError = !showingError;
 
-      if (currentStep === 'credentials') {
-        document.getElementById('error-credentials').className = showingError
-          ? 'mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm'
-          : 'hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm';
-      } else {
-        document.getElementById('error-2fa').className = showingError
-          ? 'mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm'
-          : 'hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm';
-      }
+      const errorId = currentStep === 'credentials' ? 'error-credentials' : 'error-2fa';
+      const errorEl = document.getElementById(errorId);
 
-      document.getElementById('btn-error').textContent = showingError ? 'Hide Error' : 'Show Error';
-      document.getElementById('btn-error').className = showingError
-        ? 'px-3 py-1 rounded text-sm bg-red-500 text-white'
-        : 'px-3 py-1 rounded text-sm bg-white';
+      if (showingError) {
+        errorEl.className = 'mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-center gap-3';
+        document.getElementById('btn-error').className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500 text-white';
+      } else {
+        hideErrors();
+      }
     }
+
+    function hideErrors() {
+      document.getElementById('error-credentials').className = 'hidden mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-center gap-3';
+      document.getElementById('error-2fa').className = 'hidden mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm flex items-center gap-3';
+      document.getElementById('btn-error').className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 text-slate-300';
+      showingError = false;
+    }
+
+    // Auto-focus next OTP input
+    document.querySelectorAll('.otp-input').forEach((input, index, inputs) => {
+      input.addEventListener('input', (e) => {
+        if (e.target.value && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+          inputs[index - 1].focus();
+        }
+      });
+    });
   </script>
 </body>
 </html>
