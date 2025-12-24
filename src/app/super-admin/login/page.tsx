@@ -6,7 +6,7 @@ import { signIn, useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Building2, Users, CheckCircle, ArrowLeft, Lock, Shield, Loader2 } from 'lucide-react';
+import { Building2, Users, CheckCircle, ArrowLeft, Lock, Shield, Loader2, Check, Mail } from 'lucide-react';
 
 interface PlatformStats {
   organizations: number;
@@ -30,7 +30,6 @@ export default function SuperAdminLoginPage() {
 
   // Tokens
   const [pending2faToken, setPending2faToken] = useState('');
-  const [loginToken, setLoginToken] = useState('');
 
   // UI state
   const [isLoading, setIsLoading] = useState(false);
@@ -263,12 +262,41 @@ export default function SuperAdminLoginPage() {
 
           {/* Login Card */}
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+            {/* Step Progress Indicator */}
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                  step === 'credentials'
+                    ? 'bg-slate-800 text-white'
+                    : 'bg-green-500 text-white'
+                }`}>
+                  {step === '2fa' ? <Check className="w-4 h-4" /> : '1'}
+                </div>
+                <span className={`text-sm font-medium ${step === 'credentials' ? 'text-slate-800' : 'text-green-600'}`}>
+                  Credentials
+                </span>
+              </div>
+              <div className={`w-12 h-0.5 ${step === '2fa' ? 'bg-green-500' : 'bg-slate-200'}`} />
+              <div className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                  step === '2fa'
+                    ? 'bg-slate-800 text-white'
+                    : 'bg-slate-200 text-slate-400'
+                }`}>
+                  2
+                </div>
+                <span className={`text-sm font-medium ${step === '2fa' ? 'text-slate-800' : 'text-slate-400'}`}>
+                  Verify
+                </span>
+              </div>
+            </div>
+
             {step === 'credentials' ? (
               <>
                 {/* Header */}
-                <div className="text-center mb-8">
+                <div className="text-center mb-6">
                   <h2 className="text-slate-800 text-xl font-semibold">Welcome back</h2>
-                  <p className="text-slate-500 text-sm mt-2">Sign in to access the admin console</p>
+                  <p className="text-slate-500 text-sm mt-1">Sign in to access the admin console</p>
                 </div>
 
                 {/* Error Message */}
@@ -366,23 +394,31 @@ export default function SuperAdminLoginPage() {
               </>
             ) : (
               <>
-                {/* 2FA Form */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep('credentials');
-                    setError('');
-                    setOtpCode(['', '', '', '', '', '']);
-                  }}
-                  className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to login
-                </button>
+                {/* Verified User Info */}
+                <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-xl mb-6">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <Mail className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-green-800">Identity verified</p>
+                    <p className="text-sm text-green-600 truncate">{email}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep('credentials');
+                      setError('');
+                      setOtpCode(['', '', '', '', '', '']);
+                    }}
+                    className="text-xs text-green-700 hover:text-green-800 font-medium"
+                  >
+                    Change
+                  </button>
+                </div>
 
                 <div className="text-center mb-6">
                   <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Lock className="w-7 h-7 text-blue-600" />
+                    <Shield className="w-7 h-7 text-blue-600" />
                   </div>
                   <h3 className="text-slate-800 text-lg font-semibold">Two-Factor Authentication</h3>
                   <p className="text-slate-500 text-sm mt-2">
@@ -421,7 +457,7 @@ export default function SuperAdminLoginPage() {
                           value={digit}
                           onChange={(e) => handleOtpChange(index, e.target.value)}
                           onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                          className="w-12 h-14 text-center text-xl font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                          className="w-12 h-14 text-center text-xl font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
                         />
                       ))}
                     </div>
