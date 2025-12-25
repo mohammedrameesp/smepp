@@ -1,6 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// MODULE ROUTE MAPPING (for route-level module protection)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const MODULE_ROUTES: Record<string, string[]> = {
+  assets: ['/admin/assets', '/admin/asset-requests', '/employee/assets', '/employee/my-assets', '/employee/asset-requests'],
+  subscriptions: ['/admin/subscriptions', '/employee/subscriptions'],
+  suppliers: ['/admin/suppliers', '/employee/suppliers'],
+  employees: ['/admin/employees'],
+  leave: ['/admin/leave', '/employee/leave'],
+  payroll: ['/admin/payroll', '/employee/payroll'],
+  projects: ['/admin/projects', '/employee/projects'],
+  'purchase-requests': ['/admin/purchase-requests', '/employee/purchase-requests'],
+  documents: ['/admin/company-documents'],
+};
+
+/**
+ * Check if a path requires a specific module and if it's enabled
+ */
+function checkModuleAccess(pathname: string, enabledModules: string[]): { allowed: boolean; moduleId?: string } {
+  for (const [moduleId, routes] of Object.entries(MODULE_ROUTES)) {
+    for (const route of routes) {
+      if (pathname === route || pathname.startsWith(route + '/')) {
+        // This route requires this module
+        if (!enabledModules.includes(moduleId)) {
+          return { allowed: false, moduleId };
+        }
+        return { allowed: true };
+      }
+    }
+  }
+  // Route not controlled by any module
+  return { allowed: true };
+}
+
 /**
  * Multi-Tenant Middleware
  *
@@ -176,6 +211,22 @@ export async function middleware(request: NextRequest) {
       // Redirect to their own subdomain
       const correctUrl = new URL(pathname, `${request.nextUrl.protocol}//${userOrgSlug}.${APP_DOMAIN}`);
       return NextResponse.redirect(correctUrl);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // MODULE ACCESS CHECK
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    // Check if the route requires a module that's not installed
+    const enabledModules = (token.enabledModules as string[]) || ['assets', 'subscriptions', 'suppliers'];
+    const moduleAccess = checkModuleAccess(pathname, enabledModules);
+
+    if (!moduleAccess.allowed && moduleAccess.moduleId) {
+      // Module not installed - redirect to modules page
+      const modulesUrl = new URL('/admin/modules', request.url);
+      modulesUrl.searchParams.set('install', moduleAccess.moduleId);
+      modulesUrl.searchParams.set('from', pathname);
+      return NextResponse.redirect(modulesUrl);
     }
 
     // User belongs to this subdomain - allow access
