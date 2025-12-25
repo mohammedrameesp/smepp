@@ -504,10 +504,8 @@ export default async function AdminDashboard() {
                 <CreditCard className="h-4 w-4 text-white" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-slate-900">
-              {Number(dashboardData?.stats.monthlySpend || 0).toLocaleString()}
-            </p>
-            <p className="text-slate-500 text-xs">Monthly SaaS (QAR)</p>
+            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.subscriptions || 0}</p>
+            <p className="text-slate-500 text-xs">Subscriptions</p>
           </Link>
         )}
 
@@ -533,11 +531,11 @@ export default async function AdminDashboard() {
           >
             <div className="flex items-center mb-2">
               <div className="w-9 h-9 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-200 group-hover:scale-110 transition-transform">
-                <CalendarOff className="h-4 w-4 text-white" />
+                <Calendar className="h-4 w-4 text-white" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.onLeaveToday || 0}</p>
-            <p className="text-slate-500 text-xs">On Leave Today</p>
+            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.pendingLeave || 0}</p>
+            <p className="text-slate-500 text-xs">Leave Requests</p>
           </Link>
         )}
 
@@ -570,20 +568,6 @@ export default async function AdminDashboard() {
             <p className="text-slate-500 text-xs">Pending PRs</p>
           </Link>
         )}
-
-        {/* Company Documents - always available */}
-        <Link
-          href="/admin/company-documents"
-          className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl p-4 border border-slate-200 hover:shadow-lg hover:shadow-slate-100/50 transition-all cursor-pointer group"
-        >
-          <div className="flex items-center mb-2">
-            <div className="w-9 h-9 bg-gradient-to-br from-slate-500 to-gray-600 rounded-xl flex items-center justify-center shadow-lg shadow-slate-200 group-hover:scale-110 transition-transform">
-              <FileText className="h-4 w-4 text-white" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.companyDocuments || 0}</p>
-          <p className="text-slate-500 text-xs">Documents</p>
-        </Link>
       </div>
 
       {/* Two Column Layout */}
@@ -730,29 +714,36 @@ export default async function AdminDashboard() {
             </div>
           )}
 
-          {/* Who's On Leave */}
+          {/* Leave Requests */}
           {isModuleEnabled('leave') && (
             <div className="bg-white rounded-xl border border-slate-200">
-              <div className="px-4 py-3 border-b border-slate-100">
-                <h2 className="font-semibold text-slate-900 text-sm">On Leave Today</h2>
+              <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                <h2 className="font-semibold text-slate-900 text-sm">Leave Requests</h2>
+                <Link href="/admin/leave/requests" className="text-xs text-slate-500 hover:text-slate-700">
+                  View all
+                </Link>
               </div>
-              <div className="p-3 space-y-2">
-                {dashboardData?.onLeaveToday && dashboardData.onLeaveToday.length > 0 ? (
-                  dashboardData.onLeaveToday.map((leave) => (
-                    <div key={leave.id} className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-violet-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-xs font-medium">
-                          {leave.user.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-900">{leave.user.name}</p>
-                        <p className="text-xs text-slate-400">{leave.leaveType.name}</p>
-                      </div>
-                    </div>
-                  ))
+              <div className="p-3">
+                {dashboardData?.pendingLeaveRequests && dashboardData.pendingLeaveRequests.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {dashboardData.pendingLeaveRequests.slice(0, 4).map((leave) => (
+                      <Link
+                        key={leave.id}
+                        href="/admin/leave/requests"
+                        className="flex flex-col items-center p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors text-center"
+                      >
+                        <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-full flex items-center justify-center mb-2 shadow-lg shadow-cyan-200">
+                          <span className="text-white text-sm font-bold">
+                            {leave.user.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                          </span>
+                        </div>
+                        <p className="text-sm font-medium text-slate-900 truncate w-full">{leave.user.name?.split(' ')[0]}</p>
+                        <p className="text-xs text-slate-500 truncate w-full">{leave.leaveType.name}</p>
+                      </Link>
+                    ))}
+                  </div>
                 ) : (
-                  <p className="text-sm text-slate-500 text-center py-4">Everyone's in today</p>
+                  <p className="text-sm text-slate-500 text-center py-4">No pending requests</p>
                 )}
               </div>
             </div>

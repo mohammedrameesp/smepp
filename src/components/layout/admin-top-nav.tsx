@@ -76,7 +76,7 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
   // Navigation items for the main nav
   // Note: Employees, Assets, Subscriptions are accessible via stats row on dashboard
   const mainNavItems = [
-    { label: 'Documents', href: '/admin/company-documents', moduleId: null }, // Always available, first item
+    { label: 'Company Documents', href: '/admin/company-documents', moduleId: null }, // Always available, first item
     { label: 'Leave', href: '/admin/leave/requests', moduleId: 'leave' },
   ].filter(item => item.moduleId === null || isModuleEnabled(item.moduleId));
 
