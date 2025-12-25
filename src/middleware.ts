@@ -17,17 +17,58 @@ const MODULE_ROUTES: Record<string, string[]> = {
   documents: ['/admin/company-documents'],
 };
 
+// Tier requirements for each module
+const MODULE_TIERS: Record<string, string> = {
+  assets: 'FREE',
+  subscriptions: 'FREE',
+  suppliers: 'FREE',
+  employees: 'STARTER',
+  leave: 'STARTER',
+  payroll: 'PROFESSIONAL',
+  projects: 'PROFESSIONAL',
+  'purchase-requests': 'PROFESSIONAL',
+  documents: 'ENTERPRISE',
+};
+
+// Tier hierarchy for comparison
+const TIER_ORDER = ['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'];
+
 /**
- * Check if a path requires a specific module and if it's enabled
+ * Check if the subscription tier allows access to a module
  */
-function checkModuleAccess(pathname: string, enabledModules: string[]): { allowed: boolean; moduleId?: string } {
+function tierAllowsModule(tier: string, moduleId: string): boolean {
+  const requiredTier = MODULE_TIERS[moduleId];
+  if (!requiredTier) return true; // Unknown module, allow
+
+  const currentTierIndex = TIER_ORDER.indexOf(tier);
+  const requiredTierIndex = TIER_ORDER.indexOf(requiredTier);
+
+  return currentTierIndex >= requiredTierIndex;
+}
+
+/**
+ * Check if a path requires a specific module and if it's enabled AND tier allows it
+ */
+function checkModuleAccess(
+  pathname: string,
+  enabledModules: string[],
+  subscriptionTier: string
+): { allowed: boolean; moduleId?: string; reason?: 'not_installed' | 'upgrade_required' } {
   for (const [moduleId, routes] of Object.entries(MODULE_ROUTES)) {
     for (const route of routes) {
       if (pathname === route || pathname.startsWith(route + '/')) {
         // This route requires this module
-        if (!enabledModules.includes(moduleId)) {
-          return { allowed: false, moduleId };
+
+        // First check tier - even if enabled, tier must allow it
+        if (!tierAllowsModule(subscriptionTier, moduleId)) {
+          return { allowed: false, moduleId, reason: 'upgrade_required' };
         }
+
+        // Then check if module is enabled
+        if (!enabledModules.includes(moduleId)) {
+          return { allowed: false, moduleId, reason: 'not_installed' };
+        }
+
         return { allowed: true };
       }
     }
@@ -214,19 +255,27 @@ export async function middleware(request: NextRequest) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // MODULE ACCESS CHECK
+    // MODULE ACCESS CHECK (tier + enabledModules)
     // ─────────────────────────────────────────────────────────────────────────────
 
-    // Check if the route requires a module that's not installed
+    // Check if the route requires a module that's not installed or not allowed by tier
     const enabledModules = (token.enabledModules as string[]) || ['assets', 'subscriptions', 'suppliers'];
-    const moduleAccess = checkModuleAccess(pathname, enabledModules);
+    const subscriptionTier = (token.subscriptionTier as string) || 'FREE';
+    const moduleAccess = checkModuleAccess(pathname, enabledModules, subscriptionTier);
 
     if (!moduleAccess.allowed && moduleAccess.moduleId) {
-      // Module not installed - redirect to modules page
-      const modulesUrl = new URL('/admin/modules', request.url);
-      modulesUrl.searchParams.set('install', moduleAccess.moduleId);
-      modulesUrl.searchParams.set('from', pathname);
-      return NextResponse.redirect(modulesUrl);
+      if (moduleAccess.reason === 'upgrade_required') {
+        // Tier doesn't allow this module - redirect to billing/upgrade page
+        const upgradeUrl = new URL('/admin/settings/billing', request.url);
+        upgradeUrl.searchParams.set('upgrade_for', moduleAccess.moduleId);
+        return NextResponse.redirect(upgradeUrl);
+      } else {
+        // Module not installed - redirect to modules page
+        const modulesUrl = new URL('/admin/modules', request.url);
+        modulesUrl.searchParams.set('install', moduleAccess.moduleId);
+        modulesUrl.searchParams.set('from', pathname);
+        return NextResponse.redirect(modulesUrl);
+      }
     }
 
     // User belongs to this subdomain - allow access
