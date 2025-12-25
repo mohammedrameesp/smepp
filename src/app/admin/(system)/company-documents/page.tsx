@@ -1,9 +1,8 @@
 import { Suspense } from 'react';
 import { prisma } from '@/lib/core/prisma';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileCheck, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
+import { Plus, FileCheck, AlertTriangle, Clock, CheckCircle, FileText, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/lib/domains/system/company-documents/document-utils';
@@ -83,80 +82,113 @@ async function DocumentList() {
   const stats = await getDocumentStats();
 
   return (
-    <div className="space-y-6">
+    <>
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-sm text-muted-foreground">Total Documents</p>
-          </CardContent>
-        </Card>
-        <Card className={stats.expired > 0 ? 'border-red-200 bg-red-50' : ''}>
-          <CardContent className="pt-6">
-            <div className={`text-2xl font-bold ${stats.expired > 0 ? 'text-red-600' : ''}`}>
-              {stats.expired}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl p-5 text-white shadow-lg shadow-blue-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <FileText className="h-5 w-5" />
+              </div>
+              <span className="text-3xl font-bold">{stats.total}</span>
             </div>
-            <p className="text-sm text-muted-foreground">Expired</p>
-          </CardContent>
-        </Card>
-        <Card className={stats.expiring > 0 ? 'border-yellow-200 bg-yellow-50' : ''}>
-          <CardContent className="pt-6">
-            <div className={`text-2xl font-bold ${stats.expiring > 0 ? 'text-yellow-600' : ''}`}>
-              {stats.expiring}
+            <p className="text-sm font-medium">Total Documents</p>
+            <p className="text-xs text-white/70">All registered</p>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-gradient-to-br from-rose-400 to-pink-500 rounded-2xl p-5 text-white shadow-lg shadow-rose-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <span className="text-3xl font-bold">{stats.expired}</span>
             </div>
-            <p className="text-sm text-muted-foreground">Expiring Soon</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-600">{stats.valid}</div>
-            <p className="text-sm text-muted-foreground">Valid</p>
-          </CardContent>
-        </Card>
+            <p className="text-sm font-medium">Expired</p>
+            <p className="text-xs text-white/70">Need renewal</p>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <Clock className="h-5 w-5" />
+              </div>
+              <span className="text-3xl font-bold">{stats.expiring}</span>
+            </div>
+            <p className="text-sm font-medium">Expiring Soon</p>
+            <p className="text-xs text-white/70">Next {DOCUMENT_EXPIRY_WARNING_DAYS} days</p>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <CheckCircle className="h-5 w-5" />
+              </div>
+              <span className="text-3xl font-bold">{stats.valid}</span>
+            </div>
+            <p className="text-sm font-medium">Valid</p>
+            <p className="text-xs text-white/70">Up to date</p>
+          </div>
+        </div>
       </div>
 
       {/* Documents Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Documents</CardTitle>
-          <CardDescription>
-            Company and vehicle documents with expiry tracking
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-white rounded-xl border border-slate-200">
+        <div className="px-4 py-4 border-b border-slate-100">
+          <h2 className="font-semibold text-slate-900">All Documents</h2>
+          <p className="text-sm text-slate-500">Company and vehicle documents with expiry tracking</p>
+        </div>
+        <div className="p-4">
           {documents.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileCheck className="mx-auto h-12 w-12 mb-4 opacity-50" />
-              <p>No documents yet</p>
-              <p className="text-sm mt-1">Add your first company document to get started</p>
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FileCheck className="h-8 w-8 text-slate-400" />
+              </div>
+              <h3 className="font-semibold text-slate-900 mb-1">No documents yet</h3>
+              <p className="text-slate-500 text-sm mb-4">Add your first company document to get started</p>
+              <Link href="/admin/company-documents/new">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Document
+                </Button>
+              </Link>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b text-left">
-                    <th className="pb-3 font-medium">Document Type</th>
-                    <th className="pb-3 font-medium">Reference</th>
-                    <th className="pb-3 font-medium">Expiry Date</th>
-                    <th className="pb-3 font-medium">Status</th>
-                    <th className="pb-3 font-medium"></th>
+                    <th className="pb-3 font-medium text-slate-600 text-sm">Document Type</th>
+                    <th className="pb-3 font-medium text-slate-600 text-sm">Reference</th>
+                    <th className="pb-3 font-medium text-slate-600 text-sm">Expiry Date</th>
+                    <th className="pb-3 font-medium text-slate-600 text-sm">Status</th>
+                    <th className="pb-3 font-medium text-slate-600 text-sm"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {documents.map((doc) => (
-                    <tr key={doc.id} className="border-b last:border-0">
+                    <tr key={doc.id} className="border-b last:border-0 hover:bg-slate-50">
                       <td className="py-3">
-                        <div className="font-medium">{doc.documentType.name}</div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="font-medium text-slate-900">{doc.documentType.name}</div>
+                        <div className="text-xs text-slate-500">
                           {doc.documentType.category}
                           {doc.asset && ` • ${doc.asset.assetTag || doc.asset.brand}`}
                         </div>
                       </td>
-                      <td className="py-3 text-sm">
+                      <td className="py-3 text-sm text-slate-600">
                         {doc.referenceNumber || '-'}
                       </td>
-                      <td className="py-3 text-sm">
+                      <td className="py-3 text-sm text-slate-600">
                         {format(new Date(doc.expiryDate), 'dd MMM yyyy')}
                       </td>
                       <td className="py-3">
@@ -178,39 +210,37 @@ async function DocumentList() {
               </table>
             </div>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </>
   );
 }
 
 export default function CompanyDocumentsPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Company Documents</h1>
-                <p className="text-gray-600">
-                  Track company licenses, registrations, and vehicle documents
-                </p>
-              </div>
-              <Link href="/admin/company-documents/new">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Document
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          <Suspense fallback={<div>Loading documents...</div>}>
-            <DocumentList />
-          </Suspense>
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Company Documents</h1>
+          <p className="text-slate-500 text-sm">Track licenses, registrations, and vehicle documents</p>
         </div>
+        <Link
+          href="/admin/company-documents/new"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          Add Document
+        </Link>
       </div>
+
+      <Suspense fallback={
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+        </div>
+      }>
+        <DocumentList />
+      </Suspense>
     </div>
   );
 }

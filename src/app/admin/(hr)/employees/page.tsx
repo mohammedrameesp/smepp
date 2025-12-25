@@ -1,14 +1,11 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { redirect } from 'next/navigation';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { EmployeeListTable } from '@/components/employees';
-import { ExpiryAlertsWidget, CelebrationsWidget } from '@/components/dashboard';
 import { prisma } from '@/lib/core/prisma';
+import { Users, UserPlus, FileWarning, Gift, Calendar, ClipboardList } from 'lucide-react';
 
 export default async function AdminEmployeesPage() {
   const session = await getServerSession(authOptions);
@@ -21,65 +18,148 @@ export default async function AdminEmployeesPage() {
     redirect('/forbidden');
   }
 
-  // Require organization context for tenant isolation
   if (!session.user.organizationId) {
     redirect('/login');
   }
 
   const tenantId = session.user.organizationId;
+  const today = new Date();
+  const thirtyDaysFromNow = new Date(today);
+  thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-  // Get pending change requests count (tenant-scoped)
-  const pendingChangeRequests = await prisma.profileChangeRequest.count({
-    where: { tenantId, status: 'PENDING' }
-  });
+  const [
+    totalEmployees,
+    pendingChangeRequests,
+    expiringDocuments,
+    onLeaveToday,
+  ] = await Promise.all([
+    prisma.user.count({
+      where: {
+        role: { in: ['ADMIN', 'EMPLOYEE'] },
+        organizationMemberships: { some: { organizationId: tenantId } },
+      },
+    }),
+    prisma.profileChangeRequest.count({
+      where: { tenantId, status: 'PENDING' },
+    }),
+    prisma.employeeDocument.count({
+      where: {
+        tenantId,
+        expiryDate: { gte: today, lte: thirtyDaysFromNow },
+      },
+    }),
+    prisma.leaveRequest.count({
+      where: {
+        tenantId,
+        status: 'APPROVED',
+        startDate: { lte: today },
+        endDate: { gte: today },
+      },
+    }),
+  ]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Employee Management</h1>
-                <p className="text-gray-600">
-                  Manage employee profiles, HR information, and document expiries
-                </p>
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Employees</h1>
+          <p className="text-slate-500 text-sm">Manage employee profiles and HR information</p>
+        </div>
+        <div className="flex gap-2">
+          <Link
+            href="/admin/employees/change-requests"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+          >
+            <ClipboardList className="h-4 w-4" />
+            Change Requests
+            {pendingChangeRequests > 0 && (
+              <span className="bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                {pendingChangeRequests}
+              </span>
+            )}
+          </Link>
+          <Link
+            href="/admin/employees/new"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
+          >
+            <UserPlus className="h-4 w-4" />
+            Add Employee
+          </Link>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl p-5 text-white shadow-lg shadow-blue-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <Users className="h-5 w-5" />
               </div>
-              <div className="flex gap-3">
-                <Link href="/admin/employees/change-requests">
-                  <Button variant="outline" className="relative">
-                    Change Requests
-                    {pendingChangeRequests > 0 && (
-                      <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1.5 py-0.5 min-w-[1.25rem] h-5">
-                        {pendingChangeRequests}
-                      </Badge>
-                    )}
-                  </Button>
-                </Link>
-                <Link href="/admin/employees/new">
-                  <Button>+ Add Employee</Button>
-                </Link>
+              <span className="text-3xl font-bold">{totalEmployees}</span>
+            </div>
+            <p className="text-sm font-medium">Total Employees</p>
+            <p className="text-xs text-white/70">Active team members</p>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <Calendar className="h-5 w-5" />
               </div>
+              <span className="text-3xl font-bold">{onLeaveToday}</span>
+            </div>
+            <p className="text-sm font-medium">On Leave Today</p>
+            <p className="text-xs text-white/70">Currently away</p>
+          </div>
+        </div>
+
+        <Link href="/admin/employees/document-expiry">
+          <div className="relative overflow-hidden bg-gradient-to-br from-rose-400 to-pink-500 rounded-2xl p-5 text-white shadow-lg shadow-rose-200/50 cursor-pointer hover:shadow-xl transition-shadow">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                  <FileWarning className="h-5 w-5" />
+                </div>
+                <span className="text-3xl font-bold">{expiringDocuments}</span>
+              </div>
+              <p className="text-sm font-medium">Expiring Documents</p>
+              <p className="text-xs text-white/70">Next 30 days</p>
             </div>
           </div>
+        </Link>
 
-          {/* Dashboard Widgets */}
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
-            <CelebrationsWidget />
-            <ExpiryAlertsWidget isAdmin={true} />
+        <Link href="/admin/employees/change-requests">
+          <div className="relative overflow-hidden bg-gradient-to-br from-purple-400 to-violet-500 rounded-2xl p-5 text-white shadow-lg shadow-purple-200/50 cursor-pointer hover:shadow-xl transition-shadow">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-2">
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                  <ClipboardList className="h-5 w-5" />
+                </div>
+                <span className="text-3xl font-bold">{pendingChangeRequests}</span>
+              </div>
+              <p className="text-sm font-medium">Change Requests</p>
+              <p className="text-xs text-white/70">Pending review</p>
+            </div>
           </div>
+        </Link>
+      </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>All Employees</CardTitle>
-              <CardDescription>
-                Complete employee directory with HR details, document expiries, and profile status
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EmployeeListTable />
-            </CardContent>
-          </Card>
+      {/* Employee Table */}
+      <div className="bg-white rounded-xl border border-slate-200">
+        <div className="px-4 py-4 border-b border-slate-100">
+          <h2 className="font-semibold text-slate-900">All Employees</h2>
+          <p className="text-sm text-slate-500">Complete directory with HR details and document status</p>
+        </div>
+        <div className="p-4">
+          <EmployeeListTable />
         </div>
       </div>
     </div>

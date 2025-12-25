@@ -1,13 +1,12 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { SubscriptionListTableServerSearch } from '@/components/subscriptions/subscription-list-table-server-search';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
+import { CreditCard, Plus, DollarSign, Calendar } from 'lucide-react';
 
 export default async function AdminSubscriptionsPage() {
   const session = await getServerSession(authOptions);
@@ -20,14 +19,12 @@ export default async function AdminSubscriptionsPage() {
     redirect('/forbidden');
   }
 
-  // Require organization context for tenant isolation
   if (!session.user.organizationId) {
     redirect('/login');
   }
 
   const tenantId = session.user.organizationId;
 
-  // Fetch only statistics (not all subscriptions - table component fetches its own data) - tenant-scoped
   const [activeCount, cancelledCount, activeSubscriptions] = await Promise.all([
     prisma.subscription.count({ where: { tenantId, status: 'ACTIVE' } }),
     prisma.subscription.count({ where: { tenantId, status: 'CANCELLED' } }),
@@ -41,9 +38,6 @@ export default async function AdminSubscriptionsPage() {
       },
     }),
   ]);
-
-  const activeSubscriptionsCount = activeCount;
-  const cancelledSubscriptionsCount = cancelledCount;
 
   // Calculate this month's charges
   const now = new Date();
@@ -60,13 +54,10 @@ export default async function AdminSubscriptionsPage() {
     const currency = sub.costCurrency || 'QAR';
 
     if (sub.billingCycle === 'MONTHLY') {
-      // All monthly subscriptions are charged this month
       if (currency === 'QAR') monthlyQAR += cost;
       else monthlyUSD += cost;
     } else if (sub.billingCycle === 'YEARLY' && sub.renewalDate) {
-      // Check if yearly renewal falls in current month
       const renewalDate = new Date(sub.renewalDate);
-      // Calculate next renewal from renewal date
       let nextRenewal = new Date(renewalDate);
       nextRenewal.setFullYear(currentYear);
       if (nextRenewal < now) {
@@ -80,7 +71,6 @@ export default async function AdminSubscriptionsPage() {
       const renewalYear = nextRenewal.getFullYear();
 
       if (renewalMonth === currentMonth && renewalYear === currentYear) {
-        // This yearly subscription renews this month
         if (currency === 'QAR') yearlyRenewingQAR += cost;
         else yearlyRenewingUSD += cost;
       }
@@ -92,84 +82,90 @@ export default async function AdminSubscriptionsPage() {
   const totalInQAR = totalQAR + (totalUSD * USD_TO_QAR_RATE);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Subscriptions</h1>
-              <p className="text-gray-600">
-                View, edit, and manage all company subscriptions
-              </p>
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Subscriptions</h1>
+          <p className="text-slate-500 text-sm">Manage company subscriptions and renewals</p>
+        </div>
+        <Link
+          href="/admin/subscriptions/new"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          Add Subscription
+        </Link>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl p-5 text-white shadow-lg shadow-blue-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <CreditCard className="h-5 w-5" />
+              </div>
+              <span className="text-3xl font-bold">{activeCount}</span>
             </div>
-            <Link href="/admin/subscriptions/new">
-              <Button>+ Add Subscription</Button>
-            </Link>
-          </div>
-
-          {/* Key Figures */}
-          <div className="grid md:grid-cols-3 gap-3 mb-6">
-            <Card>
-              <CardHeader className="pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-gray-600">Active Subscriptions</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="text-2xl font-bold text-gray-900">{activeSubscriptionsCount}</div>
-                <p className="text-xs text-gray-500">
-                  {cancelledSubscriptionsCount} cancelled
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-gray-600">This Month&apos;s Charges</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div>
-                  <div className="text-lg font-bold text-blue-900">
-                    QAR {totalQAR.toFixed(2)}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    (M: {monthlyQAR.toFixed(0)} + Y: {yearlyRenewingQAR.toFixed(0)})
-                  </div>
-                  <div className="text-sm font-semibold text-green-900 mt-1">
-                    USD {totalUSD.toFixed(2)}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    (M: {monthlyUSD.toFixed(0)} + Y: {yearlyRenewingUSD.toFixed(0)})
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-gray-600">Total (Converted to QAR)</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="text-2xl font-bold text-purple-900">
-                  QAR {totalInQAR.toFixed(2)}
-                </div>
-                <p className="text-xs text-gray-500">
-                  1 USD = {USD_TO_QAR_RATE} QAR
-                </p>
-              </CardContent>
-            </Card>
+            <p className="text-sm font-medium">Active</p>
+            <p className="text-xs text-white/70">{cancelledCount} cancelled</p>
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>All Subscriptions</CardTitle>
-            <CardDescription>
-              Complete list of registered subscriptions with filters and sorting
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SubscriptionListTableServerSearch />
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <DollarSign className="h-5 w-5" />
+              </div>
+              <span className="text-2xl font-bold">{totalQAR.toFixed(0)}</span>
+            </div>
+            <p className="text-sm font-medium">QAR This Month</p>
+            <p className="text-xs text-white/70">Monthly + Yearly renewals</p>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <DollarSign className="h-5 w-5" />
+              </div>
+              <span className="text-2xl font-bold">{totalUSD.toFixed(0)}</span>
+            </div>
+            <p className="text-sm font-medium">USD This Month</p>
+            <p className="text-xs text-white/70">Monthly + Yearly renewals</p>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-gradient-to-br from-purple-400 to-violet-500 rounded-2xl p-5 text-white shadow-lg shadow-purple-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <Calendar className="h-5 w-5" />
+              </div>
+              <span className="text-2xl font-bold">{(totalInQAR / 1000).toFixed(1)}K</span>
+            </div>
+            <p className="text-sm font-medium">Total (QAR)</p>
+            <p className="text-xs text-white/70">All converted</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Subscriptions Table */}
+      <div className="bg-white rounded-xl border border-slate-200">
+        <div className="px-4 py-4 border-b border-slate-100">
+          <h2 className="font-semibold text-slate-900">All Subscriptions</h2>
+          <p className="text-sm text-slate-500">Complete list with filters and sorting</p>
+        </div>
+        <div className="p-4">
+          <SubscriptionListTableServerSearch />
+        </div>
       </div>
     </div>
   );

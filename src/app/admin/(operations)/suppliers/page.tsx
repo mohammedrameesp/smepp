@@ -1,12 +1,11 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { SupplierListTableServerSearch } from '@/components/suppliers/supplier-list-table-server-search';
+import { Building2, Plus, Tags, Handshake } from 'lucide-react';
 
 export default async function AdminSuppliersPage() {
   const session = await getServerSession(authOptions);
@@ -19,16 +18,15 @@ export default async function AdminSuppliersPage() {
     redirect('/forbidden');
   }
 
-  // Require organization context for tenant isolation
   if (!session.user.organizationId) {
     redirect('/login');
   }
 
   const tenantId = session.user.organizationId;
 
-  // Fetch only statistics (not all suppliers - table component fetches its own data) - tenant-scoped
-  const [totalSuppliers, categories, totalEngagements] = await Promise.all([
+  const [totalSuppliers, approvedSuppliers, categories, totalEngagements] = await Promise.all([
     prisma.supplier.count({ where: { tenantId } }),
+    prisma.supplier.count({ where: { tenantId, status: 'APPROVED' } }),
     prisma.supplier.findMany({
       where: { tenantId },
       select: { category: true },
@@ -40,66 +38,91 @@ export default async function AdminSuppliersPage() {
   const uniqueCategories = categories.length;
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Suppliers</h1>
-              <p className="text-gray-600">
-                View, approve, and manage all supplier registrations
-              </p>
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Suppliers</h1>
+          <p className="text-slate-500 text-sm">Manage vendor registrations and engagements</p>
+        </div>
+        <Link
+          href="/suppliers/register"
+          target="_blank"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          Register Supplier
+        </Link>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl p-5 text-white shadow-lg shadow-blue-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <Building2 className="h-5 w-5" />
+              </div>
+              <span className="text-3xl font-bold">{totalSuppliers}</span>
             </div>
-            <Link href="/suppliers/register" target="_blank">
-              <Button>+ Register Supplier</Button>
-            </Link>
-          </div>
-
-          {/* Key Figures */}
-          <div className="grid md:grid-cols-3 gap-3 mb-6">
-            <Card>
-              <CardHeader className="pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-gray-600">Total Suppliers</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="text-2xl font-bold text-gray-900">{totalSuppliers}</div>
-                <p className="text-xs text-gray-500">Registered in database</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-gray-600">Categories</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="text-2xl font-bold text-blue-600">{uniqueCategories}</div>
-                <p className="text-xs text-gray-500">Unique supplier categories</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-gray-600">Total Engagements</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="text-2xl font-bold text-purple-600">{totalEngagements}</div>
-                <p className="text-xs text-gray-500">Recorded interactions</p>
-              </CardContent>
-            </Card>
+            <p className="text-sm font-medium">Total Suppliers</p>
+            <p className="text-xs text-white/70">Registered in system</p>
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>All Suppliers</CardTitle>
-            <CardDescription>
-              Complete list of registered suppliers with status and contact information
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SupplierListTableServerSearch />
-          </CardContent>
-        </Card>
+        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <Building2 className="h-5 w-5" />
+              </div>
+              <span className="text-3xl font-bold">{approvedSuppliers}</span>
+            </div>
+            <p className="text-sm font-medium">Approved</p>
+            <p className="text-xs text-white/70">Active vendors</p>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <Tags className="h-5 w-5" />
+              </div>
+              <span className="text-3xl font-bold">{uniqueCategories}</span>
+            </div>
+            <p className="text-sm font-medium">Categories</p>
+            <p className="text-xs text-white/70">Unique types</p>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden bg-gradient-to-br from-purple-400 to-violet-500 rounded-2xl p-5 text-white shadow-lg shadow-purple-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <Handshake className="h-5 w-5" />
+              </div>
+              <span className="text-3xl font-bold">{totalEngagements}</span>
+            </div>
+            <p className="text-sm font-medium">Engagements</p>
+            <p className="text-xs text-white/70">Recorded interactions</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Suppliers Table */}
+      <div className="bg-white rounded-xl border border-slate-200">
+        <div className="px-4 py-4 border-b border-slate-100">
+          <h2 className="font-semibold text-slate-900">All Suppliers</h2>
+          <p className="text-sm text-slate-500">Complete list with status and contact information</p>
+        </div>
+        <div className="p-4">
+          <SupplierListTableServerSearch />
+        </div>
       </div>
     </div>
   );
