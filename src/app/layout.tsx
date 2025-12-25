@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/header";
+import { ConditionalHeader } from "@/components/conditional-header";
 import { Providers } from "@/components/providers";
 import MainContent from "@/components/main-content";
 import { getServerSession } from "next-auth";
@@ -69,7 +69,7 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <Providers>
-          <Header enabledModules={enabledModules} />
+          <ConditionalHeader enabledModules={enabledModules} />
           <MainContent>{children}</MainContent>
         </Providers>
       </body>
