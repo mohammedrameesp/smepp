@@ -372,11 +372,11 @@ export default async function AdminDashboard() {
               <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
                 <Inbox className="h-5 w-5" />
               </div>
-              <span className="text-4xl font-bold">{dashboardData?.pendingApprovals || 0}</span>
+              <span className="text-4xl font-bold">{allApprovals.length}</span>
             </div>
             <h3 className="text-lg font-semibold mb-0.5">Pending Approvals</h3>
             <p className="text-white/80 text-sm flex-1">
-              {allApprovals.length > 0 ? `${allApprovals.length} items need review` : 'All caught up!'}
+              {allApprovals.length > 0 ? 'Items need review' : 'All caught up!'}
             </p>
             <Link
               href="/admin/my-approvals"
@@ -650,35 +650,39 @@ export default async function AdminDashboard() {
 
         {/* Right Column - Widgets (1/3 width) */}
         <div className="space-y-4">
-          {/* Activity */}
-          <div className="bg-white rounded-xl border border-slate-200">
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="font-semibold text-slate-900 text-sm">Recent Activity</h2>
-              <Link href="/admin/activity" className="text-xs text-slate-500 hover:text-slate-700">
-                View all
-              </Link>
-            </div>
-            <div className="p-3 space-y-3">
-              {dashboardData?.recentActivity && dashboardData.recentActivity.length > 0 ? (
-                dashboardData.recentActivity.slice(0, 4).map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full mt-1.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-slate-900">
-                        <span className="font-medium">{activity.actorUser?.name || 'System'}</span>
-                        {' '}{activity.action.replace(/_/g, ' ').toLowerCase()}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {format(new Date(activity.at), 'MMM d, h:mm a')}
-                      </p>
-                    </div>
+          {/* On Leave Today */}
+          {isModuleEnabled('leave') && (
+            <div className="bg-white rounded-xl border border-slate-200">
+              <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                <h2 className="font-semibold text-slate-900 text-sm">Out of Office Today</h2>
+                <Link href="/admin/leave/requests" className="text-xs text-slate-500 hover:text-slate-700">
+                  View all
+                </Link>
+              </div>
+              <div className="p-3">
+                {dashboardData?.onLeaveToday && dashboardData.onLeaveToday.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {dashboardData.onLeaveToday.slice(0, 4).map((leave) => (
+                      <div
+                        key={leave.id}
+                        className="flex flex-col items-center p-3 rounded-xl bg-slate-50 text-center"
+                      >
+                        <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mb-2 shadow-lg shadow-orange-200">
+                          <span className="text-white text-sm font-bold">
+                            {leave.user.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                          </span>
+                        </div>
+                        <p className="text-sm font-medium text-slate-900 truncate w-full">{leave.user.name?.split(' ')[0]}</p>
+                        <p className="text-xs text-slate-500 truncate w-full">{leave.leaveType.name}</p>
+                      </div>
+                    ))}
                   </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-500 text-center py-4">No recent activity</p>
-              )}
+                ) : (
+                  <p className="text-sm text-slate-500 text-center py-4">Everyone is in today</p>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Upcoming Events */}
           {isModuleEnabled('employees') && (
@@ -736,40 +740,35 @@ export default async function AdminDashboard() {
             </div>
           )}
 
-          {/* Leave Requests */}
-          {isModuleEnabled('leave') && (
-            <div className="bg-white rounded-xl border border-slate-200">
-              <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="font-semibold text-slate-900 text-sm">Leave Requests</h2>
-                <Link href="/admin/leave/requests" className="text-xs text-slate-500 hover:text-slate-700">
-                  View all
-                </Link>
-              </div>
-              <div className="p-3">
-                {dashboardData?.pendingLeaveRequests && dashboardData.pendingLeaveRequests.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    {dashboardData.pendingLeaveRequests.slice(0, 4).map((leave) => (
-                      <Link
-                        key={leave.id}
-                        href="/admin/leave/requests"
-                        className="flex flex-col items-center p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors text-center"
-                      >
-                        <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-full flex items-center justify-center mb-2 shadow-lg shadow-cyan-200">
-                          <span className="text-white text-sm font-bold">
-                            {leave.user.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
-                          </span>
-                        </div>
-                        <p className="text-sm font-medium text-slate-900 truncate w-full">{leave.user.name?.split(' ')[0]}</p>
-                        <p className="text-xs text-slate-500 truncate w-full">{leave.leaveType.name}</p>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-500 text-center py-4">No pending requests</p>
-                )}
-              </div>
+          {/* Recent Activity */}
+          <div className="bg-white rounded-xl border border-slate-200">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="font-semibold text-slate-900 text-sm">Recent Activity</h2>
+              <Link href="/admin/activity" className="text-xs text-slate-500 hover:text-slate-700">
+                View all
+              </Link>
             </div>
-          )}
+            <div className="p-3 space-y-3">
+              {dashboardData?.recentActivity && dashboardData.recentActivity.length > 0 ? (
+                dashboardData.recentActivity.slice(0, 4).map((activity) => (
+                  <div key={activity.id} className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full mt-1.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-slate-900">
+                        <span className="font-medium">{activity.actorUser?.name || 'System'}</span>
+                        {' '}{activity.action.replace(/_/g, ' ').toLowerCase()}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {format(new Date(activity.at), 'MMM d, h:mm a')}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-500 text-center py-4">No recent activity</p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

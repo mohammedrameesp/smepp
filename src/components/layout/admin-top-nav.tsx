@@ -104,36 +104,35 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
   const subscriptionTier = session?.user?.subscriptionTier || 'FREE';
 
   return (
-    <header className="sticky top-0 z-50 px-4 py-3">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white/85 backdrop-blur-xl rounded-2xl border border-slate-200/50 shadow-sm px-5 py-3">
-          <div className="flex items-center justify-between">
-            {/* Left: Logo + Org Name + Tier Badge */}
-            <div className="flex items-center gap-6">
-              <Link href="/admin" className="flex items-center gap-2.5">
-                {session?.user?.organizationLogoUrl ? (
-                  <img
-                    src={session.user.organizationLogoUrl}
-                    alt={session.user.organizationName || 'Organization'}
-                    className="h-9 w-auto max-w-[100px] object-contain"
-                  />
-                ) : (
-                  <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">S+</span>
-                  </div>
-                )}
-                <div className="hidden sm:flex items-center gap-2">
-                  <span className="font-semibold text-slate-900">
-                    {session?.user?.organizationName || 'Organization'}
-                  </span>
-                  <span className={cn(
-                    'text-[10px] px-2 py-0.5 rounded-full font-medium uppercase',
-                    tierColors[subscriptionTier] || tierColors.FREE
-                  )}>
-                    {subscriptionTier}
-                  </span>
+    <header className="sticky top-0 z-50 bg-white border-b border-slate-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between h-14">
+          {/* Left: Logo + Org Name + Tier Badge */}
+          <div className="flex items-center gap-6">
+            <Link href="/admin" className="flex items-center gap-2.5">
+              {session?.user?.organizationLogoUrl ? (
+                <img
+                  src={session.user.organizationLogoUrl}
+                  alt={session.user.organizationName || 'Organization'}
+                  className="h-8 w-auto max-w-[100px] object-contain"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">S+</span>
                 </div>
-              </Link>
+              )}
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="font-semibold text-slate-900">
+                  {session?.user?.organizationName || 'Organization'}
+                </span>
+                <span className={cn(
+                  'text-[10px] px-2 py-0.5 rounded-full font-medium uppercase',
+                  tierColors[subscriptionTier] || tierColors.FREE
+                )}>
+                  {subscriptionTier}
+                </span>
+              </div>
+            </Link>
 
               {/* Navigation */}
               <nav className="hidden md:flex items-center">
@@ -313,7 +312,6 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
             </div>
           </div>
         </div>
-      </div>
-    </header>
-  );
+      </header>
+    );
 }
