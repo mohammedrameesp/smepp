@@ -6,22 +6,68 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Loader2,
   Building2,
   Globe,
   Mail,
+  User,
   ArrowLeft,
   CheckCircle,
   AlertCircle,
   Send,
   Copy,
   Check,
+  Briefcase,
+  Users,
+  FileText,
+  Boxes,
 } from 'lucide-react';
 
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+
+// Industry options
+const INDUSTRIES = [
+  { value: 'technology', label: 'Technology' },
+  { value: 'retail', label: 'Retail & E-commerce' },
+  { value: 'healthcare', label: 'Healthcare' },
+  { value: 'manufacturing', label: 'Manufacturing' },
+  { value: 'construction', label: 'Construction' },
+  { value: 'education', label: 'Education' },
+  { value: 'finance', label: 'Finance & Banking' },
+  { value: 'real-estate', label: 'Real Estate' },
+  { value: 'hospitality', label: 'Hospitality' },
+  { value: 'professional-services', label: 'Professional Services' },
+  { value: 'other', label: 'Other' },
+];
+
+// Company size options
+const COMPANY_SIZES = [
+  { value: '1-10', label: '1-10 employees' },
+  { value: '11-50', label: '11-50 employees' },
+  { value: '51-200', label: '51-200 employees' },
+  { value: '201-500', label: '201-500 employees' },
+  { value: '500+', label: '500+ employees' },
+];
+
+// Available modules
+const MODULES = [
+  { id: 'assets', label: 'Assets', description: 'Track and manage company assets', defaultEnabled: true },
+  { id: 'subscriptions', label: 'Subscriptions', description: 'Manage software subscriptions', defaultEnabled: true },
+  { id: 'suppliers', label: 'Suppliers', description: 'Vendor management', defaultEnabled: true },
+  { id: 'employees', label: 'Employees', description: 'HR and employee profiles', defaultEnabled: false },
+  { id: 'leave', label: 'Leave Management', description: 'Leave requests and approvals', defaultEnabled: false },
+  { id: 'payroll', label: 'Payroll', description: 'Salary and payroll processing', defaultEnabled: false },
+];
 
 function generateSlug(name: string): string {
   return name
@@ -39,13 +85,20 @@ export default function CreateOrganizationPage() {
   const [success, setSuccess] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [createdOrg, setCreatedOrg] = useState<{ name: string; slug: string } | null>(null);
 
   // Form state
   const [organizationName, setOrganizationName] = useState('');
   const [subdomain, setSubdomain] = useState('');
   const [subdomainEdited, setSubdomainEdited] = useState(false);
+  const [industry, setIndustry] = useState('');
+  const [companySize, setCompanySize] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminName, setAdminName] = useState('');
+  const [enabledModules, setEnabledModules] = useState<string[]>(
+    MODULES.filter(m => m.defaultEnabled).map(m => m.id)
+  );
+  const [internalNotes, setInternalNotes] = useState('');
 
   // Subdomain validation
   const [checkingSubdomain, setCheckingSubdomain] = useState(false);
@@ -102,6 +155,14 @@ export default function CreateOrganizationPage() {
     setSubdomainStatus(null);
   };
 
+  const handleModuleToggle = (moduleId: string, checked: boolean) => {
+    if (checked) {
+      setEnabledModules(prev => [...prev, moduleId]);
+    } else {
+      setEnabledModules(prev => prev.filter(id => id !== moduleId));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -120,7 +181,6 @@ export default function CreateOrganizationPage() {
       return;
     }
 
-    // Email validation with proper regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!adminEmail || !emailRegex.test(adminEmail.trim())) {
       setError('Please enter a valid email address');
@@ -139,6 +199,10 @@ export default function CreateOrganizationPage() {
           slug: subdomain,
           adminEmail: adminEmail.trim().toLowerCase(),
           adminName: adminName.trim() || undefined,
+          industry: industry || undefined,
+          companySize: companySize || undefined,
+          enabledModules,
+          internalNotes: internalNotes.trim() || undefined,
         }),
       });
 
@@ -150,6 +214,7 @@ export default function CreateOrganizationPage() {
 
       setSuccess(true);
       setInviteUrl(data.invitation?.inviteUrl || null);
+      setCreatedOrg({ name: organizationName.trim(), slug: subdomain });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -165,27 +230,49 @@ export default function CreateOrganizationPage() {
     }
   };
 
+  // Success state
   if (success) {
     return (
       <div className="max-w-2xl mx-auto">
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+        <div className="bg-white rounded-xl border border-slate-200 p-8">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">Organization Created!</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              Share the invitation link with <strong>{adminEmail}</strong>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Organization Created!</h2>
+            <p className="text-slate-500 mb-6">
+              {createdOrg?.name} has been set up successfully
             </p>
 
+            {/* Org Details */}
+            <div className="bg-slate-50 rounded-lg p-4 mb-6 text-left">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-slate-500">Subdomain</p>
+                  <p className="font-medium text-slate-900">{createdOrg?.slug}.{APP_DOMAIN.split(':')[0]}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500">Modules</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {enabledModules.map(mod => (
+                      <span key={mod} className="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded">
+                        {MODULES.find(m => m.id === mod)?.label || mod}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Invitation Link */}
             {inviteUrl && (
-              <div className="w-full max-w-md space-y-2">
-                <Label className="text-sm font-medium">Invitation Link</Label>
-                <div className="flex gap-2">
+              <div className="mb-6">
+                <Label className="text-sm font-medium text-slate-700">Invitation Link for {adminEmail}</Label>
+                <div className="flex gap-2 mt-2">
                   <Input
                     value={inviteUrl}
                     readOnly
-                    className="font-mono text-xs"
+                    className="font-mono text-xs bg-slate-50"
                   />
                   <Button
                     variant="outline"
@@ -200,196 +287,333 @@ export default function CreateOrganizationPage() {
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-slate-500 mt-2">
                   This link expires in 7 days. Copy and send it to the admin.
                 </p>
               </div>
             )}
 
-            <div className="mt-6">
-              <Link href="/super-admin">
-                <Button variant="outline">
+            {/* Actions */}
+            <div className="flex gap-3">
+              <Link href="/super-admin/organizations" className="flex-1">
+                <Button variant="outline" className="w-full">
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Dashboard
+                  Back to Organizations
                 </Button>
               </Link>
+              <Button
+                className="flex-1 bg-slate-900 hover:bg-slate-800"
+                onClick={() => {
+                  setSuccess(false);
+                  setOrganizationName('');
+                  setSubdomain('');
+                  setSubdomainEdited(false);
+                  setIndustry('');
+                  setCompanySize('');
+                  setAdminEmail('');
+                  setAdminName('');
+                  setEnabledModules(MODULES.filter(m => m.defaultEnabled).map(m => m.id));
+                  setInternalNotes('');
+                  setInviteUrl(null);
+                  setCreatedOrg(null);
+                }}
+              >
+                Create Another
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto">
+      {/* Back Link */}
       <div className="mb-6">
         <Link
-          href="/super-admin"
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+          href="/super-admin/organizations"
+          className="inline-flex items-center text-sm text-slate-500 hover:text-slate-900"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Dashboard
+          Back to Organizations
         </Link>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            Create New Organization
-          </CardTitle>
-          <CardDescription>
-            Create a new organization and invite the first admin
-          </CardDescription>
-        </CardHeader>
+      {/* Header */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center">
+            <Building2 className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Create New Organization</h1>
+            <p className="text-sm text-slate-500">Set up a new organization and invite the first admin</p>
+          </div>
+        </div>
+      </div>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <Alert variant="error">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Error Alert */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
 
-            {/* Organization Details */}
-            <div className="space-y-4">
-              <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                Organization Details
-              </h3>
+        {/* Organization Details Section */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">
+            Organization Details
+          </h2>
 
-              <div className="space-y-2">
-                <Label htmlFor="organizationName">Organization Name *</Label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="organizationName"
-                    placeholder="Acme Corporation"
-                    value={organizationName}
-                    onChange={(e) => {
-                      setOrganizationName(e.target.value);
-                      setError(null);
-                    }}
-                    className="pl-10"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="subdomain">Subdomain *</Label>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="subdomain"
-                      placeholder="acme"
-                      value={subdomain}
-                      onChange={(e) => handleSubdomainChange(e.target.value)}
-                      className="pl-10 pr-10 font-mono"
-                      required
-                      disabled={isLoading}
-                    />
-                    <div className="absolute right-3 top-3">
-                      {checkingSubdomain ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                      ) : subdomainStatus ? (
-                        subdomainStatus.available ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                        ) : (
-                          <AlertCircle className="h-4 w-4 text-red-500" />
-                        )
-                      ) : null}
-                    </div>
-                  </div>
-                  <span className="text-sm text-muted-foreground whitespace-nowrap">
-                    .{APP_DOMAIN.split(':')[0]}
-                  </span>
-                </div>
-                {subdomainStatus && (
-                  <p className={`text-xs ${subdomainStatus.available ? 'text-green-600' : 'text-red-600'}`}>
-                    {subdomainStatus.available
-                      ? 'This subdomain is available!'
-                      : subdomainStatus.error || 'This subdomain is not available'}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Admin Details */}
-            <div className="space-y-4 pt-4 border-t">
-              <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                First Admin (will receive invitation)
-              </h3>
-
-              <div className="space-y-2">
-                <Label htmlFor="adminEmail">Admin Email *</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="adminEmail"
-                    type="email"
-                    placeholder="admin@acme.com"
-                    value={adminEmail}
-                    onChange={(e) => {
-                      setAdminEmail(e.target.value);
-                      setError(null);
-                    }}
-                    className="pl-10"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="adminName">Admin Name (optional)</Label>
+          <div className="space-y-4">
+            {/* Organization Name */}
+            <div className="space-y-2">
+              <Label htmlFor="organizationName" className="text-sm text-slate-700">
+                Organization Name <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
-                  id="adminName"
-                  placeholder="John Smith"
-                  value={adminName}
-                  onChange={(e) => setAdminName(e.target.value)}
+                  id="organizationName"
+                  placeholder="Acme Corporation"
+                  value={organizationName}
+                  onChange={(e) => {
+                    setOrganizationName(e.target.value);
+                    setError(null);
+                  }}
+                  className="pl-10 bg-slate-50 border-slate-200 focus:ring-slate-900"
+                  required
                   disabled={isLoading}
                 />
               </div>
             </div>
 
-            {/* Submit */}
-            <div className="flex gap-3 pt-4">
-              <Link href="/super-admin" className="flex-1">
-                <Button type="button" variant="outline" className="w-full" disabled={isLoading}>
-                  Cancel
-                </Button>
-              </Link>
-              <Button
-                type="submit"
-                className="flex-1"
-                disabled={
-                  isLoading ||
-                  organizationName.trim().length < 2 ||
-                  subdomain.length < 3 ||
-                  checkingSubdomain ||
-                  (subdomainStatus !== null && !subdomainStatus.available) ||
-                  !adminEmail
-                }
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Create & Send Invitation
-                  </>
-                )}
-              </Button>
+            {/* Subdomain */}
+            <div className="space-y-2">
+              <Label htmlFor="subdomain" className="text-sm text-slate-700">
+                Subdomain <span className="text-red-500">*</span>
+              </Label>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Globe className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="subdomain"
+                    placeholder="acme"
+                    value={subdomain}
+                    onChange={(e) => handleSubdomainChange(e.target.value)}
+                    className="pl-10 pr-10 font-mono bg-slate-50 border-slate-200 focus:ring-slate-900"
+                    required
+                    disabled={isLoading}
+                  />
+                  <div className="absolute right-3 top-3">
+                    {checkingSubdomain ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                    ) : subdomainStatus ? (
+                      subdomainStatus.available ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                      )
+                    ) : null}
+                  </div>
+                </div>
+                <span className="text-sm text-slate-500 whitespace-nowrap">
+                  .{APP_DOMAIN.split(':')[0]}
+                </span>
+              </div>
+              {subdomainStatus && (
+                <p className={`text-xs ${subdomainStatus.available ? 'text-green-600' : 'text-red-600'}`}>
+                  {subdomainStatus.available
+                    ? 'This subdomain is available!'
+                    : subdomainStatus.error || 'This subdomain is not available'}
+                </p>
+              )}
             </div>
-          </form>
-        </CardContent>
-      </Card>
+
+            {/* Industry & Company Size */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm text-slate-700">Industry</Label>
+                <Select value={industry} onValueChange={setIndustry} disabled={isLoading}>
+                  <SelectTrigger className="bg-slate-50 border-slate-200">
+                    <Briefcase className="h-4 w-4 text-slate-400 mr-2" />
+                    <SelectValue placeholder="Select industry" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INDUSTRIES.map((ind) => (
+                      <SelectItem key={ind.value} value={ind.value}>
+                        {ind.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm text-slate-700">Company Size</Label>
+                <Select value={companySize} onValueChange={setCompanySize} disabled={isLoading}>
+                  <SelectTrigger className="bg-slate-50 border-slate-200">
+                    <Users className="h-4 w-4 text-slate-400 mr-2" />
+                    <SelectValue placeholder="Select size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COMPANY_SIZES.map((size) => (
+                      <SelectItem key={size.value} value={size.value}>
+                        {size.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Modules Section */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Boxes className="h-4 w-4 text-slate-500" />
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Modules
+            </h2>
+          </div>
+          <p className="text-sm text-slate-500 mb-4">
+            Select which modules to enable for this organization
+          </p>
+
+          <div className="grid grid-cols-2 gap-3">
+            {MODULES.map((module) => (
+              <label
+                key={module.id}
+                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  enabledModules.includes(module.id)
+                    ? 'border-slate-900 bg-slate-50'
+                    : 'border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <Checkbox
+                  checked={enabledModules.includes(module.id)}
+                  onCheckedChange={(checked) => handleModuleToggle(module.id, checked as boolean)}
+                  disabled={isLoading}
+                  className="mt-0.5"
+                />
+                <div>
+                  <p className="text-sm font-medium text-slate-900">{module.label}</p>
+                  <p className="text-xs text-slate-500">{module.description}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* First Admin Section */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <User className="h-4 w-4 text-slate-500" />
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              First Admin
+            </h2>
+          </div>
+          <p className="text-sm text-slate-500 mb-4">
+            This person will receive an invitation to set up their account as the organization owner
+          </p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="adminEmail" className="text-sm text-slate-700">
+                Email <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  id="adminEmail"
+                  type="email"
+                  placeholder="admin@acme.com"
+                  value={adminEmail}
+                  onChange={(e) => {
+                    setAdminEmail(e.target.value);
+                    setError(null);
+                  }}
+                  className="pl-10 bg-slate-50 border-slate-200 focus:ring-slate-900"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="adminName" className="text-sm text-slate-700">
+                Name <span className="text-slate-400">(optional)</span>
+              </Label>
+              <Input
+                id="adminName"
+                placeholder="John Smith"
+                value={adminName}
+                onChange={(e) => setAdminName(e.target.value)}
+                className="bg-slate-50 border-slate-200 focus:ring-slate-900"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Internal Notes Section */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <FileText className="h-4 w-4 text-slate-500" />
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Internal Notes
+            </h2>
+          </div>
+          <p className="text-sm text-slate-500 mb-4">
+            Private notes only visible to super admins (sales info, special requirements, etc.)
+          </p>
+
+          <Textarea
+            placeholder="Add any internal notes about this organization..."
+            value={internalNotes}
+            onChange={(e) => setInternalNotes(e.target.value)}
+            className="bg-slate-50 border-slate-200 focus:ring-slate-900 min-h-[100px]"
+            disabled={isLoading}
+          />
+        </div>
+
+        {/* Submit Buttons */}
+        <div className="flex gap-3">
+          <Link href="/super-admin/organizations" className="flex-1">
+            <Button type="button" variant="outline" className="w-full" disabled={isLoading}>
+              Cancel
+            </Button>
+          </Link>
+          <Button
+            type="submit"
+            className="flex-1 bg-slate-900 hover:bg-slate-800"
+            disabled={
+              isLoading ||
+              organizationName.trim().length < 2 ||
+              subdomain.length < 3 ||
+              checkingSubdomain ||
+              (subdomainStatus !== null && !subdomainStatus.available) ||
+              !adminEmail
+            }
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Send className="mr-2 h-4 w-4" />
+                Create & Send Invitation
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

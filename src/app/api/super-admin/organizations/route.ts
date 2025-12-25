@@ -16,6 +16,11 @@ const createOrgSchema = z.object({
   slug: z.string().min(3).max(63),
   adminEmail: z.string().email('Invalid email address'),
   adminName: z.string().optional(),
+  // New fields for super-admin tracking
+  industry: z.string().optional(),
+  companySize: z.string().optional(),
+  enabledModules: z.array(z.string()).optional(),
+  internalNotes: z.string().optional(),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -69,7 +74,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, slug, adminEmail, adminName } = result.data;
+    const { name, slug, adminEmail, adminName, industry, companySize, enabledModules, internalNotes } = result.data;
 
     // Validate slug
     const slugValidation = validateSlug(slug);
@@ -100,6 +105,11 @@ export async function POST(request: NextRequest) {
           subscriptionTier: 'FREE',
           maxUsers: 5,
           maxAssets: 50,
+          // New fields
+          industry: industry || null,
+          companySize: companySize || null,
+          internalNotes: internalNotes || null,
+          enabledModules: enabledModules || ['assets', 'subscriptions', 'suppliers'],
         },
       });
 

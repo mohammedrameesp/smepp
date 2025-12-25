@@ -326,6 +326,11 @@ model Organization {
   timezone String @default("Asia/Qatar") // Hardcoded to Qatar timezone (UTC+3)
   currency String @default("QAR") // Primary currency always QAR
 
+  // Organization metadata (for super-admin tracking)
+  industry      String? // Technology, Retail, Healthcare, etc.
+  companySize   String? // 1-10, 11-50, 51-200, 201-500, 500+
+  internalNotes String? // Super-admin only notes (not visible to org users)
+
   // Module configuration (client chooses which to enable)
   enabledModules String[] @default(["assets", "subscriptions", "suppliers"])
 
