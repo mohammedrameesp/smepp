@@ -24,8 +24,18 @@ export default async function AdminDashboard() {
 
   const isAdmin = session.user.role === 'ADMIN';
 
-  // Get enabled modules for this organization
-  const enabledModules = session.user.enabledModules || ['assets', 'subscriptions', 'suppliers'];
+  // Get enabled modules from database (not session, which may be stale)
+  let enabledModules: string[] = ['assets', 'subscriptions', 'suppliers']; // defaults
+
+  if (session.user.organizationId) {
+    const org = await prisma.organization.findUnique({
+      where: { id: session.user.organizationId },
+      select: { enabledModules: true },
+    });
+    if (org?.enabledModules?.length) {
+      enabledModules = org.enabledModules;
+    }
+  }
 
   // Helper to check if a module is enabled
   const isModuleEnabled = (moduleId: string) => enabledModules.includes(moduleId);
