@@ -1,31 +1,43 @@
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/core/auth";
 import { prisma } from '@/lib/core/prisma';
-import { getNextRenewalDate, getDaysUntilRenewal } from '@/lib/utils/renewal-date';
 import { redirect } from 'next/navigation';
+import { format } from 'date-fns';
+import {
+  Users,
+  Box,
+  CreditCard,
+  Truck,
+  Calendar,
+  UserPlus,
+  Plus,
+  DollarSign,
+  Inbox,
+  Check,
+  AlertTriangle,
+  RotateCcw,
+  Laptop,
+  Gift,
+  Award,
+  CalendarCheck,
+} from 'lucide-react';
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
 
-  // Middleware handles authentication - this is a fallback
   if (!session) {
     redirect('/login');
   }
 
-  // Redirect employees to their dedicated dashboard
   if (session.user.role === 'EMPLOYEE') {
     redirect('/employee');
   }
 
   const isAdmin = session.user.role === 'ADMIN';
 
-  // Get enabled modules from database (not session, which may be stale)
-  let enabledModules: string[] = ['assets', 'subscriptions', 'suppliers']; // defaults
+  // Get enabled modules from database
+  let enabledModules: string[] = ['assets', 'subscriptions', 'suppliers'];
 
   if (session.user.organizationId) {
     const org = await prisma.organization.findUnique({
@@ -37,931 +49,596 @@ export default async function AdminDashboard() {
     }
   }
 
-  // Helper to check if a module is enabled
   const isModuleEnabled = (moduleId: string) => enabledModules.includes(moduleId);
 
-  // Admin dashboard data
-  let adminData = null;
-  let statsData = null;
+  // Dashboard data
+  let dashboardData = null;
 
   if (isAdmin && session.user.organizationId) {
     const tenantId = session.user.organizationId;
-
-    // Calculate date thresholds for expiry checks
     const today = new Date();
     const thirtyDaysFromNow = new Date(today);
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-    // Batch 1: Main data queries (tenant-scoped)
+    // Batch queries for dashboard data
     const [
-      allSubscriptions,
-      recentActivity,
+      totalEmployees,
       totalAssets,
-      activeUsers,
       totalSubscriptions,
+      totalSuppliers,
+      pendingApprovals,
+      pendingLeaveRequests,
+      pendingAssetRequests,
+      recentActivity,
+      upcomingBirthdays,
+      upcomingAnniversaries,
+      onLeaveToday,
+      monthlySubscriptionCost,
     ] = await Promise.all([
-      prisma.subscription.findMany({
-        where: {
-          tenantId,
-          status: 'ACTIVE',
-          renewalDate: { not: null },
-        },
-        include: {
-          assignedUser: {
-            select: { name: true, email: true },
-          },
-        },
-      }),
-      prisma.activityLog.findMany({
-        where: { tenantId },
-        take: 5,
-        orderBy: { at: 'desc' },
-        include: {
-          actorUser: {
-            select: { name: true, email: true },
-          },
-        },
-      }),
-      prisma.asset.count({ where: { tenantId } }),
+      // Stats counts
       prisma.user.count({
         where: {
           role: { in: ['ADMIN', 'EMPLOYEE'] },
           organizationMemberships: { some: { organizationId: tenantId } },
         },
       }),
+      prisma.asset.count({ where: { tenantId } }),
       prisma.subscription.count({ where: { tenantId, status: 'ACTIVE' } }),
-    ]);
+      prisma.supplier.count({ where: { tenantId, status: 'APPROVED' } }),
 
-    // Batch 2: Counts and pending items (tenant-scoped)
-    const [
-      totalSuppliers,
-      pendingSuppliers,
-      pendingPurchaseRequests,
-      pendingChangeRequests,
-    ] = await Promise.all([
-      prisma.supplier.count({ where: { tenantId } }),
-      prisma.supplier.count({ where: { tenantId, status: 'PENDING' } }),
-      prisma.purchaseRequest.count({ where: { tenantId, status: 'PENDING' } }),
-      prisma.profileChangeRequest.count({ where: { tenantId, status: 'PENDING' } }),
-    ]);
+      // Pending approvals (distinct entities)
+      prisma.approvalStep.groupBy({
+        by: ['entityType', 'entityId'],
+        where: { tenantId, status: 'PENDING' },
+      }).then(groups => groups.length),
 
-    // Batch 3: HR, projects, company documents (tenant-scoped)
-    const [
-      pendingLeaveRequests,
-      expiringDocuments,
-      incompleteOnboarding,
-      totalProjects,
-      expiringCompanyDocs,
-      expiredCompanyDocs,
-    ] = await Promise.all([
-      prisma.leaveRequest.count({ where: { tenantId, status: 'PENDING' } }),
-      prisma.hRProfile.count({
-        where: {
-          tenantId,
-          OR: [
-            { qidExpiry: { lte: thirtyDaysFromNow, gte: today } },
-            { passportExpiry: { lte: thirtyDaysFromNow, gte: today } },
-            { healthCardExpiry: { lte: thirtyDaysFromNow, gte: today } },
-          ],
+      // Pending leave requests
+      prisma.leaveRequest.findMany({
+        where: { tenantId, status: 'PENDING' },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { name: true } },
+          leaveType: { select: { name: true } },
         },
       }),
-      prisma.hRProfile.count({
-        where: { tenantId, onboardingComplete: false },
-      }),
-      prisma.project.count({ where: { tenantId } }),
-      prisma.companyDocument.count({
-        where: { tenantId, expiryDate: { gte: today, lte: thirtyDaysFromNow } },
-      }),
-      prisma.companyDocument.count({
-        where: { tenantId, expiryDate: { lt: today } },
-      }),
-    ]);
 
-    // Batch 4: Monthly spend data (has internal queries)
-    const monthlySpendData = await getMonthlySpendData();
-
-    statsData = {
-      totalAssets,
-      activeUsers,
-      totalSubscriptions,
-      totalSuppliers,
-      totalProjects,
-    };
-
-    const subscriptionsWithNextRenewal = allSubscriptions.map(sub => {
-      const nextRenewal = sub.renewalDate ? getNextRenewalDate(sub.renewalDate, sub.billingCycle) : null;
-      const daysUntil = getDaysUntilRenewal(nextRenewal);
-      return {
-        id: sub.id,
-        serviceName: sub.serviceName,
-        costPerCycle: sub.costPerCycle ? Number(sub.costPerCycle) : null,
-        costCurrency: sub.costCurrency,
-        paymentMethod: sub.paymentMethod,
-        status: sub.status,
-        assignedUser: sub.assignedUser,
-        nextRenewalDate: nextRenewal,
-        daysUntilRenewal: daysUntil,
-      };
-    });
-
-    adminData = {
-      subscriptionsWithNextRenewal,
-      recentActivity,
-      monthlySpendData,
-      pendingSuppliers,
-      pendingPurchaseRequests,
-      pendingChangeRequests,
-      pendingLeaveRequests,
-      expiringDocuments,
-      incompleteOnboarding,
-      expiringCompanyDocs,
-      expiredCompanyDocs,
-    };
-  }
-
-  async function getMonthlySpendData() {
-    const months = [];
-    const currentDate = new Date();
-    const tenantId = session!.user.organizationId;
-
-    const allSubscriptions = await prisma.subscription.findMany({
-      where: {
-        tenantId,
-        costPerCycle: { not: null },
-        purchaseDate: { not: null },
-      },
-      select: {
-        costPerCycle: true,
-        costCurrency: true,
-        costQAR: true,
-        billingCycle: true,
-        purchaseDate: true,
-        renewalDate: true,
-        status: true,
-      },
-    });
-
-    for (let i = 11; i >= 0; i--) {
-      const date = new Date(currentDate);
-      date.setMonth(date.getMonth() - i);
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      const monthStart = new Date(year, month - 1, 1);
-      const monthEnd = new Date(year, month, 1);
-
-      const assetSpend = await prisma.asset.aggregate({
+      // Pending asset requests
+      prisma.assetRequest.findMany({
         where: {
           tenantId,
-          purchaseDate: {
-            gte: monthStart,
-            lt: monthEnd,
-          },
-          priceQAR: { not: null },
+          status: { in: ['PENDING_ADMIN_APPROVAL', 'PENDING_RETURN_APPROVAL'] },
         },
-        _sum: { priceQAR: true },
-      });
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { name: true } },
+          asset: true,
+        },
+      }),
 
-      let recurringSubscriptionSpend = 0;
-      let newSubscriptionSpend = 0;
+      // Recent activity
+      prisma.activityLog.findMany({
+        where: { tenantId },
+        take: 5,
+        orderBy: { at: 'desc' },
+        include: {
+          actorUser: { select: { name: true } },
+        },
+      }),
 
-      allSubscriptions.forEach(sub => {
-        if (!sub.costPerCycle || !sub.purchaseDate) return;
+      // Upcoming birthdays (next 7 days)
+      prisma.hRProfile.findMany({
+        where: {
+          tenantId,
+          dateOfBirth: { not: null },
+        },
+        include: {
+          user: { select: { name: true } },
+        },
+      }).then(profiles => {
+        const now = new Date();
+        const sevenDaysLater = new Date(now);
+        sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
 
-        const purchaseDate = new Date(sub.purchaseDate);
-        const renewalDate = sub.renewalDate ? new Date(sub.renewalDate) : null;
-
-        const costInQAR = sub.costQAR ? Number(sub.costQAR) :
-                         (sub.costCurrency === 'QAR' ? Number(sub.costPerCycle) / 3.64 : Number(sub.costPerCycle));
-
-        const isPurchasedThisMonth = purchaseDate >= monthStart && purchaseDate < monthEnd;
-        const isActiveThisMonth = purchaseDate < monthEnd && sub.status === 'ACTIVE';
-
-        if (isPurchasedThisMonth && sub.billingCycle === 'ONE_TIME') {
-          newSubscriptionSpend += costInQAR;
-        } else if (isActiveThisMonth && purchaseDate < monthStart) {
-          if (sub.billingCycle === 'MONTHLY') {
-            if (renewalDate) {
-              const nextRenewal = getNextRenewalDate(renewalDate, sub.billingCycle);
-              if (nextRenewal && new Date(nextRenewal) >= monthStart && new Date(nextRenewal) < monthEnd) {
-                recurringSubscriptionSpend += costInQAR;
-              }
-            } else {
-              recurringSubscriptionSpend += costInQAR;
-            }
-          } else if (sub.billingCycle === 'YEARLY') {
-            if (renewalDate) {
-              const nextRenewal = getNextRenewalDate(renewalDate, sub.billingCycle);
-              if (nextRenewal && new Date(nextRenewal) >= monthStart && new Date(nextRenewal) < monthEnd) {
-                recurringSubscriptionSpend += costInQAR;
-              }
-            }
+        return profiles.filter(p => {
+          if (!p.dateOfBirth) return false;
+          const dob = new Date(p.dateOfBirth);
+          const thisYearBday = new Date(now.getFullYear(), dob.getMonth(), dob.getDate());
+          if (thisYearBday < now) {
+            thisYearBday.setFullYear(thisYearBday.getFullYear() + 1);
           }
-        } else if (isPurchasedThisMonth && sub.billingCycle !== 'ONE_TIME') {
-          newSubscriptionSpend += costInQAR;
-        }
-      });
+          return thisYearBday >= now && thisYearBday <= sevenDaysLater;
+        }).slice(0, 3).map(p => ({
+          name: p.user.name,
+          date: p.dateOfBirth!,
+          designation: p.designation,
+        }));
+      }),
 
-      const totalSubscriptionSpend = recurringSubscriptionSpend + newSubscriptionSpend;
+      // Upcoming work anniversaries (next 7 days)
+      prisma.hRProfile.findMany({
+        where: {
+          tenantId,
+          dateOfJoining: { not: null },
+        },
+        include: {
+          user: { select: { name: true } },
+        },
+      }).then(profiles => {
+        const now = new Date();
+        const sevenDaysLater = new Date(now);
+        sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
 
-      months.push({
-        month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-        assets: Number(assetSpend._sum.priceQAR || 0),
-        subscriptions: totalSubscriptionSpend,
-        recurringSubscriptions: recurringSubscriptionSpend,
-        newSubscriptions: newSubscriptionSpend,
-        total: Number(assetSpend._sum.priceQAR || 0) + totalSubscriptionSpend,
-      });
-    }
+        return profiles.filter(p => {
+          if (!p.dateOfJoining) return false;
+          const joinDate = new Date(p.dateOfJoining);
+          const yearsWorked = now.getFullYear() - joinDate.getFullYear();
+          if (yearsWorked < 1) return false; // No anniversary in first year
 
-    return months;
+          const thisYearAnniv = new Date(now.getFullYear(), joinDate.getMonth(), joinDate.getDate());
+          if (thisYearAnniv < now) {
+            thisYearAnniv.setFullYear(thisYearAnniv.getFullYear() + 1);
+          }
+          return thisYearAnniv >= now && thisYearAnniv <= sevenDaysLater;
+        }).slice(0, 3).map(p => {
+          const joinDate = new Date(p.dateOfJoining!);
+          const yearsWorked = now.getFullYear() - joinDate.getFullYear();
+          return {
+            name: p.user.name,
+            date: p.dateOfJoining!,
+            years: yearsWorked,
+            designation: p.designation,
+          };
+        });
+      }),
+
+      // On leave today
+      prisma.leaveRequest.findMany({
+        where: {
+          tenantId,
+          status: 'APPROVED',
+          startDate: { lte: today },
+          endDate: { gte: today },
+        },
+        take: 5,
+        include: {
+          user: { select: { name: true } },
+          leaveType: { select: { name: true } },
+        },
+      }),
+
+      // Monthly subscription cost
+      prisma.subscription.aggregate({
+        where: {
+          tenantId,
+          status: 'ACTIVE',
+          billingCycle: 'MONTHLY',
+          costPerCycle: { not: null },
+        },
+        _sum: { costPerCycle: true },
+      }),
+    ]);
+
+    dashboardData = {
+      stats: {
+        employees: totalEmployees,
+        assets: totalAssets,
+        subscriptions: totalSubscriptions,
+        suppliers: totalSuppliers,
+        monthlySpend: monthlySubscriptionCost._sum.costPerCycle || 0,
+      },
+      pendingApprovals,
+      pendingLeaveRequests,
+      pendingAssetRequests,
+      recentActivity,
+      upcomingBirthdays,
+      upcomingAnniversaries,
+      onLeaveToday,
+    };
   }
+
+  // Get user's first name for greeting
+  const firstName = session.user.name?.split(' ')[0] || 'there';
+
+  // Get time-based greeting
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
+  // Get today's date formatted
+  const todayFormatted = format(new Date(), 'EEEE, MMMM d, yyyy');
+
+  // Combine approvals for display
+  const allApprovals = [
+    ...(dashboardData?.pendingLeaveRequests || []).map(req => ({
+      id: req.id,
+      type: 'leave' as const,
+      icon: Calendar,
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600',
+      title: 'Leave Request',
+      description: `${req.user.name} - ${req.leaveType.name}`,
+      time: req.createdAt,
+    })),
+    ...(dashboardData?.pendingAssetRequests || []).map(req => ({
+      id: req.id,
+      type: 'asset' as const,
+      icon: Laptop,
+      iconBg: 'bg-purple-100',
+      iconColor: 'text-purple-600',
+      title: req.status === 'PENDING_RETURN_APPROVAL' ? 'Asset Return' : 'Asset Request',
+      description: `${req.user.name} - ${req.asset?.model || req.asset?.type || 'Asset'}`,
+      time: req.createdAt,
+    })),
+  ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* Welcome Section */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900">
+          {greeting}, {firstName}
+        </h1>
+        <p className="text-slate-500 text-sm">{todayFormatted}</p>
+      </div>
 
-      {/* Hero Banner */}
-      <div className="bg-gradient-to-r from-slate-800 to-slate-700 text-white">
-        <div className="container mx-auto py-16 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl font-bold mb-4">
-              Welcome{session.user.organizationName ? ` to ${session.user.organizationName}` : ''}
-            </h1>
-            <p className="text-xl text-slate-200 mb-8">
-              Your central hub for managing assets, subscriptions, and employees
+      {/* Action Cards Row */}
+      <div className="grid md:grid-cols-3 gap-4 mb-6">
+        {/* Pending Approvals Card */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
+                <Inbox className="h-5 w-5" />
+              </div>
+              <span className="text-4xl font-bold">{dashboardData?.pendingApprovals || 0}</span>
+            </div>
+            <h3 className="text-lg font-semibold mb-0.5">Pending Approvals</h3>
+            <p className="text-white/80 text-sm mb-4">
+              {allApprovals.length > 0 ? `${allApprovals.length} items need review` : 'All caught up!'}
             </p>
+            <Link
+              href="/admin/my-approvals"
+              className="block w-full py-2.5 bg-white text-orange-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center"
+            >
+              Review Now
+            </Link>
+          </div>
+        </div>
+
+        {/* Payroll Card - Only if payroll module enabled */}
+        {isModuleEnabled('payroll') ? (
+          <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="relative">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
+                  <DollarSign className="h-5 w-5" />
+                </div>
+                <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full">This Month</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-0.5">{format(new Date(), 'MMMM')} Payroll</h3>
+              <p className="text-white/80 text-sm">{dashboardData?.stats.employees || 0} employees</p>
+              <Link
+                href="/admin/payroll/runs"
+                className="block w-full py-2.5 bg-white text-teal-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center mt-4"
+              >
+                Run Payroll
+              </Link>
+            </div>
+          </div>
+        ) : (
+          /* Subscriptions Card - Fallback if payroll not enabled */
+          <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="relative">
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
+                  <CreditCard className="h-5 w-5" />
+                </div>
+                <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full">Monthly</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-0.5">SaaS Spend</h3>
+              <p className="text-white/80 text-sm">{dashboardData?.stats.subscriptions || 0} active subscriptions</p>
+              <p className="text-2xl font-bold mt-1 mb-3">
+                QAR {Number(dashboardData?.stats.monthlySpend || 0).toLocaleString()}
+              </p>
+              <Link
+                href="/admin/subscriptions"
+                className="block w-full py-2.5 bg-white text-teal-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center"
+              >
+                View Subscriptions
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Add Card */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+          <div className="flex items-start justify-between mb-4">
+            <div className="w-11 h-11 bg-slate-100 rounded-xl flex items-center justify-center">
+              <Plus className="h-5 w-5 text-slate-600" />
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-3">Quick Add</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {isModuleEnabled('employees') && (
+              <Link
+                href="/admin/employees/new"
+                className="py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-700 transition-colors text-center"
+              >
+                <UserPlus className="h-3.5 w-3.5 inline mr-1" />
+                Employee
+              </Link>
+            )}
+            {isModuleEnabled('assets') && (
+              <Link
+                href="/admin/assets/new"
+                className="py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-700 transition-colors text-center"
+              >
+                <Box className="h-3.5 w-3.5 inline mr-1" />
+                Asset
+              </Link>
+            )}
+            {isModuleEnabled('subscriptions') && (
+              <Link
+                href="/admin/subscriptions/new"
+                className="py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-700 transition-colors text-center"
+              >
+                <CreditCard className="h-3.5 w-3.5 inline mr-1" />
+                SaaS
+              </Link>
+            )}
+            {isModuleEnabled('suppliers') && (
+              <Link
+                href="/admin/suppliers/new"
+                className="py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-700 transition-colors text-center"
+              >
+                <Truck className="h-3.5 w-3.5 inline mr-1" />
+                Supplier
+              </Link>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-6xl mx-auto">
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {isModuleEnabled('employees') && (
+          <Link
+            href="/admin/employees"
+            className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 border border-blue-100 hover:shadow-lg hover:shadow-blue-100/50 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-slate-900">{dashboardData?.stats.employees || 0}</p>
+            <p className="text-slate-500 text-sm">Employees</p>
+          </Link>
+        )}
 
-          {/* Modules Section */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Quick Access Modules</h2>
-          </div>
+        {isModuleEnabled('assets') && (
+          <Link
+            href="/admin/assets"
+            className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-5 border border-purple-100 hover:shadow-lg hover:shadow-purple-100/50 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200 group-hover:scale-110 transition-transform">
+                <Box className="h-5 w-5 text-white" />
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-slate-900">{dashboardData?.stats.assets || 0}</p>
+            <p className="text-slate-500 text-sm">Assets</p>
+          </Link>
+        )}
 
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            {isAdmin ? (
-              <>
-                {/* Assets */}
-                {isModuleEnabled('assets') && (
-                <Link href="/admin/assets">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
-                    <CardHeader>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-4xl">📦</div>
-                        {statsData && <div className="text-2xl font-bold text-slate-700">{statsData.totalAssets}</div>}
-                      </div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Assets
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">Manage physical and digital assets</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
+        {isModuleEnabled('subscriptions') && (
+          <Link
+            href="/admin/subscriptions"
+            className="bg-gradient-to-br from-rose-50 to-orange-50 rounded-2xl p-5 border border-rose-100 hover:shadow-lg hover:shadow-rose-100/50 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-rose-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-rose-200 group-hover:scale-110 transition-transform">
+                <CreditCard className="h-5 w-5 text-white" />
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-slate-900">
+              QAR {Number(dashboardData?.stats.monthlySpend || 0).toLocaleString()}
+            </p>
+            <p className="text-slate-500 text-sm">Monthly SaaS</p>
+          </Link>
+        )}
 
-                {/* Subscriptions */}
-                {isModuleEnabled('subscriptions') && (
-                <Link href="/admin/subscriptions">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
-                    <CardHeader>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-4xl">💳</div>
-                        {statsData && <div className="text-2xl font-bold text-slate-700">{statsData.totalSubscriptions}</div>}
-                      </div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Subscriptions
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">Track software licenses and renewals</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
+        {isModuleEnabled('suppliers') && (
+          <Link
+            href="/admin/suppliers"
+            className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-5 border border-amber-100 hover:shadow-lg hover:shadow-amber-100/50 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform">
+                <Truck className="h-5 w-5 text-white" />
+              </div>
+            </div>
+            <p className="text-3xl font-bold text-slate-900">{dashboardData?.stats.suppliers || 0}</p>
+            <p className="text-slate-500 text-sm">Suppliers</p>
+          </Link>
+        )}
+      </div>
 
-                {/* Suppliers */}
-                {isModuleEnabled('suppliers') && (
-                <Link href="/admin/suppliers">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full relative">
-                    {adminData && adminData.pendingSuppliers > 0 && (
-                      <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5">
-                        {adminData.pendingSuppliers} pending
-                      </Badge>
-                    )}
-                    <CardHeader>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-4xl">🤝</div>
-                        {statsData && <div className="text-2xl font-bold text-slate-700">{statsData.totalSuppliers}</div>}
-                      </div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Suppliers
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">Manage vendors and suppliers</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
+      {/* Two Column Layout */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        {/* Main Column - Approvals (2/3 width) */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-xl border border-slate-200">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="font-semibold text-slate-900 text-sm">Pending Approvals</h2>
+              <Link href="/admin/my-approvals" className="text-xs text-slate-500 hover:text-slate-700">
+                View all
+              </Link>
+            </div>
 
-                {/* Projects */}
-                {isModuleEnabled('projects') && (
-                <Link href="/admin/projects">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
-                    <CardHeader>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-4xl">📁</div>
-                        {statsData && <div className="text-2xl font-bold text-slate-700">{statsData.totalProjects}</div>}
+            {allApprovals.length > 0 ? (
+              <div className="divide-y divide-slate-100">
+                {allApprovals.map((approval) => (
+                  <div key={approval.id} className="p-4 hover:bg-slate-50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 ${approval.iconBg} rounded-full flex items-center justify-center flex-shrink-0`}>
+                        <approval.icon className={`h-4 w-4 ${approval.iconColor}`} />
                       </div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Projects
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">Project budgets and profitability tracking</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-medium text-slate-900 text-sm">{approval.title}</p>
+                          <span className="text-xs text-slate-400">
+                            {format(new Date(approval.time), 'MMM d')}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mb-3">{approval.description}</p>
+                        <div className="flex gap-2">
+                          <Link
+                            href={approval.type === 'leave' ? '/admin/leave/requests' : '/admin/asset-requests'}
+                            className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium rounded-lg transition-colors"
+                          >
+                            Review
+                          </Link>
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
-
-                {/* Employees */}
-                {isModuleEnabled('employees') && (
-                <Link href="/admin/employees">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full relative">
-                    {adminData && adminData.pendingChangeRequests > 0 && (
-                      <Badge className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs px-2 py-0.5">
-                        {adminData.pendingChangeRequests} change req
-                      </Badge>
-                    )}
-                    <CardHeader>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-4xl">👥</div>
-                        {statsData && <div className="text-2xl font-bold text-slate-700">{statsData.activeUsers}</div>}
-                      </div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Employees
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">Team members, HR profiles & document tracking</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
-
-                {/* Reports */}
-                <Link href="/admin/reports">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
-                    <CardHeader>
-                      <div className="text-4xl mb-2">📊</div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Reports
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">View analytics and generate reports</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                {/* Purchase Requests */}
-                {isModuleEnabled('purchase-requests') && (
-                <Link href="/admin/purchase-requests">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full relative">
-                    {adminData && adminData.pendingPurchaseRequests > 0 && (
-                      <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5">
-                        {adminData.pendingPurchaseRequests} pending
-                      </Badge>
-                    )}
-                    <CardHeader>
-                      <div className="text-4xl mb-2">🛒</div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Purchase Requests
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">Review and manage employee purchase requests</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
-
-                {/* Leave Management */}
-                {isModuleEnabled('leave') && (
-                <Link href="/admin/leave">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full relative">
-                    {adminData && adminData.pendingLeaveRequests > 0 && (
-                      <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5">
-                        {adminData.pendingLeaveRequests} pending
-                      </Badge>
-                    )}
-                    <CardHeader>
-                      <div className="text-4xl mb-2">🏖️</div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Leave Management
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">Manage employee leave requests and balances</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
-
-                {/* Payroll */}
-                {isModuleEnabled('payroll') && (
-                <Link href="/admin/payroll">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
-                    <CardHeader>
-                      <div className="text-4xl mb-2">💰</div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Payroll
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">Salary structures, payroll runs, loans & gratuity</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
-
-                {/* Company Documents */}
-                {isModuleEnabled('documents') && (
-                <Link href="/admin/company-documents">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full relative">
-                    {adminData && (adminData.expiredCompanyDocs + adminData.expiringCompanyDocs) > 0 && (
-                      <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-0.5">
-                        {adminData.expiredCompanyDocs + adminData.expiringCompanyDocs} alerts
-                      </Badge>
-                    )}
-                    <CardHeader>
-                      <div className="text-4xl mb-2">📄</div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Company Documents
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">Track licenses, registrations & vehicle documents</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
-
-                {/* Settings */}
-                <Link href="/admin/settings">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
-                    <CardHeader>
-                      <div className="text-4xl mb-2">⚙️</div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Settings
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">System configuration and data export/import</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <>
-                {isModuleEnabled('assets') && (
-                <Link href="/employee/my-assets">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
-                    <CardHeader>
-                      <div className="text-4xl mb-2">👤💼</div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        My Holdings
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">View assets and subscriptions assigned to you</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Check className="h-8 w-8 text-emerald-500" />
+                </div>
+                <h3 className="font-semibold text-slate-900 mb-1">All caught up!</h3>
+                <p className="text-sm text-slate-500 mb-4">No pending approvals at the moment.</p>
+                <Link href="/admin/my-approvals" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                  View approval history
                 </Link>
-                )}
-
-                {isModuleEnabled('assets') && (
-                <Link href="/employee/assets">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
-                    <CardHeader>
-                      <div className="text-4xl mb-2">📦</div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        All Assets
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">Browse all company assets</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
-
-                {isModuleEnabled('subscriptions') && (
-                <Link href="/employee/subscriptions">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
-                    <CardHeader>
-                      <div className="text-4xl mb-2">💳</div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        All Subscriptions
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">Browse all company subscriptions</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
-
-                {isModuleEnabled('purchase-requests') && (
-                <Link href="/employee/purchase-requests">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
-                    <CardHeader>
-                      <div className="text-4xl mb-2">🛒</div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Purchase Requests
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">Submit and track your purchase requests</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
-
-                {isModuleEnabled('leave') && (
-                <Link href="/employee/leave">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
-                    <CardHeader>
-                      <div className="text-4xl mb-2">🏖️</div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Leave
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">Request leave and view your balances</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
-
-                {isModuleEnabled('payroll') && (
-                <Link href="/employee/payroll">
-                  <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
-                    <CardHeader>
-                      <div className="text-4xl mb-2">💰</div>
-                      <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-slate-700 transition-colors">
-                        Payroll
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">View payslips and gratuity estimate</CardDescription>
-                      <div className="mt-4 flex items-center text-sm text-slate-600 font-medium group-hover:text-slate-800">
-                        Open Module <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-all" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-                )}
-              </>
+              </div>
             )}
           </div>
+        </div>
 
-          {/* ATTENTION ITEMS SECTION - Admin Only */}
-          {isAdmin && adminData && (
-            <div className="mb-8 mt-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-orange-500" />
-                Needs Your Attention
-              </h2>
+        {/* Right Column - Widgets (1/3 width) */}
+        <div className="space-y-4">
+          {/* Activity */}
+          <div className="bg-white rounded-xl border border-slate-200">
+            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="font-semibold text-slate-900 text-sm">Recent Activity</h2>
+              <Link href="/admin/activity" className="text-xs text-slate-500 hover:text-slate-700">
+                View all
+              </Link>
+            </div>
+            <div className="p-3 space-y-3">
+              {dashboardData?.recentActivity && dashboardData.recentActivity.length > 0 ? (
+                dashboardData.recentActivity.slice(0, 4).map((activity) => (
+                  <div key={activity.id} className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full mt-1.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-slate-900">
+                        <span className="font-medium">{activity.actorUser?.name || 'System'}</span>
+                        {' '}{activity.action.replace(/_/g, ' ').toLowerCase()}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {format(new Date(activity.at), 'MMM d, h:mm a')}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-500 text-center py-4">No recent activity</p>
+              )}
+            </div>
+          </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          {/* Upcoming Events */}
+          {isModuleEnabled('employees') && (
+            <div className="bg-white rounded-xl border border-slate-200">
+              <div className="px-4 py-3 border-b border-slate-100">
+                <h2 className="font-semibold text-slate-900 text-sm">Upcoming This Week</h2>
+              </div>
+              <div className="p-3 space-y-2">
+                {dashboardData?.upcomingBirthdays && dashboardData.upcomingBirthdays.length > 0 ? (
+                  dashboardData.upcomingBirthdays.map((bday, idx) => (
+                    <div key={`bday-${idx}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
+                      <div className="w-10 h-10 bg-pink-100 rounded-lg flex flex-col items-center justify-center">
+                        <span className="text-[10px] text-pink-600 font-medium">
+                          {format(new Date(bday.date), 'MMM').toUpperCase()}
+                        </span>
+                        <span className="text-sm text-pink-700 font-bold leading-none">
+                          {format(new Date(bday.date), 'd')}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">{bday.name}'s Birthday</p>
+                        <p className="text-xs text-slate-500">{bday.designation || 'Team Member'}</p>
+                      </div>
+                      <Gift className="h-4 w-4 text-pink-400 ml-auto" />
+                    </div>
+                  ))
+                ) : null}
 
-                {/* Upcoming Renewals */}
-                {isModuleEnabled('subscriptions') && (
-                <Card className="bg-white border-l-4 border-l-orange-500 hover:shadow-lg transition-all">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base font-semibold text-gray-900">Upcoming Renewals</CardTitle>
-                      <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                        {adminData.subscriptionsWithNextRenewal.filter(s => s.daysUntilRenewal !== null && s.daysUntilRenewal <= 30).length} Soon
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 text-sm">
-                      {adminData.subscriptionsWithNextRenewal
-                        .filter(s => s.daysUntilRenewal !== null && s.daysUntilRenewal <= 30)
-                        .sort((a, b) => (a.daysUntilRenewal || 0) - (b.daysUntilRenewal || 0))
-                        .slice(0, 3)
-                        .map(sub => (
-                          <div key={sub.id} className="flex justify-between">
-                            <span className="text-gray-600">{sub.serviceName}</span>
-                            <span className="text-orange-600 font-medium">{sub.daysUntilRenewal} days</span>
-                          </div>
-                        ))}
-                      {adminData.subscriptionsWithNextRenewal.filter(s => s.daysUntilRenewal !== null && s.daysUntilRenewal <= 30).length === 0 && (
-                        <p className="text-gray-500 text-sm">No upcoming renewals</p>
-                      )}
-                    </div>
-                    <Link href="/admin/subscriptions">
-                      <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
-                        View All Renewals →
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-                )}
-
-                {/* Pending Approvals - show if any relevant module is enabled */}
-                {(isModuleEnabled('leave') || isModuleEnabled('purchase-requests') || isModuleEnabled('employees') || isModuleEnabled('suppliers')) && (
-                <Card className="bg-white border-l-4 border-l-red-500 hover:shadow-lg transition-all">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base font-semibold text-gray-900">Pending Approvals</CardTitle>
-                      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                        {(isModuleEnabled('suppliers') ? adminData.pendingSuppliers : 0) +
-                         (isModuleEnabled('purchase-requests') ? adminData.pendingPurchaseRequests : 0) +
-                         (isModuleEnabled('employees') ? adminData.pendingChangeRequests : 0) +
-                         (isModuleEnabled('leave') ? adminData.pendingLeaveRequests : 0)} Waiting
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 text-sm">
-                      {isModuleEnabled('leave') && adminData.pendingLeaveRequests > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Leave Requests</span>
-                          <span className="text-red-600 font-medium">{adminData.pendingLeaveRequests}</span>
-                        </div>
-                      )}
-                      {isModuleEnabled('purchase-requests') && adminData.pendingPurchaseRequests > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Purchase Requests</span>
-                          <span className="text-red-600 font-medium">{adminData.pendingPurchaseRequests}</span>
-                        </div>
-                      )}
-                      {isModuleEnabled('employees') && adminData.pendingChangeRequests > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Profile Changes</span>
-                          <span className="text-orange-600 font-medium">{adminData.pendingChangeRequests}</span>
-                        </div>
-                      )}
-                      {isModuleEnabled('suppliers') && adminData.pendingSuppliers > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Suppliers</span>
-                          <span className="text-red-600 font-medium">{adminData.pendingSuppliers}</span>
-                        </div>
-                      )}
-                      {(!isModuleEnabled('suppliers') || adminData.pendingSuppliers === 0) &&
-                       (!isModuleEnabled('purchase-requests') || adminData.pendingPurchaseRequests === 0) &&
-                       (!isModuleEnabled('employees') || adminData.pendingChangeRequests === 0) &&
-                       (!isModuleEnabled('leave') || adminData.pendingLeaveRequests === 0) && (
-                        <p className="text-gray-500 text-sm">No pending approvals</p>
-                      )}
-                    </div>
-                    {isModuleEnabled('leave') && adminData.pendingLeaveRequests > 0 ? (
-                      <Link href="/admin/leave/requests">
-                        <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
-                          Review Leave Requests →
-                        </Button>
-                      </Link>
-                    ) : isModuleEnabled('purchase-requests') && adminData.pendingPurchaseRequests > 0 ? (
-                      <Link href="/admin/purchase-requests">
-                        <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
-                          Review Purchase Requests →
-                        </Button>
-                      </Link>
-                    ) : isModuleEnabled('employees') && adminData.pendingChangeRequests > 0 ? (
-                      <Link href="/admin/employees/change-requests">
-                        <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
-                          Review Change Requests →
-                        </Button>
-                      </Link>
-                    ) : isModuleEnabled('suppliers') && adminData.pendingSuppliers > 0 ? (
-                      <Link href="/admin/suppliers">
-                        <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
-                          Review Suppliers →
-                        </Button>
-                      </Link>
-                    ) : isModuleEnabled('leave') ? (
-                      <Link href="/admin/leave">
-                        <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
-                          View Approvals →
-                        </Button>
-                      </Link>
-                    ) : null}
-                  </CardContent>
-                </Card>
-                )}
-
-                {/* HR Alerts */}
-                {isModuleEnabled('employees') && (
-                <Card className="bg-white border-l-4 border-l-purple-500 hover:shadow-lg transition-all">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base font-semibold text-gray-900">HR Alerts</CardTitle>
-                      <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                        {adminData.expiringDocuments + adminData.incompleteOnboarding} Items
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 text-sm">
-                      {adminData.expiringDocuments > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Expiring Documents</span>
-                          <span className="text-red-600 font-medium">{adminData.expiringDocuments}</span>
-                        </div>
-                      )}
-                      {adminData.incompleteOnboarding > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Incomplete Onboarding</span>
-                          <span className="text-orange-600 font-medium">{adminData.incompleteOnboarding}</span>
-                        </div>
-                      )}
-                      {adminData.expiringDocuments === 0 && adminData.incompleteOnboarding === 0 && (
-                        <p className="text-gray-500 text-sm">All clear!</p>
-                      )}
-                    </div>
-                    {adminData.expiringDocuments > 0 ? (
-                      <Link href="/admin/employees/document-expiry">
-                        <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
-                          View Expiring Documents →
-                        </Button>
-                      </Link>
-                    ) : (
-                      <Link href="/admin/employees">
-                        <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
-                          View Employees →
-                        </Button>
-                      </Link>
-                    )}
-                  </CardContent>
-                </Card>
-                )}
-
-                {/* Company Documents */}
-                {isModuleEnabled('documents') && (
-                <Card className="bg-white border-l-4 border-l-blue-500 hover:shadow-lg transition-all">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base font-semibold text-gray-900">Company Documents</CardTitle>
-                      <Badge variant="outline" className={`${(adminData.expiredCompanyDocs + adminData.expiringCompanyDocs) > 0 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'}`}>
-                        {adminData.expiredCompanyDocs + adminData.expiringCompanyDocs > 0 ? `${adminData.expiredCompanyDocs + adminData.expiringCompanyDocs} Alerts` : 'OK'}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 text-sm">
-                      {adminData.expiredCompanyDocs > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Expired</span>
-                          <span className="text-red-600 font-medium">{adminData.expiredCompanyDocs}</span>
-                        </div>
-                      )}
-                      {adminData.expiringCompanyDocs > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">Expiring Soon</span>
-                          <span className="text-orange-600 font-medium">{adminData.expiringCompanyDocs}</span>
-                        </div>
-                      )}
-                      {adminData.expiredCompanyDocs === 0 && adminData.expiringCompanyDocs === 0 && (
-                        <p className="text-gray-500 text-sm flex items-center gap-1">
-                          <CheckCircle className="h-4 w-4 text-green-500" /> All documents valid
+                {dashboardData?.upcomingAnniversaries && dashboardData.upcomingAnniversaries.length > 0 ? (
+                  dashboardData.upcomingAnniversaries.map((anniv, idx) => (
+                    <div key={`anniv-${idx}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex flex-col items-center justify-center">
+                        <span className="text-[10px] text-blue-600 font-medium">
+                          {format(new Date(anniv.date), 'MMM').toUpperCase()}
+                        </span>
+                        <span className="text-sm text-blue-700 font-bold leading-none">
+                          {format(new Date(anniv.date), 'd')}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">
+                          {anniv.name} - {anniv.years} Year Anniversary
                         </p>
-                      )}
+                        <p className="text-xs text-slate-500">{anniv.designation || 'Team Member'}</p>
+                      </div>
+                      <Award className="h-4 w-4 text-blue-400 ml-auto" />
                     </div>
-                    <Link href="/admin/company-documents">
-                      <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
-                        View Company Documents →
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-                )}
+                  ))
+                ) : null}
 
-                {/* Recent Activity */}
-                <Card className="bg-white border-l-4 border-l-blue-500 hover:shadow-lg transition-all">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base font-semibold text-gray-900">Recent Activity</CardTitle>
-                      <Clock className="h-4 w-4 text-blue-500" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 text-sm">
-                      {adminData.recentActivity.slice(0, 3).map((activity) => (
-                        <div key={activity.id} className="flex justify-between items-center hover:bg-gray-50 rounded p-1 -mx-1">
-                          <span className="text-gray-600 truncate max-w-[120px]">{activity.action.replace(/_/g, ' ')}</span>
-                          <span className="text-gray-400 text-xs">{new Date(activity.at).toLocaleDateString()}</span>
-                        </div>
-                      ))}
-                      {adminData.recentActivity.length === 0 && (
-                        <p className="text-gray-500 text-sm">No recent activity</p>
-                      )}
-                    </div>
-                    <Link href="/admin/activity">
-                      <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
-                        View All Activity →
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-
-              </div>
-            </div>
-          )}
-
-          {/* QUICK ACTIONS - Admin Only */}
-          {isAdmin && (
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-              <div className="flex flex-wrap gap-3">
-                {isModuleEnabled('assets') && (
-                  <Link href="/admin/assets/new">
-                    <Button variant="outline" className="bg-white hover:bg-slate-50">
-                      + Add Asset
-                    </Button>
-                  </Link>
-                )}
-                {isModuleEnabled('subscriptions') && (
-                  <Link href="/admin/subscriptions/new">
-                    <Button variant="outline" className="bg-white hover:bg-slate-50">
-                      + Add Subscription
-                    </Button>
-                  </Link>
-                )}
-                {isModuleEnabled('employees') && (
-                  <Link href="/admin/employees/new">
-                    <Button variant="outline" className="bg-white hover:bg-slate-50">
-                      + Add Employee
-                    </Button>
-                  </Link>
-                )}
-                {isModuleEnabled('projects') && (
-                  <Link href="/admin/projects/new">
-                    <Button variant="outline" className="bg-white hover:bg-slate-50">
-                      + Add Project
-                    </Button>
-                  </Link>
+                {(!dashboardData?.upcomingBirthdays?.length && !dashboardData?.upcomingAnniversaries?.length) && (
+                  <p className="text-sm text-slate-500 text-center py-4">No upcoming events this week</p>
                 )}
               </div>
             </div>
           )}
 
+          {/* Who's On Leave */}
+          {isModuleEnabled('leave') && (
+            <div className="bg-white rounded-xl border border-slate-200">
+              <div className="px-4 py-3 border-b border-slate-100">
+                <h2 className="font-semibold text-slate-900 text-sm">On Leave Today</h2>
+              </div>
+              <div className="p-3 space-y-2">
+                {dashboardData?.onLeaveToday && dashboardData.onLeaveToday.length > 0 ? (
+                  dashboardData.onLeaveToday.map((leave) => (
+                    <div key={leave.id} className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-violet-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs font-medium">
+                          {leave.user.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">{leave.user.name}</p>
+                        <p className="text-xs text-slate-400">{leave.leaveType.name}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-500 text-center py-4">Everyone's in today</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

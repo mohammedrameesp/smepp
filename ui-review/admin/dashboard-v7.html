@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard V7 - Vibrant Gradient Cards</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .gradient-text {
+      background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
+</head>
+<body class="bg-white min-h-screen">
+
+  <!-- Clean White Header -->
+  <header class="border-b border-gray-100">
+    <div class="max-w-7xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <!-- Left -->
+        <div class="flex items-center gap-8">
+          <a href="#" class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200">
+              <span class="text-white font-bold">S+</span>
+            </div>
+            <div>
+              <span class="font-semibold text-gray-900">SME++</span>
+              <p class="text-xs text-gray-500">Acme Corp</p>
+            </div>
+          </a>
+        </div>
+
+        <!-- Center - Search -->
+        <div class="hidden md:flex flex-1 max-w-xl mx-8">
+          <div class="relative w-full">
+            <input type="text" placeholder="Search anything..." class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+            <kbd class="absolute right-3 top-1/2 -translate-y-1/2 text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-500">⌘K</kbd>
+          </div>
+        </div>
+
+        <!-- Right -->
+        <div class="flex items-center gap-3">
+          <button class="relative w-10 h-10 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center justify-center transition-colors">
+            <i class="fas fa-bell text-gray-500"></i>
+            <span class="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full flex items-center justify-center shadow-lg">3</span>
+          </button>
+          <button class="w-10 h-10 rounded-xl bg-gray-50 hover:bg-gray-100 flex items-center justify-center transition-colors">
+            <i class="fas fa-cog text-gray-500"></i>
+          </button>
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center cursor-pointer shadow-lg shadow-purple-200">
+            <span class="text-white text-sm font-medium">JD</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tab Navigation -->
+  <nav class="border-b border-gray-100">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="flex items-center gap-8">
+        <a href="#" class="py-4 text-sm font-medium text-purple-600 border-b-2 border-purple-500">Overview</a>
+        <a href="#" class="py-4 text-sm font-medium text-gray-500 hover:text-gray-900">Employees</a>
+        <a href="#" class="py-4 text-sm font-medium text-gray-500 hover:text-gray-900">Assets</a>
+        <a href="#" class="py-4 text-sm font-medium text-gray-500 hover:text-gray-900">Leave</a>
+        <a href="#" class="py-4 text-sm font-medium text-gray-500 hover:text-gray-900">Payroll</a>
+        <a href="#" class="py-4 text-sm font-medium text-gray-500 hover:text-gray-900">Subscriptions</a>
+        <a href="#" class="py-4 text-sm font-medium text-gray-500 hover:text-gray-900">Suppliers</a>
+        <a href="#" class="py-4 text-sm font-medium text-gray-500 hover:text-gray-900">Reports</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- Hero Greeting -->
+    <div class="mb-10">
+      <h1 class="text-4xl font-bold text-gray-900 mb-2">
+        Welcome back, <span class="gradient-text">John</span>
+      </h1>
+      <p class="text-gray-500">Here's what's happening at Acme Corp today</p>
+    </div>
+
+    <!-- Gradient Action Cards -->
+    <div class="grid md:grid-cols-3 gap-6 mb-10">
+      <!-- Approvals Card -->
+      <div class="relative overflow-hidden bg-gradient-to-br from-orange-400 via-pink-500 to-rose-500 rounded-3xl p-6 text-white shadow-xl shadow-pink-200/50">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+        <div class="relative">
+          <div class="flex items-start justify-between mb-6">
+            <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+              <i class="fas fa-inbox text-2xl"></i>
+            </div>
+            <span class="text-5xl font-bold">3</span>
+          </div>
+          <h3 class="text-xl font-semibold mb-1">Pending Approvals</h3>
+          <p class="text-white/80 text-sm mb-6">2 leave, 1 asset request</p>
+          <button class="w-full py-3 bg-white text-rose-600 rounded-xl font-semibold hover:bg-white/90 transition-colors shadow-lg">
+            Review Now
+          </button>
+        </div>
+      </div>
+
+      <!-- Payroll Card -->
+      <div class="relative overflow-hidden bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-500 rounded-3xl p-6 text-white shadow-xl shadow-teal-200/50">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+        <div class="relative">
+          <div class="flex items-start justify-between mb-6">
+            <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+              <i class="fas fa-dollar-sign text-2xl"></i>
+            </div>
+            <span class="text-sm bg-white/20 px-3 py-1 rounded-full">Dec 30</span>
+          </div>
+          <h3 class="text-xl font-semibold mb-1">December Payroll</h3>
+          <p class="text-white/80 text-sm mb-2">248 employees</p>
+          <p class="text-3xl font-bold mb-4">$485,000</p>
+          <button class="w-full py-3 bg-white text-teal-600 rounded-xl font-semibold hover:bg-white/90 transition-colors shadow-lg">
+            Run Payroll
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Add Card -->
+      <div class="relative overflow-hidden bg-gradient-to-br from-violet-400 via-purple-500 to-indigo-500 rounded-3xl p-6 text-white shadow-xl shadow-purple-200/50">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+        <div class="relative">
+          <div class="flex items-start justify-between mb-6">
+            <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+              <i class="fas fa-plus text-2xl"></i>
+            </div>
+          </div>
+          <h3 class="text-xl font-semibold mb-4">Quick Add</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <button class="py-2.5 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors backdrop-blur-sm">
+              <i class="fas fa-user-plus mr-1"></i> Employee
+            </button>
+            <button class="py-2.5 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors backdrop-blur-sm">
+              <i class="fas fa-box mr-1"></i> Asset
+            </button>
+            <button class="py-2.5 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors backdrop-blur-sm">
+              <i class="fas fa-credit-card mr-1"></i> SaaS
+            </button>
+            <button class="py-2.5 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-colors backdrop-blur-sm">
+              <i class="fas fa-truck mr-1"></i> Supplier
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 border border-blue-100 hover:shadow-lg hover:shadow-blue-100 transition-all cursor-pointer">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+            <i class="fas fa-users text-white"></i>
+          </div>
+          <span class="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">+12%</span>
+        </div>
+        <p class="text-3xl font-bold text-gray-900">248</p>
+        <p class="text-gray-500 text-sm">Total Employees</p>
+      </div>
+
+      <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-5 border border-purple-100 hover:shadow-lg hover:shadow-purple-100 transition-all cursor-pointer">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200">
+            <i class="fas fa-box text-white"></i>
+          </div>
+          <span class="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">+8%</span>
+        </div>
+        <p class="text-3xl font-bold text-gray-900">1,842</p>
+        <p class="text-gray-500 text-sm">Total Assets</p>
+      </div>
+
+      <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-5 border border-red-100 hover:shadow-lg hover:shadow-red-100 transition-all cursor-pointer">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-red-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-red-200">
+            <i class="fas fa-credit-card text-white"></i>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-gray-900">$4.2k</p>
+        <p class="text-gray-500 text-sm">Monthly SaaS</p>
+      </div>
+
+      <div class="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-5 border border-amber-100 hover:shadow-lg hover:shadow-amber-100 transition-all cursor-pointer">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-200">
+            <i class="fas fa-truck text-white"></i>
+          </div>
+        </div>
+        <p class="text-3xl font-bold text-gray-900">56</p>
+        <p class="text-gray-500 text-sm">Suppliers</p>
+      </div>
+    </div>
+
+    <!-- Two Columns -->
+    <div class="grid lg:grid-cols-2 gap-6">
+
+      <!-- Pending Approvals List -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h2 class="font-semibold text-gray-900">Pending Approvals</h2>
+          <a href="#" class="text-sm text-purple-600 hover:text-purple-700 font-medium">View all</a>
+        </div>
+        <div class="divide-y divide-gray-100">
+          <div class="p-4 hover:bg-gray-50 transition-colors">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-200">
+                <i class="fas fa-calendar text-white"></i>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-1">
+                  <p class="font-medium text-gray-900">Leave Request</p>
+                  <span class="text-xs text-gray-500">2h ago</span>
+                </div>
+                <p class="text-sm text-gray-500 mb-3">Sarah Johnson - 3 days annual leave</p>
+                <div class="flex gap-2">
+                  <button class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-emerald-200 hover:shadow-xl transition-shadow">Approve</button>
+                  <button class="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-200">Decline</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 hover:bg-gray-50 transition-colors">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-200">
+                <i class="fas fa-laptop text-white"></i>
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center justify-between mb-1">
+                  <p class="font-medium text-gray-900">Asset Request</p>
+                  <span class="text-xs text-gray-500">5h ago</span>
+                </div>
+                <p class="text-sm text-gray-500 mb-3">Mike Chen - MacBook Pro 14"</p>
+                <div class="flex gap-2">
+                  <button class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-semibold rounded-lg shadow-lg shadow-emerald-200 hover:shadow-xl transition-shadow">Approve</button>
+                  <button class="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-200">Decline</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Feed -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h2 class="font-semibold text-gray-900">Recent Activity</h2>
+          <a href="#" class="text-sm text-purple-600 hover:text-purple-700 font-medium">View all</a>
+        </div>
+        <div class="p-4 space-y-4">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-green-200">
+              <i class="fas fa-user-plus text-white text-sm"></i>
+            </div>
+            <div>
+              <p class="text-gray-900"><span class="font-medium">Alex Kim</span> joined the team</p>
+              <p class="text-sm text-gray-500">Engineering Department</p>
+              <p class="text-xs text-gray-400 mt-1">10 minutes ago</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-lg shadow-blue-200">
+              <i class="fas fa-laptop text-white text-sm"></i>
+            </div>
+            <div>
+              <p class="text-gray-900"><span class="font-medium">MacBook Pro</span> assigned to Sarah</p>
+              <p class="text-sm text-gray-500">Asset ID: #A-2847</p>
+              <p class="text-xs text-gray-400 mt-1">1 hour ago</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-200">
+              <i class="fas fa-check text-white text-sm"></i>
+            </div>
+            <div>
+              <p class="text-gray-900">Leave approved for <span class="font-medium">Emma Wilson</span></p>
+              <p class="text-sm text-gray-500">Dec 26-28, Annual Leave</p>
+              <p class="text-xs text-gray-400 mt-1">3 hours ago</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg shadow-purple-200">
+              <i class="fas fa-file-invoice text-white text-sm"></i>
+            </div>
+            <div>
+              <p class="text-gray-900">November payroll completed</p>
+              <p class="text-sm text-gray-500">248 payslips generated</p>
+              <p class="text-xs text-gray-400 mt-1">Yesterday</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+</body>
+</html>

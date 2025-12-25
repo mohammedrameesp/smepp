@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - SME++</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .dropdown:hover .dropdown-menu { display: block; }
+    .dropdown-menu { display: none; }
+    .command-palette { display: none; }
+    .command-palette.open { display: flex; }
+    .nav-link:hover { background: rgba(0,0,0,0.05); }
+    .nav-link.active { background: rgba(0,0,0,0.08); font-weight: 600; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <!-- Command Palette Overlay -->
+  <div id="commandPalette" class="command-palette fixed inset-0 z-[100] items-start justify-center pt-[15vh]">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="toggleCommandPalette()"></div>
+    <div class="relative w-full max-w-2xl mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <!-- Search Input -->
+      <div class="flex items-center gap-3 px-4 py-4 border-b border-slate-200">
+        <i class="fas fa-search text-slate-400"></i>
+        <input
+          type="text"
+          placeholder="Search anything... employees, assets, actions"
+          class="flex-1 text-lg outline-none placeholder-slate-400"
+          autofocus
+        >
+        <kbd class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">ESC</kbd>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="p-2">
+        <p class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase">Quick Actions</p>
+        <div class="space-y-1">
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100">
+            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-user-plus text-blue-600 text-sm"></i>
+            </div>
+            <span class="flex-1 text-slate-700">Add new employee</span>
+            <kbd class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">E</kbd>
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100">
+            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-box text-purple-600 text-sm"></i>
+            </div>
+            <span class="flex-1 text-slate-700">Add new asset</span>
+            <kbd class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">A</kbd>
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100">
+            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-file-invoice text-green-600 text-sm"></i>
+            </div>
+            <span class="flex-1 text-slate-700">Run payroll</span>
+            <kbd class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">P</kbd>
+          </a>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="p-2 border-t border-slate-100">
+        <p class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase">Go to</p>
+        <div class="space-y-1">
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100">
+            <i class="fas fa-home w-8 text-center text-slate-400"></i>
+            <span class="text-slate-700">Dashboard</span>
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100">
+            <i class="fas fa-users w-8 text-center text-slate-400"></i>
+            <span class="text-slate-700">Employees</span>
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100">
+            <i class="fas fa-box w-8 text-center text-slate-400"></i>
+            <span class="text-slate-700">Assets</span>
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100">
+            <i class="fas fa-calendar w-8 text-center text-slate-400"></i>
+            <span class="text-slate-700">Leave Management</span>
+          </a>
+          <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100">
+            <i class="fas fa-dollar-sign w-8 text-center text-slate-400"></i>
+            <span class="text-slate-700">Payroll</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Navigation -->
+  <header class="sticky top-0 z-50 bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between h-16">
+
+        <!-- Left: Logo + Main Nav -->
+        <div class="flex items-center gap-8">
+          <!-- Logo -->
+          <a href="#" class="flex items-center gap-2">
+            <div class="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center">
+              <span class="text-white font-bold">S+</span>
+            </div>
+            <span class="font-semibold text-slate-900 hidden sm:block">Acme Corp</span>
+          </a>
+
+          <!-- Main Navigation -->
+          <nav class="hidden md:flex items-center gap-1">
+            <a href="#" class="nav-link active px-3 py-2 rounded-lg text-sm text-slate-700">
+              Dashboard
+            </a>
+
+            <!-- HR Dropdown -->
+            <div class="dropdown relative">
+              <button class="nav-link px-3 py-2 rounded-lg text-sm text-slate-600 flex items-center gap-1">
+                HR
+                <i class="fas fa-chevron-down text-xs"></i>
+              </button>
+              <div class="dropdown-menu absolute top-full left-0 mt-1 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
+                <a href="employees-v2.html" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                  <i class="fas fa-users w-5 text-slate-400"></i>
+                  <span class="text-slate-700">Employees</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                  <i class="fas fa-calendar w-5 text-slate-400"></i>
+                  <span class="text-slate-700">Leave Requests</span>
+                  <span class="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">5</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                  <i class="fas fa-dollar-sign w-5 text-slate-400"></i>
+                  <span class="text-slate-700">Payroll</span>
+                </a>
+                <div class="border-t border-slate-100 my-2"></div>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                  <i class="fas fa-list w-5 text-slate-400"></i>
+                  <span class="text-slate-700">Leave Types</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                  <i class="fas fa-calculator w-5 text-slate-400"></i>
+                  <span class="text-slate-700">Salary Structures</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Operations Dropdown -->
+            <div class="dropdown relative">
+              <button class="nav-link px-3 py-2 rounded-lg text-sm text-slate-600 flex items-center gap-1">
+                Operations
+                <i class="fas fa-chevron-down text-xs"></i>
+              </button>
+              <div class="dropdown-menu absolute top-full left-0 mt-1 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
+                <a href="assets-v2.html" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                  <i class="fas fa-box w-5 text-slate-400"></i>
+                  <span class="text-slate-700">Assets</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                  <i class="fas fa-exchange-alt w-5 text-slate-400"></i>
+                  <span class="text-slate-700">Asset Requests</span>
+                  <span class="ml-auto text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">2</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                  <i class="fas fa-credit-card w-5 text-slate-400"></i>
+                  <span class="text-slate-700">Subscriptions</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                  <i class="fas fa-truck w-5 text-slate-400"></i>
+                  <span class="text-slate-700">Suppliers</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Approvals (with badge) -->
+            <a href="#" class="nav-link px-3 py-2 rounded-lg text-sm text-slate-600 flex items-center gap-2">
+              Approvals
+              <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">3</span>
+            </a>
+
+            <!-- Reports -->
+            <a href="#" class="nav-link px-3 py-2 rounded-lg text-sm text-slate-600">
+              Reports
+            </a>
+          </nav>
+        </div>
+
+        <!-- Right: Search + Actions -->
+        <div class="flex items-center gap-3">
+          <!-- Search Trigger -->
+          <button
+            onclick="toggleCommandPalette()"
+            class="hidden sm:flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-xl text-slate-500 text-sm hover:bg-slate-200 transition-colors"
+          >
+            <i class="fas fa-search"></i>
+            <span class="hidden lg:inline">Search...</span>
+            <kbd class="hidden lg:inline text-xs bg-white px-1.5 py-0.5 rounded border border-slate-200">⌘K</kbd>
+          </button>
+
+          <!-- Mobile Search -->
+          <button class="sm:hidden p-2 hover:bg-slate-100 rounded-lg" onclick="toggleCommandPalette()">
+            <i class="fas fa-search text-slate-600"></i>
+          </button>
+
+          <!-- Notifications -->
+          <button class="relative p-2 hover:bg-slate-100 rounded-lg">
+            <i class="fas fa-bell text-slate-600"></i>
+            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+          </button>
+
+          <!-- Settings Dropdown -->
+          <div class="dropdown relative">
+            <button class="p-2 hover:bg-slate-100 rounded-lg">
+              <i class="fas fa-cog text-slate-600"></i>
+            </button>
+            <div class="dropdown-menu absolute top-full right-0 mt-1 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                <i class="fas fa-building w-5 text-slate-400"></i>
+                <span class="text-slate-700">Organization</span>
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                <i class="fas fa-users w-5 text-slate-400"></i>
+                <span class="text-slate-700">Team Members</span>
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                <i class="fas fa-th-large w-5 text-slate-400"></i>
+                <span class="text-slate-700">Modules</span>
+              </a>
+              <div class="border-t border-slate-100 my-2"></div>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                <i class="fas fa-sliders-h w-5 text-slate-400"></i>
+                <span class="text-slate-700">Settings</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Profile -->
+          <div class="dropdown relative">
+            <button class="flex items-center gap-2 p-1 hover:bg-slate-100 rounded-lg">
+              <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <span class="text-white text-sm font-medium">JD</span>
+              </div>
+              <i class="fas fa-chevron-down text-slate-400 text-xs hidden sm:block"></i>
+            </button>
+            <div class="dropdown-menu absolute top-full right-0 mt-1 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
+              <div class="px-4 py-3 border-b border-slate-100">
+                <p class="font-medium text-slate-900">John Doe</p>
+                <p class="text-sm text-slate-500">john@acme.com</p>
+              </div>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                <i class="fas fa-user w-5 text-slate-400"></i>
+                <span class="text-slate-700">My Profile</span>
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50">
+                <i class="fas fa-key w-5 text-slate-400"></i>
+                <span class="text-slate-700">Change Password</span>
+              </a>
+              <div class="border-t border-slate-100 my-2"></div>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 text-red-600">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span>Sign Out</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Mobile Menu -->
+          <button class="md:hidden p-2 hover:bg-slate-100 rounded-lg">
+            <i class="fas fa-bars text-slate-600"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+
+    <!-- Welcome Banner -->
+    <div class="bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-6 mb-8 text-white">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold">Good morning, John!</h1>
+          <p class="text-slate-300 mt-1">Here's what's happening at Acme Corp today.</p>
+        </div>
+        <div class="flex gap-3">
+          <button onclick="toggleCommandPalette()" class="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-medium transition-colors">
+            <i class="fas fa-search mr-2"></i>
+            Quick Search
+          </button>
+          <button class="px-4 py-2 bg-white text-slate-900 rounded-xl text-sm font-medium hover:bg-slate-100 transition-colors">
+            <i class="fas fa-plus mr-2"></i>
+            New
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pending Approvals Alert -->
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8 flex items-center gap-4">
+      <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+        <i class="fas fa-clock text-amber-600"></i>
+      </div>
+      <div class="flex-1">
+        <p class="font-medium text-amber-900">You have 3 pending approvals</p>
+        <p class="text-sm text-amber-700">2 leave requests, 1 asset request waiting for your review</p>
+      </div>
+      <a href="#" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors">
+        Review Now
+      </a>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+            <i class="fas fa-users text-blue-600"></i>
+          </div>
+          <span class="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full">+12%</span>
+        </div>
+        <p class="text-2xl font-bold text-slate-900">248</p>
+        <p class="text-sm text-slate-500">Employees</p>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+            <i class="fas fa-box text-purple-600"></i>
+          </div>
+          <span class="text-xs text-green-600 bg-green-100 px-2 py-0.5 rounded-full">+8%</span>
+        </div>
+        <p class="text-2xl font-bold text-slate-900">1,842</p>
+        <p class="text-sm text-slate-500">Assets</p>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+            <i class="fas fa-credit-card text-green-600"></i>
+          </div>
+        </div>
+        <p class="text-2xl font-bold text-slate-900">34</p>
+        <p class="text-sm text-slate-500">Subscriptions</p>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+            <i class="fas fa-truck text-amber-600"></i>
+          </div>
+        </div>
+        <p class="text-2xl font-bold text-slate-900">56</p>
+        <p class="text-sm text-slate-500">Suppliers</p>
+      </div>
+    </div>
+
+    <!-- Quick Access Cards -->
+    <h2 class="text-lg font-semibold text-slate-900 mb-4">Quick Access</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+      <a href="employees-v2.html" class="bg-white rounded-xl border border-slate-200 p-4 text-center hover:shadow-md hover:border-blue-300 transition-all group">
+        <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-200 transition-colors">
+          <i class="fas fa-users text-blue-600 text-xl"></i>
+        </div>
+        <p class="font-medium text-slate-900 text-sm">Employees</p>
+      </a>
+
+      <a href="assets-v2.html" class="bg-white rounded-xl border border-slate-200 p-4 text-center hover:shadow-md hover:border-purple-300 transition-all group">
+        <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-purple-200 transition-colors">
+          <i class="fas fa-box text-purple-600 text-xl"></i>
+        </div>
+        <p class="font-medium text-slate-900 text-sm">Assets</p>
+      </a>
+
+      <a href="#" class="bg-white rounded-xl border border-slate-200 p-4 text-center hover:shadow-md hover:border-green-300 transition-all group">
+        <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-green-200 transition-colors">
+          <i class="fas fa-calendar text-green-600 text-xl"></i>
+        </div>
+        <p class="font-medium text-slate-900 text-sm">Leave</p>
+      </a>
+
+      <a href="#" class="bg-white rounded-xl border border-slate-200 p-4 text-center hover:shadow-md hover:border-amber-300 transition-all group">
+        <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-amber-200 transition-colors">
+          <i class="fas fa-dollar-sign text-amber-600 text-xl"></i>
+        </div>
+        <p class="font-medium text-slate-900 text-sm">Payroll</p>
+      </a>
+
+      <a href="#" class="bg-white rounded-xl border border-slate-200 p-4 text-center hover:shadow-md hover:border-red-300 transition-all group">
+        <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-red-200 transition-colors">
+          <i class="fas fa-credit-card text-red-600 text-xl"></i>
+        </div>
+        <p class="font-medium text-slate-900 text-sm">Subscriptions</p>
+      </a>
+
+      <a href="#" class="bg-white rounded-xl border border-slate-200 p-4 text-center hover:shadow-md hover:border-slate-400 transition-all group">
+        <div class="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:bg-slate-200 transition-colors">
+          <i class="fas fa-chart-bar text-slate-600 text-xl"></i>
+        </div>
+        <p class="font-medium text-slate-900 text-sm">Reports</p>
+      </a>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="grid lg:grid-cols-3 gap-6">
+
+      <!-- Pending Actions -->
+      <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+          <h2 class="font-semibold text-slate-900">Pending Actions</h2>
+          <a href="#" class="text-sm text-blue-600 hover:text-blue-700">View all</a>
+        </div>
+        <div class="divide-y divide-slate-100">
+          <!-- Leave Request -->
+          <div class="p-4 hover:bg-slate-50 transition-colors">
+            <div class="flex items-start gap-4">
+              <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-calendar text-blue-600 text-sm"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-1">
+                  <p class="font-medium text-slate-900">Leave Request</p>
+                  <span class="text-xs text-slate-500">2 hours ago</span>
+                </div>
+                <p class="text-sm text-slate-500">Sarah Johnson requested 3 days annual leave (Dec 26-28)</p>
+                <div class="flex gap-2 mt-3">
+                  <button class="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700">
+                    <i class="fas fa-check mr-1"></i> Approve
+                  </button>
+                  <button class="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-medium rounded-lg hover:bg-slate-200">
+                    <i class="fas fa-times mr-1"></i> Decline
+                  </button>
+                  <button class="px-3 py-1.5 text-slate-500 text-xs hover:text-slate-700">
+                    View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Asset Request -->
+          <div class="p-4 hover:bg-slate-50 transition-colors">
+            <div class="flex items-start gap-4">
+              <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-laptop text-purple-600 text-sm"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-1">
+                  <p class="font-medium text-slate-900">Asset Request</p>
+                  <span class="text-xs text-slate-500">5 hours ago</span>
+                </div>
+                <p class="text-sm text-slate-500">Mike Chen requested MacBook Pro 14" for development work</p>
+                <div class="flex gap-2 mt-3">
+                  <button class="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700">
+                    <i class="fas fa-check mr-1"></i> Approve
+                  </button>
+                  <button class="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-medium rounded-lg hover:bg-slate-200">
+                    <i class="fas fa-times mr-1"></i> Decline
+                  </button>
+                  <button class="px-3 py-1.5 text-slate-500 text-xs hover:text-slate-700">
+                    View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Leave Request 2 -->
+          <div class="p-4 hover:bg-slate-50 transition-colors">
+            <div class="flex items-start gap-4">
+              <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fas fa-calendar text-blue-600 text-sm"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-1">
+                  <p class="font-medium text-slate-900">Leave Request</p>
+                  <span class="text-xs text-slate-500">1 day ago</span>
+                </div>
+                <p class="text-sm text-slate-500">Emma Wilson requested sick leave for today</p>
+                <div class="flex gap-2 mt-3">
+                  <button class="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700">
+                    <i class="fas fa-check mr-1"></i> Approve
+                  </button>
+                  <button class="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-medium rounded-lg hover:bg-slate-200">
+                    <i class="fas fa-times mr-1"></i> Decline
+                  </button>
+                  <button class="px-3 py-1.5 text-slate-500 text-xs hover:text-slate-700">
+                    View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="p-5 border-b border-slate-100">
+          <h2 class="font-semibold text-slate-900">Recent Activity</h2>
+        </div>
+        <div class="p-4 space-y-4">
+          <div class="flex items-start gap-3">
+            <div class="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+            <div>
+              <p class="text-sm text-slate-700"><span class="font-medium">Alex Kim</span> joined the team</p>
+              <p class="text-xs text-slate-400">10 min ago</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+            <div>
+              <p class="text-sm text-slate-700"><span class="font-medium">Dell Monitor</span> assigned to Mike</p>
+              <p class="text-xs text-slate-400">1 hour ago</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0"></div>
+            <div>
+              <p class="text-sm text-slate-700">Leave approved for <span class="font-medium">Emma Wilson</span></p>
+              <p class="text-xs text-slate-400">3 hours ago</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
+            <div>
+              <p class="text-sm text-slate-700">Payroll completed for <span class="font-medium">December</span></p>
+              <p class="text-xs text-slate-400">Yesterday</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-2 h-2 bg-slate-400 rounded-full mt-2 flex-shrink-0"></div>
+            <div>
+              <p class="text-sm text-slate-700">New supplier <span class="font-medium">TechParts Inc</span> added</p>
+              <p class="text-xs text-slate-400">2 days ago</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 border-t border-slate-100">
+          <a href="#" class="text-sm text-blue-600 hover:text-blue-700">View all activity →</a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40">
+    <div class="flex items-center justify-around py-2">
+      <a href="#" class="flex flex-col items-center p-2 text-blue-600">
+        <i class="fas fa-home text-lg"></i>
+        <span class="text-xs mt-1">Home</span>
+      </a>
+      <a href="#" class="flex flex-col items-center p-2 text-slate-500">
+        <i class="fas fa-users text-lg"></i>
+        <span class="text-xs mt-1">HR</span>
+      </a>
+      <a href="#" class="flex flex-col items-center p-2 text-slate-500">
+        <i class="fas fa-box text-lg"></i>
+        <span class="text-xs mt-1">Assets</span>
+      </a>
+      <a href="#" class="flex flex-col items-center p-2 text-slate-500 relative">
+        <i class="fas fa-clipboard-check text-lg"></i>
+        <span class="absolute top-1 right-1 w-4 h-4 bg-amber-500 text-white text-[10px] rounded-full flex items-center justify-center">3</span>
+        <span class="text-xs mt-1">Approvals</span>
+      </a>
+      <a href="#" class="flex flex-col items-center p-2 text-slate-500">
+        <i class="fas fa-ellipsis-h text-lg"></i>
+        <span class="text-xs mt-1">More</span>
+      </a>
+    </div>
+  </nav>
+
+  <script>
+    function toggleCommandPalette() {
+      const palette = document.getElementById('commandPalette');
+      palette.classList.toggle('open');
+      if (palette.classList.contains('open')) {
+        palette.querySelector('input').focus();
+      }
+    }
+
+    // Keyboard shortcut
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        toggleCommandPalette();
+      }
+      if (e.key === 'Escape') {
+        document.getElementById('commandPalette').classList.remove('open');
+      }
+    });
+  </script>
+</body>
+</html>

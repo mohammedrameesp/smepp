@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Communication - Super Admin | SME++</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .glass { background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+    .stagger-1 { animation-delay: 0.05s; }
+    .stagger-2 { animation-delay: 0.1s; }
+    .stagger-3 { animation-delay: 0.15s; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-white to-slate-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 px-4 py-3">
+    <div class="max-w-7xl mx-auto">
+      <div class="glass rounded-2xl border border-slate-200/50 shadow-sm px-5 py-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-6">
+            <a href="super-admin-v1.html" class="flex items-center gap-2.5">
+              <div class="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center">
+                <span class="text-white text-sm font-bold">S+</span>
+              </div>
+              <div class="hidden sm:flex items-center gap-2">
+                <span class="font-semibold text-slate-900">SME++</span>
+                <span class="text-[10px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-medium uppercase">Super Admin</span>
+              </div>
+            </a>
+            <nav class="hidden md:flex items-center">
+              <a href="super-admin-v1.html" class="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900">Dashboard</a>
+              <a href="#" class="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900">Organizations</a>
+              <a href="#" class="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900">Users</a>
+              <a href="#" class="px-3 py-1.5 text-sm font-medium text-slate-900 bg-slate-100 rounded-lg">Communication</a>
+            </nav>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center">
+              <span class="text-white text-xs font-medium">SA</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Page Header -->
+    <div class="flex items-center justify-between mb-6 opacity-0 animate-fade-in-up">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Communication Center</h1>
+        <p class="text-slate-500 text-sm">Send announcements, notifications, and manage platform communications</p>
+      </div>
+      <button onclick="openComposeModal()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl transition-colors flex items-center gap-2">
+        <i class="fas fa-plus text-xs"></i>
+        New Announcement
+      </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 opacity-0 animate-fade-in-up stagger-1">
+      <div class="bg-white rounded-2xl p-5 border border-slate-200">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center">
+            <i class="fas fa-paper-plane text-white"></i>
+          </div>
+        </div>
+        <p class="text-2xl font-bold text-slate-900">24</p>
+        <p class="text-slate-500 text-sm">Sent This Month</p>
+      </div>
+      <div class="bg-white rounded-2xl p-5 border border-slate-200">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center">
+            <i class="fas fa-eye text-white"></i>
+          </div>
+        </div>
+        <p class="text-2xl font-bold text-slate-900">89%</p>
+        <p class="text-slate-500 text-sm">Open Rate</p>
+      </div>
+      <div class="bg-white rounded-2xl p-5 border border-slate-200">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center">
+            <i class="fas fa-clock text-white"></i>
+          </div>
+        </div>
+        <p class="text-2xl font-bold text-slate-900">3</p>
+        <p class="text-slate-500 text-sm">Scheduled</p>
+      </div>
+      <div class="bg-white rounded-2xl p-5 border border-slate-200">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center">
+            <i class="fas fa-file-alt text-white"></i>
+          </div>
+        </div>
+        <p class="text-2xl font-bold text-slate-900">8</p>
+        <p class="text-slate-500 text-sm">Draft Templates</p>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid md:grid-cols-4 gap-4 mb-6 opacity-0 animate-fade-in-up stagger-2">
+      <button class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100 hover:shadow-lg hover:shadow-blue-100/50 transition-all text-left group">
+        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+          <i class="fas fa-bullhorn text-blue-600"></i>
+        </div>
+        <h3 class="font-semibold text-slate-900 text-sm">Platform Announcement</h3>
+        <p class="text-xs text-slate-500 mt-1">Broadcast to all organizations</p>
+      </button>
+      <button class="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-100 hover:shadow-lg hover:shadow-emerald-100/50 transition-all text-left group">
+        <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+          <i class="fas fa-wrench text-emerald-600"></i>
+        </div>
+        <h3 class="font-semibold text-slate-900 text-sm">Maintenance Notice</h3>
+        <p class="text-xs text-slate-500 mt-1">Schedule downtime alerts</p>
+      </button>
+      <button class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100 hover:shadow-lg hover:shadow-amber-100/50 transition-all text-left group">
+        <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+          <i class="fas fa-star text-amber-600"></i>
+        </div>
+        <h3 class="font-semibold text-slate-900 text-sm">Feature Update</h3>
+        <p class="text-xs text-slate-500 mt-1">Announce new features</p>
+      </button>
+      <button class="bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl p-4 border border-rose-100 hover:shadow-lg hover:shadow-rose-100/50 transition-all text-left group">
+        <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+          <i class="fas fa-exclamation-triangle text-rose-600"></i>
+        </div>
+        <h3 class="font-semibold text-slate-900 text-sm">Security Alert</h3>
+        <p class="text-xs text-slate-500 mt-1">Critical security notices</p>
+      </button>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid lg:grid-cols-3 gap-4 opacity-0 animate-fade-in-up stagger-3">
+
+      <!-- Recent Announcements -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl border border-slate-200">
+          <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="font-semibold text-slate-900 text-sm">Recent Announcements</h2>
+            <div class="flex items-center gap-2">
+              <select class="text-xs bg-slate-100 border-0 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500">
+                <option>All Types</option>
+                <option>Platform</option>
+                <option>Maintenance</option>
+                <option>Feature</option>
+                <option>Security</option>
+              </select>
+            </div>
+          </div>
+          <div class="divide-y divide-slate-100">
+            <!-- Announcement 1 -->
+            <div class="p-4 hover:bg-slate-50 transition-colors">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i class="fas fa-star text-emerald-600"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 class="font-medium text-slate-900 text-sm">New Payroll Module Released</h3>
+                      <p class="text-xs text-slate-500 mt-1">Introducing automated payroll processing with tax calculations...</p>
+                    </div>
+                    <span class="text-xs text-slate-400 flex-shrink-0">2 days ago</span>
+                  </div>
+                  <div class="flex items-center gap-4 mt-3">
+                    <span class="inline-flex items-center gap-1 text-xs text-slate-500">
+                      <i class="fas fa-building text-slate-400"></i> All Organizations
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-xs text-emerald-600">
+                      <i class="fas fa-check-circle"></i> Sent
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-xs text-slate-500">
+                      <i class="fas fa-eye"></i> 92% opened
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Announcement 2 -->
+            <div class="p-4 hover:bg-slate-50 transition-colors">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i class="fas fa-wrench text-amber-600"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 class="font-medium text-slate-900 text-sm">Scheduled Maintenance - Dec 28</h3>
+                      <p class="text-xs text-slate-500 mt-1">System will be unavailable from 2:00 AM - 4:00 AM UTC...</p>
+                    </div>
+                    <span class="text-xs text-slate-400 flex-shrink-0">5 days ago</span>
+                  </div>
+                  <div class="flex items-center gap-4 mt-3">
+                    <span class="inline-flex items-center gap-1 text-xs text-slate-500">
+                      <i class="fas fa-building text-slate-400"></i> All Organizations
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-xs text-emerald-600">
+                      <i class="fas fa-check-circle"></i> Sent
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-xs text-slate-500">
+                      <i class="fas fa-eye"></i> 87% opened
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Announcement 3 - Scheduled -->
+            <div class="p-4 hover:bg-slate-50 transition-colors bg-amber-50/50">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i class="fas fa-bullhorn text-blue-600"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 class="font-medium text-slate-900 text-sm">New Year 2025 Greetings</h3>
+                      <p class="text-xs text-slate-500 mt-1">Wishing all our customers a prosperous new year...</p>
+                    </div>
+                    <span class="text-xs text-amber-600 flex-shrink-0">Scheduled: Jan 1</span>
+                  </div>
+                  <div class="flex items-center gap-4 mt-3">
+                    <span class="inline-flex items-center gap-1 text-xs text-slate-500">
+                      <i class="fas fa-building text-slate-400"></i> All Organizations
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-xs text-amber-600">
+                      <i class="fas fa-clock"></i> Scheduled
+                    </span>
+                    <button class="text-xs text-blue-600 hover:text-blue-700">Edit</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Announcement 4 -->
+            <div class="p-4 hover:bg-slate-50 transition-colors">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i class="fas fa-shield-alt text-rose-600"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 class="font-medium text-slate-900 text-sm">Security Update: 2FA Enforcement</h3>
+                      <p class="text-xs text-slate-500 mt-1">Starting January 15, all admin accounts will require 2FA...</p>
+                    </div>
+                    <span class="text-xs text-slate-400 flex-shrink-0">1 week ago</span>
+                  </div>
+                  <div class="flex items-center gap-4 mt-3">
+                    <span class="inline-flex items-center gap-1 text-xs text-slate-500">
+                      <i class="fas fa-user-shield text-slate-400"></i> Admins Only
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-xs text-emerald-600">
+                      <i class="fas fa-check-circle"></i> Sent
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-xs text-slate-500">
+                      <i class="fas fa-eye"></i> 95% opened
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="px-4 py-3 border-t border-slate-100">
+            <a href="#" class="text-sm text-blue-600 hover:text-blue-700 font-medium">View all announcements</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Sidebar -->
+      <div class="space-y-4">
+        <!-- Scheduled -->
+        <div class="bg-white rounded-xl border border-slate-200">
+          <div class="px-4 py-3 border-b border-slate-100">
+            <h2 class="font-semibold text-slate-900 text-sm">Scheduled Messages</h2>
+          </div>
+          <div class="p-3 space-y-3">
+            <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
+              <div class="w-10 h-10 bg-amber-100 rounded-lg flex flex-col items-center justify-center">
+                <span class="text-[10px] text-amber-600 font-medium">JAN</span>
+                <span class="text-sm text-amber-700 font-bold leading-none">1</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-slate-900 truncate">New Year Greetings</p>
+                <p class="text-xs text-slate-500">9:00 AM UTC</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
+              <div class="w-10 h-10 bg-blue-100 rounded-lg flex flex-col items-center justify-center">
+                <span class="text-[10px] text-blue-600 font-medium">JAN</span>
+                <span class="text-sm text-blue-700 font-bold leading-none">5</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-slate-900 truncate">Q1 Feature Preview</p>
+                <p class="text-xs text-slate-500">10:00 AM UTC</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
+              <div class="w-10 h-10 bg-purple-100 rounded-lg flex flex-col items-center justify-center">
+                <span class="text-[10px] text-purple-600 font-medium">JAN</span>
+                <span class="text-sm text-purple-700 font-bold leading-none">15</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-slate-900 truncate">2FA Reminder</p>
+                <p class="text-xs text-slate-500">8:00 AM UTC</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Templates -->
+        <div class="bg-white rounded-xl border border-slate-200">
+          <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="font-semibold text-slate-900 text-sm">Quick Templates</h2>
+            <button class="text-xs text-blue-600 hover:text-blue-700">Manage</button>
+          </div>
+          <div class="p-3 space-y-2">
+            <button class="w-full p-3 bg-slate-50 hover:bg-slate-100 rounded-lg text-left transition-colors">
+              <div class="flex items-center gap-2">
+                <i class="fas fa-wrench text-amber-500 text-xs"></i>
+                <span class="text-sm font-medium text-slate-700">Maintenance Notice</span>
+              </div>
+            </button>
+            <button class="w-full p-3 bg-slate-50 hover:bg-slate-100 rounded-lg text-left transition-colors">
+              <div class="flex items-center gap-2">
+                <i class="fas fa-star text-emerald-500 text-xs"></i>
+                <span class="text-sm font-medium text-slate-700">Feature Release</span>
+              </div>
+            </button>
+            <button class="w-full p-3 bg-slate-50 hover:bg-slate-100 rounded-lg text-left transition-colors">
+              <div class="flex items-center gap-2">
+                <i class="fas fa-shield-alt text-rose-500 text-xs"></i>
+                <span class="text-sm font-medium text-slate-700">Security Notice</span>
+              </div>
+            </button>
+            <button class="w-full p-3 bg-slate-50 hover:bg-slate-100 rounded-lg text-left transition-colors">
+              <div class="flex items-center gap-2">
+                <i class="fas fa-gift text-purple-500 text-xs"></i>
+                <span class="text-sm font-medium text-slate-700">Holiday Greetings</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Audience Segments -->
+        <div class="bg-white rounded-xl border border-slate-200">
+          <div class="px-4 py-3 border-b border-slate-100">
+            <h2 class="font-semibold text-slate-900 text-sm">Audience Segments</h2>
+          </div>
+          <div class="p-3 space-y-2">
+            <div class="flex items-center justify-between p-2">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span class="text-sm text-slate-600">All Organizations</span>
+              </div>
+              <span class="text-xs text-slate-500">12 orgs</span>
+            </div>
+            <div class="flex items-center justify-between p-2">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <span class="text-sm text-slate-600">Paid Tiers Only</span>
+              </div>
+              <span class="text-xs text-slate-500">8 orgs</span>
+            </div>
+            <div class="flex items-center justify-between p-2">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-amber-500 rounded-full"></div>
+                <span class="text-sm text-slate-600">Enterprise</span>
+              </div>
+              <span class="text-xs text-slate-500">1 org</span>
+            </div>
+            <div class="flex items-center justify-between p-2">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                <span class="text-sm text-slate-600">Admins Only</span>
+              </div>
+              <span class="text-xs text-slate-500">24 users</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Compose Modal -->
+  <div id="composeModal" class="fixed inset-0 z-[100] hidden">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="closeComposeModal()"></div>
+    <div class="relative max-w-2xl mx-auto mt-[10vh] mx-4">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-fade-in-up">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 class="font-semibold text-slate-900">New Announcement</h3>
+          <button onclick="closeComposeModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center">
+            <i class="fas fa-times text-slate-400"></i>
+          </button>
+        </div>
+        <div class="p-6 space-y-4">
+          <!-- Type -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Type</label>
+            <div class="flex gap-2">
+              <button class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">Platform</button>
+              <button class="px-3 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-sm font-medium">Maintenance</button>
+              <button class="px-3 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-sm font-medium">Feature</button>
+              <button class="px-3 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-sm font-medium">Security</button>
+            </div>
+          </div>
+          <!-- Subject -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Subject</label>
+            <input type="text" placeholder="Enter announcement subject..." class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+          </div>
+          <!-- Message -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Message</label>
+            <textarea rows="5" placeholder="Write your announcement..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"></textarea>
+          </div>
+          <!-- Audience -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Audience</label>
+            <select class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+              <option>All Organizations</option>
+              <option>Paid Tiers Only</option>
+              <option>Enterprise Only</option>
+              <option>Free Tier Only</option>
+              <option>Admins Only</option>
+            </select>
+          </div>
+          <!-- Schedule -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Schedule</label>
+            <div class="flex gap-3">
+              <label class="flex items-center gap-2">
+                <input type="radio" name="schedule" checked class="text-blue-600">
+                <span class="text-sm text-slate-600">Send Now</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input type="radio" name="schedule" class="text-blue-600">
+                <span class="text-sm text-slate-600">Schedule</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50">
+          <button class="px-4 py-2 text-slate-600 hover:text-slate-800 text-sm font-medium">Save as Draft</button>
+          <div class="flex gap-2">
+            <button onclick="closeComposeModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-sm font-medium transition-colors">Cancel</button>
+            <button class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-medium transition-colors">Send Announcement</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openComposeModal() {
+      document.getElementById('composeModal').classList.remove('hidden');
+    }
+    function closeComposeModal() {
+      document.getElementById('composeModal').classList.add('hidden');
+    }
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeComposeModal();
+    });
+  </script>
+
+</body>
+</html>

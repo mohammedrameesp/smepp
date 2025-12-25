@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SME++ UI Review</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <div class="max-w-6xl mx-auto py-12 px-6">
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <div class="flex items-center justify-center gap-3 mb-4">
+        <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center">
+          <span class="text-white text-2xl font-bold">S+</span>
+        </div>
+      </div>
+      <h1 class="text-4xl font-bold text-slate-900">SME++ UI Review</h1>
+      <p class="text-lg text-slate-500 mt-2">Static HTML prototypes for UI review and improvement</p>
+      <p class="text-sm text-slate-400 mt-4">
+        <i class="fas fa-info-circle mr-1"></i>
+        Open these pages in your browser, make improvements, then reflect changes in production React components
+      </p>
+    </div>
+
+    <!-- Page Categories -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- Authentication -->
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+          <div class="flex items-center gap-3 text-white">
+            <i class="fas fa-lock text-2xl"></i>
+            <div>
+              <h2 class="text-lg font-semibold">Authentication</h2>
+              <p class="text-blue-100 text-sm">Login, signup, password reset</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 space-y-2">
+          <a href="auth/login.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-sign-in-alt text-blue-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Login</p>
+              <p class="text-xs text-slate-500">User sign-in page</p>
+            </div>
+            <i class="fas fa-arrow-right text-slate-300 group-hover:text-blue-500 transition-colors"></i>
+          </a>
+          <a href="auth/signup.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-user-plus text-blue-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Sign Up</p>
+              <p class="text-xs text-slate-500">New user registration</p>
+            </div>
+            <i class="fas fa-arrow-right text-slate-300 group-hover:text-blue-500 transition-colors"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Dashboard Design Variations -->
+      <div class="bg-white rounded-2xl border-2 border-purple-200 overflow-hidden lg:col-span-2">
+        <div class="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4">
+          <div class="flex items-center gap-3 text-white">
+            <i class="fas fa-palette text-2xl"></i>
+            <div>
+              <h2 class="text-lg font-semibold">Dashboard Design Variations</h2>
+              <p class="text-purple-100 text-sm">10 different styles to compare - no sidebar</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 grid grid-cols-2 gap-2">
+          <a href="admin/dashboard-v2.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-purple-50 transition-colors group border border-purple-100">
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <span class="font-bold text-green-600">V2</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Dropdown Nav</p>
+              <p class="text-xs text-slate-500">Top nav + command palette</p>
+            </div>
+          </a>
+          <a href="admin/dashboard-v3.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-purple-50 transition-colors group border border-purple-100">
+            <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+              <span class="font-bold text-slate-600">V3</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Minimal Clean</p>
+              <p class="text-xs text-slate-500">Floating glass nav</p>
+            </div>
+          </a>
+          <a href="admin/dashboard-v4.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-purple-50 transition-colors group border border-purple-100">
+            <div class="w-10 h-10 bg-zinc-900 rounded-lg flex items-center justify-center">
+              <span class="font-bold text-white">V4</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Dark Mode</p>
+              <p class="text-xs text-slate-500">Zinc colors + glowing effects</p>
+            </div>
+          </a>
+          <a href="admin/dashboard-v5.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-purple-50 transition-colors group border border-purple-100">
+            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+              <span class="font-bold text-gray-600">V5</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Bento Grid</p>
+              <p class="text-xs text-slate-500">Apple/Linear style layout</p>
+            </div>
+          </a>
+          <a href="admin/dashboard-v6.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-purple-50 transition-colors group border border-purple-100">
+            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+              <span class="font-bold text-indigo-600">V6</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Compact Dense</p>
+              <p class="text-xs text-slate-500">Information-rich layout</p>
+            </div>
+          </a>
+          <a href="admin/dashboard-v7.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-purple-50 transition-colors group border border-purple-100">
+            <div class="w-10 h-10 bg-gradient-to-br from-violet-400 to-pink-400 rounded-lg flex items-center justify-center">
+              <span class="font-bold text-white">V7</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Vibrant Gradients</p>
+              <p class="text-xs text-slate-500">Colorful gradient cards</p>
+            </div>
+          </a>
+          <a href="admin/dashboard-v8.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-purple-50 transition-colors group border border-purple-100">
+            <div class="w-10 h-10 bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg flex items-center justify-center">
+              <span class="font-bold text-white">V8</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Balanced Hybrid</p>
+              <p class="text-xs text-slate-500">Best of V3 + V6 + V7</p>
+            </div>
+          </a>
+          <a href="admin/dashboard-v10.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-purple-50 transition-colors group border-2 border-violet-300 bg-gradient-to-r from-violet-50 to-fuchsia-50 col-span-2">
+            <div class="w-10 h-10 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-lg flex items-center justify-center shadow-lg">
+              <span class="font-bold text-white">V10</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Production Ready</p>
+              <p class="text-xs text-slate-500">V9 + Dynamic placeholders, tier badge, 2-column layout, loading skeletons, empty states</p>
+            </div>
+            <span class="text-xs bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-2 py-0.5 rounded-full font-semibold">FINAL</span>
+          </a>
+          <a href="admin/dashboard-v9.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-purple-50 transition-colors group border border-emerald-200 bg-emerald-50 col-span-2">
+            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+              <span class="font-bold text-white">V9</span>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Full Featured</p>
+              <p class="text-xs text-slate-500">V8 + Command palette, dropdowns, animations, mobile nav, widgets</p>
+            </div>
+            <span class="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded-full">COMPLETE</span>
+          </a>
+          <a href="admin/assets-v2.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-purple-50 transition-colors group border border-green-100 col-span-2">
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-box text-green-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Assets V2 (No Sidebar)</p>
+              <p class="text-xs text-slate-500">Tabs + table without sidebar</p>
+            </div>
+            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">NEW</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Admin Portal (Old with Sidebar) -->
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden opacity-75">
+        <div class="bg-gradient-to-r from-slate-500 to-slate-600 px-6 py-4">
+          <div class="flex items-center gap-3 text-white">
+            <i class="fas fa-user-shield text-2xl"></i>
+            <div>
+              <h2 class="text-lg font-semibold">Admin (Old - With Sidebar)</h2>
+              <p class="text-slate-300 text-sm">Original design for reference</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 space-y-2">
+          <a href="admin/dashboard.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group">
+            <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-home text-slate-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Dashboard</p>
+              <p class="text-xs text-slate-500">With sidebar navigation</p>
+            </div>
+            <span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">OLD</span>
+          </a>
+          <a href="admin/assets.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group">
+            <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-box text-slate-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Assets</p>
+              <p class="text-xs text-slate-500">With sidebar navigation</p>
+            </div>
+            <span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">OLD</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Super Admin -->
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-4">
+          <div class="flex items-center gap-3 text-white">
+            <i class="fas fa-crown text-2xl"></i>
+            <div>
+              <h2 class="text-lg font-semibold">Super Admin</h2>
+              <p class="text-amber-100 text-sm">Platform management</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 space-y-2">
+          <a href="super-admin/dashboard.html" class="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group">
+            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-chart-line text-amber-600"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-slate-900">Platform Dashboard</p>
+              <p class="text-xs text-slate-500">All organizations overview</p>
+            </div>
+            <i class="fas fa-arrow-right text-slate-300 group-hover:text-amber-500 transition-colors"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Instructions -->
+    <div class="mt-12 bg-blue-50 border border-blue-200 rounded-2xl p-6">
+      <h3 class="text-lg font-semibold text-blue-900 mb-3">
+        <i class="fas fa-lightbulb mr-2"></i>
+        How to Use This
+      </h3>
+      <ol class="space-y-2 text-blue-800">
+        <li class="flex gap-3">
+          <span class="flex-shrink-0 w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center text-sm font-semibold">1</span>
+          <span>Open any HTML page in your browser (or use Live Server in VS Code)</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="flex-shrink-0 w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center text-sm font-semibold">2</span>
+          <span>Edit the HTML/CSS directly to improve the UI design</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="flex-shrink-0 w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center text-sm font-semibold">3</span>
+          <span>Once satisfied, apply the changes to the corresponding React components in <code class="bg-blue-100 px-1.5 py-0.5 rounded text-sm">src/app/</code></span>
+        </li>
+        <li class="flex gap-3">
+          <span class="flex-shrink-0 w-6 h-6 bg-blue-200 rounded-full flex items-center justify-center text-sm font-semibold">4</span>
+          <span>Use browser DevTools (F12) to experiment with styles in real-time</span>
+        </li>
+      </ol>
+    </div>
+
+    <!-- File Mapping -->
+    <div class="mt-8 bg-slate-100 rounded-2xl p-6">
+      <h3 class="text-lg font-semibold text-slate-900 mb-4">
+        <i class="fas fa-file-code mr-2"></i>
+        File Mapping (HTML → React)
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-200">
+              <th class="text-left py-2 px-4 font-semibold text-slate-600">HTML File</th>
+              <th class="text-left py-2 px-4 font-semibold text-slate-600">React Component</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200">
+            <tr>
+              <td class="py-2 px-4 font-mono text-blue-600">auth/login.html</td>
+              <td class="py-2 px-4 font-mono text-slate-600">src/app/(auth)/login/page.tsx</td>
+            </tr>
+            <tr>
+              <td class="py-2 px-4 font-mono text-blue-600">auth/signup.html</td>
+              <td class="py-2 px-4 font-mono text-slate-600">src/app/(auth)/signup/page.tsx</td>
+            </tr>
+            <tr>
+              <td class="py-2 px-4 font-mono text-blue-600">admin/dashboard.html</td>
+              <td class="py-2 px-4 font-mono text-slate-600">src/app/admin/page.tsx</td>
+            </tr>
+            <tr>
+              <td class="py-2 px-4 font-mono text-blue-600">admin/assets.html</td>
+              <td class="py-2 px-4 font-mono text-slate-600">src/app/admin/assets/page.tsx</td>
+            </tr>
+            <tr>
+              <td class="py-2 px-4 font-mono text-blue-600">admin/employees.html</td>
+              <td class="py-2 px-4 font-mono text-slate-600">src/app/admin/employees/page.tsx</td>
+            </tr>
+            <tr>
+              <td class="py-2 px-4 font-mono text-blue-600">super-admin/dashboard.html</td>
+              <td class="py-2 px-4 font-mono text-slate-600">src/app/super-admin/page.tsx</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-12 text-center text-slate-400 text-sm">
+      <p>SME++ UI Review Kit • Generated with Tailwind CSS CDN</p>
+    </div>
+  </div>
+</body>
+</html>
