@@ -41,6 +41,15 @@ import {
   Pencil,
   Trash2,
   UserPlus,
+  Package,
+  CreditCard,
+  Truck,
+  CalendarDays,
+  DollarSign,
+  FolderKanban,
+  ShoppingCart,
+  FileCheck,
+  Activity,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 
@@ -50,9 +59,13 @@ interface Organization {
   slug: string;
   logoUrl: string | null;
   subscriptionTier: string;
+  enabledModules: string[];
   maxUsers: number;
   maxAssets: number;
   createdAt: string;
+  industry: string | null;
+  companySize: string | null;
+  internalNotes: string | null;
   _count: {
     members: number;
     assets: number;
@@ -68,6 +81,26 @@ interface Organization {
       email: string;
     };
   }>;
+}
+
+interface ModuleInsights {
+  assets: { total: number; requests: number; pendingRequests: number };
+  subscriptions: { total: number };
+  suppliers: { total: number; pending: number };
+  employees: { total: number };
+  leave: { totalRequests: number; pending: number };
+  payroll: { totalRuns: number };
+  projects: { total: number };
+  'purchase-requests': { total: number; pending: number };
+  documents: { total: number };
+}
+
+interface RecentActivity {
+  id: string;
+  action: string;
+  entityType: string;
+  at: string;
+  actorUser: { name: string | null; email: string } | null;
 }
 
 interface Invitation {
@@ -87,6 +120,8 @@ export default function OrganizationDetailPage() {
   const orgId = params.id as string;
 
   const [org, setOrg] = useState<Organization | null>(null);
+  const [moduleInsights, setModuleInsights] = useState<ModuleInsights | null>(null);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,6 +161,8 @@ export default function OrganizationDetailPage() {
 
         const orgData = await orgRes.json();
         setOrg(orgData.organization);
+        setModuleInsights(orgData.moduleInsights || null);
+        setRecentActivity(orgData.recentActivity || []);
 
         if (invRes.ok) {
           const invData = await invRes.json();
@@ -424,6 +461,258 @@ export default function OrganizationDetailPage() {
           </CardHeader>
         </Card>
       </div>
+
+      {/* Installed Modules */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5" />
+            Installed Modules
+          </CardTitle>
+          <CardDescription>Modules enabled for this organization</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {(org.enabledModules || []).length === 0 ? (
+              <p className="text-muted-foreground">No modules installed</p>
+            ) : (
+              (org.enabledModules || []).map((moduleId) => {
+                const moduleConfig: Record<string, { name: string; icon: React.ReactNode; color: string }> = {
+                  assets: { name: 'Assets', icon: <Package className="h-3 w-3" />, color: 'bg-blue-100 text-blue-800' },
+                  subscriptions: { name: 'Subscriptions', icon: <CreditCard className="h-3 w-3" />, color: 'bg-purple-100 text-purple-800' },
+                  suppliers: { name: 'Suppliers', icon: <Truck className="h-3 w-3" />, color: 'bg-green-100 text-green-800' },
+                  employees: { name: 'Employees', icon: <Users className="h-3 w-3" />, color: 'bg-orange-100 text-orange-800' },
+                  leave: { name: 'Leave', icon: <CalendarDays className="h-3 w-3" />, color: 'bg-teal-100 text-teal-800' },
+                  payroll: { name: 'Payroll', icon: <DollarSign className="h-3 w-3" />, color: 'bg-emerald-100 text-emerald-800' },
+                  projects: { name: 'Projects', icon: <FolderKanban className="h-3 w-3" />, color: 'bg-indigo-100 text-indigo-800' },
+                  'purchase-requests': { name: 'Purchase Requests', icon: <ShoppingCart className="h-3 w-3" />, color: 'bg-pink-100 text-pink-800' },
+                  documents: { name: 'Company Documents', icon: <FileCheck className="h-3 w-3" />, color: 'bg-amber-100 text-amber-800' },
+                };
+                const config = moduleConfig[moduleId] || { name: moduleId, icon: <Package className="h-3 w-3" />, color: 'bg-gray-100 text-gray-800' };
+                return (
+                  <Badge key={moduleId} variant="secondary" className={`${config.color} flex items-center gap-1`}>
+                    {config.icon}
+                    {config.name}
+                  </Badge>
+                );
+              })
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Module Insights */}
+      {moduleInsights && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Module Usage Insights
+            </CardTitle>
+            <CardDescription>Usage statistics per module</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {(org.enabledModules || []).includes('assets') && (
+                <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Package className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium text-blue-900">Assets</span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-blue-700">Total</span>
+                      <span className="font-semibold text-blue-900">{moduleInsights.assets.total}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-blue-700">Requests</span>
+                      <span className="font-semibold text-blue-900">{moduleInsights.assets.requests}</span>
+                    </div>
+                    {moduleInsights.assets.pendingRequests > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-orange-600">Pending</span>
+                        <span className="font-semibold text-orange-700">{moduleInsights.assets.pendingRequests}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {(org.enabledModules || []).includes('subscriptions') && (
+                <div className="p-4 rounded-lg bg-purple-50 border border-purple-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CreditCard className="h-4 w-4 text-purple-600" />
+                    <span className="font-medium text-purple-900">Subscriptions</span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-purple-700">Total</span>
+                      <span className="font-semibold text-purple-900">{moduleInsights.subscriptions.total}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {(org.enabledModules || []).includes('suppliers') && (
+                <div className="p-4 rounded-lg bg-green-50 border border-green-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Truck className="h-4 w-4 text-green-600" />
+                    <span className="font-medium text-green-900">Suppliers</span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-green-700">Total</span>
+                      <span className="font-semibold text-green-900">{moduleInsights.suppliers.total}</span>
+                    </div>
+                    {moduleInsights.suppliers.pending > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-orange-600">Pending</span>
+                        <span className="font-semibold text-orange-700">{moduleInsights.suppliers.pending}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {(org.enabledModules || []).includes('employees') && (
+                <div className="p-4 rounded-lg bg-orange-50 border border-orange-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="h-4 w-4 text-orange-600" />
+                    <span className="font-medium text-orange-900">Employees</span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-orange-700">HR Profiles</span>
+                      <span className="font-semibold text-orange-900">{moduleInsights.employees.total}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {(org.enabledModules || []).includes('leave') && (
+                <div className="p-4 rounded-lg bg-teal-50 border border-teal-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CalendarDays className="h-4 w-4 text-teal-600" />
+                    <span className="font-medium text-teal-900">Leave</span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-teal-700">Requests</span>
+                      <span className="font-semibold text-teal-900">{moduleInsights.leave.totalRequests}</span>
+                    </div>
+                    {moduleInsights.leave.pending > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-orange-600">Pending</span>
+                        <span className="font-semibold text-orange-700">{moduleInsights.leave.pending}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {(org.enabledModules || []).includes('payroll') && (
+                <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <DollarSign className="h-4 w-4 text-emerald-600" />
+                    <span className="font-medium text-emerald-900">Payroll</span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-emerald-700">Payroll Runs</span>
+                      <span className="font-semibold text-emerald-900">{moduleInsights.payroll.totalRuns}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {(org.enabledModules || []).includes('projects') && (
+                <div className="p-4 rounded-lg bg-indigo-50 border border-indigo-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FolderKanban className="h-4 w-4 text-indigo-600" />
+                    <span className="font-medium text-indigo-900">Projects</span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-indigo-700">Total</span>
+                      <span className="font-semibold text-indigo-900">{moduleInsights.projects.total}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {(org.enabledModules || []).includes('purchase-requests') && (
+                <div className="p-4 rounded-lg bg-pink-50 border border-pink-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ShoppingCart className="h-4 w-4 text-pink-600" />
+                    <span className="font-medium text-pink-900">Purchase Requests</span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-pink-700">Total</span>
+                      <span className="font-semibold text-pink-900">{moduleInsights['purchase-requests'].total}</span>
+                    </div>
+                    {moduleInsights['purchase-requests'].pending > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-orange-600">Pending</span>
+                        <span className="font-semibold text-orange-700">{moduleInsights['purchase-requests'].pending}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {(org.enabledModules || []).includes('documents') && (
+                <div className="p-4 rounded-lg bg-amber-50 border border-amber-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileCheck className="h-4 w-4 text-amber-600" />
+                    <span className="font-medium text-amber-900">Documents</span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-amber-700">Total</span>
+                      <span className="font-semibold text-amber-900">{moduleInsights.documents.total}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Activity */}
+      {recentActivity.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Recent Activity
+            </CardTitle>
+            <CardDescription>Last 10 actions in this organization</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {recentActivity.map((activity) => (
+                <div key={activity.id} className="flex items-start justify-between py-2 border-b last:border-0">
+                  <div>
+                    <p className="font-medium text-sm">
+                      {activity.action.replace(/_/g, ' ')}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {activity.actorUser?.name || activity.actorUser?.email || 'System'}
+                      {' • '}
+                      {activity.entityType}
+                    </p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(activity.at), { addSuffix: true })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Members */}
       <Card>

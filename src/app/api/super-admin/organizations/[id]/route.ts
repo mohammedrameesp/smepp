@@ -20,6 +20,7 @@ export async function GET(
 
     const { id } = await params;
 
+    // Get organization with basic info
     const organization = await prisma.organization.findUnique({
       where: { id },
       include: {
@@ -54,7 +55,95 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ organization });
+    // Get module-specific counts for insights
+    const [
+      subscriptionsCount,
+      suppliersCount,
+      employeesCount,
+      leaveRequestsCount,
+      payrollRunsCount,
+      projectsCount,
+      purchaseRequestsCount,
+      companyDocsCount,
+      assetRequestsCount,
+    ] = await Promise.all([
+      prisma.subscription.count({ where: { tenantId: id } }),
+      prisma.supplier.count({ where: { tenantId: id } }),
+      prisma.hRProfile.count({ where: { tenantId: id } }),
+      prisma.leaveRequest.count({ where: { tenantId: id } }),
+      prisma.payrollRun.count({ where: { tenantId: id } }),
+      prisma.project.count({ where: { tenantId: id } }),
+      prisma.purchaseRequest.count({ where: { tenantId: id } }),
+      prisma.companyDocument.count({ where: { tenantId: id } }),
+      prisma.assetRequest.count({ where: { tenantId: id } }),
+    ]);
+
+    // Get recent activity
+    const recentActivity = await prisma.activityLog.findMany({
+      where: { tenantId: id },
+      take: 10,
+      orderBy: { at: 'desc' },
+      include: {
+        actorUser: {
+          select: { name: true, email: true },
+        },
+      },
+    });
+
+    // Get pending items counts
+    const [
+      pendingLeaveRequests,
+      pendingPurchaseRequests,
+      pendingSuppliers,
+      pendingAssetRequests,
+    ] = await Promise.all([
+      prisma.leaveRequest.count({ where: { tenantId: id, status: 'PENDING' } }),
+      prisma.purchaseRequest.count({ where: { tenantId: id, status: 'PENDING' } }),
+      prisma.supplier.count({ where: { tenantId: id, status: 'PENDING' } }),
+      prisma.assetRequest.count({ where: { tenantId: id, status: 'PENDING_ADMIN_APPROVAL' } }),
+    ]);
+
+    // Build module insights
+    const moduleInsights = {
+      assets: {
+        total: organization._count.assets,
+        requests: assetRequestsCount,
+        pendingRequests: pendingAssetRequests,
+      },
+      subscriptions: {
+        total: subscriptionsCount,
+      },
+      suppliers: {
+        total: suppliersCount,
+        pending: pendingSuppliers,
+      },
+      employees: {
+        total: employeesCount,
+      },
+      leave: {
+        totalRequests: leaveRequestsCount,
+        pending: pendingLeaveRequests,
+      },
+      payroll: {
+        totalRuns: payrollRunsCount,
+      },
+      projects: {
+        total: projectsCount,
+      },
+      'purchase-requests': {
+        total: purchaseRequestsCount,
+        pending: pendingPurchaseRequests,
+      },
+      documents: {
+        total: companyDocsCount,
+      },
+    };
+
+    return NextResponse.json({
+      organization,
+      moduleInsights,
+      recentActivity,
+    });
   } catch (error) {
     console.error('Get organization error:', error);
     return NextResponse.json(
