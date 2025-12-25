@@ -368,19 +368,28 @@ export default async function AdminDashboard() {
         <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50 flex flex-col">
           <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="relative flex flex-col flex-1">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
-                <Inbox className="h-5 w-5" />
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h3 className="text-lg font-semibold">Pending Approvals</h3>
+                <p className="text-white/80 text-sm">
+                  {allApprovals.length > 0 ? `${allApprovals.length} items need review` : 'All caught up!'}
+                </p>
               </div>
               <span className="text-4xl font-bold">{allApprovals.length}</span>
             </div>
-            <h3 className="text-lg font-semibold mb-0.5">Pending Approvals</h3>
-            <p className="text-white/80 text-sm flex-1">
-              {allApprovals.length > 0 ? 'Items need review' : 'All caught up!'}
-            </p>
+            {allApprovals.length > 0 && (
+              <div className="space-y-2 mb-3 flex-1">
+                {allApprovals.slice(0, 3).map((approval) => (
+                  <div key={approval.id} className="flex items-center gap-2 bg-white/15 rounded-lg px-3 py-2">
+                    <approval.icon className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-sm truncate">{approval.description}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <Link
               href="/admin/my-approvals"
-              className="block w-full py-2.5 bg-white text-orange-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center mt-4"
+              className="block w-full py-2.5 bg-white text-orange-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center mt-auto"
             >
               Review Now
             </Link>
@@ -661,19 +670,21 @@ export default async function AdminDashboard() {
               </div>
               <div className="p-3">
                 {dashboardData?.onLeaveToday && dashboardData.onLeaveToday.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    {dashboardData.onLeaveToday.slice(0, 4).map((leave) => (
+                  <div className="space-y-2">
+                    {dashboardData.onLeaveToday.slice(0, 5).map((leave) => (
                       <div
                         key={leave.id}
-                        className="flex flex-col items-center p-3 rounded-xl bg-slate-50 text-center"
+                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50"
                       >
-                        <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mb-2 shadow-lg shadow-orange-200">
-                          <span className="text-white text-sm font-bold">
+                        <div className="w-9 h-9 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-xs font-bold">
                             {leave.user.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
                           </span>
                         </div>
-                        <p className="text-sm font-medium text-slate-900 truncate w-full">{leave.user.name?.split(' ')[0]}</p>
-                        <p className="text-xs text-slate-500 truncate w-full">{leave.leaveType.name}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">{leave.user.name}</p>
+                          <p className="text-xs text-slate-500 truncate">{leave.leaveType.name}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
