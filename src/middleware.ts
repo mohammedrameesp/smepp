@@ -319,7 +319,7 @@ export async function middleware(request: NextRequest) {
     if (impersonateToken) {
       const tokenData = await verifyImpersonationToken(impersonateToken);
 
-      // If valid token and matches this subdomain, set cookie and redirect without token
+      // If valid token and matches this subdomain, set cookie and allow access
       if (tokenData && tokenData.organizationSlug.toLowerCase() === subdomain.toLowerCase()) {
         // Create impersonation cookie data with all org context
         const cookieData = {
@@ -342,20 +342,25 @@ export async function middleware(request: NextRequest) {
           .setExpirationTime('4h')
           .sign(secret);
 
-        // Redirect to same URL without the impersonate parameter (clean URL)
-        const cleanUrl = new URL(request.url);
-        cleanUrl.searchParams.delete('impersonate');
+        // Allow access with impersonation headers (don't redirect, just continue)
+        const response = NextResponse.next();
+        response.headers.set('x-subdomain', subdomain);
+        response.headers.set('x-tenant-id', tokenData.organizationId);
+        response.headers.set('x-tenant-slug', tokenData.organizationSlug);
+        response.headers.set('x-user-id', tokenData.superAdminId);
+        response.headers.set('x-user-role', 'ADMIN');
+        response.headers.set('x-org-role', 'OWNER');
+        response.headers.set('x-subscription-tier', tokenData.subscriptionTier);
+        response.headers.set('x-impersonating', 'true');
+        response.headers.set('x-impersonator-email', tokenData.superAdminEmail);
 
-        const response = NextResponse.redirect(cleanUrl);
-
-        // Set the impersonation cookie (no domain = host-only cookie for this subdomain)
+        // Set the impersonation cookie for subsequent requests
         response.cookies.set(IMPERSONATION_COOKIE, cookieToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
           path: '/',
           maxAge: 4 * 60 * 60, // 4 hours
-          // Don't set domain - let it default to the current host (subdomain)
         });
 
         return response;

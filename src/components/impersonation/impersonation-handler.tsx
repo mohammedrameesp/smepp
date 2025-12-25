@@ -6,52 +6,31 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 /**
  * ImpersonationHandler
  *
- * This component checks for an impersonation token in the URL when a super admin
- * lands on a client's subdomain. If found, it verifies the token and sets up
- * the impersonation session.
+ * This component cleans up the URL after the middleware has processed
+ * the impersonation token. The middleware already sets the cookie and
+ * allows access, so we just need to clean the URL.
  */
 export function ImpersonationHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const [processing, setProcessing] = useState(false);
+  const [cleaned, setCleaned] = useState(false);
 
   useEffect(() => {
     const impersonateToken = searchParams.get('impersonate');
 
-    if (impersonateToken && !processing) {
-      setProcessing(true);
+    // If there's an impersonate token in URL, clean it up (middleware already handled it)
+    if (impersonateToken && !cleaned) {
+      setCleaned(true);
 
-      // Verify the impersonation token and set up the session
-      fetch('/api/impersonate/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: impersonateToken }),
-      })
-        .then(async (res) => {
-          if (res.ok) {
-            // Remove the impersonate parameter from URL and refresh
-            const newUrl = new URL(window.location.href);
-            newUrl.searchParams.delete('impersonate');
+      // Remove the impersonate parameter from URL without refreshing
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('impersonate');
 
-            // Use replace to avoid adding to history
-            window.location.replace(newUrl.pathname + newUrl.search);
-          } else {
-            const data = await res.json();
-            console.error('Impersonation failed:', data.error);
-
-            // Remove the invalid token from URL
-            const newUrl = new URL(window.location.href);
-            newUrl.searchParams.delete('impersonate');
-            router.replace(newUrl.pathname + newUrl.search);
-          }
-        })
-        .catch((err) => {
-          console.error('Impersonation error:', err);
-          setProcessing(false);
-        });
+      // Use replaceState to clean URL without navigation
+      window.history.replaceState({}, '', newUrl.pathname + newUrl.search);
     }
-  }, [searchParams, router, pathname, processing]);
+  }, [searchParams, pathname, cleaned]);
 
   // This component doesn't render anything
   return null;
