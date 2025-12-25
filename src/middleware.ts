@@ -348,14 +348,14 @@ export async function middleware(request: NextRequest) {
 
         const response = NextResponse.redirect(cleanUrl);
 
-        // Set the impersonation cookie
+        // Set the impersonation cookie (no domain = host-only cookie for this subdomain)
         response.cookies.set(IMPERSONATION_COOKIE, cookieToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
           path: '/',
           maxAge: 4 * 60 * 60, // 4 hours
-          domain: process.env.NEXTAUTH_COOKIE_DOMAIN || undefined,
+          // Don't set domain - let it default to the current host (subdomain)
         });
 
         return response;

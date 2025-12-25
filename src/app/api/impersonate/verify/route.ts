@@ -118,15 +118,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Set the impersonation cookie
+    // Set the impersonation cookie (no domain = host-only for current subdomain)
     response.cookies.set(IMPERSONATION_COOKIE, impersonationCookie, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
       maxAge: 4 * 60 * 60, // 4 hours
-      // Set domain to allow subdomain access
-      domain: process.env.NEXTAUTH_COOKIE_DOMAIN || undefined,
     });
 
     return response;
@@ -146,14 +144,13 @@ export async function POST(request: NextRequest) {
 export async function DELETE() {
   const response = NextResponse.json({ success: true });
 
-  // Clear the impersonation cookie
+  // Clear the impersonation cookie (no domain = match the host-only cookie we set)
   response.cookies.set(IMPERSONATION_COOKIE, '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
     maxAge: 0, // Delete the cookie
-    domain: process.env.NEXTAUTH_COOKIE_DOMAIN || undefined,
   });
 
   return response;
