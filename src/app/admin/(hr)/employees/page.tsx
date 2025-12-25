@@ -30,7 +30,7 @@ export default async function AdminEmployeesPage() {
   const [
     totalEmployees,
     pendingChangeRequests,
-    expiringDocuments,
+    expiringDocumentsCount,
     onLeaveToday,
   ] = await Promise.all([
     prisma.user.count({
@@ -42,10 +42,17 @@ export default async function AdminEmployeesPage() {
     prisma.profileChangeRequest.count({
       where: { tenantId, status: 'PENDING' },
     }),
-    prisma.employeeDocument.count({
+    // Count employees with any document expiring in next 30 days
+    prisma.hRProfile.count({
       where: {
         tenantId,
-        expiryDate: { gte: today, lte: thirtyDaysFromNow },
+        OR: [
+          { qidExpiry: { gte: today, lte: thirtyDaysFromNow } },
+          { passportExpiry: { gte: today, lte: thirtyDaysFromNow } },
+          { healthCardExpiry: { gte: today, lte: thirtyDaysFromNow } },
+          { contractExpiry: { gte: today, lte: thirtyDaysFromNow } },
+          { licenseExpiry: { gte: today, lte: thirtyDaysFromNow } },
+        ],
       },
     }),
     prisma.leaveRequest.count({
@@ -127,7 +134,7 @@ export default async function AdminEmployeesPage() {
                 <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                   <FileWarning className="h-5 w-5" />
                 </div>
-                <span className="text-3xl font-bold">{expiringDocuments}</span>
+                <span className="text-3xl font-bold">{expiringDocumentsCount}</span>
               </div>
               <p className="text-sm font-medium">Expiring Documents</p>
               <p className="text-xs text-white/70">Next 30 days</p>

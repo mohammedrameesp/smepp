@@ -30,22 +30,20 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-interface ApprovalStep {
+interface ApprovalItem {
   id: string;
   entityType: 'LEAVE_REQUEST' | 'PURCHASE_REQUEST' | 'ASSET_REQUEST';
   entityId: string;
-  levelOrder: number;
-  requiredRole: string;
   createdAt: string;
   entityDetails: Record<string, unknown>;
 }
 
 interface MyApprovalsClientProps {
-  approvals: ApprovalStep[];
+  approvals: ApprovalItem[];
   grouped: {
-    LEAVE_REQUEST: ApprovalStep[];
-    PURCHASE_REQUEST: ApprovalStep[];
-    ASSET_REQUEST: ApprovalStep[];
+    LEAVE_REQUEST: ApprovalItem[];
+    PURCHASE_REQUEST: ApprovalItem[];
+    ASSET_REQUEST: ApprovalItem[];
   };
 }
 
@@ -88,7 +86,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
-  const [selectedStep, setSelectedStep] = useState<ApprovalStep | null>(null);
+  const [selectedStep, setSelectedStep] = useState<ApprovalItem | null>(null);
   const [notes, setNotes] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'leave' | 'purchase' | 'asset'>('all');
 
@@ -133,7 +131,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
     }
   };
 
-  const openActionDialog = (step: ApprovalStep, action: 'approve' | 'reject') => {
+  const openActionDialog = (step: ApprovalItem, action: 'approve' | 'reject') => {
     setSelectedStep(step);
     setActionType(action);
     setNotes('');
@@ -152,7 +150,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
     }
   };
 
-  const renderApprovalCard = (step: ApprovalStep) => {
+  const renderApprovalCard = (step: ApprovalItem) => {
     const config = MODULE_CONFIG[step.entityType];
     const Icon = config.icon;
     const details = step.entityDetails;
@@ -217,12 +215,12 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                 </div>
               )}
 
-              {step.entityType === 'PURCHASE_REQUEST' && details.totalAmount && (
+              {step.entityType === 'PURCHASE_REQUEST' && !!details.totalAmount && (
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-slate-900">
                     {String(details.currency || 'QAR')} {Number(details.totalAmount).toLocaleString()}
                   </span>
-                  {details.priority && (
+                  {!!details.priority && (
                     <span className={cn(
                       'text-xs px-2 py-0.5 rounded-full font-medium',
                       String(details.priority) === 'HIGH' && 'bg-red-100 text-red-600',
@@ -235,7 +233,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                 </div>
               )}
 
-              {(details.reason || details.justification) && (
+              {!!(details.reason || details.justification) && (
                 <p className="text-sm text-slate-500 line-clamp-1">
                   {String(details.reason || details.justification)}
                 </p>
