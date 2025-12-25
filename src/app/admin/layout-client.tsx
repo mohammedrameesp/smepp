@@ -16,13 +16,6 @@ export function AdminLayoutClient({ children, badgeCounts }: AdminLayoutClientPr
   const enabledModules = session?.user?.enabledModules || ['assets', 'subscriptions', 'suppliers'];
   const filteredConfig = filterSidebarByModules(adminSidebarConfig, enabledModules);
 
-  // Debug logging - remove after testing
-  if (typeof window !== 'undefined') {
-    console.log('[AdminLayout] Session enabledModules:', session?.user?.enabledModules);
-    console.log('[AdminLayout] Using enabledModules:', enabledModules);
-    console.log('[AdminLayout] Filtered items count:', filteredConfig.items.length);
-  }
-
   return (
     <div className="flex h-[calc(100vh-4rem)]">
       {/* Desktop sidebar - hidden on mobile */}

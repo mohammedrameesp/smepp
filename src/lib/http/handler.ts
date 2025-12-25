@@ -11,6 +11,8 @@ import {
   createTenantPrismaClient,
 } from '@/lib/core/prisma-tenant';
 import { prisma } from '@/lib/core/prisma';
+import { hasModuleAccess, moduleNotInstalledResponse } from '@/lib/modules/access';
+import { MODULE_REGISTRY } from '@/lib/modules/registry';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -31,6 +33,7 @@ export interface HandlerOptions {
   requireAuth?: boolean;
   requireAdmin?: boolean;
   requireTenant?: boolean; // Require tenant context (default: true for auth routes)
+  requireModule?: string; // Require a specific module to be installed (e.g., 'assets', 'payroll')
   skipLogging?: boolean;
   rateLimit?: boolean;
 }
@@ -169,6 +172,34 @@ export function withErrorHandler(
       const tenantPrisma = tenantContext
         ? createTenantPrismaClient(tenantContext)
         : prisma;
+
+      // Module access check
+      if (options.requireModule) {
+        const session = await getServerSession(authOptions);
+        const enabledModules = session?.user?.enabledModules || [];
+        const moduleId = options.requireModule;
+
+        // Validate module exists
+        if (!MODULE_REGISTRY[moduleId]) {
+          console.warn(`[Handler] Unknown module "${moduleId}" in requireModule option`);
+        }
+
+        if (!hasModuleAccess(moduleId, enabledModules)) {
+          if (!options.skipLogging) {
+            logRequest(
+              request.method,
+              request.url,
+              403,
+              Date.now() - startTime,
+              requestId,
+              session?.user.id,
+              session?.user.email
+            );
+          }
+
+          return moduleNotInstalledResponse(moduleId, requestId);
+        }
+      }
 
       // Await params from Next.js 15 route context
       const params = routeContext?.params ? await routeContext.params : undefined;

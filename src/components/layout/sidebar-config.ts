@@ -33,6 +33,7 @@ import {
   UserCheck,
   UsersRound,
   Building2,
+  Blocks,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -130,6 +131,7 @@ export const adminSidebarConfig: SidebarConfig = {
         { label: 'Organization', href: '/admin/organization', icon: Building2 },
         { label: 'Team', href: '/admin/team', icon: UsersRound },
         { label: 'Users', href: '/admin/users', icon: Users },
+        { label: 'Modules', href: '/admin/modules', icon: Blocks },
         { label: 'Company Documents', href: '/admin/company-documents', icon: FileCheck, moduleId: 'documents' },
         { label: 'Approval Policies', href: '/admin/settings/approvals', icon: GitBranch },
         { label: 'Delegations', href: '/admin/settings/delegations', icon: UserCheck },
