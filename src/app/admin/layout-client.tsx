@@ -1,19 +1,16 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { adminSidebarConfig, filterSidebarByModules, type BadgeCounts } from '@/components/layout/sidebar-config';
 
 interface AdminLayoutClientProps {
   children: React.ReactNode;
   badgeCounts: BadgeCounts;
+  enabledModules: string[];
 }
 
-export function AdminLayoutClient({ children, badgeCounts }: AdminLayoutClientProps) {
-  const { data: session } = useSession();
-
-  // Filter sidebar based on enabled modules
-  const enabledModules = session?.user?.enabledModules || ['assets', 'subscriptions', 'suppliers'];
+export function AdminLayoutClient({ children, badgeCounts, enabledModules }: AdminLayoutClientProps) {
+  // Filter sidebar based on enabled modules (passed from server)
   const filteredConfig = filterSidebarByModules(adminSidebarConfig, enabledModules);
 
   return (

@@ -10,9 +10,10 @@ import { NotificationBell } from '@/components/domains/system/notifications';
 
 interface HeaderProps {
   badgeCounts?: BadgeCounts;
+  enabledModules?: string[];
 }
 
-export default function Header({ badgeCounts = {} }: HeaderProps) {
+export default function Header({ badgeCounts = {}, enabledModules: serverEnabledModules }: HeaderProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
 
@@ -33,8 +34,8 @@ export default function Header({ badgeCounts = {} }: HeaderProps) {
   const isAdmin = session?.user?.role === 'ADMIN';
   const baseConfig = isAdmin ? adminSidebarConfig : employeeSidebarConfig;
 
-  // Filter sidebar by enabled modules
-  const enabledModules = session?.user?.enabledModules || ['assets', 'subscriptions', 'suppliers'];
+  // Use server-provided enabledModules (fresh from DB), fallback to session if not provided
+  const enabledModules = serverEnabledModules || session?.user?.enabledModules || ['assets', 'subscriptions', 'suppliers'];
   const sidebarConfig = filterSidebarByModules(baseConfig, enabledModules);
 
   // Show mobile sidebar only for authenticated users on admin/employee pages

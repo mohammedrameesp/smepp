@@ -176,13 +176,26 @@ export function withErrorHandler(
       // Module access check (tier + enabledModules)
       if (options.requireModule) {
         const session = await getServerSession(authOptions);
-        const enabledModules = session?.user?.enabledModules || [];
-        const subscriptionTier = session?.user?.subscriptionTier || 'FREE';
         const moduleId = options.requireModule;
 
         // Validate module exists
         if (!MODULE_REGISTRY[moduleId]) {
           console.warn(`[Handler] Unknown module "${moduleId}" in requireModule option`);
+        }
+
+        // Fetch fresh enabledModules and subscriptionTier from database (not session which may be stale)
+        let enabledModules: string[] = [];
+        let subscriptionTier = 'FREE';
+
+        if (tenantContext?.tenantId) {
+          const org = await prisma.organization.findUnique({
+            where: { id: tenantContext.tenantId },
+            select: { enabledModules: true, subscriptionTier: true },
+          });
+          if (org) {
+            enabledModules = org.enabledModules || [];
+            subscriptionTier = org.subscriptionTier || 'FREE';
+          }
         }
 
         // First check tier - even if enabled, tier must allow it

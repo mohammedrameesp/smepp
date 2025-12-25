@@ -4,6 +4,9 @@ import "./globals.css";
 import Header from "@/components/header";
 import { Providers } from "@/components/providers";
 import MainContent from "@/components/main-content";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/core/auth";
+import { prisma } from "@/lib/core/prisma";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,11 +43,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Get enabled modules from database for header/mobile sidebar
+  const session = await getServerSession(authOptions);
+  let enabledModules: string[] = ['assets', 'subscriptions', 'suppliers'];
+
+  if (session?.user?.organizationId) {
+    const org = await prisma.organization.findUnique({
+      where: { id: session.user.organizationId },
+      select: { enabledModules: true },
+    });
+    if (org?.enabledModules?.length) {
+      enabledModules = org.enabledModules;
+    }
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -52,7 +69,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <Providers>
-          <Header />
+          <Header enabledModules={enabledModules} />
           <MainContent>{children}</MainContent>
         </Providers>
       </body>

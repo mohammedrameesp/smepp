@@ -4,6 +4,15 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { AdminLayoutClient } from './layout-client';
 
+// Get enabled modules from database (fresh, not from session)
+async function getEnabledModules(tenantId: string): Promise<string[]> {
+  const org = await prisma.organization.findUnique({
+    where: { id: tenantId },
+    select: { enabledModules: true },
+  });
+  return org?.enabledModules?.length ? org.enabledModules : ['assets', 'subscriptions', 'suppliers'];
+}
+
 // Get badge counts with tenant filtering (no caching to ensure tenant isolation)
 async function getBadgeCounts(tenantId: string) {
   const [
@@ -55,17 +64,24 @@ export default async function AdminLayout({
     redirect('/employee');
   }
 
-  // Get tenant-scoped badge counts
-  const badgeCounts = session?.user?.organizationId
-    ? await getBadgeCounts(session.user.organizationId)
-    : {
-        pendingChangeRequests: 0,
-        pendingLeaveRequests: 0,
-        pendingSuppliers: 0,
-        pendingPurchaseRequests: 0,
-        pendingAssetRequests: 0,
-        pendingApprovals: 0,
-      };
+  // Get tenant-scoped data
+  const tenantId = session?.user?.organizationId;
+  const [badgeCounts, enabledModules] = tenantId
+    ? await Promise.all([
+        getBadgeCounts(tenantId),
+        getEnabledModules(tenantId),
+      ])
+    : [
+        {
+          pendingChangeRequests: 0,
+          pendingLeaveRequests: 0,
+          pendingSuppliers: 0,
+          pendingPurchaseRequests: 0,
+          pendingAssetRequests: 0,
+          pendingApprovals: 0,
+        },
+        ['assets', 'subscriptions', 'suppliers'],
+      ];
 
-  return <AdminLayoutClient badgeCounts={badgeCounts}>{children}</AdminLayoutClient>;
+  return <AdminLayoutClient badgeCounts={badgeCounts} enabledModules={enabledModules}>{children}</AdminLayoutClient>;
 }
