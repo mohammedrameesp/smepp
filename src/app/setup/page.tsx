@@ -139,16 +139,6 @@ export default function SetupPage() {
     }
   }, [status, router]);
 
-  // If user already has org and it's fully configured, redirect
-  useEffect(() => {
-    if (session?.user?.organizationId && session?.user?.organizationLogoUrl) {
-      const orgSlug = session.user.organizationSlug;
-      if (orgSlug) {
-        window.location.href = `${window.location.protocol}//${orgSlug}.${APP_DOMAIN}/admin`;
-      }
-    }
-  }, [session]);
-
   const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;

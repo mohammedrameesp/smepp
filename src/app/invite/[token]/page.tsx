@@ -95,12 +95,12 @@ export default function InvitePage() {
         await update({ organizationId: data.organization.id });
       }
 
-      // Redirect to the organization's subdomain
+      // Redirect to the organization's subdomain - setup wizard for first-time users
       setTimeout(() => {
         const orgSlug = data.organization?.slug;
         if (orgSlug) {
-          // Redirect to org subdomain
-          window.location.href = `${window.location.protocol}//${orgSlug}.${APP_DOMAIN}/admin`;
+          // Redirect to setup wizard for first-time organization setup
+          window.location.href = `${window.location.protocol}//${orgSlug}.${APP_DOMAIN}/setup`;
         } else {
           // Fallback - just go to home which will redirect properly
           window.location.href = APP_URL;

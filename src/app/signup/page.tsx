@@ -120,7 +120,8 @@ function SignupForm() {
       } else if (data.organization?.slug) {
         await new Promise(resolve => setTimeout(resolve, 500));
         const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
-        window.location.href = `${window.location.protocol}//${data.organization.slug}.${appDomain}/admin`;
+        // Redirect to setup wizard for first-time organization setup
+        window.location.href = `${window.location.protocol}//${data.organization.slug}.${appDomain}/setup`;
       } else if (inviteToken) {
         router.push(`/invite/${inviteToken}`);
       } else {
