@@ -6,9 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Users, AlertTriangle, XCircle, Download, User, Package, CreditCard, Clock, RefreshCw, CheckCircle2, Circle } from 'lucide-react';
+import { Loader2, AlertTriangle, Download, User, Package, CreditCard, Clock, RefreshCw, CheckCircle2, Circle } from 'lucide-react';
 import { EmployeeActions } from './employee-actions';
 import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
 import { calculateTenure } from '@/lib/hr-utils';
@@ -168,7 +167,7 @@ export function EmployeeListTable() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Error Alert */}
       {error && (
         <Alert variant="error">
@@ -182,58 +181,6 @@ export function EmployeeListTable() {
           </AlertDescription>
         </Alert>
       )}
-
-      {/* Stats Banner */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className={profileStatus === 'all' ? 'ring-2 ring-blue-500' : 'cursor-pointer hover:ring-2 hover:ring-gray-200'} onClick={() => setProfileStatus('all')}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Total Employees
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
-
-        <Card className={profileStatus === 'incomplete' ? 'ring-2 ring-orange-500' : 'cursor-pointer hover:ring-2 hover:ring-gray-200'} onClick={() => setProfileStatus('incomplete')}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-orange-600 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              Incomplete Profiles
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.incomplete}</div>
-          </CardContent>
-        </Card>
-
-        <Card className={expiryStatus === 'expiring' ? 'ring-2 ring-yellow-500' : 'cursor-pointer hover:ring-2 hover:ring-gray-200'} onClick={() => setExpiryStatus(expiryStatus === 'expiring' ? 'all' : 'expiring')}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-yellow-600 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              Expiring Soon
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.expiringSoon}</div>
-            <p className="text-xs text-gray-500">Within 30 days</p>
-          </CardContent>
-        </Card>
-
-        <Card className={expiryStatus === 'expired' ? 'ring-2 ring-red-500' : 'cursor-pointer hover:ring-2 hover:ring-gray-200'} onClick={() => setExpiryStatus(expiryStatus === 'expired' ? 'all' : 'expired')}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-red-600 flex items-center gap-2">
-              <XCircle className="h-4 w-4" />
-              Expired Documents
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.expired}</div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
