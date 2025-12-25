@@ -129,7 +129,7 @@ export async function PATCH(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DELETE /api/super-admin/organizations/[id] - Delete organization
+// DELETE /api/super-admin/organizations/[id] - Delete organization and all users
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export async function DELETE(
@@ -144,10 +144,13 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Check if organization exists
+    // Check if organization exists and get all member user IDs
     const organization = await prisma.organization.findUnique({
       where: { id },
       include: {
+        members: {
+          select: { userId: true },
+        },
         _count: {
           select: { members: true, assets: true },
         },
@@ -161,12 +164,34 @@ export async function DELETE(
       );
     }
 
-    // Delete organization (cascade will handle related records)
-    await prisma.organization.delete({
-      where: { id },
+    // Get all user IDs belonging to this organization
+    const userIds = organization.members.map((m) => m.userId);
+
+    // Delete in transaction: organization first (cascades related data), then users
+    await prisma.$transaction(async (tx) => {
+      // 1. Delete organization (cascades: members, invitations, assets, subscriptions, etc.)
+      await tx.organization.delete({
+        where: { id },
+      });
+
+      // 2. Delete all users that belonged to this organization
+      if (userIds.length > 0) {
+        await tx.user.deleteMany({
+          where: {
+            id: { in: userIds },
+          },
+        });
+      }
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      deleted: {
+        organization: organization.name,
+        users: userIds.length,
+        assets: organization._count.assets,
+      }
+    });
   } catch (error) {
     console.error('Delete organization error:', error);
     return NextResponse.json(
