@@ -18,16 +18,17 @@ const MODULE_ROUTES: Record<string, string[]> = {
 };
 
 // Tier requirements for each module
+// NOTE: All modules are FREE for now - pricing tiers will be defined later
 const MODULE_TIERS: Record<string, string> = {
   assets: 'FREE',
   subscriptions: 'FREE',
   suppliers: 'FREE',
-  employees: 'STARTER',
-  leave: 'STARTER',
-  payroll: 'PROFESSIONAL',
-  projects: 'PROFESSIONAL',
-  'purchase-requests': 'PROFESSIONAL',
-  documents: 'ENTERPRISE',
+  employees: 'FREE',
+  leave: 'FREE',
+  payroll: 'FREE',
+  projects: 'FREE',
+  'purchase-requests': 'FREE',
+  documents: 'FREE',
 };
 
 // Tier hierarchy for comparison

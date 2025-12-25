@@ -140,7 +140,7 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // STARTER TIER MODULES
+  // HR MODULES (All FREE for now - pricing tiers to be defined later)
   // ─────────────────────────────────────────────────────────────────────────────
   employees: {
     id: 'employees',
@@ -149,8 +149,8 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     icon: Users,
     iconName: 'Users',
     category: 'hr',
-    tier: 'STARTER',
-    isFree: false,
+    tier: 'FREE',
+    isFree: true,
     requires: [],
     requiredBy: ['leave', 'payroll'],
     adminRoutes: ['/admin/employees'],
@@ -168,8 +168,8 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     icon: Calendar,
     iconName: 'Calendar',
     category: 'hr',
-    tier: 'STARTER',
-    isFree: false,
+    tier: 'FREE',
+    isFree: true,
     requires: ['employees'],
     requiredBy: [],
     adminRoutes: ['/admin/leave'],
@@ -180,9 +180,6 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     isDeprecated: false,
   },
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // PROFESSIONAL TIER MODULES
-  // ─────────────────────────────────────────────────────────────────────────────
   payroll: {
     id: 'payroll',
     name: 'Payroll Processing',
@@ -190,8 +187,8 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     icon: DollarSign,
     iconName: 'DollarSign',
     category: 'hr',
-    tier: 'PROFESSIONAL',
-    isFree: false,
+    tier: 'FREE',
+    isFree: true,
     requires: ['employees'],
     requiredBy: [],
     adminRoutes: ['/admin/payroll'],
@@ -202,6 +199,9 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     isDeprecated: false,
   },
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // PROJECT MODULES (All FREE for now - pricing tiers to be defined later)
+  // ─────────────────────────────────────────────────────────────────────────────
   projects: {
     id: 'projects',
     name: 'Project Management',
@@ -209,8 +209,8 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     icon: FolderKanban,
     iconName: 'FolderKanban',
     category: 'projects',
-    tier: 'PROFESSIONAL',
-    isFree: false,
+    tier: 'FREE',
+    isFree: true,
     requires: [],
     requiredBy: ['purchase-requests'],
     adminRoutes: ['/admin/projects'],
@@ -228,8 +228,8 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     icon: ShoppingCart,
     iconName: 'ShoppingCart',
     category: 'projects',
-    tier: 'PROFESSIONAL',
-    isFree: false,
+    tier: 'FREE',
+    isFree: true,
     requires: [], // projects is optional
     requiredBy: [],
     adminRoutes: ['/admin/purchase-requests'],
@@ -241,7 +241,7 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // ENTERPRISE TIER MODULES
+  // SYSTEM MODULES (All FREE for now - pricing tiers to be defined later)
   // ─────────────────────────────────────────────────────────────────────────────
   documents: {
     id: 'documents',
@@ -250,8 +250,8 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     icon: FileCheck,
     iconName: 'FileCheck',
     category: 'system',
-    tier: 'ENTERPRISE',
-    isFree: false,
+    tier: 'FREE',
+    isFree: true,
     requires: [],
     requiredBy: [],
     adminRoutes: ['/admin/company-documents'],
