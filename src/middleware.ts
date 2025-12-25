@@ -42,9 +42,12 @@ async function getImpersonationData(request: NextRequest): Promise<Impersonation
 async function verifyImpersonationToken(token: string): Promise<{
   superAdminId: string;
   superAdminEmail: string;
+  superAdminName: string | null;
   organizationId: string;
   organizationSlug: string;
   organizationName: string;
+  subscriptionTier: string;
+  enabledModules: string[];
 } | null> {
   try {
     const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'fallback-secret');
@@ -58,9 +61,12 @@ async function verifyImpersonationToken(token: string): Promise<{
     return {
       superAdminId: payload.superAdminId as string,
       superAdminEmail: payload.superAdminEmail as string,
+      superAdminName: (payload.superAdminName as string) || null,
       organizationId: payload.organizationId as string,
       organizationSlug: payload.organizationSlug as string,
       organizationName: payload.organizationName as string,
+      subscriptionTier: (payload.subscriptionTier as string) || 'FREE',
+      enabledModules: (payload.enabledModules as string[]) || ['assets', 'subscriptions', 'suppliers'],
     };
   } catch {
     return null;
@@ -313,18 +319,45 @@ export async function middleware(request: NextRequest) {
     if (impersonateToken) {
       const tokenData = await verifyImpersonationToken(impersonateToken);
 
-      // If valid token and matches this subdomain, allow access and let client set cookie
+      // If valid token and matches this subdomain, set cookie and redirect without token
       if (tokenData && tokenData.organizationSlug.toLowerCase() === subdomain.toLowerCase()) {
-        const response = NextResponse.next();
-        response.headers.set('x-subdomain', subdomain);
-        response.headers.set('x-tenant-id', tokenData.organizationId);
-        response.headers.set('x-tenant-slug', tokenData.organizationSlug);
-        response.headers.set('x-user-id', tokenData.superAdminId);
-        response.headers.set('x-user-role', 'ADMIN');
-        response.headers.set('x-org-role', 'OWNER');
-        response.headers.set('x-subscription-tier', 'FREE');
-        response.headers.set('x-impersonating', 'true');
-        response.headers.set('x-impersonator-email', tokenData.superAdminEmail);
+        // Create impersonation cookie data with all org context
+        const cookieData = {
+          superAdminId: tokenData.superAdminId,
+          superAdminEmail: tokenData.superAdminEmail,
+          superAdminName: tokenData.superAdminName,
+          organizationId: tokenData.organizationId,
+          organizationSlug: tokenData.organizationSlug,
+          organizationName: tokenData.organizationName,
+          subscriptionTier: tokenData.subscriptionTier,
+          enabledModules: tokenData.enabledModules,
+          startedAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+        };
+
+        // Sign the cookie
+        const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'fallback-secret');
+        const cookieToken = await new jose.SignJWT(cookieData)
+          .setProtectedHeader({ alg: 'HS256' })
+          .setExpirationTime('4h')
+          .sign(secret);
+
+        // Redirect to same URL without the impersonate parameter (clean URL)
+        const cleanUrl = new URL(request.url);
+        cleanUrl.searchParams.delete('impersonate');
+
+        const response = NextResponse.redirect(cleanUrl);
+
+        // Set the impersonation cookie
+        response.cookies.set(IMPERSONATION_COOKIE, cookieToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 4 * 60 * 60, // 4 hours
+          domain: process.env.NEXTAUTH_COOKIE_DOMAIN || undefined,
+        });
+
         return response;
       }
     }

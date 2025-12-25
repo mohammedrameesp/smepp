@@ -50,14 +50,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Create an impersonation token that will be verified by the middleware
-    // This token contains the super admin's original ID and the target org
+    // This token contains the super admin's original ID and the target org with all context
     const impersonationToken = jwt.sign(
       {
         superAdminId: session.user.id,
         superAdminEmail: session.user.email,
+        superAdminName: session.user.name,
         organizationId: organization.id,
         organizationSlug: organization.slug,
         organizationName: organization.name,
+        subscriptionTier: organization.subscriptionTier || 'FREE',
+        enabledModules: organization.enabledModules || ['assets', 'subscriptions', 'suppliers'],
         purpose: 'impersonation',
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + (4 * 60 * 60), // 4 hours
