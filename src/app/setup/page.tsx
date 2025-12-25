@@ -218,6 +218,9 @@ export default function SetupPage() {
     setIsLoading(true);
     setError(null);
 
+    // Capture org slug before async operations (in case session changes)
+    const orgSlug = session?.user?.organizationSlug;
+
     try {
       // 1. Upload logo if provided
       if (logoFile) {
@@ -248,8 +251,8 @@ export default function SetupPage() {
       });
 
       if (!settingsResponse.ok) {
-        // Settings endpoint might not exist yet, continue anyway
-        console.warn('Settings update failed, continuing...');
+        const errorData = await settingsResponse.json().catch(() => ({}));
+        console.warn('Settings update failed:', errorData);
       }
 
       // 3. Send team invites
@@ -267,15 +270,15 @@ export default function SetupPage() {
         }
       }
 
-      // Refresh session
+      // Refresh session to get updated enabledModules
       await update();
 
       // Move to completion view
       setCurrentStep(5);
+      setIsLoading(false);
 
-      // Redirect after showing completion
+      // Redirect after showing completion message
       setTimeout(() => {
-        const orgSlug = session?.user?.organizationSlug;
         if (orgSlug) {
           window.location.href = `${window.location.protocol}//${orgSlug}.${APP_DOMAIN}/admin`;
         } else {
@@ -284,7 +287,6 @@ export default function SetupPage() {
       }, 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
       setIsLoading(false);
     }
   };

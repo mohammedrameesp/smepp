@@ -18,6 +18,7 @@ export interface OrganizationInfo {
   logoUrl: string | null;
   role: OrgRole;
   tier: SubscriptionTier;
+  enabledModules: string[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -239,6 +240,7 @@ async function getUserOrganization(userId: string): Promise<OrganizationInfo | n
           slug: true,
           logoUrl: true,
           subscriptionTier: true,
+          enabledModules: true,
         },
       },
     },
@@ -255,6 +257,7 @@ async function getUserOrganization(userId: string): Promise<OrganizationInfo | n
     logoUrl: membership.organization.logoUrl,
     role: membership.role,
     tier: membership.organization.subscriptionTier,
+    enabledModules: membership.organization.enabledModules,
   };
 }
 
@@ -354,6 +357,7 @@ export const authOptions: NextAuthOptions = {
             token.organizationLogoUrl = org.logoUrl;
             token.orgRole = org.role;
             token.subscriptionTier = org.tier;
+            token.enabledModules = org.enabledModules;
           }
         }
 
@@ -375,6 +379,7 @@ export const authOptions: NextAuthOptions = {
                     slug: true,
                     logoUrl: true,
                     subscriptionTier: true,
+                    enabledModules: true,
                   },
                 },
               },
@@ -387,6 +392,7 @@ export const authOptions: NextAuthOptions = {
               token.organizationLogoUrl = membership.organization.logoUrl;
               token.orgRole = membership.role;
               token.subscriptionTier = membership.organization.subscriptionTier;
+              token.enabledModules = membership.organization.enabledModules;
             }
           }
         }
@@ -401,6 +407,7 @@ export const authOptions: NextAuthOptions = {
             token.organizationLogoUrl = org.logoUrl;
             token.orgRole = org.role;
             token.subscriptionTier = org.tier;
+            token.enabledModules = org.enabledModules;
           }
         }
 
@@ -428,6 +435,7 @@ export const authOptions: NextAuthOptions = {
             session.user.organizationLogoUrl = token.organizationLogoUrl as string | undefined;
             session.user.orgRole = token.orgRole as OrgRole;
             session.user.subscriptionTier = token.subscriptionTier as SubscriptionTier;
+            session.user.enabledModules = token.enabledModules as string[] | undefined;
           }
         }
 
@@ -525,6 +533,7 @@ declare module 'next-auth' {
       organizationLogoUrl?: string;
       orgRole?: OrgRole;
       subscriptionTier?: SubscriptionTier;
+      enabledModules?: string[];
     };
   }
 
@@ -544,5 +553,6 @@ declare module 'next-auth/jwt' {
     organizationLogoUrl?: string | null;
     orgRole?: OrgRole;
     subscriptionTier?: SubscriptionTier;
+    enabledModules?: string[];
   }
 }

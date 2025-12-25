@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MobileSidebar } from '@/components/layout/mobile-sidebar';
-import { adminSidebarConfig, employeeSidebarConfig, type BadgeCounts } from '@/components/layout/sidebar-config';
+import { adminSidebarConfig, employeeSidebarConfig, filterSidebarByModules, type BadgeCounts } from '@/components/layout/sidebar-config';
 import { NotificationBell } from '@/components/domains/system/notifications';
 
 interface HeaderProps {
@@ -31,7 +31,11 @@ export default function Header({ badgeCounts = {} }: HeaderProps) {
 
   // Determine which sidebar config to use based on user role
   const isAdmin = session?.user?.role === 'ADMIN';
-  const sidebarConfig = isAdmin ? adminSidebarConfig : employeeSidebarConfig;
+  const baseConfig = isAdmin ? adminSidebarConfig : employeeSidebarConfig;
+
+  // Filter sidebar by enabled modules
+  const enabledModules = session?.user?.enabledModules || ['assets', 'subscriptions', 'suppliers'];
+  const sidebarConfig = filterSidebarByModules(baseConfig, enabledModules);
 
   // Show mobile sidebar only for authenticated users on admin/employee pages
   const showMobileSidebar = session && (pathname?.startsWith('/admin') || pathname?.startsWith('/employee') || pathname === '/');
