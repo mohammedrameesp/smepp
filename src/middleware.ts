@@ -1,5 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import * as jose from 'jose';
+
+// Impersonation cookie name (must match the one in verify route)
+const IMPERSONATION_COOKIE = 'smepp-impersonation';
+
+// Interface for impersonation data
+interface ImpersonationData {
+  superAdminId: string;
+  superAdminEmail: string;
+  superAdminName: string | null;
+  organizationId: string;
+  organizationSlug: string;
+  organizationName: string;
+  subscriptionTier: string;
+  enabledModules: string[];
+  startedAt: string;
+  expiresAt: string;
+}
+
+/**
+ * Verify and extract impersonation data from cookie
+ */
+async function getImpersonationData(request: NextRequest): Promise<ImpersonationData | null> {
+  const cookie = request.cookies.get(IMPERSONATION_COOKIE);
+  if (!cookie?.value) return null;
+
+  try {
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'fallback-secret');
+    const { payload } = await jose.jwtVerify(cookie.value, secret);
+    return payload as unknown as ImpersonationData;
+  } catch {
+    return null;
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MODULE ROUTE MAPPING (for route-level module protection)
@@ -218,6 +252,12 @@ export async function middleware(request: NextRequest) {
 
     // Subdomain root - redirect to /admin or /login
     if (pathname === '/') {
+      // Check for impersonation first
+      const impersonation = await getImpersonationData(request);
+      if (impersonation && impersonation.organizationSlug.toLowerCase() === subdomain.toLowerCase()) {
+        return NextResponse.redirect(new URL('/admin', request.url));
+      }
+
       if (token && token.organizationSlug?.toString().toLowerCase() === subdomain.toLowerCase()) {
         return NextResponse.redirect(new URL('/admin', request.url));
       } else {
@@ -231,6 +271,50 @@ export async function middleware(request: NextRequest) {
       response.headers.set('x-subdomain', subdomain);
       return response;
     }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // CHECK FOR SUPER ADMIN IMPERSONATION
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    const impersonation = await getImpersonationData(request);
+
+    // If impersonating and the subdomain matches the impersonated org
+    if (impersonation && impersonation.organizationSlug.toLowerCase() === subdomain.toLowerCase()) {
+      // Super admin is impersonating this org - allow access with org context
+      const enabledModules = impersonation.enabledModules || ['assets', 'subscriptions', 'suppliers'];
+      const subscriptionTier = impersonation.subscriptionTier || 'FREE';
+      const moduleAccess = checkModuleAccess(pathname, enabledModules, subscriptionTier);
+
+      if (!moduleAccess.allowed && moduleAccess.moduleId) {
+        if (moduleAccess.reason === 'upgrade_required') {
+          const upgradeUrl = new URL('/admin/settings/billing', request.url);
+          upgradeUrl.searchParams.set('upgrade_for', moduleAccess.moduleId);
+          return NextResponse.redirect(upgradeUrl);
+        } else {
+          const modulesUrl = new URL('/admin/modules', request.url);
+          modulesUrl.searchParams.set('install', moduleAccess.moduleId);
+          modulesUrl.searchParams.set('from', pathname);
+          return NextResponse.redirect(modulesUrl);
+        }
+      }
+
+      // Allow access with impersonation context
+      const response = NextResponse.next();
+      response.headers.set('x-subdomain', subdomain);
+      response.headers.set('x-tenant-id', impersonation.organizationId);
+      response.headers.set('x-tenant-slug', impersonation.organizationSlug);
+      response.headers.set('x-user-id', impersonation.superAdminId);
+      response.headers.set('x-user-role', 'ADMIN'); // Super admin acts as admin when impersonating
+      response.headers.set('x-org-role', 'OWNER'); // Full access when impersonating
+      response.headers.set('x-subscription-tier', subscriptionTier);
+      response.headers.set('x-impersonating', 'true'); // Flag for impersonation
+      response.headers.set('x-impersonator-email', impersonation.superAdminEmail);
+      return response;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // NORMAL USER AUTHENTICATION
+    // ─────────────────────────────────────────────────────────────────────────────
 
     // Unauthenticated on subdomain - redirect to subdomain login (not main domain)
     if (!token) {

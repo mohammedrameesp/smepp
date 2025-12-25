@@ -147,6 +147,9 @@ export default function OrganizationDetailPage() {
   const [inviting, setInviting] = useState(false);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
 
+  // Impersonation state
+  const [impersonating, setImpersonating] = useState(false);
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -270,6 +273,32 @@ export default function OrganizationDetailPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete');
       setDeleting(false);
+    }
+  };
+
+  const handleVisitPortal = async () => {
+    setImpersonating(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/super-admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ organizationId: orgId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to start impersonation');
+      }
+
+      const data = await response.json();
+
+      // Open the portal URL in a new tab
+      window.open(data.portalUrl, '_blank');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to visit portal');
+    } finally {
+      setImpersonating(false);
     }
   };
 
@@ -414,16 +443,24 @@ export default function OrganizationDetailPage() {
             <UserPlus className="h-4 w-4 mr-2" />
             Invite User
           </Button>
-          <a
-            href={`${window.location.protocol}//${org.slug}.${APP_DOMAIN}/admin`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Button
+            variant="default"
+            onClick={handleVisitPortal}
+            disabled={impersonating}
+            className="bg-blue-600 hover:bg-blue-700"
           >
-            <Button variant="outline">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Visit Portal
-            </Button>
-          </a>
+            {impersonating ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              <>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Visit Portal
+              </>
+            )}
+          </Button>
           <Button
             variant="outline"
             className="text-red-600 hover:text-red-700 hover:bg-red-50"
