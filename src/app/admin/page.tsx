@@ -285,9 +285,9 @@ export default async function AdminDashboard() {
       {/* Action Cards Row */}
       <div className="grid md:grid-cols-3 gap-4 mb-6">
         {/* Pending Approvals Card */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50">
+        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50 flex flex-col">
           <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
+          <div className="relative flex flex-col flex-1">
             <div className="flex items-start justify-between mb-4">
               <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
                 <Inbox className="h-5 w-5" />
@@ -295,12 +295,12 @@ export default async function AdminDashboard() {
               <span className="text-4xl font-bold">{dashboardData?.pendingApprovals || 0}</span>
             </div>
             <h3 className="text-lg font-semibold mb-0.5">Pending Approvals</h3>
-            <p className="text-white/80 text-sm mb-4">
+            <p className="text-white/80 text-sm flex-1">
               {allApprovals.length > 0 ? `${allApprovals.length} items need review` : 'All caught up!'}
             </p>
             <Link
               href="/admin/my-approvals"
-              className="block w-full py-2.5 bg-white text-orange-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center"
+              className="block w-full py-2.5 bg-white text-orange-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center mt-4"
             >
               Review Now
             </Link>
@@ -309,9 +309,9 @@ export default async function AdminDashboard() {
 
         {/* Payroll Card - Only if payroll module enabled */}
         {isModuleEnabled('payroll') ? (
-          <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50">
+          <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50 flex flex-col">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="relative">
+            <div className="relative flex flex-col flex-1">
               <div className="flex items-start justify-between mb-4">
                 <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
                   <DollarSign className="h-5 w-5" />
@@ -319,7 +319,7 @@ export default async function AdminDashboard() {
                 <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full">This Month</span>
               </div>
               <h3 className="text-lg font-semibold mb-0.5">{format(new Date(), 'MMMM')} Payroll</h3>
-              <p className="text-white/80 text-sm">{dashboardData?.stats.employees || 0} employees</p>
+              <p className="text-white/80 text-sm flex-1">{dashboardData?.stats.employees || 0} employees</p>
               <Link
                 href="/admin/payroll/runs"
                 className="block w-full py-2.5 bg-white text-teal-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center mt-4"
@@ -330,9 +330,9 @@ export default async function AdminDashboard() {
           </div>
         ) : (
           /* Subscriptions Card - Fallback if payroll not enabled */
-          <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50">
+          <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50 flex flex-col">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="relative">
+            <div className="relative flex flex-col flex-1">
               <div className="flex items-start justify-between mb-4">
                 <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
                   <CreditCard className="h-5 w-5" />
@@ -341,12 +341,12 @@ export default async function AdminDashboard() {
               </div>
               <h3 className="text-lg font-semibold mb-0.5">SaaS Spend</h3>
               <p className="text-white/80 text-sm">{dashboardData?.stats.subscriptions || 0} active subscriptions</p>
-              <p className="text-2xl font-bold mt-1 mb-3">
+              <p className="text-2xl font-bold mt-1 flex-1">
                 QAR {Number(dashboardData?.stats.monthlySpend || 0).toLocaleString()}
               </p>
               <Link
                 href="/admin/subscriptions"
-                className="block w-full py-2.5 bg-white text-teal-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center"
+                className="block w-full py-2.5 bg-white text-teal-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center mt-4"
               >
                 View Subscriptions
               </Link>
@@ -355,13 +355,14 @@ export default async function AdminDashboard() {
         )}
 
         {/* Quick Add Card */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col">
           <div className="flex items-start justify-between mb-4">
             <div className="w-11 h-11 bg-slate-100 rounded-xl flex items-center justify-center">
               <Plus className="h-5 w-5 text-slate-600" />
             </div>
           </div>
           <h3 className="text-lg font-semibold text-slate-900 mb-3">Quick Add</h3>
+          <div className="flex-1"></div>
           <div className="grid grid-cols-2 gap-2">
             {isModuleEnabled('employees') && (
               <Link
