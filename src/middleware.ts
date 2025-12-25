@@ -35,6 +35,38 @@ async function getImpersonationData(request: NextRequest): Promise<Impersonation
   }
 }
 
+/**
+ * Verify impersonation token from URL query parameter
+ * This is used when the super admin first lands on the subdomain
+ */
+async function verifyImpersonationToken(token: string): Promise<{
+  superAdminId: string;
+  superAdminEmail: string;
+  organizationId: string;
+  organizationSlug: string;
+  organizationName: string;
+} | null> {
+  try {
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'fallback-secret');
+    const { payload } = await jose.jwtVerify(token, secret);
+
+    // Verify the token purpose
+    if (payload.purpose !== 'impersonation') {
+      return null;
+    }
+
+    return {
+      superAdminId: payload.superAdminId as string,
+      superAdminEmail: payload.superAdminEmail as string,
+      organizationId: payload.organizationId as string,
+      organizationSlug: payload.organizationSlug as string,
+      organizationName: payload.organizationName as string,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MODULE ROUTE MAPPING (for route-level module protection)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -276,6 +308,28 @@ export async function middleware(request: NextRequest) {
     // CHECK FOR SUPER ADMIN IMPERSONATION
     // ─────────────────────────────────────────────────────────────────────────────
 
+    // First check for impersonation token in URL (first-time landing)
+    const impersonateToken = request.nextUrl.searchParams.get('impersonate');
+    if (impersonateToken) {
+      const tokenData = await verifyImpersonationToken(impersonateToken);
+
+      // If valid token and matches this subdomain, allow access and let client set cookie
+      if (tokenData && tokenData.organizationSlug.toLowerCase() === subdomain.toLowerCase()) {
+        const response = NextResponse.next();
+        response.headers.set('x-subdomain', subdomain);
+        response.headers.set('x-tenant-id', tokenData.organizationId);
+        response.headers.set('x-tenant-slug', tokenData.organizationSlug);
+        response.headers.set('x-user-id', tokenData.superAdminId);
+        response.headers.set('x-user-role', 'ADMIN');
+        response.headers.set('x-org-role', 'OWNER');
+        response.headers.set('x-subscription-tier', 'FREE');
+        response.headers.set('x-impersonating', 'true');
+        response.headers.set('x-impersonator-email', tokenData.superAdminEmail);
+        return response;
+      }
+    }
+
+    // Then check for existing impersonation cookie
     const impersonation = await getImpersonationData(request);
 
     // If impersonating and the subdomain matches the impersonated org
