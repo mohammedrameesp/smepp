@@ -3,8 +3,8 @@ import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Role, ApprovalModule } from '@prisma/client';
-import { FileText, ShoppingCart, Package, Clock, Inbox, CheckCircle } from 'lucide-react';
+import { Role } from '@prisma/client';
+import { FileText, ShoppingCart, Package, Inbox, CheckCircle } from 'lucide-react';
 import { MyApprovalsClient } from './client';
 import Link from 'next/link';
 
@@ -13,178 +13,104 @@ export const metadata: Metadata = {
   description: 'Pending approval requests',
 };
 
-const MODULE_CONFIG = {
-  LEAVE_REQUEST: {
-    label: 'Leave Requests',
-    icon: 'FileText',
-    href: '/admin/leave/requests',
-  },
-  PURCHASE_REQUEST: {
-    label: 'Purchase Requests',
-    icon: 'ShoppingCart',
-    href: '/admin/purchase-requests',
-  },
-  ASSET_REQUEST: {
-    label: 'Asset Requests',
-    icon: 'Package',
-    href: '/admin/assets/requests',
-  },
-};
-
-async function getPendingApprovals(userId: string, userRole: Role, tenantId: string) {
-  // Get roles the user can approve for (their own role + delegations)
-  const rolesCanApprove: Role[] = userRole === 'ADMIN' ? [] : [userRole];
-
-  // For non-admin users, find active delegations (tenant-scoped)
-  if (userRole !== 'ADMIN') {
-    const now = new Date();
-    const delegations = await prisma.approverDelegation.findMany({
-      where: {
-        tenantId,
-        delegateeId: userId,
-        isActive: true,
-        startDate: { lte: now },
-        endDate: { gte: now },
-      },
-      include: {
-        delegator: {
-          select: { role: true },
-        },
-      },
-    });
-
-    for (const delegation of delegations) {
-      if (!rolesCanApprove.includes(delegation.delegator.role)) {
-        rolesCanApprove.push(delegation.delegator.role);
-      }
-    }
-  }
-
-  // Get all pending steps (tenant-scoped)
-  const whereClause = userRole === 'ADMIN'
-    ? { tenantId, status: 'PENDING' as const }
-    : {
-        tenantId,
-        status: 'PENDING' as const,
-        requiredRole: { in: rolesCanApprove },
-      };
-
-  const allPendingSteps = await prisma.approvalStep.findMany({
-    where: whereClause,
-    orderBy: [
-      { entityType: 'asc' },
-      { createdAt: 'desc' },
-    ],
+async function getPendingApprovals(tenantId: string) {
+  // Fetch pending leave requests
+  const pendingLeaveRequests = await prisma.leaveRequest.findMany({
+    where: { tenantId, status: 'PENDING' },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      user: { select: { id: true, name: true, email: true } },
+      leaveType: { select: { name: true } },
+    },
   });
 
-  // Filter to only include steps that are the current pending step for their entity
-  const stepsByEntity = new Map<string, typeof allPendingSteps>();
-  for (const step of allPendingSteps) {
-    const key = `${step.entityType}:${step.entityId}`;
-    if (!stepsByEntity.has(key)) {
-      stepsByEntity.set(key, []);
-    }
-    stepsByEntity.get(key)!.push(step);
-  }
+  // Fetch pending asset requests
+  const pendingAssetRequests = await prisma.assetRequest.findMany({
+    where: {
+      tenantId,
+      status: { in: ['PENDING_ADMIN_APPROVAL', 'PENDING_RETURN_APPROVAL'] },
+    },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      user: { select: { id: true, name: true, email: true } },
+      asset: true,
+    },
+  });
 
-  const currentSteps: typeof allPendingSteps = [];
-  for (const steps of stepsByEntity.values()) {
-    // Get the step with lowest levelOrder (current step)
-    const currentStep = steps.reduce((min, step) =>
-      step.levelOrder < min.levelOrder ? step : min
-    );
-    currentSteps.push(currentStep);
-  }
+  // Fetch pending purchase requests
+  const pendingPurchaseRequests = await prisma.purchaseRequest.findMany({
+    where: { tenantId, status: 'PENDING' },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      requester: { select: { id: true, name: true, email: true } },
+    },
+  });
 
-  // Fetch entity details for each step
-  const enrichedSteps = await Promise.all(
-    currentSteps.map(async (step) => {
-      let entityDetails: Record<string, unknown> = {};
+  // Transform to common format
+  const leaveApprovals = pendingLeaveRequests.map((req) => ({
+    id: req.id,
+    entityType: 'LEAVE_REQUEST' as const,
+    entityId: req.id,
+    createdAt: req.createdAt.toISOString(),
+    entityDetails: {
+      requester: req.user.name || req.user.email,
+      requesterId: req.user.id,
+      type: req.leaveType.name,
+      startDate: req.startDate.toISOString(),
+      endDate: req.endDate.toISOString(),
+      totalDays: req.totalDays,
+      reason: req.reason,
+    },
+  }));
 
-      if (step.entityType === 'LEAVE_REQUEST') {
-        const leaveRequest = await prisma.leaveRequest.findUnique({
-          where: { id: step.entityId },
-          include: {
-            user: { select: { id: true, name: true, email: true } },
-            leaveType: { select: { name: true } },
-          },
-        });
-        if (leaveRequest) {
-          entityDetails = {
-            requester: leaveRequest.user.name || leaveRequest.user.email,
-            requesterId: leaveRequest.user.id,
-            type: leaveRequest.leaveType.name,
-            startDate: leaveRequest.startDate.toISOString(),
-            endDate: leaveRequest.endDate.toISOString(),
-            totalDays: leaveRequest.totalDays,
-            reason: leaveRequest.reason,
-          };
-        }
-      } else if (step.entityType === 'PURCHASE_REQUEST') {
-        const purchaseRequest = await prisma.purchaseRequest.findUnique({
-          where: { id: step.entityId },
-          include: {
-            requester: { select: { id: true, name: true, email: true } },
-          },
-        });
-        if (purchaseRequest) {
-          entityDetails = {
-            requester: purchaseRequest.requester.name || purchaseRequest.requester.email,
-            requesterId: purchaseRequest.requester.id,
-            title: purchaseRequest.title,
-            totalAmount: purchaseRequest.totalAmount?.toString(),
-            currency: purchaseRequest.currency,
-            priority: purchaseRequest.priority,
-            justification: purchaseRequest.justification,
-          };
-        }
-      } else if (step.entityType === 'ASSET_REQUEST') {
-        const assetRequest = await prisma.assetRequest.findUnique({
-          where: { id: step.entityId },
-          include: {
-            user: { select: { id: true, name: true, email: true } },
-            asset: true,
-          },
-        });
-        if (assetRequest) {
-          entityDetails = {
-            requester: assetRequest.user.name || assetRequest.user.email,
-            requesterId: assetRequest.user.id,
-            assetName: assetRequest.asset ? `${assetRequest.asset.brand || ''} ${assetRequest.asset.model}`.trim() : 'Unknown Asset',
-            assetTag: assetRequest.asset?.assetTag,
-            type: assetRequest.type,
-            reason: assetRequest.reason,
-          };
-        }
-      }
+  const assetApprovals = pendingAssetRequests.map((req) => ({
+    id: req.id,
+    entityType: 'ASSET_REQUEST' as const,
+    entityId: req.id,
+    createdAt: req.createdAt.toISOString(),
+    entityDetails: {
+      requester: req.user.name || req.user.email,
+      requesterId: req.user.id,
+      assetName: req.asset ? `${req.asset.brand || ''} ${req.asset.model}`.trim() : 'Unknown Asset',
+      assetTag: req.asset?.assetTag,
+      type: req.status === 'PENDING_RETURN_APPROVAL' ? 'Return' : 'Request',
+      reason: req.reason,
+    },
+  }));
 
-      return {
-        id: step.id,
-        entityType: step.entityType,
-        entityId: step.entityId,
-        levelOrder: step.levelOrder,
-        requiredRole: step.requiredRole,
-        createdAt: step.createdAt.toISOString(),
-        entityDetails,
-      };
-    })
+  const purchaseApprovals = pendingPurchaseRequests.map((req) => ({
+    id: req.id,
+    entityType: 'PURCHASE_REQUEST' as const,
+    entityId: req.id,
+    createdAt: req.createdAt.toISOString(),
+    entityDetails: {
+      requester: req.requester.name || req.requester.email,
+      requesterId: req.requester.id,
+      title: req.title,
+      totalAmount: req.totalAmount?.toString(),
+      currency: req.currency,
+      priority: req.priority,
+      justification: req.justification,
+    },
+  }));
+
+  // Combine and sort by date
+  const all = [...leaveApprovals, ...assetApprovals, ...purchaseApprovals].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
-  // Group by module
-  const grouped = {
-    LEAVE_REQUEST: enrichedSteps.filter((s) => s.entityType === 'LEAVE_REQUEST'),
-    PURCHASE_REQUEST: enrichedSteps.filter((s) => s.entityType === 'PURCHASE_REQUEST'),
-    ASSET_REQUEST: enrichedSteps.filter((s) => s.entityType === 'ASSET_REQUEST'),
-  };
-
   return {
-    all: enrichedSteps,
-    grouped,
+    all,
+    grouped: {
+      LEAVE_REQUEST: leaveApprovals,
+      PURCHASE_REQUEST: purchaseApprovals,
+      ASSET_REQUEST: assetApprovals,
+    },
     counts: {
-      LEAVE_REQUEST: grouped.LEAVE_REQUEST.length,
-      PURCHASE_REQUEST: grouped.PURCHASE_REQUEST.length,
-      ASSET_REQUEST: grouped.ASSET_REQUEST.length,
-      total: enrichedSteps.length,
+      LEAVE_REQUEST: leaveApprovals.length,
+      PURCHASE_REQUEST: purchaseApprovals.length,
+      ASSET_REQUEST: assetApprovals.length,
+      total: all.length,
     },
   };
 }
@@ -206,7 +132,7 @@ export default async function MyApprovalsPage() {
     redirect('/');
   }
 
-  const approvals = await getPendingApprovals(session.user.id, session.user.role, session.user.organizationId);
+  const approvals = await getPendingApprovals(session.user.organizationId);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">

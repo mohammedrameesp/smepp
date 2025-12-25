@@ -97,10 +97,23 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/approval-steps/${selectedStep.id}/${actionType}`, {
+      // Determine the correct API endpoint based on entity type
+      let apiUrl = '';
+      if (selectedStep.entityType === 'LEAVE_REQUEST') {
+        apiUrl = `/api/leave/requests/${selectedStep.entityId}/${actionType}`;
+      } else if (selectedStep.entityType === 'ASSET_REQUEST') {
+        apiUrl = `/api/assets/requests/${selectedStep.entityId}/${actionType}`;
+      } else if (selectedStep.entityType === 'PURCHASE_REQUEST') {
+        apiUrl = `/api/purchase-requests/${selectedStep.entityId}/${actionType}`;
+      }
+
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes: notes.trim() || undefined }),
+        body: JSON.stringify({
+          notes: notes.trim() || undefined,
+          reason: notes.trim() || undefined, // Some APIs use 'reason' instead of 'notes'
+        }),
       });
 
       if (!response.ok) {
