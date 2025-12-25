@@ -24,6 +24,7 @@ import {
   Briefcase,
   ShoppingCart,
   CalendarOff,
+  FileText,
 } from 'lucide-react';
 
 export default async function AdminDashboard() {
@@ -71,6 +72,7 @@ export default async function AdminDashboard() {
       totalSuppliers,
       totalProjects,
       pendingPurchaseRequests,
+      totalCompanyDocuments,
       pendingLeaveCount,
       onLeaveTodayCount,
       pendingApprovals,
@@ -96,6 +98,8 @@ export default async function AdminDashboard() {
       prisma.project.count({ where: { tenantId, status: 'ACTIVE' } }),
       // Pending purchase requests count
       prisma.purchaseRequest.count({ where: { tenantId, status: 'PENDING' } }),
+      // Company documents count
+      prisma.companyDocument.count({ where: { tenantId } }),
       // Pending leave requests count
       prisma.leaveRequest.count({ where: { tenantId, status: 'PENDING' } }),
       // On leave today count
@@ -250,6 +254,7 @@ export default async function AdminDashboard() {
         suppliers: totalSuppliers,
         projects: totalProjects,
         pendingPurchaseRequests,
+        companyDocuments: totalCompanyDocuments,
         pendingLeave: pendingLeaveCount,
         onLeaveToday: onLeaveTodayCount,
         monthlySpend: monthlySubscriptionCost._sum.costPerCycle || 0,
@@ -538,6 +543,20 @@ export default async function AdminDashboard() {
             <p className="text-slate-500 text-xs">Pending PRs</p>
           </Link>
         )}
+
+        {/* Company Documents - always available */}
+        <Link
+          href="/admin/company-documents"
+          className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl p-4 border border-slate-200 hover:shadow-lg hover:shadow-slate-100/50 transition-all cursor-pointer group"
+        >
+          <div className="flex items-center mb-2">
+            <div className="w-9 h-9 bg-gradient-to-br from-slate-500 to-gray-600 rounded-xl flex items-center justify-center shadow-lg shadow-slate-200 group-hover:scale-110 transition-transform">
+              <FileText className="h-4 w-4 text-white" />
+            </div>
+          </div>
+          <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.companyDocuments || 0}</p>
+          <p className="text-slate-500 text-xs">Documents</p>
+        </Link>
       </div>
 
       {/* Two Column Layout */}
