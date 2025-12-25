@@ -361,13 +361,16 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // Handle session update (e.g., after org switch)
-        if (trigger === 'update' && session) {
-          if (session.organizationId) {
+        // Handle session update (e.g., after settings change or org switch)
+        if (trigger === 'update') {
+          // Determine which org to refresh - use passed session.organizationId or existing token.organizationId
+          const orgIdToRefresh = session?.organizationId || token.organizationId;
+
+          if (orgIdToRefresh && token.id) {
             const membership = await prisma.organizationUser.findUnique({
               where: {
                 organizationId_userId: {
-                  organizationId: session.organizationId,
+                  organizationId: orgIdToRefresh as string,
                   userId: token.id as string,
                 },
               },
