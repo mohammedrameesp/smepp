@@ -21,6 +21,9 @@ import {
   Gift,
   Award,
   CalendarCheck,
+  Briefcase,
+  ShoppingCart,
+  CalendarOff,
 } from 'lucide-react';
 
 export default async function AdminDashboard() {
@@ -66,6 +69,10 @@ export default async function AdminDashboard() {
       totalAssets,
       totalSubscriptions,
       totalSuppliers,
+      totalProjects,
+      pendingPurchaseRequests,
+      pendingLeaveCount,
+      onLeaveTodayCount,
       pendingApprovals,
       pendingLeaveRequests,
       pendingAssetRequests,
@@ -85,6 +92,21 @@ export default async function AdminDashboard() {
       prisma.asset.count({ where: { tenantId } }),
       prisma.subscription.count({ where: { tenantId, status: 'ACTIVE' } }),
       prisma.supplier.count({ where: { tenantId, status: 'APPROVED' } }),
+      // Projects count
+      prisma.project.count({ where: { tenantId, status: 'ACTIVE' } }),
+      // Pending purchase requests count
+      prisma.purchaseRequest.count({ where: { tenantId, status: 'PENDING' } }),
+      // Pending leave requests count
+      prisma.leaveRequest.count({ where: { tenantId, status: 'PENDING' } }),
+      // On leave today count
+      prisma.leaveRequest.count({
+        where: {
+          tenantId,
+          status: 'APPROVED',
+          startDate: { lte: today },
+          endDate: { gte: today },
+        },
+      }),
 
       // Pending approvals (distinct entities)
       prisma.approvalStep.groupBy({
@@ -226,6 +248,10 @@ export default async function AdminDashboard() {
         assets: totalAssets,
         subscriptions: totalSubscriptions,
         suppliers: totalSuppliers,
+        projects: totalProjects,
+        pendingPurchaseRequests,
+        pendingLeave: pendingLeaveCount,
+        onLeaveToday: onLeaveTodayCount,
         monthlySpend: monthlySubscriptionCost._sum.costPerCycle || 0,
       },
       pendingApprovals,
@@ -404,67 +430,112 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      {/* Stats Row - Flexible grid based on enabled modules */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
         {isModuleEnabled('employees') && (
           <Link
             href="/admin/employees"
-            className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-5 border border-blue-100 hover:shadow-lg hover:shadow-blue-100/50 transition-all cursor-pointer group"
+            className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100 hover:shadow-lg hover:shadow-blue-100/50 transition-all cursor-pointer group"
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform">
-                <Users className="h-5 w-5 text-white" />
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform">
+                <Users className="h-4 w-4 text-white" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-slate-900">{dashboardData?.stats.employees || 0}</p>
-            <p className="text-slate-500 text-sm">Employees</p>
+            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.employees || 0}</p>
+            <p className="text-slate-500 text-xs">Employees</p>
           </Link>
         )}
 
         {isModuleEnabled('assets') && (
           <Link
             href="/admin/assets"
-            className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-5 border border-purple-100 hover:shadow-lg hover:shadow-purple-100/50 transition-all cursor-pointer group"
+            className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-4 border border-purple-100 hover:shadow-lg hover:shadow-purple-100/50 transition-all cursor-pointer group"
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200 group-hover:scale-110 transition-transform">
-                <Box className="h-5 w-5 text-white" />
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-9 h-9 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200 group-hover:scale-110 transition-transform">
+                <Box className="h-4 w-4 text-white" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-slate-900">{dashboardData?.stats.assets || 0}</p>
-            <p className="text-slate-500 text-sm">Assets</p>
+            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.assets || 0}</p>
+            <p className="text-slate-500 text-xs">Assets</p>
           </Link>
         )}
 
         {isModuleEnabled('subscriptions') && (
           <Link
             href="/admin/subscriptions"
-            className="bg-gradient-to-br from-rose-50 to-orange-50 rounded-2xl p-5 border border-rose-100 hover:shadow-lg hover:shadow-rose-100/50 transition-all cursor-pointer group"
+            className="bg-gradient-to-br from-rose-50 to-orange-50 rounded-2xl p-4 border border-rose-100 hover:shadow-lg hover:shadow-rose-100/50 transition-all cursor-pointer group"
           >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-rose-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-rose-200 group-hover:scale-110 transition-transform">
-                <CreditCard className="h-5 w-5 text-white" />
+            <div className="flex items-center mb-2">
+              <div className="w-9 h-9 bg-gradient-to-br from-rose-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-rose-200 group-hover:scale-110 transition-transform">
+                <CreditCard className="h-4 w-4 text-white" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-slate-900">
-              QAR {Number(dashboardData?.stats.monthlySpend || 0).toLocaleString()}
+            <p className="text-2xl font-bold text-slate-900">
+              {Number(dashboardData?.stats.monthlySpend || 0).toLocaleString()}
             </p>
-            <p className="text-slate-500 text-sm">Monthly SaaS</p>
+            <p className="text-slate-500 text-xs">Monthly SaaS (QAR)</p>
           </Link>
         )}
 
         {isModuleEnabled('suppliers') && (
           <Link
             href="/admin/suppliers"
-            className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-5 border border-amber-100 hover:shadow-lg hover:shadow-amber-100/50 transition-all cursor-pointer group"
+            className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-4 border border-amber-100 hover:shadow-lg hover:shadow-amber-100/50 transition-all cursor-pointer group"
           >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform">
-                <Truck className="h-5 w-5 text-white" />
+            <div className="flex items-center mb-2">
+              <div className="w-9 h-9 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform">
+                <Truck className="h-4 w-4 text-white" />
               </div>
             </div>
-            <p className="text-3xl font-bold text-slate-900">{dashboardData?.stats.suppliers || 0}</p>
-            <p className="text-slate-500 text-sm">Suppliers</p>
+            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.suppliers || 0}</p>
+            <p className="text-slate-500 text-xs">Suppliers</p>
+          </Link>
+        )}
+
+        {isModuleEnabled('leave') && (
+          <Link
+            href="/admin/leave/requests"
+            className="bg-gradient-to-br from-cyan-50 to-teal-50 rounded-2xl p-4 border border-cyan-100 hover:shadow-lg hover:shadow-cyan-100/50 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center mb-2">
+              <div className="w-9 h-9 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-200 group-hover:scale-110 transition-transform">
+                <CalendarOff className="h-4 w-4 text-white" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.onLeaveToday || 0}</p>
+            <p className="text-slate-500 text-xs">On Leave Today</p>
+          </Link>
+        )}
+
+        {isModuleEnabled('projects') && (
+          <Link
+            href="/admin/projects"
+            className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-4 border border-emerald-100 hover:shadow-lg hover:shadow-emerald-100/50 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center mb-2">
+              <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-green-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform">
+                <Briefcase className="h-4 w-4 text-white" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.projects || 0}</p>
+            <p className="text-slate-500 text-xs">Active Projects</p>
+          </Link>
+        )}
+
+        {isModuleEnabled('purchase-requests') && (
+          <Link
+            href="/admin/purchase-requests"
+            className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-4 border border-violet-100 hover:shadow-lg hover:shadow-violet-100/50 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center mb-2">
+              <div className="w-9 h-9 bg-gradient-to-br from-violet-400 to-purple-500 rounded-xl flex items-center justify-center shadow-lg shadow-violet-200 group-hover:scale-110 transition-transform">
+                <ShoppingCart className="h-4 w-4 text-white" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.pendingPurchaseRequests || 0}</p>
+            <p className="text-slate-500 text-xs">Pending PRs</p>
           </Link>
         )}
       </div>
