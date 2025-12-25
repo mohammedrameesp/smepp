@@ -74,11 +74,11 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
   const isModuleEnabled = (moduleId: string) => enabledModules.includes(moduleId);
 
   // Navigation items for the main nav
+  // Note: Employees, Assets, Subscriptions are accessible via stats row on dashboard
   const mainNavItems = [
-    { label: 'Employees', href: '/admin/employees', moduleId: 'employees' },
-    { label: 'Assets', href: '/admin/assets', moduleId: 'assets' },
+    { label: 'Documents', href: '/admin/company-documents', moduleId: null }, // Always available, first item
     { label: 'Leave', href: '/admin/leave/requests', moduleId: 'leave' },
-  ].filter(item => isModuleEnabled(item.moduleId));
+  ].filter(item => item.moduleId === null || isModuleEnabled(item.moduleId));
 
   // More dropdown items (grouped)
   const moreItems = {
@@ -97,10 +97,6 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
       { label: 'Projects', href: '/admin/projects', icon: Briefcase, moduleId: 'projects' },
       { label: 'Purchase Requests', href: '/admin/purchase-requests', icon: ShoppingCart, moduleId: 'purchase-requests', badgeKey: 'pendingPurchaseRequests' },
     ].filter(item => isModuleEnabled(item.moduleId)),
-    system: [
-      { label: 'Reports', href: '/admin/reports', icon: BarChart3 },
-      { label: 'Activity Log', href: '/admin/activity', icon: Activity },
-    ],
   };
 
   const hasMoreItems = moreItems.hr.length > 0 || moreItems.operations.length > 0 || moreItems.projects.length > 0;
@@ -231,17 +227,8 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
                               </Link>
                             </DropdownMenuItem>
                           ))}
-                          <DropdownMenuSeparator />
                         </>
                       )}
-                      {moreItems.system.map((item) => (
-                        <DropdownMenuItem key={item.href} asChild>
-                          <Link href={item.href} className="flex items-center gap-2 cursor-pointer">
-                            <item.icon className="h-4 w-4 text-slate-400" />
-                            {item.label}
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
@@ -295,6 +282,18 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/reports" className="flex items-center gap-2 cursor-pointer">
+                      <BarChart3 className="h-4 w-4 text-slate-400" />
+                      Reports
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/activity" className="flex items-center gap-2 cursor-pointer">
+                      <Activity className="h-4 w-4 text-slate-400" />
+                      Activity Log
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/help" className="flex items-center gap-2 cursor-pointer">
                       <HelpCircle className="h-4 w-4 text-slate-400" />

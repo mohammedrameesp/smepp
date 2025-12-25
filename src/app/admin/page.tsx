@@ -75,6 +75,9 @@ export default async function AdminDashboard() {
       totalCompanyDocuments,
       pendingLeaveCount,
       onLeaveTodayCount,
+      expiringEmployeeDocs,
+      expiringSubscriptions,
+      expiringCompanyDocs,
       pendingApprovals,
       pendingLeaveRequests,
       pendingAssetRequests,
@@ -110,6 +113,40 @@ export default async function AdminDashboard() {
           startDate: { lte: today },
           endDate: { gte: today },
         },
+      }),
+      // Expiring employee documents (next 30 days)
+      prisma.hRProfile.findMany({
+        where: {
+          tenantId,
+          OR: [
+            { qidExpiry: { gte: today, lte: thirtyDaysFromNow } },
+            { passportExpiry: { gte: today, lte: thirtyDaysFromNow } },
+            { healthCardExpiry: { gte: today, lte: thirtyDaysFromNow } },
+            { contractExpiry: { gte: today, lte: thirtyDaysFromNow } },
+            { licenseExpiry: { gte: today, lte: thirtyDaysFromNow } },
+          ],
+        },
+        include: { user: { select: { name: true } } },
+        take: 10,
+      }),
+      // Expiring subscriptions (next 30 days)
+      prisma.subscription.findMany({
+        where: {
+          tenantId,
+          status: 'ACTIVE',
+          renewalDate: { gte: today, lte: thirtyDaysFromNow },
+        },
+        select: { id: true, serviceName: true, renewalDate: true },
+        take: 5,
+      }),
+      // Expiring company documents (next 30 days)
+      prisma.companyDocument.findMany({
+        where: {
+          tenantId,
+          expiryDate: { gte: today, lte: thirtyDaysFromNow },
+        },
+        select: { id: true, documentType: { select: { name: true } }, expiryDate: true },
+        take: 5,
       }),
 
       // Pending approvals (distinct entities)
@@ -246,6 +283,12 @@ export default async function AdminDashboard() {
       }),
     ]);
 
+    // Count total expiring items
+    const expiringItemsCount =
+      expiringEmployeeDocs.length +
+      expiringSubscriptions.length +
+      expiringCompanyDocs.length;
+
     dashboardData = {
       stats: {
         employees: totalEmployees,
@@ -266,6 +309,12 @@ export default async function AdminDashboard() {
       upcomingBirthdays,
       upcomingAnniversaries,
       onLeaveToday,
+      needsAttention: {
+        count: expiringItemsCount,
+        expiringEmployeeDocs,
+        expiringSubscriptions,
+        expiringCompanyDocs,
+      },
     };
   }
 
@@ -338,52 +387,30 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        {/* Payroll Card - Only if payroll module enabled */}
-        {isModuleEnabled('payroll') ? (
-          <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50 flex flex-col">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="relative flex flex-col flex-1">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
-                  <DollarSign className="h-5 w-5" />
-                </div>
-                <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full">This Month</span>
+        {/* Needs Your Attention Card */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-rose-400 to-pink-500 rounded-2xl p-5 text-white shadow-lg shadow-rose-200/50 flex flex-col">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative flex flex-col flex-1">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
+                <AlertTriangle className="h-5 w-5" />
               </div>
-              <h3 className="text-lg font-semibold mb-0.5">{format(new Date(), 'MMMM')} Payroll</h3>
-              <p className="text-white/80 text-sm flex-1">{dashboardData?.stats.employees || 0} employees</p>
-              <Link
-                href="/admin/payroll/runs"
-                className="block w-full py-2.5 bg-white text-teal-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center mt-4"
-              >
-                Run Payroll
-              </Link>
+              <span className="text-4xl font-bold">{dashboardData?.needsAttention?.count || 0}</span>
             </div>
+            <h3 className="text-lg font-semibold mb-0.5">Needs Attention</h3>
+            <p className="text-white/80 text-sm flex-1">
+              {(dashboardData?.needsAttention?.count || 0) > 0
+                ? 'Expiring documents & renewals'
+                : 'Nothing expiring soon'}
+            </p>
+            <Link
+              href="/admin/employees/document-expiry"
+              className="block w-full py-2.5 bg-white text-rose-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center mt-4"
+            >
+              View All
+            </Link>
           </div>
-        ) : (
-          /* Subscriptions Card - Fallback if payroll not enabled */
-          <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50 flex flex-col">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="relative flex flex-col flex-1">
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
-                  <CreditCard className="h-5 w-5" />
-                </div>
-                <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full">Monthly</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-0.5">SaaS Spend</h3>
-              <p className="text-white/80 text-sm">{dashboardData?.stats.subscriptions || 0} active subscriptions</p>
-              <p className="text-2xl font-bold mt-1 flex-1">
-                QAR {Number(dashboardData?.stats.monthlySpend || 0).toLocaleString()}
-              </p>
-              <Link
-                href="/admin/subscriptions"
-                className="block w-full py-2.5 bg-white text-teal-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center mt-4"
-              >
-                View Subscriptions
-              </Link>
-            </div>
-          </div>
-        )}
+        </div>
 
         {/* Quick Add Card */}
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col">
