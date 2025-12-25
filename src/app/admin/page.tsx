@@ -24,6 +24,12 @@ export default async function AdminDashboard() {
 
   const isAdmin = session.user.role === 'ADMIN';
 
+  // Get enabled modules for this organization
+  const enabledModules = session.user.enabledModules || ['assets', 'subscriptions', 'suppliers'];
+
+  // Helper to check if a module is enabled
+  const isModuleEnabled = (moduleId: string) => enabledModules.includes(moduleId);
+
   // Admin dashboard data
   let adminData = null;
   let statsData = null;
@@ -289,6 +295,7 @@ export default async function AdminDashboard() {
             {isAdmin ? (
               <>
                 {/* Assets */}
+                {isModuleEnabled('assets') && (
                 <Link href="/admin/assets">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
                     <CardHeader>
@@ -308,8 +315,10 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
                 {/* Subscriptions */}
+                {isModuleEnabled('subscriptions') && (
                 <Link href="/admin/subscriptions">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
                     <CardHeader>
@@ -329,8 +338,10 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
                 {/* Suppliers */}
+                {isModuleEnabled('suppliers') && (
                 <Link href="/admin/suppliers">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full relative">
                     {adminData && adminData.pendingSuppliers > 0 && (
@@ -355,8 +366,10 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
                 {/* Projects */}
+                {isModuleEnabled('projects') && (
                 <Link href="/admin/projects">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
                     <CardHeader>
@@ -376,8 +389,10 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
                 {/* Employees */}
+                {isModuleEnabled('employees') && (
                 <Link href="/admin/employees">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full relative">
                     {adminData && adminData.pendingChangeRequests > 0 && (
@@ -402,6 +417,7 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
                 {/* Reports */}
                 <Link href="/admin/reports">
@@ -422,6 +438,7 @@ export default async function AdminDashboard() {
                 </Link>
 
                 {/* Purchase Requests */}
+                {isModuleEnabled('purchase-requests') && (
                 <Link href="/admin/purchase-requests">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full relative">
                     {adminData && adminData.pendingPurchaseRequests > 0 && (
@@ -443,8 +460,10 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
                 {/* Leave Management */}
+                {isModuleEnabled('leave') && (
                 <Link href="/admin/leave">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full relative">
                     {adminData && adminData.pendingLeaveRequests > 0 && (
@@ -466,8 +485,10 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
                 {/* Payroll */}
+                {isModuleEnabled('payroll') && (
                 <Link href="/admin/payroll">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
                     <CardHeader>
@@ -484,8 +505,10 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
                 {/* Company Documents */}
+                {isModuleEnabled('documents') && (
                 <Link href="/admin/company-documents">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full relative">
                     {adminData && (adminData.expiredCompanyDocs + adminData.expiringCompanyDocs) > 0 && (
@@ -507,6 +530,7 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
                 {/* Settings */}
                 <Link href="/admin/settings">
@@ -528,6 +552,7 @@ export default async function AdminDashboard() {
               </>
             ) : (
               <>
+                {isModuleEnabled('assets') && (
                 <Link href="/employee/my-assets">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
                     <CardHeader>
@@ -544,7 +569,9 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
+                {isModuleEnabled('assets') && (
                 <Link href="/employee/assets">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
                     <CardHeader>
@@ -561,7 +588,9 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
+                {isModuleEnabled('subscriptions') && (
                 <Link href="/employee/subscriptions">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
                     <CardHeader>
@@ -578,7 +607,9 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
+                {isModuleEnabled('purchase-requests') && (
                 <Link href="/employee/purchase-requests">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
                     <CardHeader>
@@ -595,7 +626,9 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
+                {isModuleEnabled('leave') && (
                 <Link href="/employee/leave">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
                     <CardHeader>
@@ -612,7 +645,9 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
 
+                {isModuleEnabled('payroll') && (
                 <Link href="/employee/payroll">
                   <Card className="group cursor-pointer hover:shadow-lg hover:border-slate-400 transition-all duration-200 bg-white border-gray-200 h-full">
                     <CardHeader>
@@ -629,6 +664,7 @@ export default async function AdminDashboard() {
                     </CardContent>
                   </Card>
                 </Link>
+                )}
               </>
             )}
           </div>
@@ -644,6 +680,7 @@ export default async function AdminDashboard() {
               <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
 
                 {/* Upcoming Renewals */}
+                {isModuleEnabled('subscriptions') && (
                 <Card className="bg-white border-l-4 border-l-orange-500 hover:shadow-lg transition-all">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -676,82 +713,92 @@ export default async function AdminDashboard() {
                     </Link>
                   </CardContent>
                 </Card>
+                )}
 
-                {/* Pending Approvals */}
+                {/* Pending Approvals - show if any relevant module is enabled */}
+                {(isModuleEnabled('leave') || isModuleEnabled('purchase-requests') || isModuleEnabled('employees') || isModuleEnabled('suppliers')) && (
                 <Card className="bg-white border-l-4 border-l-red-500 hover:shadow-lg transition-all">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-base font-semibold text-gray-900">Pending Approvals</CardTitle>
                       <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                        {adminData.pendingSuppliers + adminData.pendingPurchaseRequests + adminData.pendingChangeRequests + adminData.pendingLeaveRequests} Waiting
+                        {(isModuleEnabled('suppliers') ? adminData.pendingSuppliers : 0) +
+                         (isModuleEnabled('purchase-requests') ? adminData.pendingPurchaseRequests : 0) +
+                         (isModuleEnabled('employees') ? adminData.pendingChangeRequests : 0) +
+                         (isModuleEnabled('leave') ? adminData.pendingLeaveRequests : 0)} Waiting
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2 text-sm">
-                      {adminData.pendingLeaveRequests > 0 && (
+                      {isModuleEnabled('leave') && adminData.pendingLeaveRequests > 0 && (
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600">Leave Requests</span>
                           <span className="text-red-600 font-medium">{adminData.pendingLeaveRequests}</span>
                         </div>
                       )}
-                      {adminData.pendingPurchaseRequests > 0 && (
+                      {isModuleEnabled('purchase-requests') && adminData.pendingPurchaseRequests > 0 && (
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600">Purchase Requests</span>
                           <span className="text-red-600 font-medium">{adminData.pendingPurchaseRequests}</span>
                         </div>
                       )}
-                      {adminData.pendingChangeRequests > 0 && (
+                      {isModuleEnabled('employees') && adminData.pendingChangeRequests > 0 && (
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600">Profile Changes</span>
                           <span className="text-orange-600 font-medium">{adminData.pendingChangeRequests}</span>
                         </div>
                       )}
-                      {adminData.pendingSuppliers > 0 && (
+                      {isModuleEnabled('suppliers') && adminData.pendingSuppliers > 0 && (
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600">Suppliers</span>
                           <span className="text-red-600 font-medium">{adminData.pendingSuppliers}</span>
                         </div>
                       )}
-                      {adminData.pendingSuppliers === 0 && adminData.pendingPurchaseRequests === 0 && adminData.pendingChangeRequests === 0 && adminData.pendingLeaveRequests === 0 && (
+                      {(!isModuleEnabled('suppliers') || adminData.pendingSuppliers === 0) &&
+                       (!isModuleEnabled('purchase-requests') || adminData.pendingPurchaseRequests === 0) &&
+                       (!isModuleEnabled('employees') || adminData.pendingChangeRequests === 0) &&
+                       (!isModuleEnabled('leave') || adminData.pendingLeaveRequests === 0) && (
                         <p className="text-gray-500 text-sm">No pending approvals</p>
                       )}
                     </div>
-                    {adminData.pendingLeaveRequests > 0 ? (
+                    {isModuleEnabled('leave') && adminData.pendingLeaveRequests > 0 ? (
                       <Link href="/admin/leave/requests">
                         <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
                           Review Leave Requests →
                         </Button>
                       </Link>
-                    ) : adminData.pendingPurchaseRequests > 0 ? (
+                    ) : isModuleEnabled('purchase-requests') && adminData.pendingPurchaseRequests > 0 ? (
                       <Link href="/admin/purchase-requests">
                         <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
                           Review Purchase Requests →
                         </Button>
                       </Link>
-                    ) : adminData.pendingChangeRequests > 0 ? (
+                    ) : isModuleEnabled('employees') && adminData.pendingChangeRequests > 0 ? (
                       <Link href="/admin/employees/change-requests">
                         <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
                           Review Change Requests →
                         </Button>
                       </Link>
-                    ) : adminData.pendingSuppliers > 0 ? (
+                    ) : isModuleEnabled('suppliers') && adminData.pendingSuppliers > 0 ? (
                       <Link href="/admin/suppliers">
                         <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
                           Review Suppliers →
                         </Button>
                       </Link>
-                    ) : (
+                    ) : isModuleEnabled('leave') ? (
                       <Link href="/admin/leave">
                         <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-700 hover:bg-slate-50">
                           View Approvals →
                         </Button>
                       </Link>
-                    )}
+                    ) : null}
                   </CardContent>
                 </Card>
+                )}
 
                 {/* HR Alerts */}
+                {isModuleEnabled('employees') && (
                 <Card className="bg-white border-l-4 border-l-purple-500 hover:shadow-lg transition-all">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -794,8 +841,10 @@ export default async function AdminDashboard() {
                     )}
                   </CardContent>
                 </Card>
+                )}
 
                 {/* Company Documents */}
+                {isModuleEnabled('documents') && (
                 <Card className="bg-white border-l-4 border-l-blue-500 hover:shadow-lg transition-all">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -832,6 +881,7 @@ export default async function AdminDashboard() {
                     </Link>
                   </CardContent>
                 </Card>
+                )}
 
                 {/* Recent Activity */}
                 <Card className="bg-white border-l-4 border-l-blue-500 hover:shadow-lg transition-all">
@@ -870,26 +920,34 @@ export default async function AdminDashboard() {
             <div className="mb-8">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
               <div className="flex flex-wrap gap-3">
-                <Link href="/admin/assets/new">
-                  <Button variant="outline" className="bg-white hover:bg-slate-50">
-                    + Add Asset
-                  </Button>
-                </Link>
-                <Link href="/admin/subscriptions/new">
-                  <Button variant="outline" className="bg-white hover:bg-slate-50">
-                    + Add Subscription
-                  </Button>
-                </Link>
-                <Link href="/admin/employees/new">
-                  <Button variant="outline" className="bg-white hover:bg-slate-50">
-                    + Add Employee
-                  </Button>
-                </Link>
-                <Link href="/admin/projects/new">
-                  <Button variant="outline" className="bg-white hover:bg-slate-50">
-                    + Add Project
-                  </Button>
-                </Link>
+                {isModuleEnabled('assets') && (
+                  <Link href="/admin/assets/new">
+                    <Button variant="outline" className="bg-white hover:bg-slate-50">
+                      + Add Asset
+                    </Button>
+                  </Link>
+                )}
+                {isModuleEnabled('subscriptions') && (
+                  <Link href="/admin/subscriptions/new">
+                    <Button variant="outline" className="bg-white hover:bg-slate-50">
+                      + Add Subscription
+                    </Button>
+                  </Link>
+                )}
+                {isModuleEnabled('employees') && (
+                  <Link href="/admin/employees/new">
+                    <Button variant="outline" className="bg-white hover:bg-slate-50">
+                      + Add Employee
+                    </Button>
+                  </Link>
+                )}
+                {isModuleEnabled('projects') && (
+                  <Link href="/admin/projects/new">
+                    <Button variant="outline" className="bg-white hover:bg-slate-50">
+                      + Add Project
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           )}
