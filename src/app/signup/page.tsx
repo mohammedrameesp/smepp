@@ -7,9 +7,19 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Building2, Mail, Lock, User, AlertCircle } from 'lucide-react';
+import {
+  Loader2,
+  Mail,
+  Lock,
+  User,
+  AlertCircle,
+  CheckCircle,
+  ArrowRight,
+  Sparkles,
+  Shield,
+  Zap,
+  BarChart3,
+} from 'lucide-react';
 
 function SignupForm() {
   const router = useRouter();
@@ -30,6 +40,9 @@ function SignupForm() {
     confirmPassword: '',
   });
 
+  // Password strength
+  const [passwordStrength, setPasswordStrength] = useState(0);
+
   // Update fields if prefilled from URL
   useEffect(() => {
     if (prefilledEmail) {
@@ -40,9 +53,19 @@ function SignupForm() {
     }
   }, [prefilledEmail, prefilledName]);
 
+  // Calculate password strength
+  useEffect(() => {
+    const password = formData.password;
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+    if (password.match(/[0-9]/)) strength++;
+    if (password.match(/[^a-zA-Z0-9]/)) strength++;
+    setPasswordStrength(strength);
+  }, [formData.password]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    // Don't allow email change if it's an invite flow
     if (name === 'email' && isInviteFlow) return;
 
     setFormData((prev) => ({
@@ -56,13 +79,11 @@ function SignupForm() {
     e.preventDefault();
     setError(null);
 
-    // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    // Validate password strength
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters');
       return;
@@ -71,7 +92,6 @@ function SignupForm() {
     setIsLoading(true);
 
     try {
-      // Create account (with invite token if present - auto-accepts invitation)
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -89,7 +109,6 @@ function SignupForm() {
         throw new Error(data.error || 'Failed to create account');
       }
 
-      // Sign in automatically
       const signInResult = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
@@ -97,19 +116,14 @@ function SignupForm() {
       });
 
       if (signInResult?.error) {
-        // Account created but sign-in failed - redirect to login
         router.push('/login?message=Account created. Please sign in.');
       } else if (data.organization?.slug) {
-        // If signup included invitation, redirect directly to org subdomain
-        // Wait a moment for the session cookie to be fully established
         await new Promise(resolve => setTimeout(resolve, 500));
         const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
         window.location.href = `${window.location.protocol}//${data.organization.slug}.${appDomain}/admin`;
       } else if (inviteToken) {
-        // Fallback: If there's an invite token but no org returned, redirect to accept it
         router.push(`/invite/${inviteToken}`);
       } else {
-        // Success - redirect to pending (user needs org invitation)
         router.push('/pending');
       }
     } catch (err) {
@@ -123,38 +137,129 @@ function SignupForm() {
     signIn(provider, { callbackUrl: inviteToken ? `/invite/${inviteToken}` : '/pending' });
   };
 
+  const getStrengthColor = () => {
+    if (passwordStrength === 0) return 'bg-slate-200';
+    if (passwordStrength === 1) return 'bg-red-500';
+    if (passwordStrength === 2) return 'bg-amber-500';
+    if (passwordStrength === 3) return 'bg-emerald-500';
+    return 'bg-emerald-500';
+  };
+
+  const getStrengthText = () => {
+    if (formData.password.length === 0) return '';
+    if (passwordStrength <= 1) return 'Weak';
+    if (passwordStrength === 2) return 'Fair';
+    if (passwordStrength === 3) return 'Good';
+    return 'Strong';
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center">
-              <Building2 className="h-6 w-6 text-white" />
+    <div className="min-h-screen flex">
+      {/* Left Panel - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-slate-900 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-500 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
+        </div>
+
+        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
+          {/* Logo */}
+          <div>
+            <Link href="/" className="inline-flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                <span className="text-slate-900 font-black text-sm">S++</span>
+              </div>
+              <span className="text-white text-xl font-bold">SME++</span>
+            </Link>
+          </div>
+
+          {/* Main Content */}
+          <div className="space-y-8">
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-4">
+                Start managing your business smarter
+              </h1>
+              <p className="text-slate-400 text-lg">
+                Join thousands of businesses using SME++ to streamline operations, manage assets, and grow faster.
+              </p>
+            </div>
+
+            {/* Features */}
+            <div className="space-y-4">
+              <FeatureItem
+                icon={Zap}
+                title="Quick Setup"
+                description="Get started in minutes, not hours"
+              />
+              <FeatureItem
+                icon={Shield}
+                title="Enterprise Security"
+                description="Bank-grade encryption and 2FA"
+              />
+              <FeatureItem
+                icon={BarChart3}
+                title="Powerful Analytics"
+                description="Insights to drive growth"
+              />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">
-            {isInviteFlow ? 'Complete your signup' : 'Create your account'}
-          </CardTitle>
-          <CardDescription>
-            {isInviteFlow
-              ? 'Set your password to join the organization'
-              : 'Start managing your business with SME++'
-            }
-          </CardDescription>
-        </CardHeader>
 
-        <CardContent className="space-y-4">
-          {/* OAuth Buttons - hide for invite flow */}
+          {/* Testimonial */}
+          <div className="bg-slate-800/50 rounded-2xl p-6 backdrop-blur-sm">
+            <p className="text-slate-300 italic mb-4">
+              "SME++ transformed how we manage our assets and team. Setup was a breeze and the support is incredible."
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-medium">
+                AK
+              </div>
+              <div>
+                <p className="text-white font-medium">Ahmed Khan</p>
+                <p className="text-slate-400 text-sm">CEO, TechVentures Qatar</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-slate-50">
+        <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="lg:hidden text-center mb-8">
+            <Link href="/" className="inline-flex items-center gap-2">
+              <div className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center">
+                <span className="text-white font-black text-sm">S++</span>
+              </div>
+              <span className="text-slate-900 text-xl font-bold">SME++</span>
+            </Link>
+          </div>
+
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">
+              {isInviteFlow ? 'Complete your signup' : 'Create your account'}
+            </h2>
+            <p className="text-slate-500">
+              {isInviteFlow
+                ? 'Set your password to join the organization'
+                : 'Start your free trial today'
+              }
+            </p>
+          </div>
+
+          {/* OAuth Buttons */}
           {!isInviteFlow && (
             <>
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  variant="outline"
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <button
+                  type="button"
                   onClick={() => handleOAuthSignup('google')}
                   disabled={isLoading}
-                  className="w-full"
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors disabled:opacity-50"
                 >
-                  <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+                  <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                       fill="#4285F4"
@@ -173,14 +278,14 @@ function SignupForm() {
                     />
                   </svg>
                   Google
-                </Button>
-                <Button
-                  variant="outline"
+                </button>
+                <button
+                  type="button"
                   onClick={() => handleOAuthSignup('azure-ad')}
                   disabled={isLoading}
-                  className="w-full"
+                  className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors disabled:opacity-50"
                 >
-                  <svg className="mr-2 h-4 w-4" viewBox="0 0 23 23">
+                  <svg className="h-5 w-5" viewBox="0 0 23 23">
                     <path fill="#f3f3f3" d="M0 0h23v23H0z" />
                     <path fill="#f35325" d="M1 1h10v10H1z" />
                     <path fill="#81bc06" d="M12 1h10v10H12z" />
@@ -188,17 +293,15 @@ function SignupForm() {
                     <path fill="#ffba08" d="M12 12h10v10H12z" />
                   </svg>
                   Microsoft
-                </Button>
+                </button>
               </div>
 
-              <div className="relative">
+              <div className="relative mb-6">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
+                  <div className="w-full border-t border-slate-200" />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with email
-                  </span>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 bg-slate-50 text-slate-500">or continue with email</span>
                 </div>
               </div>
             </>
@@ -206,18 +309,20 @@ function SignupForm() {
 
           {/* Error Alert */}
           {error && (
-            <Alert variant="error">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
           )}
 
-          {/* Signup Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name" className="text-sm font-medium text-slate-700">
+                Full Name
+              </Label>
               <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <Input
                   id="name"
                   name="name"
@@ -225,7 +330,7 @@ function SignupForm() {
                   placeholder="John Doe"
                   value={formData.name}
                   onChange={handleChange}
-                  className="pl-10"
+                  className="pl-12 h-12 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-transparent"
                   required
                   disabled={isLoading}
                 />
@@ -233,9 +338,11 @@ function SignupForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+                Email
+              </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <Input
                   id="email"
                   name="email"
@@ -243,23 +350,27 @@ function SignupForm() {
                   placeholder="you@company.com"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`pl-10 ${isInviteFlow ? 'bg-muted cursor-not-allowed' : ''}`}
+                  className={`pl-12 h-12 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-transparent ${
+                    isInviteFlow ? 'bg-slate-100 cursor-not-allowed' : ''
+                  }`}
                   required
                   disabled={isLoading || isInviteFlow}
                   readOnly={isInviteFlow}
                 />
               </div>
               {isInviteFlow && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-slate-500">
                   Email is locked to match the invitation
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium text-slate-700">
+                Password
+              </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <Input
                   id="password"
                   name="password"
@@ -267,19 +378,41 @@ function SignupForm() {
                   placeholder="Min. 8 characters"
                   value={formData.password}
                   onChange={handleChange}
-                  className="pl-10"
+                  className="pl-12 h-12 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-transparent"
                   required
                   minLength={8}
                   disabled={isLoading}
                   autoFocus={isInviteFlow}
                 />
               </div>
+              {formData.password && (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 flex gap-1">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className={`h-1 flex-1 rounded-full transition-colors ${
+                          i <= passwordStrength ? getStrengthColor() : 'bg-slate-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className={`text-xs font-medium ${
+                    passwordStrength <= 1 ? 'text-red-500' :
+                    passwordStrength === 2 ? 'text-amber-500' : 'text-emerald-500'
+                  }`}>
+                    {getStrengthText()}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">
+                Confirm Password
+              </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <Input
                   id="confirmPassword"
                   name="confirmPassword"
@@ -287,53 +420,83 @@ function SignupForm() {
                   placeholder="Confirm your password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="pl-10"
+                  className="pl-12 h-12 bg-white border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-transparent"
                   required
                   disabled={isLoading}
                 />
+                {formData.confirmPassword && formData.password === formData.confirmPassword && (
+                  <CheckCircle className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-emerald-500" />
+                )}
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-medium"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Creating account...
                 </>
-              ) : isInviteFlow ? (
-                'Create account & Join'
               ) : (
-                'Create account'
+                <>
+                  {isInviteFlow ? 'Create account & Join' : 'Create account'}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
               )}
             </Button>
           </form>
 
+          {/* Terms */}
           {!isInviteFlow && (
-            <p className="text-xs text-center text-muted-foreground">
+            <p className="mt-6 text-xs text-center text-slate-500">
               By signing up, you agree to our{' '}
-              <Link href="/terms" className="underline hover:text-primary">
+              <Link href="/terms" className="text-slate-700 hover:text-slate-900 underline">
                 Terms of Service
               </Link>{' '}
               and{' '}
-              <Link href="/privacy" className="underline hover:text-primary">
+              <Link href="/privacy" className="text-slate-700 hover:text-slate-900 underline">
                 Privacy Policy
               </Link>
             </p>
           )}
-        </CardContent>
 
-        <CardFooter className="flex justify-center">
-          <p className="text-sm text-muted-foreground">
+          {/* Login Link */}
+          <p className="mt-8 text-center text-sm text-slate-600">
             Already have an account?{' '}
             <Link
               href={inviteToken ? `/login?callbackUrl=/invite/${inviteToken}` : '/login'}
-              className="text-primary font-medium hover:underline"
+              className="text-slate-900 font-semibold hover:underline"
             >
               Sign in
             </Link>
           </p>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeatureItem({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex items-start gap-4">
+      <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
+        <Icon className="h-5 w-5 text-indigo-400" />
+      </div>
+      <div>
+        <h3 className="text-white font-medium">{title}</h3>
+        <p className="text-slate-400 text-sm">{description}</p>
+      </div>
     </div>
   );
 }
@@ -341,8 +504,11 @@ function SignupForm() {
 export default function SignupPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+          <p className="text-sm text-slate-500">Loading...</p>
+        </div>
       </div>
     }>
       <SignupForm />
