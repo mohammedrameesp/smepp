@@ -462,113 +462,135 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* Stats Row - Flexible grid based on enabled modules */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
-        {isModuleEnabled('employees') && (
-          <Link
-            href="/admin/employees"
-            className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100 hover:shadow-lg hover:shadow-blue-100/50 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform">
-                <Users className="h-4 w-4 text-white" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.employees || 0}</p>
-            <p className="text-slate-500 text-xs">Employees</p>
-          </Link>
-        )}
+      {/* Stats Row - Dynamic grid based on count */}
+      {(() => {
+        // Build stats array based on enabled modules
+        const statsItems = [
+          isModuleEnabled('employees') && {
+            id: 'employees',
+            href: '/admin/employees',
+            gradient: 'from-blue-50 to-indigo-50',
+            border: 'border-blue-100',
+            shadow: 'hover:shadow-blue-100/50',
+            iconGradient: 'from-blue-400 to-indigo-500',
+            iconShadow: 'shadow-blue-200',
+            icon: Users,
+            value: dashboardData?.stats.employees || 0,
+            label: 'Employees',
+          },
+          isModuleEnabled('assets') && {
+            id: 'assets',
+            href: '/admin/assets',
+            gradient: 'from-purple-50 to-pink-50',
+            border: 'border-purple-100',
+            shadow: 'hover:shadow-purple-100/50',
+            iconGradient: 'from-purple-400 to-pink-500',
+            iconShadow: 'shadow-purple-200',
+            icon: Box,
+            value: dashboardData?.stats.assets || 0,
+            label: 'Assets',
+          },
+          isModuleEnabled('subscriptions') && {
+            id: 'subscriptions',
+            href: '/admin/subscriptions',
+            gradient: 'from-rose-50 to-orange-50',
+            border: 'border-rose-100',
+            shadow: 'hover:shadow-rose-100/50',
+            iconGradient: 'from-rose-400 to-orange-500',
+            iconShadow: 'shadow-rose-200',
+            icon: CreditCard,
+            value: dashboardData?.stats.subscriptions || 0,
+            label: 'Subscriptions',
+          },
+          isModuleEnabled('suppliers') && {
+            id: 'suppliers',
+            href: '/admin/suppliers',
+            gradient: 'from-amber-50 to-yellow-50',
+            border: 'border-amber-100',
+            shadow: 'hover:shadow-amber-100/50',
+            iconGradient: 'from-amber-400 to-yellow-500',
+            iconShadow: 'shadow-amber-200',
+            icon: Truck,
+            value: dashboardData?.stats.suppliers || 0,
+            label: 'Suppliers',
+          },
+          isModuleEnabled('leave') && {
+            id: 'leave',
+            href: '/admin/leave/requests',
+            gradient: 'from-cyan-50 to-teal-50',
+            border: 'border-cyan-100',
+            shadow: 'hover:shadow-cyan-100/50',
+            iconGradient: 'from-cyan-400 to-teal-500',
+            iconShadow: 'shadow-cyan-200',
+            icon: Calendar,
+            value: dashboardData?.stats.pendingLeave || 0,
+            label: 'Leave Requests',
+          },
+          isModuleEnabled('projects') && {
+            id: 'projects',
+            href: '/admin/projects',
+            gradient: 'from-emerald-50 to-green-50',
+            border: 'border-emerald-100',
+            shadow: 'hover:shadow-emerald-100/50',
+            iconGradient: 'from-emerald-400 to-green-500',
+            iconShadow: 'shadow-emerald-200',
+            icon: Briefcase,
+            value: dashboardData?.stats.projects || 0,
+            label: 'Active Projects',
+          },
+          isModuleEnabled('purchase-requests') && {
+            id: 'purchase-requests',
+            href: '/admin/purchase-requests',
+            gradient: 'from-violet-50 to-purple-50',
+            border: 'border-violet-100',
+            shadow: 'hover:shadow-violet-100/50',
+            iconGradient: 'from-violet-400 to-purple-500',
+            iconShadow: 'shadow-violet-200',
+            icon: ShoppingCart,
+            value: dashboardData?.stats.pendingPurchaseRequests || 0,
+            label: 'Pending PRs',
+          },
+        ].filter(Boolean) as Array<{
+          id: string;
+          href: string;
+          gradient: string;
+          border: string;
+          shadow: string;
+          iconGradient: string;
+          iconShadow: string;
+          icon: React.ElementType;
+          value: number;
+          label: string;
+        }>;
 
-        {isModuleEnabled('assets') && (
-          <Link
-            href="/admin/assets"
-            className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-4 border border-purple-100 hover:shadow-lg hover:shadow-purple-100/50 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-200 group-hover:scale-110 transition-transform">
-                <Box className="h-4 w-4 text-white" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.assets || 0}</p>
-            <p className="text-slate-500 text-xs">Assets</p>
-          </Link>
-        )}
+        // Grid layout: 2 columns on mobile, 4 columns on larger screens
+        // This ensures balanced rows when there are many stats
+        const count = statsItems.length;
 
-        {isModuleEnabled('subscriptions') && (
-          <Link
-            href="/admin/subscriptions"
-            className="bg-gradient-to-br from-rose-50 to-orange-50 rounded-2xl p-4 border border-rose-100 hover:shadow-lg hover:shadow-rose-100/50 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center mb-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-rose-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-rose-200 group-hover:scale-110 transition-transform">
-                <CreditCard className="h-4 w-4 text-white" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.subscriptions || 0}</p>
-            <p className="text-slate-500 text-xs">Subscriptions</p>
-          </Link>
-        )}
-
-        {isModuleEnabled('suppliers') && (
-          <Link
-            href="/admin/suppliers"
-            className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-4 border border-amber-100 hover:shadow-lg hover:shadow-amber-100/50 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center mb-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform">
-                <Truck className="h-4 w-4 text-white" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.suppliers || 0}</p>
-            <p className="text-slate-500 text-xs">Suppliers</p>
-          </Link>
-        )}
-
-        {isModuleEnabled('leave') && (
-          <Link
-            href="/admin/leave/requests"
-            className="bg-gradient-to-br from-cyan-50 to-teal-50 rounded-2xl p-4 border border-cyan-100 hover:shadow-lg hover:shadow-cyan-100/50 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center mb-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-cyan-400 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-200 group-hover:scale-110 transition-transform">
-                <Calendar className="h-4 w-4 text-white" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.pendingLeave || 0}</p>
-            <p className="text-slate-500 text-xs">Leave Requests</p>
-          </Link>
-        )}
-
-        {isModuleEnabled('projects') && (
-          <Link
-            href="/admin/projects"
-            className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-4 border border-emerald-100 hover:shadow-lg hover:shadow-emerald-100/50 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center mb-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-green-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200 group-hover:scale-110 transition-transform">
-                <Briefcase className="h-4 w-4 text-white" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.projects || 0}</p>
-            <p className="text-slate-500 text-xs">Active Projects</p>
-          </Link>
-        )}
-
-        {isModuleEnabled('purchase-requests') && (
-          <Link
-            href="/admin/purchase-requests"
-            className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-2xl p-4 border border-violet-100 hover:shadow-lg hover:shadow-violet-100/50 transition-all cursor-pointer group"
-          >
-            <div className="flex items-center mb-2">
-              <div className="w-9 h-9 bg-gradient-to-br from-violet-400 to-purple-500 rounded-xl flex items-center justify-center shadow-lg shadow-violet-200 group-hover:scale-110 transition-transform">
-                <ShoppingCart className="h-4 w-4 text-white" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900">{dashboardData?.stats.pendingPurchaseRequests || 0}</p>
-            <p className="text-slate-500 text-xs">Pending PRs</p>
-          </Link>
-        )}
-      </div>
+        return (
+          <div className={`grid gap-4 mb-6 ${
+            count <= 2 ? 'grid-cols-2' :
+            count <= 4 ? 'grid-cols-2 sm:grid-cols-4' :
+            'grid-cols-2 sm:grid-cols-4'
+          }`}>
+            {statsItems.map((stat) => (
+              <Link
+                key={stat.id}
+                href={stat.href}
+                className={`bg-gradient-to-br ${stat.gradient} rounded-2xl p-4 border ${stat.border} ${stat.shadow} hover:shadow-lg transition-all cursor-pointer group`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className={`w-9 h-9 bg-gradient-to-br ${stat.iconGradient} rounded-xl flex items-center justify-center shadow-lg ${stat.iconShadow} group-hover:scale-110 transition-transform`}>
+                    <stat.icon className="h-4 w-4 text-white" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                <p className="text-slate-500 text-xs">{stat.label}</p>
+              </Link>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Two Column Layout */}
       <div className="grid lg:grid-cols-3 gap-4">
