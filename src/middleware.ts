@@ -21,6 +21,7 @@ interface ImpersonationData {
 
 /**
  * Verify and extract impersonation data from cookie
+ * The cookie contains the original impersonation token from the API
  */
 async function getImpersonationData(request: NextRequest): Promise<ImpersonationData | null> {
   const cookie = request.cookies.get(IMPERSONATION_COOKIE);
@@ -29,7 +30,25 @@ async function getImpersonationData(request: NextRequest): Promise<Impersonation
   try {
     const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'fallback-secret');
     const { payload } = await jose.jwtVerify(cookie.value, secret);
-    return payload as unknown as ImpersonationData;
+
+    // Verify the token purpose
+    if (payload.purpose !== 'impersonation') {
+      return null;
+    }
+
+    // Map the API token structure to ImpersonationData
+    return {
+      superAdminId: payload.superAdminId as string,
+      superAdminEmail: payload.superAdminEmail as string,
+      superAdminName: (payload.superAdminName as string) || null,
+      organizationId: payload.organizationId as string,
+      organizationSlug: payload.organizationSlug as string,
+      organizationName: payload.organizationName as string,
+      subscriptionTier: (payload.subscriptionTier as string) || 'FREE',
+      enabledModules: (payload.enabledModules as string[]) || ['assets', 'subscriptions', 'suppliers'],
+      startedAt: new Date((payload.iat as number) * 1000).toISOString(),
+      expiresAt: new Date((payload.exp as number) * 1000).toISOString(),
+    };
   } catch {
     return null;
   }
@@ -321,27 +340,6 @@ export async function middleware(request: NextRequest) {
 
       // If valid token and matches this subdomain, set cookie and allow access
       if (tokenData && tokenData.organizationSlug.toLowerCase() === subdomain.toLowerCase()) {
-        // Create impersonation cookie data with all org context
-        const cookieData = {
-          superAdminId: tokenData.superAdminId,
-          superAdminEmail: tokenData.superAdminEmail,
-          superAdminName: tokenData.superAdminName,
-          organizationId: tokenData.organizationId,
-          organizationSlug: tokenData.organizationSlug,
-          organizationName: tokenData.organizationName,
-          subscriptionTier: tokenData.subscriptionTier,
-          enabledModules: tokenData.enabledModules,
-          startedAt: new Date().toISOString(),
-          expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
-        };
-
-        // Sign the cookie
-        const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'fallback-secret');
-        const cookieToken = await new jose.SignJWT(cookieData)
-          .setProtectedHeader({ alg: 'HS256' })
-          .setExpirationTime('4h')
-          .sign(secret);
-
         // Allow access with impersonation headers (don't redirect, just continue)
         const response = NextResponse.next();
         response.headers.set('x-subdomain', subdomain);
@@ -354,8 +352,9 @@ export async function middleware(request: NextRequest) {
         response.headers.set('x-impersonating', 'true');
         response.headers.set('x-impersonator-email', tokenData.superAdminEmail);
 
-        // Set the impersonation cookie for subsequent requests
-        response.cookies.set(IMPERSONATION_COOKIE, cookieToken, {
+        // Store the ORIGINAL token as the cookie (already signed by the API)
+        // This avoids creating a new JWT in middleware which can be problematic
+        response.cookies.set(IMPERSONATION_COOKIE, impersonateToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',

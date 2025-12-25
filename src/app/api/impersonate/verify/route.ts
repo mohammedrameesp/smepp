@@ -168,31 +168,38 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // The cookie contains the original impersonation token from the API
     const payload = jwt.verify(cookie.value, JWT_SECRET) as {
       superAdminId: string;
       superAdminEmail: string;
-      superAdminName: string | null;
+      superAdminName?: string | null;
       organizationId: string;
       organizationSlug: string;
       organizationName: string;
-      startedAt: string;
-      expiresAt: string;
+      purpose: string;
+      iat: number;
+      exp: number;
     };
+
+    // Verify this is an impersonation token
+    if (payload.purpose !== 'impersonation') {
+      return NextResponse.json({ isImpersonating: false });
+    }
 
     return NextResponse.json({
       isImpersonating: true,
       superAdmin: {
         id: payload.superAdminId,
         email: payload.superAdminEmail,
-        name: payload.superAdminName,
+        name: payload.superAdminName || null,
       },
       organization: {
         id: payload.organizationId,
         slug: payload.organizationSlug,
         name: payload.organizationName,
       },
-      startedAt: payload.startedAt,
-      expiresAt: payload.expiresAt,
+      startedAt: new Date(payload.iat * 1000).toISOString(),
+      expiresAt: new Date(payload.exp * 1000).toISOString(),
     });
   } catch (err) {
     // Invalid or expired cookie
