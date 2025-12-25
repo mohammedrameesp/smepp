@@ -4,14 +4,12 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Role, ApprovalModule } from '@prisma/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, ShoppingCart, Package, Clock } from 'lucide-react';
+import { FileText, ShoppingCart, Package, Clock, Inbox, CheckCircle } from 'lucide-react';
 import { MyApprovalsClient } from './client';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'My Approvals | DAMP',
+  title: 'My Approvals | SME++',
   description: 'Pending approval requests',
 };
 
@@ -211,79 +209,90 @@ export default async function MyApprovalsPage() {
   const approvals = await getPendingApprovals(session.user.id, session.user.role, session.user.organizationId);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">My Approvals</h1>
-        <p className="text-muted-foreground">
-          Review and process pending approval requests
-        </p>
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900">My Approvals</h1>
+        <p className="text-slate-500 text-sm">Review and process pending approval requests</p>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Pending</CardDescription>
-            <CardTitle className="text-3xl">{approvals.counts.total}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              Awaiting your action
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        {/* Total Pending */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <Inbox className="h-5 w-5" />
+              </div>
+              <span className="text-3xl font-bold">{approvals.counts.total}</span>
             </div>
-          </CardContent>
-        </Card>
+            <p className="text-sm font-medium">Total Pending</p>
+            <p className="text-xs text-white/70">Awaiting your action</p>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Leave Requests</CardDescription>
-            <CardTitle className="text-3xl">{approvals.counts.LEAVE_REQUEST}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <FileText className="h-3 w-3" />
-              Pending leave approvals
+        {/* Leave Requests */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl p-5 text-white shadow-lg shadow-blue-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <FileText className="h-5 w-5" />
+              </div>
+              <span className="text-3xl font-bold">{approvals.counts.LEAVE_REQUEST}</span>
             </div>
-          </CardContent>
-        </Card>
+            <p className="text-sm font-medium">Leave Requests</p>
+            <p className="text-xs text-white/70">Pending leave approvals</p>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Purchase Requests</CardDescription>
-            <CardTitle className="text-3xl">{approvals.counts.PURCHASE_REQUEST}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <ShoppingCart className="h-3 w-3" />
-              Pending purchase approvals
+        {/* Purchase Requests */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <ShoppingCart className="h-5 w-5" />
+              </div>
+              <span className="text-3xl font-bold">{approvals.counts.PURCHASE_REQUEST}</span>
             </div>
-          </CardContent>
-        </Card>
+            <p className="text-sm font-medium">Purchase Requests</p>
+            <p className="text-xs text-white/70">Pending purchase approvals</p>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Asset Requests</CardDescription>
-            <CardTitle className="text-3xl">{approvals.counts.ASSET_REQUEST}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Package className="h-3 w-3" />
-              Pending asset approvals
+        {/* Asset Requests */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-purple-400 to-violet-500 rounded-2xl p-5 text-white shadow-lg shadow-purple-200/50">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <Package className="h-5 w-5" />
+              </div>
+              <span className="text-3xl font-bold">{approvals.counts.ASSET_REQUEST}</span>
             </div>
-          </CardContent>
-        </Card>
+            <p className="text-sm font-medium">Asset Requests</p>
+            <p className="text-xs text-white/70">Pending asset approvals</p>
+          </div>
+        </div>
       </div>
 
       {approvals.counts.total === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-lg font-medium">No pending approvals</p>
-            <p className="text-muted-foreground">
-              You&apos;re all caught up! New requests will appear here.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="h-8 w-8 text-emerald-500" />
+          </div>
+          <h3 className="font-semibold text-slate-900 text-lg mb-1">All caught up!</h3>
+          <p className="text-slate-500 mb-4">No pending approvals at the moment.</p>
+          <Link
+            href="/admin"
+            className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Back to Dashboard
+          </Link>
+        </div>
       ) : (
         <MyApprovalsClient
           approvals={approvals.all}

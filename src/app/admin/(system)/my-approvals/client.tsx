@@ -3,10 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
   AlertDialog,
@@ -24,10 +21,10 @@ import {
   Package,
   Check,
   X,
-  User,
   Calendar,
   Clock,
   ExternalLink,
+  ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -60,16 +57,31 @@ const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Admin',
 };
 
-const MODULE_ICONS = {
-  LEAVE_REQUEST: FileText,
-  PURCHASE_REQUEST: ShoppingCart,
-  ASSET_REQUEST: Package,
-};
-
-const MODULE_HREFS = {
-  LEAVE_REQUEST: '/admin/leave/requests',
-  PURCHASE_REQUEST: '/admin/purchase-requests',
-  ASSET_REQUEST: '/admin/assets/requests',
+const MODULE_CONFIG = {
+  LEAVE_REQUEST: {
+    icon: FileText,
+    label: 'Leave Request',
+    gradient: 'from-blue-400 to-indigo-500',
+    iconBg: 'bg-blue-100',
+    iconColor: 'text-blue-600',
+    href: '/admin/leave/requests',
+  },
+  PURCHASE_REQUEST: {
+    icon: ShoppingCart,
+    label: 'Purchase Request',
+    gradient: 'from-emerald-400 to-teal-500',
+    iconBg: 'bg-emerald-100',
+    iconColor: 'text-emerald-600',
+    href: '/admin/purchase-requests',
+  },
+  ASSET_REQUEST: {
+    icon: Package,
+    label: 'Asset Request',
+    gradient: 'from-purple-400 to-violet-500',
+    iconBg: 'bg-purple-100',
+    iconColor: 'text-purple-600',
+    href: '/admin/assets/requests',
+  },
 };
 
 export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps) {
@@ -78,6 +90,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [selectedStep, setSelectedStep] = useState<ApprovalStep | null>(null);
   const [notes, setNotes] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'leave' | 'purchase' | 'asset'>('all');
 
   const handleAction = async () => {
     if (!selectedStep || !actionType) return;
@@ -113,173 +126,186 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
     setNotes('');
   };
 
+  const getDisplayApprovals = () => {
+    switch (activeTab) {
+      case 'leave':
+        return grouped.LEAVE_REQUEST;
+      case 'purchase':
+        return grouped.PURCHASE_REQUEST;
+      case 'asset':
+        return grouped.ASSET_REQUEST;
+      default:
+        return approvals;
+    }
+  };
+
   const renderApprovalCard = (step: ApprovalStep) => {
-    const Icon = MODULE_ICONS[step.entityType];
+    const config = MODULE_CONFIG[step.entityType];
+    const Icon = config.icon;
     const details = step.entityDetails;
-    const href = `${MODULE_HREFS[step.entityType]}/${step.entityId}`;
+    const href = `${config.href}/${step.entityId}`;
+
+    // Get initials from requester name
+    const requesterName = String(details.requester || 'Unknown');
+    const initials = requesterName
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
 
     return (
-      <Card key={step.id} className="hover:shadow-md transition-shadow">
-        <CardHeader className="pb-2">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Icon className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-base">
-                  {step.entityType === 'LEAVE_REQUEST' && (
-                    <>
-                      {String(details.type || '')} - {String(details.totalDays || 0)} day(s)
-                    </>
-                  )}
-                  {step.entityType === 'PURCHASE_REQUEST' && (
-                    <>{String(details.title || 'Untitled')}</>
-                  )}
-                  {step.entityType === 'ASSET_REQUEST' && (
-                    <>
-                      {String(details.assetName || 'Unknown Asset')}
-                      {details.assetTag && (
-                        <span className="text-muted-foreground ml-2">
-                          ({String(details.assetTag)})
-                        </span>
-                      )}
-                    </>
-                  )}
-                </CardTitle>
-                <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                  <User className="h-3 w-3" />
-                  <span>{String(details.requester || 'Unknown')}</span>
-                </div>
-              </div>
-            </div>
-            <Badge variant="outline">
-              Level {step.levelOrder}: {ROLE_LABELS[step.requiredRole] || step.requiredRole}
-            </Badge>
+      <div
+        key={step.id}
+        className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-all"
+      >
+        <div className="flex items-start gap-4">
+          {/* Avatar */}
+          <div className={cn(
+            'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br text-white font-semibold text-sm',
+            config.gradient
+          )}>
+            {initials}
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {/* Entity-specific details */}
-            {step.entityType === 'LEAVE_REQUEST' && (
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3 text-muted-foreground" />
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2 mb-1">
+              <div>
+                <h3 className="font-semibold text-slate-900">{requesterName}</h3>
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <Icon className="h-3.5 w-3.5" />
                   <span>
-                    {format(new Date(details.startDate as string), 'MMM d')} -{' '}
-                    {format(new Date(details.endDate as string), 'MMM d, yyyy')}
+                    {step.entityType === 'LEAVE_REQUEST' && (
+                      <>{String(details.type || 'Leave')} - {String(details.totalDays || 0)} day(s)</>
+                    )}
+                    {step.entityType === 'PURCHASE_REQUEST' && (
+                      <>{String(details.title || 'Untitled')}</>
+                    )}
+                    {step.entityType === 'ASSET_REQUEST' && (
+                      <>{String(details.type || 'Request')} - {String(details.assetName || 'Asset')}</>
+                    )}
                   </span>
                 </div>
               </div>
-            )}
+              <span className="text-xs text-slate-400 flex-shrink-0">
+                {format(new Date(step.createdAt), 'MMM d')}
+              </span>
+            </div>
 
-            {step.entityType === 'PURCHASE_REQUEST' && (
-              <div className="flex items-center gap-4 text-sm">
-                {details.totalAmount ? (
-                  <Badge variant="secondary">
+            {/* Details */}
+            <div className="mt-2 space-y-1">
+              {step.entityType === 'LEAVE_REQUEST' && (
+                <div className="flex items-center gap-1 text-sm text-slate-600">
+                  <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                  <span>
+                    {format(new Date(details.startDate as string), 'MMM d')} - {format(new Date(details.endDate as string), 'MMM d, yyyy')}
+                  </span>
+                </div>
+              )}
+
+              {step.entityType === 'PURCHASE_REQUEST' && details.totalAmount && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-slate-900">
                     {String(details.currency || 'QAR')} {Number(details.totalAmount).toLocaleString()}
-                  </Badge>
-                ) : null}
-                {details.priority ? (
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      String(details.priority) === 'HIGH' && 'border-red-500 text-red-500',
-                      String(details.priority) === 'MEDIUM' && 'border-yellow-500 text-yellow-500',
-                      String(details.priority) === 'LOW' && 'border-green-500 text-green-500'
-                    )}
-                  >
-                    {String(details.priority)}
-                  </Badge>
-                ) : null}
-              </div>
-            )}
+                  </span>
+                  {details.priority && (
+                    <span className={cn(
+                      'text-xs px-2 py-0.5 rounded-full font-medium',
+                      String(details.priority) === 'HIGH' && 'bg-red-100 text-red-600',
+                      String(details.priority) === 'MEDIUM' && 'bg-amber-100 text-amber-600',
+                      String(details.priority) === 'LOW' && 'bg-green-100 text-green-600'
+                    )}>
+                      {String(details.priority)}
+                    </span>
+                  )}
+                </div>
+              )}
 
-            {step.entityType === 'ASSET_REQUEST' && details.type ? (
-              <Badge variant="secondary">{String(details.type)}</Badge>
-            ) : null}
-
-            {/* Reason/Justification */}
-            {(details.reason || details.justification) ? (
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {String(details.reason || details.justification)}
-              </p>
-            ) : null}
-
-            {/* Submitted time */}
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              <span>Submitted {format(new Date(step.createdAt), 'MMM d, yyyy h:mm a')}</span>
+              {(details.reason || details.justification) && (
+                <p className="text-sm text-slate-500 line-clamp-1">
+                  {String(details.reason || details.justification)}
+                </p>
+              )}
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 pt-2">
+            <div className="flex items-center gap-2 mt-3">
               <Button
                 size="sm"
                 onClick={() => openActionDialog(step, 'approve')}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-emerald-500 hover:bg-emerald-600 text-white h-8"
               >
-                <Check className="h-4 w-4 mr-1" />
+                <Check className="h-3.5 w-3.5 mr-1" />
                 Approve
               </Button>
               <Button
                 size="sm"
-                variant="destructive"
+                variant="outline"
                 onClick={() => openActionDialog(step, 'reject')}
+                className="text-red-600 border-red-200 hover:bg-red-50 h-8"
               >
-                <X className="h-4 w-4 mr-1" />
+                <X className="h-3.5 w-3.5 mr-1" />
                 Reject
               </Button>
-              <Button size="sm" variant="outline" asChild className="ml-auto">
-                <Link href={href}>
-                  <ExternalLink className="h-4 w-4 mr-1" />
-                  View Details
-                </Link>
-              </Button>
+              <Link
+                href={href}
+                className="ml-auto text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
+              >
+                Details
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Link>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   };
 
+  const tabs = [
+    { id: 'all', label: 'All', count: approvals.length },
+    { id: 'leave', label: 'Leave', count: grouped.LEAVE_REQUEST.length, icon: FileText },
+    { id: 'purchase', label: 'Purchase', count: grouped.PURCHASE_REQUEST.length, icon: ShoppingCart },
+    { id: 'asset', label: 'Asset', count: grouped.ASSET_REQUEST.length, icon: Package },
+  ];
+
   return (
     <>
-      <Tabs defaultValue="all" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="all">
-            All ({approvals.length})
-          </TabsTrigger>
-          <TabsTrigger value="leave" disabled={grouped.LEAVE_REQUEST.length === 0}>
-            <FileText className="h-4 w-4 mr-1" />
-            Leave ({grouped.LEAVE_REQUEST.length})
-          </TabsTrigger>
-          <TabsTrigger value="purchase" disabled={grouped.PURCHASE_REQUEST.length === 0}>
-            <ShoppingCart className="h-4 w-4 mr-1" />
-            Purchase ({grouped.PURCHASE_REQUEST.length})
-          </TabsTrigger>
-          <TabsTrigger value="asset" disabled={grouped.ASSET_REQUEST.length === 0}>
-            <Package className="h-4 w-4 mr-1" />
-            Asset ({grouped.ASSET_REQUEST.length})
-          </TabsTrigger>
-        </TabsList>
+      {/* Tabs */}
+      <div className="bg-white rounded-xl border border-slate-200 mb-4">
+        <div className="flex border-b border-slate-100">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              disabled={tab.count === 0 && tab.id !== 'all'}
+              className={cn(
+                'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
+                activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700',
+                tab.count === 0 && tab.id !== 'all' && 'opacity-50 cursor-not-allowed'
+              )}
+            >
+              {tab.icon && <tab.icon className="h-4 w-4" />}
+              {tab.label}
+              <span className={cn(
+                'text-xs px-1.5 py-0.5 rounded-full',
+                activeTab === tab.id
+                  ? 'bg-blue-100 text-blue-600'
+                  : 'bg-slate-100 text-slate-500'
+              )}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
 
-        <TabsContent value="all" className="space-y-4">
-          {approvals.map(renderApprovalCard)}
-        </TabsContent>
-
-        <TabsContent value="leave" className="space-y-4">
-          {grouped.LEAVE_REQUEST.map(renderApprovalCard)}
-        </TabsContent>
-
-        <TabsContent value="purchase" className="space-y-4">
-          {grouped.PURCHASE_REQUEST.map(renderApprovalCard)}
-        </TabsContent>
-
-        <TabsContent value="asset" className="space-y-4">
-          {grouped.ASSET_REQUEST.map(renderApprovalCard)}
-        </TabsContent>
-      </Tabs>
+      {/* Approval Cards */}
+      <div className="space-y-3">
+        {getDisplayApprovals().map(renderApprovalCard)}
+      </div>
 
       {/* Action confirmation dialog */}
       <AlertDialog open={actionType !== null} onOpenChange={() => setActionType(null)}>
@@ -319,8 +345,8 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
               disabled={isSubmitting || (actionType === 'reject' && !notes.trim())}
               className={cn(
                 actionType === 'approve'
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                  ? 'bg-emerald-500 hover:bg-emerald-600'
+                  : 'bg-red-500 hover:bg-red-600'
               )}
             >
               {isSubmitting ? 'Processing...' : actionType === 'approve' ? 'Approve' : 'Reject'}
