@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation';
 import { Role, LoanStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -15,8 +14,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ArrowLeft, Plus, Eye, CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
+import { Plus, Eye, CreditCard, PauseCircle, CheckCircle, Wallet } from 'lucide-react';
 import { formatCurrency } from '@/lib/payroll/utils';
+import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 
 interface PageProps {
   searchParams: Promise<{
@@ -107,78 +107,56 @@ export default async function LoansPage({ searchParams }: PageProps) {
   const completedCount = statsMap['COMPLETED']?.count || 0;
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/admin/payroll">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Employee Loans</h1>
-            <p className="text-muted-foreground">
-              Manage employee loans and advances
-            </p>
-          </div>
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Employee Loans</h1>
+          <p className="text-slate-500 text-sm">Manage employee loans and advances</p>
         </div>
-
-        <Button asChild>
-          <Link href="/admin/payroll/loans/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Loan
-          </Link>
-        </Button>
+        <Link
+          href="/admin/payroll/loans/new"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          New Loan
+        </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Loans</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeLoansCount}</div>
-            <p className="text-xs text-muted-foreground">
-              {formatCurrency(activeLoansValue)} outstanding
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Paused</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pausedCount}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{completedCount}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Loans</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{total}</div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Stats Cards */}
+      <StatsCardGrid columns={4} className="mb-6">
+        <StatsCard
+          title="Active Loans"
+          subtitle={`${formatCurrency(activeLoansValue)} outstanding`}
+          value={activeLoansCount}
+          icon={CreditCard}
+          color="blue"
+        />
+        <StatsCard
+          title="Paused"
+          subtitle="Temporarily stopped"
+          value={pausedCount}
+          icon={PauseCircle}
+          color="amber"
+        />
+        <StatsCard
+          title="Completed"
+          subtitle="Fully repaid"
+          value={completedCount}
+          icon={CheckCircle}
+          color="emerald"
+        />
+        <StatsCard
+          title="Total Loans"
+          subtitle="All records"
+          value={total}
+          icon={Wallet}
+          color="purple"
+        />
+      </StatsCardGrid>
 
       {/* Status Filter */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 flex-wrap mb-6">
         <Button
           asChild
           variant={!statusFilter ? 'default' : 'outline'}
@@ -201,11 +179,12 @@ export default async function LoansPage({ searchParams }: PageProps) {
       </div>
 
       {/* Loans Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Loans ({total})</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="bg-white rounded-xl border border-slate-200">
+        <div className="px-4 py-4 border-b border-slate-100">
+          <h2 className="font-semibold text-slate-900">Loans ({total})</h2>
+          <p className="text-sm text-slate-500">All employee loan records</p>
+        </div>
+        <div className="p-4">
           <Table>
             <TableHeader>
               <TableRow>
@@ -296,8 +275,7 @@ export default async function LoansPage({ searchParams }: PageProps) {
               )}
             </div>
           )}
-        </CardContent>
-        </Card>
+        </div>
       </div>
     </div>
   );

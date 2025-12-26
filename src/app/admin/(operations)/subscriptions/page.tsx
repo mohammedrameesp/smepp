@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { SubscriptionListTableServerSearch } from '@/components/subscriptions/subscription-list-table-server-search';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
 import { CreditCard, Plus, DollarSign, Calendar } from 'lucide-react';
+import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 
 export default async function AdminSubscriptionsPage() {
   const session = await getServerSession(authOptions);
@@ -99,63 +100,36 @@ export default async function AdminSubscriptionsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="relative overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl p-5 text-white shadow-lg shadow-blue-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <CreditCard className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{activeCount}</span>
-            </div>
-            <p className="text-sm font-medium">Active</p>
-            <p className="text-xs text-white/70">{cancelledCount} cancelled</p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <DollarSign className="h-5 w-5" />
-              </div>
-              <span className="text-2xl font-bold">{totalQAR.toFixed(0)}</span>
-            </div>
-            <p className="text-sm font-medium">QAR This Month</p>
-            <p className="text-xs text-white/70">Monthly + Yearly renewals</p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <DollarSign className="h-5 w-5" />
-              </div>
-              <span className="text-2xl font-bold">{totalUSD.toFixed(0)}</span>
-            </div>
-            <p className="text-sm font-medium">USD This Month</p>
-            <p className="text-xs text-white/70">Monthly + Yearly renewals</p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden bg-gradient-to-br from-purple-400 to-violet-500 rounded-2xl p-5 text-white shadow-lg shadow-purple-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Calendar className="h-5 w-5" />
-              </div>
-              <span className="text-2xl font-bold">{(totalInQAR / 1000).toFixed(1)}K</span>
-            </div>
-            <p className="text-sm font-medium">Total (QAR)</p>
-            <p className="text-xs text-white/70">All converted</p>
-          </div>
-        </div>
-      </div>
+      <StatsCardGrid columns={4} className="mb-6">
+        <StatsCard
+          title="Active"
+          subtitle={`${cancelledCount} cancelled`}
+          value={activeCount}
+          icon={CreditCard}
+          color="blue"
+        />
+        <StatsCard
+          title="QAR This Month"
+          subtitle="Monthly + Yearly renewals"
+          value={totalQAR.toFixed(0)}
+          icon={DollarSign}
+          color="emerald"
+        />
+        <StatsCard
+          title="USD This Month"
+          subtitle="Monthly + Yearly renewals"
+          value={totalUSD.toFixed(0)}
+          icon={DollarSign}
+          color="amber"
+        />
+        <StatsCard
+          title="Total (QAR)"
+          subtitle="All converted"
+          value={`${(totalInQAR / 1000).toFixed(1)}K`}
+          icon={Calendar}
+          color="purple"
+        />
+      </StatsCardGrid>
 
       {/* Subscriptions Table */}
       <div className="bg-white rounded-xl border border-slate-200">

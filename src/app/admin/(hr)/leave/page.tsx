@@ -9,6 +9,7 @@ import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { Clock, CheckCircle, XCircle, Calendar, FileText, Users, Settings } from 'lucide-react';
 import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays } from '@/lib/leave-utils';
+import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 
 export default async function AdminLeavePage() {
   const session = await getServerSession(authOptions);
@@ -116,59 +117,36 @@ export default async function AdminLeavePage() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid md:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardHeader className="pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-gray-600 flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Pending Requests
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="text-2xl font-bold text-amber-600">{pendingCount}</div>
-                <p className="text-xs text-gray-500">awaiting approval</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-gray-600 flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  Approved This Year
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="text-2xl font-bold text-green-600">{approvedThisYear}</div>
-                <p className="text-xs text-gray-500">leave requests</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-gray-600 flex items-center gap-2">
-                  <XCircle className="h-4 w-4" />
-                  Rejected This Year
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="text-2xl font-bold text-red-600">{rejectedThisYear}</div>
-                <p className="text-xs text-gray-500">leave requests</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-1 pt-3 px-4">
-                <CardTitle className="text-xs font-medium text-gray-600 flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  Active Leave Types
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pb-3 px-4">
-                <div className="text-2xl font-bold text-blue-600">{activeLeaveTypes}</div>
-                <p className="text-xs text-gray-500">configured</p>
-              </CardContent>
-            </Card>
-          </div>
+          <StatsCardGrid columns={4} className="mb-6">
+            <StatsCard
+              title="Pending"
+              subtitle="Awaiting approval"
+              value={pendingCount}
+              icon={Clock}
+              color="amber"
+            />
+            <StatsCard
+              title="Approved"
+              subtitle="This year"
+              value={approvedThisYear}
+              icon={CheckCircle}
+              color="emerald"
+            />
+            <StatsCard
+              title="Rejected"
+              subtitle="This year"
+              value={rejectedThisYear}
+              icon={XCircle}
+              color="rose"
+            />
+            <StatsCard
+              title="Leave Types"
+              subtitle="Active configured"
+              value={activeLeaveTypes}
+              icon={Settings}
+              color="blue"
+            />
+          </StatsCardGrid>
 
           {/* Quick Links */}
           <div className="grid md:grid-cols-4 gap-4 mb-8">

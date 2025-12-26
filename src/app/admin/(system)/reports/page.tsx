@@ -15,6 +15,7 @@ import {
   ShoppingCart,
   UserCheck,
 } from 'lucide-react';
+import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 
 export default async function AdminReportsPage() {
   const session = await getServerSession(authOptions);
@@ -247,100 +248,54 @@ export default async function AdminReportsPage() {
         </div>
 
         {/* Overview Stats - Row 1 */}
-        <div className="grid md:grid-cols-4 gap-6 mb-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Assets</CardTitle>
-                <Package className="h-4 w-4 text-blue-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{totalAssets}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                Value: QAR {(Number(assetsValue._sum.priceQAR || 0)).toLocaleString()}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Subscriptions</CardTitle>
-                <CreditCard className="h-4 w-4 text-green-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{totalSubscriptions}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                Monthly: QAR {(Number(subscriptionsCost._sum.costQAR || 0)).toLocaleString()}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Suppliers</CardTitle>
-                <Building2 className="h-4 w-4 text-purple-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{totalSuppliers}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                {totalEngagements} total engagements
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Active Users</CardTitle>
-                <Users className="h-4 w-4 text-orange-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{activeUsers}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                {totalUsers} total (including deleted)
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <StatsCardGrid columns={4} className="mb-4">
+          <StatsCard
+            title="Total Assets"
+            subtitle={`QAR ${(Number(assetsValue._sum.priceQAR || 0)).toLocaleString()}`}
+            value={totalAssets}
+            icon={Package}
+            color="blue"
+          />
+          <StatsCard
+            title="Subscriptions"
+            subtitle={`QAR ${(Number(subscriptionsCost._sum.costQAR || 0)).toLocaleString()}/mo`}
+            value={totalSubscriptions}
+            icon={CreditCard}
+            color="emerald"
+          />
+          <StatsCard
+            title="Suppliers"
+            subtitle={`${totalEngagements} engagements`}
+            value={totalSuppliers}
+            icon={Building2}
+            color="purple"
+          />
+          <StatsCard
+            title="Active Users"
+            subtitle={`${totalUsers} total`}
+            value={activeUsers}
+            icon={Users}
+            color="amber"
+          />
+        </StatsCardGrid>
 
         {/* Overview Stats - Row 2 */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Purchase Requests</CardTitle>
-                <ShoppingCart className="h-4 w-4 text-pink-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{totalPurchaseRequests}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                {pendingPurchaseRequests} pending approval
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-gray-600">Employees</CardTitle>
-                <UserCheck className="h-4 w-4 text-emerald-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">{totalEmployees}</div>
-              <p className="text-xs text-gray-500 mt-1">
-                {employeesWithHRProfile} with HR profile
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <StatsCardGrid columns={4} className="mb-8">
+          <StatsCard
+            title="Purchase Requests"
+            subtitle={`${pendingPurchaseRequests} pending`}
+            value={totalPurchaseRequests}
+            icon={ShoppingCart}
+            color="rose"
+          />
+          <StatsCard
+            title="Employees"
+            subtitle={`${employeesWithHRProfile} with HR profile`}
+            value={totalEmployees}
+            icon={UserCheck}
+            color="cyan"
+          />
+        </StatsCardGrid>
 
         {/* Assets Reports */}
         <div className="mb-8">

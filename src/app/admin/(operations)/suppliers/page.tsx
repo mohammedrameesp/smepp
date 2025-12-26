@@ -6,6 +6,7 @@ import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { SupplierListTableServerSearch } from '@/components/suppliers/supplier-list-table-server-search';
 import { Building2, Plus, Tags, Handshake } from 'lucide-react';
+import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 
 export default async function AdminSuppliersPage() {
   const session = await getServerSession(authOptions);
@@ -56,63 +57,36 @@ export default async function AdminSuppliersPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="relative overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl p-5 text-white shadow-lg shadow-blue-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Building2 className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{totalSuppliers}</span>
-            </div>
-            <p className="text-sm font-medium">Total Suppliers</p>
-            <p className="text-xs text-white/70">Registered in system</p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Building2 className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{approvedSuppliers}</span>
-            </div>
-            <p className="text-sm font-medium">Approved</p>
-            <p className="text-xs text-white/70">Active vendors</p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Tags className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{uniqueCategories}</span>
-            </div>
-            <p className="text-sm font-medium">Categories</p>
-            <p className="text-xs text-white/70">Unique types</p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden bg-gradient-to-br from-purple-400 to-violet-500 rounded-2xl p-5 text-white shadow-lg shadow-purple-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Handshake className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{totalEngagements}</span>
-            </div>
-            <p className="text-sm font-medium">Engagements</p>
-            <p className="text-xs text-white/70">Recorded interactions</p>
-          </div>
-        </div>
-      </div>
+      <StatsCardGrid columns={4} className="mb-6">
+        <StatsCard
+          title="Total Suppliers"
+          subtitle="Registered in system"
+          value={totalSuppliers}
+          icon={Building2}
+          color="blue"
+        />
+        <StatsCard
+          title="Approved"
+          subtitle="Active vendors"
+          value={approvedSuppliers}
+          icon={Building2}
+          color="emerald"
+        />
+        <StatsCard
+          title="Categories"
+          subtitle="Unique types"
+          value={uniqueCategories}
+          icon={Tags}
+          color="amber"
+        />
+        <StatsCard
+          title="Engagements"
+          subtitle="Recorded interactions"
+          value={totalEngagements}
+          icon={Handshake}
+          color="purple"
+        />
+      </StatsCardGrid>
 
       {/* Suppliers Table */}
       <div className="bg-white rounded-xl border border-slate-200">

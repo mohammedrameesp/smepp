@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { formatCurrency, getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/lib/payroll/utils';
+import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 
 export default async function PayrollDashboardPage() {
   const session = await getServerSession(authOptions);
@@ -65,37 +66,6 @@ export default async function PayrollDashboardPage() {
   const totalMonthlyPayroll = Number(totalSalaryStructures._sum.grossSalary || 0);
   const totalLoanOutstanding = activeLoans.reduce((sum, loan) => sum + Number(loan.remainingAmount), 0);
 
-  const stats = [
-    {
-      title: 'Employees with Salary',
-      value: employeesWithSalary,
-      icon: Users,
-      href: '/admin/payroll/salary-structures',
-      color: 'text-blue-600',
-    },
-    {
-      title: 'Monthly Payroll',
-      value: formatCurrency(totalMonthlyPayroll),
-      icon: DollarSign,
-      href: '/admin/payroll/runs',
-      color: 'text-green-600',
-    },
-    {
-      title: 'Pending Payrolls',
-      value: pendingPayrolls,
-      icon: Clock,
-      href: '/admin/payroll/runs?status=PENDING_APPROVAL',
-      color: 'text-amber-600',
-    },
-    {
-      title: 'Active Loans',
-      value: `${activeLoans.length} (${formatCurrency(totalLoanOutstanding)})`,
-      icon: CreditCard,
-      href: '/admin/payroll/loans',
-      color: 'text-purple-600',
-    },
-  ];
-
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -123,21 +93,40 @@ export default async function PayrollDashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Link key={stat.title} href={stat.href}>
-            <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      <StatsCardGrid columns={4}>
+        <StatsCard
+          title="With Salary"
+          subtitle="Active structures"
+          value={employeesWithSalary}
+          icon={Users}
+          color="blue"
+          href="/admin/payroll/salary-structures"
+        />
+        <StatsCard
+          title="Monthly Payroll"
+          subtitle="Total gross"
+          value={formatCurrency(totalMonthlyPayroll).replace('QAR ', '')}
+          icon={DollarSign}
+          color="emerald"
+          href="/admin/payroll/runs"
+        />
+        <StatsCard
+          title="Pending"
+          subtitle="Awaiting approval"
+          value={pendingPayrolls}
+          icon={Clock}
+          color="amber"
+          href="/admin/payroll/runs?status=PENDING_APPROVAL"
+        />
+        <StatsCard
+          title="Active Loans"
+          subtitle={formatCurrency(totalLoanOutstanding)}
+          value={activeLoans.length}
+          icon={CreditCard}
+          color="purple"
+          href="/admin/payroll/loans"
+        />
+      </StatsCardGrid>
 
       {/* Current Month Status */}
       <Card>

@@ -19,6 +19,7 @@ import { ArrowLeft, Download, Eye, Users, Wallet, FileText, Clock, AlertCircle, 
 import { formatCurrency, getMonthName, getPayrollStatusColor, getPayrollStatusText } from '@/lib/payroll/utils';
 import { PayrollWorkflowActions } from '@/components/payroll/payroll-workflow-actions';
 import { calculatePayrollPreview } from '@/lib/payroll/preview';
+import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -134,51 +135,36 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
       />
 
       {/* Summary Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Employees</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{employeeCount}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Gross</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalGross)}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Deductions</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              -{formatCurrency(totalDeductions)}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Net Pay</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(totalNet)}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <StatsCardGrid columns={4}>
+        <StatsCard
+          title="Employees"
+          subtitle="In this run"
+          value={employeeCount}
+          icon={Users}
+          color="blue"
+        />
+        <StatsCard
+          title="Total Gross"
+          subtitle=""
+          value={formatCurrency(totalGross)}
+          icon={Wallet}
+          color="amber"
+        />
+        <StatsCard
+          title="Deductions"
+          subtitle=""
+          value={`-${formatCurrency(totalDeductions)}`}
+          icon={FileText}
+          color="rose"
+        />
+        <StatsCard
+          title="Net Pay"
+          subtitle=""
+          value={formatCurrency(totalNet)}
+          icon={Wallet}
+          color="emerald"
+        />
+      </StatsCardGrid>
 
       {/* Preview for DRAFT status */}
       {isDraft && preview && (

@@ -5,7 +5,8 @@ import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { EmployeeListTable } from '@/components/employees';
 import { prisma } from '@/lib/core/prisma';
-import { Users, UserPlus, FileWarning, Gift, Calendar, ClipboardList } from 'lucide-react';
+import { Users, UserPlus, FileWarning, Calendar, ClipboardList } from 'lucide-react';
+import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 
 export default async function AdminEmployeesPage() {
   const session = await getServerSession(authOptions);
@@ -97,67 +98,38 @@ export default async function AdminEmployeesPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="relative overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl p-5 text-white shadow-lg shadow-blue-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Users className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{totalEmployees}</span>
-            </div>
-            <p className="text-sm font-medium">Total Employees</p>
-            <p className="text-xs text-white/70">Active team members</p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Calendar className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{onLeaveToday}</span>
-            </div>
-            <p className="text-sm font-medium">On Leave Today</p>
-            <p className="text-xs text-white/70">Currently away</p>
-          </div>
-        </div>
-
-        <Link href="/admin/employees/document-expiry">
-          <div className="relative overflow-hidden bg-gradient-to-br from-rose-400 to-pink-500 rounded-2xl p-5 text-white shadow-lg shadow-rose-200/50 cursor-pointer hover:shadow-xl transition-shadow">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="relative">
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                  <FileWarning className="h-5 w-5" />
-                </div>
-                <span className="text-3xl font-bold">{expiringDocumentsCount}</span>
-              </div>
-              <p className="text-sm font-medium">Expiring Documents</p>
-              <p className="text-xs text-white/70">Next 30 days</p>
-            </div>
-          </div>
-        </Link>
-
-        <Link href="/admin/employees/change-requests">
-          <div className="relative overflow-hidden bg-gradient-to-br from-purple-400 to-violet-500 rounded-2xl p-5 text-white shadow-lg shadow-purple-200/50 cursor-pointer hover:shadow-xl transition-shadow">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="relative">
-              <div className="flex items-center justify-between mb-2">
-                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                  <ClipboardList className="h-5 w-5" />
-                </div>
-                <span className="text-3xl font-bold">{pendingChangeRequests}</span>
-              </div>
-              <p className="text-sm font-medium">Change Requests</p>
-              <p className="text-xs text-white/70">Pending review</p>
-            </div>
-          </div>
-        </Link>
-      </div>
+      <StatsCardGrid columns={4} className="mb-6">
+        <StatsCard
+          title="Total Employees"
+          subtitle="Active team members"
+          value={totalEmployees}
+          icon={Users}
+          color="blue"
+        />
+        <StatsCard
+          title="On Leave Today"
+          subtitle="Currently away"
+          value={onLeaveToday}
+          icon={Calendar}
+          color="amber"
+        />
+        <StatsCard
+          title="Expiring Documents"
+          subtitle="Next 30 days"
+          value={expiringDocumentsCount}
+          icon={FileWarning}
+          color="rose"
+          href="/admin/employees/document-expiry"
+        />
+        <StatsCard
+          title="Change Requests"
+          subtitle="Pending review"
+          value={pendingChangeRequests}
+          icon={ClipboardList}
+          color="purple"
+          href="/admin/employees/change-requests"
+        />
+      </StatsCardGrid>
 
       {/* Employee Table */}
       <div className="bg-white rounded-xl border border-slate-200">

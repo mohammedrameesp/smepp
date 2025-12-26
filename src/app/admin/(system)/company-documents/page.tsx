@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, FileCheck, AlertTriangle, Clock, CheckCircle, FileText, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 import { format } from 'date-fns';
 import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/lib/domains/system/company-documents/document-utils';
 
@@ -84,63 +85,36 @@ async function DocumentList() {
   return (
     <>
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="relative overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl p-5 text-white shadow-lg shadow-blue-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <FileText className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{stats.total}</span>
-            </div>
-            <p className="text-sm font-medium">Total Documents</p>
-            <p className="text-xs text-white/70">All registered</p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden bg-gradient-to-br from-rose-400 to-pink-500 rounded-2xl p-5 text-white shadow-lg shadow-rose-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <AlertTriangle className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{stats.expired}</span>
-            </div>
-            <p className="text-sm font-medium">Expired</p>
-            <p className="text-xs text-white/70">Need renewal</p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Clock className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{stats.expiring}</span>
-            </div>
-            <p className="text-sm font-medium">Expiring Soon</p>
-            <p className="text-xs text-white/70">Next {DOCUMENT_EXPIRY_WARNING_DAYS} days</p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <CheckCircle className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{stats.valid}</span>
-            </div>
-            <p className="text-sm font-medium">Valid</p>
-            <p className="text-xs text-white/70">Up to date</p>
-          </div>
-        </div>
-      </div>
+      <StatsCardGrid columns={4} className="mb-6">
+        <StatsCard
+          title="Total Documents"
+          subtitle="All registered"
+          value={stats.total}
+          icon={FileText}
+          color="blue"
+        />
+        <StatsCard
+          title="Expired"
+          subtitle="Need renewal"
+          value={stats.expired}
+          icon={AlertTriangle}
+          color="rose"
+        />
+        <StatsCard
+          title="Expiring Soon"
+          subtitle={`Next ${DOCUMENT_EXPIRY_WARNING_DAYS} days`}
+          value={stats.expiring}
+          icon={Clock}
+          color="amber"
+        />
+        <StatsCard
+          title="Valid"
+          subtitle="Up to date"
+          value={stats.valid}
+          icon={CheckCircle}
+          color="emerald"
+        />
+      </StatsCardGrid>
 
       {/* Documents Table */}
       <div className="bg-white rounded-xl border border-slate-200">

@@ -1,12 +1,13 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { ProjectListTable } from '@/components/projects/project-list-table';
+import { FolderKanban, Play, CheckCircle, PauseCircle, Plus } from 'lucide-react';
+import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 
 export default async function AdminProjectsPage() {
   const session = await getServerSession(authOptions);
@@ -48,71 +49,62 @@ export default async function AdminProjectsPage() {
   }, {} as Record<string, number>);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Project Management</h1>
-                <p className="text-gray-600">
-                  Manage projects, budgets, and financial tracking
-                </p>
-              </div>
-              <Link href="/admin/projects/new">
-                <Button>+ New Project</Button>
-              </Link>
-            </div>
+    <div className="max-w-7xl mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Project Management</h1>
+          <p className="text-slate-500 text-sm">Manage projects, budgets, and financial tracking</p>
+        </div>
+        <Link
+          href="/admin/projects/new"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+          New Project
+        </Link>
+      </div>
 
-            {/* Key Figures */}
-            <div className="grid md:grid-cols-4 gap-3 mb-6">
-              <Card>
-                <CardHeader className="pb-1 pt-3 px-4">
-                  <CardTitle className="text-xs font-medium text-gray-600">Total Projects</CardTitle>
-                </CardHeader>
-                <CardContent className="pb-3 px-4">
-                  <div className="text-2xl font-bold text-gray-900">{totalProjects}</div>
-                  <p className="text-xs text-gray-500">
-                    {activeProjects} active
-                  </p>
-                </CardContent>
-              </Card>
+      {/* Stats Cards */}
+      <StatsCardGrid columns={4} className="mb-6">
+        <StatsCard
+          title="Total Projects"
+          subtitle={`${activeProjects} active`}
+          value={totalProjects}
+          icon={FolderKanban}
+          color="blue"
+        />
+        <StatsCard
+          title="Planning"
+          subtitle="In planning phase"
+          value={statusMap['PLANNING'] || 0}
+          icon={PauseCircle}
+          color="amber"
+        />
+        <StatsCard
+          title="Active"
+          subtitle="Currently running"
+          value={statusMap['ACTIVE'] || 0}
+          icon={Play}
+          color="emerald"
+        />
+        <StatsCard
+          title="Completed"
+          subtitle="Successfully finished"
+          value={statusMap['COMPLETED'] || 0}
+          icon={CheckCircle}
+          color="purple"
+        />
+      </StatsCardGrid>
 
-              <Card>
-                <CardHeader className="pb-1 pt-3 px-4">
-                  <CardTitle className="text-xs font-medium text-gray-600">By Status</CardTitle>
-                </CardHeader>
-                <CardContent className="pb-3 px-4">
-                  <div className="text-sm space-y-0.5">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Planning:</span>
-                      <span className="font-medium">{statusMap['PLANNING'] || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Active:</span>
-                      <span className="font-medium text-green-600">{statusMap['ACTIVE'] || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Completed:</span>
-                      <span className="font-medium">{statusMap['COMPLETED'] || 0}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>All Projects</CardTitle>
-              <CardDescription>
-                Complete list of projects with filters and sorting
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProjectListTable />
-            </CardContent>
-          </Card>
+      {/* Projects Table */}
+      <div className="bg-white rounded-xl border border-slate-200">
+        <div className="px-4 py-4 border-b border-slate-100">
+          <h2 className="font-semibold text-slate-900">All Projects</h2>
+          <p className="text-sm text-slate-500">Complete list of projects with filters and sorting</p>
+        </div>
+        <div className="p-4">
+          <ProjectListTable />
         </div>
       </div>
     </div>

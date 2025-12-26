@@ -7,6 +7,7 @@ import { Role } from '@prisma/client';
 import { FileText, ShoppingCart, Package, Inbox, CheckCircle } from 'lucide-react';
 import { MyApprovalsClient } from './client';
 import Link from 'next/link';
+import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 
 export const metadata: Metadata = {
   title: 'My Approvals | SME++',
@@ -143,67 +144,36 @@ export default async function MyApprovalsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {/* Total Pending */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Inbox className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{approvals.counts.total}</span>
-            </div>
-            <p className="text-sm font-medium">Total Pending</p>
-            <p className="text-xs text-white/70">Awaiting your action</p>
-          </div>
-        </div>
-
-        {/* Leave Requests */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl p-5 text-white shadow-lg shadow-blue-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <FileText className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{approvals.counts.LEAVE_REQUEST}</span>
-            </div>
-            <p className="text-sm font-medium">Leave Requests</p>
-            <p className="text-xs text-white/70">Pending leave approvals</p>
-          </div>
-        </div>
-
-        {/* Purchase Requests */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <ShoppingCart className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{approvals.counts.PURCHASE_REQUEST}</span>
-            </div>
-            <p className="text-sm font-medium">Purchase Requests</p>
-            <p className="text-xs text-white/70">Pending purchase approvals</p>
-          </div>
-        </div>
-
-        {/* Asset Requests */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-purple-400 to-violet-500 rounded-2xl p-5 text-white shadow-lg shadow-purple-200/50">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <Package className="h-5 w-5" />
-              </div>
-              <span className="text-3xl font-bold">{approvals.counts.ASSET_REQUEST}</span>
-            </div>
-            <p className="text-sm font-medium">Asset Requests</p>
-            <p className="text-xs text-white/70">Pending asset approvals</p>
-          </div>
-        </div>
-      </div>
+      <StatsCardGrid columns={4} className="mb-6">
+        <StatsCard
+          title="Total Pending"
+          subtitle="Awaiting your action"
+          value={approvals.counts.total}
+          icon={Inbox}
+          color="amber"
+        />
+        <StatsCard
+          title="Leave Requests"
+          subtitle="Pending leave approvals"
+          value={approvals.counts.LEAVE_REQUEST}
+          icon={FileText}
+          color="blue"
+        />
+        <StatsCard
+          title="Purchase Requests"
+          subtitle="Pending purchase approvals"
+          value={approvals.counts.PURCHASE_REQUEST}
+          icon={ShoppingCart}
+          color="emerald"
+        />
+        <StatsCard
+          title="Asset Requests"
+          subtitle="Pending asset approvals"
+          value={approvals.counts.ASSET_REQUEST}
+          icon={Package}
+          color="purple"
+        />
+      </StatsCardGrid>
 
       {approvals.counts.total === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
