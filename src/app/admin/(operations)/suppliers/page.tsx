@@ -25,18 +25,29 @@ export default async function AdminSuppliersPage() {
 
   const tenantId = session.user.organizationId;
 
-  const [totalSuppliers, approvedSuppliers, categories, totalEngagements] = await Promise.all([
-    prisma.supplier.count({ where: { tenantId } }),
-    prisma.supplier.count({ where: { tenantId, status: 'APPROVED' } }),
-    prisma.supplier.findMany({
-      where: { tenantId },
-      select: { category: true },
-      distinct: ['category'],
-    }),
-    prisma.supplierEngagement.count({ where: { tenantId } }),
-  ]);
+  let totalSuppliers = 0;
+  let approvedSuppliers = 0;
+  let uniqueCategories = 0;
+  let totalEngagements = 0;
 
-  const uniqueCategories = categories.length;
+  try {
+    const [suppliersCount, approvedCount, categories, engagementsCount] = await Promise.all([
+      prisma.supplier.count({ where: { tenantId } }),
+      prisma.supplier.count({ where: { tenantId, status: 'APPROVED' } }),
+      prisma.supplier.findMany({
+        where: { tenantId },
+        select: { category: true },
+        distinct: ['category'],
+      }),
+      prisma.supplierEngagement.count({ where: { tenantId } }),
+    ]);
+    totalSuppliers = suppliersCount;
+    approvedSuppliers = approvedCount;
+    uniqueCategories = categories.length;
+    totalEngagements = engagementsCount;
+  } catch (error) {
+    console.error('Error fetching supplier stats:', error);
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
