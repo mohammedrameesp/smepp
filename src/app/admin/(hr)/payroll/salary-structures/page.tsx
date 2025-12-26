@@ -31,6 +31,12 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
     redirect('/');
   }
 
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
   const params = await searchParams;
   const page = parseInt(params.p || '1', 10);
   const pageSize = 20;
@@ -38,6 +44,7 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
 
   const where = search
     ? {
+        tenantId,
         user: {
           OR: [
             { name: { contains: search, mode: 'insensitive' as const } },
@@ -45,7 +52,7 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
           ],
         },
       }
-    : {};
+    : { tenantId };
 
   const [salaryStructures, total] = await Promise.all([
     prisma.salaryStructure.findMany({

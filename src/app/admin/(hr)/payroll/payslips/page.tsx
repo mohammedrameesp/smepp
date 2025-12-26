@@ -33,6 +33,12 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
     redirect('/');
   }
 
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
   const params = await searchParams;
   const page = parseInt(params.p || '1', 10);
   const pageSize = 20;
@@ -40,7 +46,7 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
   const monthFilter = params.month ? parseInt(params.month, 10) : undefined;
   const search = params.search || '';
 
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = { tenantId };
 
   if (yearFilter) {
     where.payrollRun = { ...((where.payrollRun as object) || {}), year: yearFilter };
@@ -93,6 +99,7 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
     }),
     prisma.payslip.count({ where }),
     prisma.payrollRun.findMany({
+      where: { tenantId },
       select: { year: true },
       distinct: ['year'],
       orderBy: { year: 'desc' },

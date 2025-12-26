@@ -18,6 +18,12 @@ export default async function AdminPurchaseRequestsPage() {
     redirect('/forbidden');
   }
 
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
   // Fetch statistics
   const [
     totalRequests,
@@ -28,14 +34,14 @@ export default async function AdminPurchaseRequestsPage() {
     completedRequests,
     totalAmountResult,
   ] = await Promise.all([
-    prisma.purchaseRequest.count(),
-    prisma.purchaseRequest.count({ where: { status: 'PENDING' } }),
-    prisma.purchaseRequest.count({ where: { status: 'APPROVED' } }),
-    prisma.purchaseRequest.count({ where: { status: 'REJECTED' } }),
-    prisma.purchaseRequest.count({ where: { status: 'UNDER_REVIEW' } }),
-    prisma.purchaseRequest.count({ where: { status: 'COMPLETED' } }),
+    prisma.purchaseRequest.count({ where: { tenantId } }),
+    prisma.purchaseRequest.count({ where: { tenantId, status: 'PENDING' } }),
+    prisma.purchaseRequest.count({ where: { tenantId, status: 'APPROVED' } }),
+    prisma.purchaseRequest.count({ where: { tenantId, status: 'REJECTED' } }),
+    prisma.purchaseRequest.count({ where: { tenantId, status: 'UNDER_REVIEW' } }),
+    prisma.purchaseRequest.count({ where: { tenantId, status: 'COMPLETED' } }),
     prisma.purchaseRequest.aggregate({
-      where: { status: { in: ['APPROVED', 'COMPLETED'] } },
+      where: { tenantId, status: { in: ['APPROVED', 'COMPLETED'] } },
       _sum: { totalAmountQAR: true },
     }),
   ]);

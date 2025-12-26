@@ -1,4 +1,8 @@
 import { Suspense } from 'react';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/core/auth';
+import { redirect } from 'next/navigation';
+import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,8 +12,9 @@ import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 import { format } from 'date-fns';
 import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/lib/domains/system/company-documents/document-utils';
 
-async function getCompanyDocuments() {
+async function getCompanyDocuments(tenantId: string) {
   const documents = await prisma.companyDocument.findMany({
+    where: { tenantId },
     orderBy: { expiryDate: 'asc' },
     include: {
       documentType: true,
@@ -36,17 +41,17 @@ async function getCompanyDocuments() {
   }));
 }
 
-async function getDocumentStats() {
+async function getDocumentStats(tenantId: string) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const warningDate = new Date(today);
   warningDate.setDate(warningDate.getDate() + DOCUMENT_EXPIRY_WARNING_DAYS);
 
   const [total, expired, expiring] = await Promise.all([
-    prisma.companyDocument.count(),
-    prisma.companyDocument.count({ where: { expiryDate: { lt: today } } }),
+    prisma.companyDocument.count({ where: { tenantId } }),
+    prisma.companyDocument.count({ where: { tenantId, expiryDate: { lt: today } } }),
     prisma.companyDocument.count({
-      where: { expiryDate: { gte: today, lte: warningDate } },
+      where: { tenantId, expiryDate: { gte: today, lte: warningDate } },
     }),
   ]);
 
@@ -78,9 +83,9 @@ function ExpiryBadge({ status, daysRemaining }: { status: string; daysRemaining:
   );
 }
 
-async function DocumentList() {
-  const documents = await getCompanyDocuments();
-  const stats = await getDocumentStats();
+async function DocumentList({ tenantId }: { tenantId: string }) {
+  const documents = await getCompanyDocuments(tenantId);
+  const stats = await getDocumentStats(tenantId);
 
   return (
     <>
@@ -190,7 +195,23 @@ async function DocumentList() {
   );
 }
 
-export default function CompanyDocumentsPage() {
+export default async function CompanyDocumentsPage() {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    redirect('/login');
+  }
+
+  if (process.env.NODE_ENV !== 'development' && session.user.role !== Role.ADMIN) {
+    redirect('/forbidden');
+  }
+
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Header */}
@@ -213,7 +234,7 @@ export default function CompanyDocumentsPage() {
           <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
         </div>
       }>
-        <DocumentList />
+        <DocumentList tenantId={tenantId} />
       </Suspense>
     </div>
   );

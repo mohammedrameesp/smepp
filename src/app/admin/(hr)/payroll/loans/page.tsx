@@ -46,12 +46,18 @@ export default async function LoansPage({ searchParams }: PageProps) {
     redirect('/');
   }
 
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
   const params = await searchParams;
   const statusFilter = params.status as LoanStatus | undefined;
   const page = parseInt(params.p || '1', 10);
   const pageSize = 20;
 
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = { tenantId };
   if (statusFilter && Object.values(LoanStatus).includes(statusFilter)) {
     where.status = statusFilter;
   }
@@ -84,6 +90,7 @@ export default async function LoansPage({ searchParams }: PageProps) {
     prisma.employeeLoan.count({ where }),
     prisma.employeeLoan.groupBy({
       by: ['status'],
+      where: { tenantId },
       _count: true,
       _sum: {
         remainingAmount: true,

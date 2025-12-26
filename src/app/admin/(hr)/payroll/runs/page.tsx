@@ -32,13 +32,19 @@ export default async function PayrollRunsPage({ searchParams }: PageProps) {
     redirect('/');
   }
 
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
   const params = await searchParams;
   const page = parseInt(params.p || '1', 10);
   const pageSize = 20;
   const yearFilter = params.year ? parseInt(params.year, 10) : undefined;
   const statusFilter = params.status as PayrollStatus | undefined;
 
-  const where: Record<string, unknown> = {};
+  const where: Record<string, unknown> = { tenantId };
   if (yearFilter) where.year = yearFilter;
   if (statusFilter) where.status = statusFilter;
 

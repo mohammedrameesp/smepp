@@ -19,8 +19,15 @@ export default async function ActivityLogPage() {
     redirect('/forbidden');
   }
 
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
   // Fetch recent activity logs
   const activities = await prisma.activityLog.findMany({
+    where: { tenantId },
     take: 50,
     orderBy: { at: 'desc' },
     include: {
