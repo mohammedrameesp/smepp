@@ -26,6 +26,12 @@ export default async function PayrollDashboardPage() {
     redirect('/');
   }
 
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
+
+  const tenantId = session.user.organizationId;
+
   // Get statistics
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
@@ -39,22 +45,23 @@ export default async function PayrollDashboardPage() {
     activeLoans,
     recentPayrollRuns,
   ] = await Promise.all([
-    prisma.salaryStructure.count({ where: { isActive: true } }),
+    prisma.salaryStructure.count({ where: { tenantId, isActive: true } }),
     prisma.salaryStructure.aggregate({
-      where: { isActive: true },
+      where: { tenantId, isActive: true },
       _sum: { grossSalary: true },
     }),
     prisma.payrollRun.count({
-      where: { status: { in: [PayrollStatus.DRAFT, PayrollStatus.PENDING_APPROVAL] } },
+      where: { tenantId, status: { in: [PayrollStatus.DRAFT, PayrollStatus.PENDING_APPROVAL] } },
     }),
-    prisma.payrollRun.findUnique({
-      where: { year_month: { year: currentYear, month: currentMonth } },
+    prisma.payrollRun.findFirst({
+      where: { tenantId, year: currentYear, month: currentMonth },
     }),
     prisma.employeeLoan.findMany({
-      where: { status: LoanStatus.ACTIVE },
+      where: { tenantId, status: LoanStatus.ACTIVE },
       select: { remainingAmount: true },
     }),
     prisma.payrollRun.findMany({
+      where: { tenantId },
       orderBy: [{ year: 'desc' }, { month: 'desc' }],
       take: 5,
       include: {

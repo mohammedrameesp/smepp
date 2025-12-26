@@ -11,6 +11,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     // Get search query parameter
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q') || '';
@@ -18,6 +25,7 @@ export async function GET(request: NextRequest) {
     // Get distinct categories from database
     const subscriptions = await prisma.subscription.findMany({
       where: {
+        tenantId,
         category: {
           not: null,
           contains: query,
