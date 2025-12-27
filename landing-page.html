@@ -593,6 +593,143 @@
             font-weight: 700;
         }
 
+        /* Pain Points Section */
+        .pain-points {
+            padding: 6rem 0;
+            background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 50%, #fefce8 100%);
+        }
+
+        .pain-points-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 4rem;
+        }
+
+        .pain-points-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .pain-points-title {
+            font-size: 2.5rem;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+        }
+
+        .pain-points-title span {
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .pain-points-subtitle {
+            font-size: 1.125rem;
+            color: var(--gray-600);
+        }
+
+        .pain-points-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        .pain-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.75rem;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pain-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ef4444, #10b981);
+        }
+
+        .pain-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--success);
+        }
+
+        .pain-emoji {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .pain-problem {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px dashed var(--gray-200);
+        }
+
+        .pain-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.875rem;
+        }
+
+        .pain-icon.problem {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .pain-icon.solution {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .pain-text {
+            font-size: 0.95rem;
+            color: var(--gray-700);
+            font-style: italic;
+        }
+
+        .pain-solution {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .solution-text {
+            font-size: 0.95rem;
+            color: var(--gray-800);
+            font-weight: 600;
+        }
+
+        .pain-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0.75rem 0;
+            color: var(--gray-400);
+        }
+
         /* Domains Section */
         .domains {
             padding: 6rem 0;
@@ -1221,6 +1358,10 @@
                 grid-template-columns: repeat(2, 1fr);
             }
 
+            .pain-points-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
             .domains-grid {
                 grid-template-columns: 1fr;
             }
@@ -1231,56 +1372,350 @@
             }
 
             .pricing-grid {
-                grid-template-columns: 1fr;
-                max-width: 400px;
-                margin-left: auto;
-                margin-right: auto;
+                grid-template-columns: 1fr !important;
+                max-width: 450px !important;
+                margin-left: auto !important;
+                margin-right: auto !important;
             }
 
             .footer-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .floating-card {
+                display: none;
+            }
         }
 
         @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+
             .nav-links {
                 display: none;
+            }
+
+            .nav-cta .btn-ghost {
+                display: none;
+            }
+
+            .nav-cta .btn-primary {
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
             }
 
             .mobile-menu-btn {
                 display: block;
             }
 
+            .hero {
+                padding: 6rem 0 3rem;
+                min-height: auto;
+            }
+
             .hero h1 {
-                font-size: 2.5rem;
+                font-size: 2rem;
+            }
+
+            .hero-description {
+                font-size: 1rem;
+            }
+
+            .hero-badge {
+                font-size: 0.75rem;
+                padding: 0.375rem 0.75rem;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .hero-cta .btn {
+                width: 100%;
+            }
+
+            .hero-stats {
+                gap: 1.5rem;
+                flex-wrap: wrap;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+            }
+
+            .stat-label {
+                font-size: 0.75rem;
+            }
+
+            .hero-visual {
+                margin-top: 2rem;
+            }
+
+            .dashboard-preview {
+                padding: 1rem;
+            }
+
+            .dashboard-cards {
+                gap: 0.5rem;
+            }
+
+            .mini-card {
+                padding: 0.75rem;
+            }
+
+            .mini-card-value {
+                font-size: 1.25rem;
+            }
+
+            .mini-card-label {
+                font-size: 0.65rem;
+            }
+
+            .section-header {
+                margin-bottom: 2rem;
+            }
+
+            .section-label {
+                font-size: 0.75rem;
             }
 
             .section-title {
-                font-size: 2rem;
+                font-size: 1.75rem;
+            }
+
+            .section-description {
+                font-size: 1rem;
+            }
+
+            .features, .domains, .qatar, .security, .pricing, .cta, .pain-points {
+                padding: 3rem 0;
             }
 
             .features-grid {
                 grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .pain-points-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .pain-points-title {
+                font-size: 1.75rem;
+            }
+
+            .pain-card {
+                padding: 1.25rem;
+            }
+
+            .pain-emoji {
+                font-size: 1.5rem;
+            }
+
+            .pain-text, .solution-text {
+                font-size: 0.875rem;
+            }
+
+            .feature-card {
+                padding: 1.5rem;
+            }
+
+            .feature-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .feature-title {
+                font-size: 1.1rem;
+            }
+
+            .feature-description {
+                font-size: 0.875rem;
+            }
+
+            .domain-card {
+                padding: 1.5rem;
+            }
+
+            .domain-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .domain-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 1.5rem;
+            }
+
+            .domain-title {
+                font-size: 1.25rem;
+            }
+
+            .domain-features {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .domain-feature {
+                padding: 0.625rem 0.875rem;
+                font-size: 0.85rem;
+            }
+
+            .qatar-text h2,
+            .security-text h2 {
+                font-size: 1.75rem;
+            }
+
+            .qatar-text p,
+            .security-text p {
+                font-size: 1rem;
+            }
+
+            .qatar-features {
+                gap: 0.75rem;
+            }
+
+            .qatar-feature {
+                padding: 0.875rem 1rem;
+            }
+
+            .qatar-feature-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1.25rem;
+            }
+
+            .qatar-feature-text h4 {
+                font-size: 0.9rem;
+            }
+
+            .qatar-feature-text p {
+                font-size: 0.8rem;
             }
 
             .qatar-visual {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+
+            .qatar-stat-card {
+                padding: 1rem;
+            }
+
+            .qatar-stat-icon {
+                font-size: 1.75rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .qatar-stat-value {
+                font-size: 1.5rem;
+            }
+
+            .qatar-stat-label {
+                font-size: 0.75rem;
+            }
+
+            .security-visual {
+                order: 2;
+                margin-top: 2rem;
+            }
+
+            .security-text {
+                order: 1;
+            }
+
+            .security-card {
+                padding: 1.5rem;
+            }
+
+            .security-badges {
+                gap: 0.5rem;
+            }
+
+            .security-badge {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+            }
+
+            .pricing-card {
+                padding: 1.5rem;
+            }
+
+            .pricing-card.popular::before {
+                font-size: 0.65rem;
+                padding: 0.375rem 0.75rem;
+            }
+
+            .pricing-name {
+                font-size: 1.1rem;
+            }
+
+            .pricing-amount {
+                font-size: 2.5rem;
+            }
+
+            .pricing-currency {
+                font-size: 1.25rem;
+            }
+
+            .pricing-features li {
+                font-size: 0.875rem;
+                padding: 0.5rem 0;
             }
 
             .cta-card {
-                padding: 3rem 1.5rem;
+                padding: 2rem 1.25rem;
+                border-radius: 16px;
             }
 
             .cta h2 {
-                font-size: 1.75rem;
+                font-size: 1.5rem;
+            }
+
+            .cta p {
+                font-size: 1rem;
             }
 
             .cta-buttons {
                 flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .cta-buttons .btn {
+                width: 100%;
+            }
+
+            .footer {
+                padding: 3rem 0 1.5rem;
             }
 
             .footer-grid {
                 grid-template-columns: 1fr;
+                gap: 2rem;
+                text-align: center;
+            }
+
+            .footer-brand {
+                text-align: center;
+            }
+
+            .footer-links {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem 1.5rem;
+            }
+
+            .footer-links li {
+                margin-bottom: 0;
             }
 
             .footer-bottom {
@@ -1288,6 +1723,129 @@
                 gap: 1rem;
                 text-align: center;
             }
+
+            .trusted-by {
+                padding: 2rem 0;
+            }
+
+            .trusted-logos {
+                gap: 2rem;
+            }
+
+            .trusted-logo {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 1.75rem;
+            }
+
+            .hero-stats {
+                gap: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.25rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .dashboard-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .dashboard-cards .mini-card:last-child {
+                grid-column: span 2;
+            }
+
+            .qatar-visual {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .pricing-amount {
+                font-size: 2.25rem;
+            }
+
+            .nav-inner {
+                height: 60px;
+            }
+
+            .logo {
+                font-size: 1.25rem;
+            }
+
+            .logo-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+            }
+        }
+
+        /* Mobile menu overlay */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 1001;
+            padding: 1.5rem;
+            flex-direction: column;
+        }
+
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        .mobile-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .mobile-menu-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .mobile-menu-links {
+            list-style: none;
+            flex: 1;
+        }
+
+        .mobile-menu-links li {
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .mobile-menu-links a {
+            display: block;
+            padding: 1rem 0;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--gray-800);
+            text-decoration: none;
+        }
+
+        .mobile-menu-cta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .mobile-menu-cta .btn {
+            width: 100%;
         }
 
         /* Animations */
@@ -1339,6 +1897,31 @@
             </div>
         </div>
     </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <a href="#" class="logo">
+                SME<span style="color: var(--primary-light);">++</span>
+            </a>
+            <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Close menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <ul class="mobile-menu-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#domains">Modules</a></li>
+            <li><a href="#qatar">Why Qatar</a></li>
+            <li><a href="#security">Security</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+        </ul>
+        <div class="mobile-menu-cta">
+            <a href="#" class="btn btn-secondary">Sign In</a>
+            <a href="#" class="btn btn-primary">Get Started</a>
+        </div>
+    </div>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -1439,6 +2022,144 @@
                     <span class="trusted-logo">BuildQatar</span>
                     <span class="trusted-logo">FinanceGulf</span>
                     <span class="trusted-logo">CreativeStudio</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pain Points Section -->
+    <section class="pain-points" id="problems">
+        <div class="container">
+            <div class="pain-points-header">
+                <div class="pain-points-badge">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    Replace Excel + Reduce Surprises
+                </div>
+                <h2 class="pain-points-title">Sound <span>Familiar?</span></h2>
+                <p class="pain-points-subtitle">
+                    These common headaches cost businesses time and money. SME++ solves them all.
+                </p>
+            </div>
+            <div class="pain-points-grid">
+                <!-- Card 1: Trade License -->
+                <div class="pain-card">
+                    <div class="pain-emoji">📋</div>
+                    <div class="pain-problem">
+                        <div class="pain-icon problem">✗</div>
+                        <div class="pain-text">"I forgot to renew the trade license..."</div>
+                    </div>
+                    <div class="pain-solution">
+                        <div class="pain-icon solution">✓</div>
+                        <div class="solution-text">Expiry alerts for all company documents - CR, licenses, insurance</div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Assets -->
+                <div class="pain-card">
+                    <div class="pain-emoji">💻</div>
+                    <div class="pain-problem">
+                        <div class="pain-icon problem">✗</div>
+                        <div class="pain-text">"Which laptop does Ahmed have?"</div>
+                    </div>
+                    <div class="pain-solution">
+                        <div class="pain-icon solution">✓</div>
+                        <div class="solution-text">Asset assignment tracking with full history in one click</div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Software Spending -->
+                <div class="pain-card">
+                    <div class="pain-emoji">💳</div>
+                    <div class="pain-problem">
+                        <div class="pain-icon problem">✗</div>
+                        <div class="pain-text">"How much are we spending on software?"</div>
+                    </div>
+                    <div class="pain-solution">
+                        <div class="pain-icon solution">✓</div>
+                        <div class="solution-text">Subscription cost dashboard with renewal tracking</div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Passport Expiry -->
+                <div class="pain-card">
+                    <div class="pain-emoji">🛂</div>
+                    <div class="pain-problem">
+                        <div class="pain-icon problem">✗</div>
+                        <div class="pain-text">"Someone's passport is expiring?"</div>
+                    </div>
+                    <div class="pain-solution">
+                        <div class="pain-icon solution">✓</div>
+                        <div class="solution-text">Employee document tracking - QID, passport, visa expiry alerts</div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Purchase Approval -->
+                <div class="pain-card">
+                    <div class="pain-emoji">🛒</div>
+                    <div class="pain-problem">
+                        <div class="pain-icon problem">✗</div>
+                        <div class="pain-text">"Who approved this purchase?"</div>
+                    </div>
+                    <div class="pain-solution">
+                        <div class="pain-icon solution">✓</div>
+                        <div class="solution-text">Simple purchase approval trail with full audit history</div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Vehicle Registration -->
+                <div class="pain-card">
+                    <div class="pain-emoji">🚗</div>
+                    <div class="pain-problem">
+                        <div class="pain-icon problem">✗</div>
+                        <div class="pain-text">"The car registration expired!"</div>
+                    </div>
+                    <div class="pain-solution">
+                        <div class="pain-icon solution">✓</div>
+                        <div class="solution-text">Vehicle & Istimara tracking with insurance reminders</div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Leave Balance -->
+                <div class="pain-card">
+                    <div class="pain-emoji">🏖️</div>
+                    <div class="pain-problem">
+                        <div class="pain-icon problem">✗</div>
+                        <div class="pain-text">"How many leave days does Sara have left?"</div>
+                    </div>
+                    <div class="pain-solution">
+                        <div class="pain-icon solution">✓</div>
+                        <div class="solution-text">Real-time leave balance tracking with approval workflow</div>
+                    </div>
+                </div>
+
+                <!-- Card 8: Payroll -->
+                <div class="pain-card">
+                    <div class="pain-emoji">💰</div>
+                    <div class="pain-problem">
+                        <div class="pain-icon problem">✗</div>
+                        <div class="pain-text">"WPS file rejected again..."</div>
+                    </div>
+                    <div class="pain-solution">
+                        <div class="pain-icon solution">✓</div>
+                        <div class="solution-text">Qatar-compliant WPS file generation, every time</div>
+                    </div>
+                </div>
+
+                <!-- Card 9: Supplier Info -->
+                <div class="pain-card">
+                    <div class="pain-emoji">🚚</div>
+                    <div class="pain-problem">
+                        <div class="pain-icon problem">✗</div>
+                        <div class="pain-text">"What was that supplier's contact?"</div>
+                    </div>
+                    <div class="pain-solution">
+                        <div class="pain-icon solution">✓</div>
+                        <div class="solution-text">Centralized supplier database with engagement history</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1859,66 +2580,53 @@
                     </svg>
                     Simple Pricing
                 </div>
-                <h2 class="section-title">Choose the Right Plan for Your Business</h2>
+                <h2 class="section-title">Free Forever. Or Go Plus.</h2>
                 <p class="section-description">
-                    Start with a free trial and upgrade as your business grows.
-                    All plans include core features.
+                    All core features are free. Upgrade to Plus for notifications & storage.
+                    No limits on assets, subscriptions, or employees.
                 </p>
             </div>
-            <div class="pricing-grid">
+            <div class="pricing-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 900px; margin: 3rem auto 0;">
+                <!-- Free Plan -->
                 <div class="pricing-card">
-                    <div class="pricing-name">Starter</div>
-                    <div class="pricing-desc">For small teams getting started</div>
+                    <div class="pricing-name">Free</div>
+                    <div class="pricing-desc">Everything that doesn't cost us</div>
                     <div class="pricing-price">
                         <span class="pricing-currency">QAR</span>
-                        <span class="pricing-amount">499</span>
-                        <span class="pricing-period">/month</span>
+                        <span class="pricing-amount">0</span>
+                        <span class="pricing-period">/forever</span>
                     </div>
                     <ul class="pricing-features">
-                        <li><span class="check">✓</span> Up to 10 employees</li>
+                        <li><span class="check">✓</span> <strong style="color: var(--success);">Unlimited</strong> employees</li>
+                        <li><span class="check">✓</span> <strong style="color: var(--success);">Unlimited</strong> assets</li>
+                        <li><span class="check">✓</span> <strong style="color: var(--success);">Unlimited</strong> subscriptions</li>
                         <li><span class="check">✓</span> Asset management</li>
-                        <li><span class="check">✓</span> Subscription tracking</li>
                         <li><span class="check">✓</span> Leave management</li>
-                        <li><span class="check">✓</span> Basic reports</li>
-                        <li><span class="check">✓</span> Email support</li>
+                        <li><span class="check">✓</span> Payroll & WPS</li>
+                        <li><span class="check">✓</span> Reports & dashboards</li>
+                        <li><span class="check">✓</span> In-app notifications</li>
                     </ul>
-                    <a href="#" class="btn btn-secondary pricing-btn">Get Started</a>
+                    <a href="#" class="btn btn-secondary pricing-btn">Start Free</a>
                 </div>
+                <!-- Plus Plan -->
                 <div class="pricing-card popular">
-                    <div class="pricing-name">Professional</div>
-                    <div class="pricing-desc">For growing businesses</div>
+                    <div class="pricing-name">Plus</div>
+                    <div class="pricing-desc">Full notifications & storage</div>
                     <div class="pricing-price">
                         <span class="pricing-currency">QAR</span>
-                        <span class="pricing-amount">999</span>
+                        <span class="pricing-amount">200</span>
                         <span class="pricing-period">/month</span>
                     </div>
                     <ul class="pricing-features">
-                        <li><span class="check">✓</span> Up to 50 employees</li>
-                        <li><span class="check">✓</span> Everything in Starter</li>
-                        <li><span class="check">✓</span> Payroll & WPS</li>
-                        <li><span class="check">✓</span> Supplier management</li>
-                        <li><span class="check">✓</span> Purchase requests</li>
-                        <li><span class="check">✓</span> Company documents</li>
+                        <li><span class="check">✓</span> Everything in Free</li>
+                        <li><span class="check">✓</span> <strong style="color: var(--primary);">Custom domain</strong></li>
+                        <li><span class="check">✓</span> <strong style="color: var(--primary);">Google & Microsoft SSO</strong></li>
+                        <li><span class="check">✓</span> <strong style="color: var(--primary);">Email alerts</strong></li>
+                        <li><span class="check">✓</span> <strong style="color: var(--primary);">WhatsApp alerts</strong></li>
+                        <li><span class="check">✓</span> <strong style="color: var(--primary);">10 GB file storage</strong></li>
                         <li><span class="check">✓</span> Priority support</li>
                     </ul>
                     <a href="#" class="btn btn-primary pricing-btn">Get Started</a>
-                </div>
-                <div class="pricing-card">
-                    <div class="pricing-name">Enterprise</div>
-                    <div class="pricing-desc">For large organizations</div>
-                    <div class="pricing-price">
-                        <span class="pricing-amount">Custom</span>
-                    </div>
-                    <ul class="pricing-features">
-                        <li><span class="check">✓</span> Unlimited employees</li>
-                        <li><span class="check">✓</span> Everything in Professional</li>
-                        <li><span class="check">✓</span> Custom integrations</li>
-                        <li><span class="check">✓</span> Dedicated support</li>
-                        <li><span class="check">✓</span> On-premise option</li>
-                        <li><span class="check">✓</span> SLA guarantee</li>
-                        <li><span class="check">✓</span> Training included</li>
-                    </ul>
-                    <a href="#" class="btn btn-secondary pricing-btn">Contact Sales</a>
                 </div>
             </div>
         </div>
@@ -1931,8 +2639,7 @@
                 <div class="cta-content">
                     <h2>Ready to Streamline Your Operations?</h2>
                     <p>
-                        Join hundreds of Qatar businesses already using SME++ to manage their
-                        assets, subscriptions, and employees.
+                        Be among the first Qatar businesses to manage your assets, subscriptions, and employees — all in one place.
                     </p>
                     <div class="cta-buttons">
                         <a href="#" class="btn btn-primary btn-large">Start Free Trial</a>
@@ -2006,6 +2713,29 @@
             } else {
                 nav.classList.remove('scrolled');
             }
+        });
+
+        // Mobile menu functionality
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuClose = document.getElementById('mobileMenuClose');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        mobileMenuClose.addEventListener('click', () => {
+            mobileMenu.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+
+        // Close mobile menu when clicking a link
+        document.querySelectorAll('.mobile-menu-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
         });
 
         // Smooth scroll for anchor links
