@@ -22,6 +22,12 @@ async function resolveChangeRequestHandler(
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
+
+  const tenantId = session.user.organizationId;
   const id = context.params?.id;
   const body = await request.json();
   const validation = resolveSchema.safeParse(body);
@@ -33,9 +39,9 @@ async function resolveChangeRequestHandler(
     );
   }
 
-  // Find the change request
-  const changeRequest = await prisma.profileChangeRequest.findUnique({
-    where: { id },
+  // Find the change request within tenant
+  const changeRequest = await prisma.profileChangeRequest.findFirst({
+    where: { id, tenantId },
     include: {
       hrProfile: {
         include: {
@@ -88,10 +94,16 @@ async function getChangeRequestHandler(
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
+
+  const tenantId = session.user.organizationId;
   const id = context.params?.id;
 
-  const changeRequest = await prisma.profileChangeRequest.findUnique({
-    where: { id },
+  const changeRequest = await prisma.profileChangeRequest.findFirst({
+    where: { id, tenantId },
     include: {
       hrProfile: {
         include: {

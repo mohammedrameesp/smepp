@@ -295,6 +295,9 @@ model User {
   // Organization membership (multi-tenant)
   organizationMemberships OrganizationUser[]
 
+  // Depreciation relations
+  depreciationRecords DepreciationRecord[] @relation("DepreciationRecordCalculator")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -416,6 +419,7 @@ model Organization {
   assetRequests         AssetRequest[]
   companyDocumentTypes  CompanyDocumentType[]
   companyDocuments      CompanyDocument[]
+  depreciationRecords   DepreciationRecord[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -517,13 +521,25 @@ model Asset {
   notes    String? // General notes/remarks about the asset
   location String? // Physical location of the asset (Office, Building, Room, etc.)
 
+  // Depreciation fields
+  depreciationCategoryId  String?
+  depreciationCategory    DepreciationCategory? @relation(fields: [depreciationCategoryId], references: [id])
+  salvageValue            Decimal?              @default(0) @db.Decimal(12, 2)
+  customUsefulLifeMonths  Int? // Override category default if needed
+  depreciationStartDate   DateTime? // Defaults to purchaseDate
+  accumulatedDepreciation Decimal?              @default(0) @db.Decimal(12, 2)
+  netBookValue            Decimal?              @db.Decimal(12, 2)
+  lastDepreciationDate    DateTime?
+  isFullyDepreciated      Boolean               @default(false)
+
   // Relations & Metadata
-  history            AssetHistory[]
-  maintenanceRecords MaintenanceRecord[]
-  assetRequests      AssetRequest[]
-  companyDocuments   CompanyDocument[] // Vehicle documents (insurance, istimara)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  history             AssetHistory[]
+  maintenanceRecords  MaintenanceRecord[]
+  assetRequests       AssetRequest[]
+  companyDocuments    CompanyDocument[] // Vehicle documents (insurance, istimara)
+  depreciationRecords DepreciationRecord[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
   @@unique([tenantId, assetTag])
   @@index([warrantyExpiry])
@@ -1729,6 +1745,49 @@ model AssetRequestHistory {
 
   @@index([assetRequestId])
   @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ASSET DEPRECIATION - Qatar Tax Rates & IFRS Compliance
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model DepreciationCategory {
+  id              String  @id @default(cuid())
+  name            String // "Buildings", "Vehicles", etc.
+  code            String  @unique // "BUILDINGS", "VEHICLES", etc.
+  annualRate      Decimal @db.Decimal(5, 2) // 4.00, 20.00
+  usefulLifeYears Int // 25, 5, etc.
+  description     String?
+  isActive        Boolean @default(true)
+
+  assets Asset[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DepreciationRecord {
+  id       String       @id @default(cuid())
+  tenantId String
+  tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assetId  String
+  asset    Asset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  periodStart        DateTime
+  periodEnd          DateTime
+  depreciationAmount Decimal  @db.Decimal(12, 2)
+  accumulatedAmount  Decimal  @db.Decimal(12, 2)
+  netBookValue       Decimal  @db.Decimal(12, 2)
+
+  calculationType String // "SCHEDULED" | "MANUAL"
+  calculatedAt    DateTime @default(now())
+  calculatedById  String?
+  calculatedBy    User?    @relation("DepreciationRecordCalculator", fields: [calculatedById], references: [id])
+  notes           String?
+
+  @@index([tenantId])
+  @@index([assetId])
+  @@index([periodEnd])
 }
 
 // ===== Company Document Management =====

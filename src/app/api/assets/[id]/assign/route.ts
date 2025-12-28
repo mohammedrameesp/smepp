@@ -21,10 +21,17 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     // Parse and validate request body
     const body = await request.json();
     const validation = assignAssetSchema.safeParse(body);
-    
+
     if (!validation.success) {
       return NextResponse.json({
         error: 'Invalid request body',
@@ -36,9 +43,9 @@ export async function POST(
 
     const { id } = await params;
 
-    // Get current asset for logging
-    const currentAsset = await prisma.asset.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent cross-tenant access
+    const currentAsset = await prisma.asset.findFirst({
+      where: { id, tenantId },
       include: { assignedUser: true },
     });
 
@@ -46,11 +53,16 @@ export async function POST(
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
     }
 
-    // Verify assigned user exists if provided
+    // Verify assigned user exists and belongs to same organization
     if (assignedUserId) {
-      const user = await prisma.user.findUnique({ where: { id: assignedUserId } });
+      const user = await prisma.user.findFirst({
+        where: {
+          id: assignedUserId,
+          organizationMemberships: { some: { organizationId: tenantId } },
+        },
+      });
       if (!user) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        return NextResponse.json({ error: 'User not found in this organization' }, { status: 404 });
       }
     }
 

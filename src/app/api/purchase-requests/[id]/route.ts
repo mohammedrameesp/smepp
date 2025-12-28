@@ -18,10 +18,16 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    const purchaseRequest = await prisma.purchaseRequest.findUnique({
-      where: { id },
+    const purchaseRequest = await prisma.purchaseRequest.findFirst({
+      where: { id, tenantId },
       include: {
         requester: {
           select: {
@@ -85,11 +91,17 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Get current request
-    const currentRequest = await prisma.purchaseRequest.findUnique({
-      where: { id },
+    // Get current request within tenant
+    const currentRequest = await prisma.purchaseRequest.findFirst({
+      where: { id, tenantId },
       include: { items: true },
     });
 
@@ -306,11 +318,17 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Get current request
-    const currentRequest = await prisma.purchaseRequest.findUnique({
-      where: { id },
+    // Get current request within tenant
+    const currentRequest = await prisma.purchaseRequest.findFirst({
+      where: { id, tenantId },
     });
 
     if (!currentRequest) {

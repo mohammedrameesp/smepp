@@ -7,7 +7,7 @@ config({ path: resolve(process.cwd(), '.env.local') });
 
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const bucketName = process.env.SUPABASE_BUCKET || 'accreditation-photos';
+const bucketName = process.env.SUPABASE_BUCKET || 'smepp-storage';
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('❌ Missing Supabase environment variables');
@@ -42,7 +42,14 @@ async function setupStorage() {
     const { data, error } = await supabase.storage.createBucket(bucketName, {
       public: true,
       fileSizeLimit: 10485760, // 10MB
-      allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'],
+      allowedMimeTypes: [
+        'image/png',
+        'image/jpeg',
+        'image/jpg',
+        'image/webp',
+        'image/svg+xml',
+        'application/pdf',
+      ],
     });
 
     if (error) {

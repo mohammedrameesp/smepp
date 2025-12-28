@@ -26,26 +26,44 @@ const authConfigSchema = z.object({
   customAzureTenantId: z.string().nullable().optional(),
 }).refine(
   (data) => {
-    // If Google client ID is provided, secret must also be provided (and vice versa)
-    const hasGoogleId = data.customGoogleClientId && data.customGoogleClientId.trim() !== '';
-    const hasGoogleSecret = data.customGoogleClientSecret && data.customGoogleClientSecret.trim() !== '';
-    if (hasGoogleId !== hasGoogleSecret) {
+    // Validation for Google OAuth:
+    // - If clearing (both null), that's fine
+    // - If only updating client ID (secret not in request), that's fine
+    // - If providing new secret, client ID must also be provided
+    // - If explicitly setting secret to null, client ID should also be null
+    const googleIdIsNull = data.customGoogleClientId === null;
+    const googleSecretIsNull = data.customGoogleClientSecret === null;
+    const googleSecretProvided = data.customGoogleClientSecret !== undefined && data.customGoogleClientSecret !== null && data.customGoogleClientSecret.trim() !== '';
+
+    // If explicitly clearing secret (null), ID should also be cleared
+    if (googleSecretIsNull && !googleIdIsNull && data.customGoogleClientId?.trim()) {
+      return false;
+    }
+    // If providing new secret, must also provide ID
+    if (googleSecretProvided && !data.customGoogleClientId?.trim()) {
       return false;
     }
     return true;
   },
-  { message: 'Google OAuth client ID and secret must be provided together', path: ['customGoogleClientId'] }
+  { message: 'When providing Google OAuth client secret, client ID must also be provided', path: ['customGoogleClientId'] }
 ).refine(
   (data) => {
-    // If Azure client ID is provided, secret must also be provided (and vice versa)
-    const hasAzureId = data.customAzureClientId && data.customAzureClientId.trim() !== '';
-    const hasAzureSecret = data.customAzureClientSecret && data.customAzureClientSecret.trim() !== '';
-    if (hasAzureId !== hasAzureSecret) {
+    // Same validation logic for Azure OAuth
+    const azureIdIsNull = data.customAzureClientId === null;
+    const azureSecretIsNull = data.customAzureClientSecret === null;
+    const azureSecretProvided = data.customAzureClientSecret !== undefined && data.customAzureClientSecret !== null && data.customAzureClientSecret.trim() !== '';
+
+    // If explicitly clearing secret (null), ID should also be cleared
+    if (azureSecretIsNull && !azureIdIsNull && data.customAzureClientId?.trim()) {
+      return false;
+    }
+    // If providing new secret, must also provide ID
+    if (azureSecretProvided && !data.customAzureClientId?.trim()) {
       return false;
     }
     return true;
   },
-  { message: 'Azure OAuth client ID and secret must be provided together', path: ['customAzureClientId'] }
+  { message: 'When providing Azure OAuth client secret, client ID must also be provided', path: ['customAzureClientId'] }
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════

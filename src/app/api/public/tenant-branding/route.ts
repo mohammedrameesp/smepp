@@ -47,6 +47,11 @@ export async function GET(request: NextRequest) {
         allowedAuthMethods: true,
         allowedEmailDomains: true,
         enforceDomainRestriction: true,
+        // Custom OAuth configuration (check if properly configured)
+        customGoogleClientId: true,
+        customGoogleClientSecret: true,
+        customAzureClientId: true,
+        customAzureClientSecret: true,
       },
     });
 
@@ -56,6 +61,10 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    // Check if OAuth is properly configured (both client ID and secret exist)
+    const hasCustomGoogleOAuth = !!(org.customGoogleClientId && org.customGoogleClientSecret);
+    const hasCustomAzureOAuth = !!(org.customAzureClientId && org.customAzureClientSecret);
 
     return NextResponse.json<TenantBrandingResponse>({
       found: true,
@@ -73,6 +82,9 @@ export async function GET(request: NextRequest) {
         allowedAuthMethods: (org.allowedAuthMethods || []) as TenantBranding['allowedAuthMethods'],
         allowedEmailDomains: org.allowedEmailDomains || [],
         enforceDomainRestriction: org.enforceDomainRestriction || false,
+        // OAuth configuration status (true only if properly configured with ID + secret)
+        hasCustomGoogleOAuth,
+        hasCustomAzureOAuth,
       },
     });
   } catch (error) {

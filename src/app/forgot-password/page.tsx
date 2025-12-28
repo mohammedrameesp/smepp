@@ -7,12 +7,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Mail, AlertCircle, Check, ArrowLeft } from 'lucide-react';
+import { useSubdomain } from '@/hooks/use-subdomain';
+import { useTenantBranding } from '@/hooks/use-tenant-branding';
+import { TenantBrandedPanel } from '@/components/auth/TenantBrandedPanel';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Get subdomain and tenant branding
+  const { subdomain, isLoading: subdomainLoading } = useSubdomain();
+  const { branding, isLoading: brandingLoading } = useTenantBranding(subdomain);
+
+  // Dynamic colors based on branding
+  const primaryColor = branding?.primaryColor || '#2563eb';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,44 +50,39 @@ export default function ForgotPasswordPage() {
     }
   };
 
+  const orgName = branding?.organizationName || 'SME++';
+
   return (
     <div className="min-h-screen flex">
-      {/* Left Column - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="relative z-10 flex flex-col justify-center px-16 py-24">
-          <div className="max-w-md">
-            <div className="mb-8">
-              <img
-                src="/sme-wordmark-white.png"
-                alt="SME++ Logo"
-                className="h-12 w-auto"
-              />
-            </div>
-
-            <h1 className="text-4xl font-bold text-white mb-4">
-              SME++
-            </h1>
-            <p className="text-xl text-blue-100 mb-6">
-              All-in-one Business Management
-            </p>
-            <p className="text-blue-200 text-base leading-relaxed">
-              Manage assets, employees, suppliers, subscriptions, and operations in one unified platform built for growing businesses.
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Left Column - Dynamic Branding */}
+      <TenantBrandedPanel
+        branding={branding}
+        isLoading={subdomainLoading || brandingLoading}
+        variant={subdomain ? 'tenant' : 'super-admin'}
+      />
 
       {/* Right Column - Form */}
       <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <img src="/sme-icon-shield-512.png" alt="SME++" className="h-10 w-10" />
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">SME++</h1>
-            </div>
-            <p className="text-gray-600 dark:text-gray-400">Business Management Platform</p>
+            {branding?.logoUrl ? (
+              <img
+                src={branding.logoUrl}
+                alt={orgName}
+                className="h-12 w-auto mx-auto mb-2"
+              />
+            ) : (
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <img src="/sme-icon-shield-512.png" alt="SME++" className="h-10 w-10" />
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  {subdomain ? orgName : 'SME++'}
+                </h1>
+              </div>
+            )}
+            <p className="text-gray-600 dark:text-gray-400">
+              {subdomain ? 'Password Recovery' : 'Business Management Platform'}
+            </p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
@@ -108,7 +113,10 @@ export default function ForgotPasswordPage() {
                     Try a different email
                   </Button>
                   <Link href="/login">
-                    <Button className="w-full">
+                    <Button
+                      className="w-full text-white"
+                      style={{ backgroundColor: primaryColor }}
+                    >
                       Back to sign in
                     </Button>
                   </Link>
@@ -151,7 +159,12 @@ export default function ForgotPasswordPage() {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full h-12" disabled={isLoading}>
+                  <Button
+                    type="submit"
+                    className="w-full h-12 text-white"
+                    style={{ backgroundColor: primaryColor }}
+                    disabled={isLoading}
+                  >
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -165,7 +178,8 @@ export default function ForgotPasswordPage() {
 
                 <Link
                   href="/login"
-                  className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-6 hover:text-primary"
+                  className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-6"
+                  style={{ color: primaryColor }}
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back to sign in

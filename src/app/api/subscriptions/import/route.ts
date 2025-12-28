@@ -59,6 +59,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     // Get file from request
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -271,13 +278,23 @@ export async function POST(request: NextRequest) {
         // Get ID from export if available
         const id = row['ID'];
 
-        // Find user by ID first (if provided), then by email
+        // Find user by ID first (if provided), then by email - verify org membership
         let assignedUserId = null;
         if (row['Assigned User ID']) {
-          assignedUserId = row['Assigned User ID'];
+          // Verify the user belongs to this organization
+          const user = await prisma.user.findFirst({
+            where: {
+              id: row['Assigned User ID'],
+              organizationMemberships: { some: { organizationId: tenantId } },
+            },
+          });
+          assignedUserId = user?.id || null;
         } else if (row['Assigned User Email']) {
-          const user = await prisma.user.findUnique({
-            where: { email: row['Assigned User Email'] },
+          const user = await prisma.user.findFirst({
+            where: {
+              email: row['Assigned User Email'],
+              organizationMemberships: { some: { organizationId: tenantId } },
+            },
           });
           assignedUserId = user?.id || null;
         }
@@ -312,9 +329,9 @@ export async function POST(request: NextRequest) {
 
         // If ID is provided, use upsert to preserve relationships
         if (id) {
-          // Check if subscription with this ID exists
-          const existingById = await prisma.subscription.findUnique({
-            where: { id },
+          // Check if subscription with this ID exists within tenant
+          const existingById = await prisma.subscription.findFirst({
+            where: { id, tenantId },
           });
 
           // Use upsert with ID to preserve relationships
@@ -324,6 +341,7 @@ export async function POST(request: NextRequest) {
               create: {
                 id,
                 ...subscriptionData,
+                tenantId,
               },
               update: subscriptionData,
             });
@@ -360,11 +378,12 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // No ID provided - check for duplicates by service name
+        // No ID provided - check for duplicates by service name within tenant
         const existingByName = await prisma.subscription.findFirst({
           where: {
             serviceName: row['Service Name'],
             accountId: row['Account ID/Email'] || null,
+            tenantId,
           },
         });
 
@@ -404,10 +423,10 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Create new subscription
+        // Create new subscription with tenant
         const subscription = await prisma.$transaction(async (tx) => {
           const sub = await tx.subscription.create({
-            data: subscriptionData,
+            data: { ...subscriptionData, tenantId },
           });
 
           // Log activity
@@ -472,9 +491,9 @@ export async function POST(request: NextRequest) {
           // Map old subscription ID to new one if available
           const subscriptionId = idMap.get(oldSubscriptionId) || oldSubscriptionId;
 
-          // Check if subscription exists
-          const subscription = await prisma.subscription.findUnique({
-            where: { id: subscriptionId },
+          // Check if subscription exists within tenant
+          const subscription = await prisma.subscription.findFirst({
+            where: { id: subscriptionId, tenantId },
           });
 
           if (!subscription) {
@@ -483,7 +502,7 @@ export async function POST(request: NextRequest) {
             continue;
           }
 
-          // Find performer by name or create system entry
+          // Find performer by name or email - verify org membership
           let performerId = session.user.id; // Default to current user
           if (historyRow['Performed By'] && historyRow['Performed By'] !== 'System') {
             const performer = await prisma.user.findFirst({
@@ -492,6 +511,7 @@ export async function POST(request: NextRequest) {
                   { name: historyRow['Performed By'] },
                   { email: historyRow['Performed By'] },
                 ],
+                organizationMemberships: { some: { organizationId: tenantId } },
               },
             });
             if (performer) {

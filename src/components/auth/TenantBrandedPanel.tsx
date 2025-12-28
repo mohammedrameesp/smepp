@@ -86,21 +86,24 @@ export function TenantBrandedPanel({ branding, isLoading, variant }: TenantBrand
 
   // Tenant panel - dynamic branding
   const primaryColor = branding?.primaryColor || '#1E40AF';
-  const secondaryColor = branding?.secondaryColor || '#3B82F6';
+  const secondaryColor = branding?.secondaryColor; // No fallback - use solid color if not set
   const backgroundImage = branding?.loginBackgroundUrl;
   const welcomeTitle = branding?.welcomeTitle || 'Welcome back';
   const welcomeSubtitle = branding?.welcomeSubtitle || 'Sign in to your account';
   const orgName = branding?.organizationName || 'SME++';
   const logoUrl = branding?.logoUrl;
 
+  // Use gradient only if secondary color is explicitly set, otherwise solid primary color
+  const backgroundStyle = backgroundImage
+    ? `url(${backgroundImage}) center/cover no-repeat`
+    : secondaryColor
+      ? `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`
+      : primaryColor;
+
   return (
     <div
       className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
-      style={{
-        background: backgroundImage
-          ? `url(${backgroundImage}) center/cover no-repeat`
-          : `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
-      }}
+      style={{ background: backgroundStyle }}
     >
       {/* Overlay for better text readability */}
       <div

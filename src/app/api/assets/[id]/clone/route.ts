@@ -21,11 +21,12 @@ export async function POST(
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Get the original asset
-    const originalAsset = await prisma.asset.findUnique({
-      where: { id },
+    // Get the original asset within tenant
+    const originalAsset = await prisma.asset.findFirst({
+      where: { id, tenantId },
     });
 
     if (!originalAsset) {

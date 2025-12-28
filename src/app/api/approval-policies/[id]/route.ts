@@ -18,10 +18,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    const policy = await prisma.approvalPolicy.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent cross-tenant access
+    const policy = await prisma.approvalPolicy.findFirst({
+      where: { id, tenantId },
       include: {
         levels: {
           orderBy: { levelOrder: 'asc' },
@@ -51,6 +58,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
     const body = await request.json();
     const validation = updateApprovalPolicySchema.safeParse(body);
@@ -62,8 +75,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       }, { status: 400 });
     }
 
-    const existing = await prisma.approvalPolicy.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent cross-tenant access
+    const existing = await prisma.approvalPolicy.findFirst({
+      where: { id, tenantId },
       include: { levels: true },
     });
 
@@ -144,10 +158,17 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    const existing = await prisma.approvalPolicy.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent cross-tenant access
+    const existing = await prisma.approvalPolicy.findFirst({
+      where: { id, tenantId },
     });
 
     if (!existing) {

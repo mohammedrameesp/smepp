@@ -152,6 +152,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const body = await request.json();
     const requestType = body.type as AssetRequestType | undefined;
     const isAdmin = session.user.role === Role.ADMIN;
@@ -246,20 +252,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get asset info for activity log
-    const asset = await prisma.asset.findUnique({
-      where: { id: assetId },
+    // Get asset info for activity log - verify asset belongs to tenant
+    const asset = await prisma.asset.findFirst({
+      where: { id: assetId, tenantId },
       select: { assetTag: true, model: true, brand: true },
     });
 
     if (!asset) {
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
-    }
-
-    // Get tenantId from session
-    const tenantId = session.user.organizationId;
-    if (!tenantId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     // Create the request in a transaction
@@ -328,9 +328,9 @@ export async function POST(request: NextRequest) {
     // Send email and in-app notifications
     try {
       if (type === AssetRequestType.EMPLOYEE_REQUEST) {
-        // Get asset price for multi-level approval check
-        const assetWithPrice = await prisma.asset.findUnique({
-          where: { id: assetId },
+        // Get asset price for multi-level approval check - use tenant filter
+        const assetWithPrice = await prisma.asset.findFirst({
+          where: { id: assetId, tenantId },
           select: { priceQAR: true },
         });
         const assetValue = assetWithPrice?.priceQAR ? Number(assetWithPrice.priceQAR) : 0;

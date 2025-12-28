@@ -16,18 +16,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
-    const pendingSteps = await getPendingApprovalsForUser(session.user.id, session.user.organizationId);
+    const tenantId = session.user.organizationId;
+    const pendingSteps = await getPendingApprovalsForUser(session.user.id, tenantId);
 
     // Enrich with entity details
     const enrichedSteps = await Promise.all(
       pendingSteps.map(async (step) => {
         let entityDetails: Record<string, unknown> = {};
 
-        // Fetch entity details based on type
+        // Fetch entity details based on type - use tenant filter for safety
         if (step.entityType === 'LEAVE_REQUEST') {
           const { prisma } = await import('@/lib/prisma');
-          const leaveRequest = await prisma.leaveRequest.findUnique({
-            where: { id: step.entityId },
+          const leaveRequest = await prisma.leaveRequest.findFirst({
+            where: { id: step.entityId, tenantId },
             select: {
               requestNumber: true,
               totalDays: true,
@@ -53,8 +54,8 @@ export async function GET(request: NextRequest) {
           }
         } else if (step.entityType === 'PURCHASE_REQUEST') {
           const { prisma } = await import('@/lib/prisma');
-          const purchaseRequest = await prisma.purchaseRequest.findUnique({
-            where: { id: step.entityId },
+          const purchaseRequest = await prisma.purchaseRequest.findFirst({
+            where: { id: step.entityId, tenantId },
             select: {
               referenceNumber: true,
               title: true,
@@ -76,8 +77,8 @@ export async function GET(request: NextRequest) {
           }
         } else if (step.entityType === 'ASSET_REQUEST') {
           const { prisma } = await import('@/lib/prisma');
-          const assetRequest = await prisma.assetRequest.findUnique({
-            where: { id: step.entityId },
+          const assetRequest = await prisma.assetRequest.findFirst({
+            where: { id: step.entityId, tenantId },
             select: {
               requestNumber: true,
               type: true,

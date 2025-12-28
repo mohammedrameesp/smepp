@@ -17,6 +17,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { userId } = await params;
     const isAdmin = session.user.role === Role.ADMIN;
 
@@ -25,9 +31,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Get user's salary structure and HR profile
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+    // Get user's salary structure and HR profile - verify user belongs to same org
+    const user = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        organizationMemberships: { some: { organizationId: tenantId } },
+      },
       include: {
         salaryStructure: true,
         hrProfile: {

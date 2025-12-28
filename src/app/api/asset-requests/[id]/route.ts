@@ -17,10 +17,17 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await context.params;
 
-    const assetRequest = await prisma.assetRequest.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent cross-tenant access
+    const assetRequest = await prisma.assetRequest.findFirst({
+      where: { id, tenantId },
       include: {
         asset: {
           select: {
@@ -97,10 +104,17 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await context.params;
 
-    const assetRequest = await prisma.assetRequest.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent cross-tenant access
+    const assetRequest = await prisma.assetRequest.findFirst({
+      where: { id, tenantId },
       include: {
         asset: {
           select: { assetTag: true, model: true },

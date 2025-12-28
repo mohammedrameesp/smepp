@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Mail, Lock, AlertCircle } from 'lucide-react';
+import { Loader2, Mail, Lock, AlertCircle, Building2, Home } from 'lucide-react';
 import { useSubdomain } from '@/hooks/use-subdomain';
 import { useTenantBranding } from '@/hooks/use-tenant-branding';
 import { TenantBrandedPanel } from '@/components/auth/TenantBrandedPanel';
@@ -24,6 +24,7 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [notFoundCountdown, setNotFoundCountdown] = useState(10);
 
   // Get subdomain and tenant branding
   const { subdomain, isLoading: subdomainLoading } = useSubdomain();
@@ -38,8 +39,16 @@ function LoginForm() {
   // Auth method restrictions - empty array means all methods allowed
   const allowedMethods = branding?.allowedAuthMethods || [];
   const showAllMethods = allowedMethods.length === 0;
-  const showGoogle = showAllMethods || allowedMethods.includes('google');
-  const showMicrosoft = showAllMethods || allowedMethods.includes('azure-ad');
+
+  // For subdomain tenants: OAuth buttons only show if method is allowed AND OAuth is configured
+  // For main domain: OAuth buttons show based on allowed methods (uses platform credentials)
+  const isGoogleAllowed = showAllMethods || allowedMethods.includes('google');
+  const isMicrosoftAllowed = showAllMethods || allowedMethods.includes('azure-ad');
+
+  // On subdomain, require OAuth to be properly configured (client ID + secret)
+  // On main domain, always allow OAuth (uses platform credentials)
+  const showGoogle = isGoogleAllowed && (!subdomain || branding?.hasCustomGoogleOAuth);
+  const showMicrosoft = isMicrosoftAllowed && (!subdomain || branding?.hasCustomAzureOAuth);
   const showCredentials = showAllMethods || allowedMethods.includes('credentials');
   const showAnyOAuth = showGoogle || showMicrosoft;
 
@@ -57,19 +66,52 @@ function LoginForm() {
       setMessage(msg);
     }
 
-    // Check for auth errors from NextAuth callback
+    // Check for auth errors from NextAuth callback or custom OAuth
     const errorParam = searchParams.get('error');
+    const errorMessage = searchParams.get('message');
     if (errorParam === 'AuthMethodNotAllowed') {
       setError('This login method is not allowed for your organization. Please use a different method.');
     } else if (errorParam === 'DomainNotAllowed') {
       setError('Your email domain is not allowed for this organization.');
     } else if (errorParam === 'AccessDenied') {
       setError('Access denied. Please contact your administrator.');
+    } else if (errorParam === 'OAuthError') {
+      setError(errorMessage ? decodeURIComponent(errorMessage) : 'OAuth authentication failed. Please try again.');
+    } else if (errorParam === 'OAuthFailed') {
+      setError('Authentication failed. Please try again.');
+    } else if (errorParam === 'InvalidState') {
+      setError('Invalid authentication state. Please try again.');
+    } else if (errorParam === 'OrganizationNotFound') {
+      setError('Organization not found. Please check the URL.');
+    } else if (errorParam === 'OAuthNotConfigured') {
+      setError('OAuth is not configured for this organization.');
+    } else if (errorParam === 'MissingParams') {
+      setError('Missing authentication parameters. Please try again.');
     }
 
     // Check if user is already logged in
     getSession().then((session) => {
       if (session) {
+        const userOrgSlug = session.user.organizationSlug;
+
+        // If on a subdomain, check if user belongs to this organization
+        if (subdomain && userOrgSlug && userOrgSlug.toLowerCase() !== subdomain.toLowerCase()) {
+          // User belongs to a different organization - show message and redirect
+          setMessage(`You belong to "${userOrgSlug}". Redirecting to your organization...`);
+          const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+          const protocol = window.location.protocol;
+          setTimeout(() => {
+            window.location.href = `${protocol}//${userOrgSlug}.${appDomain}/admin`;
+          }, 2000);
+          return;
+        }
+
+        // If on subdomain but user has no org (e.g., super admin)
+        if (subdomain && !userOrgSlug) {
+          setError('You do not belong to this organization. Please use the main login page or super admin portal.');
+          return;
+        }
+
         if (session.user.organizationId) {
           router.push('/admin');
         } else {
@@ -77,11 +119,31 @@ function LoginForm() {
         }
       }
     });
-  }, [router, searchParams]);
+  }, [router, searchParams, subdomain]);
+
+  // Countdown timer for organization not found - redirect to home
+  useEffect(() => {
+    if (subdomain && brandingError && !brandingLoading) {
+      const timer = setInterval(() => {
+        setNotFoundCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+            window.location.href = `${window.location.protocol}//${appDomain}`;
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [subdomain, brandingError, brandingLoading]);
 
   const handleCredentialsSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setMessage('');
     setIsLoading(true);
 
     try {
@@ -93,7 +155,38 @@ function LoginForm() {
 
       if (result?.error) {
         setError('Invalid email or password');
-      } else if (result?.ok) {
+        setIsLoading(false);
+        return;
+      }
+
+      if (result?.ok) {
+        // Get fresh session to check organization membership
+        const session = await getSession();
+
+        if (session) {
+          const userOrgSlug = session.user.organizationSlug;
+
+          // If on a subdomain, check if user belongs to this organization
+          if (subdomain && userOrgSlug && userOrgSlug.toLowerCase() !== subdomain.toLowerCase()) {
+            // User belongs to a different organization - show message and redirect
+            setMessage(`You belong to "${userOrgSlug}". Redirecting to your organization...`);
+            setIsLoading(false);
+            const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+            const protocol = window.location.protocol;
+            setTimeout(() => {
+              window.location.href = `${protocol}//${userOrgSlug}.${appDomain}/admin`;
+            }, 2000);
+            return;
+          }
+
+          // If on subdomain but user has no org (e.g., super admin)
+          if (subdomain && !userOrgSlug) {
+            setError('You do not belong to this organization. Please use the main login page or super admin portal.');
+            setIsLoading(false);
+            return;
+          }
+        }
+
         // Force full page reload to get fresh session data
         // This ensures the JWT token is fully propagated
         window.location.href = '/';
@@ -109,7 +202,14 @@ function LoginForm() {
   const handleOAuthSignIn = async (provider: string) => {
     setOauthLoading(provider);
     try {
-      // Redirect to a page that will check org status and route appropriately
+      // If we have a subdomain, use custom OAuth routes that support org-specific credentials
+      if (subdomain) {
+        const oauthProvider = provider === 'azure-ad' ? 'azure' : provider;
+        window.location.href = `/api/auth/oauth/${oauthProvider}?subdomain=${encodeURIComponent(subdomain)}`;
+        return;
+      }
+
+      // For main domain, use NextAuth's standard OAuth
       await signIn(provider, { callbackUrl: '/' });
     } catch (err) {
       console.error(`${provider} sign in error:`, err);
@@ -120,21 +220,68 @@ function LoginForm() {
 
   // Show branding error for invalid subdomain
   if (subdomain && brandingError && !brandingLoading) {
+    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+    const homeUrl = `${typeof window !== 'undefined' ? window.location.protocol : 'https:'}//${appDomain}`;
+
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Organization Not Found
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            The organization &quot;{subdomain}&quot; does not exist.
-          </p>
-          <a
-            href={`https://${process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000'}/login`}
-            className="text-blue-600 hover:text-blue-700 hover:underline"
-          >
-            Go to main login
-          </a>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 px-4">
+        <div className="w-full max-w-md">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
+            {/* Icon */}
+            <div className="mx-auto w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-6">
+              <Building2 className="w-10 h-10 text-red-500 dark:text-red-400" />
+            </div>
+
+            {/* Title */}
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Organization Not Found
+            </h1>
+
+            {/* Description */}
+            <p className="text-gray-600 dark:text-gray-400 mb-2">
+              The organization
+            </p>
+            <p className="text-lg font-semibold text-gray-900 dark:text-white mb-4 px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg inline-block">
+              {subdomain}
+            </p>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              does not exist or may have been removed.
+            </p>
+
+            {/* Countdown Timer */}
+            <div className="mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 rounded-full">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  {notFoundCountdown}
+                </div>
+                <span className="text-blue-700 dark:text-blue-300 text-sm">
+                  Redirecting to home page...
+                </span>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full mb-6 overflow-hidden">
+              <div
+                className="h-full bg-blue-500 transition-all duration-1000 ease-linear"
+                style={{ width: `${((10 - notFoundCountdown) / 10) * 100}%` }}
+              />
+            </div>
+
+            {/* Action Button */}
+            <Button
+              onClick={() => { window.location.href = homeUrl; }}
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Go to Home Now
+            </Button>
+
+            {/* Help Text */}
+            <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
+              If you believe this is an error, please contact support.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -333,7 +480,9 @@ function LoginForm() {
                   type="submit"
                   className="w-full h-12 text-white shadow-lg"
                   style={{
-                    background: `linear-gradient(to right, ${primaryColor}, ${branding?.secondaryColor || primaryColor})`,
+                    background: branding?.secondaryColor
+                      ? `linear-gradient(to right, ${primaryColor}, ${branding.secondaryColor})`
+                      : primaryColor,
                   }}
                   disabled={isLoading}
                 >

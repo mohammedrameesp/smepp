@@ -16,10 +16,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    const loan = await prisma.employeeLoan.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent cross-tenant access
+    const loan = await prisma.employeeLoan.findFirst({
+      where: { id, tenantId },
       include: {
         user: { select: { id: true, name: true, email: true } },
         approvedBy: { select: { id: true, name: true } },

@@ -15,14 +15,20 @@ export const PATCH = withErrorHandler(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Find the notification and verify ownership
-    const notification = await prisma.notification.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent cross-tenant access
+    const notification = await prisma.notification.findFirst({
+      where: { id, tenantId },
     });
 
     if (!notification) {

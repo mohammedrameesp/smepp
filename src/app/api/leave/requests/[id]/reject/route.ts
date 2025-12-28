@@ -18,6 +18,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
     const body = await request.json();
@@ -32,9 +38,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { reason } = validation.data;
 
-    // Get existing request
-    const existing = await prisma.leaveRequest.findUnique({
-      where: { id },
+    // Get existing request within tenant
+    const existing = await prisma.leaveRequest.findFirst({
+      where: { id, tenantId },
       include: {
         user: {
           select: { name: true },

@@ -119,18 +119,20 @@ export async function POST(request: NextRequest) {
     }
 
     const data = validation.data;
+    const tenantId = session.user.organizationId!;
 
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: data.userId },
+    // Check if user exists and belongs to same organization
+    const user = await prisma.user.findFirst({
+      where: {
+        id: data.userId,
+        organizationMemberships: { some: { organizationId: tenantId } },
+      },
       select: { id: true, name: true },
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'User not found in this organization' }, { status: 404 });
     }
-
-    const tenantId = session.user.organizationId!;
 
     // Get organization's code prefix
     const codePrefix = await getOrganizationCodePrefix(tenantId);

@@ -20,6 +20,9 @@ export interface TenantBranding {
   allowedAuthMethods: AuthMethod[];
   allowedEmailDomains: string[];
   enforceDomainRestriction: boolean;
+  // OAuth configuration status (true only if properly configured with ID + secret)
+  hasCustomGoogleOAuth?: boolean;
+  hasCustomAzureOAuth?: boolean;
 }
 
 export interface TenantBrandingResponse {

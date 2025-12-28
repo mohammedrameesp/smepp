@@ -12,6 +12,7 @@ import { AssetCostBreakdown } from '@/components/domains/operations/assets/asset
 import { CloneAssetButton } from '@/components/domains/operations/assets/clone-asset-button';
 import { DeleteAssetButton } from '@/components/domains/operations/assets/delete-asset-button';
 import { AssetMaintenanceRecords } from '@/components/domains/operations/assets/asset-maintenance-records';
+import { DepreciationCard, DepreciationScheduleTable } from '@/components/domains/operations/assets';
 import { AssetAssignDialog } from '@/components/domains/operations/asset-requests';
 import {
   Package,
@@ -296,6 +297,10 @@ export default async function AssetDetailPage({ params }: Props) {
 
           {/* Asset Utilization */}
           <AssetCostBreakdown assetId={asset.id} purchaseDate={asset.purchaseDate} />
+
+          {/* Depreciation */}
+          <DepreciationCard assetId={asset.id} />
+          <DepreciationScheduleTable assetId={asset.id} />
 
           {/* Maintenance Records */}
           <AssetMaintenanceRecords assetId={asset.id} readOnly={true} />

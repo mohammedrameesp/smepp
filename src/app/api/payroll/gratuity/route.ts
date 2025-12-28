@@ -14,6 +14,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
 
@@ -31,9 +37,12 @@ export async function GET(request: NextRequest) {
     // Non-admin users can only view their own gratuity
     const targetUserId = isAdmin && userId ? userId : session.user.id;
 
-    // Get user's salary structure and HR profile
-    const user = await prisma.user.findUnique({
-      where: { id: targetUserId },
+    // Get user's salary structure and HR profile - verify user belongs to same org
+    const user = await prisma.user.findFirst({
+      where: {
+        id: targetUserId,
+        organizationMemberships: { some: { organizationId: tenantId } },
+      },
       include: {
         salaryStructure: true,
         hrProfile: {

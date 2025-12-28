@@ -134,6 +134,17 @@ export function createTenantPrismaClient(tenantId: string) {
 
 Configuration: `src/lib/core/auth.ts`
 
+### Custom OAuth (Per-Organization)
+
+Organizations can configure their own OAuth apps instead of platform defaults:
+- `src/lib/oauth/utils.ts` - Encryption, state management, session creation
+- `src/lib/oauth/google.ts` - Google OAuth helpers
+- `src/lib/oauth/azure.ts` - Azure AD OAuth helpers
+- `src/app/api/auth/oauth/google/` - Custom Google OAuth routes
+- `src/app/api/auth/oauth/azure/` - Custom Azure OAuth routes
+
+Login page checks `hasCustomGoogleOAuth`/`hasCustomAzureOAuth` flags before showing OAuth buttons on tenant subdomains.
+
 ### Session Structure
 
 ```typescript
@@ -235,23 +246,7 @@ src/app/
 
 ## Billing Integration (Stripe)
 
-### Price Configuration
-
-```typescript
-// src/lib/billing/stripe.ts
-export const STRIPE_PRICES = {
-  STARTER_MONTHLY: 'price_xxx',
-  STARTER_YEARLY: 'price_xxx',
-  PROFESSIONAL_MONTHLY: 'price_xxx',
-  PROFESSIONAL_YEARLY: 'price_xxx',
-};
-```
-
-### Billing APIs
-
-- `POST /api/billing/create-checkout` - Start subscription checkout
-- `GET /api/billing/portal` - Redirect to Stripe customer portal
-- `POST /api/webhooks/stripe` - Handle Stripe webhooks
+> **Note:** Stripe billing is planned but not yet fully implemented. The schema supports it but checkout/webhooks are missing.
 
 ### Usage Limits
 
@@ -363,6 +358,29 @@ Token bucket algorithm per tenant: `src/lib/security/rateLimit.ts`
 ### File Storage
 
 Tenant-scoped buckets in Supabase with signed URLs.
+
+## Notification System
+
+- `src/lib/domains/system/notifications/notification-service.ts` - Core notification service
+- Templates for: leave requests, asset assignments, purchase requests, document expiry
+- In-app notifications only (bell icon) - no email/push notifications yet
+- Notifications are non-blocking (fire and forget)
+
+## Scheduled Jobs (Vercel Cron)
+
+Configured in `vercel.json`. Cron auth uses `CRON_SECRET` bearer token.
+
+| Job | Schedule | Description |
+|-----|----------|-------------|
+| `/api/super-admin/backups/cron` | Daily 1 AM UTC | Full platform + per-org backups |
+
+Manual cron scripts available via npm:
+```bash
+npm run cron:subs              # Subscription renewal alerts
+npm run cron:warranty          # Warranty expiry alerts
+npm run cron:employee-expiry   # Employee document expiry alerts
+npm run cron:company-docs      # Company document expiry alerts
+```
 
 ## Development vs Production
 

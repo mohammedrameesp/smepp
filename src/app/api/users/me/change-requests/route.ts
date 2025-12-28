@@ -20,9 +20,16 @@ async function getChangeRequestsHandler(request: NextRequest) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
-  // Find user's HR profile
-  const hrProfile = await prisma.hRProfile.findUnique({
-    where: { userId: session.user.id },
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
+
+  const tenantId = session.user.organizationId;
+
+  // Find user's HR profile within tenant
+  const hrProfile = await prisma.hRProfile.findFirst({
+    where: { userId: session.user.id, tenantId },
   });
 
   if (!hrProfile) {
@@ -30,7 +37,7 @@ async function getChangeRequestsHandler(request: NextRequest) {
   }
 
   const requests = await prisma.profileChangeRequest.findMany({
-    where: { hrProfileId: hrProfile.id },
+    where: { hrProfileId: hrProfile.id, tenantId },
     orderBy: { createdAt: 'desc' },
   });
 
@@ -57,16 +64,23 @@ async function createChangeRequestHandler(request: NextRequest) {
     );
   }
 
-  // Find or create user's HR profile
-  let hrProfile = await prisma.hRProfile.findUnique({
-    where: { userId: session.user.id },
+  // Require organization context for tenant isolation
+  if (!session.user.organizationId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
+
+  const tenantId = session.user.organizationId;
+
+  // Find or create user's HR profile within tenant
+  let hrProfile = await prisma.hRProfile.findFirst({
+    where: { userId: session.user.id, tenantId },
   });
 
   if (!hrProfile) {
     hrProfile = await prisma.hRProfile.create({
       data: {
         userId: session.user.id,
-        tenantId: session.user.organizationId!,
+        tenantId,
       },
     });
   }
@@ -91,7 +105,7 @@ async function createChangeRequestHandler(request: NextRequest) {
     data: {
       hrProfileId: hrProfile.id,
       description: validation.data.description,
-      tenantId: session.user.organizationId!,
+      tenantId,
     },
   });
 

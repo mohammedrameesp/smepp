@@ -18,6 +18,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     // Get file from request
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -147,9 +154,9 @@ export async function POST(request: NextRequest) {
 
         // If ID is provided, use upsert to preserve relationships
         if (id) {
-          // Check if supplier with this ID exists
-          const existingById = await prisma.supplier.findUnique({
-            where: { id },
+          // Check if supplier with this ID exists within tenant
+          const existingById = await prisma.supplier.findFirst({
+            where: { id, tenantId },
           });
 
           // Use upsert with ID to preserve relationships
@@ -158,6 +165,7 @@ export async function POST(request: NextRequest) {
             create: {
               id,
               ...supplierData,
+              tenantId,
             },
             update: supplierData,
           });
@@ -184,18 +192,19 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // No ID provided - check for duplicate by suppCode or name
+        // No ID provided - check for duplicate by suppCode or name within tenant
         let existingSupplier = null;
         if (suppCode) {
           existingSupplier = await prisma.supplier.findFirst({
-            where: { suppCode },
+            where: { suppCode, tenantId },
           });
         }
 
         if (!existingSupplier) {
-          // Check by name (case-insensitive)
+          // Check by name (case-insensitive) within tenant
           const suppliers = await prisma.supplier.findMany({
             where: {
+              tenantId,
               name: {
                 equals: name,
                 mode: 'insensitive',
@@ -229,9 +238,9 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Create new supplier
+        // Create new supplier with tenant
         const supplier = await prisma.supplier.create({
-          data: supplierData,
+          data: { ...supplierData, tenantId },
         });
 
         // Log activity

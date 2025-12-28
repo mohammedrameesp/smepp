@@ -24,11 +24,20 @@ export async function GET(
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Find the user
-    const user = await prisma.user.findUnique({
-      where: { id },
+    // Find the user - verify they belong to same organization
+    const user = await prisma.user.findFirst({
+      where: {
+        id,
+        organizationMemberships: { some: { organizationId: tenantId } },
+      },
       select: {
         id: true,
         name: true,
@@ -41,9 +50,9 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Find or create HR profile
-    let hrProfile = await prisma.hRProfile.findUnique({
-      where: { userId: id },
+    // Find or create HR profile - use tenantId filter
+    let hrProfile = await prisma.hRProfile.findFirst({
+      where: { userId: id, tenantId },
     });
 
     // Create empty profile if none exists
@@ -93,11 +102,20 @@ export async function PATCH(
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id },
+    // Check if user exists and belongs to same organization
+    const user = await prisma.user.findFirst({
+      where: {
+        id,
+        organizationMemberships: { some: { organizationId: tenantId } },
+      },
       select: { id: true, name: true, email: true },
     });
 

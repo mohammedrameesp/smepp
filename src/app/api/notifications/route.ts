@@ -16,6 +16,12 @@ export const GET = withErrorHandler(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { searchParams } = new URL(request.url);
     const query = notificationQuerySchema.parse({
       isRead: searchParams.get('isRead') || undefined,
@@ -23,8 +29,10 @@ export const GET = withErrorHandler(
       ps: searchParams.get('ps') || '20',
     });
 
-    const where: { recipientId: string; isRead?: boolean } = {
+    // Include tenantId to ensure user only sees notifications for current org
+    const where: { recipientId: string; tenantId: string; isRead?: boolean } = {
       recipientId: session.user.id,
+      tenantId,
     };
 
     if (query.isRead !== undefined) {
@@ -66,9 +74,17 @@ export const POST = withErrorHandler(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     const result = await prisma.notification.updateMany({
       where: {
         recipientId: session.user.id,
+        tenantId,
         isRead: false,
       },
       data: {

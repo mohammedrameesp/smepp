@@ -23,12 +23,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
     // Debug: Check database connection and table existence
     try {
-      const salaryCount = await prisma.salaryStructure.count();
-      console.log(`[Payroll Process] Found ${salaryCount} salary structures`);
+      const salaryCount = await prisma.salaryStructure.count({
+        where: { tenantId },
+      });
+      console.log(`[Payroll Process] Found ${salaryCount} salary structures for tenant ${tenantId}`);
     } catch (dbError) {
       console.error('[Payroll Process] Database error:', dbError);
       return NextResponse.json({
@@ -37,9 +45,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }, { status: 500 });
     }
 
-    // Get payroll run
-    const payrollRun = await prisma.payrollRun.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent cross-tenant access
+    const payrollRun = await prisma.payrollRun.findFirst({
+      where: { id, tenantId },
     });
 
     if (!payrollRun) {

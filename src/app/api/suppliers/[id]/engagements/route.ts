@@ -11,17 +11,23 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if supplier exists
-    const supplier = await prisma.supplier.findUnique({
-      where: { id },
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+    const { id } = await params;
+
+    // Check if supplier exists within tenant
+    const supplier = await prisma.supplier.findFirst({
+      where: { id, tenantId },
     });
 
     if (!supplier) {
@@ -64,17 +70,23 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-
     // Check authentication - ADMIN and EMPLOYEE can add engagements
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if supplier exists
-    const supplier = await prisma.supplier.findUnique({
-      where: { id },
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+    const { id } = await params;
+
+    // Check if supplier exists within tenant
+    const supplier = await prisma.supplier.findFirst({
+      where: { id, tenantId },
     });
 
     if (!supplier) {

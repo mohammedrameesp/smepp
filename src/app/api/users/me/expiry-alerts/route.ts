@@ -12,14 +12,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const thirtyDaysFromNow = new Date(today);
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-    // Find user's HR profile
-    const hrProfile = await prisma.hRProfile.findUnique({
-      where: { userId: session.user.id },
+    // Find user's HR profile within tenant
+    const hrProfile = await prisma.hRProfile.findFirst({
+      where: { userId: session.user.id, tenantId },
     });
 
     if (!hrProfile) {

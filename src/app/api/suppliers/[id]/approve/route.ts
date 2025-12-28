@@ -32,9 +32,9 @@ export async function PATCH(
 
     const tenantId = session.user.organizationId;
 
-    // Check if supplier exists and is PENDING
-    const existingSupplier = await prisma.supplier.findUnique({
-      where: { id },
+    // Check if supplier exists within tenant and is PENDING
+    const existingSupplier = await prisma.supplier.findFirst({
+      where: { id, tenantId },
     });
 
     if (!existingSupplier) {

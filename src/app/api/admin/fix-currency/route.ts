@@ -12,14 +12,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { subscriptionId, currency } = await request.json();
 
     if (!subscriptionId || !currency || !['USD', 'QAR'].includes(currency)) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
     }
 
-    const subscription = await prisma.subscription.findUnique({
-      where: { id: subscriptionId },
+    const subscription = await prisma.subscription.findFirst({
+      where: { id: subscriptionId, tenantId },
       select: { costPerCycle: true, costCurrency: true },
     });
 

@@ -12,6 +12,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
@@ -114,11 +121,16 @@ export async function POST(request: NextRequest) {
 
           if (!model) continue;
 
-          // Map user ID by email
+          // Map user ID by email - verify user belongs to same organization
           const userEmail = row.getCell(25).value?.toString() || '';
           let newUserId = null;
           if (userEmail) {
-            const user = await prisma.user.findUnique({ where: { email: userEmail } });
+            const user = await prisma.user.findFirst({
+              where: {
+                email: userEmail,
+                organizationMemberships: { some: { organizationId: tenantId } },
+              },
+            });
             newUserId = user?.id || null;
           }
 
@@ -150,9 +162,9 @@ export async function POST(request: NextRequest) {
 
           let asset;
           if (assetTag) {
-            // Try to find existing asset by tag
+            // Try to find existing asset by tag within tenant
             const existing = await prisma.asset.findFirst({
-              where: { assetTag: assetTag },
+              where: { assetTag: assetTag, tenantId },
             });
 
             if (existing) {
@@ -161,12 +173,12 @@ export async function POST(request: NextRequest) {
                 data: assetData,
               });
             } else {
-              asset = await prisma.asset.create({ data: assetData });
+              asset = await prisma.asset.create({ data: { ...assetData, tenantId } });
             }
             results.assets.updated++;
           } else {
             // Create new asset without tag
-            asset = await prisma.asset.create({ data: assetData });
+            asset = await prisma.asset.create({ data: { ...assetData, tenantId } });
             results.assets.created++;
           }
 
@@ -192,11 +204,16 @@ export async function POST(request: NextRequest) {
 
           if (!serviceName) continue;
 
-          // Map user ID by email
+          // Map user ID by email - verify user belongs to same organization
           const userEmail = row.getCell(17).value?.toString() || '';
           let newUserId = null;
           if (userEmail) {
-            const user = await prisma.user.findUnique({ where: { email: userEmail } });
+            const user = await prisma.user.findFirst({
+              where: {
+                email: userEmail,
+                organizationMemberships: { some: { organizationId: tenantId } },
+              },
+            });
             newUserId = user?.id || null;
           }
 
@@ -221,9 +238,9 @@ export async function POST(request: NextRequest) {
             reactivatedAt: parseDate(row.getCell(21).value?.toString()),
           };
 
-          // Try to find existing subscription by serviceName
+          // Try to find existing subscription by serviceName within tenant
           const existingSub = await prisma.subscription.findFirst({
-            where: { serviceName: serviceName },
+            where: { serviceName: serviceName, tenantId },
           });
 
           let subscription;
@@ -234,7 +251,7 @@ export async function POST(request: NextRequest) {
             });
             results.subscriptions.updated++;
           } else {
-            subscription = await prisma.subscription.create({ data: subscriptionData });
+            subscription = await prisma.subscription.create({ data: { ...subscriptionData, tenantId } });
             results.subscriptions.created++;
           }
 

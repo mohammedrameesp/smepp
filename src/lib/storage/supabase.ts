@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const bucketName = process.env.SUPABASE_BUCKET || 'storage';
+const bucketName = process.env.SUPABASE_BUCKET || 'smepp-storage';
 
 // Lazy-initialized Supabase client to avoid build-time errors
 let supabase: SupabaseClient | null = null;

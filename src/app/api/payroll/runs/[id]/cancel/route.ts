@@ -17,6 +17,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
     const body = await request.json();
     const validation = rejectPayrollSchema.safeParse(body);
@@ -30,8 +36,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { reason } = validation.data;
 
-    const payrollRun = await prisma.payrollRun.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent cross-tenant access
+    const payrollRun = await prisma.payrollRun.findFirst({
+      where: { id, tenantId },
     });
 
     if (!payrollRun) {

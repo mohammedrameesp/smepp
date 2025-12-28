@@ -17,12 +17,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const isAdmin = session.user.role === Role.ADMIN;
     const { searchParams } = new URL(request.url);
     const viewAll = searchParams.get('all') === 'true';
 
-    // Build filter
-    const filter: Record<string, unknown> = {};
+    // Build filter - always include tenantId
+    const filter: Record<string, unknown> = { tenantId };
 
     // Non-admins can only see their own delegations
     if (!isAdmin || !viewAll) {
@@ -86,15 +92,19 @@ export async function POST(request: NextRequest) {
     }
 
     const { delegateeId, startDate, endDate, reason } = validation.data;
+    const tenantId = session.user.organizationId;
 
-    // Verify delegatee exists and has appropriate role
-    const delegatee = await prisma.user.findUnique({
-      where: { id: delegateeId },
+    // Verify delegatee exists, belongs to same organization, and has appropriate role
+    const delegatee = await prisma.user.findFirst({
+      where: {
+        id: delegateeId,
+        organizationMemberships: { some: { organizationId: tenantId } },
+      },
       select: { id: true, name: true, role: true },
     });
 
     if (!delegatee) {
-      return NextResponse.json({ error: 'Delegatee not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Delegatee not found in this organization' }, { status: 404 });
     }
 
     if (!APPROVER_ROLES.includes(delegatee.role)) {

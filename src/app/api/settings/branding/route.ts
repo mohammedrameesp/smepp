@@ -33,7 +33,7 @@ export async function GET() {
     return NextResponse.json({
       logoUrl: branding.logoUrl || null,
       primaryColor: branding.primaryColor || '#3B82F6',
-      secondaryColor: branding.secondaryColor || '#6B7280',
+      secondaryColor: branding.secondaryColor || null, // No fallback - solid color if not set
       companyName: branding.companyName || 'Be Creative Portal',
     });
 

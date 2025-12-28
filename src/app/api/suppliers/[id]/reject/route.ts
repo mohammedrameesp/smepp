@@ -11,8 +11,6 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-
     // Check authentication - only ADMIN can reject
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -22,6 +20,14 @@ export async function PATCH(
     if (session.user.role !== Role.ADMIN) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+    const { id } = await params;
 
     // Parse and validate request body
     const body = await request.json();
@@ -39,9 +45,9 @@ export async function PATCH(
 
     const { rejectionReason } = validation.data;
 
-    // Check if supplier exists and is PENDING
-    const existingSupplier = await prisma.supplier.findUnique({
-      where: { id },
+    // Check if supplier exists within tenant and is PENDING
+    const existingSupplier = await prisma.supplier.findFirst({
+      where: { id, tenantId },
     });
 
     if (!existingSupplier) {

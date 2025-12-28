@@ -18,10 +18,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    const salaryStructure = await prisma.salaryStructure.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent cross-tenant access
+    const salaryStructure = await prisma.salaryStructure.findFirst({
+      where: { id, tenantId },
       include: {
         user: {
           select: {
@@ -88,6 +95,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
     const body = await request.json();
     const validation = updateSalaryStructureSchema.safeParse(body);
@@ -101,9 +114,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const data = validation.data;
 
-    // Get existing salary structure
-    const existing = await prisma.salaryStructure.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent cross-tenant access
+    const existing = await prisma.salaryStructure.findFirst({
+      where: { id, tenantId },
       include: {
         user: { select: { id: true, name: true } },
       },
@@ -239,11 +252,17 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Get existing salary structure
-    const existing = await prisma.salaryStructure.findUnique({
-      where: { id },
+    // Use findFirst with tenantId to prevent cross-tenant access
+    const existing = await prisma.salaryStructure.findFirst({
+      where: { id, tenantId },
       include: {
         user: { select: { id: true, name: true } },
       },

@@ -3,14 +3,14 @@ import { prisma } from '@/lib/core/prisma';
 export interface BrandingSettings {
   logoUrl: string | null;
   primaryColor: string;
-  secondaryColor: string;
+  secondaryColor: string | null; // Optional - if null, use solid primary color (no gradient)
   companyName: string;
 }
 
 const DEFAULT_BRANDING: BrandingSettings = {
   logoUrl: null,
   primaryColor: '#1E40AF', // Deep Blue - brand primary
-  secondaryColor: '#3B82F6', // Blue - brand accent
+  secondaryColor: null, // No secondary color by default - solid color instead of gradient
   companyName: 'SME++',
 };
 

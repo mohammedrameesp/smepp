@@ -16,11 +16,17 @@ export async function GET(request: Request, { params }: Props) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Fetch subscription with related data
-    const subscription = await prisma.subscription.findUnique({
-      where: { id },
+    // Fetch subscription within tenant with related data
+    const subscription = await prisma.subscription.findFirst({
+      where: { id, tenantId },
       include: {
         assignedUser: {
           select: { name: true, email: true },

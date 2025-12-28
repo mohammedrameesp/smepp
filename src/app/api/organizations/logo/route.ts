@@ -76,14 +76,26 @@ export async function POST(request: NextRequest) {
 
     // Upload to Supabase
     const bytes = Buffer.from(await file.arrayBuffer());
-    await sbUpload({
-      path,
-      bytes,
-      contentType: file.type,
-    });
+
+    console.log('[Logo Upload] Uploading to path:', path);
+    console.log('[Logo Upload] File size:', bytes.length, 'bytes');
+    console.log('[Logo Upload] Content type:', file.type);
+
+    try {
+      await sbUpload({
+        path,
+        bytes,
+        contentType: file.type,
+      });
+      console.log('[Logo Upload] Upload successful');
+    } catch (uploadError) {
+      console.error('[Logo Upload] Upload failed:', uploadError);
+      throw uploadError;
+    }
 
     // Get public URL
     const logoUrl = await sbPublicUrl(path);
+    console.log('[Logo Upload] Public URL:', logoUrl);
 
     // Update organization
     await prisma.organization.update({
