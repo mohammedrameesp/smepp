@@ -187,6 +187,8 @@ const PUBLIC_ROUTES = [
   '/',
   '/login',
   '/signup',
+  '/forgot-password',
+  '/reset-password',
   '/get-started', // Public signup page
   '/platform-login', // Super admin login (legacy)
   '/api/auth',
