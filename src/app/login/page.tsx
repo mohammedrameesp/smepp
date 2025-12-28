@@ -41,14 +41,14 @@ function LoginForm() {
   const showAllMethods = allowedMethods.length === 0;
 
   // For subdomain tenants: OAuth buttons only show if method is allowed AND OAuth is configured
-  // For main domain: OAuth buttons show based on allowed methods (uses platform credentials)
+  // Main domain: OAuth is hidden (no platform credentials configured)
   const isGoogleAllowed = showAllMethods || allowedMethods.includes('google');
   const isMicrosoftAllowed = showAllMethods || allowedMethods.includes('azure-ad');
 
-  // On subdomain, require OAuth to be properly configured (client ID + secret)
-  // On main domain, always allow OAuth (uses platform credentials)
-  const showGoogle = isGoogleAllowed && (!subdomain || branding?.hasCustomGoogleOAuth);
-  const showMicrosoft = isMicrosoftAllowed && (!subdomain || branding?.hasCustomAzureOAuth);
+  // Only show OAuth on subdomains with custom OAuth configured
+  // Main domain only supports email/password login
+  const showGoogle = subdomain && isGoogleAllowed && branding?.hasCustomGoogleOAuth;
+  const showMicrosoft = subdomain && isMicrosoftAllowed && branding?.hasCustomAzureOAuth;
   const showCredentials = showAllMethods || allowedMethods.includes('credentials');
   const showAnyOAuth = showGoogle || showMicrosoft;
 
