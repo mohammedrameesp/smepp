@@ -8,9 +8,10 @@ import { logAction, ActivityActions } from '@/lib/activity';
 import { generatePurchaseRequestNumber } from '@/lib/purchase-request-utils';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
 import { sendEmail } from '@/lib/email';
-import { purchaseRequestSubmittedEmail } from '@/lib/email-templates';
+import { purchaseRequestSubmittedEmail } from '@/lib/core/email-templates';
 import { createBulkNotifications, createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
 import { findApplicablePolicy, initializeApprovalChain } from '@/lib/domains/system/approvals';
+import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 
 // GET - List purchase requests
 export async function GET(request: NextRequest) {
@@ -294,11 +295,28 @@ export async function POST(request: NextRequest) {
 
     // Check for multi-level approval policy
     try {
+      // Get org slug for email URLs
+      const org = await prisma.organization.findUnique({
+        where: { id: session.user.organizationId },
+        select: { slug: true },
+      });
+      const orgSlug = org?.slug || 'app';
+
       const approvalPolicy = await findApplicablePolicy('PURCHASE_REQUEST', { amount: totalAmountQAR, tenantId: session.user.organizationId! });
 
       if (approvalPolicy && approvalPolicy.levels.length > 0) {
         // Initialize approval chain
-        const steps = await initializeApprovalChain('PURCHASE_REQUEST', purchaseRequest.id, approvalPolicy);
+        const steps = await initializeApprovalChain('PURCHASE_REQUEST', purchaseRequest.id, approvalPolicy, session.user.organizationId!);
+
+        // Send WhatsApp notifications to approvers (non-blocking)
+        if (steps.length > 0) {
+          notifyApproversViaWhatsApp(
+            session.user.organizationId!,
+            'PURCHASE_REQUEST',
+            purchaseRequest.id,
+            steps[0].requiredRole
+          );
+        }
 
         // Notify users with the first level's required role (tenant-scoped)
         const firstStep = steps[0];
@@ -321,6 +339,7 @@ export async function POST(request: NextRequest) {
               currency: purchaseRequest.currency,
               itemCount: data.items.length,
               priority: data.priority,
+              orgSlug,
             });
 
             await sendEmail({
@@ -364,6 +383,7 @@ export async function POST(request: NextRequest) {
             currency: purchaseRequest.currency,
             itemCount: data.items.length,
             priority: data.priority,
+            orgSlug,
           });
 
           await sendEmail({

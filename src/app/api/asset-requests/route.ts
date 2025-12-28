@@ -24,6 +24,7 @@ import {
   assetReturnRequestEmail,
 } from '@/lib/email-templates';
 import { findApplicablePolicy, initializeApprovalChain } from '@/lib/domains/system/approvals';
+import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 
 export async function GET(request: NextRequest) {
   try {
@@ -327,6 +328,13 @@ export async function POST(request: NextRequest) {
 
     // Send email and in-app notifications
     try {
+      // Get org slug for email URLs
+      const org = await prisma.organization.findUnique({
+        where: { id: tenantId },
+        select: { slug: true },
+      });
+      const orgSlug = org?.slug || 'app';
+
       if (type === AssetRequestType.EMPLOYEE_REQUEST) {
         // Get asset price for multi-level approval check - use tenant filter
         const assetWithPrice = await prisma.asset.findFirst({
@@ -340,7 +348,17 @@ export async function POST(request: NextRequest) {
 
         if (approvalPolicy && approvalPolicy.levels.length > 0) {
           // Initialize approval chain
-          const steps = await initializeApprovalChain('ASSET_REQUEST', assetRequest.id, approvalPolicy);
+          const steps = await initializeApprovalChain('ASSET_REQUEST', assetRequest.id, approvalPolicy, tenantId);
+
+          // Send WhatsApp notifications to approvers (non-blocking)
+          if (steps.length > 0) {
+            notifyApproversViaWhatsApp(
+              tenantId,
+              'ASSET_REQUEST',
+              assetRequest.id,
+              steps[0].requiredRole
+            );
+          }
 
           // Notify users with the first level's required role
           const firstStep = steps[0];
@@ -364,6 +382,7 @@ export async function POST(request: NextRequest) {
               requesterName: assetRequest.user.name || assetRequest.user.email,
               requesterEmail: assetRequest.user.email,
               reason: reason || '',
+              orgSlug,
             });
             await sendBatchEmails(approvers.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
 
@@ -398,6 +417,7 @@ export async function POST(request: NextRequest) {
             requesterName: assetRequest.user.name || assetRequest.user.email,
             requesterEmail: assetRequest.user.email,
             reason: reason || '',
+            orgSlug,
           });
           await sendBatchEmails(admins.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
 
@@ -425,6 +445,7 @@ export async function POST(request: NextRequest) {
           userName: assetRequest.user.name || assetRequest.user.email,
           assignerName: session.user.name || session.user.email || 'Admin',
           reason: notes || undefined,
+          orgSlug,
         });
         await sendEmail({ to: assetRequest.user.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
 
@@ -457,6 +478,7 @@ export async function POST(request: NextRequest) {
           userName: assetRequest.user.name || assetRequest.user.email,
           userEmail: assetRequest.user.email,
           reason: reason || '',
+          orgSlug,
         });
         await sendBatchEmails(admins.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
 

@@ -7,6 +7,7 @@ import { createLeaveRequestSchema, leaveRequestQuerySchema } from '@/lib/validat
 import { logAction, ActivityActions } from '@/lib/activity';
 import { createBulkNotifications, createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
 import { findApplicablePolicy, initializeApprovalChain } from '@/lib/domains/system/approvals';
+import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 import {
   calculateWorkingDays,
   meetsNoticeDaysRequirement,
@@ -536,7 +537,17 @@ export async function POST(request: NextRequest) {
 
       if (approvalPolicy && approvalPolicy.levels.length > 0) {
         // Initialize approval chain
-        const steps = await initializeApprovalChain('LEAVE_REQUEST', leaveRequest.id, approvalPolicy);
+        const steps = await initializeApprovalChain('LEAVE_REQUEST', leaveRequest.id, approvalPolicy, session.user.organizationId!);
+
+        // Send WhatsApp notifications to approvers (non-blocking)
+        if (steps.length > 0) {
+          notifyApproversViaWhatsApp(
+            session.user.organizationId!,
+            'LEAVE_REQUEST',
+            leaveRequest.id,
+            steps[0].requiredRole
+          );
+        }
 
         // Notify users with the first level's required role
         const firstStep = steps[0];
