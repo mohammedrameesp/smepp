@@ -391,15 +391,29 @@ export default function OrganizationDetailPage() {
   const handleToggleAuthMethod = async (methodId: string, enabled: boolean) => {
     if (!authConfig) return;
 
-    const newMethods = enabled
-      ? [...authConfig.allowedAuthMethods, methodId]
-      : authConfig.allowedAuthMethods.filter((m) => m !== methodId);
+    let newMethods: string[];
 
-    // Don't allow disabling all methods if it would leave empty
-    // (unless we're enabling something, or there are still methods left)
-    if (newMethods.length === 0 && authConfig.allowedAuthMethods.length > 0) {
-      setError('At least one authentication method must be enabled');
-      return;
+    // If currently empty (all allowed), clicking a switch means:
+    // - If turning OFF: enable all OTHER methods (exclude this one)
+    // - If turning ON: this shouldn't happen since they all show as ON
+    if (authConfig.allowedAuthMethods.length === 0) {
+      if (!enabled) {
+        // User wants to disable this method - enable all others explicitly
+        newMethods = AUTH_METHODS.map(m => m.id).filter(id => id !== methodId);
+      } else {
+        // Shouldn't happen, but just in case - enable only this one
+        newMethods = [methodId];
+      }
+    } else {
+      // Normal toggle behavior
+      newMethods = enabled
+        ? [...authConfig.allowedAuthMethods, methodId]
+        : authConfig.allowedAuthMethods.filter((m) => m !== methodId);
+    }
+
+    // If user disables all methods, reset to empty (allow all)
+    if (newMethods.length === 0) {
+      newMethods = []; // Empty = all allowed
     }
 
     await updateAuthConfig({ allowedAuthMethods: newMethods });
