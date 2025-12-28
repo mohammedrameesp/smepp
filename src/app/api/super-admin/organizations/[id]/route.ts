@@ -256,18 +256,32 @@ export async function DELETE(
     // Get all user IDs belonging to this organization
     const userIds = organization.members.map((m) => m.userId);
 
-    // Delete in transaction: organization first (cascades related data), then users
+    // Find users who ONLY belong to this organization (no other memberships)
+    // These are the users we should delete when org is deleted
+    const usersWithOtherOrgs = await prisma.organizationUser.findMany({
+      where: {
+        userId: { in: userIds },
+        organizationId: { not: id }, // Memberships in OTHER orgs
+      },
+      select: { userId: true },
+    });
+    const usersWithOtherOrgsSet = new Set(usersWithOtherOrgs.map(u => u.userId));
+
+    // Only delete users who don't belong to any other organization
+    const userIdsToDelete = userIds.filter(uid => !usersWithOtherOrgsSet.has(uid));
+
+    // Delete in transaction: organization first (cascades related data), then orphaned users
     await prisma.$transaction(async (tx) => {
       // 1. Delete organization (cascades: members, invitations, assets, subscriptions, etc.)
       await tx.organization.delete({
         where: { id },
       });
 
-      // 2. Delete all users that belonged to this organization
-      if (userIds.length > 0) {
+      // 2. Delete only users that don't belong to any other organization
+      if (userIdsToDelete.length > 0) {
         await tx.user.deleteMany({
           where: {
-            id: { in: userIds },
+            id: { in: userIdsToDelete },
           },
         });
       }
@@ -277,7 +291,8 @@ export async function DELETE(
       success: true,
       deleted: {
         organization: organization.name,
-        users: userIds.length,
+        users: userIdsToDelete.length,
+        usersRetained: userIds.length - userIdsToDelete.length, // Users kept because they belong to other orgs
         assets: organization._count.assets,
       }
     });

@@ -5,7 +5,8 @@ import { Role, LoanStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createLoanSchema, loanQuerySchema } from '@/lib/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/activity';
-import { generateLoanNumber, calculateLoanEndDate, parseDecimal } from '@/lib/payroll/utils';
+import { generateLoanNumberWithPrefix, calculateLoanEndDate, parseDecimal } from '@/lib/payroll/utils';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 export async function GET(request: NextRequest) {
   try {
@@ -129,20 +130,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Generate loan number
+    const tenantId = session.user.organizationId!;
+
+    // Get organization's code prefix
+    const codePrefix = await getOrganizationCodePrefix(tenantId);
+
+    // Generate loan number with tenant-scoped sequence
     const lastLoan = await prisma.employeeLoan.findFirst({
+      where: { tenantId },
       orderBy: { loanNumber: 'desc' },
     });
 
     let sequence = 1;
     if (lastLoan) {
-      const match = lastLoan.loanNumber.match(/LOAN-(\d{5})/);
+      // Match pattern like "BCE-LOAN-00001" or legacy "LOAN-00001"
+      const prefixedMatch = lastLoan.loanNumber.match(new RegExp(`${codePrefix}-LOAN-(\\d{5})`));
+      const legacyMatch = lastLoan.loanNumber.match(/LOAN-(\d{5})/);
+      const match = prefixedMatch || legacyMatch;
       if (match) {
         sequence = parseInt(match[1], 10) + 1;
       }
     }
 
-    const loanNumber = generateLoanNumber(sequence);
+    const loanNumber = await generateLoanNumberWithPrefix(tenantId, sequence);
     const startDate = new Date(data.startDate);
     const endDate = calculateLoanEndDate(startDate, data.installments);
 
@@ -165,7 +175,7 @@ export async function POST(request: NextRequest) {
         approvedAt: new Date(),
         notes: data.notes,
         createdById: session.user.id,
-        tenantId: session.user.organizationId!,
+        tenantId,
       },
       include: {
         user: { select: { id: true, name: true, email: true } },

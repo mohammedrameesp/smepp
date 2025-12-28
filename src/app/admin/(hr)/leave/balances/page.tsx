@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -261,23 +262,19 @@ export default function AdminLeaveBalancesPage() {
   const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Leave Balances</h1>
-              <p className="text-gray-600">
-                View and manage employee leave balances grouped by employee
-              </p>
-            </div>
-            <Button onClick={() => setInitDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Initialize Balance
-            </Button>
-          </div>
-        </div>
+    <>
+      <PageHeader
+        title="Leave Balances"
+        subtitle="View and manage employee leave balances grouped by employee"
+        actions={
+          <Button onClick={() => setInitDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Initialize Balance
+          </Button>
+        }
+      />
 
+      <PageContent>
         <Card>
           <CardHeader>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -597,7 +594,7 @@ export default function AdminLeaveBalancesPage() {
             </Card>
           </div>
         )}
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

@@ -1,24 +1,45 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { redirect, notFound } from 'next/navigation';
 import { Role, AssetRequestStatus } from '@prisma/client';
 import Link from 'next/link';
 import AssetHistory from '@/components/AssetHistory';
 import { formatDate, formatDateTime } from '@/lib/date-format';
-import { AssetCostBreakdown } from '@/components/assets/asset-cost-breakdown';
-import { CloneAssetButton } from '@/components/assets/clone-asset-button';
-import { DeleteAssetButton } from '@/components/assets/delete-asset-button';
-import { AssetMaintenanceRecords } from '@/components/assets/asset-maintenance-records';
+import { AssetCostBreakdown } from '@/components/domains/operations/assets/asset-cost-breakdown';
+import { CloneAssetButton } from '@/components/domains/operations/assets/clone-asset-button';
+import { DeleteAssetButton } from '@/components/domains/operations/assets/delete-asset-button';
+import { AssetMaintenanceRecords } from '@/components/domains/operations/assets/asset-maintenance-records';
 import { AssetAssignDialog } from '@/components/domains/operations/asset-requests';
+import {
+  Package,
+  DollarSign,
+  User,
+  MapPin,
+  FileText,
+  Clock,
+  AlertTriangle,
+  Wrench,
+  Tag,
+  Building2,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
 interface Props {
   params: Promise<{ id: string }>;
 }
+
+// Status styles
+const statusStyles: Record<string, { bg: string; text: string; icon: typeof CheckCircle }> = {
+  IN_USE: { bg: 'bg-blue-100', text: 'text-blue-700', icon: CheckCircle },
+  SPARE: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: Package },
+  REPAIR: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Wrench },
+  DISPOSED: { bg: 'bg-slate-100', text: 'text-slate-700', icon: XCircle },
+};
 
 export default async function AssetDetailPage({ params }: Props) {
   const session = await getServerSession(authOptions);
@@ -86,57 +107,47 @@ export default async function AssetDetailPage({ params }: Props) {
   const hasPendingRequest = asset.assetRequests.length > 0;
   const canAssign = asset.status === 'SPARE' && !hasPendingRequest;
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'IN_USE':
-        return 'default';
-      case 'SPARE':
-        return 'secondary';
-      case 'REPAIR':
-        return 'destructive';
-      case 'DISPOSED':
-        return 'outline';
-      default:
-        return 'secondary';
-    }
-  };
+  const StatusIcon = statusStyles[asset.status]?.icon || Package;
+  const statusBadgeVariant = asset.status === 'DISPOSED' ? 'default' :
+    asset.status === 'IN_USE' ? 'info' :
+    asset.status === 'SPARE' ? 'success' :
+    asset.status === 'REPAIR' ? 'warning' : 'default';
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Asset Details</h1>
-                <p className="text-gray-600">
-                  Complete information for {asset.model}
-                </p>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {canAssign && (
-                  <AssetAssignDialog asset={asset} />
-                )}
-                <Link href={`/admin/assets/${asset.id}/edit`}>
-                  <Button>Edit Asset</Button>
-                </Link>
-                <CloneAssetButton assetId={asset.id} assetModel={asset.model} />
-                <DeleteAssetButton assetId={asset.id} assetModel={asset.model} />
-                <Link href="/admin/assets">
-                  <Button variant="outline">Back to Assets</Button>
-                </Link>
-              </div>
-            </div>
+    <>
+      <PageHeader
+        title={asset.model}
+        subtitle={[asset.brand, asset.assetTag].filter(Boolean).join(' • ')}
+        breadcrumbs={[
+          { label: 'Assets', href: '/admin/assets' },
+          { label: asset.model },
+        ]}
+        badge={{ text: asset.status.replace('_', ' '), variant: statusBadgeVariant }}
+        actions={
+          <div className="flex gap-2 flex-wrap">
+            {canAssign && <AssetAssignDialog asset={asset} />}
+            <PageHeaderButton href={`/admin/assets/${asset.id}/edit`} variant="primary">
+              Edit Asset
+            </PageHeaderButton>
+            <CloneAssetButton assetId={asset.id} assetModel={asset.model} />
+            <DeleteAssetButton assetId={asset.id} assetModel={asset.model} />
           </div>
+        }
+      />
 
-          {/* Pending Requests Alert */}
-          {hasPendingRequest && (
-            <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h3 className="font-medium text-yellow-800">Pending Requests</h3>
-              <div className="mt-2 space-y-1">
+      <PageContent>
+        {/* Pending Requests Alert */}
+        {hasPendingRequest && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-amber-800">Pending Requests</h3>
+              <div className="mt-1 space-y-1">
                 {asset.assetRequests.map((req) => (
-                  <p key={req.id} className="text-sm text-yellow-700">
-                    <Link href={`/admin/asset-requests/${req.id}`} className="underline hover:text-yellow-900">
+                  <p key={req.id} className="text-sm text-amber-700">
+                    <Link href={`/admin/asset-requests/${req.id}`} className="underline hover:text-amber-900 font-medium">
                       {req.requestNumber}
                     </Link>
                     {' - '}
@@ -145,267 +156,262 @@ export default async function AssetDetailPage({ params }: Props) {
                 ))}
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          <div className="grid gap-6">
-            {/* Acquisition Type */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Acquisition Information</CardTitle>
-                <CardDescription>
-                  How this asset was acquired
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Acquisition Type</Label>
-                    <div>
-                      <Badge variant={asset.acquisitionType === 'NEW_PURCHASE' ? 'default' : 'secondary'}>
-                        {asset.acquisitionType === 'NEW_PURCHASE' ? 'New Purchase' : 'Transferred'}
-                      </Badge>
-                    </div>
-                  </div>
-                  {asset.acquisitionType === 'TRANSFERRED' && asset.transferNotes && (
-                    <div>
-                      <Label>Transfer Notes</Label>
-                      <div className="whitespace-pre-wrap">{asset.transferNotes}</div>
-                    </div>
+        <div className="grid lg:grid-cols-3 gap-6">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Basic Information Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                <Package className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Basic Information</h2>
+                <p className="text-sm text-slate-500">Core asset details</p>
+              </div>
+            </div>
+            <div className="p-5">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Asset Tag</p>
+                  <p className="font-mono font-semibold text-slate-900">{asset.assetTag || 'Not assigned'}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Type</p>
+                  <p className="font-semibold text-slate-900">{asset.type}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Category</p>
+                  <p className="font-semibold text-slate-900">{asset.category || 'Not specified'}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Serial Number</p>
+                  <p className="font-mono font-semibold text-slate-900">{asset.serial || 'Not provided'}</p>
+                </div>
+              </div>
+
+              {asset.configuration && (
+                <div className="mt-4">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Configuration/Specs</p>
+                  <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">{asset.configuration}</div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Financial & Procurement Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <DollarSign className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Financial & Procurement</h2>
+                <p className="text-sm text-slate-500">Purchase and cost details</p>
+              </div>
+            </div>
+            <div className="p-5">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Purchase Date</p>
+                  <p className="font-semibold text-slate-900">{formatDate(asset.purchaseDate, 'Not specified')}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Cost/Value</p>
+                  <p className="font-semibold text-slate-900">
+                    {asset.price ? (
+                      <>
+                        {asset.priceCurrency === 'USD' ? '$' : 'QAR '}{Number(asset.price).toFixed(2)}
+                      </>
+                    ) : 'Not specified'}
+                  </p>
+                  {asset.priceCurrency === 'USD' && asset.priceQAR && (
+                    <p className="text-xs text-slate-500 mt-1">≈ QAR {Number(asset.priceQAR).toFixed(2)}</p>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-                <CardDescription>
-                  Core asset details and identification
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Asset ID/Tag</Label>
-                      <div className="font-mono text-lg font-semibold">
-                        {asset.assetTag || 'Not assigned'}
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Asset Type</Label>
-                      <div className="text-lg font-semibold">{asset.type}</div>
-                    </div>
-                    <div>
-                      <Label>Category/Department</Label>
-                      <div>{asset.category || 'Not specified'}</div>
-                    </div>
-                    <div>
-                      <Label>Brand/Manufacturer</Label>
-                      <div>{asset.brand || 'Not specified'}</div>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Model/Version</Label>
-                      <div className="text-lg font-semibold">{asset.model}</div>
-                    </div>
-                    <div>
-                      <Label>Serial Number</Label>
-                      <div className="font-mono">{asset.serial || 'Not provided'}</div>
-                    </div>
-                    <div>
-                      <Label>Status/Condition</Label>
-                      <div>
-                        <Badge variant={getStatusBadgeVariant(asset.status)}>
-                          {asset.status.replace('_', ' ')}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {asset.configuration && (
-                  <div className="mt-6 pt-6 border-t">
-                    <Label>Configuration/Specs</Label>
-                    <div className="whitespace-pre-wrap mt-2">{asset.configuration}</div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Financial & Procurement Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Financial & Procurement</CardTitle>
-                <CardDescription>
-                  Purchase details, costs, and supplier information
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Purchase Date</Label>
-                      <div>
-                        {formatDate(asset.purchaseDate, 'Not specified')}
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Warranty Expiry</Label>
-                      <div>
-                        {asset.warrantyExpiry ? (
-                          <div className="flex items-center gap-2">
-                            <span>{formatDate(asset.warrantyExpiry)}</span>
-                            {asset.warrantyExpiry < new Date() && (
-                              <Badge variant="destructive">Expired</Badge>
-                            )}
-                          </div>
-                        ) : (
-                          'Not specified'
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Supplier/Vendor</Label>
-                      <div>{asset.supplier || 'Not specified'}</div>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Invoice/PO Number</Label>
-                      <div className="font-mono">{asset.invoiceNumber || 'Not provided'}</div>
-                    </div>
-                    <div>
-                      <Label>Cost/Value</Label>
-                      <div className="text-lg font-semibold">
-                        {asset.price ? (
-                          <div>
-                            {asset.priceCurrency === 'USD' ? '$' : 'QAR '}{Number(asset.price).toFixed(2)}
-                            {asset.priceCurrency === 'USD' && asset.priceQAR && (
-                              <div className="text-sm text-gray-600 font-normal mt-1">
-                                ≈ QAR {Number(asset.priceQAR).toFixed(2)} (saved at time of entry)
-                              </div>
-                            )}
-                            {asset.priceCurrency === 'QAR' && asset.price && (
-                              <div className="text-sm text-gray-600 font-normal mt-1">
-                                ≈ USD {(Number(asset.price) / 3.64).toFixed(2)}
-                              </div>
-                            )}
-                          </div>
-                        ) : 'Not specified'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-            </CardContent>
-          </Card>
-
-          {/* Assignment Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Assignment</CardTitle>
-              <CardDescription>
-                Current user assignment
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Label>Assigned To (User)</Label>
-                  <div>
-                    {asset.assignedUser ? (
-                      <div>
-                        <div className="font-medium">
-                          {asset.assignedUser.name || 'Unknown User'}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {asset.assignedUser.email}
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400">Unassigned</span>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Warranty Expiry</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-slate-900">
+                      {asset.warrantyExpiry ? formatDate(asset.warrantyExpiry) : 'Not specified'}
+                    </p>
+                    {asset.warrantyExpiry && asset.warrantyExpiry < new Date() && (
+                      <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-xs font-medium rounded-full">Expired</span>
                     )}
                   </div>
                 </div>
-                {asset.assignedUser && assignmentDate && (
-                  <div>
-                    <Label>Assignment Date</Label>
-                    <div className="font-medium">
-                      {formatDate(assignmentDate)}
-                    </div>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Supplier</p>
+                  <p className="font-semibold text-slate-900">{asset.supplier || 'Not specified'}</p>
+                </div>
+                {asset.invoiceNumber && (
+                  <div className="p-4 bg-slate-50 rounded-xl sm:col-span-2">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Invoice/PO Number</p>
+                    <p className="font-mono font-semibold text-slate-900">{asset.invoiceNumber}</p>
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Location */}
-          {asset.location && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Location</CardTitle>
-                <CardDescription>
-                  Physical location of this asset
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div>{asset.location}</div>
-              </CardContent>
-            </Card>
+          {/* Acquisition Info */}
+          {asset.acquisitionType === 'TRANSFERRED' && asset.transferNotes && (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-slate-900">Transfer Information</h2>
+                  <p className="text-sm text-slate-500">Asset was transferred</p>
+                </div>
+              </div>
+              <div className="p-5">
+                <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">
+                  {asset.transferNotes}
+                </div>
+              </div>
+            </div>
           )}
 
-          {/* Notes / Remarks */}
+          {/* Notes */}
           {asset.notes && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Notes / Remarks</CardTitle>
-                <CardDescription>
-                  Additional information about this asset
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="whitespace-pre-wrap">{asset.notes}</div>
-              </CardContent>
-            </Card>
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <h2 className="font-semibold text-slate-900">Notes</h2>
+              </div>
+              <div className="p-5">
+                <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">
+                  {asset.notes}
+                </div>
+              </div>
+            </div>
           )}
 
-          {/* Asset Utilization Stats */}
-          <AssetCostBreakdown
-            assetId={asset.id}
-            purchaseDate={asset.purchaseDate}
-          />
+          {/* Asset Utilization */}
+          <AssetCostBreakdown assetId={asset.id} purchaseDate={asset.purchaseDate} />
 
           {/* Maintenance Records */}
           <AssetMaintenanceRecords assetId={asset.id} readOnly={true} />
 
-          {/* Asset History */}
+          {/* History */}
           <AssetHistory assetId={asset.id} />
-
-          {/* System Information - Moved to bottom */}
-          <Card>
-            <CardHeader>
-              <CardTitle>System Information</CardTitle>
-              <CardDescription>
-                System timestamps and tracking
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <Label>Created</Label>
-                  <div>{formatDateTime(asset.createdAt)}</div>
-                </div>
-                <div>
-                  <Label>Last Updated</Label>
-                  <div>{formatDateTime(asset.updatedAt)}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
-      </div>
-    </div>
-    </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Assignment Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                <User className="h-5 w-5 text-indigo-600" />
+              </div>
+              <h2 className="font-semibold text-slate-900">Assignment</h2>
+            </div>
+            <div className="p-5">
+              {asset.assignedUser ? (
+                <>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <span className="text-indigo-600 font-semibold">
+                        {asset.assignedUser.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900">{asset.assignedUser.name || 'Unknown User'}</p>
+                      <p className="text-sm text-slate-500">{asset.assignedUser.email}</p>
+                    </div>
+                  </div>
+                  {assignmentDate && (
+                    <div className="p-3 bg-slate-50 rounded-xl">
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Assigned Since</p>
+                      <p className="font-medium text-slate-900">{formatDate(assignmentDate)}</p>
+                    </div>
+                  )}
+                  <Link href={`/admin/users/${asset.assignedUser.id}`} className="mt-4 block">
+                    <Button variant="outline" size="sm" className="w-full">
+                      View Profile
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <User className="h-6 w-6 text-slate-400" />
+                  </div>
+                  <p className="text-slate-500 text-sm">Unassigned</p>
+                  {canAssign && (
+                    <div className="mt-3">
+                      <AssetAssignDialog asset={asset} />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Location Card */}
+          {asset.location && (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
+                  <MapPin className="h-5 w-5 text-rose-600" />
+                </div>
+                <h2 className="font-semibold text-slate-900">Location</h2>
+              </div>
+              <div className="p-5">
+                <p className="text-slate-700">{asset.location}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Acquisition Type Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-cyan-100 rounded-xl flex items-center justify-center">
+                <Tag className="h-5 w-5 text-cyan-600" />
+              </div>
+              <h2 className="font-semibold text-slate-900">Acquisition</h2>
+            </div>
+            <div className="p-5">
+              <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
+                asset.acquisitionType === 'NEW_PURCHASE'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-amber-100 text-amber-700'
+              }`}>
+                {asset.acquisitionType === 'NEW_PURCHASE' ? 'New Purchase' : 'Transferred'}
+              </span>
+            </div>
+          </div>
+
+          {/* System Info Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+                <Clock className="h-5 w-5 text-slate-600" />
+              </div>
+              <h2 className="font-semibold text-slate-900">System Info</h2>
+            </div>
+            <div className="p-5 space-y-3">
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Created</p>
+                <p className="text-sm text-slate-700">{formatDateTime(asset.createdAt)}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Last Updated</p>
+                <p className="text-sm text-slate-700">{formatDateTime(asset.updatedAt)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </PageContent>
+    </>
   );
 }

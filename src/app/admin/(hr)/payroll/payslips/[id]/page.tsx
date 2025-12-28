@@ -4,10 +4,21 @@ import { redirect, notFound } from 'next/navigation';
 import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Wallet } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  User,
+  Wallet,
+  Calendar,
+  Building2,
+  CreditCard,
+  CheckCircle,
+  Clock,
+  TrendingUp,
+  TrendingDown,
+  Banknote,
+} from 'lucide-react';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { formatCurrency, getMonthName } from '@/lib/payroll/utils';
 
 interface PageProps {
@@ -67,227 +78,251 @@ export default async function AdminPayslipDetailPage({ params }: PageProps) {
   const totalDeductions = Number(payslip.totalDeductions);
   const netSalary = Number(payslip.netSalary);
 
+  const statusBadgeVariant = payslip.isPaid ? 'success' : 'warning';
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" size="icon">
-              <Link href={`/admin/payroll/runs/${payslip.payrollRun.id}`}>
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">Payslip Details</h1>
-              <Badge variant={payslip.isPaid ? 'default' : 'secondary'}>
-                {payslip.isPaid ? 'Paid' : 'Pending'}
-              </Badge>
+    <>
+      <PageHeader
+        title={payslip.user.name || 'Unknown'}
+        subtitle={`${payslip.payslipNumber} • ${getMonthName(payslip.payrollRun.month)} ${payslip.payrollRun.year}`}
+        breadcrumbs={[
+          { label: 'Payroll', href: '/admin/payroll' },
+          { label: 'Payroll Runs', href: '/admin/payroll/runs' },
+          { label: `${getMonthName(payslip.payrollRun.month)} ${payslip.payrollRun.year}`, href: `/admin/payroll/runs/${payslip.payrollRun.id}` },
+          { label: payslip.payslipNumber },
+        ]}
+        badge={{ text: payslip.isPaid ? 'Paid' : 'Pending', variant: statusBadgeVariant }}
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/admin/employees/${payslip.userId}`}>
+              <User className="mr-2 h-4 w-4" />
+              View Employee
+            </Link>
+          </Button>
+        }
+      />
+
+      <PageContent>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content - 2/3 */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Net Pay Summary */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-500 text-sm font-medium">Net Pay</p>
+                <p className="text-4xl font-bold mt-1 text-emerald-600">{formatCurrency(netSalary)}</p>
+                <p className="text-slate-500 text-sm mt-2">
+                  For {getMonthName(payslip.payrollRun.month)} {payslip.payrollRun.year}
+                </p>
+              </div>
+              <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
+                <Banknote className="h-8 w-8 text-emerald-600" />
+              </div>
             </div>
-            <p className="text-muted-foreground">
-              {payslip.payslipNumber}
-            </p>
           </div>
+
+          {/* Earnings */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Earnings</h2>
+                <p className="text-sm text-slate-500">Salary and allowances</p>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-3 border-b border-slate-100">
+                  <span className="text-slate-600">Basic Salary</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(basicSalary)}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-slate-100">
+                  <span className="text-slate-600">Housing Allowance</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(housingAllowance)}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-slate-100">
+                  <span className="text-slate-600">Transport Allowance</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(transportAllowance)}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-slate-100">
+                  <span className="text-slate-600">Food Allowance</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(foodAllowance)}</span>
+                </div>
+                <div className="flex justify-between items-center py-3 border-b border-slate-100">
+                  <span className="text-slate-600">Phone Allowance</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(phoneAllowance)}</span>
+                </div>
+                {otherAllowances > 0 && (
+                  <div className="flex justify-between items-center py-3 border-b border-slate-100">
+                    <span className="text-slate-600">Other Allowances</span>
+                    <span className="font-semibold text-slate-900">{formatCurrency(otherAllowances)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-3 bg-emerald-50 -mx-6 px-6 py-4 -mb-6 rounded-b-xl">
+                  <span className="font-semibold text-slate-900">Total Earnings</span>
+                  <span className="text-xl font-bold text-emerald-600">{formatCurrency(grossSalary)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Deductions */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
+                <TrendingDown className="h-5 w-5 text-rose-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Deductions</h2>
+                <p className="text-sm text-slate-500">{payslip.deductions.length} deduction{payslip.deductions.length !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+            <div className="p-6">
+              {payslip.deductions.length === 0 ? (
+                <div className="text-center py-8 text-slate-400">
+                  <TrendingDown className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No deductions</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {payslip.deductions.map((deduction) => (
+                    <div key={deduction.id} className="flex justify-between items-center py-3 border-b border-slate-100">
+                      <div>
+                        <span className="text-slate-600">{deduction.type.replace(/_/g, ' ')}</span>
+                        {deduction.description && (
+                          <p className="text-xs text-slate-400">{deduction.description}</p>
+                        )}
+                      </div>
+                      <span className="font-semibold text-rose-600">
+                        -{formatCurrency(Number(deduction.amount))}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between items-center pt-3 bg-rose-50 -mx-6 px-6 py-4 -mb-6 rounded-b-xl">
+                    <span className="font-semibold text-slate-900">Total Deductions</span>
+                    <span className="text-xl font-bold text-rose-600">-{formatCurrency(totalDeductions)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Payment Confirmation */}
+          {payslip.isPaid && payslip.paidAt && (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                </div>
+                <h2 className="font-semibold text-slate-900">Payment Confirmation</h2>
+              </div>
+              <div className="p-6">
+                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
+                  <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide mb-1">Payment Date</p>
+                  <p className="text-sm font-semibold text-emerald-700">
+                    {new Date(payslip.paidAt).toLocaleDateString('en-US', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        <Button asChild variant="outline">
-          <Link href={`/admin/employees/${payslip.userId}`}>
-            <User className="mr-2 h-4 w-4" />
-            View Employee
-          </Link>
-        </Button>
-      </div>
-
-      {/* Employee & Payroll Info */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Employee Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div>
-                <div className="text-sm text-muted-foreground">Name</div>
-                <div className="font-medium">{payslip.user.name}</div>
+        {/* Sidebar - 1/3 */}
+        <div className="space-y-6">
+          {/* Employee Details */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                <User className="h-5 w-5 text-blue-600" />
               </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Employee ID</div>
-                <div className="font-medium font-mono">
+              <h2 className="font-semibold text-slate-900">Employee Details</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Name</p>
+                <p className="text-sm font-semibold text-slate-900">{payslip.user.name}</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Employee ID</p>
+                <p className="text-sm font-semibold text-slate-900 font-mono">
                   {payslip.user.hrProfile?.employeeId || 'N/A'}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Designation</div>
-                <div className="font-medium">
-                  {payslip.user.hrProfile?.designation || 'N/A'}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Wallet className="h-5 w-5" />
-              Payment Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div>
-                <div className="text-sm text-muted-foreground">Pay Period</div>
-                <div className="font-medium">
-                  {getMonthName(payslip.payrollRun.month)} {payslip.payrollRun.year}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Payroll Reference</div>
-                <div className="font-medium font-mono">
-                  {payslip.payrollRun.referenceNumber}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Bank</div>
-                <div className="font-medium">{payslip.bankName || 'Not specified'}</div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">IBAN</div>
-                <div className="font-medium font-mono">{payslip.iban || 'N/A'}</div>
-              </div>
-              {payslip.qidNumber && (
-                <div>
-                  <div className="text-sm text-muted-foreground">QID</div>
-                  <div className="font-medium font-mono">{payslip.qidNumber}</div>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Earnings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Earnings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Basic Salary</span>
-                <span className="font-medium">{formatCurrency(basicSalary)}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Housing Allowance</span>
-                <span className="font-medium">{formatCurrency(housingAllowance)}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Transport Allowance</span>
-                <span className="font-medium">{formatCurrency(transportAllowance)}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Food Allowance</span>
-                <span className="font-medium">{formatCurrency(foodAllowance)}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Phone Allowance</span>
-                <span className="font-medium">{formatCurrency(phoneAllowance)}</span>
-              </div>
-              {otherAllowances > 0 && (
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Other Allowances</span>
-                  <span className="font-medium">{formatCurrency(otherAllowances)}</span>
-                </div>
-              )}
-              <div className="flex justify-between py-2 font-semibold">
-                <span>Total Earnings</span>
-                <span className="text-green-600">{formatCurrency(grossSalary)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Deductions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Deductions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {payslip.deductions.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No deductions
                 </p>
-              ) : (
-                payslip.deductions.map((deduction) => (
-                  <div key={deduction.id} className="flex justify-between py-2 border-b">
-                    <div>
-                      <span className="text-muted-foreground">
-                        {deduction.type.replace(/_/g, ' ')}
-                      </span>
-                      {deduction.description && (
-                        <div className="text-xs text-muted-foreground">
-                          {deduction.description}
-                        </div>
-                      )}
-                    </div>
-                    <span className="font-medium text-red-600">
-                      -{formatCurrency(Number(deduction.amount))}
-                    </span>
-                  </div>
-                ))
-              )}
-              <div className="flex justify-between py-2 font-semibold">
-                <span>Total Deductions</span>
-                <span className="text-red-600">-{formatCurrency(totalDeductions)}</span>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Net Pay Summary */}
-      <Card className="bg-green-50 border-green-200">
-        <CardContent className="py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="text-lg font-medium text-green-800">Net Pay</div>
-              <p className="text-sm text-green-600">
-                Amount to be paid for {getMonthName(payslip.payrollRun.month)} {payslip.payrollRun.year}
-              </p>
-            </div>
-            <div className="text-4xl font-bold text-green-700">
-              {formatCurrency(netSalary)}
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Designation</p>
+                <p className="text-sm font-semibold text-slate-900">
+                  {payslip.user.hrProfile?.designation || 'N/A'}
+                </p>
+              </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Payment Info */}
-      {payslip.isPaid && payslip.paidAt && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Payment Confirmation</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div>
-              <div className="text-sm text-muted-foreground">Payment Date</div>
-              <div className="font-medium">
-                {new Date(payslip.paidAt).toLocaleDateString('en-US', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+          {/* Payment Details */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
+                <Wallet className="h-5 w-5 text-purple-600" />
               </div>
+              <h2 className="font-semibold text-slate-900">Payment Details</h2>
             </div>
-          </CardContent>
-        </Card>
-        )}
-      </div>
-    </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-slate-50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Calendar className="h-4 w-4 text-slate-400" />
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Pay Period</p>
+                </div>
+                <p className="text-sm font-semibold text-slate-900">
+                  {getMonthName(payslip.payrollRun.month)} {payslip.payrollRun.year}
+                </p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Payroll Reference</p>
+                <p className="text-sm font-semibold text-slate-900 font-mono">
+                  {payslip.payrollRun.referenceNumber}
+                </p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Building2 className="h-4 w-4 text-slate-400" />
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Bank</p>
+                </div>
+                <p className="text-sm font-semibold text-slate-900">{payslip.bankName || 'Not specified'}</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <CreditCard className="h-4 w-4 text-slate-400" />
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">IBAN</p>
+                </div>
+                <p className="text-sm font-semibold text-slate-900 font-mono">{payslip.iban || 'N/A'}</p>
+              </div>
+              {payslip.qidNumber && (
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">QID</p>
+                  <p className="text-sm font-semibold text-slate-900 font-mono">{payslip.qidNumber}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* View Payroll Run Link */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <Button asChild className="w-full">
+              <Link href={`/admin/payroll/runs/${payslip.payrollRun.id}`}>
+                View Full Payroll Run
+              </Link>
+            </Button>
+          </div>
+        </div>
+        </div>
+      </PageContent>
+    </>
   );
 }

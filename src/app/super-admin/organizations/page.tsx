@@ -1,13 +1,12 @@
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Building2, Plus, Users, Mail, Calendar, Search, Filter } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Building2, Plus, Users, Eye, UserCog, Edit } from 'lucide-react';
+import { format } from 'date-fns';
 
-// Prevent static pre-rendering (requires database)
 export const dynamic = 'force-dynamic';
+
+const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 
 async function getOrganizations() {
   const organizations = await prisma.organization.findMany({
@@ -17,9 +16,6 @@ async function getOrganizations() {
         select: {
           members: true,
           assets: true,
-          invitations: {
-            where: { acceptedAt: null },
-          },
         },
       },
       members: {
@@ -37,162 +33,124 @@ async function getOrganizations() {
   return organizations;
 }
 
-async function getStats() {
-  const [total, free, starter, professional, enterprise] = await Promise.all([
-    prisma.organization.count(),
-    prisma.organization.count({ where: { subscriptionTier: 'FREE' } }),
-    prisma.organization.count({ where: { subscriptionTier: 'STARTER' } }),
-    prisma.organization.count({ where: { subscriptionTier: 'PROFESSIONAL' } }),
-    prisma.organization.count({ where: { subscriptionTier: 'ENTERPRISE' } }),
-  ]);
-
-  return { total, free, starter, professional, enterprise };
-}
-
 export default async function OrganizationsPage() {
-  const [organizations, stats] = await Promise.all([
-    getOrganizations(),
-    getStats(),
-  ]);
+  const organizations = await getOrganizations();
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Organizations</h2>
-          <p className="text-slate-500">
-            Manage all {stats.total} organizations on the platform
-          </p>
-        </div>
-        <Link href="/super-admin/organizations/new">
-          <Button className="bg-slate-900 hover:bg-slate-800">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Organization
-          </Button>
-        </Link>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-5 gap-4">
-        <StatCard label="Total" value={stats.total} />
-        <StatCard label="Free" value={stats.free} color="text-slate-600" />
-        <StatCard label="Starter" value={stats.starter} color="text-blue-600" />
-        <StatCard label="Professional" value={stats.professional} color="text-indigo-600" />
-        <StatCard label="Enterprise" value={stats.enterprise} color="text-amber-600" />
-      </div>
-
       {/* Organizations Table */}
-      <div className="bg-white rounded-xl border border-slate-200">
+      <div className="bg-white rounded-xl border border-gray-100">
         {organizations.length === 0 ? (
           <div className="p-12 text-center">
-            <Building2 className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">No organizations yet</h3>
-            <p className="text-slate-500 text-sm mb-4">
-              Create your first organization to get started
-            </p>
+            <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No organizations yet</h3>
+            <p className="text-gray-500 text-sm mb-4">Create your first organization to get started</p>
             <Link href="/super-admin/organizations/new">
-              <Button>
+              <Button className="bg-indigo-600 hover:bg-indigo-700">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Organization
               </Button>
             </Link>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-100 bg-slate-50">
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Organization</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Owner</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Tier</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Users</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Assets</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Created</th>
-                <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {organizations.map((org) => {
-                const owner = org.members[0]?.user;
-                return (
-                  <tr key={org.id} className="hover:bg-slate-50">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        {org.logoUrl ? (
-                          <img
-                            src={org.logoUrl}
-                            alt={org.name}
-                            className="w-9 h-9 rounded-lg object-contain bg-slate-100"
-                          />
-                        ) : (
-                          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-medium text-sm">
-                            {org.name.substring(0, 2).toUpperCase()}
+          <>
+            <table className="w-full">
+              <thead>
+                <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                  <th className="px-6 py-3">Organization</th>
+                  <th className="px-6 py-3">Owner</th>
+                  <th className="px-6 py-3">Users</th>
+                  <th className="px-6 py-3">Assets</th>
+                  <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3">Created</th>
+                  <th className="px-6 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {organizations.map((org) => {
+                  const owner = org.members[0]?.user;
+                  return (
+                    <tr key={org.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {org.logoUrl ? (
+                            <img
+                              src={org.logoUrl}
+                              alt={org.name}
+                              className="w-9 h-9 rounded-lg object-contain bg-gray-100"
+                            />
+                          ) : (
+                            <div className="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 font-semibold text-sm">
+                              {org.name.substring(0, 2).toUpperCase()}
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-medium text-gray-900">{org.name}</div>
+                            <div className="text-sm text-gray-500">{org.slug}.{APP_DOMAIN.split(':')[0]}</div>
                           </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-slate-900">{org.name}</p>
-                          <p className="text-xs text-slate-400">{org.slug}</p>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <p className="text-slate-600 text-sm">
-                        {owner?.name || owner?.email || 'No owner'}
-                      </p>
-                    </td>
-                    <td className="px-5 py-4">
-                      <TierBadge tier={org.subscriptionTier} />
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-1 text-slate-600">
-                        <Users className="h-4 w-4 text-slate-400" />
-                        {org._count.members}
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 text-slate-600">
-                      {org._count.assets}
-                    </td>
-                    <td className="px-5 py-4 text-slate-400 text-xs">
-                      {formatDistanceToNow(org.createdAt, { addSuffix: true })}
-                    </td>
-                    <td className="px-5 py-4">
-                      <Link href={`/super-admin/organizations/${org.id}`}>
-                        <Button variant="outline" size="sm">
-                          Manage
-                        </Button>
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">{owner?.name || 'No owner'}</div>
+                        <div className="text-xs text-gray-500">{owner?.email || '-'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5 text-sm text-gray-900">
+                          <Users className="h-4 w-4 text-gray-400" />
+                          {org._count.members}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {org._count.assets}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                          Active
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {format(new Date(org.createdAt), 'MMM d, yyyy')}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/api/super-admin/impersonate?organizationId=${org.id}`}
+                            className="text-gray-400 hover:text-indigo-600 p-1.5 hover:bg-indigo-50 rounded"
+                            title="Impersonate"
+                          >
+                            <UserCog className="h-4 w-4" />
+                          </Link>
+                          <Link
+                            href={`/super-admin/organizations/${org.id}`}
+                            className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded"
+                            title="View"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                          <Link
+                            href={`/super-admin/organizations/${org.id}?edit=true`}
+                            className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded"
+                            title="Edit"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            <div className="px-6 py-4 border-t border-gray-100">
+              <div className="text-sm text-gray-500">
+                Showing {organizations.length} organization{organizations.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
-  );
-}
-
-function StatCard({ label, value, color = 'text-slate-900' }: { label: string; value: number; color?: string }) {
-  return (
-    <div className="bg-white rounded-xl p-4 border border-slate-200">
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className={`text-2xl font-bold mt-1 ${color}`}>{value}</p>
-    </div>
-  );
-}
-
-function TierBadge({ tier }: { tier: string }) {
-  const colors: Record<string, string> = {
-    FREE: 'text-slate-700 bg-slate-100',
-    STARTER: 'text-blue-700 bg-blue-50',
-    PROFESSIONAL: 'text-indigo-700 bg-indigo-50',
-    ENTERPRISE: 'text-amber-700 bg-amber-50',
-  };
-
-  return (
-    <span className={`text-xs font-medium px-2 py-1 rounded-full ${colors[tier] || colors.FREE}`}>
-      {tier}
-    </span>
   );
 }

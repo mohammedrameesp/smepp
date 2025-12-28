@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { EmployeeAssetListTable } from '@/components/assets/employee-asset-list-table';
+import { EmployeeAssetListTable } from '@/components/domains/operations/assets/employee-asset-list-table';
 
 export default async function EmployeeAllAssetsPage() {
   const session = await getServerSession(authOptions);

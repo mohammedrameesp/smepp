@@ -60,9 +60,11 @@ interface LeaveRequestFormProps {
   balances: LeaveBalance[];
   onSuccess?: () => void;
   isAdmin?: boolean;
+  // For admin to create leave request on behalf of an employee
+  employeeId?: string;
 }
 
-export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = false }: LeaveRequestFormProps) {
+export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = false, employeeId }: LeaveRequestFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [calculatedDays, setCalculatedDays] = useState<number | null>(null);
@@ -166,10 +168,13 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
     setError(null);
 
     try {
+      // Include employeeId if admin is creating request on behalf of someone
+      const requestData = employeeId ? { ...data, employeeId } : data;
+
       const response = await fetch('/api/leave/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {

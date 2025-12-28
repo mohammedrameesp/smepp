@@ -69,6 +69,8 @@ export const createLeaveRequestSchema = z.object({
   emergencyPhone: z.string().max(20, 'Emergency phone is too long').optional().nullable(),
   // Admin can override advance notice requirement
   adminOverrideNotice: z.boolean().optional().default(false),
+  // Admin can create leave request on behalf of another employee
+  employeeId: z.string().optional(),
 }).refine(
   (data) => {
     const start = new Date(data.startDate);

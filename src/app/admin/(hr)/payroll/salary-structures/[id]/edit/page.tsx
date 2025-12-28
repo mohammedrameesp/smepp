@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Loader2, Calculator } from 'lucide-react';
+import { Loader2, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/payroll/utils';
 
@@ -138,22 +139,18 @@ export default function EditSalaryStructurePage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/admin/payroll/salary-structures">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Edit Salary Structure</h1>
-            <p className="text-muted-foreground">
-              Update salary components for {salary.user.name || salary.user.email}
-            </p>
-          </div>
-        </div>
+    <>
+      <PageHeader
+        title="Edit Salary Structure"
+        subtitle={`Update salary components for ${salary.user.name || salary.user.email}`}
+        breadcrumbs={[
+          { label: 'Payroll', href: '/admin/payroll' },
+          { label: 'Salary Structures', href: '/admin/payroll/salary-structures' },
+          { label: 'Edit' },
+        ]}
+      />
 
+      <PageContent className="max-w-4xl">
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6 md:grid-cols-2">
             {/* Employee Info */}
@@ -368,7 +365,7 @@ export default function EditSalaryStructurePage() {
             </Card>
           </div>
         </form>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

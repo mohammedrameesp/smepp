@@ -25,6 +25,13 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     // Check if supplier exists and is PENDING
     const existingSupplier = await prisma.supplier.findUnique({
       where: { id },
@@ -42,7 +49,7 @@ export async function PATCH(
     }
 
     // Generate unique supplier code
-    const suppCode = await generateUniqueSupplierCode();
+    const suppCode = await generateUniqueSupplierCode(tenantId);
 
     // Approve supplier and assign supplier code
     const supplier = await prisma.supplier.update({

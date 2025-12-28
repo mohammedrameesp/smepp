@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { formatDate, formatDateTime } from '@/lib/date-format';
-import { AssetMaintenanceRecords } from '@/components/assets/asset-maintenance-records';
+import { AssetMaintenanceRecords } from '@/components/domains/operations/assets/asset-maintenance-records';
 import { AssetRequestDialog, AssetReturnDialog } from '@/components/domains/operations/asset-requests';
 
 interface Props {

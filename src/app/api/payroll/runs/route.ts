@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role, PayrollStatus } from '@prisma/client';
+import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createPayrollRunSchema, payrollRunQuerySchema } from '@/lib/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/activity';
+import { withErrorHandler } from '@/lib/http/handler';
 import {
   generatePayrollReference,
   getPeriodStartDate,
@@ -12,23 +13,8 @@ import {
   parseDecimal
 } from '@/lib/payroll/utils';
 
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Only admins can view payroll runs
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
+export const GET = withErrorHandler(
+  async (request, { prisma: tenantPrisma, tenant }) => {
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
 
@@ -44,10 +30,8 @@ export async function GET(request: NextRequest) {
     const page = p;
     const pageSize = ps;
 
-    // Build where clause with tenant filtering
-    const where: Record<string, unknown> = {
-      tenantId: session.user.organizationId,
-    };
+    // Build where clause - tenantId filtering handled by tenant-scoped prisma
+    const where: Record<string, unknown> = {};
 
     if (year) {
       where.year = year;
@@ -58,7 +42,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [runs, total] = await Promise.all([
-      prisma.payrollRun.findMany({
+      tenantPrisma.payrollRun.findMany({
         where,
         include: {
           createdBy: { select: { id: true, name: true } },
@@ -72,7 +56,7 @@ export async function GET(request: NextRequest) {
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      prisma.payrollRun.count({ where }),
+      tenantPrisma.payrollRun.count({ where }),
     ]);
 
     // Transform decimals
@@ -93,26 +77,18 @@ export async function GET(request: NextRequest) {
         hasMore: page * pageSize < total,
       },
     });
-  } catch (error) {
-    console.error('Payroll runs GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch payroll runs' },
-      { status: 500 }
-    );
+  },
+  {
+    requireAuth: true,
+    requireAdmin: true,
+    requireModule: 'payroll',
+    rateLimit: true,
   }
-}
+);
 
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withErrorHandler(
+  async (request, { prisma: tenantPrisma, tenant }) => {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
 
     const body = await request.json();
     const validation = createPayrollRunSchema.safeParse(body);
@@ -127,8 +103,8 @@ export async function POST(request: NextRequest) {
     const { year, month } = validation.data;
 
     // Check if payroll run already exists for this period (tenant-scoped)
-    const existing = await prisma.payrollRun.findFirst({
-      where: { year, month, tenantId: session.user.organizationId },
+    const existing = await tenantPrisma.payrollRun.findFirst({
+      where: { year, month },
     });
 
     if (existing) {
@@ -139,10 +115,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get all employees with active salary structures (tenant-scoped)
-    const salaryStructures = await prisma.salaryStructure.findMany({
+    const salaryStructures = await tenantPrisma.salaryStructure.findMany({
       where: {
         isActive: true,
-        tenantId: session.user.organizationId,
       },
       include: {
         user: {
@@ -179,8 +154,8 @@ export async function POST(request: NextRequest) {
     const totalNet = totalGross - totalDeductions;
 
     // Generate reference number (tenant-scoped)
-    const lastPayroll = await prisma.payrollRun.findFirst({
-      where: { year, tenantId: session.user.organizationId },
+    const lastPayroll = await tenantPrisma.payrollRun.findFirst({
+      where: { year },
       orderBy: { referenceNumber: 'desc' },
     });
 
@@ -196,7 +171,7 @@ export async function POST(request: NextRequest) {
     const periodStart = getPeriodStartDate(year, month);
     const periodEnd = getPeriodEndDate(year, month);
 
-    // Create payroll run with history
+    // Create payroll run with history (use global prisma for transaction)
     const payrollRun = await prisma.$transaction(async (tx) => {
       const run = await tx.payrollRun.create({
         data: {
@@ -210,8 +185,8 @@ export async function POST(request: NextRequest) {
           totalDeductions,
           totalNet,
           employeeCount: salaryStructures.length,
-          createdById: session.user.id,
-          tenantId: session.user.organizationId!,
+          createdById: session!.user.id,
+          tenantId: tenant!.tenantId,
         },
         include: {
           createdBy: { select: { id: true, name: true } },
@@ -224,7 +199,7 @@ export async function POST(request: NextRequest) {
           payrollRunId: run.id,
           action: 'CREATED',
           newStatus: PayrollStatus.DRAFT,
-          performedById: session.user.id,
+          performedById: session!.user.id,
         },
       });
 
@@ -232,7 +207,7 @@ export async function POST(request: NextRequest) {
     });
 
     await logAction(
-      session.user.id,
+      session!.user.id,
       ActivityActions.PAYROLL_RUN_CREATED,
       'PayrollRun',
       payrollRun.id,
@@ -254,11 +229,11 @@ export async function POST(request: NextRequest) {
     };
 
     return NextResponse.json(response, { status: 201 });
-  } catch (error) {
-    console.error('Payroll run POST error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create payroll run' },
-      { status: 500 }
-    );
+  },
+  {
+    requireAuth: true,
+    requireAdmin: true,
+    requireModule: 'payroll',
+    rateLimit: true,
   }
-}
+);

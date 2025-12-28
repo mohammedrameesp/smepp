@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -111,15 +112,17 @@ export default function NewProjectPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create New Project</h1>
-          <p className="text-gray-600">
-            Set up a new project with timeline and team
-          </p>
-        </div>
+    <>
+      <PageHeader
+        title="Create New Project"
+        subtitle="Set up a new project with timeline and team"
+        breadcrumbs={[
+          { label: 'Projects', href: '/admin/projects' },
+          { label: 'New Project' },
+        ]}
+      />
 
+      <PageContent className="max-w-2xl">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Basic Information */}
           <Card>
@@ -328,7 +331,7 @@ export default function NewProjectPage() {
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

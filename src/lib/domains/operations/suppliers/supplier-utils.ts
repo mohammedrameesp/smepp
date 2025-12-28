@@ -1,15 +1,21 @@
 import { prisma } from '@/lib/core/prisma';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 /**
- * Generates the next unique supplier code in the format SUPP-XXXX
- * Example: SUPP-0001, SUPP-0002, etc.
+ * Generates the next unique supplier code in the format {PREFIX}-SUPP-XXXX
+ * Example: BCE-SUPP-0001, JAS-SUPP-0002, etc.
  */
-export async function generateSupplierCode(): Promise<string> {
-  // Get the latest supplier code
+export async function generateSupplierCode(tenantId: string): Promise<string> {
+  // Get organization's code prefix
+  const codePrefix = await getOrganizationCodePrefix(tenantId);
+  const searchPrefix = `${codePrefix}-SUPP-`;
+
+  // Get the latest supplier code for this tenant
   const latestSupplier = await prisma.supplier.findFirst({
     where: {
+      tenantId,
       suppCode: {
-        startsWith: 'SUPP-',
+        startsWith: searchPrefix,
       },
     },
     orderBy: {
@@ -23,8 +29,8 @@ export async function generateSupplierCode(): Promise<string> {
   let nextNumber = 1;
 
   if (latestSupplier && latestSupplier.suppCode) {
-    // Extract the number from the latest code (e.g., "SUPP-0042" -> 42)
-    const match = latestSupplier.suppCode.match(/SUPP-(\d+)/);
+    // Extract the number from the latest code (e.g., "BCE-SUPP-0042" -> 42)
+    const match = latestSupplier.suppCode.match(new RegExp(`${codePrefix}-SUPP-(\\d+)`));
     if (match) {
       nextNumber = parseInt(match[1], 10) + 1;
     }
@@ -32,23 +38,23 @@ export async function generateSupplierCode(): Promise<string> {
 
   // Format with leading zeros to ensure 4 digits
   const formattedNumber = nextNumber.toString().padStart(4, '0');
-  return `SUPP-${formattedNumber}`;
+  return `${searchPrefix}${formattedNumber}`;
 }
 
 /**
  * Ensures the generated supplier code is unique by checking the database
  * If a collision occurs, it will retry with the next number
  */
-export async function generateUniqueSupplierCode(): Promise<string> {
+export async function generateUniqueSupplierCode(tenantId: string): Promise<string> {
   let attempts = 0;
   const maxAttempts = 10;
 
   while (attempts < maxAttempts) {
-    const code = await generateSupplierCode();
+    const code = await generateSupplierCode(tenantId);
 
-    // Check if this code already exists (use findFirst instead of findUnique for non-unique field)
+    // Check if this code already exists within this tenant
     const existing = await prisma.supplier.findFirst({
-      where: { suppCode: code },
+      where: { tenantId, suppCode: code },
     });
 
     if (!existing) {
@@ -59,6 +65,7 @@ export async function generateUniqueSupplierCode(): Promise<string> {
   }
 
   // Fallback: use timestamp-based code if all else fails
+  const codePrefix = await getOrganizationCodePrefix(tenantId);
   const timestamp = Date.now().toString().slice(-4);
-  return `SUPP-${timestamp}`;
+  return `${codePrefix}-SUPP-${timestamp}`;
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -146,19 +147,13 @@ export default function AdminLeaveCalendarPage() {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Team Calendar</h1>
-              <p className="text-gray-600">
-                View all team leave schedules at a glance
-              </p>
-            </div>
-          </div>
-        </div>
+    <>
+      <PageHeader
+        title="Team Calendar"
+        subtitle="View all team leave schedules at a glance"
+      />
 
+      <PageContent>
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -313,7 +308,7 @@ export default function AdminLeaveCalendarPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

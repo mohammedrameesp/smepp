@@ -46,6 +46,8 @@ async function getUsersHandler(request: NextRequest) {
   if (includeHrProfile || includeAll) {
     include.hrProfile = {
       select: {
+        id: true,
+        tenantId: true,
         dateOfJoining: true,
         employeeId: true,
         designation: true,
@@ -69,10 +71,17 @@ async function getUsersHandler(request: NextRequest) {
     orderBy: { createdAt: 'desc' },
   });
 
-  // Return wrapped format when includeHrProfile or includeAll is used for consistency with other APIs
-  // Otherwise return array directly for backward compatibility
+  // Filter hrProfile by tenantId - only include hrProfile if it belongs to current organization
+  // This is needed because hrProfile is a one-to-one relation and can't be filtered in Prisma include
   if (includeHrProfile || includeAll) {
-    return NextResponse.json({ users });
+    const filteredUsers = users.map((user: any) => {
+      if (user.hrProfile && user.hrProfile.tenantId !== session.user.organizationId) {
+        // hrProfile belongs to different organization, exclude it
+        return { ...user, hrProfile: null };
+      }
+      return user;
+    });
+    return NextResponse.json({ users: filteredUsers });
   }
   return NextResponse.json(users);
 }
@@ -91,11 +100,30 @@ async function createUserHandler(request: NextRequest) {
     }, { status: 400 });
   }
 
-  const { name, email, role, employeeId, designation } = validation.data;
+  const { name, email, role, employeeId, designation, isEmployee, canLogin, isOnWps } = validation.data;
+
+  // Get session for tenant context
+  const session = await getServerSession(authOptions);
+  if (!session?.user.organizationId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
+
+  // Generate email for non-login users (use placeholder to satisfy unique constraint)
+  // Format: nologin-{uuid}@{tenantSlug}.internal
+  let finalEmail = email;
+  if (!canLogin && !email) {
+    const crypto = await import('crypto');
+    const uniqueId = crypto.randomUUID().split('-')[0]; // Use first segment of UUID for shorter ID
+    const org = await prisma.organization.findUnique({
+      where: { id: session.user.organizationId },
+      select: { slug: true },
+    });
+    finalEmail = `nologin-${uniqueId}@${org?.slug || 'system'}.internal`;
+  }
 
   // Check if user with this email already exists
   const existingUser = await prisma.user.findUnique({
-    where: { email },
+    where: { email: finalEmail },
   });
 
   if (existingUser) {
@@ -105,9 +133,9 @@ async function createUserHandler(request: NextRequest) {
     );
   }
 
-  // Generate employee code if not provided
+  // Generate employee code if not provided (only for employees)
   let finalEmployeeId = employeeId;
-  if (!finalEmployeeId) {
+  if (isEmployee && !finalEmployeeId) {
     // Generate employee code: BCE-YYYY-XXX (e.g., BCE-2024-001)
     const year = new Date().getFullYear();
     const prefix = `BCE-${year}`;
@@ -119,33 +147,42 @@ async function createUserHandler(request: NextRequest) {
     finalEmployeeId = `${prefix}-${String(count + 1).padStart(3, '0')}`;
   }
 
-  // Create user with HR profile and organization membership in a transaction
+  // Build user data
+  const userData: any = {
+    name,
+    email: finalEmail,
+    role,
+    isEmployee,
+    canLogin,
+    isOnWps: isEmployee ? isOnWps : false, // Only set WPS for employees
+    emailVerified: null,
+    // Create organization membership so user appears in tenant-filtered queries
+    organizationMemberships: {
+      create: {
+        organizationId: session.user.organizationId,
+        role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+      }
+    }
+  };
+
+  // Only create HR profile for employees
+  if (isEmployee) {
+    userData.hrProfile = {
+      create: {
+        employeeId: finalEmployeeId,
+        designation: designation || null,
+        onboardingComplete: false,
+        onboardingStep: 0,
+        tenantId: session.user.organizationId,
+      }
+    };
+  }
+
+  // Create user with optional HR profile and organization membership
   // Note: Password is not stored as users authenticate via Azure AD or OAuth
   // emailVerified is set to null - they'll verify on first login
-  const session = await getServerSession(authOptions);
   const user = await prisma.user.create({
-    data: {
-      name,
-      email,
-      role,
-      emailVerified: null,
-      hrProfile: {
-        create: {
-          employeeId: finalEmployeeId,
-          designation: designation || null,
-          onboardingComplete: false,
-          onboardingStep: 0,
-          tenantId: session?.user.organizationId!,
-        }
-      },
-      // Create organization membership so user appears in tenant-filtered queries
-      organizationMemberships: {
-        create: {
-          organizationId: session?.user.organizationId!,
-          role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
-        }
-      }
-    },
+    data: userData,
     include: {
       _count: {
         select: {
@@ -173,30 +210,34 @@ async function createUserHandler(request: NextRequest) {
     );
   }
 
-  // Initialize leave balances for the new user (non-blocking)
-  try {
-    await initializeUserLeaveBalances(user.id);
-  } catch (leaveError) {
-    console.error('[Leave] Failed to initialize leave balances:', leaveError);
-    // Don't fail the request if leave balance initialization fails
+  // Initialize leave balances for employees only (non-blocking)
+  if (isEmployee) {
+    try {
+      await initializeUserLeaveBalances(user.id);
+    } catch (leaveError) {
+      console.error('[Leave] Failed to initialize leave balances:', leaveError);
+      // Don't fail the request if leave balance initialization fails
+    }
   }
 
-  // Send welcome email to the new user (non-blocking)
-  try {
-    const emailContent = welcomeUserEmail({
-      userName: user.name || user.email,
-      userEmail: user.email,
-      userRole: user.role,
-    });
-    await sendEmail({
-      to: user.email,
-      subject: emailContent.subject,
-      html: emailContent.html,
-      text: emailContent.text,
-    });
-  } catch (emailError) {
-    console.error('[Email] Failed to send welcome email:', emailError);
-    // Don't fail the request if email fails
+  // Send welcome email only to users who can login (non-blocking)
+  if (canLogin && finalEmail && !finalEmail.endsWith('.internal')) {
+    try {
+      const emailContent = welcomeUserEmail({
+        userName: user.name || user.email,
+        userEmail: user.email,
+        userRole: user.role,
+      });
+      await sendEmail({
+        to: user.email,
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text,
+      });
+    } catch (emailError) {
+      console.error('[Email] Failed to send welcome email:', emailError);
+      // Don't fail the request if email fails
+    }
   }
 
   return NextResponse.json(user, { status: 201 });

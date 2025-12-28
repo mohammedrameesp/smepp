@@ -297,15 +297,10 @@ export function getModulesByCategory(category: ModuleCategory): ModuleDefinition
 
 /**
  * Get modules available at a specific tier
+ * NOTE: All modules are available - tier restrictions disabled
  */
-export function getModulesForTier(tier: SubscriptionTier): ModuleDefinition[] {
-  const tierOrder: SubscriptionTier[] = ['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'];
-  const tierIndex = tierOrder.indexOf(tier);
-
-  return Object.values(MODULE_REGISTRY).filter(m => {
-    const moduleTierIndex = tierOrder.indexOf(m.tier);
-    return moduleTierIndex <= tierIndex;
-  });
+export function getModulesForTier(_tier: SubscriptionTier): ModuleDefinition[] {
+  return Object.values(MODULE_REGISTRY);
 }
 
 /**
@@ -331,10 +326,10 @@ export function getDefaultEnabledModules(): string[] {
 
 /**
  * Check if a module requires a specific tier
+ * NOTE: Always returns null - tier restrictions disabled
  */
-export function getRequiredTier(moduleId: string): SubscriptionTier | null {
-  const mod = MODULE_REGISTRY[moduleId];
-  return mod ? mod.tier : null;
+export function getRequiredTier(_moduleId: string): SubscriptionTier | null {
+  return null;
 }
 
 /**
@@ -389,11 +384,12 @@ export function canUninstallModule(
 /**
  * Check if a module can be installed
  * Returns an error message if not, or null if it can be installed
+ * NOTE: Tier restrictions disabled - only checks dependencies
  */
 export function canInstallModule(
   moduleId: string,
   enabledModules: string[],
-  currentTier: SubscriptionTier
+  _currentTier: SubscriptionTier
 ): string | null {
   const mod = MODULE_REGISTRY[moduleId];
 
@@ -405,16 +401,7 @@ export function canInstallModule(
     return `"${mod.name}" is already installed`;
   }
 
-  // Check tier requirement
-  const tierOrder: SubscriptionTier[] = ['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'];
-  const currentTierIndex = tierOrder.indexOf(currentTier);
-  const requiredTierIndex = tierOrder.indexOf(mod.tier);
-
-  if (requiredTierIndex > currentTierIndex) {
-    return `"${mod.name}" requires ${mod.tier} tier or higher. Please upgrade your subscription.`;
-  }
-
-  // Check dependencies
+  // Check dependencies only (tier check removed)
   const missingDeps = mod.requires.filter(dep => !enabledModules.includes(dep));
 
   if (missingDeps.length > 0) {

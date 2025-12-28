@@ -158,7 +158,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${token}`;
+    // Build organization-specific invite URL using subdomain
+    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+    const protocol = appDomain.includes('localhost') ? 'http' : 'https';
+    const inviteUrl = `${protocol}://${org.slug}.${appDomain}/invite/${token}`;
     const inviterName = session.user.name || 'A team member';
     const roleName = role === 'ADMIN' ? 'Administrator' : role === 'MANAGER' ? 'Manager' : 'Team Member';
 

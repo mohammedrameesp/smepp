@@ -15,7 +15,7 @@ import {
   ShoppingCart,
   UserCheck,
 } from 'lucide-react';
-import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 export default async function AdminReportsPage() {
   const session = await getServerSession(authOptions);
@@ -28,7 +28,6 @@ export default async function AdminReportsPage() {
     redirect('/forbidden');
   }
 
-  // Require organization context for tenant isolation
   if (!session.user.organizationId) {
     redirect('/forbidden');
   }
@@ -37,51 +36,37 @@ export default async function AdminReportsPage() {
 
   // Get comprehensive stats from ALL modules (tenant-scoped)
   const [
-    // Assets
     totalAssets,
     assetsByStatus,
     assetsByType,
     assetsValue,
-
-    // Subscriptions
     totalSubscriptions,
     subscriptionsByStatus,
     subscriptionsByBilling,
     subscriptionsCost,
     upcomingRenewals,
-
-    // Suppliers
     totalSuppliers,
     suppliersByStatus,
     suppliersByCategory,
     totalEngagements,
-
-    // Users
     totalUsers,
     usersByRole,
     activeUsers,
-
-    // Purchase Requests
     totalPurchaseRequests,
     purchaseRequestsByStatus,
     purchaseRequestsByPriority,
     purchaseRequestsByCostType,
     purchaseRequestsValue,
     pendingPurchaseRequests,
-
-    // Employees/HR
     totalEmployees,
     employeesWithHRProfile,
     pendingChangeRequests,
     expiringDocuments,
     incompleteOnboarding,
-
-    // Activity Logs
     recentActivity,
     activityByAction,
     activityByEntity,
   ] = await Promise.all([
-    // Assets queries (tenant-scoped)
     prisma.asset.count({ where: { tenantId } }),
     prisma.asset.groupBy({
       by: ['status'],
@@ -99,8 +84,6 @@ export default async function AdminReportsPage() {
       where: { tenantId },
       _sum: { priceQAR: true },
     }),
-
-    // Subscriptions queries (tenant-scoped)
     prisma.subscription.count({ where: { tenantId } }),
     prisma.subscription.groupBy({
       by: ['status'],
@@ -126,8 +109,6 @@ export default async function AdminReportsPage() {
         },
       },
     }),
-
-    // Suppliers queries (tenant-scoped)
     prisma.supplier.count({ where: { tenantId } }),
     prisma.supplier.groupBy({
       by: ['status'],
@@ -142,8 +123,6 @@ export default async function AdminReportsPage() {
       take: 10,
     }),
     prisma.supplierEngagement.count({ where: { tenantId } }),
-
-    // Users queries (tenant-scoped)
     prisma.user.count({
       where: { organizationMemberships: { some: { organizationId: tenantId } } },
     }),
@@ -155,8 +134,6 @@ export default async function AdminReportsPage() {
     prisma.user.count({
       where: { organizationMemberships: { some: { organizationId: tenantId } } },
     }),
-
-    // Purchase Requests queries (tenant-scoped)
     prisma.purchaseRequest.count({ where: { tenantId } }),
     prisma.purchaseRequest.groupBy({
       by: ['status'],
@@ -180,8 +157,6 @@ export default async function AdminReportsPage() {
     prisma.purchaseRequest.count({
       where: { tenantId, status: 'PENDING' },
     }),
-
-    // Employees/HR queries (tenant-scoped)
     prisma.user.count({
       where: {
         role: { in: ['ADMIN', 'EMPLOYEE'] },
@@ -205,8 +180,6 @@ export default async function AdminReportsPage() {
     prisma.hRProfile.count({
       where: { tenantId, onboardingStep: { lt: 10 } },
     }),
-
-    // Activity Logs queries (tenant-scoped)
     prisma.activityLog.findMany({
       where: { tenantId },
       take: 20,
@@ -233,74 +206,33 @@ export default async function AdminReportsPage() {
   ]);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Reports & Analytics</h1>
-              <p className="text-gray-600">
-                Comprehensive system reports across all modules with activity logs
-              </p>
-            </div>
+    <>
+      <PageHeader
+        title="Reports & Analytics"
+        subtitle="Comprehensive system reports across all modules with activity logs"
+      >
+        {/* Quick Stats */}
+        <div className="flex flex-wrap items-center gap-4 mt-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
+            <span className="text-blue-400 text-sm font-medium">{totalAssets} assets</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
+            <span className="text-emerald-400 text-sm font-medium">{totalSubscriptions} subscriptions</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 rounded-lg">
+            <span className="text-purple-400 text-sm font-medium">{totalSuppliers} suppliers</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
+            <span className="text-amber-400 text-sm font-medium">{totalEmployees} employees</span>
           </div>
         </div>
+      </PageHeader>
 
-        {/* Overview Stats - Row 1 */}
-        <StatsCardGrid columns={4} className="mb-4">
-          <StatsCard
-            title="Total Assets"
-            subtitle={`QAR ${(Number(assetsValue._sum.priceQAR || 0)).toLocaleString()}`}
-            value={totalAssets}
-            icon={Package}
-            color="blue"
-          />
-          <StatsCard
-            title="Subscriptions"
-            subtitle={`QAR ${(Number(subscriptionsCost._sum.costQAR || 0)).toLocaleString()}/mo`}
-            value={totalSubscriptions}
-            icon={CreditCard}
-            color="emerald"
-          />
-          <StatsCard
-            title="Suppliers"
-            subtitle={`${totalEngagements} engagements`}
-            value={totalSuppliers}
-            icon={Building2}
-            color="purple"
-          />
-          <StatsCard
-            title="Active Users"
-            subtitle={`${totalUsers} total`}
-            value={activeUsers}
-            icon={Users}
-            color="amber"
-          />
-        </StatsCardGrid>
-
-        {/* Overview Stats - Row 2 */}
-        <StatsCardGrid columns={4} className="mb-8">
-          <StatsCard
-            title="Purchase Requests"
-            subtitle={`${pendingPurchaseRequests} pending`}
-            value={totalPurchaseRequests}
-            icon={ShoppingCart}
-            color="rose"
-          />
-          <StatsCard
-            title="Employees"
-            subtitle={`${employeesWithHRProfile} with HR profile`}
-            value={totalEmployees}
-            icon={UserCheck}
-            color="cyan"
-          />
-        </StatsCardGrid>
-
+      <PageContent>
         {/* Assets Reports */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Package className="h-6 w-6 text-blue-500" />
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Package className="h-5 w-5 text-blue-500" />
             Assets Reports
           </h2>
 
@@ -343,8 +275,8 @@ export default async function AdminReportsPage() {
 
         {/* Subscriptions Reports */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <CreditCard className="h-6 w-6 text-green-500" />
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-green-500" />
             Subscriptions Reports
           </h2>
 
@@ -401,8 +333,8 @@ export default async function AdminReportsPage() {
 
         {/* Suppliers Reports */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Building2 className="h-6 w-6 text-purple-500" />
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-purple-500" />
             Suppliers Reports
           </h2>
 
@@ -445,8 +377,8 @@ export default async function AdminReportsPage() {
 
         {/* Purchase Requests Reports */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <ShoppingCart className="h-6 w-6 text-pink-500" />
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5 text-pink-500" />
             Purchase Requests Reports
           </h2>
 
@@ -502,39 +434,12 @@ export default async function AdminReportsPage() {
               </CardContent>
             </Card>
           </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Total Request Value</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900">
-                  QAR {(Number(purchaseRequestsValue._sum.totalAmount || 0)).toLocaleString()}
-                </div>
-                <p className="text-sm text-gray-600 mt-1">All time total</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Pending Approval</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-orange-600">{pendingPurchaseRequests}</div>
-                <p className="text-sm text-gray-600 mt-1">Requests awaiting review</p>
-                <Link href="/admin/purchase-requests" className="text-sm text-blue-600 hover:underline mt-2 inline-block">
-                  View details →
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
         </div>
 
         {/* Employees/HR Reports */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <UserCheck className="h-6 w-6 text-emerald-500" />
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <UserCheck className="h-5 w-5 text-emerald-500" />
             Employees & HR Reports
           </h2>
 
@@ -582,30 +487,12 @@ export default async function AdminReportsPage() {
               </CardContent>
             </Card>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Change Requests</CardTitle>
-              <CardDescription>Employee profile updates awaiting approval</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                <div className="text-4xl font-bold text-purple-600">{pendingChangeRequests}</div>
-                <div>
-                  <p className="text-sm text-gray-600">Pending review</p>
-                  <Link href="/admin/employees/change-requests" className="text-sm text-blue-600 hover:underline">
-                    Review requests →
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Users Reports */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Users className="h-6 w-6 text-orange-500" />
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Users className="h-5 w-5 text-orange-500" />
             Users Reports
           </h2>
 
@@ -629,8 +516,8 @@ export default async function AdminReportsPage() {
 
         {/* Activity Logs */}
         <div id="activity-logs" className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Activity className="h-6 w-6 text-blue-500" />
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Activity className="h-5 w-5 text-blue-500" />
             Activity Logs
           </h2>
 
@@ -719,8 +606,7 @@ export default async function AdminReportsPage() {
             </CardContent>
           </Card>
         </div>
-
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

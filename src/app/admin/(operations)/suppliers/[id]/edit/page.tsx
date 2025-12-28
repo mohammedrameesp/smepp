@@ -5,13 +5,14 @@ import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -221,35 +222,35 @@ export default function EditSupplierPage() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+      </div>
+    );
+  }
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-        </div>
-      ) : (
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <Link href={`/admin/suppliers/${params.id}`}>
-              <Button variant="ghost" className="mb-4">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Supplier
-              </Button>
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Edit Supplier</h1>
-            <p className="text-gray-600">
-              Update supplier information
-            </p>
-          </div>
+    <>
+      <PageHeader
+        title="Edit Supplier"
+        subtitle="Update supplier information"
+        breadcrumbs={[
+          { label: 'Suppliers', href: '/admin/suppliers' },
+          { label: 'Supplier', href: `/admin/suppliers/${params.id}` },
+          { label: 'Edit' },
+        ]}
+      />
 
-          {error && (
-            <Alert variant="error" className="mb-6">
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+      <PageContent className="max-w-4xl">
+        {error && (
+          <Alert variant="error" className="mb-6">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Company Information */}
             <Card>
               <CardHeader>
@@ -553,10 +554,9 @@ export default function EditSupplierPage() {
                   'Save Changes'
                 )}
               </Button>
-            </div>
-          </form>
-        </div>
-      )}
-    </div>
+          </div>
+        </form>
+      </PageContent>
+    </>
   );
 }

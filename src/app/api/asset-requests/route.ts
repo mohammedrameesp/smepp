@@ -264,7 +264,7 @@ export async function POST(request: NextRequest) {
 
     // Create the request in a transaction
     const assetRequest = await prisma.$transaction(async (tx) => {
-      const requestNumber = await generateRequestNumber(tx);
+      const requestNumber = await generateRequestNumber(tenantId, tx);
 
       const newRequest = await tx.assetRequest.create({
         data: {

@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, FileText, User, Calendar, Clock, Phone, Mail, ExternalLink } from 'lucide-react';
+import { ArrowLeft, FileText, User, Calendar, Clock, Phone, Mail, ExternalLink, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import {
   getLeaveStatusVariant,
@@ -56,6 +55,11 @@ interface LeaveRequest {
     name: string | null;
     email: string;
   } | null;
+  createdBy?: {
+    id: string;
+    name: string | null;
+    email: string;
+  } | null;
   history: Array<{
     id: string;
     action: string;
@@ -79,6 +83,14 @@ interface LeaveBalance {
   carriedForward: number;
   adjustment: number;
 }
+
+// Status badge styles
+const statusStyles: Record<LeaveStatus, { bg: string; text: string; icon: typeof CheckCircle }> = {
+  PENDING: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Clock },
+  APPROVED: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: CheckCircle },
+  REJECTED: { bg: 'bg-rose-100', text: 'text-rose-700', icon: XCircle },
+  CANCELLED: { bg: 'bg-slate-100', text: 'text-slate-700', icon: XCircle },
+};
 
 export default function AdminLeaveRequestDetailPage() {
   const params = useParams();
@@ -139,9 +151,10 @@ export default function AdminLeaveRequestDetailPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center py-12">Loading...</div>
+      <div className="max-w-5xl mx-auto px-4 py-6">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-slate-200 rounded w-48"></div>
+          <div className="h-64 bg-slate-200 rounded-2xl"></div>
         </div>
       </div>
     );
@@ -149,269 +162,291 @@ export default function AdminLeaveRequestDetailPage() {
 
   if (error || !request) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-red-600 mb-4">{error || 'Leave request not found'}</p>
-              <Link href="/admin/leave/requests">
-                <Button variant="outline">Back to Requests</Button>
-              </Link>
-            </CardContent>
-          </Card>
+      <div className="max-w-5xl mx-auto px-4 py-6">
+        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+          <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="h-8 w-8 text-rose-500" />
+          </div>
+          <h3 className="font-semibold text-slate-900 text-lg mb-1">{error || 'Leave request not found'}</h3>
+          <p className="text-slate-500 mb-4">We couldn&apos;t find the leave request you&apos;re looking for.</p>
+          <Link href="/admin/leave/requests">
+            <Button variant="outline">Back to Requests</Button>
+          </Link>
         </div>
       </div>
     );
   }
 
   const canCancel = canCancelLeaveRequest(request.status, new Date(request.startDate));
+  const StatusIcon = statusStyles[request.status]?.icon || Clock;
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <Link href="/admin/leave/requests">
-            <Button variant="ghost" size="sm" className="mb-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Requests
-            </Button>
-          </Link>
+    <div className="max-w-5xl mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="mb-6">
+        <Link
+          href="/admin/leave/requests"
+          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-4"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Requests
+        </Link>
 
-          <div className="flex justify-between items-start">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {request.requestNumber}
-                </h1>
-                <Badge variant={getLeaveStatusVariant(request.status)}>
-                  {request.status}
-                </Badge>
-              </div>
-              <p className="text-gray-600">
-                Leave request from {request.user.name}
-              </p>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl font-bold text-slate-900">
+                {request.requestNumber}
+              </h1>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${statusStyles[request.status]?.bg} ${statusStyles[request.status]?.text}`}>
+                <StatusIcon className="h-3.5 w-3.5" />
+                {request.status}
+              </span>
             </div>
+            <p className="text-slate-500">
+              Leave request from <span className="font-medium text-slate-700">{request.user.name}</span>
+            </p>
+            {request.createdBy && (
+              <p className="text-sm text-slate-400 mt-1">
+                Submitted by <span className="font-medium text-slate-600">{request.createdBy.name || request.createdBy.email}</span> on behalf of employee
+              </p>
+            )}
+          </div>
 
-            <div className="flex gap-2">
-              {request.status === 'PENDING' && (
-                <LeaveApprovalActions
-                  requestId={request.id}
-                  onApproved={fetchRequest}
-                  onRejected={fetchRequest}
+          <div className="flex gap-2">
+            {request.status === 'PENDING' && (
+              <LeaveApprovalActions
+                requestId={request.id}
+                onApproved={fetchRequest}
+                onRejected={fetchRequest}
+              />
+            )}
+            {canCancel && (
+              <CancelLeaveDialog
+                requestId={request.id}
+                requestNumber={request.requestNumber}
+                onCancelled={fetchRequest}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Leave Details Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Leave Details</h2>
+                <p className="text-sm text-slate-500">Request information</p>
+              </div>
+            </div>
+            <div className="p-5 space-y-5">
+              {/* Leave Type */}
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-4 h-4 rounded-full shadow-sm"
+                  style={{ backgroundColor: request.leaveType.color, boxShadow: `0 0 0 4px ${request.leaveType.color}30` }}
                 />
+                <span className="text-lg font-semibold text-slate-900">{request.leaveType.name}</span>
+              </div>
+
+              {/* Details Grid */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Date Range</p>
+                  <p className="font-semibold text-slate-900">
+                    {getDateRangeText(new Date(request.startDate), new Date(request.endDate))}
+                  </p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Duration</p>
+                  <p className="font-semibold text-slate-900">{formatLeaveDays(request.totalDays)}</p>
+                </div>
+                {!request.leaveType.accrualBased && (
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Request Type</p>
+                    <p className="font-semibold text-slate-900">{getRequestTypeText(request.requestType)}</p>
+                  </div>
+                )}
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Submitted</p>
+                  <p className="font-semibold text-slate-900">
+                    {new Date(request.createdAt).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              {/* Reason */}
+              {request.reason && (
+                <div>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Reason</p>
+                  <div className="p-4 bg-slate-50 rounded-xl text-slate-700">{request.reason}</div>
+                </div>
               )}
-              {canCancel && (
-                <CancelLeaveDialog
-                  requestId={request.id}
-                  requestNumber={request.requestNumber}
-                  onCancelled={fetchRequest}
-                />
+
+              {/* Document */}
+              {request.documentUrl && (
+                <div>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Supporting Document</p>
+                  <a
+                    href={request.documentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                  >
+                    <FileText className="h-4 w-4" />
+                    View Document
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
               )}
+            </div>
+          </div>
+
+          {/* Status Details Card */}
+          {(request.approverNotes || request.rejectionReason || request.cancellationReason) && (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100">
+                <h2 className="font-semibold text-slate-900">
+                  {request.status === 'APPROVED' && 'Approval Details'}
+                  {request.status === 'REJECTED' && 'Rejection Details'}
+                  {request.status === 'CANCELLED' && 'Cancellation Details'}
+                </h2>
+              </div>
+              <div className="p-5">
+                {request.approver && (
+                  <div className="mb-4">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Processed by</p>
+                    <p className="font-medium text-slate-900">{request.approver.name}</p>
+                  </div>
+                )}
+                {request.approverNotes && (
+                  <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800">
+                    {request.approverNotes}
+                  </div>
+                )}
+                {request.rejectionReason && (
+                  <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-800">
+                    {request.rejectionReason}
+                  </div>
+                )}
+                {request.cancellationReason && (
+                  <div className="p-4 bg-slate-100 rounded-xl text-slate-700">
+                    {request.cancellationReason}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* History Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                <Clock className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">History</h2>
+                <p className="text-sm text-slate-500">Activity timeline</p>
+              </div>
+            </div>
+            <div className="p-5">
+              <LeaveRequestHistory history={request.history} />
             </div>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Main Details */}
-          <div className="md:col-span-2 space-y-6">
-            {/* Leave Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Leave Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-4 h-4 rounded-full"
-                    style={{ backgroundColor: request.leaveType.color }}
-                  />
-                  <span className="font-medium text-lg">{request.leaveType.name}</span>
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Employee Card */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                <User className="h-5 w-5 text-indigo-600" />
+              </div>
+              <h2 className="font-semibold text-slate-900">Employee</h2>
+            </div>
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <span className="text-indigo-600 font-semibold">
+                    {request.user.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                  </span>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-gray-500">Date Range</div>
-                    <div className="font-medium">
-                      {getDateRangeText(new Date(request.startDate), new Date(request.endDate))}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Duration</div>
-                    <div className="font-medium">{formatLeaveDays(request.totalDays)}</div>
-                  </div>
-                  {!request.leaveType.accrualBased && (
-                    <div>
-                      <div className="text-sm text-gray-500">Request Type</div>
-                      <div className="font-medium">{getRequestTypeText(request.requestType)}</div>
-                    </div>
-                  )}
-                  <div>
-                    <div className="text-sm text-gray-500">Submitted</div>
-                    <div className="font-medium">
-                      {new Date(request.createdAt).toLocaleDateString('en-GB', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {request.reason && (
-                  <div>
-                    <div className="text-sm text-gray-500 mb-1">Reason</div>
-                    <div className="p-3 bg-gray-50 rounded-md">{request.reason}</div>
-                  </div>
-                )}
-
-                {request.documentUrl && (
-                  <div>
-                    <div className="text-sm text-gray-500 mb-1">Supporting Document</div>
-                    <a
-                      href={request.documentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-blue-600 hover:underline"
-                    >
-                      <FileText className="h-4 w-4" />
-                      View Document
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Status Details */}
-            {(request.approverNotes || request.rejectionReason || request.cancellationReason) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    {request.status === 'APPROVED' && 'Approval Details'}
-                    {request.status === 'REJECTED' && 'Rejection Details'}
-                    {request.status === 'CANCELLED' && 'Cancellation Details'}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {request.approver && (
-                    <div className="mb-3">
-                      <div className="text-sm text-gray-500">Processed by</div>
-                      <div className="font-medium">{request.approver.name}</div>
-                    </div>
-                  )}
-                  {request.approverNotes && (
-                    <div className="p-3 bg-green-50 rounded-md text-green-800">
-                      {request.approverNotes}
-                    </div>
-                  )}
-                  {request.rejectionReason && (
-                    <div className="p-3 bg-red-50 rounded-md text-red-800">
-                      {request.rejectionReason}
-                    </div>
-                  )}
-                  {request.cancellationReason && (
-                    <div className="p-3 bg-gray-100 rounded-md">
-                      {request.cancellationReason}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* History */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  History
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <LeaveRequestHistory history={request.history} />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Employee Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Employee
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
                 <div>
-                  <div className="font-medium text-lg">{request.user.name}</div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <p className="font-semibold text-slate-900">{request.user.name}</p>
+                  <p className="text-sm text-slate-500 flex items-center gap-1">
                     <Mail className="h-3 w-3" />
                     {request.user.email}
+                  </p>
+                </div>
+              </div>
+              <Link href={`/admin/users/${request.user.id}`}>
+                <Button variant="outline" size="sm" className="w-full">
+                  View Profile
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Balance Summary Card */}
+          {balance && (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100">
+                <h2 className="font-semibold text-slate-900">Balance Summary</h2>
+                <p className="text-sm text-slate-500">
+                  {request.leaveType.name} - {new Date(request.startDate).getFullYear()}
+                </p>
+              </div>
+              <div className="p-5 space-y-3">
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-sm text-slate-500">Entitlement</span>
+                  <span className="font-semibold text-slate-900">{Number(balance.entitlement)} days</span>
+                </div>
+                {request.leaveType.accrualBased && accrued !== null && (
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm text-slate-500">Accrued (Pro-rata)</span>
+                    <span className="font-semibold text-blue-600">{accrued.toFixed(1)} days</span>
+                  </div>
+                )}
+                {Number(balance.carriedForward) > 0 && (
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm text-slate-500">Carried Forward</span>
+                    <span className="font-semibold text-blue-600">+{Number(balance.carriedForward)} days</span>
+                  </div>
+                )}
+                {Number(balance.adjustment) !== 0 && (
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm text-slate-500">Adjustment</span>
+                    <span className={`font-semibold ${Number(balance.adjustment) > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {Number(balance.adjustment) > 0 ? '+' : ''}{Number(balance.adjustment)} days
+                    </span>
+                  </div>
+                )}
+                <div className="border-t border-slate-100 pt-3 mt-3">
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm text-slate-500">Used</span>
+                    <span className="font-semibold text-rose-600">-{Number(balance.used)} days</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm text-slate-500">Pending</span>
+                    <span className="font-semibold text-amber-600">{Number(balance.pending)} days</span>
                   </div>
                 </div>
-                <Link href={`/admin/users/${request.user.id}`}>
-                  <Button variant="outline" size="sm" className="w-full">
-                    View Profile
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Balance Summary */}
-            {balance && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Balance Summary
-                  </CardTitle>
-                  <CardDescription>
-                    {request.leaveType.name} - {new Date(request.startDate).getFullYear()}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Entitlement</span>
-                    <span className="font-medium">{Number(balance.entitlement)} days</span>
-                  </div>
-                  {request.leaveType.accrualBased && accrued !== null && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">Accrued (Pro-rata)</span>
-                      <span className="font-medium text-blue-600">{accrued.toFixed(1)} days</span>
-                    </div>
-                  )}
-                  {Number(balance.carriedForward) > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">Carried Forward</span>
-                      <span className="font-medium text-blue-600">+{Number(balance.carriedForward)} days</span>
-                    </div>
-                  )}
-                  {Number(balance.adjustment) !== 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-500">Adjustment</span>
-                      <span className={`font-medium ${Number(balance.adjustment) > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {Number(balance.adjustment) > 0 ? '+' : ''}{Number(balance.adjustment)} days
-                      </span>
-                    </div>
-                  )}
-                  <hr className="my-2" />
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Used</span>
-                    <span className="font-medium text-red-600">-{Number(balance.used)} days</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-500">Pending</span>
-                    <span className="font-medium text-amber-600">{Number(balance.pending)} days</span>
-                  </div>
-                  <hr className="my-2" />
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium">Remaining</span>
-                    <span className="font-bold text-green-600">
+                <div className="border-t border-slate-100 pt-3 mt-3">
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-sm font-medium text-slate-700">Remaining</span>
+                    <span className="text-lg font-bold text-emerald-600">
                       {(() => {
                         const effectiveEntitlement = request.leaveType.accrualBased && accrued !== null
                           ? accrued
@@ -420,30 +455,33 @@ export default function AdminLeaveRequestDetailPage() {
                       })()} days
                     </span>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              </div>
+            </div>
+          )}
 
-            {/* Emergency Contact */}
-            {(request.emergencyContact || request.emergencyPhone) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Phone className="h-5 w-5" />
-                    Emergency Contact
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {request.emergencyContact && (
-                    <div className="font-medium">{request.emergencyContact}</div>
-                  )}
-                  {request.emergencyPhone && (
-                    <div className="text-sm text-gray-500">{request.emergencyPhone}</div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          {/* Emergency Contact Card */}
+          {(request.emergencyContact || request.emergencyPhone) && (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
+                  <Phone className="h-5 w-5 text-rose-600" />
+                </div>
+                <h2 className="font-semibold text-slate-900">Emergency Contact</h2>
+              </div>
+              <div className="p-5">
+                {request.emergencyContact && (
+                  <p className="font-medium text-slate-900">{request.emergencyContact}</p>
+                )}
+                {request.emergencyPhone && (
+                  <p className="text-sm text-slate-500 flex items-center gap-2 mt-1">
+                    <Phone className="h-3.5 w-3.5" />
+                    {request.emergencyPhone}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

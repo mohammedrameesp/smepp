@@ -55,9 +55,9 @@ export function AdminLayoutClient({ children, badgeCounts, enabledModules }: Adm
       />
 
       {/* Main content - full width, no sidebar */}
-      <main className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 pb-20 md:pb-0">
+      <div className="min-h-[calc(100vh-3.5rem)] bg-gray-50 pb-20 md:pb-0">
         {children}
-      </main>
+      </div>
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav badgeCounts={badgeCounts} enabledModules={enabledModules} />

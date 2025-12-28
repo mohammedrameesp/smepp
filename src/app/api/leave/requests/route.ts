@@ -18,6 +18,7 @@ import {
   ServiceBasedEntitlement,
   getAnnualLeaveDetails,
 } from '@/lib/leave-utils';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 export async function GET(request: NextRequest) {
   try {
@@ -164,9 +165,47 @@ export async function POST(request: NextRequest) {
     }
 
     const data = validation.data;
-    const userId = session.user.id;
+    const sessionUserId = session.user.id;
+    const isAdmin = session.user.role === Role.ADMIN;
 
     const tenantId = session.user.organizationId;
+
+    // Handle on-behalf-of requests (admin creating request for another employee)
+    let targetUserId = sessionUserId;
+    let createdById: string | null = null;
+
+    if (data.employeeId && data.employeeId !== sessionUserId) {
+      // Only admins can create requests on behalf of others
+      if (!isAdmin) {
+        return NextResponse.json(
+          { error: 'Only administrators can create leave requests on behalf of other employees' },
+          { status: 403 }
+        );
+      }
+
+      // Verify the target employee exists and belongs to this tenant
+      const targetEmployee = await prisma.user.findFirst({
+        where: {
+          id: data.employeeId,
+          organizationMemberships: {
+            some: { organizationId: tenantId },
+          },
+        },
+      });
+
+      if (!targetEmployee) {
+        return NextResponse.json(
+          { error: 'Employee not found in this organization' },
+          { status: 404 }
+        );
+      }
+
+      targetUserId = data.employeeId;
+      createdById = sessionUserId; // Track who submitted on behalf
+    }
+
+    // Use targetUserId for all subsequent operations
+    const userId = targetUserId;
 
     // Parse dates
     const startDate = new Date(data.startDate);
@@ -185,7 +224,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'This leave type is not active' }, { status: 400 });
     }
 
-    // Get user's HR profile for service duration and gender checks
+    // Get target user's HR profile for service duration and gender checks
     const hrProfile = await prisma.hRProfile.findUnique({
       where: { userId },
       select: {
@@ -286,7 +325,7 @@ export async function POST(request: NextRequest) {
 
     // Calculate days - Accrual-based leave (Annual Leave) includes weekends, others exclude weekends
     const includeWeekends = leaveType.accrualBased === true;
-    const isAdmin = session.user.role === Role.ADMIN;
+    // isAdmin already defined at the top of the function
     const totalDays = calculateWorkingDays(startDate, endDate, data.requestType, includeWeekends);
 
     if (totalDays === 0) {
@@ -400,10 +439,14 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Generate unique request number using timestamp + random to prevent duplicates
-      const timestamp = Date.now().toString(36).toUpperCase();
-      const random = Math.random().toString(36).substring(2, 5).toUpperCase();
-      const requestNumber = `LR-${timestamp}-${random}`;
+      // Get organization's code prefix
+      const codePrefix = await getOrganizationCodePrefix(session.user.organizationId!);
+
+      // Generate unique request number: {PREFIX}-LR-XXXXX
+      const leaveCount = await tx.leaveRequest.count({
+        where: { tenantId: session.user.organizationId! }
+      });
+      const requestNumber = `${codePrefix}-LR-${String(leaveCount + 1).padStart(5, '0')}`;
 
       // Create the request
       const request = await tx.leaveRequest.create({
@@ -421,6 +464,8 @@ export async function POST(request: NextRequest) {
           emergencyPhone: data.emergencyPhone,
           status: 'PENDING',
           tenantId: session.user.organizationId!,
+          // Track who submitted the request (if on behalf of another employee)
+          createdById,
         },
         include: {
           user: {
@@ -456,13 +501,14 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Create history entry
+      // Create history entry (performedById is the actual submitter, not the target user)
       await tx.leaveRequestHistory.create({
         data: {
           leaveRequestId: request.id,
           action: 'CREATED',
           newStatus: 'PENDING',
-          performedById: userId,
+          performedById: sessionUserId,
+          notes: createdById ? 'Submitted on behalf of employee' : undefined,
         },
       });
 
@@ -470,7 +516,7 @@ export async function POST(request: NextRequest) {
     });
 
     await logAction(
-      userId,
+      sessionUserId,
       ActivityActions.LEAVE_REQUEST_CREATED,
       'LeaveRequest',
       leaveRequest.id,
@@ -480,6 +526,7 @@ export async function POST(request: NextRequest) {
         totalDays,
         startDate: data.startDate,
         endDate: data.endDate,
+        onBehalfOf: createdById ? userId : undefined,
       }
     );
 

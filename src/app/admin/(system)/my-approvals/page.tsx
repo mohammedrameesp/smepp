@@ -4,10 +4,10 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Role } from '@prisma/client';
-import { FileText, ShoppingCart, Package, Inbox, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { MyApprovalsClient } from './client';
 import Link from 'next/link';
-import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 export const metadata: Metadata = {
   title: 'My Approvals | SME++',
@@ -136,65 +136,56 @@ export default async function MyApprovalsPage() {
   const approvals = await getPendingApprovals(session.user.organizationId);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">My Approvals</h1>
-        <p className="text-slate-500 text-sm">Review and process pending approval requests</p>
-      </div>
-
-      {/* Summary Cards */}
-      <StatsCardGrid columns={4} className="mb-6">
-        <StatsCard
-          title="Total Pending"
-          subtitle="Awaiting your action"
-          value={approvals.counts.total}
-          icon={Inbox}
-          color="amber"
-        />
-        <StatsCard
-          title="Leave Requests"
-          subtitle="Pending leave approvals"
-          value={approvals.counts.LEAVE_REQUEST}
-          icon={FileText}
-          color="blue"
-        />
-        <StatsCard
-          title="Purchase Requests"
-          subtitle="Pending purchase approvals"
-          value={approvals.counts.PURCHASE_REQUEST}
-          icon={ShoppingCart}
-          color="emerald"
-        />
-        <StatsCard
-          title="Asset Requests"
-          subtitle="Pending asset approvals"
-          value={approvals.counts.ASSET_REQUEST}
-          icon={Package}
-          color="purple"
-        />
-      </StatsCardGrid>
-
-      {approvals.counts.total === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="h-8 w-8 text-emerald-500" />
+    <>
+      <PageHeader
+        title="My Approvals"
+        subtitle="Review and process pending approval requests"
+      >
+        {/* Stats Summary */}
+        <div className="flex flex-wrap items-center gap-4 mt-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
+            <span className="text-amber-400 text-sm font-medium">{approvals.counts.total} total pending</span>
           </div>
-          <h3 className="font-semibold text-slate-900 text-lg mb-1">All caught up!</h3>
-          <p className="text-slate-500 mb-4">No pending approvals at the moment.</p>
-          <Link
-            href="/admin"
-            className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
-            Back to Dashboard
-          </Link>
+          {approvals.counts.LEAVE_REQUEST > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
+              <span className="text-blue-400 text-sm font-medium">{approvals.counts.LEAVE_REQUEST} leave</span>
+            </div>
+          )}
+          {approvals.counts.PURCHASE_REQUEST > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
+              <span className="text-emerald-400 text-sm font-medium">{approvals.counts.PURCHASE_REQUEST} purchase</span>
+            </div>
+          )}
+          {approvals.counts.ASSET_REQUEST > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 rounded-lg">
+              <span className="text-purple-400 text-sm font-medium">{approvals.counts.ASSET_REQUEST} asset</span>
+            </div>
+          )}
         </div>
-      ) : (
-        <MyApprovalsClient
-          approvals={approvals.all}
-          grouped={approvals.grouped}
-        />
-      )}
-    </div>
+      </PageHeader>
+
+      <PageContent>
+        {approvals.counts.total === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="h-8 w-8 text-emerald-500" />
+            </div>
+            <h3 className="font-semibold text-slate-900 text-lg mb-1">All caught up!</h3>
+            <p className="text-slate-500 mb-4">No pending approvals at the moment.</p>
+            <Link
+              href="/admin"
+              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Back to Dashboard
+            </Link>
+          </div>
+        ) : (
+          <MyApprovalsClient
+            approvals={approvals.all}
+            grouped={approvals.grouped}
+          />
+        )}
+      </PageContent>
+    </>
   );
 }

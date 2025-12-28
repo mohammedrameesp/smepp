@@ -9,11 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { SubscriptionRenewalDisplay } from '@/components/subscriptions/subscription-renewal-display';
+import { SubscriptionRenewalDisplay } from '@/components/domains/operations/subscriptions/subscription-renewal-display';
 import { formatDate, formatDateTime } from '@/lib/date-format';
 import { formatBillingCycle } from '@/lib/utils/format-billing-cycle';
-import { HistoryTimeline } from '@/components/subscriptions/history-timeline';
-import { CostBreakdown } from '@/components/subscriptions/cost-breakdown';
+import { HistoryTimeline } from '@/components/domains/operations/subscriptions/history-timeline';
+import { CostBreakdown } from '@/components/domains/operations/subscriptions/cost-breakdown';
 
 interface Props {
   params: Promise<{ id: string }>;

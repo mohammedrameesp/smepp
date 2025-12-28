@@ -168,10 +168,7 @@ function SignupForm() {
           {/* Logo */}
           <div>
             <Link href="/" className="inline-flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-slate-900 font-black text-sm">S++</span>
-              </div>
-              <span className="text-white text-xl font-bold">SME++</span>
+              <img src="/sme-wordmark-white.png" alt="SME++" className="h-10 w-auto" />
             </Link>
           </div>
 
@@ -230,9 +227,7 @@ function SignupForm() {
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8">
             <Link href="/" className="inline-flex items-center gap-2">
-              <div className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center">
-                <span className="text-white font-black text-sm">S++</span>
-              </div>
+              <img src="/sme-icon-shield-512.png" alt="SME++" className="h-10 w-10" />
               <span className="text-slate-900 text-xl font-bold">SME++</span>
             </Link>
           </div>

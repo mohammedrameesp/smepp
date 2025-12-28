@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LeaveTypeForm } from '@/components/leave/leave-type-form';
@@ -114,15 +115,13 @@ export default function AdminLeaveTypesPage() {
   const inactiveTypes = leaveTypes.filter((t) => !t.isActive);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Leave Types</h1>
-          <p className="text-gray-600">
-            Configure leave types available in the system
-          </p>
-        </div>
+    <>
+      <PageHeader
+        title="Leave Types"
+        subtitle="Configure leave types available in the system"
+      />
 
+      <PageContent>
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Create Form */}
           <div>
@@ -240,7 +239,7 @@ export default function AdminLeaveTypesPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

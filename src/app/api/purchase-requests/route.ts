@@ -117,6 +117,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    if (!session.user.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const tenantId = session.user.organizationId;
+
     // Parse and validate request body
     const body = await request.json();
     const validation = createPurchaseRequestSchema.safeParse(body);
@@ -131,7 +138,7 @@ export async function POST(request: NextRequest) {
     const data = validation.data;
 
     // Generate reference number
-    const referenceNumber = await generatePurchaseRequestNumber(prisma);
+    const referenceNumber = await generatePurchaseRequestNumber(prisma, tenantId);
 
     // Calculate totals
     let totalAmount = 0;

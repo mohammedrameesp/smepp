@@ -5,10 +5,11 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, User, Loader2, Shield, Calendar } from 'lucide-react';
+import { User, Loader2, Shield, Calendar, ArrowLeft } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { HRProfileForm } from '@/components/hr';
 import { toast } from 'sonner';
@@ -238,39 +239,19 @@ export default function AdminEmployeeEditPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              <Link href={`/admin/employees/${employeeId}`}>
-                <Button variant="outline" size="sm">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Employee
-                </Button>
-              </Link>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Edit Profile</h1>
-            {hrProfile?.user && (
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                  <User className="h-5 w-5 text-gray-500" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {hrProfile.user.name || hrProfile.user.email}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500">{hrProfile.user.email}</span>
-                    <Badge variant={getRoleBadgeVariant(hrProfile.user.role)}>
-                      {hrProfile.user.role}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+    <>
+      <PageHeader
+        title="Edit Profile"
+        subtitle={hrProfile?.user?.name || hrProfile?.user?.email || 'Employee'}
+        breadcrumbs={[
+          { label: 'Employees', href: '/admin/employees' },
+          { label: hrProfile?.user?.name || 'Employee', href: `/admin/employees/${employeeId}` },
+          { label: 'Edit' },
+        ]}
+        badge={hrProfile?.user?.role ? { text: hrProfile.user.role, variant: getRoleBadgeVariant(hrProfile.user.role) as any } : undefined}
+      />
+
+      <PageContent className="max-w-5xl">
 
           {/* Role Management */}
           {hrProfile?.user && (
@@ -369,23 +350,22 @@ export default function AdminEmployeeEditPage() {
             </Card>
           )}
 
-          {/* HR Form */}
-          {hrProfile && (
-            <HRProfileForm
-              initialData={{
-                ...hrProfile,
-                workEmail: hrProfile.workEmail || hrProfile.user?.email,
-              }}
-              isAdmin={true}
-              userId={employeeId} // Pass the employee ID so form saves to correct user
-              onSave={() => {
-                toast.success('Profile saved');
-                fetchHRProfile(true); // Refresh without showing full loading state
-              }}
-            />
-          )}
-        </div>
-      </div>
-    </div>
+        {/* HR Form */}
+        {hrProfile && (
+          <HRProfileForm
+            initialData={{
+              ...hrProfile,
+              workEmail: hrProfile.workEmail || hrProfile.user?.email,
+            }}
+            isAdmin={true}
+            userId={employeeId} // Pass the employee ID so form saves to correct user
+            onSave={() => {
+              toast.success('Profile saved');
+              fetchHRProfile(true); // Refresh without showing full loading state
+            }}
+          />
+        )}
+      </PageContent>
+    </>
   );
 }

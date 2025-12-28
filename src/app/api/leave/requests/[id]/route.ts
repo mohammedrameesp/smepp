@@ -56,6 +56,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             email: true,
           },
         },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         history: {
           include: {
             performedBy: {

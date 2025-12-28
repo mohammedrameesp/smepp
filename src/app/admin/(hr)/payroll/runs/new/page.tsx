@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -13,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { getMonthName } from '@/lib/payroll/utils';
 
@@ -59,23 +60,19 @@ export default function NewPayrollRunPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/admin/payroll/runs">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Create Payroll Run</h1>
-          <p className="text-muted-foreground">
-            Start a new monthly payroll process
-          </p>
-        </div>
-      </div>
+    <>
+      <PageHeader
+        title="Create Payroll Run"
+        subtitle="Start a new monthly payroll process"
+        breadcrumbs={[
+          { label: 'Payroll', href: '/admin/payroll' },
+          { label: 'Payroll Runs', href: '/admin/payroll/runs' },
+          { label: 'New Run' },
+        ]}
+      />
 
-      <Card className="max-w-md">
+      <PageContent className="max-w-md">
+        <Card>
         <CardHeader>
           <CardTitle>Select Pay Period</CardTitle>
           <CardDescription>
@@ -137,7 +134,7 @@ export default function NewPayrollRunPage() {
           </form>
         </CardContent>
         </Card>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

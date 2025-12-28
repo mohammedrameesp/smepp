@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Admin - SME++</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen p-6">
+
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white text-xs font-bold">S+</div>
+        <span class="text-lg font-semibold text-slate-900">Super Admin</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+        <span class="text-xs text-slate-500">Online</span>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-xl p-5 shadow-sm">
+        <p class="text-xs text-slate-400 uppercase tracking-wide">Organizations</p>
+        <p class="text-2xl font-bold text-slate-900 mt-1">24</p>
+      </div>
+      <div class="bg-white rounded-xl p-5 shadow-sm">
+        <p class="text-xs text-slate-400 uppercase tracking-wide">Users</p>
+        <p class="text-2xl font-bold text-slate-900 mt-1">156</p>
+      </div>
+      <div class="bg-white rounded-xl p-5 shadow-sm">
+        <p class="text-xs text-slate-400 uppercase tracking-wide">Free</p>
+        <p class="text-2xl font-bold text-slate-900 mt-1">18</p>
+      </div>
+      <div class="bg-white rounded-xl p-5 shadow-sm">
+        <p class="text-xs text-slate-400 uppercase tracking-wide">Plus</p>
+        <p class="text-2xl font-bold text-indigo-600 mt-1">6</p>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-3 gap-4">
+
+      <!-- Organizations Card -->
+      <div class="col-span-2 bg-white rounded-xl shadow-sm">
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+          <span class="font-medium text-slate-900">Organizations</span>
+          <a href="#" class="text-xs text-indigo-600">View all</a>
+        </div>
+        <div class="divide-y divide-slate-50">
+          <a href="#" class="flex items-center justify-between p-4 hover:bg-slate-50">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-violet-500 rounded-lg flex items-center justify-center text-white text-xs font-medium">JA</div>
+              <div>
+                <p class="text-sm font-medium text-slate-900">Jasira Trading</p>
+                <p class="text-xs text-slate-400">5 users</p>
+              </div>
+            </div>
+            <span class="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">PLUS</span>
+          </a>
+          <a href="#" class="flex items-center justify-between p-4 hover:bg-slate-50">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center text-white text-xs font-medium">IC</div>
+              <div>
+                <p class="text-sm font-medium text-slate-900">Innovation Cafe</p>
+                <p class="text-xs text-slate-400">3 users</p>
+              </div>
+            </div>
+            <span class="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded font-medium">FREE</span>
+          </a>
+          <a href="#" class="flex items-center justify-between p-4 hover:bg-slate-50">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center text-white text-xs font-medium">AC</div>
+              <div>
+                <p class="text-sm font-medium text-slate-900">Acme Corp</p>
+                <p class="text-xs text-slate-400">12 users</p>
+              </div>
+            </div>
+            <span class="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">PLUS</span>
+          </a>
+          <a href="#" class="flex items-center justify-between p-4 hover:bg-slate-50">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white text-xs font-medium">TG</div>
+              <div>
+                <p class="text-sm font-medium text-slate-900">Tech Giants</p>
+                <p class="text-xs text-slate-400">8 users</p>
+              </div>
+            </div>
+            <span class="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded font-medium">FREE</span>
+          </a>
+          <a href="#" class="flex items-center justify-between p-4 hover:bg-slate-50">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-rose-500 rounded-lg flex items-center justify-center text-white text-xs font-medium">QH</div>
+              <div>
+                <p class="text-sm font-medium text-slate-900">Quriosity Hub</p>
+                <p class="text-xs text-slate-400">15 users</p>
+              </div>
+            </div>
+            <span class="text-xs px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded font-medium">PLUS</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="space-y-4">
+
+        <!-- Actions Card -->
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <p class="text-xs text-slate-400 uppercase tracking-wide mb-3">Actions</p>
+          <div class="space-y-2">
+            <a href="#" class="flex items-center gap-2 text-sm text-slate-700 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-50">
+              <span class="w-6 h-6 bg-slate-100 rounded flex items-center justify-center text-slate-500">+</span>
+              New Organization
+            </a>
+            <a href="#" class="flex items-center gap-2 text-sm text-slate-700 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-50">
+              <span class="w-6 h-6 bg-slate-100 rounded flex items-center justify-center text-slate-500">+</span>
+              Add Admin
+            </a>
+            <a href="#" class="flex items-center gap-2 text-sm text-slate-700 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-50">
+              <span class="w-6 h-6 bg-slate-100 rounded flex items-center justify-center">
+                <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </span>
+              Settings
+            </a>
+          </div>
+        </div>
+
+        <!-- Status Card -->
+        <div class="bg-white rounded-xl shadow-sm p-4">
+          <p class="text-xs text-slate-400 uppercase tracking-wide mb-3">Status</p>
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-600">API</span>
+              <span class="text-emerald-600">OK</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-600">Database</span>
+              <span class="text-emerald-600">OK</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-600">Storage</span>
+              <span class="text-emerald-600">OK</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dev Tools Card -->
+        <div class="bg-amber-50 rounded-xl p-4 border border-amber-200">
+          <p class="text-xs text-amber-600 uppercase tracking-wide mb-2">Dev Only</p>
+          <a href="#" class="text-sm font-medium text-amber-800 hover:text-amber-900">Reset Platform →</a>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -27,6 +27,13 @@ export async function GET() {
         maxUsers: true,
         maxAssets: true,
         createdAt: true,
+        // Branding
+        primaryColor: true,
+        secondaryColor: true,
+        // Currency settings
+        additionalCurrencies: true,
+        // Module settings
+        enabledModules: true,
         _count: {
           select: {
             members: true,
@@ -56,6 +63,10 @@ export async function GET() {
 
 const updateOrgSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
+  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional(),
+  secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional().nullable(),
+  additionalCurrencies: z.array(z.string()).optional(),
+  enabledModules: z.array(z.string()).optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -81,18 +92,26 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const { name } = result.data;
+    const { name, primaryColor, secondaryColor, additionalCurrencies, enabledModules } = result.data;
 
     const updated = await prisma.organization.update({
       where: { id: session.user.organizationId },
       data: {
         ...(name && { name }),
+        ...(primaryColor !== undefined && { primaryColor }),
+        ...(secondaryColor !== undefined && { secondaryColor }),
+        ...(additionalCurrencies !== undefined && { additionalCurrencies }),
+        ...(enabledModules !== undefined && { enabledModules }),
       },
       select: {
         id: true,
         name: true,
         slug: true,
         logoUrl: true,
+        primaryColor: true,
+        secondaryColor: true,
+        additionalCurrencies: true,
+        enabledModules: true,
       },
     });
 

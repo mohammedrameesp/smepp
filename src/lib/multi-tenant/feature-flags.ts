@@ -1,222 +1,120 @@
 /**
  * Feature Flags & Tier Configuration
  *
- * Defines what features are available at each subscription tier.
+ * NOTE: Tier restrictions are currently disabled.
+ * All features and modules are available to all organizations.
+ * This will be re-implemented when billing is ready.
  */
 
 import { SubscriptionTier } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TIER CONFIGURATION
+// TIER CONFIGURATION (For pricing page display only)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface TierConfig {
   name: string;
   description: string;
-  monthlyPrice: number; // USD
-  yearlyPrice: number;  // USD (annual, typically 2 months free)
-  maxUsers: number;     // -1 for unlimited
-  maxAssets: number;    // -1 for unlimited
+  monthlyPrice: number;
+  yearlyPrice: number;
+  maxUsers: number;
+  maxAssets: number;
   maxSubscriptions: number;
   maxSuppliers: number;
   modules: string[];
   features: string[];
 }
 
+// All modules available
+const ALL_MODULES = [
+  'assets',
+  'subscriptions',
+  'suppliers',
+  'employees',
+  'leave',
+  'payroll',
+  'purchase_requests',
+  'approvals',
+  'projects',
+  'company_documents',
+];
+
+// All features available
+const ALL_FEATURES = [
+  'basic_reports',
+  'advanced_reports',
+  'in_app_notifications',
+  'browser_notifications',
+  'email_notifications',
+  'whatsapp_notifications',
+  'sms_notifications',
+  'audit_logs',
+  'subdomain',
+  'custom_domain',
+  'google_sso',
+  'microsoft_sso',
+  'custom_branding',
+  'api_access',
+  'priority_support',
+  'file_storage_10gb',
+];
+
 export const TIER_CONFIG: Record<SubscriptionTier, TierConfig> = {
   FREE: {
     name: 'Free',
-    description: 'Perfect for trying out SME++',
+    description: 'All features included',
     monthlyPrice: 0,
     yearlyPrice: 0,
-    maxUsers: 5,
-    maxAssets: 50,
-    maxSubscriptions: 20,
-    maxSuppliers: 10,
-    modules: [
-      'assets',
-      'subscriptions',
-      'suppliers',
-    ],
-    features: [
-      'basic_reports',
-      'email_notifications',
-    ],
-  },
-
-  STARTER: {
-    name: 'Starter',
-    description: 'For growing teams',
-    monthlyPrice: 29,
-    yearlyPrice: 290, // ~$24/mo
-    maxUsers: 15,
-    maxAssets: 200,
-    maxSubscriptions: 100,
-    maxSuppliers: 50,
-    modules: [
-      'assets',
-      'subscriptions',
-      'suppliers',
-      'employees',
-      'leave',
-    ],
-    features: [
-      'basic_reports',
-      'advanced_reports',
-      'email_notifications',
-      'document_storage',
-      'leave_management',
-    ],
-  },
-
-  PROFESSIONAL: {
-    name: 'Professional',
-    description: 'For established businesses',
-    monthlyPrice: 99,
-    yearlyPrice: 990, // ~$82/mo
-    maxUsers: 50,
-    maxAssets: 1000,
-    maxSubscriptions: 500,
-    maxSuppliers: 200,
-    modules: [
-      'assets',
-      'subscriptions',
-      'suppliers',
-      'employees',
-      'leave',
-      'payroll',
-      'purchase_requests',
-      'approvals',
-      'projects',
-    ],
-    features: [
-      'basic_reports',
-      'advanced_reports',
-      'email_notifications',
-      'document_storage',
-      'leave_management',
-      'payroll_processing',
-      'approval_workflows',
-      'api_access',
-      'audit_logs',
-      'custom_branding',
-    ],
-  },
-
-  ENTERPRISE: {
-    name: 'Enterprise',
-    description: 'For large organizations',
-    monthlyPrice: 299, // Custom pricing typically
-    yearlyPrice: 2990,
-    maxUsers: -1, // Unlimited
+    maxUsers: -1,
     maxAssets: -1,
     maxSubscriptions: -1,
     maxSuppliers: -1,
-    modules: [
-      'assets',
-      'subscriptions',
-      'suppliers',
-      'employees',
-      'leave',
-      'payroll',
-      'purchase_requests',
-      'approvals',
-      'projects',
-      'company_documents',
-    ],
-    features: [
-      'basic_reports',
-      'advanced_reports',
-      'email_notifications',
-      'document_storage',
-      'leave_management',
-      'payroll_processing',
-      'approval_workflows',
-      'api_access',
-      'audit_logs',
-      'custom_branding',
-      'sso_integration',
-      'priority_support',
-      'dedicated_account_manager',
-      'custom_integrations',
-      'data_export',
-    ],
+    modules: ALL_MODULES,
+    features: ALL_FEATURES,
+  },
+  PLUS: {
+    name: 'Plus',
+    description: 'Priority support & advanced features',
+    monthlyPrice: 149,
+    yearlyPrice: 1490,
+    maxUsers: -1,
+    maxAssets: -1,
+    maxSubscriptions: -1,
+    maxSuppliers: -1,
+    modules: ALL_MODULES,
+    features: ALL_FEATURES,
   },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// FEATURE CHECKING UTILITIES
+// FEATURE CHECKING UTILITIES - All return true/null (tier restrictions disabled)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Check if a tier has access to a specific module
- */
-export function hasModuleAccess(tier: SubscriptionTier, module: string): boolean {
-  return TIER_CONFIG[tier].modules.includes(module);
+export function hasModuleAccess(_tier: SubscriptionTier, _module: string): boolean {
+  return true;
 }
 
-/**
- * Check if a tier has access to a specific feature
- */
-export function hasFeatureAccess(tier: SubscriptionTier, feature: string): boolean {
-  return TIER_CONFIG[tier].features.includes(feature);
+export function hasFeatureAccess(_tier: SubscriptionTier, _feature: string): boolean {
+  return true;
 }
 
-/**
- * Get the tier configuration
- */
 export function getTierConfig(tier: SubscriptionTier): TierConfig {
-  return TIER_CONFIG[tier];
+  return TIER_CONFIG[tier] || TIER_CONFIG.FREE;
 }
 
-/**
- * Get all modules available for a tier
- */
-export function getAvailableModules(tier: SubscriptionTier): string[] {
-  return TIER_CONFIG[tier].modules;
+export function getAvailableModules(_tier: SubscriptionTier): string[] {
+  return ALL_MODULES;
 }
 
-/**
- * Get all features available for a tier
- */
-export function getAvailableFeatures(tier: SubscriptionTier): string[] {
-  return TIER_CONFIG[tier].features;
+export function getAvailableFeatures(_tier: SubscriptionTier): string[] {
+  return ALL_FEATURES;
 }
 
-/**
- * Check if upgrade is needed for a module
- */
-export function needsUpgradeForModule(currentTier: SubscriptionTier, module: string): SubscriptionTier | null {
-  if (hasModuleAccess(currentTier, module)) {
-    return null;
-  }
-
-  // Find the minimum tier that has this module
-  const tiers: SubscriptionTier[] = ['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'];
-  for (const tier of tiers) {
-    if (hasModuleAccess(tier, module)) {
-      return tier;
-    }
-  }
-
+export function needsUpgradeForModule(_currentTier: SubscriptionTier, _module: string): SubscriptionTier | null {
   return null;
 }
 
-/**
- * Check if upgrade is needed for a feature
- */
-export function needsUpgradeForFeature(currentTier: SubscriptionTier, feature: string): SubscriptionTier | null {
-  if (hasFeatureAccess(currentTier, feature)) {
-    return null;
-  }
-
-  const tiers: SubscriptionTier[] = ['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'];
-  for (const tier of tiers) {
-    if (hasFeatureAccess(tier, feature)) {
-      return tier;
-    }
-  }
-
+export function needsUpgradeForFeature(_currentTier: SubscriptionTier, _feature: string): SubscriptionTier | null {
   return null;
 }
 
@@ -225,54 +123,14 @@ export function needsUpgradeForFeature(currentTier: SubscriptionTier, feature: s
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const MODULE_METADATA: Record<string, { name: string; description: string; icon: string }> = {
-  assets: {
-    name: 'Asset Management',
-    description: 'Track hardware, equipment, warranties, and assignments',
-    icon: 'Package',
-  },
-  subscriptions: {
-    name: 'Subscription Tracking',
-    description: 'Monitor SaaS services, renewals, and costs',
-    icon: 'CreditCard',
-  },
-  suppliers: {
-    name: 'Supplier Management',
-    description: 'Manage vendors and supplier relationships',
-    icon: 'Truck',
-  },
-  employees: {
-    name: 'Employee Directory',
-    description: 'Employee profiles and HR information',
-    icon: 'Users',
-  },
-  leave: {
-    name: 'Leave Management',
-    description: 'Leave requests, balances, and approvals',
-    icon: 'Calendar',
-  },
-  payroll: {
-    name: 'Payroll Processing',
-    description: 'Salary structures, payslips, and loans',
-    icon: 'DollarSign',
-  },
-  purchase_requests: {
-    name: 'Purchase Requests',
-    description: 'Internal procurement workflow',
-    icon: 'ShoppingCart',
-  },
-  approvals: {
-    name: 'Approval Workflows',
-    description: 'Multi-level approval chains',
-    icon: 'CheckSquare',
-  },
-  projects: {
-    name: 'Project Management',
-    description: 'Track projects and assign resources',
-    icon: 'FolderKanban',
-  },
-  company_documents: {
-    name: 'Company Documents',
-    description: 'Track licenses, certifications, and compliance',
-    icon: 'FileCheck',
-  },
+  assets: { name: 'Asset Management', description: 'Track hardware, equipment, warranties, and assignments', icon: 'Package' },
+  subscriptions: { name: 'Subscription Tracking', description: 'Monitor SaaS services, renewals, and costs', icon: 'CreditCard' },
+  suppliers: { name: 'Supplier Management', description: 'Manage vendors and supplier relationships', icon: 'Truck' },
+  employees: { name: 'Employee Directory', description: 'Employee profiles and HR information', icon: 'Users' },
+  leave: { name: 'Leave Management', description: 'Leave requests, balances, and approvals', icon: 'Calendar' },
+  payroll: { name: 'Payroll Processing', description: 'Salary structures, payslips, and loans', icon: 'DollarSign' },
+  purchase_requests: { name: 'Purchase Requests', description: 'Internal procurement workflow', icon: 'ShoppingCart' },
+  approvals: { name: 'Approval Workflows', description: 'Multi-level approval chains', icon: 'CheckSquare' },
+  projects: { name: 'Project Management', description: 'Track projects and assign resources', icon: 'FolderKanban' },
+  company_documents: { name: 'Company Documents', description: 'Track licenses, certifications, and compliance', icon: 'FileCheck' },
 };

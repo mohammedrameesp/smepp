@@ -65,9 +65,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }, { status: 400 });
     }
 
-    // Get all active salary structures
+    // Get all active salary structures for employees only
     const salaryStructures = await prisma.salaryStructure.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        user: {
+          isEmployee: true, // Only process payroll for users marked as employees
+        },
+      },
       include: {
         user: {
           select: {

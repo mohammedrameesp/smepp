@@ -1,9 +1,8 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { redirect, notFound } from 'next/navigation';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
@@ -13,7 +12,16 @@ import {
   AssetRequestTypeBadge,
   AdminRequestActions,
 } from '@/components/domains/operations/asset-requests';
-import { ArrowLeft, Package, User, Clock, FileText } from 'lucide-react';
+import {
+  Package,
+  User,
+  Clock,
+  FileText,
+  MapPin,
+  Settings,
+  Tag,
+} from 'lucide-react';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -87,203 +95,261 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="mb-6">
-            <Link href="/admin/asset-requests" className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Requests
-            </Link>
+    <>
+      <PageHeader
+        title={request.requestNumber}
+        subtitle={`Submitted on ${formatDateTime(request.createdAt)}`}
+        breadcrumbs={[
+          { label: 'Asset Requests', href: '/admin/asset-requests' },
+          { label: request.requestNumber },
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
+            <AssetRequestTypeBadge type={request.type} />
+            <AssetRequestStatusBadge status={request.status} />
+            <AdminRequestActions
+              requestId={request.id}
+              type={request.type}
+              status={request.status}
+            />
+          </div>
+        }
+      />
 
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                  {request.requestNumber}
-                  <AssetRequestTypeBadge type={request.type} />
-                  <AssetRequestStatusBadge status={request.status} />
-                </h1>
-                <p className="text-gray-600 mt-1">
-                  Submitted on {formatDateTime(request.createdAt)}
-                </p>
+      <PageContent>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content - 2/3 */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Requestor Information */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                <User className="h-5 w-5 text-blue-600" />
               </div>
-
-              <AdminRequestActions
-                requestId={request.id}
-                type={request.type}
-                status={request.status}
-              />
+              <div>
+                <h2 className="font-semibold text-slate-900">Requestor</h2>
+                <p className="text-sm text-slate-500">Who submitted this request</p>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                  <User className="h-6 w-6 text-slate-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900">{request.user.name || 'Unknown'}</p>
+                  <p className="text-sm text-slate-500">{request.user.email}</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="grid gap-6">
-            {/* User Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Requestor
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-                    <User className="h-6 w-6 text-gray-500" />
-                  </div>
-                  <div>
-                    <p className="font-medium">{request.user.name || 'Unknown'}</p>
-                    <p className="text-sm text-gray-500">{request.user.email}</p>
-                  </div>
+          {/* Asset Details */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
+                <Package className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Asset Details</h2>
+                <p className="text-sm text-slate-500">Information about the requested asset</p>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Model</p>
+                  <p className="text-sm font-semibold text-slate-900">{request.asset.model}</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Asset Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Asset Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-gray-500">Model</label>
-                    <p className="font-medium">{request.asset.model}</p>
+                {request.asset.brand && (
+                  <div className="bg-slate-50 rounded-xl p-4">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Brand</p>
+                    <p className="text-sm font-semibold text-slate-900">{request.asset.brand}</p>
                   </div>
-                  {request.asset.brand && (
-                    <div>
-                      <label className="text-sm text-gray-500">Brand</label>
-                      <p className="font-medium">{request.asset.brand}</p>
-                    </div>
-                  )}
-                  <div>
-                    <label className="text-sm text-gray-500">Type</label>
-                    <p className="font-medium">{request.asset.type}</p>
+                )}
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Settings className="h-4 w-4 text-slate-400" />
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Type</p>
                   </div>
-                  {request.asset.assetTag && (
-                    <div>
-                      <label className="text-sm text-gray-500">Asset Tag</label>
-                      <p className="font-mono">{request.asset.assetTag}</p>
-                    </div>
-                  )}
-                  <div>
-                    <label className="text-sm text-gray-500">Current Status</label>
-                    <p className="font-medium">{request.asset.status}</p>
-                  </div>
-                  {request.asset.location && (
-                    <div>
-                      <label className="text-sm text-gray-500">Location</label>
-                      <p className="font-medium">{request.asset.location}</p>
-                    </div>
-                  )}
-                  {request.asset.configuration && (
-                    <div className="md:col-span-2">
-                      <label className="text-sm text-gray-500">Configuration</label>
-                      <p className="font-medium">{request.asset.configuration}</p>
-                    </div>
-                  )}
+                  <p className="text-sm font-semibold text-slate-900">{request.asset.type}</p>
                 </div>
-                <div className="mt-4">
+                {request.asset.assetTag && (
+                  <div className="bg-slate-50 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Tag className="h-4 w-4 text-slate-400" />
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Asset Tag</p>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900 font-mono">{request.asset.assetTag}</p>
+                  </div>
+                )}
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Current Status</p>
+                  <Badge variant="outline">{request.asset.status}</Badge>
+                </div>
+                {request.asset.location && (
+                  <div className="bg-slate-50 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <MapPin className="h-4 w-4 text-slate-400" />
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Location</p>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900">{request.asset.location}</p>
+                  </div>
+                )}
+                {request.asset.configuration && (
+                  <div className="sm:col-span-2 bg-slate-50 rounded-xl p-4">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Configuration</p>
+                    <p className="text-sm font-semibold text-slate-900">{request.asset.configuration}</p>
+                  </div>
+                )}
+              </div>
+              <div className="mt-4">
+                <Button asChild variant="outline" size="sm">
                   <Link href={`/admin/assets/${request.asset.id}`}>
-                    <Button variant="outline" size="sm">View Asset</Button>
+                    <Package className="mr-2 h-4 w-4" />
+                    View Asset
                   </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Request Details */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                <FileText className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Request Details</h2>
+                <p className="text-sm text-slate-500">Reason and notes</p>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              {request.reason && (
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Reason</p>
+                  <p className="text-sm text-slate-700 leading-relaxed">{request.reason}</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Request Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Request Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {request.reason && (
-                  <div>
-                    <label className="text-sm text-gray-500">Reason</label>
-                    <p className="mt-1">{request.reason}</p>
-                  </div>
-                )}
-                {request.notes && (
-                  <div>
-                    <label className="text-sm text-gray-500">Notes</label>
-                    <p className="mt-1">{request.notes}</p>
-                  </div>
-                )}
-                {request.assignedByUser && (
-                  <div>
-                    <label className="text-sm text-gray-500">Assigned By</label>
-                    <p className="mt-1">
-                      {request.assignedByUser.name || request.assignedByUser.email}
-                    </p>
-                  </div>
-                )}
-                {request.processedAt && request.processedByUser && (
-                  <>
-                    <Separator />
-                    <div>
-                      <label className="text-sm text-gray-500">Processed By</label>
-                      <p className="mt-1">
+              )}
+              {request.notes && (
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Notes</p>
+                  <p className="text-sm text-slate-700 leading-relaxed">{request.notes}</p>
+                </div>
+              )}
+              {request.assignedByUser && (
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Assigned By</p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {request.assignedByUser.name || request.assignedByUser.email}
+                  </p>
+                </div>
+              )}
+              {request.processedAt && request.processedByUser && (
+                <>
+                  <div className="border-t border-slate-200 pt-4">
+                    <div className="bg-slate-50 rounded-xl p-4">
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Processed By</p>
+                      <p className="text-sm font-semibold text-slate-900">
                         {request.processedByUser.name || request.processedByUser.email}
-                        <span className="text-gray-400 ml-2">on {formatDateTime(request.processedAt)}</span>
                       </p>
+                      <p className="text-xs text-slate-500 mt-1">{formatDateTime(request.processedAt)}</p>
                     </div>
-                    {request.processorNotes && (
-                      <div>
-                        <label className="text-sm text-gray-500">Response Notes</label>
-                        <p className="mt-1">{request.processorNotes}</p>
-                      </div>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* History */}
-            {request.history && request.history.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    History
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {request.history.map((entry, index) => (
-                      <div
-                        key={entry.id}
-                        className={`flex gap-4 ${index !== request.history.length - 1 ? 'pb-4 border-b' : ''}`}
-                      >
-                        <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-gray-400"></div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-medium">{entry.action}</span>
-                            {entry.newStatus && (
-                              <AssetRequestStatusBadge status={entry.newStatus} />
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-500 mt-1">
-                            by {entry.performedBy.name || entry.performedBy.email} on {formatDateTime(entry.createdAt)}
-                          </p>
-                          {entry.notes && (
-                            <p className="text-sm mt-2 text-gray-600">{entry.notes}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                  {request.processorNotes && (
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                      <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-2">Response Notes</p>
+                      <p className="text-sm text-blue-700 leading-relaxed">{request.processorNotes}</p>
+                    </div>
+                  )}
+                </>
+              )}
+              {!request.reason && !request.notes && !request.processorNotes && (
+                <div className="text-center py-8 text-slate-400">
+                  <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No additional details provided</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+
+        {/* Sidebar - 1/3 */}
+        <div className="space-y-6">
+          {/* History */}
+          {request.history && request.history.length > 0 && (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-slate-900">History</h2>
+                  <p className="text-sm text-slate-500">{request.history.length} event{request.history.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="space-y-4">
+                  {request.history.map((entry, index) => (
+                    <div
+                      key={entry.id}
+                      className={`relative pl-6 ${index !== request.history.length - 1 ? 'pb-4' : ''}`}
+                    >
+                      {/* Timeline line */}
+                      {index !== request.history.length - 1 && (
+                        <div className="absolute left-[7px] top-3 bottom-0 w-0.5 bg-slate-200" />
+                      )}
+                      {/* Timeline dot */}
+                      <div className="absolute left-0 top-1 w-3.5 h-3.5 rounded-full bg-slate-300 border-2 border-white" />
+
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="text-sm font-semibold text-slate-900">{entry.action}</span>
+                          {entry.newStatus && (
+                            <AssetRequestStatusBadge status={entry.newStatus} />
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          by {entry.performedBy.name || entry.performedBy.email}
+                        </p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {formatDateTime(entry.createdAt)}
+                        </p>
+                        {entry.notes && (
+                          <p className="text-sm text-slate-600 mt-2 bg-white p-2 rounded-lg border border-slate-100">
+                            {entry.notes}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Quick Actions */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <h3 className="font-semibold text-slate-900 mb-4">Quick Actions</h3>
+            <div className="space-y-2">
+              <Button asChild variant="outline" className="w-full justify-start">
+                <Link href={`/admin/assets/${request.asset.id}`}>
+                  <Package className="mr-2 h-4 w-4" />
+                  View Asset Details
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="w-full justify-start">
+                <Link href={`/admin/employees/${request.user.id}`}>
+                  <User className="mr-2 h-4 w-4" />
+                  View Requestor Profile
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+        </div>
+      </PageContent>
+    </>
   );
 }

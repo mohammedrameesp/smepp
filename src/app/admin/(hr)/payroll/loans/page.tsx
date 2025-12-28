@@ -14,9 +14,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Eye, CreditCard, PauseCircle, CheckCircle, Wallet } from 'lucide-react';
+import { Plus, Eye, ChevronRight } from 'lucide-react';
 import { formatCurrency } from '@/lib/payroll/utils';
-import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
 interface PageProps {
   searchParams: Promise<{
@@ -114,56 +114,43 @@ export default async function LoansPage({ searchParams }: PageProps) {
   const completedCount = statsMap['COMPLETED']?.count || 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Employee Loans</h1>
-          <p className="text-slate-500 text-sm">Manage employee loans and advances</p>
+    <>
+      <PageHeader
+        title="Employee Loans"
+        subtitle="Manage employee loans and advances"
+        breadcrumbs={[
+          { label: 'Payroll', href: '/admin/payroll' },
+          { label: 'Loans' },
+        ]}
+        actions={
+          <PageHeaderButton href="/admin/payroll/loans/new" variant="primary">
+            <Plus className="h-4 w-4" />
+            New Loan
+          </PageHeaderButton>
+        }
+      >
+        {/* Summary Chips */}
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
+            <span className="text-blue-400 text-sm font-medium">{activeLoansCount} active ({formatCurrency(activeLoansValue)})</span>
+          </div>
+          {pausedCount > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
+              <span className="text-amber-400 text-sm font-medium">{pausedCount} paused</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
+            <span className="text-emerald-400 text-sm font-medium">{completedCount} completed</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
+            <span className="text-slate-300 text-sm font-medium">{total} total</span>
+          </div>
         </div>
-        <Link
-          href="/admin/payroll/loans/new"
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          New Loan
-        </Link>
-      </div>
+      </PageHeader>
 
-      {/* Stats Cards */}
-      <StatsCardGrid columns={4} className="mb-6">
-        <StatsCard
-          title="Active Loans"
-          subtitle={`${formatCurrency(activeLoansValue)} outstanding`}
-          value={activeLoansCount}
-          icon={CreditCard}
-          color="blue"
-        />
-        <StatsCard
-          title="Paused"
-          subtitle="Temporarily stopped"
-          value={pausedCount}
-          icon={PauseCircle}
-          color="amber"
-        />
-        <StatsCard
-          title="Completed"
-          subtitle="Fully repaid"
-          value={completedCount}
-          icon={CheckCircle}
-          color="emerald"
-        />
-        <StatsCard
-          title="Total Loans"
-          subtitle="All records"
-          value={total}
-          icon={Wallet}
-          color="purple"
-        />
-      </StatsCardGrid>
-
-      {/* Status Filter */}
-      <div className="flex gap-2 flex-wrap mb-6">
+      <PageContent>
+        {/* Status Filter */}
+        <div className="flex gap-2 flex-wrap mb-6">
         <Button
           asChild
           variant={!statusFilter ? 'default' : 'outline'}
@@ -284,6 +271,7 @@ export default async function LoansPage({ searchParams }: PageProps) {
           )}
         </div>
       </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

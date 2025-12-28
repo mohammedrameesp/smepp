@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
+import { revalidatePath } from 'next/cache';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
@@ -21,6 +22,7 @@ const VALID_MODULES = [
 const VALID_CURRENCIES = ['USD', 'EUR', 'GBP', 'SAR', 'AED', 'KWD'];
 
 const updateSettingsSchema = z.object({
+  name: z.string().min(2).max(100).optional(),
   enabledModules: z.array(z.string()).optional(),
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
@@ -88,7 +90,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { enabledModules, primaryColor, secondaryColor, additionalCurrencies } = result.data;
+    const { name, enabledModules, primaryColor, secondaryColor, additionalCurrencies } = result.data;
 
     // Validate modules
     if (enabledModules) {
@@ -116,6 +118,7 @@ export async function PUT(request: NextRequest) {
     const organization = await prisma.organization.update({
       where: { id: session.user.organizationId },
       data: {
+        ...(name && { name }),
         ...(enabledModules && { enabledModules }),
         ...(primaryColor && { primaryColor }),
         ...(secondaryColor && { secondaryColor }),
@@ -125,6 +128,7 @@ export async function PUT(request: NextRequest) {
         onboardingCompletedAt: new Date(),
       },
       select: {
+        name: true,
         enabledModules: true,
         primaryColor: true,
         secondaryColor: true,
@@ -132,6 +136,9 @@ export async function PUT(request: NextRequest) {
         onboardingCompleted: true,
       },
     });
+
+    // Revalidate admin layout to reflect module changes in the navigation
+    revalidatePath('/admin', 'layout');
 
     return NextResponse.json({ success: true, settings: organization });
   } catch (error) {

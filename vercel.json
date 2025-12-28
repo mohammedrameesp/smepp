@@ -5,13 +5,19 @@
   "regions": ["bom1"],
   "crons": [
     {
-      "path": "/api/admin/backup",
-      "schedule": "0 3 * * *"
+      "path": "/api/super-admin/backups/cron",
+      "schedule": "0 1 * * *"
     }
   ],
   "functions": {
     "app/api/**/*": {
       "maxDuration": 30
+    },
+    "app/api/super-admin/backups/cron/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/super-admin/backups/restore/route.ts": {
+      "maxDuration": 300
     }
   },
   "headers": [

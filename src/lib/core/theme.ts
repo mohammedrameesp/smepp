@@ -11,12 +11,12 @@ export const theme = {
   // Clean white background for main pages
   background: 'bg-gray-50',
 
-  // Text colors for light backgrounds
+  // Text colors for light backgrounds (WCAG AA compliant)
   text: {
     primary: 'text-gray-900',
     secondary: 'text-gray-700',
     tertiary: 'text-gray-600',
-    muted: 'text-gray-500',
+    muted: 'text-gray-600', // Changed from gray-500 for WCAG AA contrast (4.5:1 ratio)
   },
 
   // Button styles - using branding colors

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Loader2, AlertTriangle, XCircle, User, FileWarning, Search } from 'lucide-react';
+import { Loader2, AlertTriangle, XCircle, User, ChevronRight, Search } from 'lucide-react';
 import { formatDate } from '@/lib/date-format';
 
 interface ExpiringDocument {
@@ -118,92 +118,84 @@ export default function DocumentExpiryPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto py-8 px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
+      <>
+        <div className="bg-slate-800 shadow-lg">
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            <nav className="flex items-center gap-1 text-sm mb-3">
+              <Link href="/admin/employees" className="text-slate-400 hover:text-white transition-colors">
+                Employees
+              </Link>
+              <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
+              <span className="text-slate-300">Document Expiry</span>
+            </nav>
+            <h1 className="text-2xl font-bold text-white">Document Expiry Alerts</h1>
+            <p className="text-slate-400 mt-1">Track and manage expiring employee documents</p>
           </div>
         </div>
-      </div>
+        <main className="max-w-6xl mx-auto px-6 py-8">
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <Link href="/admin/employees">
-              <Button variant="ghost" size="sm" className="mb-4">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Employees
-              </Button>
+    <>
+      {/* Dark Header */}
+      <div className="bg-slate-800 shadow-lg">
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          {/* Breadcrumbs */}
+          <nav className="flex items-center gap-1 text-sm mb-3">
+            <Link href="/admin/employees" className="text-slate-400 hover:text-white transition-colors">
+              Employees
             </Link>
-            <div className="flex items-center gap-3 mb-2">
-              <FileWarning className="h-8 w-8 text-yellow-500" />
-              <h1 className="text-3xl font-bold text-gray-900">Document Expiry Alerts</h1>
-            </div>
-            <p className="text-gray-600">
-              Track and manage expiring and expired employee documents (QID, Passport, Health Card, Driving License)
-            </p>
-          </div>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
+            <span className="text-slate-300">Document Expiry</span>
+          </nav>
 
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <Card
-              className={`cursor-pointer transition-all ${statusFilter === 'all' ? 'ring-2 ring-blue-500' : 'hover:ring-2 hover:ring-gray-200'}`}
+          <h1 className="text-2xl font-bold text-white">Document Expiry Alerts</h1>
+          <p className="text-slate-400 mt-1">Track and manage expiring and expired employee documents</p>
+
+          {/* Summary Chips */}
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            <button
               onClick={() => setStatusFilter('all')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                statusFilter === 'all' ? 'bg-slate-600 ring-2 ring-slate-400' : 'bg-slate-700/50 hover:bg-slate-700'
+              }`}
             >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  Total Alerts
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{summary.total}</div>
-                <p className="text-xs text-gray-500">Within 30 days</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className={`cursor-pointer transition-all ${statusFilter === 'expired' ? 'ring-2 ring-red-500' : 'hover:ring-2 hover:ring-gray-200'}`}
-              onClick={() => setStatusFilter(statusFilter === 'expired' ? 'all' : 'expired')}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-red-600 flex items-center gap-2">
-                  <XCircle className="h-4 w-4" />
-                  Expired
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">{summary.expired}</div>
-                <p className="text-xs text-gray-500">Requires immediate action</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className={`cursor-pointer transition-all ${statusFilter === 'expiring' ? 'ring-2 ring-yellow-500' : 'hover:ring-2 hover:ring-gray-200'}`}
-              onClick={() => setStatusFilter(statusFilter === 'expiring' ? 'all' : 'expiring')}
-            >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-yellow-600 flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  Expiring Soon
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{summary.expiring}</div>
-                <p className="text-xs text-gray-500">Within 30 days</p>
-              </CardContent>
-            </Card>
+              <span className="text-slate-300 text-sm font-medium">{summary.total} total alerts</span>
+            </button>
+            {summary.expired > 0 && (
+              <button
+                onClick={() => setStatusFilter(statusFilter === 'expired' ? 'all' : 'expired')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                  statusFilter === 'expired' ? 'bg-rose-500/30 ring-2 ring-rose-400' : 'bg-rose-500/20 hover:bg-rose-500/30'
+                }`}
+              >
+                <span className="text-rose-400 text-sm font-medium">{summary.expired} expired</span>
+              </button>
+            )}
+            {summary.expiring > 0 && (
+              <button
+                onClick={() => setStatusFilter(statusFilter === 'expiring' ? 'all' : 'expiring')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                  statusFilter === 'expiring' ? 'bg-amber-500/30 ring-2 ring-amber-400' : 'bg-amber-500/20 hover:bg-amber-500/30'
+                }`}
+              >
+                <span className="text-amber-400 text-sm font-medium">{summary.expiring} expiring soon</span>
+              </button>
+            )}
           </div>
+        </div>
+      </div>
 
-          {/* Filters */}
-          <Card className="mb-6">
+      {/* Main Content */}
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        {/* Filters */}
+        <Card className="mb-6">
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="relative">
@@ -320,8 +312,7 @@ export default function DocumentExpiryPage() {
               )}
             </CardContent>
           </Card>
-        </div>
-      </div>
-    </div>
+      </main>
+    </>
   );
 }

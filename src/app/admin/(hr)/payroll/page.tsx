@@ -11,14 +11,13 @@ import {
   Users,
   DollarSign,
   FileText,
-  Clock,
   CreditCard,
   Calculator,
   Plus,
   ArrowRight,
 } from 'lucide-react';
 import { formatCurrency, getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/lib/payroll/utils';
-import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
 export default async function PayrollDashboardPage() {
   const session = await getServerSession(authOptions);
@@ -74,66 +73,54 @@ export default async function PayrollDashboardPage() {
   const totalLoanOutstanding = activeLoans.reduce((sum, loan) => sum + Number(loan.remainingAmount), 0);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Payroll Management</h1>
-          <p className="text-muted-foreground">
-            Manage employee salaries, payroll runs, and gratuity calculations
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link href="/admin/payroll/gratuity">
-              <Calculator className="mr-2 h-4 w-4" />
+    <>
+      <PageHeader
+        title="Payroll Management"
+        subtitle="Manage employee salaries, payroll runs, and gratuity calculations"
+        actions={
+          <div className="flex gap-2">
+            <PageHeaderButton href="/admin/payroll/gratuity" variant="secondary">
+              <Calculator className="h-4 w-4" />
               Gratuity Report
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href="/admin/payroll/runs/new">
-              <Plus className="mr-2 h-4 w-4" />
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/runs/new" variant="primary">
+              <Plus className="h-4 w-4" />
               New Payroll Run
+            </PageHeaderButton>
+          </div>
+        }
+      >
+        {/* Summary Chips */}
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          <Link
+            href="/admin/payroll/salary-structures"
+            className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors"
+          >
+            <span className="text-blue-400 text-sm font-medium">{employeesWithSalary} with salary</span>
+          </Link>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
+            <span className="text-emerald-400 text-sm font-medium">{formatCurrency(totalMonthlyPayroll)} monthly</span>
+          </div>
+          {pendingPayrolls > 0 && (
+            <Link
+              href="/admin/payroll/runs?status=PENDING_APPROVAL"
+              className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg transition-colors"
+            >
+              <span className="text-amber-400 text-sm font-medium">{pendingPayrolls} pending approval</span>
             </Link>
-          </Button>
+          )}
+          {activeLoans.length > 0 && (
+            <Link
+              href="/admin/payroll/loans"
+              className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg transition-colors"
+            >
+              <span className="text-purple-400 text-sm font-medium">{activeLoans.length} active loans</span>
+            </Link>
+          )}
         </div>
-      </div>
+      </PageHeader>
 
-      {/* Stats Cards */}
-      <StatsCardGrid columns={4}>
-        <StatsCard
-          title="With Salary"
-          subtitle="Active structures"
-          value={employeesWithSalary}
-          icon={Users}
-          color="blue"
-          href="/admin/payroll/salary-structures"
-        />
-        <StatsCard
-          title="Monthly Payroll"
-          subtitle="Total gross"
-          value={formatCurrency(totalMonthlyPayroll).replace('QAR ', '')}
-          icon={DollarSign}
-          color="emerald"
-          href="/admin/payroll/runs"
-        />
-        <StatsCard
-          title="Pending"
-          subtitle="Awaiting approval"
-          value={pendingPayrolls}
-          icon={Clock}
-          color="amber"
-          href="/admin/payroll/runs?status=PENDING_APPROVAL"
-        />
-        <StatsCard
-          title="Active Loans"
-          subtitle={formatCurrency(totalLoanOutstanding)}
-          value={activeLoans.length}
-          icon={CreditCard}
-          color="purple"
-          href="/admin/payroll/loans"
-        />
-      </StatsCardGrid>
+      <PageContent className="space-y-6">
 
       {/* Current Month Status */}
       <Card>
@@ -252,7 +239,7 @@ export default async function PayrollDashboardPage() {
           </CardContent>
         </Card>
         </div>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

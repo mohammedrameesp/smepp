@@ -1,25 +1,34 @@
 import { PrismaClient } from '@prisma/client';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 /**
  * Generate a unique Purchase Request reference number.
- * Format: BCE-PR-YYMM-XXX
- * - BCE: Company prefix
+ * Format: {PREFIX}-PR-YYMM-XXX
+ * - {PREFIX}: Organization code prefix (e.g., BCE, JAS, INC)
  * - PR: Purchase Request
  * - YY: Year (2 digits)
  * - MM: Month (2 digits)
  * - XXX: Sequential number per month (padded to 3 digits)
  *
- * Example: BCE-PR-2412-001 (first request in December 2024)
+ * Example: BCE-PR-2412-001 (first request in December 2024 for BeCreative)
+ * Example: JAS-PR-2412-001 (first request in December 2024 for Jasira)
  */
-export async function generatePurchaseRequestNumber(prisma: PrismaClient): Promise<string> {
+export async function generatePurchaseRequestNumber(
+  prisma: PrismaClient,
+  tenantId: string
+): Promise<string> {
+  // Get organization's code prefix
+  const codePrefix = await getOrganizationCodePrefix(tenantId);
+
   const now = new Date();
   const year = now.getFullYear().toString().slice(-2);
   const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  const prefix = `BCE-PR-${year}${month}`;
+  const prefix = `${codePrefix}-PR-${year}${month}`;
 
-  // Get count of requests this month
+  // Get count of requests this month within this tenant
   const count = await prisma.purchaseRequest.count({
     where: {
+      tenantId,
       referenceNumber: { startsWith: prefix }
     }
   });

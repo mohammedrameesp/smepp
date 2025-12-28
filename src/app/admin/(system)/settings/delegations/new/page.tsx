@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { format, addDays } from 'date-fns';
@@ -124,22 +125,19 @@ export default function NewDelegationPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/settings/delegations">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">New Delegation</h1>
-          <p className="text-muted-foreground">
-            Allow a user to approve requests on behalf of another
-          </p>
-        </div>
-      </div>
+    <>
+      <PageHeader
+        title="New Delegation"
+        subtitle="Allow a user to approve requests on behalf of another"
+        breadcrumbs={[
+          { label: 'Settings', href: '/admin/settings' },
+          { label: 'Delegations', href: '/admin/settings/delegations' },
+          { label: 'New Delegation' },
+        ]}
+      />
 
-      <form onSubmit={handleSubmit}>
+      <PageContent>
+        <form onSubmit={handleSubmit}>
         <Card>
           <CardHeader>
             <CardTitle>Delegation Details</CardTitle>
@@ -256,15 +254,16 @@ export default function NewDelegationPage() {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-4 mt-6">
-          <Button type="button" variant="outline" asChild>
-            <Link href="/admin/settings/delegations">Cancel</Link>
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating...' : 'Create Delegation'}
-          </Button>
-        </div>
-      </form>
-    </div>
+          <div className="flex justify-end gap-4 mt-6">
+            <Button type="button" variant="outline" asChild>
+              <Link href="/admin/settings/delegations">Cancel</Link>
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create Delegation'}
+            </Button>
+          </div>
+        </form>
+      </PageContent>
+    </>
   );
 }

@@ -1,23 +1,33 @@
 import { prisma, PrismaTransactionClient } from '@/lib/core/prisma';
 import { AssetStatus, AssetRequestStatus, AssetRequestType } from '@prisma/client';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 /**
  * Generate a unique request number
- * Format: AR-YYMMDD-XXX
- * Example: AR-241222-001
+ * Format: {PREFIX}-AR-YYMMDD-XXX
+ * Example: BCE-AR-241222-001, JAS-AR-241222-001
+ * @param tenantId - Organization tenant ID
  * @param tx - Optional transaction client to use (required when called inside a transaction)
  */
-export async function generateRequestNumber(tx?: PrismaTransactionClient): Promise<string> {
+export async function generateRequestNumber(
+  tenantId: string,
+  tx?: PrismaTransactionClient
+): Promise<string> {
   const db = tx || prisma;
+
+  // Get organization's code prefix
+  const codePrefix = await getOrganizationCodePrefix(tenantId);
+
   const now = new Date();
   const year = now.getFullYear().toString().slice(-2);
   const month = (now.getMonth() + 1).toString().padStart(2, '0');
   const day = now.getDate().toString().padStart(2, '0');
-  const datePrefix = `AR-${year}${month}${day}`;
+  const datePrefix = `${codePrefix}-AR-${year}${month}${day}`;
 
-  // Find the highest sequence number for today
+  // Find the highest sequence number for today within this tenant
   const existingRequests = await db.assetRequest.findMany({
     where: {
+      tenantId,
       requestNumber: {
         startsWith: datePrefix,
       },
@@ -32,10 +42,10 @@ export async function generateRequestNumber(tx?: PrismaTransactionClient): Promi
 
   if (existingRequests.length > 0) {
     const latestNumber = existingRequests[0].requestNumber;
-    // Extract sequence from "AR-YYMMDD-XXX"
+    // Extract sequence from "{PREFIX}-AR-YYMMDD-XXX"
     const parts = latestNumber.split('-');
-    if (parts.length === 3) {
-      const currentSequence = parseInt(parts[2], 10);
+    if (parts.length === 4) {
+      const currentSequence = parseInt(parts[3], 10);
       if (!isNaN(currentSequence)) {
         nextSequence = currentSequence + 1;
       }

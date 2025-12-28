@@ -1,21 +1,31 @@
 import { prisma } from '@/lib/core/prisma';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 /**
  * Generate a unique asset tag based on the asset type
- * Format: {TYPE_PREFIX}-{YEAR}-{SEQUENCE}
- * Example: LAP-2024-001, PHN-2024-002, MON-2024-003
+ * Format: {ORG_PREFIX}-{TYPE_PREFIX}-{YEAR}-{SEQUENCE}
+ * Example: BCE-LAP-2024-001, JAS-PHN-2024-002
  */
-export async function generateAssetTag(assetType: string): Promise<string> {
+export async function generateAssetTag(
+  assetType: string,
+  tenantId: string
+): Promise<string> {
+  // Get organization's code prefix
+  const orgPrefix = await getOrganizationCodePrefix(tenantId);
+
   const year = new Date().getFullYear();
-  
-  // Create prefix from asset type (first 3 characters, uppercase)
-  const prefix = assetType.toUpperCase().substring(0, 3);
-  
-  // Find the highest sequence number for this year and type
+
+  // Get type prefix from asset type
+  const typePrefix = getAssetTypePrefix(assetType);
+
+  const searchPrefix = `${orgPrefix}-${typePrefix}-${year}-`;
+
+  // Find the highest sequence number for this year, type, and tenant
   const existingAssets = await prisma.asset.findMany({
     where: {
+      tenantId,
       assetTag: {
-        startsWith: `${prefix}-${year}-`
+        startsWith: searchPrefix
       }
     },
     orderBy: {
@@ -23,27 +33,27 @@ export async function generateAssetTag(assetType: string): Promise<string> {
     },
     take: 1
   });
-  
+
   let nextSequence = 1;
-  
+
   if (existingAssets.length > 0) {
     const latestTag = existingAssets[0].assetTag;
     if (latestTag) {
-      // Extract sequence number from tag like "LAP-2024-001"
+      // Extract sequence number from tag like "BCE-LAP-2024-001"
       const parts = latestTag.split('-');
-      if (parts.length === 3) {
-        const currentSequence = parseInt(parts[2], 10);
+      if (parts.length === 4) {
+        const currentSequence = parseInt(parts[3], 10);
         if (!isNaN(currentSequence)) {
           nextSequence = currentSequence + 1;
         }
       }
     }
   }
-  
+
   // Format sequence with leading zeros (3 digits)
   const sequence = nextSequence.toString().padStart(3, '0');
-  
-  return `${prefix}-${year}-${sequence}`;
+
+  return `${searchPrefix}${sequence}`;
 }
 
 /**

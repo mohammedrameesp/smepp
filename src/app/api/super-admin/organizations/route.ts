@@ -128,7 +128,10 @@ export async function POST(request: NextRequest) {
       return org;
     });
 
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${inviteToken}`;
+    // Build organization-specific invite URL using subdomain
+    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+    const protocol = appDomain.includes('localhost') ? 'http' : 'https';
+    const inviteUrl = `${protocol}://${slug}.${appDomain}/invite/${inviteToken}`;
     const greeting = adminName ? `Dear ${adminName}` : 'Hello';
 
     // Send professional invitation email (email-client safe styling)

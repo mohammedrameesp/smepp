@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { EmployeeSubscriptionListTable } from '@/components/subscriptions/employee-subscription-list-table';
+import { EmployeeSubscriptionListTable } from '@/components/domains/operations/subscriptions/employee-subscription-list-table';
 
 export default async function EmployeeSubscriptionsPage() {
   const session = await getServerSession(authOptions);

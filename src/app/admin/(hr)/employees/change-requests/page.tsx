@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Loader2, CheckCircle, XCircle, Clock, User, ArrowLeft, MessageSquare } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Clock, User, ChevronRight, MessageSquare } from 'lucide-react';
 import { formatDateTime } from '@/lib/date-format';
 import { toast } from 'sonner';
 
@@ -119,57 +119,70 @@ export default function ChangeRequestsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <Link href="/admin/employees" className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Employees
+    <>
+      {/* Dark Header */}
+      <div className="bg-slate-800 shadow-lg">
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          {/* Breadcrumbs */}
+          <nav className="flex items-center gap-1 text-sm mb-3">
+            <Link href="/admin/employees" className="text-slate-400 hover:text-white transition-colors">
+              Employees
             </Link>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Profile Change Requests</h1>
-            <p className="text-gray-600">Review and manage employee profile change requests</p>
-          </div>
+            <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
+            <span className="text-slate-300">Change Requests</span>
+          </nav>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <Card className={statusFilter === 'all' ? 'ring-2 ring-blue-500' : 'cursor-pointer hover:ring-2 hover:ring-gray-200'} onClick={() => setStatusFilter('all')}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total}</div>
-              </CardContent>
-            </Card>
-            <Card className={statusFilter === 'PENDING' ? 'ring-2 ring-yellow-500' : 'cursor-pointer hover:ring-2 hover:ring-gray-200'} onClick={() => setStatusFilter('PENDING')}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-yellow-600">Pending</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-              </CardContent>
-            </Card>
-            <Card className={statusFilter === 'APPROVED' ? 'ring-2 ring-green-500' : 'cursor-pointer hover:ring-2 hover:ring-gray-200'} onClick={() => setStatusFilter('APPROVED')}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-green-600">Approved</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
-              </CardContent>
-            </Card>
-            <Card className={statusFilter === 'REJECTED' ? 'ring-2 ring-red-500' : 'cursor-pointer hover:ring-2 hover:ring-gray-200'} onClick={() => setStatusFilter('REJECTED')}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-red-600">Rejected</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
-              </CardContent>
-            </Card>
-          </div>
+          <h1 className="text-2xl font-bold text-white">Profile Change Requests</h1>
+          <p className="text-slate-400 mt-1">Review and manage employee profile change requests</p>
 
-          {/* Table */}
-          <Card>
+          {/* Summary Chips */}
+          <div className="flex flex-wrap items-center gap-3 mt-4">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                statusFilter === 'all' ? 'bg-slate-600 ring-2 ring-slate-400' : 'bg-slate-700/50 hover:bg-slate-700'
+              }`}
+            >
+              <span className="text-slate-300 text-sm font-medium">{stats.total} total</span>
+            </button>
+            {stats.pending > 0 && (
+              <button
+                onClick={() => setStatusFilter('PENDING')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                  statusFilter === 'PENDING' ? 'bg-amber-500/30 ring-2 ring-amber-400' : 'bg-amber-500/20 hover:bg-amber-500/30'
+                }`}
+              >
+                <span className="text-amber-400 text-sm font-medium">{stats.pending} pending</span>
+              </button>
+            )}
+            {stats.approved > 0 && (
+              <button
+                onClick={() => setStatusFilter('APPROVED')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                  statusFilter === 'APPROVED' ? 'bg-emerald-500/30 ring-2 ring-emerald-400' : 'bg-emerald-500/20 hover:bg-emerald-500/30'
+                }`}
+              >
+                <span className="text-emerald-400 text-sm font-medium">{stats.approved} approved</span>
+              </button>
+            )}
+            {stats.rejected > 0 && (
+              <button
+                onClick={() => setStatusFilter('REJECTED')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                  statusFilter === 'REJECTED' ? 'bg-rose-500/30 ring-2 ring-rose-400' : 'bg-rose-500/20 hover:bg-rose-500/30'
+                }`}
+              >
+                <span className="text-rose-400 text-sm font-medium">{stats.rejected} rejected</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        {/* Table */}
+        <Card>
             <CardHeader>
               <CardTitle>Change Requests</CardTitle>
               <CardDescription>
@@ -240,8 +253,7 @@ export default function ChangeRequestsPage() {
               )}
             </CardContent>
           </Card>
-        </div>
-      </div>
+      </main>
 
       {/* Review Dialog */}
       <Dialog open={!!selectedRequest} onOpenChange={() => { setSelectedRequest(null); setResolverNotes(''); }}>
@@ -307,6 +319,6 @@ export default function ChangeRequestsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import Link from 'next/link';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { RefreshCw, AlertTriangle } from 'lucide-react';
 import { createUserSchema, type CreateUserInput } from '@/lib/validations/users';
 
 export default function NewEmployeePage() {
@@ -33,11 +34,17 @@ export default function NewEmployeePage() {
       role: 'EMPLOYEE',
       employeeId: '',
       designation: '',
+      isEmployee: true,
+      canLogin: true,
+      isOnWps: true,
     },
     mode: 'onChange',
   });
 
   const role = watch('role');
+  const isEmployee = watch('isEmployee');
+  const canLogin = watch('canLogin');
+  const isOnWps = watch('isOnWps');
 
   // Generate next employee code on mount
   useEffect(() => {
@@ -84,30 +91,25 @@ export default function NewEmployeePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="mb-6">
-            <Link href="/admin/employees">
-              <Button variant="outline" size="sm" className="mb-4">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Employees
-              </Button>
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Employee</h1>
-            <p className="text-gray-600">
-              Add a new employee to the system. They will authenticate using Azure AD or the configured provider.
-            </p>
-          </div>
+    <>
+      <PageHeader
+        title="Add New Employee"
+        subtitle="Add a new employee to the system. They will authenticate using Azure AD or the configured provider."
+        breadcrumbs={[
+          { label: 'Employees', href: '/admin/employees' },
+          { label: 'New Employee' },
+        ]}
+      />
 
-          {error && (
-            <Alert variant="error" className="mb-6">
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+      <PageContent className="max-w-2xl">
+        {error && (
+          <Alert variant="error" className="mb-6">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-          <Card>
+        <Card>
             <CardHeader>
               <CardTitle>Employee Information</CardTitle>
               <CardDescription>
@@ -135,23 +137,25 @@ export default function NewEmployeePage() {
                   </p>
                 </div>
 
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    {...register('email')}
-                    placeholder="john.doe@company.com"
-                    className={errors.email ? 'border-red-500' : ''}
-                  />
-                  {errors.email && (
-                    <p className="text-sm text-red-500">{errors.email.message}</p>
-                  )}
-                  <p className="text-sm text-gray-500">
-                    This email must match their Azure AD or OAuth provider email
-                  </p>
-                </div>
+                {/* Email - only shown when canLogin is true */}
+                {canLogin && (
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      {...register('email')}
+                      placeholder="john.doe@company.com"
+                      className={errors.email ? 'border-red-500' : ''}
+                    />
+                    {errors.email && (
+                      <p className="text-sm text-red-500">{errors.email.message}</p>
+                    )}
+                    <p className="text-sm text-gray-500">
+                      This email must match their Azure AD or OAuth provider email
+                    </p>
+                  </div>
+                )}
 
                 {/* Employee Code */}
                 <div className="space-y-2">
@@ -226,21 +230,93 @@ export default function NewEmployeePage() {
                   </div>
                 </div>
 
-                {/* Info Alert */}
-                {role !== 'TEMP_STAFF' && (
-                  <Alert>
-                    <AlertDescription>
-                      <strong>Note:</strong> Employees will authenticate using Azure AD or the configured OAuth provider.
-                      No password is set here. On first login, their account will be activated and they will be prompted to complete their HR profile.
+                {/* User Type Toggles */}
+                <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
+                  <h4 className="font-medium text-gray-900">User Type Settings</h4>
+
+                  {/* Is Employee Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="isEmployee" className="text-base">Is an Employee</Label>
+                      <p className="text-sm text-gray-500">
+                        Appears in HR features (payroll, leave, employee lists)
+                      </p>
+                    </div>
+                    <Switch
+                      id="isEmployee"
+                      checked={isEmployee}
+                      onCheckedChange={(checked) => setValue('isEmployee', checked)}
+                    />
+                  </div>
+
+                  {/* Can Login Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="canLogin" className="text-base">Can Log In</Label>
+                      <p className="text-sm text-gray-500">
+                        {canLogin
+                          ? 'Will authenticate via Azure AD or OAuth'
+                          : 'No login access - a system ID will be auto-generated'}
+                      </p>
+                    </div>
+                    <Switch
+                      id="canLogin"
+                      checked={canLogin}
+                      onCheckedChange={(checked) => {
+                        setValue('canLogin', checked);
+                        // Clear email when disabling login
+                        if (!checked) {
+                          setValue('email', '');
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* WPS Toggle - only show for employees */}
+                  {isEmployee && (
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="isOnWps" className="text-base">On WPS</Label>
+                        <p className="text-sm text-gray-500">
+                          {isOnWps
+                            ? 'Included in WPS (Wage Protection System) payroll files'
+                            : 'Not included in WPS files - paid outside WPS'}
+                        </p>
+                      </div>
+                      <Switch
+                        id="isOnWps"
+                        checked={isOnWps}
+                        onCheckedChange={(checked) => setValue('isOnWps', checked)}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Warning Alerts */}
+                {!isEmployee && (
+                  <Alert className="border-amber-200 bg-amber-50">
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    <AlertDescription className="text-amber-800">
+                      <strong>Non-Employee User:</strong> This user will NOT appear in HR features like payroll, leave balances, or employee lists.
+                      They will only appear in team management.
                     </AlertDescription>
                   </Alert>
                 )}
 
-                {role === 'TEMP_STAFF' && (
+                {!canLogin && (
                   <Alert>
                     <AlertDescription>
-                      <strong>Temporary Staff:</strong> This employee will appear in assignment dropdowns but will not be able to log in to the system.
-                      Use a placeholder email (e.g., temp.name@company.local) if they don&apos;t have an actual company email.
+                      <strong>Non-Login Employee:</strong> This person will appear in dropdowns and HR features but cannot log in to the system.
+                      Useful for drivers, laborers, or other staff who don&apos;t need system access.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {canLogin && isEmployee && (
+                  <Alert>
+                    <AlertDescription>
+                      <strong>Note:</strong> This employee will authenticate using Azure AD or the configured OAuth provider.
+                      On first login, their account will be activated and they will be prompted to complete their HR profile.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -260,9 +336,8 @@ export default function NewEmployeePage() {
                 </div>
               </form>
             </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
+        </Card>
+      </PageContent>
+    </>
   );
 }

@@ -4,8 +4,12 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret';
+// SECURITY: NEXTAUTH_SECRET is required - validated in auth.ts at module load
+const JWT_SECRET = process.env.NEXTAUTH_SECRET!;
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+
+// Impersonation token expiry - reduced from 4 hours to 15 minutes for security
+const IMPERSONATION_EXPIRY_SECONDS = 15 * 60; // 15 minutes
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/super-admin/impersonate - Start impersonating an organization
@@ -49,6 +53,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // AUDIT: Log impersonation event for security tracking
+    const clientIp = request.headers.get('x-forwarded-for') ||
+                     request.headers.get('x-real-ip') ||
+                     'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+
+    console.log('[AUDIT] Impersonation started:', JSON.stringify({
+      event: 'IMPERSONATION_START',
+      timestamp: new Date().toISOString(),
+      superAdmin: {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+      },
+      targetOrganization: {
+        id: organization.id,
+        name: organization.name,
+        slug: organization.slug,
+      },
+      clientIp,
+      userAgent,
+      expiresIn: `${IMPERSONATION_EXPIRY_SECONDS / 60} minutes`,
+    }));
+
     // Create an impersonation token that will be verified by the middleware
     // This token contains the super admin's original ID and the target org with all context
     const impersonationToken = jwt.sign(
@@ -63,7 +91,7 @@ export async function POST(request: NextRequest) {
         enabledModules: organization.enabledModules || ['assets', 'subscriptions', 'suppliers'],
         purpose: 'impersonation',
         iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + (4 * 60 * 60), // 4 hours
+        exp: Math.floor(Date.now() / 1000) + IMPERSONATION_EXPIRY_SECONDS,
       },
       JWT_SECRET
     );

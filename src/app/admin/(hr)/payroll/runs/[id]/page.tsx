@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ArrowLeft, Download, Eye, Users, Wallet, FileText, Clock, AlertCircle, CreditCard, CalendarOff } from 'lucide-react';
+import { ArrowLeft, Download, Eye, Clock, AlertCircle, CreditCard, CalendarOff } from 'lucide-react';
 import { formatCurrency, getMonthName, getPayrollStatusColor, getPayrollStatusText } from '@/lib/payroll/utils';
 import { PayrollWorkflowActions } from '@/components/payroll/payroll-workflow-actions';
 import { calculatePayrollPreview } from '@/lib/payroll/preview';
@@ -140,28 +140,28 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
           title="Employees"
           subtitle="In this run"
           value={employeeCount}
-          icon={Users}
+          icon="users"
           color="blue"
         />
         <StatsCard
           title="Total Gross"
           subtitle=""
           value={formatCurrency(totalGross)}
-          icon={Wallet}
+          icon="wallet"
           color="amber"
         />
         <StatsCard
           title="Deductions"
           subtitle=""
           value={`-${formatCurrency(totalDeductions)}`}
-          icon={FileText}
+          icon="file-text"
           color="rose"
         />
         <StatsCard
           title="Net Pay"
           subtitle=""
           value={formatCurrency(totalNet)}
-          icon={Wallet}
+          icon="wallet"
           color="emerald"
         />
       </StatsCardGrid>

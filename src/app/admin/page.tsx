@@ -3,29 +3,33 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/core/auth";
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
-import { format } from 'date-fns';
-import {
-  Users,
-  Box,
-  CreditCard,
-  Truck,
-  Calendar,
-  UserPlus,
-  Plus,
-  DollarSign,
-  Inbox,
-  Check,
-  AlertTriangle,
-  RotateCcw,
-  Laptop,
-  Gift,
-  Award,
-  CalendarCheck,
-  Briefcase,
-  ShoppingCart,
-  CalendarOff,
-  FileText,
-} from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns';
+
+// Avatar color palette - consistent colors based on name
+const AVATAR_COLORS = [
+  'bg-blue-100 text-blue-600',
+  'bg-emerald-100 text-emerald-600',
+  'bg-purple-100 text-purple-600',
+  'bg-amber-100 text-amber-600',
+  'bg-rose-100 text-rose-600',
+  'bg-cyan-100 text-cyan-600',
+  'bg-violet-100 text-violet-600',
+  'bg-lime-100 text-lime-600',
+];
+
+function getAvatarColor(name: string): string {
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
@@ -40,13 +44,13 @@ export default async function AdminDashboard() {
 
   const isAdmin = session.user.role === 'ADMIN';
 
-  // Get enabled modules from database
+  // Get enabled modules and org details from database
   let enabledModules: string[] = ['assets', 'subscriptions', 'suppliers'];
 
   if (session.user.organizationId) {
     const org = await prisma.organization.findUnique({
       where: { id: session.user.organizationId },
-      select: { enabledModules: true },
+      select: { enabledModules: true, name: true, subscriptionTier: true },
     });
     if (org?.enabledModules?.length) {
       enabledModules = org.enabledModules;
@@ -63,6 +67,8 @@ export default async function AdminDashboard() {
     const today = new Date();
     const thirtyDaysFromNow = new Date(today);
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    const sevenDaysFromNow = new Date(today);
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
     // Batch queries for dashboard data
     const [
@@ -75,17 +81,16 @@ export default async function AdminDashboard() {
       totalCompanyDocuments,
       pendingLeaveCount,
       onLeaveTodayCount,
-      expiringEmployeeDocs,
-      expiringSubscriptions,
+      pendingSuppliers,
+      pendingChangeRequests,
       expiringCompanyDocs,
+      expiringSubscriptions,
       pendingApprovals,
-      pendingLeaveRequests,
-      pendingAssetRequests,
       recentActivity,
       upcomingBirthdays,
       upcomingAnniversaries,
       onLeaveToday,
-      monthlySubscriptionCost,
+      expiringEmployeeDocs,
     ] = await Promise.all([
       // Stats counts
       prisma.user.count({
@@ -97,15 +102,10 @@ export default async function AdminDashboard() {
       prisma.asset.count({ where: { tenantId } }),
       prisma.subscription.count({ where: { tenantId, status: 'ACTIVE' } }),
       prisma.supplier.count({ where: { tenantId, status: 'APPROVED' } }),
-      // Projects count
       prisma.project.count({ where: { tenantId, status: 'ACTIVE' } }),
-      // Pending purchase requests count
       prisma.purchaseRequest.count({ where: { tenantId, status: 'PENDING' } }),
-      // Company documents count
       prisma.companyDocument.count({ where: { tenantId } }),
-      // Pending leave requests count
       prisma.leaveRequest.count({ where: { tenantId, status: 'PENDING' } }),
-      // On leave today count
       prisma.leaveRequest.count({
         where: {
           tenantId,
@@ -114,20 +114,16 @@ export default async function AdminDashboard() {
           endDate: { gte: today },
         },
       }),
-      // Expiring employee documents (next 30 days)
-      prisma.hRProfile.findMany({
+      prisma.supplier.count({ where: { tenantId, status: 'PENDING' } }),
+      prisma.profileChangeRequest.count({ where: { tenantId, status: 'PENDING' } }),
+      // Expiring company documents (next 30 days)
+      prisma.companyDocument.findMany({
         where: {
           tenantId,
-          OR: [
-            { qidExpiry: { gte: today, lte: thirtyDaysFromNow } },
-            { passportExpiry: { gte: today, lte: thirtyDaysFromNow } },
-            { healthCardExpiry: { gte: today, lte: thirtyDaysFromNow } },
-            { contractExpiry: { gte: today, lte: thirtyDaysFromNow } },
-            { licenseExpiry: { gte: today, lte: thirtyDaysFromNow } },
-          ],
+          expiryDate: { gte: today, lte: thirtyDaysFromNow },
         },
-        include: { user: { select: { name: true } } },
-        take: 10,
+        select: { id: true, documentType: { select: { name: true } }, expiryDate: true },
+        take: 5,
       }),
       // Expiring subscriptions (next 30 days)
       prisma.subscription.findMany({
@@ -139,57 +135,20 @@ export default async function AdminDashboard() {
         select: { id: true, serviceName: true, renewalDate: true },
         take: 5,
       }),
-      // Expiring company documents (next 30 days)
-      prisma.companyDocument.findMany({
-        where: {
-          tenantId,
-          expiryDate: { gte: today, lte: thirtyDaysFromNow },
-        },
-        select: { id: true, documentType: { select: { name: true } }, expiryDate: true },
-        take: 5,
-      }),
-
       // Pending approvals (distinct entities)
       prisma.approvalStep.groupBy({
         by: ['entityType', 'entityId'],
         where: { tenantId, status: 'PENDING' },
       }).then(groups => groups.length),
-
-      // Pending leave requests
-      prisma.leaveRequest.findMany({
-        where: { tenantId, status: 'PENDING' },
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: { select: { name: true } },
-          leaveType: { select: { name: true } },
-        },
-      }),
-
-      // Pending asset requests
-      prisma.assetRequest.findMany({
-        where: {
-          tenantId,
-          status: { in: ['PENDING_ADMIN_APPROVAL', 'PENDING_RETURN_APPROVAL'] },
-        },
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: { select: { name: true } },
-          asset: true,
-        },
-      }),
-
       // Recent activity
       prisma.activityLog.findMany({
         where: { tenantId },
-        take: 5,
+        take: 4,
         orderBy: { at: 'desc' },
         include: {
           actorUser: { select: { name: true } },
         },
       }),
-
       // Upcoming birthdays (next 7 days)
       prisma.hRProfile.findMany({
         where: {
@@ -215,10 +174,8 @@ export default async function AdminDashboard() {
         }).slice(0, 3).map(p => ({
           name: p.user.name,
           date: p.dateOfBirth!,
-          designation: p.designation,
         }));
       }),
-
       // Upcoming work anniversaries (next 7 days)
       prisma.hRProfile.findMany({
         where: {
@@ -237,7 +194,7 @@ export default async function AdminDashboard() {
           if (!p.dateOfJoining) return false;
           const joinDate = new Date(p.dateOfJoining);
           const yearsWorked = now.getFullYear() - joinDate.getFullYear();
-          if (yearsWorked < 1) return false; // No anniversary in first year
+          if (yearsWorked < 1) return false;
 
           const thisYearAnniv = new Date(now.getFullYear(), joinDate.getMonth(), joinDate.getDate());
           if (thisYearAnniv < now) {
@@ -246,16 +203,14 @@ export default async function AdminDashboard() {
           return thisYearAnniv >= now && thisYearAnniv <= sevenDaysLater;
         }).slice(0, 3).map(p => {
           const joinDate = new Date(p.dateOfJoining!);
-          const yearsWorked = now.getFullYear() - joinDate.getFullYear();
+          const yearsWorked = new Date().getFullYear() - joinDate.getFullYear();
           return {
             name: p.user.name,
             date: p.dateOfJoining!,
             years: yearsWorked,
-            designation: p.designation,
           };
         });
       }),
-
       // On leave today
       prisma.leaveRequest.findMany({
         where: {
@@ -270,24 +225,28 @@ export default async function AdminDashboard() {
           leaveType: { select: { name: true } },
         },
       }),
-
-      // Monthly subscription cost
-      prisma.subscription.aggregate({
+      // Expiring employee documents (next 30 days)
+      prisma.hRProfile.findMany({
         where: {
           tenantId,
-          status: 'ACTIVE',
-          billingCycle: 'MONTHLY',
-          costPerCycle: { not: null },
+          OR: [
+            { qidExpiry: { gte: today, lte: thirtyDaysFromNow } },
+            { passportExpiry: { gte: today, lte: thirtyDaysFromNow } },
+            { healthCardExpiry: { gte: today, lte: thirtyDaysFromNow } },
+            { contractExpiry: { gte: today, lte: thirtyDaysFromNow } },
+            { licenseExpiry: { gte: today, lte: thirtyDaysFromNow } },
+          ],
         },
-        _sum: { costPerCycle: true },
+        include: { user: { select: { name: true } } },
+        take: 10,
       }),
     ]);
 
-    // Count total expiring items
-    const expiringItemsCount =
-      expiringEmployeeDocs.length +
-      expiringSubscriptions.length +
-      expiringCompanyDocs.length;
+    // Calculate total pending approvals
+    const totalPendingApprovals = pendingApprovals + pendingLeaveCount + pendingPurchaseRequests + pendingSuppliers + pendingChangeRequests;
+
+    // Calculate expiring documents count
+    const expiringDocsCount = expiringCompanyDocs.length + expiringSubscriptions.length + expiringEmployeeDocs.length;
 
     dashboardData = {
       stats: {
@@ -300,21 +259,17 @@ export default async function AdminDashboard() {
         companyDocuments: totalCompanyDocuments,
         pendingLeave: pendingLeaveCount,
         onLeaveToday: onLeaveTodayCount,
-        monthlySpend: monthlySubscriptionCost._sum.costPerCycle || 0,
+        pendingSuppliers,
+        pendingChangeRequests,
       },
-      pendingApprovals,
-      pendingLeaveRequests,
-      pendingAssetRequests,
+      totalPendingApprovals,
+      expiringDocsCount,
+      expiringCompanyDocs,
+      expiringSubscriptions,
       recentActivity,
       upcomingBirthdays,
       upcomingAnniversaries,
       onLeaveToday,
-      needsAttention: {
-        count: expiringItemsCount,
-        expiringEmployeeDocs,
-        expiringSubscriptions,
-        expiringCompanyDocs,
-      },
     };
   }
 
@@ -323,465 +278,354 @@ export default async function AdminDashboard() {
 
   // Get time-based greeting
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const greeting = hour >= 5 && hour < 12 ? 'Good morning' :
+                   hour >= 12 && hour < 17 ? 'Good afternoon' :
+                   hour >= 17 && hour < 21 ? 'Good evening' : 'Good night';
 
-  // Get today's date formatted
-  const todayFormatted = format(new Date(), 'EEEE, MMMM d, yyyy');
+  // Calculate total attention items
+  const attentionItems = (dashboardData?.totalPendingApprovals || 0) + (dashboardData?.expiringDocsCount || 0);
 
-  // Combine approvals for display
-  const allApprovals = [
-    ...(dashboardData?.pendingLeaveRequests || []).map(req => ({
-      id: req.id,
-      type: 'leave' as const,
-      icon: Calendar,
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
-      title: 'Leave Request',
-      description: `${req.user.name} - ${req.leaveType.name}`,
-      time: req.createdAt,
-    })),
-    ...(dashboardData?.pendingAssetRequests || []).map(req => ({
-      id: req.id,
-      type: 'asset' as const,
-      icon: Laptop,
-      iconBg: 'bg-purple-100',
-      iconColor: 'text-purple-600',
-      title: req.status === 'PENDING_RETURN_APPROVAL' ? 'Asset Return' : 'Asset Request',
-      description: `${req.user.name} - ${req.asset?.model || req.asset?.type || 'Asset'}`,
-      time: req.createdAt,
-    })),
-  ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
+  // Module cards configuration
+  const moduleCards = [
+    {
+      id: 'assets',
+      href: '/admin/assets',
+      icon: '📦',
+      title: 'Assets',
+      description: 'Physical and digital assets',
+      count: dashboardData?.stats.assets,
+      enabled: isModuleEnabled('assets'),
+    },
+    {
+      id: 'subscriptions',
+      href: '/admin/subscriptions',
+      icon: '💳',
+      title: 'Subscriptions',
+      description: 'Software licenses and renewals',
+      count: dashboardData?.stats.subscriptions,
+      enabled: isModuleEnabled('subscriptions'),
+    },
+    {
+      id: 'suppliers',
+      href: '/admin/suppliers',
+      icon: '🤝',
+      title: 'Suppliers',
+      description: 'Vendors and partners',
+      count: dashboardData?.stats.suppliers,
+      badge: dashboardData?.stats.pendingSuppliers ? `${dashboardData.stats.pendingSuppliers} pending` : null,
+      badgeColor: 'bg-red-500',
+      enabled: isModuleEnabled('suppliers'),
+    },
+    {
+      id: 'employees',
+      href: '/admin/employees',
+      icon: '👥',
+      title: 'Employees',
+      description: 'Team members and HR profiles',
+      count: dashboardData?.stats.employees,
+      badge: dashboardData?.stats.pendingChangeRequests ? `${dashboardData.stats.pendingChangeRequests} change req` : null,
+      badgeColor: 'bg-orange-500',
+      enabled: isModuleEnabled('employees'),
+    },
+    {
+      id: 'leave',
+      href: '/admin/leave/requests',
+      icon: '🏖️',
+      title: 'Leave',
+      description: 'Requests and balances',
+      status: dashboardData?.stats.pendingLeave ? { text: `${dashboardData.stats.pendingLeave} pending`, color: 'text-red-600 bg-red-50' } : { text: 'Up to date', color: 'text-emerald-600 bg-emerald-50' },
+      enabled: isModuleEnabled('leave'),
+    },
+    {
+      id: 'payroll',
+      href: '/admin/payroll',
+      icon: '💰',
+      title: 'Payroll',
+      description: 'Salaries, runs, and loans',
+      status: { text: 'Up to date', color: 'text-emerald-600 bg-emerald-50' },
+      enabled: isModuleEnabled('payroll'),
+    },
+    {
+      id: 'purchase-requests',
+      href: '/admin/purchase-requests',
+      icon: '🛒',
+      title: 'Purchases',
+      description: 'Requests and approvals',
+      count: dashboardData?.stats.pendingPurchaseRequests || 0,
+      badge: dashboardData?.stats.pendingPurchaseRequests ? `${dashboardData.stats.pendingPurchaseRequests} pending` : null,
+      badgeColor: 'bg-red-500',
+      enabled: isModuleEnabled('purchase-requests'),
+    },
+    {
+      id: 'company-documents',
+      href: '/admin/company-documents',
+      icon: '📄',
+      title: 'Documents',
+      description: 'Licenses and registrations',
+      count: dashboardData?.stats.companyDocuments,
+      badge: (dashboardData?.expiringCompanyDocs?.length || 0) > 0 ? `${dashboardData?.expiringCompanyDocs?.length} expiring` : null,
+      badgeColor: 'bg-red-500',
+      enabled: true, // Always enabled
+    },
+    {
+      id: 'reports',
+      href: '/admin/reports',
+      icon: '📊',
+      title: 'Reports',
+      description: 'Analytics and exports',
+      enabled: true, // Always enabled
+    },
+  ].filter(card => card.enabled);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* Welcome Section */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">
-          {greeting}, {firstName}
-        </h1>
-        <p className="text-slate-500 text-sm">{todayFormatted}</p>
-      </div>
+    <>
+      {/* Extended Header with Greeting */}
+      <div className="bg-slate-800 pb-10 shadow-lg">
+        <div className="max-w-6xl mx-auto px-6 pt-10">
+          <h1 className="text-2xl font-bold text-white">
+            {greeting}, {firstName}
+          </h1>
+          <p className="text-slate-400 mt-1">
+            {attentionItems > 0
+              ? `You have ${attentionItems} items needing your attention`
+              : "You're all caught up!"}
+          </p>
 
-      {/* Action Cards Row */}
-      <div className="grid md:grid-cols-3 gap-4 mb-6">
-        {/* Pending Approvals Card */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-orange-200/50 flex flex-col">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative flex flex-col flex-1">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="text-lg font-semibold">Pending Approvals</h3>
-                <p className="text-white/80 text-sm">
-                  {allApprovals.length > 0 ? `${allApprovals.length} items need review` : 'All caught up!'}
-                </p>
-              </div>
-              <span className="text-4xl font-bold">{allApprovals.length}</span>
-            </div>
-            {allApprovals.length > 0 && (
-              <div className="space-y-2 mb-3 flex-1">
-                {allApprovals.slice(0, 3).map((approval) => (
-                  <div key={approval.id} className="flex items-center gap-2 bg-white/15 rounded-lg px-3 py-2">
-                    <approval.icon className="h-4 w-4 flex-shrink-0" />
-                    <span className="text-sm truncate">{approval.description}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            <Link
-              href="/admin/my-approvals"
-              className="block w-full py-2.5 bg-white text-orange-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center mt-auto"
-            >
-              Review Now
-            </Link>
-          </div>
-        </div>
-
-        {/* Needs Your Attention Card */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-rose-400 to-pink-500 rounded-2xl p-5 text-white shadow-lg shadow-rose-200/50 flex flex-col">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative flex flex-col flex-1">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-11 h-11 bg-white/20 rounded-xl flex items-center justify-center">
-                <AlertTriangle className="h-5 w-5" />
-              </div>
-              <span className="text-4xl font-bold">{dashboardData?.needsAttention?.count || 0}</span>
-            </div>
-            <h3 className="text-lg font-semibold mb-0.5">Needs Attention</h3>
-            <p className="text-white/80 text-sm flex-1">
-              {(dashboardData?.needsAttention?.count || 0) > 0
-                ? 'Expiring documents & renewals'
-                : 'Nothing expiring soon'}
-            </p>
-            <Link
-              href="/admin/employees/document-expiry"
-              className="block w-full py-2.5 bg-white text-rose-600 rounded-xl font-semibold text-sm hover:bg-white/90 transition-colors text-center mt-4"
-            >
-              View All
-            </Link>
-          </div>
-        </div>
-
-        {/* Quick Add Card */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col">
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-11 h-11 bg-slate-100 rounded-xl flex items-center justify-center">
-              <Plus className="h-5 w-5 text-slate-600" />
-            </div>
-          </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-3">Quick Add</h3>
-          <div className="flex-1"></div>
-          <div className="grid grid-cols-2 gap-2">
-            {isModuleEnabled('employees') && (
+          {/* Summary Chips */}
+          <div className="flex flex-wrap items-center gap-4 mt-4">
+            {(dashboardData?.totalPendingApprovals || 0) > 0 && (
               <Link
-                href="/admin/employees/new"
-                className="py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-700 transition-colors text-center"
+                href="/admin/my-approvals"
+                className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-slate-800"
               >
-                <UserPlus className="h-3.5 w-3.5 inline mr-1" />
-                Employee
+                <span className="text-red-400 text-sm font-medium">
+                  {dashboardData?.totalPendingApprovals} pending approvals
+                </span>
               </Link>
             )}
-            {isModuleEnabled('assets') && (
+            {(dashboardData?.expiringDocsCount || 0) > 0 && (
               <Link
-                href="/admin/assets/new"
-                className="py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-700 transition-colors text-center"
+                href="/admin/employees/document-expiry"
+                className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-800"
               >
-                <Box className="h-3.5 w-3.5 inline mr-1" />
-                Asset
+                <span className="text-amber-400 text-sm font-medium">
+                  {dashboardData?.expiringDocsCount} documents expiring
+                </span>
               </Link>
             )}
-            {isModuleEnabled('subscriptions') && (
+            {(dashboardData?.stats.onLeaveToday || 0) > 0 && (
               <Link
-                href="/admin/subscriptions/new"
-                className="py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-700 transition-colors text-center"
+                href="/admin/leave/requests"
+                className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-800"
               >
-                <CreditCard className="h-3.5 w-3.5 inline mr-1" />
-                SaaS
-              </Link>
-            )}
-            {isModuleEnabled('suppliers') && (
-              <Link
-                href="/admin/suppliers/new"
-                className="py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium text-slate-700 transition-colors text-center"
-              >
-                <Truck className="h-3.5 w-3.5 inline mr-1" />
-                Supplier
+                <span className="text-blue-400 text-sm font-medium">
+                  {dashboardData?.stats.onLeaveToday} out of office
+                </span>
               </Link>
             )}
           </div>
         </div>
       </div>
 
-      {/* Stats Row - Dynamic grid based on count */}
-      {(() => {
-        // Build stats array based on enabled modules
-        const statsItems = [
-          isModuleEnabled('employees') && {
-            id: 'employees',
-            href: '/admin/employees',
-            gradient: 'from-blue-50 to-indigo-50',
-            border: 'border-blue-100',
-            shadow: 'hover:shadow-blue-100/50',
-            iconGradient: 'from-blue-400 to-indigo-500',
-            iconShadow: 'shadow-blue-200',
-            icon: Users,
-            value: dashboardData?.stats.employees || 0,
-            label: 'Employees',
-          },
-          isModuleEnabled('assets') && {
-            id: 'assets',
-            href: '/admin/assets',
-            gradient: 'from-purple-50 to-pink-50',
-            border: 'border-purple-100',
-            shadow: 'hover:shadow-purple-100/50',
-            iconGradient: 'from-purple-400 to-pink-500',
-            iconShadow: 'shadow-purple-200',
-            icon: Box,
-            value: dashboardData?.stats.assets || 0,
-            label: 'Assets',
-          },
-          isModuleEnabled('subscriptions') && {
-            id: 'subscriptions',
-            href: '/admin/subscriptions',
-            gradient: 'from-rose-50 to-orange-50',
-            border: 'border-rose-100',
-            shadow: 'hover:shadow-rose-100/50',
-            iconGradient: 'from-rose-400 to-orange-500',
-            iconShadow: 'shadow-rose-200',
-            icon: CreditCard,
-            value: dashboardData?.stats.subscriptions || 0,
-            label: 'Subscriptions',
-          },
-          isModuleEnabled('suppliers') && {
-            id: 'suppliers',
-            href: '/admin/suppliers',
-            gradient: 'from-amber-50 to-yellow-50',
-            border: 'border-amber-100',
-            shadow: 'hover:shadow-amber-100/50',
-            iconGradient: 'from-amber-400 to-yellow-500',
-            iconShadow: 'shadow-amber-200',
-            icon: Truck,
-            value: dashboardData?.stats.suppliers || 0,
-            label: 'Suppliers',
-          },
-          isModuleEnabled('leave') && {
-            id: 'leave',
-            href: '/admin/leave/requests',
-            gradient: 'from-cyan-50 to-teal-50',
-            border: 'border-cyan-100',
-            shadow: 'hover:shadow-cyan-100/50',
-            iconGradient: 'from-cyan-400 to-teal-500',
-            iconShadow: 'shadow-cyan-200',
-            icon: Calendar,
-            value: dashboardData?.stats.pendingLeave || 0,
-            label: 'Leave Requests',
-          },
-          isModuleEnabled('projects') && {
-            id: 'projects',
-            href: '/admin/projects',
-            gradient: 'from-emerald-50 to-green-50',
-            border: 'border-emerald-100',
-            shadow: 'hover:shadow-emerald-100/50',
-            iconGradient: 'from-emerald-400 to-green-500',
-            iconShadow: 'shadow-emerald-200',
-            icon: Briefcase,
-            value: dashboardData?.stats.projects || 0,
-            label: 'Active Projects',
-          },
-          isModuleEnabled('purchase-requests') && {
-            id: 'purchase-requests',
-            href: '/admin/purchase-requests',
-            gradient: 'from-violet-50 to-purple-50',
-            border: 'border-violet-100',
-            shadow: 'hover:shadow-violet-100/50',
-            iconGradient: 'from-violet-400 to-purple-500',
-            iconShadow: 'shadow-violet-200',
-            icon: ShoppingCart,
-            value: dashboardData?.stats.pendingPurchaseRequests || 0,
-            label: 'Pending PRs',
-          },
-        ].filter(Boolean) as Array<{
-          id: string;
-          href: string;
-          gradient: string;
-          border: string;
-          shadow: string;
-          iconGradient: string;
-          iconShadow: string;
-          icon: React.ElementType;
-          value: number;
-          label: string;
-        }>;
-
-        // Grid layout: 2 columns on mobile, 4 columns on larger screens
-        // This ensures balanced rows when there are many stats
-        const count = statsItems.length;
-
-        return (
-          <div className={`grid gap-4 mb-6 ${
-            count <= 2 ? 'grid-cols-2' :
-            count <= 4 ? 'grid-cols-2 sm:grid-cols-4' :
-            'grid-cols-2 sm:grid-cols-4'
-          }`}>
-            {statsItems.map((stat) => (
-              <Link
-                key={stat.id}
-                href={stat.href}
-                className={`bg-gradient-to-br ${stat.gradient} rounded-2xl p-4 border ${stat.border} ${stat.shadow} hover:shadow-lg transition-all cursor-pointer group`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className={`w-9 h-9 bg-gradient-to-br ${stat.iconGradient} rounded-xl flex items-center justify-center shadow-lg ${stat.iconShadow} group-hover:scale-110 transition-transform`}>
-                    <stat.icon className="h-4 w-4 text-white" />
-                  </div>
-                </div>
-                <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-                <p className="text-slate-500 text-xs">{stat.label}</p>
-              </Link>
-            ))}
-          </div>
-        );
-      })()}
-
-      {/* Two Column Layout */}
-      <div className="grid lg:grid-cols-3 gap-4">
-        {/* Main Column - Approvals (2/3 width) */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl border border-slate-200">
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="font-semibold text-slate-900 text-sm">Pending Approvals</h2>
-              <Link href="/admin/my-approvals" className="text-xs text-slate-500 hover:text-slate-700">
-                View all
-              </Link>
-            </div>
-
-            {allApprovals.length > 0 ? (
-              <div className="divide-y divide-slate-100">
-                {allApprovals.map((approval) => (
-                  <div key={approval.id} className="p-4 hover:bg-slate-50 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 ${approval.iconBg} rounded-full flex items-center justify-center flex-shrink-0`}>
-                        <approval.icon className={`h-4 w-4 ${approval.iconColor}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="font-medium text-slate-900 text-sm">{approval.title}</p>
-                          <span className="text-xs text-slate-400">
-                            {format(new Date(approval.time), 'MMM d')}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 mb-3">{approval.description}</p>
-                        <div className="flex gap-2">
-                          <Link
-                            href={approval.type === 'leave' ? '/admin/leave/requests' : '/admin/asset-requests'}
-                            className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium rounded-lg transition-colors"
-                          >
-                            Review
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Check className="h-8 w-8 text-emerald-500" />
-                </div>
-                <h3 className="font-semibold text-slate-900 mb-1">All caught up!</h3>
-                <p className="text-sm text-slate-500 mb-4">No pending approvals at the moment.</p>
-                <Link href="/admin/my-approvals" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                  View approval history
-                </Link>
-              </div>
-            )}
-          </div>
+      {/* Main Content */}
+      <main className="max-w-6xl mx-auto px-6 pt-10 pb-8">
+        {/* Modules Section */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-gray-900">Modules</h2>
         </div>
 
-        {/* Right Column - Widgets (1/3 width) */}
-        <div className="space-y-4">
-          {/* On Leave Today */}
-          {isModuleEnabled('leave') && (
-            <div className="bg-white rounded-xl border border-slate-200">
-              <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                <h2 className="font-semibold text-slate-900 text-sm">Out of Office Today</h2>
-                <Link href="/admin/leave/requests" className="text-xs text-slate-500 hover:text-slate-700">
-                  View all
-                </Link>
-              </div>
-              <div className="p-3">
-                {dashboardData?.onLeaveToday && dashboardData.onLeaveToday.length > 0 ? (
-                  <div className="space-y-2">
-                    {dashboardData.onLeaveToday.slice(0, 5).map((leave) => (
-                      <div
-                        key={leave.id}
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50"
-                      >
-                        <div className="w-9 h-9 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                          <span className="text-white text-xs font-bold">
-                            {leave.user.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">{leave.user.name}</p>
-                          <p className="text-xs text-slate-500 truncate">{leave.leaveType.name}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-500 text-center py-4">Everyone is in today</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Upcoming Events */}
-          {isModuleEnabled('employees') && (
-            <div className="bg-white rounded-xl border border-slate-200">
-              <div className="px-4 py-3 border-b border-slate-100">
-                <h2 className="font-semibold text-slate-900 text-sm">Upcoming This Week</h2>
-              </div>
-              <div className="p-3 space-y-2">
-                {dashboardData?.upcomingBirthdays && dashboardData.upcomingBirthdays.length > 0 ? (
-                  dashboardData.upcomingBirthdays.map((bday, idx) => (
-                    <div key={`bday-${idx}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
-                      <div className="w-10 h-10 bg-pink-100 rounded-lg flex flex-col items-center justify-center">
-                        <span className="text-[10px] text-pink-600 font-medium">
-                          {format(new Date(bday.date), 'MMM').toUpperCase()}
-                        </span>
-                        <span className="text-sm text-pink-700 font-bold leading-none">
-                          {format(new Date(bday.date), 'd')}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-900">{bday.name}'s Birthday</p>
-                        <p className="text-xs text-slate-500">{bday.designation || 'Team Member'}</p>
-                      </div>
-                      <Gift className="h-4 w-4 text-pink-400 ml-auto" />
+        {/* Module Cards Grid */}
+        <div className="grid md:grid-cols-3 gap-5 mb-10">
+          {moduleCards.map((card) => (
+            <Link
+              key={card.id}
+              href={card.href}
+              className="group relative bg-white border border-gray-300 rounded-lg hover:-translate-y-0.5 hover:shadow-lg hover:border-slate-400 transition-all duration-200"
+              style={{
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06)',
+              }}
+            >
+              {card.badge && (
+                <span className={`absolute -top-2 -right-2 ${card.badgeColor} text-white text-xs px-2 py-0.5 rounded-full`}>
+                  {card.badge}
+                </span>
+              )}
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-4xl">{card.icon}</div>
+                  {card.count !== undefined ? (
+                    <div className="text-2xl font-bold text-slate-700">{card.count}</div>
+                  ) : card.status ? (
+                    <div className={`text-sm font-semibold ${card.status.color} px-2 py-1 rounded`}>
+                      {card.status.text}
                     </div>
-                  ))
-                ) : null}
-
-                {dashboardData?.upcomingAnniversaries && dashboardData.upcomingAnniversaries.length > 0 ? (
-                  dashboardData.upcomingAnniversaries.map((anniv, idx) => (
-                    <div key={`anniv-${idx}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex flex-col items-center justify-center">
-                        <span className="text-[10px] text-blue-600 font-medium">
-                          {format(new Date(anniv.date), 'MMM').toUpperCase()}
-                        </span>
-                        <span className="text-sm text-blue-700 font-bold leading-none">
-                          {format(new Date(anniv.date), 'd')}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-900">
-                          {anniv.name} - {anniv.years} Year Anniversary
-                        </p>
-                        <p className="text-xs text-slate-500">{anniv.designation || 'Team Member'}</p>
-                      </div>
-                      <Award className="h-4 w-4 text-blue-400 ml-auto" />
-                    </div>
-                  ))
-                ) : null}
-
-                {(!dashboardData?.upcomingBirthdays?.length && !dashboardData?.upcomingAnniversaries?.length) && (
-                  <p className="text-sm text-slate-500 text-center py-4">No upcoming events this week</p>
-                )}
+                  ) : null}
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-slate-700">
+                  {card.title}
+                </h3>
+                <p className="text-sm text-gray-500 mt-2">{card.description}</p>
               </div>
-            </div>
-          )}
+            </Link>
+          ))}
+        </div>
 
-          {/* Recent Activity */}
-          <div className="bg-white rounded-xl border border-slate-200">
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="font-semibold text-slate-900 text-sm">Recent Activity</h2>
-              <Link href="/admin/activity" className="text-xs text-slate-500 hover:text-slate-700">
-                View all
-              </Link>
+        {/* Bottom Section: Out of Office + Upcoming + Recent Activity */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          {/* Out of Office Today */}
+          <div className="bg-white rounded-lg border border-gray-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Out of Office Today</h3>
+              <span className="text-xs text-gray-500">
+                {dashboardData?.onLeaveToday?.length || 0} people
+              </span>
             </div>
-            <div className="p-3 space-y-3">
-              {dashboardData?.recentActivity && dashboardData.recentActivity.length > 0 ? (
-                dashboardData.recentActivity.slice(0, 4).map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full mt-1.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-slate-900">
-                        <span className="font-medium">{activity.actorUser?.name || 'System'}</span>
-                        {' '}{activity.action.replace(/_/g, ' ').toLowerCase()}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {format(new Date(activity.at), 'MMM d, h:mm a')}
-                      </p>
+            <div className="space-y-3">
+              {dashboardData?.onLeaveToday && dashboardData.onLeaveToday.length > 0 ? (
+                dashboardData.onLeaveToday.map((leave) => (
+                  <div key={leave.id} className="flex items-center gap-3">
+                    <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-medium ${getAvatarColor(leave.user.name || '')}`}>
+                      {getInitials(leave.user.name || '??')}
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">{leave.user.name}</p>
+                      <p className="text-xs text-gray-500">{leave.leaveType.name}</p>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {leave.endDate && format(new Date(leave.endDate), 'MMM d') !== format(new Date(), 'MMM d')
+                        ? `Until ${format(new Date(leave.endDate), 'MMM d')}`
+                        : 'Today only'}
+                    </span>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-slate-500 text-center py-4">No recent activity</p>
+                <p className="text-sm text-gray-500 text-center py-4">Everyone is in today</p>
+              )}
+            </div>
+          </div>
+
+          {/* Upcoming This Week */}
+          <div className="bg-white rounded-lg border border-gray-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Upcoming This Week</h3>
+              <Link href="/admin/employees" className="text-sm text-slate-600 hover:text-slate-800 font-medium">
+                View all
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {/* Birthdays */}
+              {dashboardData?.upcomingBirthdays?.map((bday, idx) => (
+                <Link
+                  key={`bday-${idx}`}
+                  href="/admin/employees"
+                  className="flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">🎂</span>
+                    <span className="text-sm font-medium text-gray-900">{bday.name}&apos;s Birthday</span>
+                  </div>
+                  <span className="text-xs text-blue-600 font-medium">
+                    {format(new Date(new Date().getFullYear(), new Date(bday.date).getMonth(), new Date(bday.date).getDate()), 'MMM d')}
+                  </span>
+                </Link>
+              ))}
+
+              {/* Expiring Documents */}
+              {dashboardData?.expiringCompanyDocs?.slice(0, 2).map((doc) => (
+                <Link
+                  key={doc.id}
+                  href={`/admin/company-documents/${doc.id}`}
+                  className="flex items-center justify-between p-3 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">📄</span>
+                    <span className="text-sm font-medium text-gray-900">{doc.documentType?.name || 'Document'} Expires</span>
+                  </div>
+                  <span className="text-xs text-amber-600 font-medium">
+                    {doc.expiryDate && format(new Date(doc.expiryDate), 'MMM d')}
+                  </span>
+                </Link>
+              ))}
+
+              {/* Subscription Renewals */}
+              {dashboardData?.expiringSubscriptions?.slice(0, 2).map((sub) => (
+                <Link
+                  key={sub.id}
+                  href={`/admin/subscriptions/${sub.id}`}
+                  className="flex items-center justify-between p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">🔄</span>
+                    <span className="text-sm font-medium text-gray-900">{sub.serviceName} Renewal</span>
+                  </div>
+                  <span className="text-xs text-purple-600 font-medium">
+                    {sub.renewalDate && format(new Date(sub.renewalDate), 'MMM d')}
+                  </span>
+                </Link>
+              ))}
+
+              {/* Anniversaries */}
+              {dashboardData?.upcomingAnniversaries?.map((anniv, idx) => (
+                <Link
+                  key={`anniv-${idx}`}
+                  href="/admin/employees"
+                  className="flex items-center justify-between p-3 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">🎉</span>
+                    <span className="text-sm font-medium text-gray-900">{anniv.name}&apos;s {anniv.years}yr Anniversary</span>
+                  </div>
+                  <span className="text-xs text-emerald-600 font-medium">
+                    {format(new Date(new Date().getFullYear(), new Date(anniv.date).getMonth(), new Date(anniv.date).getDate()), 'MMM d')}
+                  </span>
+                </Link>
+              ))}
+
+              {/* Empty state */}
+              {!dashboardData?.upcomingBirthdays?.length &&
+               !dashboardData?.upcomingAnniversaries?.length &&
+               !dashboardData?.expiringCompanyDocs?.length &&
+               !dashboardData?.expiringSubscriptions?.length && (
+                <p className="text-sm text-gray-500 text-center py-4">No upcoming events this week</p>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="bg-white rounded-lg border border-gray-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900">Recent Activity</h3>
+              <Link href="/admin/activity" className="text-sm text-slate-600 hover:text-slate-800 font-medium">
+                View all
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {dashboardData?.recentActivity && dashboardData.recentActivity.length > 0 ? (
+                dashboardData.recentActivity.map((activity) => {
+                  const actionText = activity.action.replace(/_/g, ' ').toLowerCase();
+                  return (
+                    <div key={activity.id} className="flex items-center gap-3 text-sm">
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium ${getAvatarColor(activity.actorUser?.name || 'System')}`}>
+                        {getInitials(activity.actorUser?.name || 'SY')}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-900 truncate">
+                          {activity.actorUser?.name || 'System'} {actionText}
+                        </p>
+                        <p className="text-gray-400 text-xs">
+                          {formatDistanceToNow(new Date(activity.at), { addSuffix: true })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">No recent activity</p>
               )}
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </main>
+    </>
   );
 }

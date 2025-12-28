@@ -4,9 +4,8 @@ import { redirect, notFound } from 'next/navigation';
 import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -16,7 +15,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, User, Clock } from 'lucide-react';
+import {
+  User,
+  CreditCard,
+  Calendar,
+  CheckCircle,
+  PauseCircle,
+  XCircle,
+  Banknote,
+  Receipt,
+  FileText,
+} from 'lucide-react';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { formatCurrency } from '@/lib/payroll/utils';
 import { LoanActions } from '@/components/payroll/loan-actions';
 
@@ -24,20 +34,40 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-function getLoanStatusColor(status: string): string {
-  switch (status) {
-    case 'ACTIVE':
-      return '#22c55e';
-    case 'PAUSED':
-      return '#eab308';
-    case 'COMPLETED':
-      return '#3b82f6';
-    case 'WRITTEN_OFF':
-      return '#ef4444';
-    default:
-      return '#6b7280';
-  }
-}
+const statusConfig = {
+  ACTIVE: {
+    label: 'Active',
+    icon: CheckCircle,
+    bgColor: 'bg-emerald-50',
+    textColor: 'text-emerald-700',
+    borderColor: 'border-emerald-200',
+    iconColor: 'text-emerald-500',
+  },
+  PAUSED: {
+    label: 'Paused',
+    icon: PauseCircle,
+    bgColor: 'bg-amber-50',
+    textColor: 'text-amber-700',
+    borderColor: 'border-amber-200',
+    iconColor: 'text-amber-500',
+  },
+  COMPLETED: {
+    label: 'Completed',
+    icon: CheckCircle,
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-700',
+    borderColor: 'border-blue-200',
+    iconColor: 'text-blue-500',
+  },
+  WRITTEN_OFF: {
+    label: 'Written Off',
+    icon: XCircle,
+    bgColor: 'bg-rose-50',
+    textColor: 'text-rose-700',
+    borderColor: 'border-rose-200',
+    iconColor: 'text-rose-500',
+  },
+};
 
 export default async function LoanDetailPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
@@ -83,238 +113,294 @@ export default async function LoanDetailPage({ params }: PageProps) {
   const progressPercent = totalAmount > 0 ? (paidAmount / totalAmount) * 100 : 0;
   const estimatedRemainingMonths = monthlyDeduction > 0 ? Math.ceil(remainingAmount / monthlyDeduction) : 0;
 
+  const status = statusConfig[loan.status as keyof typeof statusConfig] || statusConfig.ACTIVE;
+  const StatusIcon = status.icon;
+
+  const statusBadgeVariant = loan.status === 'ACTIVE' ? 'success' :
+    loan.status === 'PAUSED' ? 'warning' :
+    loan.status === 'COMPLETED' ? 'info' :
+    loan.status === 'WRITTEN_OFF' ? 'error' : 'default';
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" size="icon">
-              <Link href="/admin/payroll/loans">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">Loan Details</h1>
-              <Badge style={{ backgroundColor: getLoanStatusColor(loan.status) }} className="text-white">
-                {loan.status}
-              </Badge>
-            </div>
-            <p className="text-muted-foreground">
-              {loan.loanNumber}
-            </p>
+    <>
+      <PageHeader
+        title={loan.user.name || 'Unknown'}
+        subtitle={`${loan.loanNumber} • ${loan.type.replace(/_/g, ' ')}`}
+        breadcrumbs={[
+          { label: 'Payroll', href: '/admin/payroll' },
+          { label: 'Loans', href: '/admin/payroll/loans' },
+          { label: loan.loanNumber },
+        ]}
+        badge={{ text: status.label, variant: statusBadgeVariant }}
+        actions={
+          <div className="flex gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/admin/employees/${loan.userId}`}>
+                <User className="mr-2 h-4 w-4" />
+                View Employee
+              </Link>
+            </Button>
+            <LoanActions
+              loanId={loan.id}
+              currentStatus={loan.status}
+              remainingAmount={remainingAmount}
+            />
           </div>
-        </div>
-
-        <Button asChild variant="outline">
-          <Link href={`/admin/employees/${loan.userId}`}>
-            <User className="mr-2 h-4 w-4" />
-            View Employee
-          </Link>
-        </Button>
-      </div>
-
-      {/* Loan Actions */}
-      <LoanActions
-        loanId={loan.id}
-        currentStatus={loan.status}
-        remainingAmount={remainingAmount}
+        }
       />
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Loan Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Loan Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+      <PageContent>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content - 2/3 */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Amount Summary */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                <Banknote className="h-5 w-5 text-emerald-600" />
+              </div>
               <div>
-                <div className="text-sm text-muted-foreground">Employee</div>
-                <div className="font-medium">{loan.user.name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {loan.user.hrProfile?.employeeId || loan.user.email}
+                <h2 className="font-semibold text-slate-900">Amount Summary</h2>
+                <p className="text-sm text-slate-500">Loan progress and balances</p>
+              </div>
+            </div>
+            <div className="p-6 space-y-6">
+              {/* Progress Bar */}
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Repayment Progress</span>
+                  <span className="font-semibold text-slate-900">{progressPercent.toFixed(1)}%</span>
+                </div>
+                <Progress value={progressPercent} className="h-3" />
+                <div className="flex justify-between text-sm">
+                  <span className="text-emerald-600 font-medium">{formatCurrency(paidAmount)} paid</span>
+                  <span className="text-slate-500">{formatCurrency(remainingAmount)} remaining</span>
                 </div>
               </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Loan Type</div>
-                <div className="font-medium">{loan.type.replace(/_/g, ' ')}</div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Total Loan</p>
+                  <p className="text-xl font-bold text-slate-900">{formatCurrency(totalAmount)}</p>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Monthly Deduction</p>
+                  <p className="text-xl font-bold text-slate-900">{formatCurrency(monthlyDeduction)}</p>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Installments</p>
+                  <p className="text-xl font-bold text-slate-900">{loan.installmentsPaid} / {loan.installments}</p>
+                </div>
+                {loan.status === 'ACTIVE' && estimatedRemainingMonths > 0 && (
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                    <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-1">Est. Remaining</p>
+                    <p className="text-xl font-bold text-blue-700">
+                      {estimatedRemainingMonths} month{estimatedRemainingMonths !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {loan.status === 'COMPLETED' && (
+                <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center">
+                  <CheckCircle className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+                  <p className="font-semibold text-emerald-700">Loan Fully Repaid</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Repayment History */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                <Receipt className="h-5 w-5 text-indigo-600" />
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Start Date</div>
-                <div className="font-medium">
+                <h2 className="font-semibold text-slate-900">Repayment History</h2>
+                <p className="text-sm text-slate-500">{loan.repayments.length} payment{loan.repayments.length !== 1 ? 's' : ''} recorded</p>
+              </div>
+            </div>
+            <div className="p-6">
+              {loan.repayments.length === 0 ? (
+                <div className="text-center py-8 text-slate-400">
+                  <Receipt className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No repayments recorded yet</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead>Method</TableHead>
+                        <TableHead>Reference</TableHead>
+                        <TableHead>Notes</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loan.repayments.map((repayment) => (
+                        <TableRow key={repayment.id}>
+                          <TableCell className="text-slate-600">
+                            {new Date(repayment.paymentDate).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-emerald-600">
+                            {formatCurrency(Number(repayment.amount))}
+                          </TableCell>
+                          <TableCell className="text-slate-600">
+                            {repayment.paymentMethod.replace(/_/g, ' ')}
+                          </TableCell>
+                          <TableCell className="text-slate-500 font-mono text-sm">
+                            {repayment.reference || '-'}
+                          </TableCell>
+                          <TableCell className="text-slate-500">
+                            {repayment.notes || '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Notes */}
+          {loan.notes && (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-amber-600" />
+                </div>
+                <h2 className="font-semibold text-slate-900">Notes</h2>
+              </div>
+              <div className="p-6">
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-sm text-slate-700 leading-relaxed">{loan.notes}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar - 1/3 */}
+        <div className="space-y-6">
+          {/* Loan Information */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                <CreditCard className="h-5 w-5 text-blue-600" />
+              </div>
+              <h2 className="font-semibold text-slate-900">Loan Details</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Employee</p>
+                <p className="text-sm font-semibold text-slate-900">{loan.user.name}</p>
+                <p className="text-xs text-slate-500">{loan.user.hrProfile?.employeeId || loan.user.email}</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Loan Type</p>
+                <p className="text-sm font-semibold text-slate-900">{loan.type.replace(/_/g, ' ')}</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <Calendar className="h-4 w-4 text-slate-400" />
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Start Date</p>
+                </div>
+                <p className="text-sm font-semibold text-slate-900">
                   {new Date(loan.startDate).toLocaleDateString('en-US', {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric',
                   })}
-                </div>
+                </p>
               </div>
               {loan.endDate && (
-                <div>
-                  <div className="text-sm text-muted-foreground">Expected End Date</div>
-                  <div className="font-medium">
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Calendar className="h-4 w-4 text-slate-400" />
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Expected End</p>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-900">
                     {new Date(loan.endDate).toLocaleDateString('en-US', {
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric',
                     })}
-                  </div>
-                </div>
-              )}
-              {loan.approvedBy && (
-                <div>
-                  <div className="text-sm text-muted-foreground">Approved By</div>
-                  <div className="font-medium">{loan.approvedBy.name}</div>
-                  {loan.approvedAt && (
-                    <div className="text-sm text-muted-foreground">
-                      {new Date(loan.approvedAt).toLocaleDateString()}
-                    </div>
-                  )}
-                </div>
-              )}
-              {loan.description && (
-                <div>
-                  <div className="text-sm text-muted-foreground">Description</div>
-                  <div className="font-medium">{loan.description}</div>
+                  </p>
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Amount Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Amount Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Repayment Progress</span>
-                <span className="font-medium">{progressPercent.toFixed(1)}%</span>
-              </div>
-              <Progress value={progressPercent} className="h-3" />
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>{formatCurrency(paidAmount)} paid</span>
-                <span>{formatCurrency(remainingAmount)} remaining</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-muted rounded-lg">
-                <div className="text-sm text-muted-foreground">Total Loan</div>
-                <div className="text-xl font-bold">{formatCurrency(totalAmount)}</div>
-              </div>
-              <div className="p-4 bg-muted rounded-lg">
-                <div className="text-sm text-muted-foreground">Monthly Deduction</div>
-                <div className="text-xl font-bold">{formatCurrency(monthlyDeduction)}</div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-muted rounded-lg">
-                <div className="text-sm text-muted-foreground">Installments</div>
-                <div className="text-xl font-bold">{loan.installmentsPaid} / {loan.installments}</div>
-              </div>
-              {loan.status === 'ACTIVE' && estimatedRemainingMonths > 0 && (
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <div className="text-sm text-blue-600">Est. Remaining</div>
-                  <div className="font-medium text-blue-800">
-                    {estimatedRemainingMonths} month{estimatedRemainingMonths !== 1 ? 's' : ''}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {loan.status === 'COMPLETED' && (
-              <div className="p-4 bg-green-50 rounded-lg">
-                <div className="text-sm text-green-600">Status</div>
-                <div className="font-medium text-green-800">Fully Repaid</div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Repayment History */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Repayment History</CardTitle>
-          <CardDescription>
-            Record of all repayments for this loan
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>Reference</TableHead>
-                <TableHead>Notes</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loan.repayments.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    No repayments recorded yet
-                  </TableCell>
-                </TableRow>
-              ) : (
-                loan.repayments.map((repayment) => (
-                  <TableRow key={repayment.id}>
-                    <TableCell>
-                      {new Date(repayment.paymentDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(Number(repayment.amount))}
-                    </TableCell>
-                    <TableCell>
-                      {repayment.paymentMethod.replace(/_/g, ' ')}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground font-mono text-sm">
-                      {repayment.reference || '-'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {repayment.notes || '-'}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Notes */}
-      {loan.notes && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Notes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">{loan.notes}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Metadata */}
-      <Card>
-        <CardContent className="py-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            Created on {new Date(loan.createdAt).toLocaleDateString('en-US', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })}
           </div>
-        </CardContent>
-        </Card>
-      </div>
-    </div>
+
+          {/* Approval Information */}
+          {loan.approvedBy && (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                </div>
+                <h2 className="font-semibold text-slate-900">Approval</h2>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Approved By</p>
+                  <p className="text-sm font-semibold text-slate-900">{loan.approvedBy.name}</p>
+                </div>
+                {loan.approvedAt && (
+                  <div className="bg-slate-50 rounded-xl p-4">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Approved On</p>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {new Date(loan.approvedAt).toLocaleDateString('en-US', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Record Information */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h2 className="font-semibold text-slate-900">Record Information</h2>
+            </div>
+            <div className="p-6 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-500">Created</span>
+                <span className="text-slate-900">
+                  {new Date(loan.createdAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-500">Last Updated</span>
+                <span className="text-slate-900">
+                  {new Date(loan.updatedAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </PageContent>
+    </>
   );
 }

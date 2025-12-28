@@ -4,9 +4,9 @@ import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { Role, AssetRequestStatus } from '@prisma/client';
 import Link from 'next/link';
-import { AssetListTableServerSearch } from '@/components/assets/asset-list-table-server-search';
-import { Package, Plus, DollarSign, Users, Inbox } from 'lucide-react';
-import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
+import { AssetListTableServerSearch } from '@/components/domains/operations/assets/asset-list-table-server-search';
+import { Plus, Inbox } from 'lucide-react';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
 export default async function AdminAssetsPage() {
   const session = await getServerSession(authOptions);
@@ -25,10 +25,7 @@ export default async function AdminAssetsPage() {
 
   const tenantId = session.user.organizationId;
 
-  const [totalUsers, assetStats, assignedCount, pendingRequests, pendingReturns] = await Promise.all([
-    prisma.user.count({
-      where: { organizationMemberships: { some: { organizationId: tenantId } } },
-    }),
+  const [assetStats, assignedCount, pendingRequests, pendingReturns] = await Promise.all([
     prisma.asset.aggregate({
       where: { tenantId },
       _count: { _all: true },
@@ -51,79 +48,62 @@ export default async function AdminAssetsPage() {
   const totalPendingRequests = pendingRequests + pendingReturns;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Assets</h1>
-          <p className="text-slate-500 text-sm">Manage company assets and equipment</p>
+    <>
+      <PageHeader
+        title="Assets"
+        subtitle="Manage company assets and equipment"
+        actions={
+          <>
+            <PageHeaderButton href="/admin/asset-requests" variant="secondary">
+              <Inbox className="h-4 w-4" />
+              Requests
+              {totalPendingRequests > 0 && (
+                <span className="bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                  {totalPendingRequests}
+                </span>
+              )}
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/assets/new" variant="primary">
+              <Plus className="h-4 w-4" />
+              Add Asset
+            </PageHeaderButton>
+          </>
+        }
+      >
+        {/* Stats Summary */}
+        <div className="flex flex-wrap items-center gap-4 mt-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
+            <span className="text-blue-400 text-sm font-medium">{totalAssets} total assets</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
+            <span className="text-emerald-400 text-sm font-medium">{assignedAssets} assigned</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 rounded-lg">
+            <span className="text-purple-400 text-sm font-medium">QAR {totalValueQAR.toLocaleString()} value</span>
+          </div>
+          {totalPendingRequests > 0 && (
+            <Link
+              href="/admin/asset-requests"
+              className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg transition-colors"
+            >
+              <span className="text-amber-400 text-sm font-medium">{totalPendingRequests} pending requests</span>
+            </Link>
+          )}
         </div>
-        <div className="flex gap-2">
-          <Link
-            href="/admin/asset-requests"
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            <Inbox className="h-4 w-4" />
-            Requests
-            {totalPendingRequests > 0 && (
-              <span className="bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-                {totalPendingRequests}
-              </span>
-            )}
-          </Link>
-          <Link
-            href="/admin/assets/new"
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            Add Asset
-          </Link>
-        </div>
-      </div>
+      </PageHeader>
 
-      {/* Stats Cards */}
-      <StatsCardGrid columns={4} className="mb-6">
-        <StatsCard
-          title="Total Assets"
-          subtitle="All registered items"
-          value={totalAssets}
-          icon={Package}
-          color="blue"
-        />
-        <StatsCard
-          title="Assigned"
-          subtitle={`${totalAssets > 0 ? Math.round((assignedAssets / totalAssets) * 100) : 0}% of total`}
-          value={assignedAssets}
-          icon={Users}
-          color="emerald"
-        />
-        <StatsCard
-          title="Total Value"
-          subtitle={`QAR ${totalValueQAR.toLocaleString()}`}
-          value={`${(totalValueQAR / 1000).toFixed(0)}K`}
-          icon={DollarSign}
-          color="purple"
-        />
-        <StatsCard
-          title="Pending Requests"
-          subtitle={`${pendingRequests} new, ${pendingReturns} returns`}
-          value={totalPendingRequests}
-          icon={Inbox}
-          color="amber"
-          href="/admin/asset-requests"
-        />
-      </StatsCardGrid>
-
-      {/* Assets Table */}
-      <div className="bg-white rounded-xl border border-slate-200">
-        <div className="px-4 py-4 border-b border-slate-100">
-          <h2 className="font-semibold text-slate-900">All Assets</h2>
-          <p className="text-sm text-slate-500">Complete inventory with filters and sorting</p>
+      <PageContent>
+        {/* Assets Table */}
+        <div className="bg-white rounded-xl border border-slate-200">
+          <div className="px-4 py-4 border-b border-slate-100">
+            <h2 className="font-semibold text-slate-900">All Assets</h2>
+            <p className="text-sm text-slate-500">Complete inventory with filters and sorting</p>
+          </div>
+          <div className="p-4">
+            <AssetListTableServerSearch />
+          </div>
         </div>
-        <div className="p-4">
-          <AssetListTableServerSearch />
-        </div>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

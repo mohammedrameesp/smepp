@@ -1,25 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { supplierQuerySchema } from '@/lib/validations/suppliers';
 import { Role } from '@prisma/client';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
+import { withErrorHandler } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
-    // Check authentication
+export const GET = withErrorHandler(
+  async (request, { prisma }) => {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
@@ -35,12 +24,12 @@ export async function GET(request: NextRequest) {
 
     const { q, status, category, p, ps, sort, order } = validation.data;
 
-    // Build where clause with tenant filter
-    const filters: Record<string, any> = { tenantId };
+    // Build where clause - tenantId filtering handled by tenant-scoped prisma
+    const filters: Record<string, unknown> = {};
 
     // EMPLOYEE can only see APPROVED suppliers
     // ADMIN can see all suppliers
-    if (session.user.role === Role.EMPLOYEE) {
+    if (session!.user.role === Role.EMPLOYEE) {
       filters.status = 'APPROVED';
     } else if (status) {
       // Admin can filter by status
@@ -96,12 +85,10 @@ export async function GET(request: NextRequest) {
         hasMore: skip + ps < total,
       },
     });
-
-  } catch (error) {
-    console.error('Supplier list error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch suppliers' },
-      { status: 500 }
-    );
+  },
+  {
+    requireAuth: true,
+    requireModule: 'suppliers',
+    rateLimit: true,
   }
-}
+);

@@ -123,44 +123,32 @@ const MODULE_TIERS: Record<string, string> = {
 };
 
 // Tier hierarchy for comparison
-const TIER_ORDER = ['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'];
+const TIER_ORDER = ['FREE', 'PLUS'];
 
 /**
  * Check if the subscription tier allows access to a module
+ * NOTE: Always returns true - tier restrictions disabled
  */
-function tierAllowsModule(tier: string, moduleId: string): boolean {
-  const requiredTier = MODULE_TIERS[moduleId];
-  if (!requiredTier) return true; // Unknown module, allow
-
-  const currentTierIndex = TIER_ORDER.indexOf(tier);
-  const requiredTierIndex = TIER_ORDER.indexOf(requiredTier);
-
-  return currentTierIndex >= requiredTierIndex;
+function tierAllowsModule(_tier: string, _moduleId: string): boolean {
+  return true;
 }
 
 /**
- * Check if a path requires a specific module and if it's enabled AND tier allows it
+ * Check if a path requires a specific module and if it's enabled
+ * NOTE: Tier restrictions disabled - only checks if module is enabled
  */
 function checkModuleAccess(
   pathname: string,
   enabledModules: string[],
-  subscriptionTier: string
-): { allowed: boolean; moduleId?: string; reason?: 'not_installed' | 'upgrade_required' } {
+  _subscriptionTier: string
+): { allowed: boolean; moduleId?: string; reason?: 'not_installed' } {
   for (const [moduleId, routes] of Object.entries(MODULE_ROUTES)) {
     for (const route of routes) {
       if (pathname === route || pathname.startsWith(route + '/')) {
-        // This route requires this module
-
-        // First check tier - even if enabled, tier must allow it
-        if (!tierAllowsModule(subscriptionTier, moduleId)) {
-          return { allowed: false, moduleId, reason: 'upgrade_required' };
-        }
-
-        // Then check if module is enabled
+        // This route requires this module - check if enabled
         if (!enabledModules.includes(moduleId)) {
           return { allowed: false, moduleId, reason: 'not_installed' };
         }
-
         return { allowed: true };
       }
     }
@@ -199,13 +187,17 @@ const PUBLIC_ROUTES = [
   '/',
   '/login',
   '/signup',
+  '/get-started', // Public signup page
   '/platform-login', // Super admin login (legacy)
-  '/super-admin/login', // Super admin login with 2FA
   '/api/auth',
   '/api/webhooks',
   '/api/public', // Public APIs (tenant branding, etc.)
   '/api/super-admin/auth', // Super admin auth APIs (login, verify-2fa)
   '/api/super-admin/stats', // Platform stats for login page
+  '/api/super-admin/import-becreative', // Data import endpoint (temporary)
+  '/api/super-admin/set-password', // Password reset endpoint (temporary)
+  '/api/organizations/signup', // Public organization signup
+  '/api/subdomains', // Subdomain availability check
   '/verify',
   '/invite',
   '/pricing',
@@ -222,7 +214,6 @@ const AUTH_ONLY_ROUTES = [
   '/setup', // Org setup for invited admins
   '/pending', // Waiting for invitation
   '/api/organizations',
-  '/api/subdomains', // Subdomain availability check
 ];
 
 // Super admin routes (require isSuperAdmin flag)
@@ -377,16 +368,10 @@ export async function middleware(request: NextRequest) {
       const moduleAccess = checkModuleAccess(pathname, enabledModules, subscriptionTier);
 
       if (!moduleAccess.allowed && moduleAccess.moduleId) {
-        if (moduleAccess.reason === 'upgrade_required') {
-          const upgradeUrl = new URL('/admin/settings/billing', request.url);
-          upgradeUrl.searchParams.set('upgrade_for', moduleAccess.moduleId);
-          return NextResponse.redirect(upgradeUrl);
-        } else {
-          const modulesUrl = new URL('/admin/modules', request.url);
-          modulesUrl.searchParams.set('install', moduleAccess.moduleId);
-          modulesUrl.searchParams.set('from', pathname);
-          return NextResponse.redirect(modulesUrl);
-        }
+        const modulesUrl = new URL('/admin/modules', request.url);
+        modulesUrl.searchParams.set('install', moduleAccess.moduleId);
+        modulesUrl.searchParams.set('from', pathname);
+        return NextResponse.redirect(modulesUrl);
       }
 
       // Allow access with impersonation context
@@ -440,18 +425,11 @@ export async function middleware(request: NextRequest) {
     const moduleAccess = checkModuleAccess(pathname, enabledModules, subscriptionTier);
 
     if (!moduleAccess.allowed && moduleAccess.moduleId) {
-      if (moduleAccess.reason === 'upgrade_required') {
-        // Tier doesn't allow this module - redirect to billing/upgrade page
-        const upgradeUrl = new URL('/admin/settings/billing', request.url);
-        upgradeUrl.searchParams.set('upgrade_for', moduleAccess.moduleId);
-        return NextResponse.redirect(upgradeUrl);
-      } else {
-        // Module not installed - redirect to modules page
-        const modulesUrl = new URL('/admin/modules', request.url);
-        modulesUrl.searchParams.set('install', moduleAccess.moduleId);
-        modulesUrl.searchParams.set('from', pathname);
-        return NextResponse.redirect(modulesUrl);
-      }
+      // Module not installed - redirect to modules page
+      const modulesUrl = new URL('/admin/modules', request.url);
+      modulesUrl.searchParams.set('install', moduleAccess.moduleId);
+      modulesUrl.searchParams.set('from', pathname);
+      return NextResponse.redirect(modulesUrl);
     }
 
     // User belongs to this subdomain - allow access
@@ -495,8 +473,8 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/pending', request.url));
       }
     }
-    // Not authenticated - redirect to super admin login
-    return NextResponse.redirect(new URL('/super-admin/login', request.url));
+    // Not authenticated - show landing page (allow through)
+    return NextResponse.next();
   }
 
   // Skip public routes on main domain

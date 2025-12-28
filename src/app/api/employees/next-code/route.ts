@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,9 +19,12 @@ export async function GET(request: NextRequest) {
 
     const tenantId = session.user.organizationId;
 
-    // Generate employee code: BCE-YYYY-XXX (e.g., BCE-2024-001)
+    // Get organization's code prefix (e.g., "BCE", "JAS", "INC")
+    const codePrefix = await getOrganizationCodePrefix(tenantId);
+
+    // Generate employee code: {PREFIX}-YYYY-XXX (e.g., BCE-2024-001, JAS-2024-001)
     const year = new Date().getFullYear();
-    const prefix = `BCE-${year}`;
+    const prefix = `${codePrefix}-${year}`;
 
     // Count only within the current tenant
     const count = await prisma.hRProfile.count({

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { clearPrefixCache, isCodePrefixAvailable } from '@/lib/utils/code-prefix';
 import { z } from 'zod';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -12,6 +13,7 @@ const updateOrgSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   logoUrl: z.string().url().nullable().optional(),
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  codePrefix: z.string().length(3).regex(/^[A-Z0-9]{3}$/).optional(),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -127,17 +129,39 @@ export async function PATCH(
       );
     }
 
+    const { codePrefix, ...restData } = result.data;
+
+    // If codePrefix is being updated, check uniqueness
+    if (codePrefix) {
+      const isAvailable = await isCodePrefixAvailable(codePrefix, id);
+      if (!isAvailable) {
+        return NextResponse.json(
+          { error: 'This code prefix is already in use by another organization' },
+          { status: 400 }
+        );
+      }
+    }
+
     const organization = await prisma.organization.update({
       where: { id },
-      data: result.data,
+      data: {
+        ...restData,
+        ...(codePrefix && { codePrefix }),
+      },
       select: {
         id: true,
         name: true,
         slug: true,
         logoUrl: true,
         primaryColor: true,
+        codePrefix: true,
       },
     });
+
+    // Clear the prefix cache if codePrefix was updated
+    if (codePrefix) {
+      clearPrefixCache(id);
+    }
 
     return NextResponse.json({ success: true, organization });
   } catch (error) {

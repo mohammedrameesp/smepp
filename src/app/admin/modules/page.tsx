@@ -50,14 +50,6 @@ const ICONS: Record<string, React.ElementType> = {
   FileCheck,
 };
 
-// Tier badge colors
-const TIER_COLORS: Record<string, string> = {
-  FREE: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100',
-  STARTER: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100',
-  PROFESSIONAL: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100',
-  ENTERPRISE: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100',
-};
-
 // Category labels
 const CATEGORY_LABELS: Record<string, string> = {
   operations: 'Operations',
@@ -230,8 +222,7 @@ export default function ModulesPage() {
       <div>
         <h1 className="text-2xl font-bold">Modules</h1>
         <p className="text-muted-foreground">
-          Install and manage modules for your organization. Your current plan: {' '}
-          <Badge className={TIER_COLORS[subscriptionTier]}>{subscriptionTier}</Badge>
+          Install and manage modules for your organization
         </p>
       </div>
 
@@ -264,10 +255,7 @@ export default function ModulesPage() {
                         <Badge variant="outline" className="text-xs">
                           {CATEGORY_LABELS[module.category]}
                         </Badge>
-                        <Badge className={`text-xs ${TIER_COLORS[module.tier]}`}>
-                          {module.tier}
-                        </Badge>
-                      </div>
+                                              </div>
                     </div>
                   </div>
                 </CardHeader>
@@ -345,9 +333,7 @@ export default function ModulesPage() {
                           <Badge variant="outline" className="text-xs">
                             {CATEGORY_LABELS[module.category]}
                           </Badge>
-                          <Badge className={`text-xs ${TIER_COLORS[module.tier]}`}>
-                            {module.isFree ? 'FREE' : module.tier}
-                          </Badge>
+
                         </div>
                       </div>
                     </div>

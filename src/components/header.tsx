@@ -59,9 +59,7 @@ export default function Header({ badgeCounts = {}, enabledModules: serverEnabled
                 />
               ) : (
                 <>
-                  <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">S++</span>
-                  </div>
+                  <img src="/sme-icon-shield-512.png" alt="SME++" className="h-8 w-8" />
                   {session?.user?.organizationName && (
                     <span className="text-white font-semibold text-lg hidden sm:inline">
                       {session.user.organizationName}
@@ -97,7 +95,7 @@ export default function Header({ badgeCounts = {}, enabledModules: serverEnabled
                 </Link>
                 <Button
                   size="sm"
-                  onClick={() => signOut()}
+                  onClick={() => signOut({ callbackUrl: '/login' })}
                   className="border border-slate-400 bg-white/10 text-white hover:bg-white/20 hover:border-slate-300 transition-colors"
                 >
                   Sign Out

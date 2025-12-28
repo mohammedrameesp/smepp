@@ -26,15 +26,6 @@ const authConfigSchema = z.object({
   customAzureTenantId: z.string().nullable().optional(),
 }).refine(
   (data) => {
-    // If allowedAuthMethods is provided and empty, that's invalid (at least one method required)
-    if (data.allowedAuthMethods !== undefined && data.allowedAuthMethods.length === 0) {
-      return false;
-    }
-    return true;
-  },
-  { message: 'At least one authentication method must be enabled', path: ['allowedAuthMethods'] }
-).refine(
-  (data) => {
     // If Google client ID is provided, secret must also be provided (and vice versa)
     const hasGoogleId = data.customGoogleClientId && data.customGoogleClientId.trim() !== '';
     const hasGoogleSecret = data.customGoogleClientSecret && data.customGoogleClientSecret.trim() !== '';
@@ -139,11 +130,12 @@ export async function GET(
     }
 
     // Return config without actual secrets - just indicate if they're set
+    // Ensure arrays are never null (database might have null for new columns)
     return NextResponse.json({
       authConfig: {
-        allowedAuthMethods: organization.allowedAuthMethods,
-        allowedEmailDomains: organization.allowedEmailDomains,
-        enforceDomainRestriction: organization.enforceDomainRestriction,
+        allowedAuthMethods: organization.allowedAuthMethods || [],
+        allowedEmailDomains: organization.allowedEmailDomains || [],
+        enforceDomainRestriction: organization.enforceDomainRestriction ?? false,
         // Indicate if custom OAuth is configured (don't expose actual credentials)
         hasCustomGoogleOAuth: !!(organization.customGoogleClientId && organization.customGoogleClientSecret),
         hasCustomAzureOAuth: !!(organization.customAzureClientId && organization.customAzureClientSecret),

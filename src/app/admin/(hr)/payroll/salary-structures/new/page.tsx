@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, Loader2, Calculator, Settings2 } from 'lucide-react';
+import { Loader2, Calculator, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/payroll/utils';
 
@@ -186,22 +187,18 @@ export default function NewSalaryStructurePage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/admin/payroll/salary-structures">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">New Salary Structure</h1>
-            <p className="text-muted-foreground">
-              Set up salary components for an employee
-            </p>
-          </div>
-        </div>
+    <>
+      <PageHeader
+        title="New Salary Structure"
+        subtitle="Set up salary components for an employee"
+        breadcrumbs={[
+          { label: 'Payroll', href: '/admin/payroll' },
+          { label: 'Salary Structures', href: '/admin/payroll/salary-structures' },
+          { label: 'New Structure' },
+        ]}
+      />
 
+      <PageContent className="max-w-5xl">
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6">
             {/* Employee Selection */}
@@ -553,7 +550,7 @@ export default function NewSalaryStructurePage() {
             </Card>
           </div>
         </form>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

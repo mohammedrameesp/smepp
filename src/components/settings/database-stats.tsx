@@ -106,38 +106,6 @@ export function DatabaseStats({ stats }: DatabaseStatsProps) {
           </div>
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Database Information</CardTitle>
-          <CardDescription>
-            Technical details about your database
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <div className="text-sm font-medium text-gray-700 mb-1">Database Type</div>
-              <div className="text-base text-gray-900">PostgreSQL (Supabase)</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700 mb-1">Connection</div>
-              <div className="text-base text-gray-900">Pooled Connection</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700 mb-1">ORM</div>
-              <div className="text-base text-gray-900">Prisma</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700 mb-1">Status</div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-base text-green-700 font-medium">Healthy</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -11,8 +11,8 @@ import {
   createTenantPrismaClient,
 } from '@/lib/core/prisma-tenant';
 import { prisma } from '@/lib/core/prisma';
-import { hasModuleAccess, moduleNotInstalledResponse, moduleUpgradeRequiredResponse } from '@/lib/modules/access';
-import { MODULE_REGISTRY, getRequiredTier } from '@/lib/modules/registry';
+import { hasModuleAccess, moduleNotInstalledResponse } from '@/lib/modules/access';
+import { MODULE_REGISTRY } from '@/lib/modules/registry';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -173,7 +173,7 @@ export function withErrorHandler(
         ? createTenantPrismaClient(tenantContext)
         : prisma;
 
-      // Module access check (tier + enabledModules)
+      // Module access check (enabledModules only - tier restrictions disabled)
       if (options.requireModule) {
         const session = await getServerSession(authOptions);
         const moduleId = options.requireModule;
@@ -183,46 +183,20 @@ export function withErrorHandler(
           console.warn(`[Handler] Unknown module "${moduleId}" in requireModule option`);
         }
 
-        // Fetch fresh enabledModules and subscriptionTier from database (not session which may be stale)
+        // Fetch fresh enabledModules from database (not session which may be stale)
         let enabledModules: string[] = [];
-        let subscriptionTier = 'FREE';
 
         if (tenantContext?.tenantId) {
           const org = await prisma.organization.findUnique({
             where: { id: tenantContext.tenantId },
-            select: { enabledModules: true, subscriptionTier: true },
+            select: { enabledModules: true },
           });
           if (org) {
             enabledModules = org.enabledModules || [];
-            subscriptionTier = org.subscriptionTier || 'FREE';
           }
         }
 
-        // First check tier - even if enabled, tier must allow it
-        const requiredTier = getRequiredTier(moduleId);
-        if (requiredTier) {
-          const tierOrder = ['FREE', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'];
-          const currentTierIndex = tierOrder.indexOf(subscriptionTier);
-          const requiredTierIndex = tierOrder.indexOf(requiredTier);
-
-          if (currentTierIndex < requiredTierIndex) {
-            if (!options.skipLogging) {
-              logRequest(
-                request.method,
-                request.url,
-                403,
-                Date.now() - startTime,
-                requestId,
-                session?.user.id,
-                session?.user.email
-              );
-            }
-
-            return moduleUpgradeRequiredResponse(moduleId, requiredTier, requestId);
-          }
-        }
-
-        // Then check if module is enabled
+        // Check if module is enabled (tier check removed)
         if (!hasModuleAccess(moduleId, enabledModules)) {
           if (!options.skipLogging) {
             logRequest(

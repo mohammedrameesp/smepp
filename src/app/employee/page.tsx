@@ -162,18 +162,40 @@ export default async function EmployeeDashboard() {
     documentAlerts.sort((a, b) => a.daysLeft - b.daysLeft);
 
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">
+      <>
+        {/* Dark Header */}
+        <div className="bg-slate-800 shadow-lg">
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            <h1 className="text-2xl font-bold text-white">
               Welcome back, {session.user.name}!
             </h1>
-            <p className="text-gray-600 text-sm">
+            <p className="text-slate-400 mt-1">
               Here&apos;s your workspace overview
             </p>
+            {/* Summary Chips */}
+            <div className="flex flex-wrap items-center gap-3 mt-4">
+              {pendingPurchaseRequests.length > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-500/20 rounded-lg">
+                  <span className="text-violet-400 text-sm font-medium">{pendingPurchaseRequests.length} pending purchases</span>
+                </div>
+              )}
+              {pendingLeaveRequests.length > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
+                  <span className="text-blue-400 text-sm font-medium">{pendingLeaveRequests.length} pending leave</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
+                <span className="text-emerald-400 text-sm font-medium">{totalAvailableLeaveDays.toFixed(1)} leave days</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
+                <span className="text-slate-300 text-sm font-medium">{activeAssets.length} assets</span>
+              </div>
+            </div>
           </div>
+        </div>
 
+        {/* Main Content */}
+        <main className="max-w-6xl mx-auto px-6 py-8">
           {/* Document Alert Banner */}
           {documentAlerts.length > 0 && (
             <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-3">
@@ -562,8 +584,8 @@ export default async function EmployeeDashboard() {
               </Link>
             </div>
           </Card>
-        </div>
-      </div>
+        </main>
+      </>
     );
   } catch (error) {
     console.error('Error in EmployeeDashboard:', error);

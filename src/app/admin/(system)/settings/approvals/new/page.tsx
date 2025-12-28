@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Plus, X, GripVertical } from 'lucide-react';
+import { Plus, X, GripVertical } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -114,22 +115,19 @@ export default function NewApprovalPolicyPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/settings/approvals">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">New Approval Policy</h1>
-          <p className="text-muted-foreground">
-            Create a new multi-level approval chain
-          </p>
-        </div>
-      </div>
+    <>
+      <PageHeader
+        title="New Approval Policy"
+        subtitle="Create a new multi-level approval chain"
+        breadcrumbs={[
+          { label: 'Settings', href: '/admin/settings' },
+          { label: 'Approvals', href: '/admin/settings/approvals' },
+          { label: 'New Policy' },
+        ]}
+      />
 
-      <form onSubmit={handleSubmit}>
+      <PageContent>
+        <form onSubmit={handleSubmit}>
         <Card>
           <CardHeader>
             <CardTitle>Policy Details</CardTitle>
@@ -303,15 +301,16 @@ export default function NewApprovalPolicyPage() {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-4 mt-6">
-          <Button type="button" variant="outline" asChild>
-            <Link href="/admin/settings/approvals">Cancel</Link>
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating...' : 'Create Policy'}
-          </Button>
-        </div>
-      </form>
-    </div>
+          <div className="flex justify-end gap-4 mt-6">
+            <Button type="button" variant="outline" asChild>
+              <Link href="/admin/settings/approvals">Cancel</Link>
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create Policy'}
+            </Button>
+          </div>
+        </form>
+      </PageContent>
+    </>
   );
 }

@@ -21,7 +21,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { id } = await params;
 
-    // Get payroll run with payslips
+    // Get payroll run with payslips (only for WPS employees)
     const payrollRun = await prisma.payrollRun.findUnique({
       where: { id },
       include: {
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             user: {
               select: {
                 name: true,
+                isOnWps: true,
               },
             },
           },
@@ -49,9 +50,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }, { status: 400 });
     }
 
-    if (payrollRun.payslips.length === 0) {
+    // Filter payslips to only include WPS employees
+    const wpsPayslips = payrollRun.payslips.filter(p => p.user.isOnWps !== false);
+
+    if (wpsPayslips.length === 0) {
       return NextResponse.json({
-        error: 'No payslips found for this payroll run',
+        error: 'No WPS employees found for this payroll run. Check if employees have "On WPS" enabled.',
       }, { status: 400 });
     }
 
@@ -67,11 +71,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const employerMolId = molIdSetting?.value || '0000000000';
     const employerName = companyNameSetting?.value || 'COMPANY NAME';
 
-    // Build WPS records
+    // Build WPS records (only from WPS-enabled employees)
     const wpsRecords: WPSEmployeeRecord[] = [];
     const validationErrors: Array<{ employee: string; errors: string[] }> = [];
 
-    for (const payslip of payrollRun.payslips) {
+    for (const payslip of wpsPayslips) {
       const record: WPSEmployeeRecord = {
         qidNumber: payslip.qidNumber || '',
         employeeName: payslip.user.name || 'UNKNOWN',

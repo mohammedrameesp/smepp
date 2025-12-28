@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Plus, Pencil } from 'lucide-react';
 import { formatCurrency } from '@/lib/payroll/utils';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
 interface PageProps {
   searchParams: Promise<{
@@ -82,24 +83,30 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Salary Structures</h1>
-          <p className="text-muted-foreground">
-            Manage employee salary components and allowances
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/admin/payroll/salary-structures/new">
-            <Plus className="mr-2 h-4 w-4" />
+    <>
+      <PageHeader
+        title="Salary Structures"
+        subtitle="Manage employee salary components and allowances"
+        breadcrumbs={[
+          { label: 'Payroll', href: '/admin/payroll' },
+          { label: 'Salary Structures' },
+        ]}
+        actions={
+          <PageHeaderButton href="/admin/payroll/salary-structures/new" variant="primary">
+            <Plus className="h-4 w-4" />
             Add Salary Structure
-          </Link>
-        </Button>
-      </div>
+          </PageHeaderButton>
+        }
+      >
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
+            <span className="text-slate-300 text-sm font-medium">{total} salary structures</span>
+          </div>
+        </div>
+      </PageHeader>
 
-      <Card>
+      <PageContent>
+        <Card>
         <CardHeader>
           <CardTitle>All Salary Structures ({total})</CardTitle>
         </CardHeader>
@@ -191,7 +198,7 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
           )}
         </CardContent>
         </Card>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

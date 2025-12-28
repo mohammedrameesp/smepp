@@ -7,12 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DataExportImport } from '@/components/settings/data-export-import';
 import { ExchangeRateSettings } from '@/components/settings/exchange-rate-settings';
 import { DatabaseStats } from '@/components/settings/database-stats';
-import { DataDeletion } from '@/components/settings/data-deletion';
-import { BackupDownload } from '@/components/settings/backup-download';
 import { PayrollSettings } from '@/components/settings/payroll-settings';
+import { CodeFormatSettings } from '@/components/settings/code-format-settings';
 import { DocumentTypeSettings } from '@/components/domains/system/settings/DocumentTypeSettings';
 import { OrganizationSettings, TeamMembers } from '@/components/domains/system/organization';
 import { prisma } from '@/lib/core/prisma';
+import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
@@ -79,6 +79,8 @@ export default async function SettingsPage() {
           name: true,
           slug: true,
           logoUrl: true,
+          codePrefix: true,
+          codeFormats: true,
           subscriptionTier: true,
           maxUsers: true,
           maxAssets: true,
@@ -139,21 +141,14 @@ export default async function SettingsPage() {
             </p>
           </div>
 
-          <Tabs defaultValue="backup" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-7">
-              <TabsTrigger value="backup">Backup</TabsTrigger>
+          <Tabs defaultValue="export" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5">
               <TabsTrigger value="export">Data Export/Import</TabsTrigger>
               <TabsTrigger value="database">Database</TabsTrigger>
               <TabsTrigger value="doctypes">Document Types</TabsTrigger>
-              <TabsTrigger value="testing" className="text-red-600">Testing/Deletion</TabsTrigger>
               <TabsTrigger value="organization">Organization</TabsTrigger>
               <TabsTrigger value="system">System Config</TabsTrigger>
             </TabsList>
-
-            {/* Backup Tab */}
-            <TabsContent value="backup" className="space-y-6">
-              <BackupDownload />
-            </TabsContent>
 
             {/* Data Export/Import Tab */}
             <TabsContent value="export" className="space-y-6">
@@ -170,16 +165,16 @@ export default async function SettingsPage() {
               <DocumentTypeSettings />
             </TabsContent>
 
-            {/* Testing/Deletion Tab */}
-            <TabsContent value="testing" className="space-y-6">
-              <DataDeletion />
-            </TabsContent>
-
             {/* Organization Tab */}
             <TabsContent value="organization" className="space-y-6">
               {organization && currentMembership ? (
                 <>
                   <OrganizationSettings organization={organization} />
+                  <CodeFormatSettings
+                    organizationId={organization.id}
+                    codePrefix={organization.codePrefix || 'ORG'}
+                    initialFormats={(organization.codeFormats as CodeFormatConfig) || {}}
+                  />
                   <TeamMembers
                     organizationId={organization.id}
                     members={members}

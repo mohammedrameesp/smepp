@@ -13,22 +13,10 @@ const PLANS = [
     ctaVariant: 'outline' as const,
   },
   {
-    tier: 'STARTER' as const,
-    popular: false,
-    cta: 'Start Free Trial',
-    ctaVariant: 'default' as const,
-  },
-  {
-    tier: 'PROFESSIONAL' as const,
+    tier: 'PLUS' as const,
     popular: true,
     cta: 'Start Free Trial',
     ctaVariant: 'default' as const,
-  },
-  {
-    tier: 'ENTERPRISE' as const,
-    popular: false,
-    cta: 'Contact Sales',
-    ctaVariant: 'outline' as const,
   },
 ];
 
@@ -64,19 +52,19 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-16">
           {PLANS.map((plan) => {
             const config = TIER_CONFIG[plan.tier];
             return (
               <Card
                 key={plan.tier}
                 className={`relative ${
-                  plan.popular ? 'border-blue-500 border-2 shadow-lg' : ''
+                  plan.popular ? 'border-indigo-500 border-2 shadow-lg' : ''
                 }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-blue-500">Most Popular</Badge>
+                    <Badge className="bg-indigo-500">Recommended</Badge>
                   </div>
                 )}
                 <CardHeader className="text-center pb-4">
@@ -84,7 +72,7 @@ export default function PricingPage() {
                   <CardDescription>{config.description}</CardDescription>
                   <div className="mt-4">
                     <span className="text-4xl font-bold">
-                      ${config.monthlyPrice}
+                      {config.monthlyPrice === 0 ? 'Free' : `QAR ${config.monthlyPrice}`}
                     </span>
                     {config.monthlyPrice > 0 && (
                       <span className="text-gray-500">/month</span>
@@ -92,7 +80,7 @@ export default function PricingPage() {
                   </div>
                   {config.monthlyPrice > 0 && (
                     <p className="text-sm text-gray-500 mt-1">
-                      or ${config.yearlyPrice}/year (save 2 months)
+                      or QAR {config.yearlyPrice}/year (save 2 months)
                     </p>
                   )}
                 </CardHeader>

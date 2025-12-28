@@ -20,6 +20,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Require organization context for tenant isolation
+    const tenantId = session.user.organizationId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
     // Get file from request
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -193,7 +199,7 @@ export async function POST(request: NextRequest) {
             assetData.assetTag = assetTag;
           } else if (!existingAssetById) {
             // New asset needs a tag
-            assetData.assetTag = await generateAssetTag(type);
+            assetData.assetTag = await generateAssetTag(type, tenantId);
           }
 
           // Use upsert with ID to preserve relationships
@@ -243,7 +249,7 @@ export async function POST(request: NextRequest) {
         }
 
         // No ID provided - use tag-based logic
-        const finalAssetTag = assetTag || (await generateAssetTag(type));
+        const finalAssetTag = assetTag || (await generateAssetTag(type, tenantId));
 
         // Check if asset tag already exists
         if (finalAssetTag) {

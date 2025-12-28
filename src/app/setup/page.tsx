@@ -115,7 +115,15 @@ export default function SetupPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Step 1: Basics
+  const [organizationName, setOrganizationName] = useState('');
   const [additionalCurrencies, setAdditionalCurrencies] = useState<string[]>(['USD']);
+
+  // Initialize org name from session
+  useEffect(() => {
+    if (session?.user?.organizationName) {
+      setOrganizationName(session.user.organizationName);
+    }
+  }, [session?.user?.organizationName]);
 
   // Step 2: Branding
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -126,6 +134,29 @@ export default function SetupPage() {
 
   // Step 3: Modules
   const [selectedModules, setSelectedModules] = useState<string[]>(['assets', 'subscriptions', 'suppliers']);
+  const [modulesLoaded, setModulesLoaded] = useState(false);
+
+  // Load organization's enabled modules on mount
+  useEffect(() => {
+    async function loadOrgModules() {
+      if (!session?.user?.organizationId || modulesLoaded) return;
+
+      try {
+        const response = await fetch('/api/organizations/settings');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.settings?.enabledModules && Array.isArray(data.settings.enabledModules)) {
+            setSelectedModules(data.settings.enabledModules);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load organization modules:', err);
+      }
+      setModulesLoaded(true);
+    }
+
+    loadOrgModules();
+  }, [session?.user?.organizationId, modulesLoaded]);
 
   // Step 4: Team
   const [inviteEmail, setInviteEmail] = useState('');
@@ -238,11 +269,12 @@ export default function SetupPage() {
         }
       }
 
-      // 2. Update organization settings (modules, colors, currencies)
+      // 2. Update organization settings (name, modules, colors, currencies)
       const settingsResponse = await fetch('/api/organizations/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          name: organizationName.trim(),
           enabledModules: selectedModules,
           primaryColor,
           secondaryColor,
@@ -333,9 +365,7 @@ export default function SetupPage() {
       {/* Header */}
       <header className="py-6 px-4 border-b border-slate-200 bg-white">
         <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-lg">S+</span>
-          </div>
+          <img src="/sme-icon-shield-512.png" alt="SME++" className="h-10 w-10" />
           <span className="text-xl font-semibold text-slate-900">SME++</span>
         </div>
       </header>
@@ -375,12 +405,16 @@ export default function SetupPage() {
               </div>
 
               <div className="bg-white rounded-2xl border border-slate-200 p-8 space-y-6">
-                {/* Organization Name (readonly) */}
+                {/* Organization Name */}
                 <div>
                   <Label className="text-slate-700">Organization Name</Label>
-                  <div className="mt-2 w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-lg font-medium">
-                    {session.user.organizationName}
-                  </div>
+                  <Input
+                    value={organizationName}
+                    onChange={(e) => setOrganizationName(e.target.value)}
+                    placeholder="Enter your organization name"
+                    className="mt-2 h-12 text-lg bg-slate-50 border-slate-200 rounded-xl"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">This name will appear throughout your workspace</p>
                 </div>
 
                 {/* Timezone (fixed) */}
@@ -562,10 +596,10 @@ export default function SetupPage() {
                           className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
                           style={{ backgroundColor: primaryColor }}
                         >
-                          {session.user.organizationName?.charAt(0) || 'A'}
+                          {organizationName?.charAt(0) || 'A'}
                         </div>
                       )}
-                      <span className="font-semibold text-slate-900">{session.user.organizationName}</span>
+                      <span className="font-semibold text-slate-900">{organizationName || session.user.organizationName}</span>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -754,7 +788,7 @@ export default function SetupPage() {
 
               <h1 className="text-3xl font-bold text-slate-900 mb-3">You're all set!</h1>
               <p className="text-slate-600 mb-8 max-w-md mx-auto">
-                Welcome to <span className="font-semibold">{session.user.organizationName}</span>. Your workspace is ready to use.
+                Welcome to <span className="font-semibold">{organizationName || session.user.organizationName}</span>. Your workspace is ready to use.
               </p>
 
               {/* Summary */}

@@ -33,9 +33,23 @@ npx prisma format        # Format schema.prisma
 # Testing
 npm test                 # Run Jest unit tests
 npm run test:watch       # Jest watch mode
+npm run test:unit        # Unit tests only (tests/unit)
+npm run test:security    # Security-focused tests (tests/security)
+npm run test:api         # Integration/API tests (tests/integration)
 npm run test:e2e         # Run Playwright E2E tests
+npm run test:e2e:ui      # Playwright with interactive UI
+npm run test:e2e:headed  # Playwright with visible browser
+npm run test:e2e:debug   # Playwright debug mode
 npm run test:all         # Run all tests (unit + E2E)
 ```
+
+## Test Organization
+
+Tests live in `tests/` directory (not alongside source files):
+- `tests/unit/` - Unit tests for utilities and business logic
+- `tests/integration/` - API integration tests
+- `tests/security/` - Security-focused tests
+- `tests/e2e/` - Playwright E2E tests
 
 ## Multi-Tenant Architecture
 
@@ -73,13 +87,22 @@ model OrganizationUser {
 
 Feature flags: `src/lib/multi-tenant/feature-flags.ts`
 
+### Subdomain Routing
+
+Each organization gets a subdomain: `{org-slug}.smepp.com` (or `{org-slug}.localhost` in dev).
+
+The middleware (`src/middleware.ts`) handles:
+1. Subdomain extraction and validation
+2. Redirect to correct subdomain if user accesses wrong one
+3. Injection of tenant headers (`x-tenant-id`, `x-tenant-slug`, etc.)
+
 ### Tenant Context
 
 The tenant context flows through the application:
 
-1. **Middleware** (`src/middleware.ts`) extracts `organizationId` from session
-2. **Prisma Extension** (`src/lib/core/prisma-tenant.ts`) auto-filters all queries
-3. **API Handler** (`src/lib/http/handler.ts`) injects tenant-scoped Prisma client
+1. **Middleware** (`src/middleware.ts`) extracts `organizationId` from session and sets headers
+2. **Prisma Extension** (`src/lib/core/prisma-tenant.ts`) auto-filters all queries by `tenantId`
+3. **API Handler** (`src/lib/http/handler.ts`) reads headers and injects tenant-scoped Prisma client
 
 ```typescript
 // src/lib/core/prisma-tenant.ts
@@ -133,6 +156,48 @@ interface Session {
 - `/login` - Multi-provider login
 - `/invite/[token]` - Join existing organization via invite
 - `/onboarding` - Post-signup setup wizard
+
+## Super Admin System
+
+The platform includes a super admin layer for platform-wide management:
+
+- `/super-admin/login` - Login with 2FA verification
+- `/super-admin/*` - Platform management routes (organizations, users, settings)
+- **Impersonation**: Super admins can access tenant orgs via signed JWT tokens
+- Middleware validates `isSuperAdmin` flag from session for protected routes
+
+Key files:
+- `src/app/super-admin/` - Super admin UI pages
+- `src/app/api/super-admin/` - Super admin API routes
+- `src/middleware.ts` - Impersonation token verification
+
+## Module System
+
+Modules are the feature units that can be enabled/disabled per organization.
+
+### Registry
+
+Central definition in `src/lib/modules/registry.ts`:
+- Each module defines: routes (admin/employee/API), tier requirements, dependencies
+- Categories: `operations`, `hr`, `projects`, `system`
+- Default enabled for new orgs: `['assets', 'subscriptions', 'suppliers']`
+
+### Access Control
+
+1. **Middleware level** (`src/middleware.ts`): Blocks routes for disabled modules
+2. **API level** (`src/lib/http/handler.ts`): `requireModule` option for per-endpoint checks
+
+```typescript
+// API route requiring a specific module
+export const GET = withErrorHandler(async (request, { prisma }) => {
+  const loans = await prisma.loan.findMany();
+  return NextResponse.json(loans);
+}, { requireAuth: true, requireModule: 'payroll' });
+```
+
+### Module Dependencies
+
+Some modules depend on others (e.g., `leave` requires `employees`). The registry tracks these via `requires` and `requiredBy` fields.
 
 ## Domain Organization
 
@@ -203,17 +268,27 @@ export async function checkLimit(tenantId: string, resource: 'users' | 'assets')
 
 ## API Pattern
 
-All API routes use the `withErrorHandler` wrapper:
+All API routes use the `withErrorHandler` wrapper from `src/lib/http/handler.ts`:
 
 ```typescript
-export const GET = withErrorHandler(async (request, { prisma, tenantId }) => {
+export const GET = withErrorHandler(async (request, { prisma, tenant, params }) => {
   // prisma is already tenant-scoped
+  // tenant contains: tenantId, tenantSlug, userId, userRole, orgRole, subscriptionTier
   const assets = await prisma.asset.findMany();
   return NextResponse.json(assets);
 }, { requireAuth: true });
 ```
 
-Options: `requireAuth`, `requireOrgRole`, `requireTier`, `rateLimit`
+### Handler Options
+
+| Option | Description |
+|--------|-------------|
+| `requireAuth` | Require authenticated session |
+| `requireAdmin` | Require ADMIN role |
+| `requireTenant` | Require tenant context (default: true when auth required) |
+| `requireModule` | Require specific module to be enabled (e.g., `'payroll'`) |
+| `rateLimit` | Enable rate limiting for this endpoint |
+| `skipLogging` | Disable request logging |
 
 ## Key Libraries
 

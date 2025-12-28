@@ -109,8 +109,8 @@ function OverviewTab() {
             iconBg="bg-indigo-100"
             iconColor="text-indigo-600"
             title="TechStart"
-            description="upgraded to Professional"
-            detail="+$70/mo MRR"
+            description="added new team members"
+            detail="5 users added"
             time="5 min ago"
           />
           <ActivityItem
@@ -119,7 +119,7 @@ function OverviewTab() {
             iconColor="text-cyan-600"
             title="New organization"
             description="CloudSync Ltd"
-            detail="Free tier"
+            detail="New signup"
             time="18 min ago"
           />
           <ActivityItem

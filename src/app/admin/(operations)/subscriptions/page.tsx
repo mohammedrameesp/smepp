@@ -3,11 +3,10 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { Role } from '@prisma/client';
-import Link from 'next/link';
-import { SubscriptionListTableServerSearch } from '@/components/subscriptions/subscription-list-table-server-search';
+import { SubscriptionListTableServerSearch } from '@/components/domains/operations/subscriptions/subscription-list-table-server-search';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
-import { CreditCard, Plus, DollarSign, Calendar } from 'lucide-react';
-import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
+import { Plus } from 'lucide-react';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
 export default async function AdminSubscriptionsPage() {
   const session = await getServerSession(authOptions);
@@ -83,64 +82,55 @@ export default async function AdminSubscriptionsPage() {
   const totalInQAR = totalQAR + (totalUSD * USD_TO_QAR_RATE);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Subscriptions</h1>
-          <p className="text-slate-500 text-sm">Manage company subscriptions and renewals</p>
+    <>
+      <PageHeader
+        title="Subscriptions"
+        subtitle="Manage company subscriptions and renewals"
+        actions={
+          <PageHeaderButton href="/admin/subscriptions/new" variant="primary">
+            <Plus className="h-4 w-4" />
+            Add Subscription
+          </PageHeaderButton>
+        }
+      >
+        {/* Stats Summary */}
+        <div className="flex flex-wrap items-center gap-4 mt-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
+            <span className="text-blue-400 text-sm font-medium">{activeCount} active</span>
+          </div>
+          {cancelledCount > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
+              <span className="text-slate-400 text-sm font-medium">{cancelledCount} cancelled</span>
+            </div>
+          )}
+          {totalQAR > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
+              <span className="text-emerald-400 text-sm font-medium">QAR {totalQAR.toLocaleString()} this month</span>
+            </div>
+          )}
+          {totalUSD > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
+              <span className="text-amber-400 text-sm font-medium">USD {totalUSD.toLocaleString()} this month</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 rounded-lg">
+            <span className="text-purple-400 text-sm font-medium">QAR {totalInQAR.toLocaleString()} total</span>
+          </div>
         </div>
-        <Link
-          href="/admin/subscriptions/new"
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Add Subscription
-        </Link>
-      </div>
+      </PageHeader>
 
-      {/* Stats Cards */}
-      <StatsCardGrid columns={4} className="mb-6">
-        <StatsCard
-          title="Active"
-          subtitle={`${cancelledCount} cancelled`}
-          value={activeCount}
-          icon={CreditCard}
-          color="blue"
-        />
-        <StatsCard
-          title="QAR This Month"
-          subtitle="Monthly + Yearly renewals"
-          value={totalQAR.toFixed(0)}
-          icon={DollarSign}
-          color="emerald"
-        />
-        <StatsCard
-          title="USD This Month"
-          subtitle="Monthly + Yearly renewals"
-          value={totalUSD.toFixed(0)}
-          icon={DollarSign}
-          color="amber"
-        />
-        <StatsCard
-          title="Total (QAR)"
-          subtitle="All converted"
-          value={`${(totalInQAR / 1000).toFixed(1)}K`}
-          icon={Calendar}
-          color="purple"
-        />
-      </StatsCardGrid>
-
-      {/* Subscriptions Table */}
-      <div className="bg-white rounded-xl border border-slate-200">
-        <div className="px-4 py-4 border-b border-slate-100">
-          <h2 className="font-semibold text-slate-900">All Subscriptions</h2>
-          <p className="text-sm text-slate-500">Complete list with filters and sorting</p>
+      <PageContent>
+        {/* Subscriptions Table */}
+        <div className="bg-white rounded-xl border border-slate-200">
+          <div className="px-4 py-4 border-b border-slate-100">
+            <h2 className="font-semibold text-slate-900">All Subscriptions</h2>
+            <p className="text-sm text-slate-500">Complete list with filters and sorting</p>
+          </div>
+          <div className="p-4">
+            <SubscriptionListTableServerSearch />
+          </div>
         </div>
-        <div className="p-4">
-          <SubscriptionListTableServerSearch />
-        </div>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

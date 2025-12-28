@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/table';
 import { Plus, Eye } from 'lucide-react';
 import { formatCurrency, getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/lib/payroll/utils';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
 interface PageProps {
   searchParams: Promise<{
@@ -65,25 +66,31 @@ export default async function PayrollRunsPage({ searchParams }: PageProps) {
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Payroll Runs</h1>
-          <p className="text-muted-foreground">
-            Monthly payroll processing and management
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/admin/payroll/runs/new">
-            <Plus className="mr-2 h-4 w-4" />
+    <>
+      <PageHeader
+        title="Payroll Runs"
+        subtitle="Monthly payroll processing and management"
+        breadcrumbs={[
+          { label: 'Payroll', href: '/admin/payroll' },
+          { label: 'Runs' },
+        ]}
+        actions={
+          <PageHeaderButton href="/admin/payroll/runs/new" variant="primary">
+            <Plus className="h-4 w-4" />
             New Payroll Run
-          </Link>
-        </Button>
-      </div>
+          </PageHeaderButton>
+        }
+      >
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
+            <span className="text-slate-300 text-sm font-medium">{total} payroll runs</span>
+          </div>
+        </div>
+      </PageHeader>
 
-      {/* Status Filter */}
-      <div className="flex gap-2 flex-wrap">
+      <PageContent className="space-y-6">
+        {/* Status Filter */}
+        <div className="flex gap-2 flex-wrap">
         <Button
           asChild
           variant={!statusFilter ? 'default' : 'outline'}
@@ -202,7 +209,7 @@ export default async function PayrollRunsPage({ searchParams }: PageProps) {
           )}
         </CardContent>
         </Card>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

@@ -97,8 +97,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Logo upload error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to upload logo' },
+      { error: `Failed to upload logo: ${message}` },
       { status: 500 }
     );
   }

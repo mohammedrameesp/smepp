@@ -4,7 +4,8 @@ import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { Role, AssetRequestStatus } from '@prisma/client';
 import { AssetRequestListTable } from '@/components/domains/operations/asset-requests';
-import { Clock, RotateCcw, UserCheck, Package } from 'lucide-react';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { Package } from 'lucide-react';
 
 export default async function AdminAssetRequestsPage() {
   const session = await getServerSession(authOptions);
@@ -58,74 +59,45 @@ export default async function AdminAssetRequestsPage() {
   const pendingApproval = requests.filter(r => r.status === AssetRequestStatus.PENDING_ADMIN_APPROVAL);
   const pendingReturn = requests.filter(r => r.status === AssetRequestStatus.PENDING_RETURN_APPROVAL);
   const pendingAcceptance = requests.filter(r => r.status === AssetRequestStatus.PENDING_USER_ACCEPTANCE);
-  const totalPending = pendingApproval.length + pendingReturn.length;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Asset Requests</h1>
-        <p className="text-slate-500 text-sm">Manage asset requests, assignments, and returns</p>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="relative overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg shadow-orange-200/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-200">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-1">
-              <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
-                <Clock className="h-4 w-4" />
-              </div>
-              <span className="text-3xl font-bold">{pendingApproval.length}</span>
+    <>
+      <PageHeader
+        title="Asset Requests"
+        subtitle="Manage asset requests, assignments, and returns"
+      >
+        {/* Summary Chips */}
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          {pendingApproval.length > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
+              <span className="text-amber-400 text-sm font-medium">
+                {pendingApproval.length} pending approval
+              </span>
             </div>
-            <p className="text-sm font-medium">Pending Requests</p>
-            <p className="text-xs text-white/80">Employee requests</p>
+          )}
+          {pendingReturn.length > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/20 rounded-lg">
+              <span className="text-rose-400 text-sm font-medium">
+                {pendingReturn.length} pending return
+              </span>
+            </div>
+          )}
+          {pendingAcceptance.length > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
+              <span className="text-blue-400 text-sm font-medium">
+                {pendingAcceptance.length} awaiting acceptance
+              </span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
+            <span className="text-slate-300 text-sm font-medium">
+              {requests.length} total requests
+            </span>
           </div>
         </div>
+      </PageHeader>
 
-        <div className="relative overflow-hidden bg-gradient-to-br from-rose-400 to-pink-500 rounded-2xl p-4 text-white shadow-lg shadow-rose-200/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-200">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-1">
-              <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
-                <RotateCcw className="h-4 w-4" />
-              </div>
-              <span className="text-3xl font-bold">{pendingReturn.length}</span>
-            </div>
-            <p className="text-sm font-medium">Pending Returns</p>
-            <p className="text-xs text-white/80">Return requests</p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl p-4 text-white shadow-lg shadow-blue-200/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-200">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-1">
-              <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
-                <UserCheck className="h-4 w-4" />
-              </div>
-              <span className="text-3xl font-bold">{pendingAcceptance.length}</span>
-            </div>
-            <p className="text-sm font-medium">Awaiting User</p>
-            <p className="text-xs text-white/80">User acceptance</p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl p-4 text-white shadow-lg shadow-emerald-200/50 hover:shadow-xl hover:-translate-y-1 transition-all duration-200">
-          <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="relative">
-            <div className="flex items-center justify-between mb-1">
-              <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
-                <Package className="h-4 w-4" />
-              </div>
-              <span className="text-3xl font-bold">{requests.length}</span>
-            </div>
-            <p className="text-sm font-medium">Total Requests</p>
-            <p className="text-xs text-white/80">All time</p>
-          </div>
-        </div>
-      </div>
+      <PageContent>
 
       {/* Requests Table */}
       <div className="bg-white rounded-xl border border-slate-200">
@@ -152,6 +124,7 @@ export default async function AdminAssetRequestsPage() {
           )}
         </div>
       </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

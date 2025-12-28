@@ -7,7 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, AlertTriangle, Download, User, Package, CreditCard, Clock, RefreshCw, CheckCircle2, Circle } from 'lucide-react';
+import { NoResultsState, NoDataState } from '@/components/ui/empty-state';
+import { Loader2, AlertTriangle, Download, User, Package, CreditCard, Clock, RefreshCw, CheckCircle2, Circle, UserPlus, UserX } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { EmployeeActions } from './employee-actions';
 import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
 import { calculateTenure } from '@/lib/hr-utils';
@@ -18,6 +20,9 @@ interface Employee {
   email: string;
   image: string | null;
   role: string;
+  canLogin?: boolean;
+  isEmployee?: boolean;
+  isOnWps?: boolean;
   createdAt: string;
   _count: {
     assets: number;
@@ -226,7 +231,7 @@ export function EmployeeListTable() {
       </div>
 
       {/* Results and Export */}
-      <div className="flex justify-between items-center text-sm text-gray-600">
+      <div className="flex justify-between items-center text-sm text-slate-600">
         <div>
           Showing {employees.length > 0 ? ((pagination.page - 1) * pagination.pageSize) + 1 : 0} - {Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total} employees
         </div>
@@ -263,16 +268,30 @@ export function EmployeeListTable() {
             {loading && employees.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
-                  <p className="text-gray-500 mt-2">Loading employees...</p>
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-slate-400" />
+                  <p className="text-slate-600 mt-2">Loading employees...</p>
                 </TableCell>
               </TableRow>
             ) : employees.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                  {debouncedSearch || profileStatus !== 'all' || expiryStatus !== 'all'
-                    ? 'No employees match your filters'
-                    : 'No employees found'}
+                <TableCell colSpan={8} className="p-0">
+                  {debouncedSearch || profileStatus !== 'all' || expiryStatus !== 'all' || sponsorshipFilter !== 'all' ? (
+                    <NoResultsState
+                      searchTerm={debouncedSearch || undefined}
+                      onClear={() => {
+                        setSearchTerm('');
+                        setProfileStatus('all');
+                        setExpiryStatus('all');
+                        setSponsorshipFilter('all');
+                      }}
+                    />
+                  ) : (
+                    <NoDataState
+                      resourceName="employees"
+                      actionLabel="Add Employee"
+                      actionHref="/admin/employees/new"
+                    />
+                  )}
                 </TableCell>
               </TableRow>
             ) : (
@@ -297,22 +316,37 @@ export function EmployeeListTable() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <User className="h-5 w-5 text-gray-400" />
+                          <User className="h-5 w-5 text-slate-400" />
                         )}
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-gray-900 flex items-center gap-2">
                           {employee.name || 'No name'}
+                          {employee.canLogin === false && (
+                            <Badge variant="secondary" className="text-xs font-normal bg-gray-100 text-gray-600">
+                              <UserX className="h-3 w-3 mr-1" />
+                              No Login
+                            </Badge>
+                          )}
+                          {employee.isOnWps === false && (
+                            <Badge variant="outline" className="text-xs font-normal border-orange-300 text-orange-600">
+                              Non-WPS
+                            </Badge>
+                          )}
                         </div>
-                        <div className="text-sm text-gray-500">{employee.email}</div>
+                        <div className="text-sm text-slate-600">
+                          {employee.canLogin === false && employee.email.endsWith('.internal')
+                            ? <span className="text-gray-400 italic">System ID</span>
+                            : employee.email}
+                        </div>
                       </div>
                     </Link>
                   </TableCell>
                   <TableCell className="font-mono text-sm">
-                    {employee.hrProfile?.employeeId || <span className="text-gray-400">-</span>}
+                    {employee.hrProfile?.employeeId || <span className="text-slate-400">-</span>}
                   </TableCell>
                   <TableCell>
-                    {employee.hrProfile?.designation || <span className="text-gray-400">-</span>}
+                    {employee.hrProfile?.designation || <span className="text-slate-400">-</span>}
                   </TableCell>
                   <TableCell className="text-center">
                     <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-50 text-blue-700">
@@ -364,7 +398,7 @@ export function EmployeeListTable() {
       {/* Pagination */}
       {pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-slate-600">
             Page {pagination.page} of {pagination.totalPages}
           </div>
           <div className="flex gap-2">

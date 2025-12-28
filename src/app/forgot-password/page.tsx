@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,13 +48,10 @@ export default function ForgotPasswordPage() {
         <div className="relative z-10 flex flex-col justify-center px-16 py-24">
           <div className="max-w-md">
             <div className="mb-8">
-              <Image
-                src="/logo.png"
+              <img
+                src="/sme-wordmark-white.png"
                 alt="SME++ Logo"
-                width={180}
-                height={60}
-                className="h-16 w-auto brightness-0 invert"
-                priority
+                className="h-12 w-auto"
               />
             </div>
 
@@ -77,7 +73,10 @@ export default function ForgotPasswordPage() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">SME++</h1>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <img src="/sme-icon-shield-512.png" alt="SME++" className="h-10 w-10" />
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">SME++</h1>
+            </div>
             <p className="text-gray-600 dark:text-gray-400">Business Management Platform</p>
           </div>
 

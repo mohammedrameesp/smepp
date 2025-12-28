@@ -1,34 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
+import { NextResponse } from 'next/server';
 import { Role } from '@prisma/client';
+import { withErrorHandler } from '@/lib/http/handler';
 import {
   getExpiryStatus,
   getOverallExpiryStatus,
   calculateProfileCompletion,
-  EXPIRY_WARNING_DAYS,
 } from '@/lib/hr-utils';
 
 // GET /api/employees - Get all employees with HR profile data
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    // Only admins can view employee list
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    // Require organization context
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
+export const GET = withErrorHandler(
+  async (request, { prisma, tenant }) => {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('p') || '1');
     const pageSize = parseInt(searchParams.get('ps') || '50');
@@ -40,15 +21,17 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('order') || 'desc';
 
     // Build where clause for employees (exclude system accounts, filter by organization)
+    // Only include users who are marked as employees (isEmployee: true)
     const userWhere: Record<string, unknown> = {
       isSystemAccount: false,
+      isEmployee: true, // Only show users marked as employees in HR features
       role: {
         in: [Role.EMPLOYEE, Role.TEMP_STAFF, Role.ADMIN],
       },
       // Filter by organization membership
       organizationMemberships: {
         some: {
-          organizationId: session.user.organizationId,
+          organizationId: tenant!.tenantId,
         },
       },
     };
@@ -120,6 +103,9 @@ export async function GET(request: NextRequest) {
         email: emp.email,
         image: emp.image,
         role: emp.role,
+        canLogin: emp.canLogin, // For UI badges
+        isEmployee: emp.isEmployee, // For UI badges
+        isOnWps: emp.isOnWps, // For UI badges - WPS status
         createdAt: emp.createdAt,
         updatedAt: emp.updatedAt,
         _count: emp._count,
@@ -183,11 +169,11 @@ export async function GET(request: NextRequest) {
         hasMore: page * pageSize < filteredEmployees.length,
       },
     });
-  } catch (error) {
-    console.error('Get employees error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch employees', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+  },
+  {
+    requireAuth: true,
+    requireAdmin: true,
+    requireModule: 'employees',
+    rateLimit: true,
   }
-}
+);

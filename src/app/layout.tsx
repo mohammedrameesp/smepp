@@ -30,6 +30,14 @@ export const metadata: Metadata = {
   title: "SME++ | Business Management Platform",
   description: "All-in-one asset, HR, and operations management for SMBs",
   manifest: "/manifest.json",
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -39,7 +47,8 @@ export const metadata: Metadata = {
     "mobile-web-app-capable": "yes",
   },
   icons: {
-    apple: "/logo.png",
+    icon: "/sme-icon-shield-512.png",
+    apple: "/sme-icon-shield-512.png",
   },
 };
 

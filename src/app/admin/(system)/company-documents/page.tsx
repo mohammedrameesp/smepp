@@ -6,11 +6,11 @@ import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, FileCheck, AlertTriangle, Clock, CheckCircle, FileText, Loader2 } from 'lucide-react';
+import { Plus, FileCheck, AlertTriangle, Clock, CheckCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 import { format } from 'date-fns';
 import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/lib/domains/system/company-documents/document-utils';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
 async function getCompanyDocuments(tenantId: string) {
   const documents = await prisma.companyDocument.findMany({
@@ -89,37 +89,7 @@ async function DocumentList({ tenantId }: { tenantId: string }) {
 
   return (
     <>
-      {/* Stats Cards */}
-      <StatsCardGrid columns={4} className="mb-6">
-        <StatsCard
-          title="Total Documents"
-          subtitle="All registered"
-          value={stats.total}
-          icon={FileText}
-          color="blue"
-        />
-        <StatsCard
-          title="Expired"
-          subtitle="Need renewal"
-          value={stats.expired}
-          icon={AlertTriangle}
-          color="rose"
-        />
-        <StatsCard
-          title="Expiring Soon"
-          subtitle={`Next ${DOCUMENT_EXPIRY_WARNING_DAYS} days`}
-          value={stats.expiring}
-          icon={Clock}
-          color="amber"
-        />
-        <StatsCard
-          title="Valid"
-          subtitle="Up to date"
-          value={stats.valid}
-          icon={CheckCircle}
-          color="emerald"
-        />
-      </StatsCardGrid>
+      {/* Stats Summary in header is handled by parent */}
 
       {/* Documents Table */}
       <div className="bg-white rounded-xl border border-slate-200">
@@ -195,6 +165,34 @@ async function DocumentList({ tenantId }: { tenantId: string }) {
   );
 }
 
+async function DocumentStats({ tenantId }: { tenantId: string }) {
+  const stats = await getDocumentStats(tenantId);
+
+  return (
+    <div className="flex flex-wrap items-center gap-4 mt-4">
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
+        <span className="text-blue-400 text-sm font-medium">{stats.total} total</span>
+      </div>
+      {stats.expired > 0 && (
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/20 rounded-lg">
+          <AlertTriangle className="h-3.5 w-3.5 text-rose-400" />
+          <span className="text-rose-400 text-sm font-medium">{stats.expired} expired</span>
+        </div>
+      )}
+      {stats.expiring > 0 && (
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
+          <Clock className="h-3.5 w-3.5 text-amber-400" />
+          <span className="text-amber-400 text-sm font-medium">{stats.expiring} expiring soon</span>
+        </div>
+      )}
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
+        <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+        <span className="text-emerald-400 text-sm font-medium">{stats.valid} valid</span>
+      </div>
+    </div>
+  );
+}
+
 export default async function CompanyDocumentsPage() {
   const session = await getServerSession(authOptions);
 
@@ -213,29 +211,31 @@ export default async function CompanyDocumentsPage() {
   const tenantId = session.user.organizationId;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Company Documents</h1>
-          <p className="text-slate-500 text-sm">Track licenses, registrations, and vehicle documents</p>
-        </div>
-        <Link
-          href="/admin/company-documents/new"
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Add Document
-        </Link>
-      </div>
+    <>
+      <PageHeader
+        title="Company Documents"
+        subtitle="Track licenses, registrations, and vehicle documents"
+        actions={
+          <PageHeaderButton href="/admin/company-documents/new" variant="primary">
+            <Plus className="h-4 w-4" />
+            Add Document
+          </PageHeaderButton>
+        }
+      >
+        <Suspense fallback={<div className="h-8" />}>
+          <DocumentStats tenantId={tenantId} />
+        </Suspense>
+      </PageHeader>
 
-      <Suspense fallback={
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
-        </div>
-      }>
-        <DocumentList tenantId={tenantId} />
-      </Suspense>
-    </div>
+      <PageContent>
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+          </div>
+        }>
+          <DocumentList tenantId={tenantId} />
+        </Suspense>
+      </PageContent>
+    </>
   );
 }

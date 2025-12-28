@@ -31,21 +31,9 @@ export function TenantBrandedPanel({ branding, isLoading, variant }: TenantBrand
         </div>
         <div className="relative z-10 flex flex-col justify-center px-16 py-24">
           <div className="max-w-md">
-            {/* Shield icon */}
+            {/* Logo */}
             <div className="mb-6">
-              <svg
-                className="w-16 h-16 text-blue-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
-                />
-              </svg>
+              <img src="/sme-wordmark-white.png" alt="SME++" className="h-12 w-auto" />
             </div>
 
             <h1 className="text-5xl font-extrabold text-white mb-4">

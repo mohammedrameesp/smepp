@@ -140,7 +140,10 @@ export async function POST(
       },
     });
 
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${token}`;
+    // Build organization-specific invite URL using subdomain
+    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+    const protocol = appDomain.includes('localhost') ? 'http' : 'https';
+    const inviteUrl = `${protocol}://${org.slug}.${appDomain}/invite/${token}`;
 
     // Send invitation email
     const emailResult = await sendEmail({

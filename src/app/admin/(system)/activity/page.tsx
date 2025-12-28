@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { redirect } from 'next/navigation';
 import { Role } from '@prisma/client';
-import { formatDate, formatDateTime } from '@/lib/date-format';
+import { formatDate } from '@/lib/date-format';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 export default async function ActivityLogPage() {
   const session = await getServerSession(authOptions);
@@ -50,15 +51,19 @@ export default async function ActivityLogPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Activity Log</h1>
-          <p className="text-gray-600">
-            System activity and audit trail
-          </p>
+    <>
+      <PageHeader
+        title="Activity Log"
+        subtitle="System activity and audit trail"
+      >
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
+            <span className="text-slate-300 text-sm font-medium">{activities.length} recent activities</span>
+          </div>
         </div>
+      </PageHeader>
 
+      <PageContent>
         <Card>
           <CardHeader>
             <CardTitle>Recent Activity ({activities.length})</CardTitle>
@@ -136,7 +141,7 @@ export default async function ActivityLogPage() {
             </Table>
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

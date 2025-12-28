@@ -15,8 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ArrowLeft, Eye, Search } from 'lucide-react';
+import { Eye, Search } from 'lucide-react';
 import { formatCurrency, getMonthName, getPayrollStatusColor } from '@/lib/payroll/utils';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 interface PageProps {
   searchParams: Promise<{
@@ -110,22 +111,23 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
   const availableYears = years.map((y) => y.year);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/admin/payroll">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Search Payslips</h1>
-            <p className="text-muted-foreground">
-              Search and view all employee payslips
-            </p>
+    <>
+      <PageHeader
+        title="Search Payslips"
+        subtitle="Search and view all employee payslips"
+        breadcrumbs={[
+          { label: 'Payroll', href: '/admin/payroll' },
+          { label: 'Payslips' },
+        ]}
+      >
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
+            <span className="text-slate-300 text-sm font-medium">{total} payslips found</span>
           </div>
         </div>
+      </PageHeader>
 
+      <PageContent className="space-y-6">
         {/* Filters */}
         <Card>
           <CardContent className="py-4">
@@ -288,7 +290,7 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

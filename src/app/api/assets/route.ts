@@ -110,7 +110,7 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
   const data = validation.data;
 
   // Generate asset tag if not provided, and ensure it's always uppercase
-  let assetTag = data.assetTag || await generateAssetTag(data.type);
+  let assetTag = data.assetTag || await generateAssetTag(data.type, session.user.organizationId!);
   if (assetTag) {
     assetTag = assetTag.toUpperCase();
   }

@@ -5,40 +5,19 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import {
-  Users,
-  Package,
   Settings,
   ChevronDown,
   Search,
-  Bell,
   User,
   CreditCard,
   LogOut,
   HelpCircle,
-  Box,
   Truck,
-  Calendar,
-  DollarSign,
-  FileText,
   BarChart3,
   Building2,
-  Blocks,
   Activity,
-  Sliders,
-  ClipboardCheck,
-  UserCheck,
-  GitBranch,
-  UsersRound,
   ShoppingCart,
   Briefcase,
-  ArrowRightLeft,
-  Receipt,
-  Gift,
-  Calculator,
-  List,
-  CalendarDays,
-  AlertTriangle,
-  FileCheck,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -59,14 +38,6 @@ interface AdminTopNavProps {
   onOpenCommandPalette?: () => void;
 }
 
-// Subscription tier badge colors
-const tierColors: Record<string, string> = {
-  FREE: 'bg-emerald-100 text-emerald-700',
-  STARTER: 'bg-blue-100 text-blue-700',
-  PROFESSIONAL: 'bg-purple-100 text-purple-700',
-  ENTERPRISE: 'bg-amber-100 text-amber-700',
-};
-
 export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenCommandPalette }: AdminTopNavProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
@@ -77,18 +48,12 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
   // Note: Employees, Assets, Subscriptions are accessible via stats row on dashboard
   const mainNavItems = [
     { label: 'Company Documents', href: '/admin/company-documents', moduleId: null }, // Always available, first item
-    { label: 'Leave', href: '/admin/leave/requests', moduleId: 'leave' },
+    { label: 'Leave', href: '/admin/leave', moduleId: 'leave' },
+    { label: 'Payroll', href: '/admin/payroll', moduleId: 'payroll' },
   ].filter(item => item.moduleId === null || isModuleEnabled(item.moduleId));
 
   // More dropdown items (grouped)
   const moreItems = {
-    hr: [
-      { label: 'Payroll Runs', href: '/admin/payroll/runs', icon: DollarSign, moduleId: 'payroll' },
-      { label: 'Salary Structures', href: '/admin/payroll/salary-structures', icon: FileText, moduleId: 'payroll' },
-      { label: 'Loans & Advances', href: '/admin/payroll/loans', icon: CreditCard, moduleId: 'payroll' },
-      { label: 'Payslips', href: '/admin/payroll/payslips', icon: Receipt, moduleId: 'payroll' },
-      { label: 'Gratuity', href: '/admin/payroll/gratuity', icon: Gift, moduleId: 'payroll' },
-    ].filter(item => isModuleEnabled(item.moduleId)),
     operations: [
       { label: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard, moduleId: 'subscriptions' },
       { label: 'Suppliers', href: '/admin/suppliers', icon: Truck, moduleId: 'suppliers', badgeKey: 'pendingSuppliers' },
@@ -99,39 +64,21 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
     ].filter(item => isModuleEnabled(item.moduleId)),
   };
 
-  const hasMoreItems = moreItems.hr.length > 0 || moreItems.operations.length > 0 || moreItems.projects.length > 0;
+  const hasMoreItems = moreItems.operations.length > 0 || moreItems.projects.length > 0;
 
-  const subscriptionTier = session?.user?.subscriptionTier || 'FREE';
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+    <header className="sticky top-0 z-50 bg-slate-800 border-b border-slate-700">
+      <div className="max-w-6xl mx-auto px-6">
         <div className="flex items-center justify-between h-14">
-          {/* Left: Logo + Org Name + Tier Badge */}
+          {/* Left: Logo + Org Name */}
           <div className="flex items-center gap-6">
-            <Link href="/admin" className="flex items-center gap-2.5">
-              {session?.user?.organizationLogoUrl ? (
-                <img
-                  src={session.user.organizationLogoUrl}
-                  alt={session.user.organizationName || 'Organization'}
-                  className="h-8 w-auto max-w-[100px] object-contain"
-                />
-              ) : (
-                <div className="w-8 h-8 bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">S+</span>
-                </div>
-              )}
-              <div className="hidden sm:flex items-center gap-2">
-                <span className="font-semibold text-slate-900">
-                  {session?.user?.organizationName || 'Organization'}
-                </span>
-                <span className={cn(
-                  'text-[10px] px-2 py-0.5 rounded-full font-medium uppercase',
-                  tierColors[subscriptionTier] || tierColors.FREE
-                )}>
-                  {subscriptionTier}
-                </span>
-              </div>
+            <Link href="/admin" className="flex items-center gap-3">
+              <img src="/sme-wordmark-white.png" alt="SME++" className="h-7 w-auto" />
+              <span className="text-slate-500 hidden sm:inline">|</span>
+              <span className="text-sm font-medium text-slate-200 hidden sm:inline">
+                {session?.user?.organizationName || 'Organization'}
+              </span>
             </Link>
 
               {/* Navigation */}
@@ -143,8 +90,8 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
                     className={cn(
                       'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
                       pathname?.startsWith(item.href)
-                        ? 'text-slate-900 bg-slate-100'
-                        : 'text-slate-500 hover:text-slate-900'
+                        ? 'text-white bg-slate-700'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-700'
                     )}
                   >
                     {item.label}
@@ -157,8 +104,8 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
                   className={cn(
                     'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5',
                     pathname === '/admin/my-approvals'
-                      ? 'text-slate-900 bg-slate-100'
-                      : 'text-slate-500 hover:text-slate-900'
+                      ? 'text-white bg-slate-700'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-700'
                   )}
                 >
                   Approvals
@@ -172,25 +119,11 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
                 {/* More Dropdown */}
                 {hasMoreItems && (
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 flex items-center gap-1 outline-none">
+                    <DropdownMenuTrigger className="px-3 py-1.5 text-sm font-medium text-slate-300 hover:text-white flex items-center gap-1 outline-none">
                       More
                       <ChevronDown className="h-3 w-3" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start" className="w-56">
-                      {moreItems.hr.length > 0 && (
-                        <>
-                          <DropdownMenuLabel className="text-xs text-slate-400 font-normal">Payroll</DropdownMenuLabel>
-                          {moreItems.hr.map((item) => (
-                            <DropdownMenuItem key={item.href} asChild>
-                              <Link href={item.href} className="flex items-center gap-2 cursor-pointer">
-                                <item.icon className="h-4 w-4 text-slate-400" />
-                                {item.label}
-                              </Link>
-                            </DropdownMenuItem>
-                          ))}
-                          <DropdownMenuSeparator />
-                        </>
-                      )}
                       {moreItems.operations.length > 0 && (
                         <>
                           <DropdownMenuLabel className="text-xs text-slate-400 font-normal">Operations</DropdownMenuLabel>
@@ -235,15 +168,16 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
             </div>
 
             {/* Right: Search + Notifications + User */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-600">
               {/* Search/Command Palette trigger */}
               <button
                 onClick={onOpenCommandPalette}
-                className="h-9 px-3 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm text-slate-500 flex items-center gap-2 transition-colors"
+                className="h-9 px-3 bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-lg text-sm text-slate-300 flex items-center gap-2 transition-colors"
+                aria-label="Search"
               >
                 <Search className="h-4 w-4" />
-                <span className="hidden sm:inline">Search</span>
-                <kbd className="hidden md:inline text-xs bg-slate-200 px-1.5 py-0.5 rounded">⌘K</kbd>
+                <span className="hidden sm:inline">Search...</span>
+                <kbd className="hidden md:inline text-xs bg-slate-600 text-slate-400 px-1.5 py-0.5 rounded">⌘K</kbd>
               </button>
 
               {/* Notifications */}
@@ -251,7 +185,7 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
 
               {/* User Menu */}
               <DropdownMenu>
-                <DropdownMenuTrigger className="w-9 h-9 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center cursor-pointer outline-none">
+                <DropdownMenuTrigger className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center cursor-pointer outline-none ring-2 ring-slate-700">
                   <span className="text-white text-xs font-medium">
                     {session?.user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
                   </span>
@@ -301,7 +235,7 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => signOut()}
+                    onClick={() => signOut({ callbackUrl: '/login' })}
                     className="flex items-center gap-2 cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
                   >
                     <LogOut className="h-4 w-4" />

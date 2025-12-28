@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { ProjectListTable } from '@/components/projects/project-list-table';
-import { FolderKanban, Play, CheckCircle, PauseCircle, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
 
 export default async function AdminProjectsPage() {
@@ -71,28 +71,28 @@ export default async function AdminProjectsPage() {
           title="Total Projects"
           subtitle={`${activeProjects} active`}
           value={totalProjects}
-          icon={FolderKanban}
+          icon="folder-kanban"
           color="blue"
         />
         <StatsCard
           title="Planning"
           subtitle="In planning phase"
           value={statusMap['PLANNING'] || 0}
-          icon={PauseCircle}
+          icon="pause-circle"
           color="amber"
         />
         <StatsCard
           title="Active"
           subtitle="Currently running"
           value={statusMap['ACTIVE'] || 0}
-          icon={Play}
+          icon="play"
           color="emerald"
         />
         <StatsCard
           title="Completed"
           subtitle="Successfully finished"
           value={statusMap['COMPLETED'] || 0}
-          icon={CheckCircle}
+          icon="check-circle"
           color="purple"
         />
       </StatsCardGrid>

@@ -7,9 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { redirect } from 'next/navigation';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
-import { Clock, CheckCircle, XCircle, Calendar, FileText, Users, Settings } from 'lucide-react';
+import { Calendar, FileText, Users, Settings } from 'lucide-react';
 import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays } from '@/lib/leave-utils';
-import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
 export default async function AdminLeavePage() {
   const session = await getServerSession(authOptions);
@@ -104,77 +104,57 @@ export default async function AdminLeavePage() {
   ]);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Leave Management</h1>
-              <p className="text-gray-600">
-                Manage employee leave requests, balances, and types
-              </p>
-            </div>
+    <>
+      <PageHeader
+        title="Leave Management"
+        subtitle="Manage employee leave requests, balances, and types"
+      >
+        {/* Summary Chips */}
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          {pendingCount > 0 && (
+            <Link
+              href="/admin/leave/requests?status=PENDING"
+              className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg transition-colors"
+            >
+              <span className="text-amber-400 text-sm font-medium">{pendingCount} pending approval</span>
+            </Link>
+          )}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
+            <span className="text-emerald-400 text-sm font-medium">{approvedThisYear} approved this year</span>
           </div>
-
-          {/* Stats Cards */}
-          <StatsCardGrid columns={4} className="mb-6">
-            <StatsCard
-              title="Pending"
-              subtitle="Awaiting approval"
-              value={pendingCount}
-              icon={Clock}
-              color="amber"
-            />
-            <StatsCard
-              title="Approved"
-              subtitle="This year"
-              value={approvedThisYear}
-              icon={CheckCircle}
-              color="emerald"
-            />
-            <StatsCard
-              title="Rejected"
-              subtitle="This year"
-              value={rejectedThisYear}
-              icon={XCircle}
-              color="rose"
-            />
-            <StatsCard
-              title="Leave Types"
-              subtitle="Active configured"
-              value={activeLeaveTypes}
-              icon={Settings}
-              color="blue"
-            />
-          </StatsCardGrid>
-
-          {/* Quick Links */}
-          <div className="grid md:grid-cols-4 gap-4 mb-8">
-            <Link href="/admin/leave/requests">
-              <Button variant="outline" className="w-full h-auto py-4 flex flex-col items-center gap-2">
-                <FileText className="h-6 w-6" />
-                <span>All Requests</span>
-              </Button>
-            </Link>
-            <Link href="/admin/leave/balances">
-              <Button variant="outline" className="w-full h-auto py-4 flex flex-col items-center gap-2">
-                <Users className="h-6 w-6" />
-                <span>Leave Balances</span>
-              </Button>
-            </Link>
-            <Link href="/admin/leave/types">
-              <Button variant="outline" className="w-full h-auto py-4 flex flex-col items-center gap-2">
-                <Settings className="h-6 w-6" />
-                <span>Leave Types</span>
-              </Button>
-            </Link>
-            <Link href="/admin/leave/calendar">
-              <Button variant="outline" className="w-full h-auto py-4 flex flex-col items-center gap-2">
-                <Calendar className="h-6 w-6" />
-                <span>Team Calendar</span>
-              </Button>
-            </Link>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
+            <span className="text-slate-300 text-sm font-medium">{activeLeaveTypes} leave types</span>
           </div>
+        </div>
+      </PageHeader>
+
+      <PageContent>
+        {/* Quick Links */}
+        <div className="grid md:grid-cols-4 gap-4 mb-8">
+          <Link href="/admin/leave/requests">
+            <Button variant="outline" className="w-full h-auto py-4 flex flex-col items-center gap-2">
+              <FileText className="h-6 w-6" />
+              <span>All Requests</span>
+            </Button>
+          </Link>
+          <Link href="/admin/leave/balances">
+            <Button variant="outline" className="w-full h-auto py-4 flex flex-col items-center gap-2">
+              <Users className="h-6 w-6" />
+              <span>Leave Balances</span>
+            </Button>
+          </Link>
+          <Link href="/admin/leave/types">
+            <Button variant="outline" className="w-full h-auto py-4 flex flex-col items-center gap-2">
+              <Settings className="h-6 w-6" />
+              <span>Leave Types</span>
+            </Button>
+          </Link>
+          <Link href="/admin/leave/calendar">
+            <Button variant="outline" className="w-full h-auto py-4 flex flex-col items-center gap-2">
+              <Calendar className="h-6 w-6" />
+              <span>Team Calendar</span>
+            </Button>
+          </Link>
         </div>
 
         {/* Two Column Layout */}
@@ -275,7 +255,7 @@ export default async function AdminLeavePage() {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

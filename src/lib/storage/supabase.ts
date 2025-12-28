@@ -8,10 +8,14 @@ let supabase: SupabaseClient | null = null;
 function getSupabaseClient(): SupabaseClient {
   if (supabase) return supabase;
 
-  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('Missing Supabase env vars:', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseServiceKey
+    });
     throw new Error('Missing Supabase environment variables');
   }
 

@@ -1,0 +1,111 @@
+'use client';
+
+import { AlertTriangle, ArrowLeft, Trash2, Database, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
+import { ResetPlatformButton } from '../components/ResetPlatformButton';
+
+export default function ResetPage() {
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center gap-4">
+        <Link
+          href="/super-admin"
+          className="w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4 text-slate-500" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Testing Tools</h1>
+          <p className="text-slate-500 text-sm">Development and testing utilities</p>
+        </div>
+      </div>
+
+      {/* Warning Banner */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+        <div>
+          <h3 className="font-semibold text-amber-800">Development Only</h3>
+          <p className="text-amber-700 text-sm mt-1">
+            These tools are for development and testing purposes only. They should be disabled or removed in production environments.
+          </p>
+        </div>
+      </div>
+
+      {/* Testing Tools Grid */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Reset Platform */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
+              <Trash2 className="h-6 w-6 text-red-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-slate-900">Reset Platform</h3>
+              <p className="text-slate-500 text-sm mt-1 mb-4">
+                Delete all organizations, users, and data. Super admin accounts will be preserved.
+              </p>
+              <ResetPlatformButton />
+            </div>
+          </div>
+        </div>
+
+        {/* Database Info */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
+              <Database className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-slate-900">Database Status</h3>
+              <p className="text-slate-500 text-sm mt-1 mb-4">
+                View database connection status and run diagnostics.
+              </p>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                <span className="text-green-700">Connected</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Refresh Cache */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center shrink-0">
+              <RefreshCw className="h-6 w-6 text-violet-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-slate-900">Clear Cache</h3>
+              <p className="text-slate-500 text-sm mt-1 mb-4">
+                Clear application cache and refresh all data.
+              </p>
+              <button className="text-sm text-violet-600 hover:text-violet-700 font-medium">
+                Clear Cache
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Environment Info */}
+      <div className="bg-slate-50 rounded-xl border border-slate-200 p-6">
+        <h3 className="font-semibold text-slate-900 mb-4">Environment Information</h3>
+        <div className="grid gap-3 text-sm">
+          <div className="flex justify-between">
+            <span className="text-slate-500">Environment</span>
+            <span className="font-mono text-slate-700">{process.env.NODE_ENV || 'development'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500">Platform</span>
+            <span className="font-mono text-slate-700">Vercel / Next.js 15</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500">Database</span>
+            <span className="font-mono text-slate-700">Supabase PostgreSQL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
