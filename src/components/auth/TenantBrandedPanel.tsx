@@ -36,9 +36,13 @@ export function TenantBrandedPanel({ branding, isLoading, variant }: TenantBrand
         {/* Subtle decorative orb */}
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
 
-        <div className="relative z-10 flex flex-col justify-center items-center px-12 py-16 h-full w-full text-center">
+        <div className="relative z-10 flex flex-col justify-between px-12 py-16 h-full w-full">
+          {/* Spacer */}
+          <div />
+
+          {/* Center content - Logo and welcome */}
           <div>
-            <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="flex items-center gap-3 mb-8">
               <img src="/sme-icon-shield-512.png" alt="SME++" className="h-12 w-12" />
               <span className="text-3xl font-bold text-white">
                 SME<span className="text-blue-400">++</span>
@@ -49,17 +53,17 @@ export function TenantBrandedPanel({ branding, isLoading, variant }: TenantBrand
               All-in-One Business<br />
               <span className="text-blue-400">Management Platform</span>
             </h1>
-            <p className="text-lg text-slate-300 leading-relaxed mb-12">
+            <p className="text-lg text-slate-300 leading-relaxed">
               Streamline your operations, empower your team, and accelerate growth.
             </p>
+          </div>
 
-            {/* Quote */}
-            <div className="pt-6 border-t border-white/10 max-w-md mx-auto">
-              <blockquote className="text-slate-300 italic text-base">
-                &ldquo;{quote.text}&rdquo;
-              </blockquote>
-              <p className="text-slate-500 text-sm mt-2">— {quote.author}</p>
-            </div>
+          {/* Quote at bottom */}
+          <div className="pt-6 border-t border-white/10">
+            <blockquote className="text-slate-300 italic text-base">
+              &ldquo;{quote.text}&rdquo;
+            </blockquote>
+            <p className="text-slate-500 text-sm mt-2">— {quote.author}</p>
           </div>
         </div>
       </div>
@@ -102,13 +106,17 @@ export function TenantBrandedPanel({ branding, isLoading, variant }: TenantBrand
         style={{ backgroundColor: backgroundImage ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.1)' }}
       />
 
-      <div className="relative z-10 flex flex-col justify-center items-center px-12 py-16 h-full w-full text-center">
+      <div className="relative z-10 flex flex-col justify-between px-12 py-16 h-full w-full">
+        {/* Spacer */}
+        <div />
+
+        {/* Center content - Logo and welcome */}
         <div>
           {logoUrl ? (
             <img
               src={logoUrl}
               alt={orgName}
-              className="h-16 w-auto object-contain mb-8 mx-auto"
+              className="h-16 w-auto object-contain mb-8"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
           ) : (
@@ -116,15 +124,15 @@ export function TenantBrandedPanel({ branding, isLoading, variant }: TenantBrand
           )}
 
           <h2 className="text-4xl font-bold text-white mb-4">{welcomeTitle}</h2>
-          <p className="text-xl text-white/80 mb-12">{welcomeSubtitle}</p>
+          <p className="text-xl text-white/80">{welcomeSubtitle}</p>
+        </div>
 
-          {/* Quote */}
-          <div className="pt-6 border-t border-white/20 max-w-md mx-auto">
-            <blockquote className="text-white/80 italic text-base">
-              &ldquo;{quote.text}&rdquo;
-            </blockquote>
-            <p className="text-white/50 text-sm mt-2">— {quote.author}</p>
-          </div>
+        {/* Quote at bottom */}
+        <div className="pt-6 border-t border-white/20">
+          <blockquote className="text-white/80 italic text-base">
+            &ldquo;{quote.text}&rdquo;
+          </blockquote>
+          <p className="text-white/50 text-sm mt-2">— {quote.author}</p>
         </div>
       </div>
     </div>
