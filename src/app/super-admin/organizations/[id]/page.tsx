@@ -49,8 +49,15 @@ import {
   FolderKanban,
   ShoppingCart,
   FileCheck,
+  FileText,
   Activity,
+  Shield,
+  Key,
+  Globe,
+  X,
+  Plus,
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { formatDistanceToNow, format } from 'date-fns';
 
 interface Organization {
@@ -60,8 +67,6 @@ interface Organization {
   logoUrl: string | null;
   subscriptionTier: string;
   enabledModules: string[];
-  maxUsers: number;
-  maxAssets: number;
   createdAt: string;
   industry: string | null;
   companySize: string | null;
@@ -112,7 +117,23 @@ interface Invitation {
   isExpired: boolean;
 }
 
+interface AuthConfig {
+  allowedAuthMethods: string[];
+  allowedEmailDomains: string[];
+  enforceDomainRestriction: boolean;
+  hasCustomGoogleOAuth: boolean;
+  hasCustomAzureOAuth: boolean;
+  customGoogleClientId: string | null;
+  customAzureClientId: string | null;
+  customAzureTenantId: string | null;
+}
+
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+const AUTH_METHODS = [
+  { id: 'credentials', label: 'Email & Password', icon: Mail },
+  { id: 'google', label: 'Google Workspace SSO', icon: Globe },
+  { id: 'azure-ad', label: 'Microsoft SSO', icon: Key },
+] as const;
 
 export default function OrganizationDetailPage() {
   const params = useParams();
@@ -131,8 +152,6 @@ export default function OrganizationDetailPage() {
   // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editName, setEditName] = useState('');
-  const [editMaxUsers, setEditMaxUsers] = useState(0);
-  const [editMaxAssets, setEditMaxAssets] = useState(0);
   const [updating, setUpdating] = useState(false);
 
   // Delete dialog state
@@ -150,12 +169,19 @@ export default function OrganizationDetailPage() {
   // Impersonation state
   const [impersonating, setImpersonating] = useState(false);
 
+  // Auth config state
+  const [authConfig, setAuthConfig] = useState<AuthConfig | null>(null);
+  const [authConfigLoading, setAuthConfigLoading] = useState(false);
+  const [savingAuthConfig, setSavingAuthConfig] = useState(false);
+  const [newDomain, setNewDomain] = useState('');
+
   useEffect(() => {
     async function fetchData() {
       try {
-        const [orgRes, invRes] = await Promise.all([
+        const [orgRes, invRes, authRes] = await Promise.all([
           fetch(`/api/super-admin/organizations/${orgId}`),
           fetch(`/api/super-admin/organizations/${orgId}/invitations`),
+          fetch(`/api/super-admin/organizations/${orgId}/auth-config`),
         ]);
 
         if (!orgRes.ok) {
@@ -170,6 +196,11 @@ export default function OrganizationDetailPage() {
         if (invRes.ok) {
           const invData = await invRes.json();
           setInvitations(invData.invitations || []);
+        }
+
+        if (authRes.ok) {
+          const authData = await authRes.json();
+          setAuthConfig(authData.authConfig);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load organization');
@@ -219,8 +250,6 @@ export default function OrganizationDetailPage() {
   const openEditDialog = () => {
     if (org) {
       setEditName(org.name);
-      setEditMaxUsers(org.maxUsers);
-      setEditMaxAssets(org.maxAssets);
       setEditDialogOpen(true);
     }
   };
@@ -234,8 +263,6 @@ export default function OrganizationDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: editName,
-          maxUsers: editMaxUsers,
-          maxAssets: editMaxAssets,
         }),
       });
 
@@ -360,6 +387,80 @@ export default function OrganizationDetailPage() {
     }
   };
 
+  // Auth config handlers
+  const handleToggleAuthMethod = async (methodId: string, enabled: boolean) => {
+    if (!authConfig) return;
+
+    const newMethods = enabled
+      ? [...authConfig.allowedAuthMethods, methodId]
+      : authConfig.allowedAuthMethods.filter((m) => m !== methodId);
+
+    // Don't allow disabling all methods if it would leave empty
+    // (unless we're enabling something, or there are still methods left)
+    if (newMethods.length === 0 && authConfig.allowedAuthMethods.length > 0) {
+      setError('At least one authentication method must be enabled');
+      return;
+    }
+
+    await updateAuthConfig({ allowedAuthMethods: newMethods });
+  };
+
+  const handleToggleDomainRestriction = async (enabled: boolean) => {
+    await updateAuthConfig({ enforceDomainRestriction: enabled });
+  };
+
+  const handleAddDomain = async () => {
+    if (!newDomain.trim() || !authConfig) return;
+
+    const domain = newDomain.trim().toLowerCase();
+    // Basic domain validation
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,}$/.test(domain)) {
+      setError('Invalid domain format');
+      return;
+    }
+
+    if (authConfig.allowedEmailDomains.includes(domain)) {
+      setError('Domain already added');
+      return;
+    }
+
+    await updateAuthConfig({
+      allowedEmailDomains: [...authConfig.allowedEmailDomains, domain],
+    });
+    setNewDomain('');
+  };
+
+  const handleRemoveDomain = async (domain: string) => {
+    if (!authConfig) return;
+    await updateAuthConfig({
+      allowedEmailDomains: authConfig.allowedEmailDomains.filter((d) => d !== domain),
+    });
+  };
+
+  const updateAuthConfig = async (updates: Partial<AuthConfig>) => {
+    setSavingAuthConfig(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/super-admin/organizations/${orgId}/auth-config`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update auth configuration');
+      }
+
+      const data = await response.json();
+      setAuthConfig(data.authConfig);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update');
+    } finally {
+      setSavingAuthConfig(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -476,13 +577,13 @@ export default function OrganizationDetailPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Members</CardDescription>
-            <CardTitle className="text-2xl">{org._count.members} / {org.maxUsers}</CardTitle>
+            <CardTitle className="text-2xl">{org._count.members}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Assets</CardDescription>
-            <CardTitle className="text-2xl">{org._count.assets} / {org.maxAssets}</CardTitle>
+            <CardTitle className="text-2xl">{org._count.assets}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -498,6 +599,21 @@ export default function OrganizationDetailPage() {
           </CardHeader>
         </Card>
       </div>
+
+      {/* Internal Notes (Super Admin Only) */}
+      {org.internalNotes && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-amber-800 flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Internal Notes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-amber-900 whitespace-pre-wrap">{org.internalNotes}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Installed Modules */}
       <Card>
@@ -535,6 +651,136 @@ export default function OrganizationDetailPage() {
               })
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Authentication Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Authentication Settings
+            {savingAuthConfig && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+          </CardTitle>
+          <CardDescription>Configure login methods and restrictions for this organization</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {authConfig ? (
+            <>
+              {/* Allowed Auth Methods */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Allowed Login Methods</Label>
+                <p className="text-xs text-muted-foreground">
+                  Empty selection means all methods are allowed
+                </p>
+                <div className="space-y-2">
+                  {AUTH_METHODS.map((method) => {
+                    const isEnabled = authConfig.allowedAuthMethods.length === 0 ||
+                      authConfig.allowedAuthMethods.includes(method.id);
+                    const IconComponent = method.icon;
+                    return (
+                      <div key={method.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <IconComponent className="h-4 w-4 text-muted-foreground" />
+                          <span>{method.label}</span>
+                        </div>
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={(checked) => handleToggleAuthMethod(method.id, checked)}
+                          disabled={savingAuthConfig}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Email Domain Restrictions */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium">Email Domain Restrictions</Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Restrict which email domains can login
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {authConfig.enforceDomainRestriction ? 'Enforced' : 'Not enforced'}
+                    </span>
+                    <Switch
+                      checked={authConfig.enforceDomainRestriction}
+                      onCheckedChange={handleToggleDomainRestriction}
+                      disabled={savingAuthConfig || authConfig.allowedEmailDomains.length === 0}
+                    />
+                  </div>
+                </div>
+
+                {/* Domain List */}
+                <div className="flex flex-wrap gap-2">
+                  {authConfig.allowedEmailDomains.map((domain) => (
+                    <Badge key={domain} variant="secondary" className="px-3 py-1">
+                      @{domain}
+                      <button
+                        onClick={() => handleRemoveDomain(domain)}
+                        className="ml-2 hover:text-red-600"
+                        disabled={savingAuthConfig}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+
+                {/* Add Domain Input */}
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="company.com"
+                    value={newDomain}
+                    onChange={(e) => setNewDomain(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddDomain()}
+                    className="max-w-xs"
+                    disabled={savingAuthConfig}
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={handleAddDomain}
+                    disabled={savingAuthConfig || !newDomain.trim()}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Domain
+                  </Button>
+                </div>
+              </div>
+
+              {/* Custom OAuth Status */}
+              {(authConfig.hasCustomGoogleOAuth || authConfig.hasCustomAzureOAuth) && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Custom OAuth Apps</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {authConfig.hasCustomGoogleOAuth && (
+                      <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200">
+                        <Globe className="h-3 w-3 mr-1" />
+                        Custom Google OAuth configured
+                      </Badge>
+                    )}
+                    {authConfig.hasCustomAzureOAuth && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
+                        <Key className="h-3 w-3 mr-1" />
+                        Custom Azure OAuth configured
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -867,28 +1113,6 @@ export default function OrganizationDetailPage() {
                 onChange={(e) => setEditName(e.target.value)}
                 placeholder="Organization name"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-max-users">Max Users</Label>
-                <Input
-                  id="edit-max-users"
-                  type="number"
-                  min={1}
-                  value={editMaxUsers}
-                  onChange={(e) => setEditMaxUsers(parseInt(e.target.value) || 0)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-max-assets">Max Assets</Label>
-                <Input
-                  id="edit-max-assets"
-                  type="number"
-                  min={1}
-                  value={editMaxAssets}
-                  onChange={(e) => setEditMaxAssets(parseInt(e.target.value) || 0)}
-                />
-              </div>
             </div>
           </div>
           <DialogFooter>

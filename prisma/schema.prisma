@@ -150,9 +150,7 @@ enum ApprovalStepStatus {
 
 enum SubscriptionTier {
   FREE
-  STARTER
-  PROFESSIONAL
-  ENTERPRISE
+  PLUS
 }
 
 enum OrgRole {
@@ -208,24 +206,27 @@ model Session {
 }
 
 model User {
-  id                           String                @id @default(cuid())
-  name                         String?
-  email                        String                @unique
-  emailVerified                DateTime?
-  image                        String?
-  passwordHash                 String? // For email/password auth
-  role                         Role                  @default(EMPLOYEE)
-  isSystemAccount              Boolean               @default(false) // For shared assets and system users
-  isSuperAdmin                 Boolean               @default(false) // Platform-level admin (can manage all orgs)
+  id              String    @id @default(cuid())
+  name            String?
+  email           String    @unique
+  emailVerified   DateTime?
+  image           String?
+  passwordHash    String? // For email/password auth
+  role            Role      @default(EMPLOYEE)
+  isSystemAccount Boolean   @default(false) // For shared assets and system users
+  isSuperAdmin    Boolean   @default(false) // Platform-level admin (can manage all orgs)
+  isEmployee      Boolean   @default(true) // Is this user an employee (appears in HR/payroll)?
+  canLogin        Boolean   @default(true) // Can this user authenticate to the system?
+  isOnWps         Boolean   @default(true) // Is this employee on WPS (Wage Protection System)?
 
   // Password reset
   resetToken       String?   @unique
   resetTokenExpiry DateTime?
 
   // Two-Factor Authentication (for super admins)
-  twoFactorSecret      String?   // Encrypted TOTP secret
-  twoFactorEnabled     Boolean   @default(false)
-  twoFactorBackupCodes String[]  // Hashed backup codes
+  twoFactorSecret      String? // Encrypted TOTP secret
+  twoFactorEnabled     Boolean  @default(false)
+  twoFactorBackupCodes String[] // Hashed backup codes
 
   accounts                     Account[]
   sessions                     Session[]
@@ -251,6 +252,7 @@ model User {
   // Leave Management relations
   leaveRequests         LeaveRequest[]        @relation("LeaveRequests")
   leaveApprovals        LeaveRequest[]        @relation("LeaveApprovals")
+  leaveRequestsCreated  LeaveRequest[]        @relation("LeaveRequestCreator")
   leaveBalances         LeaveBalance[]
   leaveHistoryPerformed LeaveRequestHistory[] @relation("LeaveHistoryPerformer")
 
@@ -316,15 +318,23 @@ model Organization {
 
   // Branding
   logoUrl            String?
-  primaryColor       String   @default("#1E40AF") // Deep Blue - brand primary
-  secondaryColor     String?  // Accent color
-  loginBackgroundUrl String?  // Background image for login page
-  welcomeTitle       String?  // Custom welcome title (e.g., "Welcome to Acme")
-  welcomeSubtitle    String?  // Custom welcome subtitle/tagline
+  primaryColor       String  @default("#1E40AF") // Deep Blue - brand primary
+  secondaryColor     String? // Accent color
+  loginBackgroundUrl String? // Background image for login page
+  welcomeTitle       String? // Custom welcome title (e.g., "Welcome to Acme")
+  welcomeSubtitle    String? // Custom welcome subtitle/tagline
 
   // Settings
   timezone String @default("Asia/Qatar") // Hardcoded to Qatar timezone (UTC+3)
   currency String @default("QAR") // Primary currency always QAR
+
+  // Reference Code Prefix (auto-generated from org name, customizable by admin)
+  // Used for employee IDs, asset tags, purchase requests, etc.
+  codePrefix String @default("ORG")
+
+  // Custom code format patterns for different entity types
+  // JSON structure: { "employees": "{PREFIX}-{YYYY}-{SEQ:3}", "assets": "{PREFIX}-{TYPE}-{YYMM}-{SEQ:3}", ... }
+  codeFormats Json @default("{}")
 
   // Organization metadata (for super-admin tracking)
   industry      String? // Technology, Retail, Healthcare, etc.
@@ -351,6 +361,29 @@ model Organization {
   // Usage Limits (can be overridden from tier defaults)
   maxUsers  Int @default(5)
   maxAssets Int @default(50)
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // AUTHENTICATION CONFIGURATION (Super Admin only)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Allowed auth methods: ["credentials", "google", "azure-ad"]
+  // Empty array = all platform-enabled methods allowed (default)
+  allowedAuthMethods String[] @default([])
+
+  // Email domain restrictions (e.g., ["company.com", "subsidiary.com"])
+  // Empty array = any email domain allowed (default)
+  allowedEmailDomains String[] @default([])
+
+  // Whether to enforce domain restriction (block logins from other domains)
+  enforceDomainRestriction Boolean @default(false)
+
+  // Custom OAuth credentials (Enterprise feature - encrypted)
+  // These override platform-level OAuth apps when provided
+  customGoogleClientId     String?
+  customGoogleClientSecret String? // Encrypted at rest
+  customAzureClientId      String?
+  customAzureClientSecret  String? // Encrypted at rest
+  customAzureTenantId      String? // For Azure AD directory restriction
 
   // Core Relations
   members       OrganizationUser[]
@@ -1003,7 +1036,7 @@ model PurchaseRequest {
   id              String                  @id @default(cuid())
   tenantId        String
   tenant          Organization            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  referenceNumber String                  @unique // BCE-PR-YYMM-XXXX
+  referenceNumber String // {PREFIX}-PR-YYMM-XXXX (tenant-scoped unique)
   requestDate     DateTime                @default(now())
   status          PurchaseRequestStatus   @default(PENDING)
   priority        PurchaseRequestPriority @default(MEDIUM)
@@ -1061,6 +1094,7 @@ model PurchaseRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([tenantId, referenceNumber])
   @@index([requesterId])
   @@index([status])
   @@index([referenceNumber])
@@ -1195,7 +1229,7 @@ model LeaveRequest {
   id            String           @id @default(cuid())
   tenantId      String
   tenant        Organization     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  requestNumber String           @unique // Auto-generated LR-XXXXX
+  requestNumber String // {PREFIX}-LR-XXXXX (tenant-scoped unique)
   userId        String
   user          User             @relation("LeaveRequests", fields: [userId], references: [id], onDelete: Cascade)
   leaveTypeId   String
@@ -1223,6 +1257,10 @@ model LeaveRequest {
   cancelledAt        DateTime?
   cancellationReason String?
 
+  // On behalf of: track who submitted if different from user
+  createdById String?
+  createdBy   User?   @relation("LeaveRequestCreator", fields: [createdById], references: [id])
+
   // Emergency contact during leave
   emergencyContact String?
   emergencyPhone   String?
@@ -1232,6 +1270,7 @@ model LeaveRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([tenantId, requestNumber])
   @@index([userId])
   @@index([leaveTypeId])
   @@index([status])
@@ -1349,7 +1388,7 @@ model PayrollRun {
   id              String       @id @default(cuid())
   tenantId        String
   tenant          Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  referenceNumber String       @unique // PAY-YYYY-MM-XXX
+  referenceNumber String // {PREFIX}-PAY-YYYY-MM-XXX (tenant-scoped unique)
 
   // Period
   year        Int
@@ -1399,7 +1438,8 @@ model PayrollRun {
   payslips Payslip[]
   history  PayrollHistory[]
 
-  @@unique([year, month])
+  @@unique([tenantId, year, month])
+  @@unique([tenantId, referenceNumber])
   @@index([status])
   @@index([year, month])
   @@index([referenceNumber])
@@ -1430,7 +1470,7 @@ model Payslip {
   id            String       @id @default(cuid())
   tenantId      String
   tenant        Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  payslipNumber String       @unique // PS-YYYY-MM-XXXXX
+  payslipNumber String // {PREFIX}-PS-YYYY-MM-XXXXX (tenant-scoped unique)
 
   payrollRunId String
   payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
@@ -1472,6 +1512,7 @@ model Payslip {
   deductions PayslipDeduction[]
 
   @@unique([payrollRunId, userId])
+  @@unique([tenantId, payslipNumber])
   @@index([payrollRunId])
   @@index([userId])
   @@index([payslipNumber])
@@ -1502,7 +1543,7 @@ model EmployeeLoan {
   id         String       @id @default(cuid())
   tenantId   String
   tenant     Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  loanNumber String       @unique // LOAN-XXXXX
+  loanNumber String // {PREFIX}-LOAN-XXXXX (tenant-scoped unique)
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1543,6 +1584,7 @@ model EmployeeLoan {
 
   repayments LoanRepayment[]
 
+  @@unique([tenantId, loanNumber])
   @@index([userId])
   @@index([status])
   @@index([loanNumber])
@@ -1581,7 +1623,7 @@ model Project {
   id          String        @id @default(cuid())
   tenantId    String
   tenant      Organization  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  code        String        @unique // "PRJ-2025-0001" or custom like "MCITFN25"
+  code        String // {PREFIX}-PRJ-YYYY-XXXX (tenant-scoped unique)
   name        String
   description String?
   status      ProjectStatus @default(PLANNING)
@@ -1611,6 +1653,7 @@ model Project {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@unique([tenantId, code])
   @@index([status])
   @@index([code])
   @@index([managerId])
@@ -1626,7 +1669,7 @@ model AssetRequest {
   id            String             @id @default(cuid())
   tenantId      String
   tenant        Organization       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  requestNumber String             @unique // AR-XXXXX
+  requestNumber String // {PREFIX}-AR-YYMMDD-XXX (tenant-scoped unique)
   type          AssetRequestType
   status        AssetRequestStatus
 
@@ -1660,6 +1703,7 @@ model AssetRequest {
 
   history AssetRequestHistory[]
 
+  @@unique([tenantId, requestNumber])
   @@index([assetId])
   @@index([userId])
   @@index([status])

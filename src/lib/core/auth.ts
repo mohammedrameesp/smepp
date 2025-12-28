@@ -22,25 +22,15 @@ export interface OrganizationInfo {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DEV USERS (for development only)
+// SECURITY: Validate required environment variables
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const DEV_USERS: Record<string, { id: string; email: string; name: string; role: Role; password: string }> = {
-  'admin@test.local': {
-    id: 'dev-admin-001',
-    email: 'admin@test.local',
-    name: 'Dev Admin',
-    role: Role.ADMIN,
-    password: 'admin123',
-  },
-  'employee@test.local': {
-    id: 'dev-employee-001',
-    email: 'employee@test.local',
-    name: 'Dev Employee',
-    role: Role.EMPLOYEE,
-    password: 'employee123',
-  },
-};
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error(
+    'NEXTAUTH_SECRET environment variable is required. ' +
+    'Generate one with: openssl rand -base64 32'
+  );
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // BUILD PROVIDERS
@@ -95,31 +85,6 @@ providers.push(
 
       const email = credentials.email.toLowerCase().trim();
 
-      // Check for dev users first (development only)
-      if (process.env.DEV_AUTH_ENABLED === 'true') {
-        const devUser = DEV_USERS[email];
-        if (devUser && devUser.password === credentials.password) {
-          // Ensure dev user exists in database
-          const dbUser = await prisma.user.upsert({
-            where: { email: devUser.email },
-            update: { name: devUser.name, role: devUser.role },
-            create: {
-              id: devUser.id,
-              email: devUser.email,
-              name: devUser.name,
-              role: devUser.role,
-            },
-          });
-
-          return {
-            id: dbUser.id,
-            email: dbUser.email,
-            name: dbUser.name,
-            role: dbUser.role,
-          };
-        }
-      }
-
       // Look up user in database
       const user = await prisma.user.findUnique({
         where: { email },
@@ -129,11 +94,17 @@ providers.push(
           name: true,
           role: true,
           passwordHash: true,
+          canLogin: true,
         },
       });
 
       if (!user || !user.passwordHash) {
         return null;
+      }
+
+      // Block users who cannot login (non-login employees like drivers)
+      if (!user.canLogin) {
+        throw new Error('This account is not enabled for login');
       }
 
       // Verify password
@@ -165,7 +136,8 @@ providers.push(
         return null;
       }
 
-      const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret';
+      // NEXTAUTH_SECRET is validated at module load - guaranteed to exist
+      const JWT_SECRET = process.env.NEXTAUTH_SECRET!;
 
       try {
         // Verify the login token
@@ -271,9 +243,20 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       try {
+        // Map NextAuth provider ID to our auth method names
+        const providerToAuthMethod: Record<string, string> = {
+          'google': 'google',
+          'azure-ad': 'azure-ad',
+          'credentials': 'credentials',
+          'super-admin-credentials': 'credentials', // Allow super admins through
+        };
+
+        const authMethod = account?.provider ? providerToAuthMethod[account.provider] : null;
+
         // For OAuth providers, link accounts with same email if exists
-        if (account?.provider && account.provider !== 'credentials' && user.email) {
+        if (account?.provider && account.provider !== 'credentials' && account.provider !== 'super-admin-credentials' && user.email) {
           const normalizedEmail = user.email.toLowerCase().trim();
+          const emailDomain = normalizedEmail.split('@')[1];
           const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.toLowerCase().trim();
           const isSuperAdmin = superAdminEmail === normalizedEmail;
 
@@ -282,7 +265,55 @@ export const authOptions: NextAuthOptions = {
             include: { accounts: true },
           });
 
+          // Block users who cannot login (non-login employees like drivers)
+          if (existingUser && !existingUser.canLogin) {
+            console.log(`Login blocked for non-login user: ${normalizedEmail}`);
+            return false;
+          }
+
+          // Check auth restrictions for existing users with organizations
           if (existingUser) {
+            // Get user's organizations with auth config
+            const memberships = await prisma.organizationUser.findMany({
+              where: { userId: existingUser.id },
+              include: {
+                organization: {
+                  select: {
+                    id: true,
+                    name: true,
+                    allowedAuthMethods: true,
+                    allowedEmailDomains: true,
+                    enforceDomainRestriction: true,
+                  },
+                },
+              },
+            });
+
+            // Check if ALL user's organizations allow this auth method
+            // (If user belongs to orgs with restrictions, validate against them)
+            for (const membership of memberships) {
+              const org = membership.organization;
+
+              // Skip super admins - they can always login
+              if (isSuperAdmin) continue;
+
+              // Check auth method restriction
+              if (org.allowedAuthMethods.length > 0 && authMethod) {
+                if (!org.allowedAuthMethods.includes(authMethod)) {
+                  console.log(`Auth method ${authMethod} not allowed for org ${org.name}`);
+                  return '/login?error=AuthMethodNotAllowed';
+                }
+              }
+
+              // Check email domain restriction
+              if (org.enforceDomainRestriction && org.allowedEmailDomains.length > 0) {
+                if (!org.allowedEmailDomains.includes(emailDomain)) {
+                  console.log(`Email domain ${emailDomain} not allowed for org ${org.name}`);
+                  return '/login?error=DomainNotAllowed';
+                }
+              }
+            }
+
             // Check if this OAuth account is already linked
             const accountExists = existingUser.accounts.some(
               (acc) =>
@@ -315,6 +346,54 @@ export const authOptions: NextAuthOptions = {
                 where: { id: existingUser.id },
                 data: { isSuperAdmin: true },
               });
+            }
+          }
+        }
+
+        // For credentials login, also check auth restrictions
+        if (account?.provider === 'credentials' && user.email) {
+          const normalizedEmail = user.email.toLowerCase().trim();
+          const emailDomain = normalizedEmail.split('@')[1];
+
+          // Get user from DB to check org memberships
+          const dbUser = await prisma.user.findUnique({
+            where: { email: normalizedEmail },
+            select: { id: true, isSuperAdmin: true },
+          });
+
+          if (dbUser && !dbUser.isSuperAdmin) {
+            const memberships = await prisma.organizationUser.findMany({
+              where: { userId: dbUser.id },
+              include: {
+                organization: {
+                  select: {
+                    name: true,
+                    allowedAuthMethods: true,
+                    allowedEmailDomains: true,
+                    enforceDomainRestriction: true,
+                  },
+                },
+              },
+            });
+
+            for (const membership of memberships) {
+              const org = membership.organization;
+
+              // Check auth method restriction
+              if (org.allowedAuthMethods.length > 0) {
+                if (!org.allowedAuthMethods.includes('credentials')) {
+                  console.log(`Credentials auth not allowed for org ${org.name}`);
+                  return '/login?error=AuthMethodNotAllowed';
+                }
+              }
+
+              // Check email domain restriction
+              if (org.enforceDomainRestriction && org.allowedEmailDomains.length > 0) {
+                if (!org.allowedEmailDomains.includes(emailDomain)) {
+                  console.log(`Email domain ${emailDomain} not allowed for org ${org.name}`);
+                  return '/login?error=DomainNotAllowed';
+                }
+              }
             }
           }
         }
@@ -358,6 +437,15 @@ export const authOptions: NextAuthOptions = {
             token.orgRole = org.role;
             token.subscriptionTier = org.tier;
             token.enabledModules = org.enabledModules;
+          } else {
+            // Clear any stale organization data (e.g., if org was deleted)
+            token.organizationId = undefined;
+            token.organizationSlug = undefined;
+            token.organizationName = undefined;
+            token.organizationLogoUrl = undefined;
+            token.orgRole = undefined;
+            token.subscriptionTier = undefined;
+            token.enabledModules = undefined;
           }
         }
 
@@ -400,8 +488,8 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // Refresh organization info if missing
-        if (token.id && !token.organizationId) {
+        // Refresh organization info if missing (but don't override cleared values)
+        if (token.id && token.organizationId === undefined) {
           const org = await getUserOrganization(token.id as string);
           if (org) {
             token.organizationId = org.id;
@@ -412,6 +500,7 @@ export const authOptions: NextAuthOptions = {
             token.subscriptionTier = org.tier;
             token.enabledModules = org.enabledModules;
           }
+          // If still no org, values remain undefined (user has no organization)
         }
 
         return token;

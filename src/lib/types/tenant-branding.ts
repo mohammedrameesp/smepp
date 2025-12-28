@@ -4,6 +4,8 @@
  * Types for organization-specific branding on login pages.
  */
 
+export type AuthMethod = 'credentials' | 'google' | 'azure-ad';
+
 export interface TenantBranding {
   organizationId: string;
   organizationName: string;
@@ -14,6 +16,10 @@ export interface TenantBranding {
   loginBackgroundUrl: string | null;
   welcomeTitle: string | null;
   welcomeSubtitle: string | null;
+  // Authentication configuration
+  allowedAuthMethods: AuthMethod[];
+  allowedEmailDomains: string[];
+  enforceDomainRestriction: boolean;
 }
 
 export interface TenantBrandingResponse {
@@ -30,4 +36,7 @@ export const DEFAULT_TENANT_BRANDING: Partial<TenantBranding> = {
   secondaryColor: '#3B82F6', // Blue - brand accent
   welcomeTitle: 'Welcome back',
   welcomeSubtitle: 'Sign in to your account',
+  allowedAuthMethods: [], // Empty = all methods allowed
+  allowedEmailDomains: [], // Empty = all domains allowed
+  enforceDomainRestriction: false,
 };

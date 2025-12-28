@@ -35,11 +35,36 @@ function LoginForm() {
   const welcomeTitle = branding?.welcomeTitle || 'Welcome back';
   const welcomeSubtitle = branding?.welcomeSubtitle || 'Sign in to your account';
 
+  // Auth method restrictions - empty array means all methods allowed
+  const allowedMethods = branding?.allowedAuthMethods || [];
+  const showAllMethods = allowedMethods.length === 0;
+  const showGoogle = showAllMethods || allowedMethods.includes('google');
+  const showMicrosoft = showAllMethods || allowedMethods.includes('azure-ad');
+  const showCredentials = showAllMethods || allowedMethods.includes('credentials');
+  const showAnyOAuth = showGoogle || showMicrosoft;
+
+  // Domain restriction hint
+  const domainRestrictionHint = branding?.enforceDomainRestriction &&
+    branding?.allowedEmailDomains &&
+    branding.allowedEmailDomains.length > 0
+    ? `Only @${branding.allowedEmailDomains.join(', @')} emails allowed`
+    : null;
+
   useEffect(() => {
     // Check for message in URL (e.g., after signup)
     const msg = searchParams.get('message');
     if (msg) {
       setMessage(msg);
+    }
+
+    // Check for auth errors from NextAuth callback
+    const errorParam = searchParams.get('error');
+    if (errorParam === 'AuthMethodNotAllowed') {
+      setError('This login method is not allowed for your organization. Please use a different method.');
+    } else if (errorParam === 'DomainNotAllowed') {
+      setError('Your email domain is not allowed for this organization.');
+    } else if (errorParam === 'AccessDenied') {
+      setError('Access denied. Please contact your administrator.');
     }
 
     // Check if user is already logged in
@@ -136,11 +161,14 @@ function LoginForm() {
                 className="h-12 w-auto mx-auto mb-2"
               />
             ) : (
-              <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
-                {subdomain ? orgName : (
-                  <>SME<span className="text-blue-600">++</span></>
-                )}
-              </h1>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <img src="/sme-icon-shield-512.png" alt="SME++" className="h-10 w-10" />
+                <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
+                  {subdomain ? orgName : (
+                    <>SME<span className="text-blue-600">++</span></>
+                  )}
+                </h1>
+              </div>
             )}
             <p className="text-gray-600 dark:text-gray-400">
               {subdomain ? welcomeTitle : 'Operations, Upgraded'}
@@ -172,134 +200,154 @@ function LoginForm() {
               </Alert>
             )}
 
-            {/* OAuth Buttons */}
-            <div className="space-y-3 mb-6">
-              <Button
-                variant="outline"
-                className="w-full h-12"
-                onClick={() => handleOAuthSignIn('google')}
-                disabled={!!oauthLoading}
-              >
-                {oauthLoading === 'google' ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
-                    <path
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      fill="#4285F4"
-                    />
-                    <path
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      fill="#34A853"
-                    />
-                    <path
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                      fill="#FBBC05"
-                    />
-                    <path
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                      fill="#EA4335"
-                    />
-                  </svg>
-                )}
-                Continue with Google
-              </Button>
+            {/* Domain Restriction Hint */}
+            {domainRestrictionHint && (
+              <Alert className="mb-4 bg-blue-50 border-blue-200">
+                <AlertDescription className="text-blue-800 text-sm">
+                  {domainRestrictionHint}
+                </AlertDescription>
+              </Alert>
+            )}
 
-              <Button
-                variant="outline"
-                className="w-full h-12"
-                onClick={() => handleOAuthSignIn('azure-ad')}
-                disabled={!!oauthLoading}
-              >
-                {oauthLoading === 'azure-ad' ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <svg className="mr-2 h-5 w-5" viewBox="0 0 23 23">
-                    <path fill="#f3f3f3" d="M0 0h23v23H0z" />
-                    <path fill="#f35325" d="M1 1h10v10H1z" />
-                    <path fill="#81bc06" d="M12 1h10v10H12z" />
-                    <path fill="#05a6f0" d="M1 12h10v10H1z" />
-                    <path fill="#ffba08" d="M12 12h10v10H12z" />
-                  </svg>
-                )}
-                Continue with Microsoft
-              </Button>
-            </div>
-
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white dark:bg-gray-800 px-2 text-muted-foreground">
-                  Or continue with email
-                </span>
-              </div>
-            </div>
-
-            {/* Email/Password Form */}
-            <form onSubmit={handleCredentialsSignIn} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@company.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm hover:underline"
-                    style={{ color: primaryColor }}
+            {/* OAuth Buttons - Only show if allowed */}
+            {showAnyOAuth && (
+              <div className="space-y-3 mb-6">
+                {showGoogle && (
+                  <Button
+                    variant="outline"
+                    className="w-full h-12"
+                    onClick={() => handleOAuthSignIn('google')}
+                    disabled={!!oauthLoading}
                   >
-                    Forgot password?
-                  </Link>
+                    {oauthLoading === 'google' ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
+                        <path
+                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                          fill="#4285F4"
+                        />
+                        <path
+                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                          fill="#34A853"
+                        />
+                        <path
+                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                          fill="#FBBC05"
+                        />
+                        <path
+                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                          fill="#EA4335"
+                        />
+                      </svg>
+                    )}
+                    Continue with Google
+                  </Button>
+                )}
+
+                {showMicrosoft && (
+                  <Button
+                    variant="outline"
+                    className="w-full h-12"
+                    onClick={() => handleOAuthSignIn('azure-ad')}
+                    disabled={!!oauthLoading}
+                  >
+                    {oauthLoading === 'azure-ad' ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <svg className="mr-2 h-5 w-5" viewBox="0 0 23 23">
+                        <path fill="#f3f3f3" d="M0 0h23v23H0z" />
+                        <path fill="#f35325" d="M1 1h10v10H1z" />
+                        <path fill="#81bc06" d="M12 1h10v10H12z" />
+                        <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                        <path fill="#ffba08" d="M12 12h10v10H12z" />
+                      </svg>
+                    )}
+                    Continue with Microsoft
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Divider - only if both OAuth and credentials are shown */}
+            {showAnyOAuth && showCredentials && (
+              <div className="relative mb-6">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
                 </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                    required
-                    disabled={isLoading}
-                  />
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white dark:bg-gray-800 px-2 text-muted-foreground">
+                    Or continue with email
+                  </span>
                 </div>
               </div>
+            )}
 
-              <Button
-                type="submit"
-                className="w-full h-12 text-white shadow-lg"
-                style={{
-                  background: `linear-gradient(to right, ${primaryColor}, ${branding?.secondaryColor || primaryColor})`,
-                }}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign in'
-                )}
-              </Button>
-            </form>
+            {/* Email/Password Form - Only show if credentials allowed */}
+            {showCredentials && (
+              <form onSubmit={handleCredentialsSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="you@company.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    <Link
+                      href="/forgot-password"
+                      className="text-sm hover:underline"
+                      style={{ color: primaryColor }}
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full h-12 text-white shadow-lg"
+                  style={{
+                    background: `linear-gradient(to right, ${primaryColor}, ${branding?.secondaryColor || primaryColor})`,
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    'Sign in'
+                  )}
+                </Button>
+              </form>
+            )}
 
             {/* Dev Mode Notice */}
             {DEV_AUTH_ENABLED && (

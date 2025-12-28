@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { RESERVED_SUBDOMAINS } from '@/lib/multi-tenant/subdomain';
-import type { TenantBrandingResponse } from '@/lib/types/tenant-branding';
+import type { TenantBranding, TenantBrandingResponse } from '@/lib/types/tenant-branding';
 
 /**
  * GET /api/public/tenant-branding?subdomain=acme
@@ -43,6 +43,10 @@ export async function GET(request: NextRequest) {
         loginBackgroundUrl: true,
         welcomeTitle: true,
         welcomeSubtitle: true,
+        // Authentication configuration
+        allowedAuthMethods: true,
+        allowedEmailDomains: true,
+        enforceDomainRestriction: true,
       },
     });
 
@@ -65,6 +69,10 @@ export async function GET(request: NextRequest) {
         loginBackgroundUrl: org.loginBackgroundUrl,
         welcomeTitle: org.welcomeTitle,
         welcomeSubtitle: org.welcomeSubtitle,
+        // Authentication configuration
+        allowedAuthMethods: (org.allowedAuthMethods || []) as TenantBranding['allowedAuthMethods'],
+        allowedEmailDomains: org.allowedEmailDomains || [],
+        enforceDomainRestriction: org.enforceDomainRestriction || false,
       },
     });
   } catch (error) {
