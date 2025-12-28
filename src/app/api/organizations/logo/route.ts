@@ -93,8 +93,9 @@ export async function POST(request: NextRequest) {
       throw uploadError;
     }
 
-    // Get public URL
-    const logoUrl = await sbPublicUrl(path);
+    // Get public URL with cache-busting timestamp
+    const baseUrl = await sbPublicUrl(path);
+    const logoUrl = `${baseUrl}?v=${Date.now()}`;
     console.log('[Logo Upload] Public URL:', logoUrl);
 
     // Update organization
