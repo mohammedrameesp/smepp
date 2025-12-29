@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,11 +12,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toInputDateString } from '@/lib/date-format';
 import { createAssetSchema, type CreateAssetRequest } from '@/lib/validations/assets';
 import { AssetStatus, AcquisitionType } from '@prisma/client';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
 import { getQatarEndOfDay } from '@/lib/qatar-timezone';
+
+interface DepreciationCategory {
+  id: string;
+  name: string;
+  code: string;
+  annualRate: number;
+  usefulLifeYears: number;
+}
 
 export default function NewAssetPage() {
   const router = useRouter();
@@ -27,6 +36,7 @@ export default function NewAssetPage() {
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [users, setUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
+  const [depreciationCategories, setDepreciationCategories] = useState<DepreciationCategory[]>([]);
 
   const {
     register,
@@ -59,6 +69,8 @@ export default function NewAssetPage() {
       assignmentDate: '',
       notes: '',
       location: '',
+      isShared: false,
+      depreciationCategoryId: '',
     },
     mode: 'onChange',
   });
@@ -74,10 +86,13 @@ export default function NewAssetPage() {
   const watchedStatus = watch('status');
   const watchedAcquisitionType = watch('acquisitionType');
   const watchedAssignedUserId = watch('assignedUserId');
+  const watchedDepreciationCategoryId = watch('depreciationCategoryId');
+  const watchedIsShared = watch('isShared');
 
-  // Fetch users on mount
+  // Fetch users and depreciation categories on mount
   useEffect(() => {
     fetchUsers();
+    fetchDepreciationCategories();
   }, []);
 
   // Fetch asset type suggestions
@@ -169,23 +184,50 @@ export default function NewAssetPage() {
     }
   };
 
-  // Auto-fill warranty expiry when purchase date changes
-  useEffect(() => {
-    if (watchedPurchaseDate && !watchedWarrantyExpiry) {
-      const purchaseDate = new Date(watchedPurchaseDate);
-      const warrantyDate = new Date(purchaseDate);
-      warrantyDate.setFullYear(warrantyDate.getFullYear() + 1);
-      setValue('warrantyExpiry', toInputDateString(warrantyDate));
+  const fetchDepreciationCategories = async () => {
+    try {
+      const response = await fetch('/api/depreciation/categories');
+      if (response.ok) {
+        const data = await response.json();
+        setDepreciationCategories(data.categories || []);
+      }
+    } catch (error) {
+      console.error('Error fetching depreciation categories:', error);
     }
-  }, [watchedPurchaseDate, watchedWarrantyExpiry, setValue]);
+  };
 
-  // Clear assignment when status is not IN_USE
+  // Track previous purchase date to auto-fill warranty only when purchase date changes
+  const prevPurchaseDateRef = useRef<string | null>(null);
+
+  // Auto-fill warranty expiry only when purchase date is first set or changes
   useEffect(() => {
-    if (watchedStatus !== AssetStatus.IN_USE && watchedAssignedUserId) {
-      setValue('assignedUserId', '');
-      setValue('assignmentDate', '');
+    // Only auto-fill if purchase date changed (not when warranty is cleared)
+    if (watchedPurchaseDate && watchedPurchaseDate !== prevPurchaseDateRef.current) {
+      // Get current warranty value directly from form
+      const currentWarranty = getValues('warrantyExpiry');
+      // Only auto-fill if warranty is empty
+      if (!currentWarranty) {
+        const purchaseDate = new Date(watchedPurchaseDate);
+        const warrantyDate = new Date(purchaseDate);
+        warrantyDate.setFullYear(warrantyDate.getFullYear() + 1);
+        setValue('warrantyExpiry', toInputDateString(warrantyDate));
+      }
     }
-  }, [watchedStatus, watchedAssignedUserId, setValue]);
+    prevPurchaseDateRef.current = watchedPurchaseDate || null;
+  }, [watchedPurchaseDate, setValue, getValues]);
+
+  // Clear assignment and isShared when status is not IN_USE
+  useEffect(() => {
+    if (watchedStatus !== AssetStatus.IN_USE) {
+      if (watchedAssignedUserId) {
+        setValue('assignedUserId', '');
+        setValue('assignmentDate', '');
+      }
+      if (watchedIsShared) {
+        setValue('isShared', false);
+      }
+    }
+  }, [watchedStatus, watchedAssignedUserId, watchedIsShared, setValue]);
 
   const onSubmit = async (data: CreateAssetRequest) => {
     try {
@@ -211,7 +253,9 @@ export default function NewAssetPage() {
           price: price,
           priceQAR: priceInQAR,
           assetTag: data.assetTag || null,
-          assignmentDate: data.assignedUserId ? data.assignmentDate : null,
+          // Clear assignment for shared assets
+          assignedUserId: data.isShared ? null : data.assignedUserId,
+          assignmentDate: data.isShared ? null : (data.assignedUserId ? data.assignmentDate : null),
         }),
       });
 
@@ -520,6 +564,32 @@ export default function NewAssetPage() {
                     </p>
                   </div>
                 )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="depreciationCategoryId">
+                    Depreciation Category
+                    <span className="text-gray-500 text-sm ml-2">(Optional)</span>
+                  </Label>
+                  <Select
+                    value={watchedDepreciationCategoryId || '__none__'}
+                    onValueChange={(value) => setValue('depreciationCategoryId', value === '__none__' ? '' : value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select depreciation category..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">None</SelectItem>
+                      {depreciationCategories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name} ({cat.annualRate}% / {cat.usefulLifeYears} years)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500">
+                    Select a depreciation category to track asset value over time
+                  </p>
+                </div>
               </div>
 
               {/* Current Status Section */}
@@ -544,10 +614,36 @@ export default function NewAssetPage() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {watchedStatus === AssetStatus.IN_USE && (
+                  <div className="flex items-start space-x-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <Checkbox
+                      id="isShared"
+                      checked={watchedIsShared}
+                      onCheckedChange={(checked) => {
+                        setValue('isShared', !!checked);
+                        // Clear assignment when marking as shared
+                        if (checked) {
+                          setValue('assignedUserId', '');
+                          setValue('assignmentDate', '');
+                        }
+                      }}
+                    />
+                    <div className="space-y-1">
+                      <Label htmlFor="isShared" className="font-medium cursor-pointer">
+                        This is a shared/common resource
+                      </Label>
+                      <p className="text-xs text-gray-600">
+                        Check this for assets like printers, conference room equipment, or shared workstations
+                        that are not assigned to any specific person.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Assignment Section - Only show when status is IN_USE */}
-              {watchedStatus === AssetStatus.IN_USE && (
+              {/* Assignment Section - Only show when status is IN_USE and NOT shared */}
+              {watchedStatus === AssetStatus.IN_USE && !watchedIsShared && (
                 <div className="space-y-4 pt-4 border-t">
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">5. Assignment</h3>
                   <p className="text-xs text-gray-600">Who is using this asset?</p>
@@ -596,15 +692,22 @@ export default function NewAssetPage() {
 
               {/* Location Section */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">6. Location</h3>
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  {watchedIsShared ? '5. Location' : '6. Location'}
+                </h3>
                 <div className="space-y-2 relative">
-                  <Label htmlFor="location">Physical Location (optional)</Label>
+                  <Label htmlFor="location">
+                    Physical Location {watchedIsShared ? '(Recommended)' : '(Optional)'}
+                  </Label>
                   <Input
                     id="location"
                     {...register('location')}
                     onFocus={() => setShowLocationSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
-                    placeholder="E.g., Office 3rd Floor, Building A, Storage Room 201"
+                    placeholder={watchedIsShared
+                      ? "E.g., Reception, Conference Room A, IT Room"
+                      : "E.g., Office 3rd Floor, Building A, Storage Room 201"
+                    }
                     autoComplete="off"
                   />
                   {showLocationSuggestions && locationSuggestions.length > 0 && (
@@ -624,14 +727,19 @@ export default function NewAssetPage() {
                     </div>
                   )}
                   <p className="text-xs text-gray-500">
-                    Where is this asset physically located?
+                    {watchedIsShared
+                      ? "Where can people find this shared resource?"
+                      : "Where is this asset physically located?"
+                    }
                   </p>
                 </div>
               </div>
 
               {/* Notes Section */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">7. Notes / Remarks</h3>
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                  {watchedIsShared ? '6. Notes / Remarks' : '7. Notes / Remarks'}
+                </h3>
                 <div className="space-y-2">
                   <Label htmlFor="notes">Additional Notes (optional)</Label>
                   <textarea

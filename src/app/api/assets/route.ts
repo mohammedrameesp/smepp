@@ -155,6 +155,7 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
         transferNotes: data.transferNotes || null,
         notes: data.notes || null,
         location: data.location || null,
+        isShared: data.isShared || false,
         tenantId: session.user.organizationId,
         assignedUserId: data.assignedUserId || null,
       },

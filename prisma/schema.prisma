@@ -577,6 +577,7 @@ model Asset {
   // Additional fields
   notes    String? // General notes/remarks about the asset
   location String? // Physical location of the asset (Office, Building, Room, etc.)
+  isShared Boolean @default(false) // Shared/common resource (e.g., printer, conference room equipment)
 
   // Depreciation fields
   depreciationCategoryId  String?

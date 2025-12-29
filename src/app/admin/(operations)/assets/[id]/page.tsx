@@ -12,12 +12,13 @@ import { AssetCostBreakdown } from '@/components/domains/operations/assets/asset
 import { CloneAssetButton } from '@/components/domains/operations/assets/clone-asset-button';
 import { DeleteAssetButton } from '@/components/domains/operations/assets/delete-asset-button';
 import { AssetMaintenanceRecords } from '@/components/domains/operations/assets/asset-maintenance-records';
-import { DepreciationCard, DepreciationScheduleTable } from '@/components/domains/operations/assets';
+import { DepreciationCard } from '@/components/domains/operations/assets';
 import { AssetAssignDialog } from '@/components/domains/operations/asset-requests';
 import {
   Package,
   DollarSign,
   User,
+  Users,
   MapPin,
   FileText,
   Clock,
@@ -118,7 +119,7 @@ export default async function AssetDetailPage({ params }: Props) {
     <>
       <PageHeader
         title={asset.model}
-        subtitle={[asset.brand, asset.assetTag].filter(Boolean).join(' • ')}
+        subtitle={[asset.brand, asset.assetTag, asset.isShared ? 'Shared Resource' : null].filter(Boolean).join(' • ')}
         breadcrumbs={[
           { label: 'Assets', href: '/admin/assets' },
           { label: asset.model },
@@ -300,7 +301,6 @@ export default async function AssetDetailPage({ params }: Props) {
 
           {/* Depreciation */}
           <DepreciationCard assetId={asset.id} />
-          <DepreciationScheduleTable assetId={asset.id} />
 
           {/* Maintenance Records */}
           <AssetMaintenanceRecords assetId={asset.id} readOnly={true} />
@@ -314,13 +314,35 @@ export default async function AssetDetailPage({ params }: Props) {
           {/* Assignment Card */}
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                <User className="h-5 w-5 text-indigo-600" />
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                asset.isShared ? 'bg-blue-100' : 'bg-indigo-100'
+              }`}>
+                {asset.isShared ? (
+                  <Users className="h-5 w-5 text-blue-600" />
+                ) : (
+                  <User className="h-5 w-5 text-indigo-600" />
+                )}
               </div>
-              <h2 className="font-semibold text-slate-900">Assignment</h2>
+              <h2 className="font-semibold text-slate-900">
+                {asset.isShared ? 'Shared Resource' : 'Assignment'}
+              </h2>
             </div>
             <div className="p-5">
-              {asset.assignedUser ? (
+              {asset.isShared ? (
+                <div className="text-center py-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Users className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <p className="font-semibold text-slate-900 mb-1">Common/Shared Asset</p>
+                  <p className="text-slate-500 text-sm">This asset is shared among team members</p>
+                  {asset.location && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-xl">
+                      <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-1">Location</p>
+                      <p className="font-medium text-blue-800">{asset.location}</p>
+                    </div>
+                  )}
+                </div>
+              ) : asset.assignedUser ? (
                 <>
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
@@ -361,8 +383,8 @@ export default async function AssetDetailPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Location Card */}
-          {asset.location && (
+          {/* Location Card - Only show for non-shared assets since shared assets show location in the Shared Resource card */}
+          {asset.location && !asset.isShared && (
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
                 <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">

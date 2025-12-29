@@ -23,9 +23,11 @@ export const createAssetSchema = z.object({
   assignmentDate: z.string().optional().nullable().or(z.literal('')),
   notes: z.string().optional().nullable().or(z.literal('')),
   location: z.string().optional().nullable().or(z.literal('')),
+  isShared: z.boolean().default(false),
+  depreciationCategoryId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
 }).refine((data) => {
-  // If status is IN_USE, assignment must be provided
-  if (data.status === AssetStatus.IN_USE) {
+  // If status is IN_USE and NOT a shared asset, assignment must be provided
+  if (data.status === AssetStatus.IN_USE && !data.isShared) {
     if (!data.assignedUserId) {
       return false;
     }
@@ -35,7 +37,7 @@ export const createAssetSchema = z.object({
   }
   return true;
 }, {
-  message: 'Assignment and assignment date are required when status is "In Use"',
+  message: 'Assignment and assignment date are required when status is "In Use" (unless shared)',
   path: ['assignedUserId'],
 }).refine((data) => {
   // Assignment date must not be before purchase date
@@ -75,13 +77,15 @@ const baseAssetSchema = z.object({
   assignmentDate: z.string().optional().nullable().or(z.literal('')),
   notes: z.string().optional().nullable().or(z.literal('')),
   location: z.string().optional().nullable().or(z.literal('')),
+  isShared: z.boolean().optional(),
+  depreciationCategoryId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
 });
 
 export const updateAssetSchema = baseAssetSchema
   .partial()
   .refine((data) => {
-    // Only validate assignment if status is being set to IN_USE
-    if (data.status === AssetStatus.IN_USE) {
+    // Only validate assignment if status is being set to IN_USE and NOT shared
+    if (data.status === AssetStatus.IN_USE && !data.isShared) {
       if (!data.assignedUserId) {
         return false;
       }
@@ -91,7 +95,7 @@ export const updateAssetSchema = baseAssetSchema
     }
     return true;
   }, {
-    message: 'Assignment and assignment date are required when status is "In Use"',
+    message: 'Assignment and assignment date are required when status is "In Use" (unless shared)',
     path: ['assignedUserId'],
   })
   .refine((data) => {

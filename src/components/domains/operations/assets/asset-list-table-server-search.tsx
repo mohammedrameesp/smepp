@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { AssetActions } from './asset-actions';
 import { formatDate } from '@/lib/date-format';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Users, MapPin } from 'lucide-react';
 
 interface Asset {
   id: string;
@@ -26,6 +26,8 @@ interface Asset {
   serial: string | null;
   supplier: string | null;
   configuration: string | null;
+  isShared: boolean;
+  location: string | null;
   assignedUser: {
     id: string;
     name: string | null;
@@ -280,7 +282,20 @@ export function AssetListTableServerSearch() {
                   </TableCell>
                   <TableCell>{getStatusBadge(asset.status)}</TableCell>
                   <TableCell className="text-sm">
-                    {asset.assignedUser ? (
+                    {asset.isShared ? (
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                          <Users className="h-3 w-3 mr-1" />
+                          Shared
+                        </Badge>
+                        {asset.location && (
+                          <span className="text-gray-500 text-xs flex items-center gap-0.5">
+                            <MapPin className="h-3 w-3" />
+                            {asset.location}
+                          </span>
+                        )}
+                      </div>
+                    ) : asset.assignedUser ? (
                       <Link
                         href={`/admin/users/${asset.assignedUser.id}`}
                         className="text-gray-900 hover:text-gray-700 cursor-pointer font-medium"

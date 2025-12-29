@@ -31,6 +31,8 @@ const fieldLabels: Record<string, string> = {
   assignedUserId: 'Assigned User',
   assignmentDate: 'Assignment Date',
   notes: 'Notes',
+  location: 'Location',
+  isShared: 'Shared Resource',
 };
 
 export async function GET(
