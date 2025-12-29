@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { validateSlug, isSlugAvailable } from '@/lib/multi-tenant/subdomain';
 import { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/core/email';
+import { newOrganizationSignupEmail } from '@/lib/core/email-templates';
+import { seedDefaultPermissions } from '@/lib/access-control';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION
@@ -102,6 +104,11 @@ export async function POST(request: NextRequest) {
       return org;
     });
 
+    // Seed default permissions for the new organization (non-blocking)
+    seedDefaultPermissions(organization.id).catch((err) => {
+      console.error('[Signup] Failed to seed default permissions:', err);
+    });
+
     // Build organization-specific invite URL using subdomain
     const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
     const protocol = appDomain.includes('localhost') ? 'http' : 'https';
@@ -111,7 +118,7 @@ export async function POST(request: NextRequest) {
     // Send welcome email
     await sendEmail({
       to: adminEmail,
-      subject: `Welcome to SME++ - Your Organization "${name}" is Ready`,
+      subject: `Welcome to Durj - Your Organization "${name}" is Ready`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -127,7 +134,7 @@ export async function POST(request: NextRequest) {
           <!-- Header -->
           <tr>
             <td align="center" style="background-color: #2563eb; padding: 40px 40px 30px;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">SME<sup style="font-size: 16px;">++</sup></h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Durj</h1>
               <p style="color: #bfdbfe; margin: 8px 0 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Your Business, Simplified</p>
             </td>
           </tr>
@@ -142,7 +149,7 @@ export async function POST(request: NextRequest) {
               </p>
 
               <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
-                Thank you for choosing SME++! Your organization <strong style="color: #1e293b;">"${name}"</strong> has been created and is ready for you.
+                Thank you for choosing Durj! Your organization <strong style="color: #1e293b;">"${name}"</strong> has been created and is ready for you.
               </p>
 
               <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 30px; font-family: Arial, Helvetica, sans-serif;">
@@ -199,10 +206,10 @@ export async function POST(request: NextRequest) {
           <tr>
             <td style="background-color: #f8fafc; padding: 30px 40px; border-top: 1px solid #e2e8f0;">
               <p style="color: #64748b; font-size: 14px; line-height: 21px; margin: 0 0 10px; font-family: Arial, Helvetica, sans-serif;">
-                If you didn't sign up for SME++, you can safely ignore this email.
+                If you didn't sign up for Durj, you can safely ignore this email.
               </p>
               <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
-                © ${new Date().getFullYear()} SME++. All rights reserved.
+                © ${new Date().getFullYear()} Durj. All rights reserved.
               </p>
             </td>
           </tr>
@@ -215,7 +222,7 @@ export async function POST(request: NextRequest) {
       `,
       text: `${greeting},
 
-Thank you for choosing SME++! Your organization "${name}" has been created and is ready for you.
+Thank you for choosing Durj! Your organization "${name}" has been created and is ready for you.
 
 Complete your setup here: ${inviteUrl}
 
@@ -223,10 +230,34 @@ Your portal URL: ${slug}.${(process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:300
 
 Note: This link expires in 7 days.
 
-If you didn't sign up for SME++, you can safely ignore this email.
+If you didn't sign up for Durj, you can safely ignore this email.
 
-- The SME++ Team`,
+- The Durj Team`,
     });
+
+    // Send notification to super admin (non-blocking)
+    const superAdminEmail = process.env.SUPER_ADMIN_EMAIL;
+    if (superAdminEmail) {
+      const superAdminNotification = newOrganizationSignupEmail({
+        organizationName: name,
+        organizationSlug: slug,
+        adminEmail,
+        adminName,
+        industry,
+        companySize,
+        signupDate: new Date(),
+      });
+
+      // Fire and forget - don't block the response
+      sendEmail({
+        to: superAdminEmail,
+        subject: superAdminNotification.subject,
+        html: superAdminNotification.html,
+        text: superAdminNotification.text,
+      }).catch((err) => {
+        console.error('[Signup] Failed to send super admin notification:', err);
+      });
+    }
 
     return NextResponse.json(
       {

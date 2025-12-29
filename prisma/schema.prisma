@@ -160,6 +160,12 @@ enum OrgRole {
   MEMBER // Basic access
 }
 
+enum WhatsAppSource {
+  NONE // WhatsApp disabled
+  PLATFORM // Use platform-wide config
+  CUSTOM // Use tenant's own config
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // PROJECT MODULE ENUMS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -443,11 +449,16 @@ model Organization {
   chatConversations     ChatConversation[]
   aiChatUsage           AIChatUsage[]
 
+  // Access Control
+  rolePermissions RolePermission[]
+
   // WhatsApp integration
-  whatsAppConfig       WhatsAppConfig?
-  whatsAppUserPhones   WhatsAppUserPhone[]
-  whatsAppActionTokens WhatsAppActionToken[]
-  whatsAppMessageLogs  WhatsAppMessageLog[]
+  whatsAppSource          WhatsAppSource        @default(NONE) // NONE, PLATFORM, or CUSTOM
+  whatsAppPlatformEnabled Boolean               @default(false) // Super-admin controlled: can tenant use platform WhatsApp?
+  whatsAppConfig          WhatsAppConfig?
+  whatsAppUserPhones      WhatsAppUserPhone[]
+  whatsAppActionTokens    WhatsAppActionToken[]
+  whatsAppMessageLogs     WhatsAppMessageLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -493,6 +504,24 @@ model OrganizationInvitation {
   @@unique([organizationId, email])
   @@index([token])
   @@index([email])
+}
+
+// Custom role permissions per organization
+// OWNER and ADMIN have all permissions by default (not stored)
+// MANAGER and MEMBER get custom permissions stored here
+model RolePermission {
+  id         String       @id @default(cuid())
+  tenantId   String
+  tenant     Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role       OrgRole // MANAGER or MEMBER (OWNER/ADMIN have all by default)
+  permission String // e.g., "assets:view", "payroll:run"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, role, permission])
+  @@index([tenantId])
+  @@index([tenantId, role])
 }
 
 model OrganizationSetupProgress {
@@ -2016,8 +2045,23 @@ model WhatsAppMessageLog {
   errorMessage   String?
   entityType     String?
   entityId       String?
+  configSource   String? // 'PLATFORM' or 'CUSTOM' - which config was used
   createdAt      DateTime     @default(now())
 
   @@index([tenantId])
   @@index([messageId])
+}
+
+// Platform-wide WhatsApp configuration (Super Admin only)
+model PlatformWhatsAppConfig {
+  id                   String   @id @default(cuid())
+  phoneNumberId        String // Meta Phone Number ID
+  businessAccountId    String // WhatsApp Business Account ID
+  accessTokenEncrypted String // Encrypted permanent access token
+  webhookVerifyToken   String // For webhook verification
+  displayPhoneNumber   String? // Human-readable phone number for display
+  businessName         String? // Business name for branding
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }

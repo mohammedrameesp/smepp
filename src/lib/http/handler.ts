@@ -13,6 +13,8 @@ import {
 import { prisma } from '@/lib/core/prisma';
 import { hasModuleAccess, moduleNotInstalledResponse } from '@/lib/modules/access';
 import { MODULE_REGISTRY } from '@/lib/modules/registry';
+import { hasPermission as checkPermission } from '@/lib/access-control';
+import { OrgRole } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -34,6 +36,8 @@ export interface HandlerOptions {
   requireAdmin?: boolean;
   requireTenant?: boolean; // Require tenant context (default: true for auth routes)
   requireModule?: string; // Require a specific module to be installed (e.g., 'assets', 'payroll')
+  requirePermission?: string; // Require a specific permission (e.g., 'payroll:run', 'assets:edit')
+  requireOrgRole?: OrgRole[]; // Require one of these organization roles
   skipLogging?: boolean;
   rateLimit?: boolean;
 }
@@ -211,6 +215,104 @@ export function withErrorHandler(
           }
 
           return moduleNotInstalledResponse(moduleId, requestId);
+        }
+      }
+
+      // Organization role check
+      if (options.requireOrgRole && options.requireOrgRole.length > 0) {
+        if (!tenantContext?.orgRole || !options.requireOrgRole.includes(tenantContext.orgRole as OrgRole)) {
+          const response = NextResponse.json(
+            {
+              error: 'Insufficient role',
+              message: `This action requires one of the following roles: ${options.requireOrgRole.join(', ')}`,
+              requestId
+            },
+            { status: 403 }
+          );
+
+          if (!options.skipLogging) {
+            const session = await getServerSession(authOptions);
+            logRequest(
+              request.method,
+              request.url,
+              403,
+              Date.now() - startTime,
+              requestId,
+              session?.user.id,
+              session?.user.email
+            );
+          }
+
+          return response;
+        }
+      }
+
+      // Permission check
+      if (options.requirePermission) {
+        const session = await getServerSession(authOptions);
+
+        if (!tenantContext?.tenantId || !tenantContext?.orgRole) {
+          const response = NextResponse.json(
+            { error: 'Permission check requires organization context', requestId },
+            { status: 403 }
+          );
+
+          if (!options.skipLogging) {
+            logRequest(
+              request.method,
+              request.url,
+              403,
+              Date.now() - startTime,
+              requestId,
+              session?.user.id,
+              session?.user.email
+            );
+          }
+
+          return response;
+        }
+
+        // Fetch enabledModules for permission check
+        let enabledModules: string[] = [];
+        const org = await prisma.organization.findUnique({
+          where: { id: tenantContext.tenantId },
+          select: { enabledModules: true },
+        });
+        if (org) {
+          enabledModules = org.enabledModules || [];
+        }
+
+        const hasRequiredPermission = await checkPermission(
+          tenantContext.tenantId,
+          tenantContext.orgRole as OrgRole,
+          options.requirePermission,
+          enabledModules
+        );
+
+        if (!hasRequiredPermission) {
+          const response = NextResponse.json(
+            {
+              error: 'Permission denied',
+              message: `You do not have the required permission: ${options.requirePermission}`,
+              required: options.requirePermission,
+              requestId
+            },
+            { status: 403 }
+          );
+
+          if (!options.skipLogging) {
+            logRequest(
+              request.method,
+              request.url,
+              403,
+              Date.now() - startTime,
+              requestId,
+              session?.user.id,
+              session?.user.email
+            );
+          }
+
+          return response;
         }
       }
 
