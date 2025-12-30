@@ -125,7 +125,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       totalPages: Math.ceil(total / query.limit),
     },
   });
-}, { requireAuth: true });
+}, { requireAuth: true, requireModule: 'documents' });
 
 // POST /api/company-documents - Create a new document
 export const POST = withErrorHandler(async (request: NextRequest) => {
@@ -211,4 +211,4 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       expiryInfo: getDocumentExpiryInfo(document.expiryDate),
     },
   }, { status: 201 });
-}, { requireAdmin: true });
+}, { requireAdmin: true, requireModule: 'documents' });

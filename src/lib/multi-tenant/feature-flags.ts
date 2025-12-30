@@ -25,7 +25,7 @@ export interface TierConfig {
   features: string[];
 }
 
-// All modules available
+// All modules available (use hyphens for consistency)
 const ALL_MODULES = [
   'assets',
   'subscriptions',
@@ -33,10 +33,10 @@ const ALL_MODULES = [
   'employees',
   'leave',
   'payroll',
-  'purchase_requests',
+  'purchase-requests',
   'approvals',
   'projects',
-  'company_documents',
+  'documents',
 ];
 
 // All features available
@@ -129,8 +129,8 @@ export const MODULE_METADATA: Record<string, { name: string; description: string
   employees: { name: 'Employee Directory', description: 'Employee profiles and HR information', icon: 'Users' },
   leave: { name: 'Leave Management', description: 'Leave requests, balances, and approvals', icon: 'Calendar' },
   payroll: { name: 'Payroll Processing', description: 'Salary structures, payslips, and loans', icon: 'DollarSign' },
-  purchase_requests: { name: 'Purchase Requests', description: 'Internal procurement workflow', icon: 'ShoppingCart' },
+  'purchase-requests': { name: 'Purchase Requests', description: 'Internal procurement workflow', icon: 'ShoppingCart' },
   approvals: { name: 'Approval Workflows', description: 'Multi-level approval chains', icon: 'CheckSquare' },
   projects: { name: 'Project Management', description: 'Track projects and assign resources', icon: 'FolderKanban' },
-  company_documents: { name: 'Company Documents', description: 'Track licenses, certifications, and compliance', icon: 'FileCheck' },
+  documents: { name: 'Company Documents', description: 'Track licenses, certifications, and compliance', icon: 'FileCheck' },
 };

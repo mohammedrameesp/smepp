@@ -167,4 +167,4 @@ async function exportSubscriptionsHandler(request: NextRequest) {
     });
 }
 
-export const GET = withErrorHandler(exportSubscriptionsHandler, { requireAdmin: true, rateLimit: true });
+export const GET = withErrorHandler(exportSubscriptionsHandler, { requireAdmin: true, rateLimit: true, requireModule: 'subscriptions' });

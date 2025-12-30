@@ -105,4 +105,4 @@ async function exportAssetsHandler(_request: NextRequest) {
   });
 }
 
-export const GET = withErrorHandler(exportAssetsHandler, { requireAdmin: true, rateLimit: true });
+export const GET = withErrorHandler(exportAssetsHandler, { requireAdmin: true, rateLimit: true, requireModule: 'assets' });

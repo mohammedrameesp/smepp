@@ -24,7 +24,7 @@ export const GET = withErrorHandler(async (_request: NextRequest) => {
       _count: undefined,
     })),
   });
-}, { requireAuth: true });
+}, { requireAuth: true, requireModule: 'documents' });
 
 // POST /api/company-document-types - Create a new document type
 export const POST = withErrorHandler(async (request: NextRequest, context: APIContext) => {
@@ -55,4 +55,4 @@ export const POST = withErrorHandler(async (request: NextRequest, context: APICo
   });
 
   return NextResponse.json({ documentType }, { status: 201 });
-}, { requireAdmin: true });
+}, { requireAdmin: true, requireModule: 'documents' });

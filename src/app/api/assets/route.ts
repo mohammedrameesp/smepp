@@ -81,7 +81,7 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
   });
 }
 
-export const GET = withErrorHandler(getAssetsHandler, { requireAuth: true, rateLimit: true });
+export const GET = withErrorHandler(getAssetsHandler, { requireAuth: true, rateLimit: true, requireModule: 'assets' });
 
 async function createAssetHandler(request: NextRequest, context: APIContext) {
   const { prisma } = context;
@@ -197,4 +197,4 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
   }
 }
 
-export const POST = withErrorHandler(createAssetHandler, { requireAdmin: true, rateLimit: true });
+export const POST = withErrorHandler(createAssetHandler, { requireAdmin: true, rateLimit: true, requireModule: 'assets' });

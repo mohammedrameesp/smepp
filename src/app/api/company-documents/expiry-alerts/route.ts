@@ -66,4 +66,4 @@ export const GET = withErrorHandler(async (_request: NextRequest) => {
       expiring: expiring.length,
     },
   });
-}, { requireAuth: true });
+}, { requireAuth: true, requireModule: 'documents' });

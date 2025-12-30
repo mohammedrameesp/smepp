@@ -27,10 +27,10 @@ const ALL_MODULES = [
   'employees',
   'leave',
   'payroll',
-  'purchase_requests',
+  'purchase-requests',
   'approvals',
   'projects',
-  'company_documents',
+  'documents',
 ];
 
 export default function PricingPage() {

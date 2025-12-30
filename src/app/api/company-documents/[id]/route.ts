@@ -61,7 +61,7 @@ export const GET = withErrorHandler(async (
       expiryInfo: getDocumentExpiryInfo(document.expiryDate),
     },
   });
-}, { requireAuth: true });
+}, { requireAuth: true, requireModule: 'documents' });
 
 // PUT /api/company-documents/[id] - Update a document
 export const PUT = withErrorHandler(async (
@@ -169,7 +169,7 @@ export const PUT = withErrorHandler(async (
       expiryInfo: getDocumentExpiryInfo(document.expiryDate),
     },
   });
-}, { requireAdmin: true });
+}, { requireAdmin: true, requireModule: 'documents' });
 
 // DELETE /api/company-documents/[id] - Delete a document
 export const DELETE = withErrorHandler(async (
@@ -226,4 +226,4 @@ export const DELETE = withErrorHandler(async (
   );
 
   return NextResponse.json({ success: true });
-}, { requireAdmin: true });
+}, { requireAdmin: true, requireModule: 'documents' });

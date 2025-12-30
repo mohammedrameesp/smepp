@@ -45,7 +45,7 @@ export const GET = withErrorHandler(async (
       _count: undefined,
     },
   });
-}, { requireAuth: true });
+}, { requireAuth: true, requireModule: 'documents' });
 
 // PUT /api/company-document-types/[id] - Update a document type
 export const PUT = withErrorHandler(async (
@@ -97,7 +97,7 @@ export const PUT = withErrorHandler(async (
   });
 
   return NextResponse.json({ documentType });
-}, { requireAdmin: true });
+}, { requireAdmin: true, requireModule: 'documents' });
 
 // DELETE /api/company-document-types/[id] - Delete a document type
 export const DELETE = withErrorHandler(async (
@@ -148,4 +148,4 @@ export const DELETE = withErrorHandler(async (
   });
 
   return NextResponse.json({ success: true });
-}, { requireAdmin: true });
+}, { requireAdmin: true, requireModule: 'documents' });
