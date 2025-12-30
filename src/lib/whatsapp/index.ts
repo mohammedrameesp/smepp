@@ -37,6 +37,16 @@ export {
   verifyUserWhatsAppPhone,
   encrypt,
   decrypt,
+  // Platform config
+  getPlatformWhatsAppConfig,
+  savePlatformWhatsAppConfig,
+  disablePlatformWhatsApp,
+  getPlatformWhatsAppConfigForDisplay,
+  // Hybrid config resolution
+  getEffectiveWhatsAppConfig,
+  updateTenantWhatsAppSource,
+  setTenantPlatformWhatsAppAccess,
+  getTenantWhatsAppStatus,
 } from './config';
 
 // Client

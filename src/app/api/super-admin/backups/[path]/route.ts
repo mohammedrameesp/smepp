@@ -6,6 +6,60 @@ import logger from '@/lib/log';
 
 const BACKUP_BUCKET = 'database-backups';
 
+/**
+ * SECURITY: Validate and sanitize backup file path to prevent path traversal
+ * @param path - The path to validate
+ * @returns Validated path or null if invalid
+ */
+function validateBackupPath(path: string): string | null {
+  // Reject empty paths
+  if (!path || path.trim() === '') {
+    return null;
+  }
+
+  // SECURITY: Reject path traversal attempts
+  if (path.includes('..')) {
+    logger.warn({ path }, 'Path traversal attempt detected in backup path');
+    return null;
+  }
+
+  // SECURITY: Reject absolute paths
+  if (path.startsWith('/')) {
+    logger.warn({ path }, 'Absolute path rejected in backup path');
+    return null;
+  }
+
+  // SECURITY: Reject null bytes
+  if (path.includes('\0')) {
+    logger.warn({ path }, 'Null byte detected in backup path');
+    return null;
+  }
+
+  // SECURITY: Only allow safe characters
+  // Backup paths should be like: "platform/YYYY-MM-DD/backup.json" or "tenant-slug/YYYY-MM-DD/backup.json"
+  const safePathPattern = /^[a-zA-Z0-9\-_./]+$/;
+  if (!safePathPattern.test(path)) {
+    logger.warn({ path }, 'Invalid characters in backup path');
+    return null;
+  }
+
+  // SECURITY: Prevent double slashes
+  if (path.includes('//')) {
+    logger.warn({ path }, 'Double slashes rejected in backup path');
+    return null;
+  }
+
+  // SECURITY: Validate it looks like a backup file
+  // Expected patterns: platform/YYYY-MM-DD/backup.json or {org-slug}/YYYY-MM-DD/backup.json
+  const backupFilePattern = /^[a-zA-Z0-9-]+\/\d{4}-\d{2}-\d{2}\/backup\.json$/;
+  if (!backupFilePattern.test(path)) {
+    logger.warn({ path }, 'Path does not match expected backup file pattern');
+    return null;
+  }
+
+  return path;
+}
+
 function getSupabaseClient() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -29,7 +83,13 @@ export async function GET(
 
   try {
     const { path: encodedPath } = await params;
-    const filePath = decodeURIComponent(encodedPath);
+    const decodedPath = decodeURIComponent(encodedPath);
+
+    // SECURITY: Validate path after decoding to prevent path traversal
+    const filePath = validateBackupPath(decodedPath);
+    if (!filePath) {
+      return NextResponse.json({ error: 'Invalid backup path' }, { status: 400 });
+    }
 
     const supabase = getSupabaseClient();
 
@@ -73,7 +133,13 @@ export async function DELETE(
 
   try {
     const { path: encodedPath } = await params;
-    const filePath = decodeURIComponent(encodedPath);
+    const decodedPath = decodeURIComponent(encodedPath);
+
+    // SECURITY: Validate path after decoding to prevent path traversal
+    const filePath = validateBackupPath(decodedPath);
+    if (!filePath) {
+      return NextResponse.json({ error: 'Invalid backup path' }, { status: 400 });
+    }
 
     const supabase = getSupabaseClient();
 

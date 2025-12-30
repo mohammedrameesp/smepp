@@ -69,7 +69,7 @@ export async function POST(
     // Send invitation email (email-client safe styling)
     const emailResult = await sendEmail({
       to: invitation.email,
-      subject: `Reminder: You're invited to join ${orgName} on SME++`,
+      subject: `Reminder: You're invited to join ${orgName} on Durj`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -85,7 +85,7 @@ export async function POST(
           <!-- Header -->
           <tr>
             <td align="center" style="background-color: #2563eb; padding: 40px 40px 30px;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">SME++</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Durj</h1>
               <p style="color: #bfdbfe; margin: 8px 0 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Business Management Platform</p>
             </td>
           </tr>
@@ -100,7 +100,7 @@ export async function POST(
               </p>
 
               <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
-                This is a reminder that you've been invited to join <strong style="color: #1e293b;">"${orgName}"</strong> on SME++.
+                This is a reminder that you've been invited to join <strong style="color: #1e293b;">"${orgName}"</strong> on Durj.
               </p>
 
               <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 30px; font-family: Arial, Helvetica, sans-serif;">
@@ -150,7 +150,7 @@ export async function POST(
                 If you did not expect this invitation, you can safely ignore this email.
               </p>
               <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
-                © ${new Date().getFullYear()} SME++. All rights reserved.
+                © ${new Date().getFullYear()} Durj. All rights reserved.
               </p>
             </td>
           </tr>
@@ -163,7 +163,7 @@ export async function POST(
       `,
       text: `${greeting},
 
-This is a reminder that you've been invited to join "${orgName}" on SME++.
+This is a reminder that you've been invited to join "${orgName}" on Durj.
 
 Accept your invitation: ${inviteUrl}
 
@@ -171,7 +171,7 @@ Note: This invitation will expire in 7 days.
 
 If you did not expect this invitation, you can safely ignore this email.
 
-- The SME++ Team`,
+- The Durj Team`,
     });
 
     return NextResponse.json({

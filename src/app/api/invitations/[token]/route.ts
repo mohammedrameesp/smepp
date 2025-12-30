@@ -21,7 +21,14 @@ export async function GET(
           select: {
             id: true,
             name: true,
+            slug: true,
             logoUrl: true,
+            // Auth config for SSO on signup
+            customGoogleClientId: true,
+            customGoogleClientSecret: true,
+            customAzureClientId: true,
+            customAzureClientSecret: true,
+            allowedAuthMethods: true,
           },
         },
       },
@@ -48,14 +55,39 @@ export async function GET(
       );
     }
 
+    // Check if OAuth is properly configured (both client ID and secret exist)
+    const hasCustomGoogleOAuth = !!(
+      invitation.organization.customGoogleClientId &&
+      invitation.organization.customGoogleClientSecret
+    );
+    const hasCustomAzureOAuth = !!(
+      invitation.organization.customAzureClientId &&
+      invitation.organization.customAzureClientSecret
+    );
+
+    // Check if auth methods are allowed (empty array = all allowed)
+    const allowedMethods = invitation.organization.allowedAuthMethods || [];
+    const isGoogleAllowed = allowedMethods.length === 0 || allowedMethods.includes('google');
+    const isAzureAllowed = allowedMethods.length === 0 || allowedMethods.includes('azure-ad');
+
     return NextResponse.json({
       invitation: {
         id: invitation.id,
         email: invitation.email,
         name: invitation.name,
         role: invitation.role,
-        organization: invitation.organization,
+        organization: {
+          id: invitation.organization.id,
+          name: invitation.organization.name,
+          slug: invitation.organization.slug,
+          logoUrl: invitation.organization.logoUrl,
+        },
         expiresAt: invitation.expiresAt,
+        // Auth config for signup page (don't expose secrets)
+        authConfig: {
+          hasCustomGoogleOAuth: hasCustomGoogleOAuth && isGoogleAllowed,
+          hasCustomAzureOAuth: hasCustomAzureOAuth && isAzureAllowed,
+        },
       },
     });
   } catch (error) {

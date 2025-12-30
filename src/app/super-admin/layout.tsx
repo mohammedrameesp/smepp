@@ -127,7 +127,7 @@ function LoginForm() {
         <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl" />
         <div className="relative z-10 flex flex-col justify-between h-full">
           <div className="flex items-center gap-3">
-            <img src="/sme-wordmark-white.png" alt="SME++" className="h-10 w-auto" />
+            <img src="/sme-wordmark-white.png" alt="Durj" className="h-10 w-auto" />
           </div>
           <div className="space-y-8">
             <div>
@@ -150,7 +150,7 @@ function LoginForm() {
               </div>
             </div>
           </div>
-          <p className="text-slate-600 text-sm">&copy; {new Date().getFullYear()} SME<sup className="text-xs">++</sup> Platform</p>
+          <p className="text-slate-600 text-sm">&copy; {new Date().getFullYear()} Durj Platform</p>
         </div>
       </div>
 
@@ -158,8 +158,8 @@ function LoginForm() {
         <div className="w-full max-w-sm">
           <div className="lg:hidden text-center mb-10">
             <div className="flex items-center justify-center gap-2">
-              <img src="/sme-icon-shield-512.png" alt="SME++" className="h-10 w-10" />
-              <span className="text-slate-900 font-bold text-2xl">SME++</span>
+              <img src="/sme-icon-shield-512.png" alt="Durj" className="h-10 w-10" />
+              <span className="text-slate-900 font-bold text-2xl">Durj</span>
             </div>
             <p className="text-slate-500 text-sm mt-2">Admin Console</p>
           </div>
@@ -285,8 +285,8 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
       <aside className="w-56 bg-slate-900 text-white flex flex-col fixed h-full">
         <div className="p-5 border-b border-slate-700">
           <div className="flex items-center gap-2">
-            <img src="/sme-icon-shield-512.png" alt="SME++" className="h-8 w-8" />
-            <span className="font-semibold">SME++ Admin</span>
+            <img src="/sme-icon-shield-512.png" alt="Durj" className="h-8 w-8" />
+            <span className="font-semibold">Durj Admin</span>
           </div>
         </div>
         <nav className="flex-1 py-4">

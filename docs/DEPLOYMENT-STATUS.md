@@ -1,4 +1,4 @@
-# SME++ Deployment Status
+# Durj Deployment Status
 
 **Last Updated:** December 24, 2024
 
@@ -7,9 +7,9 @@
 ## Completed
 
 ### Infrastructure Setup
-- [x] GitHub repository created: https://github.com/mohammedrameesp/smepp
+- [x] GitHub repository created: https://github.com/mohammedrameesp/durj
 - [x] Supabase project configured (ap-southeast-1 region)
-- [x] Vercel project deployed: https://smepp.vercel.app
+- [x] Vercel project deployed: https://durj.vercel.app
 - [x] Database connection working (session pooler, port 5432)
 
 ### Environment Configuration
@@ -73,7 +73,7 @@
 - [ ] Check Resend dashboard → Logs for any sent emails
 
 ### 2. Test Full Invitation Flow
-1. [ ] Login as super admin at https://smepp.vercel.app
+1. [ ] Login as super admin at https://durj.vercel.app
 2. [ ] Create a new organization
 3. [ ] Invite a user with a real email address
 4. [ ] Verify invitation email arrives (check spam folder)
@@ -111,7 +111,7 @@ All environment variables are configured in Vercel dashboard. See `.env.example`
 
 ```bash
 # Check deployment logs
-vercel logs smepp.vercel.app
+vercel logs durj.vercel.app
 
 # Redeploy
 vercel --prod
@@ -124,8 +124,8 @@ node -e "const { PrismaClient } = require('@prisma/client'); new PrismaClient().
 
 ## Contacts & Resources
 
-- **GitHub:** https://github.com/mohammedrameesp/smepp
-- **Vercel:** https://smepp.vercel.app
+- **GitHub:** https://github.com/mohammedrameesp/durj
+- **Vercel:** https://durj.vercel.app
 - **Supabase:** ap-southeast-1 region
 - **Resend Domain:** quriosityhub.com
 - **Super Admin:** mohammedramees@outlook.in

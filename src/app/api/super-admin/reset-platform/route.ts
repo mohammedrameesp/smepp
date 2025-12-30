@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { requireRecent2FA } from '@/lib/two-factor';
 
 /**
  * POST /api/super-admin/reset-platform
@@ -16,6 +17,11 @@ export async function POST() {
     if (!session?.user?.isSuperAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    // SECURITY: Require recent 2FA verification for platform reset
+    // This is a destructive operation that requires highest level of verification
+    const require2FAResult = await requireRecent2FA(session.user.id);
+    if (require2FAResult) return require2FAResult;
 
     console.log('🚨 PLATFORM RESET INITIATED BY SUPER ADMIN:', session.user.email);
 

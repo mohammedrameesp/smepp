@@ -1,8 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { requireRecent2FA } from '@/lib/two-factor';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Require super admin authentication
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.isSuperAdmin) {
+      return NextResponse.json({ error: 'Super admin access required' }, { status: 403 });
+    }
+
+    // SECURITY: Require recent 2FA verification for data import
+    const require2FAResult = await requireRecent2FA(session.user.id);
+    if (require2FAResult) return require2FAResult;
+
     const backupData = await request.json();
 
     console.log('Starting import for Be Creative organization...');
@@ -29,6 +42,23 @@ export async function POST(request: Request) {
     }
 
     console.log(`Found organization: ${org.name} (${org.id})`);
+
+    // AUDIT: Log import operation for security tracking
+    console.log('[AUDIT] Data import initiated:', JSON.stringify({
+      event: 'IMPORT_DATA_START',
+      timestamp: new Date().toISOString(),
+      superAdmin: {
+        id: session.user.id,
+        email: session.user.email,
+      },
+      targetOrganization: {
+        id: org.id,
+        name: org.name,
+        slug: org.slug,
+      },
+      backupMetadata: backupData._metadata,
+    }));
+
     const tenantId = org.id;
 
     const results = {

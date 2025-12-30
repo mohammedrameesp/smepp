@@ -29,7 +29,7 @@ function getDailyQuote() {
 export function TenantBrandedPanel({ branding, isLoading, variant }: TenantBrandedPanelProps) {
   const quote = getDailyQuote();
 
-  // Super admin panel - fixed SME++ branding (main domain)
+  // Super admin panel - fixed Durj branding (main domain)
   if (variant === 'super-admin') {
     return (
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
@@ -43,9 +43,9 @@ export function TenantBrandedPanel({ branding, isLoading, variant }: TenantBrand
           {/* Center content - Logo and welcome */}
           <div>
             <div className="flex items-center gap-3 mb-8">
-              <img src="/sme-icon-shield-512.png" alt="SME++" className="h-12 w-12" />
+              <img src="/sme-icon-shield-512.png" alt="Durj" className="h-12 w-12" />
               <span className="text-3xl font-bold text-white">
-                SME<span className="text-blue-400">++</span>
+                Durj
               </span>
             </div>
 
@@ -83,7 +83,7 @@ export function TenantBrandedPanel({ branding, isLoading, variant }: TenantBrand
   const backgroundImage = branding?.loginBackgroundUrl;
   const welcomeTitle = branding?.welcomeTitle || 'Welcome back';
   const welcomeSubtitle = branding?.welcomeSubtitle || 'Sign in to access your workspace';
-  const orgName = branding?.organizationName || 'SME++';
+  const orgName = branding?.organizationName || 'Durj';
   const logoUrl = branding?.logoUrl;
 
   const backgroundStyle = backgroundImage

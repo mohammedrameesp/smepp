@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**SME++** (Small & Medium Enterprise Plus Plus) is a multi-tenant SaaS platform for business management, targeting small and medium businesses. It provides comprehensive asset management, HR, operations, and project management capabilities.
+**Durj** is a multi-tenant SaaS platform for business management, targeting small and medium businesses. It provides comprehensive asset management, HR, operations, and project management capabilities.
 
 **Key Differentiators from internal tools:**
 - Multi-tenant architecture with tenant isolation
@@ -55,7 +55,7 @@ Tests live in `tests/` directory (not alongside source files):
 
 ### Tenant Model
 
-Every business using SME++ is an **Organization** (tenant). Data is isolated using a `tenantId` column on all business entities.
+Every business using Durj is an **Organization** (tenant). Data is isolated using a `tenantId` column on all business entities.
 
 ```prisma
 model Organization {
@@ -89,7 +89,7 @@ Feature flags: `src/lib/multi-tenant/feature-flags.ts`
 
 ### Subdomain Routing
 
-Each organization gets a subdomain: `{org-slug}.smepp.com` (or `{org-slug}.localhost` in dev).
+Each organization gets a subdomain: `{org-slug}.durj.com` (or `{org-slug}.localhost` in dev).
 
 The middleware (`src/middleware.ts`) handles:
 1. Subdomain extraction and validation

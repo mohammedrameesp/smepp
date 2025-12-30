@@ -21,6 +21,7 @@ import type { MetaWebhookPayload, ApprovalEntityType } from '@/lib/whatsapp';
  *
  * Webhook verification endpoint called by Meta when configuring the webhook.
  * Returns the challenge token if verify_token matches.
+ * Supports both platform-wide and tenant-specific configurations.
  */
 export async function GET(request: NextRequest): Promise<Response> {
   const searchParams = request.nextUrl.searchParams;
@@ -32,12 +33,21 @@ export async function GET(request: NextRequest): Promise<Response> {
     return new Response('Missing parameters', { status: 400 });
   }
 
-  // Find any config with this verify token
-  const config = await prisma.whatsAppConfig.findFirst({
+  // Check platform config first
+  const platformConfig = await prisma.platformWhatsAppConfig.findFirst({
     where: { webhookVerifyToken: token },
   });
 
-  if (!config) {
+  if (platformConfig) {
+    return new Response(challenge, { status: 200 });
+  }
+
+  // Then check tenant configs
+  const tenantConfig = await prisma.whatsAppConfig.findFirst({
+    where: { webhookVerifyToken: token },
+  });
+
+  if (!tenantConfig) {
     return new Response('Invalid verify token', { status: 403 });
   }
 

@@ -25,6 +25,31 @@ const nextConfig: NextConfig = {
   },
   // Security headers
   async headers() {
+    // Build CSP directives
+    const cspDirectives = [
+      "default-src 'self'",
+      // Scripts: self + inline for Next.js + eval for dev
+      process.env.NODE_ENV === 'development'
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+        : "script-src 'self' 'unsafe-inline'", // unsafe-inline needed for Next.js
+      // Styles: self + inline for styled-components/emotion
+      "style-src 'self' 'unsafe-inline'",
+      // Images: self + Supabase + data URIs + blob
+      "img-src 'self' data: blob: https://*.supabase.co",
+      // Fonts: self + Google Fonts
+      "font-src 'self' data: https://fonts.gstatic.com",
+      // Connect: self + Supabase + Sentry + Upstash
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://*.upstash.io",
+      // Frames: deny embedding
+      "frame-ancestors 'none'",
+      // Forms: self only
+      "form-action 'self'",
+      // Base URI: self only
+      "base-uri 'self'",
+      // Block mixed content
+      "upgrade-insecure-requests",
+    ];
+
     return [
       {
         source: '/(.*)',
@@ -52,6 +77,14 @@ const nextConfig: NextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: cspDirectives.join('; '),
           },
         ],
       },

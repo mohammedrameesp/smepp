@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -110,7 +111,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
       router.push('/employee/asset-requests');
       router.refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to cancel request');
+      toast.error(err instanceof Error ? err.message : 'Failed to cancel request');
     } finally {
       setIsCancelling(false);
     }

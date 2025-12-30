@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { requireRecent2FA } from '@/lib/two-factor';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DELETE /api/super-admin/admins/[id] - Remove super admin privileges
@@ -16,6 +17,11 @@ export async function DELETE(
     if (!session?.user?.isSuperAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    // SECURITY: Require recent 2FA verification for super admin removal
+    // Demoting super admins is a high-privilege operation
+    const require2FAResult = await requireRecent2FA(session.user.id);
+    if (require2FAResult) return require2FAResult;
 
     const { id } = await params;
 

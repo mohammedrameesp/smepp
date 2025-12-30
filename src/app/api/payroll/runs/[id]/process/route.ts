@@ -8,7 +8,9 @@ import {
   generatePayslipNumber,
   parseDecimal,
   calculateDailySalary,
-  toFixed2
+  toFixed2,
+  subtractMoney,
+  addMoney
 } from '@/lib/payroll/utils';
 import { calculateUnpaidLeaveDeductions } from '@/lib/payroll/leave-deduction';
 
@@ -62,20 +64,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }, { status: 400 });
     }
 
-    // Check if payslips already exist
-    const existingPayslips = await prisma.payslip.count({
-      where: { payrollRunId: id },
-    });
-
-    if (existingPayslips > 0) {
-      return NextResponse.json({
-        error: 'Payslips already generated for this payroll run',
-      }, { status: 400 });
-    }
+    // FIN-005: Moved payslip existence check inside transaction to prevent race conditions
+    // The check is now done inside the transaction with a lock
 
     // Get all active salary structures for employees only
+    // SECURITY: Filter by tenantId to prevent cross-tenant payroll processing
     const salaryStructures = await prisma.salaryStructure.findMany({
       where: {
+        tenantId, // CRITICAL: Tenant isolation
         isActive: true,
         user: {
           isEmployee: true, // Only process payroll for users marked as employees
@@ -105,10 +101,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get active loans for deductions (wrapped in try-catch)
+    // SECURITY: Filter by tenantId to prevent cross-tenant loan access
     let activeLoans: Awaited<ReturnType<typeof prisma.employeeLoan.findMany>> = [];
     try {
       activeLoans = await prisma.employeeLoan.findMany({
         where: {
+          tenantId, // CRITICAL: Tenant isolation
           status: LoanStatus.ACTIVE,
           // Only include loans that have started by the payroll period end date
           startDate: { lte: payrollRun.periodEnd },
@@ -148,6 +146,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Process payroll in transaction (with extended timeout for large payrolls)
     const result = await prisma.$transaction(async (tx) => {
+      // FIN-005: Check for existing payslips INSIDE transaction with lock
+      // This prevents race conditions when multiple users click "Process" simultaneously
+      const existingPayslips = await tx.payslip.count({
+        where: { payrollRunId: id },
+      });
+
+      if (existingPayslips > 0) {
+        throw new Error('PAYSLIPS_ALREADY_EXIST');
+      }
+
       let totalGross = 0;
       let totalDeductions = 0;
       const createdPayslips = [];
@@ -173,7 +181,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             salary.userId,
             payrollRun.year,
             payrollRun.month,
-            dailyRate
+            dailyRate,
+            tenantId
           );
         } catch (leaveError) {
           console.error('Leave deduction calculation error:', leaveError);
@@ -206,8 +215,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           }
         }
 
-        const totalDeductionsForEmployee = deductionItems.reduce((sum, d) => sum + d.amount, 0);
-        const netSalary = toFixed2(grossSalary - totalDeductionsForEmployee);
+        // FIN-003: Use precise addition for deduction totals
+        const totalDeductionsForEmployee = addMoney(...deductionItems.map(d => d.amount));
+
+        // FIN-004: Validate net salary is not negative
+        // Cap deductions at gross salary to prevent negative net
+        const cappedDeductions = Math.min(totalDeductionsForEmployee, grossSalary);
+        if (totalDeductionsForEmployee > grossSalary) {
+          console.warn(
+            `[Payroll] Deductions (${totalDeductionsForEmployee}) exceed gross salary (${grossSalary}) for user ${salary.userId}. Capping at gross.`
+          );
+        }
+
+        // FIN-003: Use precise subtraction for net salary
+        const netSalary = subtractMoney(grossSalary, cappedDeductions);
 
         // Create payslip
         const payslipNumber = generatePayslipNumber(
@@ -229,7 +250,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             otherAllowances: parseDecimal(salary.otherAllowances),
             otherAllowancesDetails: salary.otherAllowancesDetails,
             grossSalary,
-            totalDeductions: totalDeductionsForEmployee,
+            totalDeductions: cappedDeductions, // FIN-004: Use capped deductions
             netSalary,
             bankName: salary.user.hrProfile?.bankName,
             iban: salary.user.hrProfile?.iban,
@@ -255,8 +276,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           if (deduction.type === DeductionType.LOAN_REPAYMENT && deduction.loanId) {
             const loan = userLoans.find(l => l.id === deduction.loanId);
             if (loan) {
-              const newTotalPaid = parseDecimal(loan.totalPaid) + deduction.amount;
-              const newRemaining = parseDecimal(loan.remainingAmount) - deduction.amount;
+              // FIN-003: Use precise math for loan calculations
+              const newTotalPaid = addMoney(parseDecimal(loan.totalPaid), deduction.amount);
+              const newRemaining = subtractMoney(parseDecimal(loan.remainingAmount), deduction.amount);
               const newInstallmentsPaid = loan.installmentsPaid + 1;
 
               await tx.employeeLoan.update({
@@ -284,8 +306,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           }
         }
 
-        totalGross += grossSalary;
-        totalDeductions += totalDeductionsForEmployee;
+        // FIN-010: Reconcile deduction totals
+        // Verify sum of individual deductions equals payslip total
+        const deductionSum = addMoney(...deductionItems.map(d => d.amount));
+        if (Math.abs(deductionSum - cappedDeductions) > 0.01) {
+          console.error(
+            `[Payroll] Deduction reconciliation failed for user ${salary.userId}: ` +
+            `sum=${deductionSum}, total=${cappedDeductions}`
+          );
+          throw new Error(`Deduction reconciliation failed for payslip ${payslipNumber}`);
+        }
+
+        // FIN-003: Use precise addition for running totals
+        totalGross = addMoney(totalGross, grossSalary);
+        totalDeductions = addMoney(totalDeductions, cappedDeductions);
         createdPayslips.push(payslip);
       }
 
@@ -320,7 +354,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         payslipsCreated: createdPayslips.length,
         totalGross,
         totalDeductions,
-        totalNet: totalGross - totalDeductions,
+        // FIN-003: Use precise subtraction for total net
+        totalNet: subtractMoney(totalGross, totalDeductions),
       };
     }, {
       maxWait: 10000, // 10 seconds max wait to start transaction
@@ -346,8 +381,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   } catch (error) {
     console.error('Payroll process error:', error);
     let errorMessage = 'Unknown error';
+    let statusCode = 500;
+
     if (error instanceof Error) {
       errorMessage = error.message;
+
+      // FIN-005: Handle race condition error
+      if (error.message === 'PAYSLIPS_ALREADY_EXIST') {
+        return NextResponse.json({
+          error: 'Payslips already generated for this payroll run',
+        }, { status: 400 });
+      }
+
       // Check for common Prisma errors
       if (error.message.includes('does not exist')) {
         errorMessage = 'Database table not found. Please run migrations.';
@@ -355,11 +400,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         errorMessage = 'Foreign key constraint failed. Check data integrity.';
       } else if (error.message.includes('Unique constraint')) {
         errorMessage = 'Duplicate record found.';
+      } else if (error.message.includes('Deduction reconciliation failed')) {
+        errorMessage = 'Payroll calculation error: deductions do not reconcile.';
+        statusCode = 400;
       }
     }
     return NextResponse.json(
       { error: `Failed to process payroll: ${errorMessage}` },
-      { status: 500 }
+      { status: statusCode }
     );
   }
 }

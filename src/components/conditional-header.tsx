@@ -13,6 +13,7 @@ export function ConditionalHeader({ enabledModules }: ConditionalHeaderProps) {
   // Routes that have their own header/navigation
   const routesWithOwnHeader = [
     '/admin',        // Admin dashboard has AdminTopNav
+    '/employee',     // Employee dashboard has EmployeeTopNav
     '/super-admin',  // Super admin has its own layout
     '/login',
     '/signup',
@@ -21,6 +22,7 @@ export function ConditionalHeader({ enabledModules }: ConditionalHeaderProps) {
     '/platform-login',
     '/forgot-password',
     '/reset-password',
+    '/set-password',
   ];
 
   // Don't render header for routes with their own header

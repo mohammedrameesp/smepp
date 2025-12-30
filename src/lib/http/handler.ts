@@ -59,7 +59,7 @@ export function withErrorHandler(
     try {
       // Rate limiting check
       if (options.rateLimit) {
-        const { allowed } = checkRateLimit(request);
+        const { allowed } = await checkRateLimit(request);
         if (!allowed) {
           const response = NextResponse.json(
             {

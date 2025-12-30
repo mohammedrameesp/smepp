@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, MessageCircle, Save, Loader2, Copy, Check, Phone, UserCheck, RefreshCw } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Save, Loader2, Copy, Check, Phone, UserCheck, RefreshCw, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
+
+type WhatsAppSource = 'NONE' | 'PLATFORM' | 'CUSTOM';
 
 interface WhatsAppConfig {
   id: string;
@@ -32,17 +35,37 @@ interface UserPhone {
   };
 }
 
+interface ConfigResponse {
+  configured: boolean;
+  config?: WhatsAppConfig;
+  source: WhatsAppSource;
+  platformAvailable: boolean;
+  platformDisplayPhone?: string;
+  platformBusinessName?: string;
+  customConfigured: boolean;
+  webhookUrl: string;
+}
+
 export default function WhatsAppSettingsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [configured, setConfigured] = useState(false);
+  const [switchingSource, setSwitchingSource] = useState(false);
+
+  // Config state
+  const [source, setSource] = useState<WhatsAppSource>('NONE');
+  const [platformAvailable, setPlatformAvailable] = useState(false);
+  const [platformDisplayPhone, setPlatformDisplayPhone] = useState<string | null>(null);
+  const [platformBusinessName, setPlatformBusinessName] = useState<string | null>(null);
+  const [customConfigured, setCustomConfigured] = useState(false);
   const [config, setConfig] = useState<WhatsAppConfig | null>(null);
   const [webhookUrl, setWebhookUrl] = useState('');
+
+  // User phones
   const [userPhones, setUserPhones] = useState<UserPhone[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
 
-  // Form state
+  // Custom config form state
   const [phoneNumberId, setPhoneNumberId] = useState('');
   const [businessAccountId, setBusinessAccountId] = useState('');
   const [accessToken, setAccessToken] = useState('');
@@ -57,14 +80,19 @@ export default function WhatsAppSettingsPage() {
     try {
       const res = await fetch('/api/whatsapp/config');
       if (res.ok) {
-        const data = await res.json();
-        setConfigured(data.configured);
+        const data: ConfigResponse = await res.json();
+        setSource(data.source);
+        setPlatformAvailable(data.platformAvailable);
+        setPlatformDisplayPhone(data.platformDisplayPhone || null);
+        setPlatformBusinessName(data.platformBusinessName || null);
+        setCustomConfigured(data.customConfigured);
+        setWebhookUrl(data.webhookUrl || '');
+
         if (data.config) {
           setConfig(data.config);
           setPhoneNumberId(data.config.phoneNumberId || '');
           setBusinessAccountId(data.config.businessAccountId || '');
         }
-        setWebhookUrl(data.webhookUrl || '');
       }
     } catch (error) {
       console.error('Failed to load WhatsApp config:', error);
@@ -85,7 +113,42 @@ export default function WhatsAppSettingsPage() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSourceChange = async (newSource: WhatsAppSource) => {
+    if (newSource === source) return;
+
+    // Validate before switching
+    if (newSource === 'PLATFORM' && !platformAvailable) {
+      toast.error('Platform WhatsApp is not available for your organization');
+      return;
+    }
+    if (newSource === 'CUSTOM' && !customConfigured) {
+      // Allow switching to CUSTOM to configure - don't block
+    }
+
+    setSwitchingSource(true);
+    try {
+      const res = await fetch('/api/whatsapp/config', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: newSource }),
+      });
+
+      if (res.ok) {
+        setSource(newSource);
+        toast.success(`WhatsApp ${newSource === 'NONE' ? 'disabled' : `switched to ${newSource.toLowerCase()}`}`);
+        loadConfig(); // Reload to get updated state
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Failed to update WhatsApp source');
+      }
+    } catch (error) {
+      toast.error('Failed to update WhatsApp source');
+    } finally {
+      setSwitchingSource(false);
+    }
+  };
+
+  const handleSaveCustomConfig = async () => {
     if (!phoneNumberId || !businessAccountId || !accessToken) {
       toast.error('Please fill in all required fields');
       return;
@@ -108,8 +171,10 @@ export default function WhatsAppSettingsPage() {
       if (res.ok) {
         toast.success('WhatsApp configuration saved successfully');
         setConfig(data.config);
-        setConfigured(true);
+        setCustomConfigured(true);
+        setSource('CUSTOM');
         setAccessToken(''); // Clear the token input
+        loadConfig(); // Reload to get updated state
       } else {
         toast.error(data.error || 'Failed to save configuration');
       }
@@ -117,23 +182,6 @@ export default function WhatsAppSettingsPage() {
       toast.error('Failed to save configuration');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleDisable = async () => {
-    if (!confirm('Are you sure you want to disable WhatsApp integration?')) {
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/whatsapp/config', { method: 'DELETE' });
-      if (res.ok) {
-        toast.success('WhatsApp integration disabled');
-        setConfigured(false);
-        setConfig(null);
-      }
-    } catch (error) {
-      toast.error('Failed to disable WhatsApp');
     }
   };
 
@@ -190,91 +238,203 @@ export default function WhatsAppSettingsPage() {
       </div>
 
       {/* Status Badge */}
-      {configured && config?.isActive && (
+      {source !== 'NONE' && (
         <Alert className="border-green-200 bg-green-50">
           <MessageCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            WhatsApp integration is active. Approval notifications will be sent via WhatsApp.
+            WhatsApp integration is active using {source === 'PLATFORM' ? 'platform' : 'custom'} configuration.
+            Approval notifications will be sent via WhatsApp.
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Configuration Card */}
+      {/* Source Selection Card */}
       <Card>
         <CardHeader>
-          <CardTitle>API Configuration</CardTitle>
+          <CardTitle>WhatsApp Source</CardTitle>
           <CardDescription>
-            Enter your WhatsApp Business API credentials from Meta Business Manager
+            Choose how WhatsApp notifications are sent for your organization
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="phoneNumberId">Phone Number ID *</Label>
-              <Input
-                id="phoneNumberId"
-                value={phoneNumberId}
-                onChange={(e) => setPhoneNumberId(e.target.value)}
-                placeholder="e.g., 123456789012345"
-              />
-              <p className="text-xs text-muted-foreground">
-                Found in Meta Business Manager under your phone number settings
-              </p>
+          <RadioGroup
+            value={source}
+            onValueChange={(value: string) => handleSourceChange(value as WhatsAppSource)}
+            disabled={switchingSource}
+          >
+            {/* Disabled Option */}
+            <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50">
+              <RadioGroupItem value="NONE" id="source-none" />
+              <div className="flex-1">
+                <Label htmlFor="source-none" className="font-medium cursor-pointer">
+                  Disable WhatsApp
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Turn off WhatsApp notifications completely
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="businessAccountId">Business Account ID *</Label>
-              <Input
-                id="businessAccountId"
-                value={businessAccountId}
-                onChange={(e) => setBusinessAccountId(e.target.value)}
-                placeholder="e.g., 123456789012345"
+            {/* Platform Option */}
+            <div className={`flex items-center space-x-3 p-4 border rounded-lg ${
+              platformAvailable ? 'hover:bg-muted/50' : 'opacity-60'
+            }`}>
+              <RadioGroupItem
+                value="PLATFORM"
+                id="source-platform"
+                disabled={!platformAvailable}
               />
-              <p className="text-xs text-muted-foreground">
-                Your WhatsApp Business Account ID from Meta
-              </p>
+              <div className="flex-1">
+                <Label htmlFor="source-platform" className="font-medium cursor-pointer flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Use Platform WhatsApp
+                  {!platformAvailable && (
+                    <Badge variant="secondary" className="text-xs">Not Available</Badge>
+                  )}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {platformAvailable
+                    ? `Use Durj platform account${platformDisplayPhone ? ` (${platformDisplayPhone})` : ''}`
+                    : 'Your organization does not have access to platform WhatsApp'
+                  }
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="accessToken">Permanent Access Token *</Label>
-            <Input
-              id="accessToken"
-              type="password"
-              value={accessToken}
-              onChange={(e) => setAccessToken(e.target.value)}
-              placeholder={configured ? '••••••••••••••••' : 'Enter your access token'}
-            />
-            <p className="text-xs text-muted-foreground">
-              Generate a permanent token in Meta Business Manager (never expires)
-            </p>
-          </div>
-
-          <div className="flex gap-2 pt-4">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Configuration
-                </>
+            {/* Custom Option */}
+            <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50">
+              <RadioGroupItem value="CUSTOM" id="source-custom" />
+              <div className="flex-1">
+                <Label htmlFor="source-custom" className="font-medium cursor-pointer">
+                  Use Own WhatsApp Business API
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Configure your own WhatsApp Business API credentials
+                </p>
+              </div>
+              {customConfigured && (
+                <Badge variant="secondary" className="bg-green-100 text-green-700">
+                  Configured
+                </Badge>
               )}
-            </Button>
-            {configured && (
-              <Button variant="destructive" onClick={handleDisable}>
-                Disable Integration
-              </Button>
-            )}
-          </div>
+            </div>
+          </RadioGroup>
+
+          {switchingSource && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Updating...</span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Webhook Configuration */}
-      {configured && (
+      {/* Platform Info (when using platform) */}
+      {source === 'PLATFORM' && platformAvailable && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Platform WhatsApp</CardTitle>
+            <CardDescription>
+              You are using the Durj platform WhatsApp account
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
+                  <MessageCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-green-800">
+                    {platformBusinessName || 'Durj Platform'}
+                  </p>
+                  {platformDisplayPhone && (
+                    <p className="text-sm text-green-700">{platformDisplayPhone}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Messages will be sent from the Durj platform WhatsApp Business account.
+              You only need to manage user phone numbers below.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Custom Configuration Card (when using custom or setting up) */}
+      {(source === 'CUSTOM' || (!customConfigured && source !== 'PLATFORM')) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Custom API Configuration</CardTitle>
+            <CardDescription>
+              Enter your WhatsApp Business API credentials from Meta Business Manager
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="phoneNumberId">Phone Number ID *</Label>
+                <Input
+                  id="phoneNumberId"
+                  value={phoneNumberId}
+                  onChange={(e) => setPhoneNumberId(e.target.value)}
+                  placeholder="e.g., 123456789012345"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Found in Meta Business Manager under your phone number settings
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="businessAccountId">Business Account ID *</Label>
+                <Input
+                  id="businessAccountId"
+                  value={businessAccountId}
+                  onChange={(e) => setBusinessAccountId(e.target.value)}
+                  placeholder="e.g., 123456789012345"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Your WhatsApp Business Account ID from Meta
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="accessToken">Permanent Access Token *</Label>
+              <Input
+                id="accessToken"
+                type="password"
+                value={accessToken}
+                onChange={(e) => setAccessToken(e.target.value)}
+                placeholder={customConfigured ? '••••••••••••••••' : 'Enter your access token'}
+              />
+              <p className="text-xs text-muted-foreground">
+                Generate a permanent token in Meta Business Manager (never expires)
+              </p>
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button onClick={handleSaveCustomConfig} disabled={saving}>
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Configuration
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Webhook Configuration (for custom only) */}
+      {source === 'CUSTOM' && customConfigured && config && (
         <Card>
           <CardHeader>
             <CardTitle>Webhook Configuration</CardTitle>
@@ -325,8 +485,8 @@ export default function WhatsAppSettingsPage() {
         </Card>
       )}
 
-      {/* User Phone Numbers */}
-      {configured && (
+      {/* User Phone Numbers (when WhatsApp is enabled) */}
+      {source !== 'NONE' && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -393,62 +553,64 @@ export default function WhatsAppSettingsPage() {
         </Card>
       )}
 
-      {/* Setup Instructions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Setup Instructions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <h4 className="font-medium">1. Create a Meta Business Account</h4>
-            <p className="text-sm text-muted-foreground">
-              Go to{' '}
-              <a
-                href="https://business.facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-              >
-                business.facebook.com
-              </a>{' '}
-              and create a business account if you don't have one.
-            </p>
-          </div>
+      {/* Setup Instructions (only for custom config) */}
+      {source === 'CUSTOM' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Setup Instructions</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <h4 className="font-medium">1. Create a Meta Business Account</h4>
+              <p className="text-sm text-muted-foreground">
+                Go to{' '}
+                <a
+                  href="https://business.facebook.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  business.facebook.com
+                </a>{' '}
+                and create a business account if you don't have one.
+              </p>
+            </div>
 
-          <Separator />
+            <Separator />
 
-          <div className="space-y-2">
-            <h4 className="font-medium">2. Set up WhatsApp Business API</h4>
-            <p className="text-sm text-muted-foreground">
-              Create a Meta App and add WhatsApp as a product. Configure your business phone number.
-            </p>
-          </div>
+            <div className="space-y-2">
+              <h4 className="font-medium">2. Set up WhatsApp Business API</h4>
+              <p className="text-sm text-muted-foreground">
+                Create a Meta App and add WhatsApp as a product. Configure your business phone number.
+              </p>
+            </div>
 
-          <Separator />
+            <Separator />
 
-          <div className="space-y-2">
-            <h4 className="font-medium">3. Create Message Templates</h4>
-            <p className="text-sm text-muted-foreground">
-              Submit the following templates for approval in Meta Business Manager:
-            </p>
-            <ul className="text-sm text-muted-foreground list-disc ml-6 space-y-1">
-              <li><code>leave_approval_request</code> - For leave request notifications</li>
-              <li><code>purchase_approval_request</code> - For purchase request notifications</li>
-              <li><code>asset_approval_request</code> - For asset request notifications</li>
-            </ul>
-          </div>
+            <div className="space-y-2">
+              <h4 className="font-medium">3. Create Message Templates</h4>
+              <p className="text-sm text-muted-foreground">
+                Submit the following templates for approval in Meta Business Manager:
+              </p>
+              <ul className="text-sm text-muted-foreground list-disc ml-6 space-y-1">
+                <li><code>leave_approval_request</code> - For leave request notifications</li>
+                <li><code>purchase_approval_request</code> - For purchase request notifications</li>
+                <li><code>asset_approval_request</code> - For asset request notifications</li>
+              </ul>
+            </div>
 
-          <Separator />
+            <Separator />
 
-          <div className="space-y-2">
-            <h4 className="font-medium">4. Configure Webhook</h4>
-            <p className="text-sm text-muted-foreground">
-              In your Meta App settings, configure the webhook URL and verify token shown above.
-              Subscribe to the <code>messages</code> field.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <h4 className="font-medium">4. Configure Webhook</h4>
+              <p className="text-sm text-muted-foreground">
+                In your Meta App settings, configure the webhook URL and verify token shown above.
+                Subscribe to the <code>messages</code> field.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

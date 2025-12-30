@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
     // Send professional invitation email (email-client safe styling)
     const emailResult = await sendEmail({
       to: adminEmail,
-      subject: `Welcome to SME++ - Your Organization "${name}" is Ready`,
+      subject: `Welcome to Durj - Your Organization "${name}" is Ready`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
           <!-- Header -->
           <tr>
             <td align="center" style="background-color: #2563eb; padding: 40px 40px 30px;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">SME++</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Durj</h1>
               <p style="color: #bfdbfe; margin: 8px 0 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Business Management Platform</p>
             </td>
           </tr>
@@ -161,14 +161,14 @@ export async function POST(request: NextRequest) {
           <!-- Content -->
           <tr>
             <td style="padding: 40px; background-color: #ffffff;">
-              <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 22px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Welcome to SME++!</h2>
+              <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 22px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Welcome to Durj!</h2>
 
               <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
                 ${greeting},
               </p>
 
               <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
-                Congratulations! Your organization <strong style="color: #1e293b;">"${name}"</strong> has been created on SME++. You have been designated as the Administrator.
+                Congratulations! Your organization <strong style="color: #1e293b;">"${name}"</strong> has been created on Durj. You have been designated as the Administrator.
               </p>
 
               <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 30px; font-family: Arial, Helvetica, sans-serif;">
@@ -218,7 +218,7 @@ export async function POST(request: NextRequest) {
                 If you did not expect this invitation, you can safely ignore this email.
               </p>
               <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
-                © ${new Date().getFullYear()} SME++. All rights reserved.
+                © ${new Date().getFullYear()} Durj. All rights reserved.
               </p>
             </td>
           </tr>
@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
       `,
       text: `${greeting},
 
-Congratulations! Your organization "${name}" has been created on SME++. You have been designated as the Administrator.
+Congratulations! Your organization "${name}" has been created on Durj. You have been designated as the Administrator.
 
 Accept your invitation and get started: ${inviteUrl}
 
@@ -239,7 +239,7 @@ Note: This invitation will expire in 7 days.
 
 If you did not expect this invitation, you can safely ignore this email.
 
-- The SME++ Team`,
+- The Durj Team`,
     });
 
     return NextResponse.json(

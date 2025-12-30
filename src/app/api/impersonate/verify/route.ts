@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/core/prisma';
 
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret';
+// SECURITY: Fail fast if NEXTAUTH_SECRET is not set
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error('CRITICAL: NEXTAUTH_SECRET environment variable is required');
+}
+const JWT_SECRET = process.env.NEXTAUTH_SECRET;
 
 // Cookie name for impersonation session
-export const IMPERSONATION_COOKIE = 'smepp-impersonation';
+export const IMPERSONATION_COOKIE = 'durj-impersonation';
 
 interface ImpersonationPayload {
   superAdminId: string;
@@ -100,8 +104,9 @@ export async function POST(request: NextRequest) {
       expiresAt: new Date(payload.exp * 1000).toISOString(),
     };
 
+    // SECURITY: Short TTL (15 minutes) to limit exposure if token is compromised
     const impersonationCookie = jwt.sign(impersonationData, JWT_SECRET, {
-      expiresIn: '4h', // Match the original token expiry
+      expiresIn: '15m', // Reduced from 4h for security
     });
 
     // Create the response with the impersonation cookie
@@ -119,12 +124,13 @@ export async function POST(request: NextRequest) {
     });
 
     // Set the impersonation cookie (no domain = host-only for current subdomain)
+    // SECURITY: Short TTL (15 minutes) to limit exposure if token is compromised
     response.cookies.set(IMPERSONATION_COOKIE, impersonationCookie, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict', // Changed from 'lax' for additional CSRF protection
       path: '/',
-      maxAge: 4 * 60 * 60, // 4 hours
+      maxAge: 15 * 60, // 15 minutes (reduced from 4 hours)
     });
 
     return response;

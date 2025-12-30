@@ -48,11 +48,12 @@ export interface PayrollPreview {
 export async function calculatePayrollPreview(
   year: number,
   month: number,
-  periodEnd: Date
+  periodEnd: Date,
+  tenantId: string
 ): Promise<PayrollPreview> {
-  // Get all active salary structures
+  // Get all active salary structures for this tenant
   const salaryStructures = await prisma.salaryStructure.findMany({
-    where: { isActive: true },
+    where: { isActive: true, tenantId },
     include: {
       user: {
         select: {
@@ -69,9 +70,10 @@ export async function calculatePayrollPreview(
     },
   });
 
-  // Get active loans that should be deducted in this period
+  // Get active loans that should be deducted in this period for this tenant
   const activeLoans = await prisma.employeeLoan.findMany({
     where: {
+      tenantId,
       status: LoanStatus.ACTIVE,
       startDate: { lte: periodEnd },
     },
@@ -123,7 +125,8 @@ export async function calculatePayrollPreview(
         salary.userId,
         year,
         month,
-        dailyRate
+        dailyRate,
+        tenantId
       );
     } catch (error) {
       console.error('Error calculating leave deductions:', error);

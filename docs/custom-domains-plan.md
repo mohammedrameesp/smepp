@@ -1,11 +1,11 @@
 # Custom Domains Implementation Plan
 
-This document outlines the implementation plan for adding fully custom domain support to SME++ (e.g., `portal.acme-corp.com` instead of `acme.smepp.com`).
+This document outlines the implementation plan for adding fully custom domain support to Durj (e.g., `portal.acme-corp.com` instead of `acme.durj.com`).
 
 ## Current State: Subdomain-Based Routing
 
 Currently implemented:
-- Subdomains: `{org-slug}.smepp.com`
+- Subdomains: `{org-slug}.durj.com`
 - Single wildcard SSL certificate
 - Middleware resolves tenant from subdomain
 - Reserved subdomain list prevents conflicts
@@ -13,8 +13,8 @@ Currently implemented:
 ## Target State: Full Custom Domains
 
 Enable customers to use their own domains:
-- `portal.acme-corp.com` → Acme Corp's SME++ instance
-- `hr.widgets-inc.com` → Widgets Inc's SME++ instance
+- `portal.acme-corp.com` → Acme Corp's Durj instance
+- `hr.widgets-inc.com` → Widgets Inc's Durj instance
 - Falls back to subdomain if custom domain not configured
 
 ---
@@ -69,12 +69,12 @@ Provision SSL → Activate domain
 
 **Option A: TXT Record (Recommended)**
 ```
-_smepp-verify.portal.acme-corp.com TXT "smepp-verify=abc123token"
+_durj-verify.portal.acme-corp.com TXT "durj-verify=abc123token"
 ```
 
 **Option B: CNAME Record**
 ```
-_smepp-verify.portal.acme-corp.com CNAME abc123token.verify.smepp.com
+_durj-verify.portal.acme-corp.com CNAME abc123token.verify.durj.com
 ```
 
 #### 2.3 Verification API
@@ -90,17 +90,17 @@ _smepp-verify.portal.acme-corp.com CNAME abc123token.verify.smepp.com
 {
   "domain": "portal.acme-corp.com",
   "status": "PENDING",
-  "verificationToken": "smepp-verify=abc123",
+  "verificationToken": "durj-verify=abc123",
   "dnsRecords": [
     {
       "type": "TXT",
-      "name": "_smepp-verify.portal.acme-corp.com",
-      "value": "smepp-verify=abc123"
+      "name": "_durj-verify.portal.acme-corp.com",
+      "value": "durj-verify=abc123"
     },
     {
       "type": "CNAME",
       "name": "portal.acme-corp.com",
-      "value": "proxy.smepp.com"
+      "value": "proxy.durj.com"
     }
   ]
 }
@@ -274,7 +274,7 @@ Create settings page for domain configuration:
 ```
 /admin/settings/domain
 ├── Current Domain Display
-│   └── "Your workspace: acme.smepp.com"
+│   └── "Your workspace: acme.durj.com"
 ├── Custom Domain Section (Premium feature)
 │   ├── Add Custom Domain input
 │   ├── DNS Instructions
@@ -297,7 +297,7 @@ export function DomainSettings() {
       <CardHeader>
         <CardTitle>Custom Domain</CardTitle>
         <CardDescription>
-          Use your own domain for your SME++ workspace
+          Use your own domain for your Durj workspace
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -356,7 +356,7 @@ export function DomainSettings() {
 
 For Vercel:
 1. Enable "Custom Domains" in project settings
-2. Add wildcard domain (*.smepp.com)
+2. Add wildcard domain (*.durj.com)
 3. Use Vercel's domain API for programmatic domain addition
 
 #### AWS/Self-Hosted
@@ -451,7 +451,7 @@ For Vercel:
 
 | Plan | Subdomain | Custom Domain |
 |------|-----------|---------------|
-| Free | ✓ (acme.smepp.com) | ✗ |
+| Free | ✓ (acme.durj.com) | ✗ |
 | Starter | ✓ | ✗ |
 | Professional | ✓ | ✓ (1 domain) |
 | Enterprise | ✓ | ✓ (unlimited) |

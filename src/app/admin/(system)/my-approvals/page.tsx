@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 export const metadata: Metadata = {
-  title: 'My Approvals | SME++',
+  title: 'My Approvals | Durj',
   description: 'Pending approval requests',
 };
 

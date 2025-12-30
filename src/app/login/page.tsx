@@ -32,7 +32,7 @@ function LoginForm() {
 
   // Dynamic colors based on branding
   const primaryColor = branding?.primaryColor || '#1E40AF';
-  const orgName = branding?.organizationName || 'SME++';
+  const orgName = branding?.organizationName || 'Durj';
   const welcomeTitle = branding?.welcomeTitle || 'Welcome back';
   const welcomeSubtitle = branding?.welcomeSubtitle || 'Sign in to your account';
 
@@ -309,11 +309,9 @@ function LoginForm() {
               />
             ) : (
               <div className="flex items-center justify-center gap-2 mb-2">
-                <img src="/sme-icon-shield-512.png" alt="SME++" className="h-10 w-10" />
+                <img src="/sme-icon-shield-512.png" alt="Durj" className="h-10 w-10" />
                 <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
-                  {subdomain ? orgName : (
-                    <>SME<span className="text-blue-600">++</span></>
-                  )}
+                  {subdomain ? orgName : 'Durj'}
                 </h1>
               </div>
             )}

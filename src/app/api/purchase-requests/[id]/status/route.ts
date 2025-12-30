@@ -7,7 +7,7 @@ import { updatePurchaseRequestStatusSchema } from '@/lib/validations/purchase-re
 import { logAction, ActivityActions } from '@/lib/activity';
 import { getAllowedStatusTransitions, getStatusLabel } from '@/lib/purchase-request-utils';
 import { sendEmail } from '@/lib/email';
-import { purchaseRequestStatusEmail } from '@/lib/email-templates';
+import { purchaseRequestStatusEmail } from '@/lib/core/email-templates';
 import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
 
 // PATCH - Update purchase request status (admin only)
@@ -154,6 +154,12 @@ export async function PATCH(
 
     // Send email notification to requester
     try {
+      // Get org slug for email URL
+      const org = await prisma.organization.findUnique({
+        where: { id: tenantId },
+        select: { slug: true },
+      });
+
       if (currentRequest.requester.email) {
         const emailContent = purchaseRequestStatusEmail({
           referenceNumber: purchaseRequest.referenceNumber,
@@ -163,6 +169,7 @@ export async function PATCH(
           newStatus: getStatusLabel(status),
           reviewNotes: reviewNotes || undefined,
           reviewerName: session.user.name || session.user.email,
+          orgSlug: org?.slug || 'app',
         });
 
         await sendEmail({

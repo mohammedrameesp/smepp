@@ -148,15 +148,15 @@ export async function POST(
     // Send invitation email
     const emailResult = await sendEmail({
       to: email,
-      subject: `You're invited to join ${org.name} on SME++`,
+      subject: `You're invited to join ${org.name} on Durj`,
       html: `
         <h2>You've been invited!</h2>
-        <p>You've been invited to join <strong>${org.name}</strong> on SME++.</p>
+        <p>You've been invited to join <strong>${org.name}</strong> on Durj.</p>
         <p><a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px;">Accept Invitation</a></p>
         <p>Or copy this link: ${inviteUrl}</p>
         <p>This invitation expires in 7 days.</p>
       `,
-      text: `You've been invited to join ${org.name} on SME++. Accept here: ${inviteUrl}`,
+      text: `You've been invited to join ${org.name} on Durj. Accept here: ${inviteUrl}`,
     });
 
     return NextResponse.json(

@@ -8,7 +8,7 @@ import { redirect, notFound } from 'next/navigation';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { formatDate, formatDateTime } from '@/lib/date-format';
-import { Edit, User, AlertTriangle, Package, CreditCard, FileText, Calendar, Clock, Mail } from 'lucide-react';
+import { Edit, User, AlertTriangle, Package, CreditCard, FileText, Calendar, Clock, Mail, Trash2 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { EmployeeHRViewSection } from '@/components/employees/employee-hr-view';
 import { getUserSubscriptionHistory } from '@/lib/subscription-lifecycle';
@@ -18,6 +18,7 @@ import { UserAssetHistory } from '@/components/users/user-asset-history';
 import { DeleteUserButton } from '@/components/users/delete-user-button';
 import { ExportUserPDFButton } from '@/components/users/export-user-pdf-button';
 import { EmployeeLeaveSection } from '@/components/employees/employee-leave-section';
+import { RestoreUserButton } from '@/components/users/restore-user-button';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -48,6 +49,13 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
       },
     },
   });
+
+  // Check soft-delete status
+  const isDeleted = employee?.isDeleted || false;
+  const scheduledDeletionAt = employee?.scheduledDeletionAt;
+  const daysUntilDeletion = scheduledDeletionAt
+    ? Math.ceil((new Date(scheduledDeletionAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : 0;
 
   if (!employee) {
     notFound();
@@ -112,7 +120,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
               <Edit className="h-4 w-4" />
               Edit
             </PageHeaderButton>
-            {!isSelf && !employee.isSystemAccount && (
+            {!isSelf && !employee.isSystemAccount && !isDeleted && (
               <DeleteUserButton
                 userId={employee.id}
                 userName={employee.name || employee.email}
@@ -129,8 +137,29 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
       </PageHeader>
 
       <PageContent>
+        {/* Deletion Status Banner */}
+        {isDeleted && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
+            <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Trash2 className="h-5 w-5 text-red-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-red-800">Scheduled for Deletion</h3>
+              <p className="text-sm text-red-600">
+                This employee has been deactivated and will be permanently deleted in{' '}
+                <strong>{daysUntilDeletion} day{daysUntilDeletion !== 1 ? 's' : ''}</strong>.
+                Gratuity and service calculations are frozen at the termination date.
+              </p>
+            </div>
+            <RestoreUserButton
+              userId={employee.id}
+              userName={employee.name || employee.email}
+            />
+          </div>
+        )}
+
         {/* Profile Completion Alert */}
-        {completionPercentage < 80 && !employee.isSystemAccount && (
+        {completionPercentage < 80 && !employee.isSystemAccount && !isDeleted && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
           <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
             <AlertTriangle className="h-5 w-5 text-amber-600" />

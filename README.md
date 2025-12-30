@@ -1,4 +1,4 @@
-# SME++ - Business Management Platform for SMBs
+# Durj - Business Management Platform for SMBs
 
 A comprehensive multi-tenant SaaS platform for managing business operations including assets, HR, subscriptions, suppliers, and more. Built for small and medium businesses.
 
@@ -36,7 +36,7 @@ A comprehensive multi-tenant SaaS platform for managing business operations incl
 1. **Clone and install:**
    ```bash
    git clone <repository-url>
-   cd smepp
+   cd durj
    npm install
    ```
 
@@ -74,7 +74,7 @@ Test accounts:
 ## Project Structure
 
 ```
-smepp/
+durj/
 ├── src/
 │   ├── app/                    # Next.js App Router
 │   │   ├── admin/             # Admin dashboard
@@ -95,7 +95,7 @@ smepp/
 
 ## Multi-Tenant Architecture
 
-SME++ uses a shared database with tenant isolation:
+Durj uses a shared database with tenant isolation:
 
 - Every organization is a tenant
 - All data is scoped by `tenantId`

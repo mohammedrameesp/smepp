@@ -109,6 +109,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     // Send email notification to user
     try {
+      // Get org slug for email URLs
+      const org = await prisma.organization.findUnique({
+        where: { id: tenantId },
+        select: { slug: true },
+      });
+      const orgSlug = org?.slug || 'app';
+
       if (assetRequest.type === AssetRequestType.EMPLOYEE_REQUEST) {
         const emailData = assetRequestRejectedEmail({
           requestNumber: assetRequest.requestNumber,
@@ -119,6 +126,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           userName: assetRequest.user.name || assetRequest.user.email,
           rejectorName: session.user.name || session.user.email || 'Admin',
           reason: reason || 'No reason provided',
+          orgSlug,
         });
         await sendEmail({ to: assetRequest.user.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
       } else if (assetRequest.type === AssetRequestType.RETURN_REQUEST) {
@@ -131,6 +139,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           userName: assetRequest.user.name || assetRequest.user.email,
           rejectorName: session.user.name || session.user.email || 'Admin',
           reason: reason || 'No reason provided',
+          orgSlug,
         });
         await sendEmail({ to: assetRequest.user.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
       }

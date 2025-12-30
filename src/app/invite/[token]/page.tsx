@@ -186,7 +186,7 @@ export default function InvitePage() {
           </div>
           <CardTitle className="text-2xl">You&apos;re Invited!</CardTitle>
           <CardDescription>
-            Join <span className="font-semibold text-foreground">{invitation?.organization.name}</span> on SME++
+            Join <span className="font-semibold text-foreground">{invitation?.organization.name}</span> on Durj
           </CardDescription>
         </CardHeader>
 

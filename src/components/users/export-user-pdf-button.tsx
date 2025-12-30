@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { FileDown, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface Asset {
   id: string;
@@ -259,7 +260,7 @@ export function ExportUserPDFButton({ userId, userName, userEmail }: ExportUserP
 
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      toast.error('Failed to generate PDF. Please try again.');
     } finally {
       setIsExporting(false);
     }

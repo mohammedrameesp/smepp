@@ -7,7 +7,7 @@ config({ path: resolve(process.cwd(), '.env.local') });
 
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const bucketName = process.env.SUPABASE_BUCKET || 'smepp-storage';
+const bucketName = process.env.SUPABASE_BUCKET || 'durj-storage';
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('❌ Missing Supabase environment variables');

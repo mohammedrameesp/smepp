@@ -7,6 +7,7 @@ import {
   upsertOAuthUser,
   createSessionToken,
   getTenantUrl,
+  validateOAuthSecurity,
 } from '@/lib/oauth/utils';
 import {
   exchangeGoogleCodeForTokens,
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { subdomain, orgId } = state;
+    const { subdomain, orgId, inviteToken } = state;
 
     // Get organization and its credentials
     const org = await prisma.organization.findUnique({
@@ -103,6 +104,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // SECURITY: Validate OAuth security checks (mirrors NextAuth signIn callback)
+    // This checks: isDeleted, canLogin, account lockout, and auth method restrictions
+    const securityCheck = await validateOAuthSecurity(googleUser.email, org.id, 'google');
+    if (!securityCheck.allowed) {
+      console.log(`[OAuth] Security check failed for ${googleUser.email}: ${securityCheck.error}`);
+      return NextResponse.redirect(
+        `${getTenantUrl(subdomain, '/login')}?error=${securityCheck.error}`
+      );
+    }
+
     // Create or update user
     const user = await upsertOAuthUser(
       {
@@ -133,8 +144,11 @@ export async function GET(request: NextRequest) {
       domain: isSecure ? `.${process.env.NEXT_PUBLIC_APP_DOMAIN}` : undefined,
     });
 
-    // Redirect to the organization's admin dashboard
-    return NextResponse.redirect(getTenantUrl(subdomain, '/admin'));
+    // Redirect based on flow
+    // If invite token is present, redirect to invite page to complete invitation acceptance
+    // Otherwise, redirect to admin dashboard
+    const redirectPath = inviteToken ? `/invite/${inviteToken}` : '/admin';
+    return NextResponse.redirect(getTenantUrl(subdomain, redirectPath));
   } catch (error) {
     console.error('Google OAuth callback error:', error);
 

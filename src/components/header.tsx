@@ -21,6 +21,7 @@ export default function Header({ badgeCounts = {}, enabledModules: serverEnabled
   const routesWithOwnHeader = [
     '/', '/login', '/signup', '/pricing', '/onboarding', '/verify', '/invite',
     '/super-admin', '/setup', '/pending', '/forgot-password', '/reset-password',
+    '/help', '/admin', '/employee',
   ];
   const isPublicRoute = routesWithOwnHeader.some(route =>
     route === '/' ? pathname === '/' : pathname?.startsWith(route)
@@ -59,7 +60,7 @@ export default function Header({ badgeCounts = {}, enabledModules: serverEnabled
                 />
               ) : (
                 <>
-                  <img src="/sme-icon-shield-512.png" alt="SME++" className="h-8 w-8" />
+                  <img src="/sme-icon-shield-512.png" alt="Durj" className="h-8 w-8" />
                   {session?.user?.organizationName && (
                     <span className="text-white font-semibold text-lg hidden sm:inline">
                       {session.user.organizationName}

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import jwt from 'jsonwebtoken';
+import { requireRecent2FA } from '@/lib/two-factor';
 
 // SECURITY: NEXTAUTH_SECRET is required - validated in auth.ts at module load
 const JWT_SECRET = process.env.NEXTAUTH_SECRET!;
@@ -22,6 +23,11 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.isSuperAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    // SECURITY: Require recent 2FA verification for impersonation
+    // This prevents session hijacking attacks from accessing tenant data
+    const require2FAResult = await requireRecent2FA(session.user.id);
+    if (require2FAResult) return require2FAResult;
 
     const body = await request.json();
     const { organizationId } = body;

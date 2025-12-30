@@ -78,7 +78,7 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
   // Calculate preview for DRAFT status
   const isDraft = payrollRun.status === PayrollStatus.DRAFT;
   const preview = isDraft
-    ? await calculatePayrollPreview(payrollRun.year, payrollRun.month, payrollRun.periodEnd)
+    ? await calculatePayrollPreview(payrollRun.year, payrollRun.month, payrollRun.periodEnd, session.user.organizationId!)
     : null;
 
   const totalGross = isDraft && preview ? preview.totalGross : Number(payrollRun.totalGross);

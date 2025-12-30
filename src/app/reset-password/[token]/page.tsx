@@ -31,7 +31,7 @@ export default function ResetPasswordPage() {
 
   // Dynamic colors based on branding
   const primaryColor = branding?.primaryColor || '#2563eb';
-  const orgName = branding?.organizationName || 'SME++';
+  const orgName = branding?.organizationName || 'Durj';
 
   // Validate token on mount
   useEffect(() => {
@@ -129,9 +129,9 @@ export default function ResetPasswordPage() {
               />
             ) : (
               <div className="flex items-center justify-center gap-2 mb-2">
-                <img src="/sme-icon-shield-512.png" alt="SME++" className="h-10 w-10" />
+                <img src="/sme-icon-shield-512.png" alt="Durj" className="h-10 w-10" />
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  {subdomain ? orgName : 'SME++'}
+                  {subdomain ? orgName : 'Durj'}
                 </h1>
               </div>
             )}

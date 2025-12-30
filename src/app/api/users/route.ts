@@ -7,8 +7,8 @@ import { createUserSchema } from '@/lib/validations/users';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { withErrorHandler } from '@/lib/http/handler';
 import { sendEmail } from '@/lib/email';
-import { welcomeUserEmail } from '@/lib/email-templates';
-import { initializeUserLeaveBalances } from '@/lib/leave-balance-init';
+import { welcomeUserEmail, welcomeUserWithPasswordSetupEmail } from '@/lib/core/email-templates';
+import { randomBytes } from 'crypto';
 
 async function getUsersHandler(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -23,6 +23,7 @@ async function getUsersHandler(request: NextRequest) {
   const role = searchParams.get('role');
   const includeHrProfile = searchParams.get('includeHrProfile') === 'true';
   const includeAll = searchParams.get('includeAll') === 'true';
+  const includeDeleted = searchParams.get('includeDeleted') === 'true';
 
   // Build where clause with tenant filtering
   const where: any = {
@@ -31,6 +32,11 @@ async function getUsersHandler(request: NextRequest) {
     },
   };
   if (role) where.role = role;
+
+  // By default, exclude soft-deleted users unless explicitly requested
+  if (!includeDeleted) {
+    where.isDeleted = false;
+  }
 
   // Build include clause
   const include: any = {
@@ -64,7 +70,7 @@ async function getUsersHandler(request: NextRequest) {
     };
   }
 
-  // Fetch users
+  // Fetch users (soft-delete fields isDeleted, deletedAt, scheduledDeletionAt are included by default)
   const users = await prisma.user.findMany({
     where,
     include,
@@ -210,30 +216,83 @@ async function createUserHandler(request: NextRequest) {
     );
   }
 
-  // Initialize leave balances for employees only (non-blocking)
-  if (isEmployee) {
-    try {
-      await initializeUserLeaveBalances(user.id);
-    } catch (leaveError) {
-      console.error('[Leave] Failed to initialize leave balances:', leaveError);
-      // Don't fail the request if leave balance initialization fails
-    }
-  }
+  // Note: Leave balances are initialized when the employee completes
+  // their HR profile onboarding with dateOfJoining set
 
   // Send welcome email only to users who can login (non-blocking)
   if (canLogin && finalEmail && !finalEmail.endsWith('.internal')) {
     try {
-      const emailContent = welcomeUserEmail({
-        userName: user.name || user.email,
-        userEmail: user.email,
-        userRole: user.role,
+      // Fetch organization with auth config for customized welcome email
+      const org = await prisma.organization.findUnique({
+        where: { id: session.user.organizationId },
+        select: {
+          slug: true,
+          customGoogleClientId: true,
+          customAzureClientId: true,
+          allowedAuthMethods: true,
+        },
       });
-      await sendEmail({
-        to: user.email,
-        subject: emailContent.subject,
-        html: emailContent.html,
-        text: emailContent.text,
-      });
+
+      // Determine which auth methods are enabled
+      // If allowedAuthMethods is empty, all methods are allowed (default)
+      const allowedMethods = org?.allowedAuthMethods || [];
+      const allMethodsAllowed = allowedMethods.length === 0;
+
+      const hasGoogle = !!org?.customGoogleClientId && (allMethodsAllowed || allowedMethods.includes('google'));
+      const hasMicrosoft = !!org?.customAzureClientId && (allMethodsAllowed || allowedMethods.includes('azure-ad'));
+      const hasPassword = allMethodsAllowed || allowedMethods.includes('credentials');
+
+      // Determine if we need to send password setup email
+      // Send password setup email if:
+      // 1. Password auth is allowed AND
+      // 2. No SSO is configured (user must use password to login)
+      const needsPasswordSetup = hasPassword && !hasGoogle && !hasMicrosoft;
+
+      if (needsPasswordSetup) {
+        // Generate setup token (7-day expiry)
+        const setupToken = randomBytes(32).toString('hex');
+        const setupTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+        // Update user with setup token
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { setupToken, setupTokenExpiry },
+        });
+
+        // Send welcome email with password setup link
+        const emailContent = welcomeUserWithPasswordSetupEmail({
+          userName: user.name || user.email,
+          userEmail: user.email,
+          userRole: user.role,
+          orgSlug: org?.slug || 'app',
+          setupToken,
+        });
+        await sendEmail({
+          to: user.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+          text: emailContent.text,
+        });
+      } else {
+        // Send regular welcome email (for SSO users or mixed auth)
+        const emailContent = welcomeUserEmail({
+          userName: user.name || user.email,
+          userEmail: user.email,
+          userRole: user.role,
+          orgSlug: org?.slug || 'app',
+          authMethods: {
+            hasGoogle,
+            hasMicrosoft,
+            hasPassword,
+          },
+        });
+        await sendEmail({
+          to: user.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+          text: emailContent.text,
+        });
+      }
     } catch (emailError) {
       console.error('[Email] Failed to send welcome email:', emailError);
       // Don't fail the request if email fails

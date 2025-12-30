@@ -10,13 +10,17 @@ const DEFAULT_RATE = '3.64';
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session || !session.user.organizationId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get exchange rate from database
+    const tenantId = session.user.organizationId;
+
+    // Get exchange rate from database (tenant-scoped)
     const setting = await prisma.systemSettings.findUnique({
-      where: { key: EXCHANGE_RATE_KEY },
+      where: {
+        tenantId_key: { tenantId, key: EXCHANGE_RATE_KEY },
+      },
     });
 
     const rate = setting?.value || DEFAULT_RATE;
@@ -53,14 +57,18 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Update or create setting
+    const tenantId = session.user.organizationId!;
+
+    // Update or create setting (tenant-scoped)
     const setting = await prisma.systemSettings.upsert({
-      where: { key: EXCHANGE_RATE_KEY },
+      where: {
+        tenantId_key: { tenantId, key: EXCHANGE_RATE_KEY },
+      },
       create: {
         key: EXCHANGE_RATE_KEY,
         value: rateNum.toString(),
         updatedBy: session.user.id,
-        tenantId: session.user.organizationId!,
+        tenantId,
       },
       update: {
         value: rateNum.toString(),

@@ -2,7 +2,18 @@
 // Brand color: #73c5d1
 
 const BRAND_COLOR = '#73c5d1';
-const PORTAL_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://portal.becreative.qa';
+const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+
+/**
+ * Get tenant-specific portal URL
+ * @param orgSlug - Organization slug for subdomain
+ * @param path - Optional path to append (e.g., '/admin', '/employee')
+ */
+function getTenantPortalUrl(orgSlug: string, path: string = ''): string {
+  const isLocalhost = APP_DOMAIN.includes('localhost');
+  const protocol = isLocalhost ? 'http' : 'https';
+  return `${protocol}://${orgSlug}.${APP_DOMAIN}${path}`;
+}
 
 function formatTimestamp(): string {
   return new Date().toLocaleString('en-GB', {
@@ -62,6 +73,7 @@ interface AssetRequestEmailData {
   assetModel: string;
   assetBrand: string | null;
   assetType: string;
+  orgSlug: string;
 }
 
 // Employee submits asset request -> Admin notification
@@ -133,7 +145,7 @@ export function assetRequestSubmittedEmail(data: AssetRequestSubmittedData): { s
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${PORTAL_URL}/admin/asset-requests" style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/asset-requests')}" style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Request
           </a>
         </td>
@@ -160,7 +172,7 @@ Request Details:
 Reason for Request:
 ${data.reason}
 
-Review at: ${PORTAL_URL}/admin/asset-requests
+Review at: ${getTenantPortalUrl(data.orgSlug, '/admin/asset-requests')}
 `.trim();
 
   return { subject, html, text };
@@ -241,7 +253,7 @@ export function assetAssignmentPendingEmail(data: AssetAssignmentPendingData): {
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${PORTAL_URL}/employee/asset-requests" style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+          <a href="${getTenantPortalUrl(data.orgSlug, '/employee/asset-requests')}" style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Assignment
           </a>
         </td>
@@ -267,7 +279,7 @@ Asset Details:
 - Asset Type: ${data.assetType}
 ${data.reason ? `\nNotes: ${data.reason}` : ''}
 
-Review at: ${PORTAL_URL}/employee/asset-requests
+Review at: ${getTenantPortalUrl(data.orgSlug, '/employee/asset-requests')}
 `.trim();
 
   return { subject, html, text };
@@ -490,7 +502,7 @@ export function assetReturnRequestEmail(data: AssetReturnRequestData): { subject
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${PORTAL_URL}/admin/asset-requests" style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/asset-requests')}" style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Request
           </a>
         </td>
@@ -515,7 +527,7 @@ Details:
 
 Reason: ${data.reason}
 
-Review at: ${PORTAL_URL}/admin/asset-requests
+Review at: ${getTenantPortalUrl(data.orgSlug, '/admin/asset-requests')}
 `.trim();
 
   return { subject, html, text };

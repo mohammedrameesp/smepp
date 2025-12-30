@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -150,7 +151,7 @@ export function TeamMembers({
 
       window.location.reload();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to remove member');
+      toast.error(err instanceof Error ? err.message : 'Failed to remove member');
     }
   };
 
@@ -167,7 +168,7 @@ export function TeamMembers({
 
       window.location.reload();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to cancel invitation');
+      toast.error(err instanceof Error ? err.message : 'Failed to cancel invitation');
     }
   };
 

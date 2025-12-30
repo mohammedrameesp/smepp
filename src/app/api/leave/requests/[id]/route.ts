@@ -9,6 +9,7 @@ import {
   calculateWorkingDays,
   canEditLeaveRequest,
 } from '@/lib/leave-utils';
+import { cleanupStorageFile } from '@/lib/storage/cleanup';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -168,11 +169,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Check for overlapping requests (excluding current request)
+    // Check for overlapping requests (excluding current request) within tenant
     const overlappingRequests = await prisma.leaveRequest.findMany({
       where: {
         id: { not: id },
         userId: existing.userId,
+        tenantId,
         status: { in: ['PENDING', 'APPROVED'] },
         OR: [
           {
@@ -346,6 +348,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         where: { id },
       });
     });
+
+    // STORAGE-003: Clean up associated document from storage
+    if (existing.documentUrl) {
+      await cleanupStorageFile(existing.documentUrl, tenantId);
+    }
 
     await logAction(
       session.user.id,

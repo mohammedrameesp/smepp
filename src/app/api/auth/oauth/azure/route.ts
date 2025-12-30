@@ -11,6 +11,7 @@ import { buildAzureAuthUrl } from '@/lib/oauth/azure';
 export async function GET(request: NextRequest) {
   try {
     const subdomain = request.nextUrl.searchParams.get('subdomain');
+    const inviteToken = request.nextUrl.searchParams.get('invite');
 
     if (!subdomain) {
       return NextResponse.json(
@@ -74,10 +75,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Create encrypted state for CSRF protection
+    // Include invite token if present (for invite signup flow)
     const state = encryptState({
       subdomain: org.slug,
       orgId: org.id,
       provider: 'azure',
+      inviteToken: inviteToken || undefined,
     });
 
     // Build the Azure OAuth URL

@@ -6,6 +6,11 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from './prisma';
 import { Role, OrgRole, SubscriptionTier } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import {
+  isAccountLocked,
+  recordFailedLogin,
+  clearFailedLogins,
+} from '@/lib/security/account-lockout';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -95,11 +100,27 @@ providers.push(
           role: true,
           passwordHash: true,
           canLogin: true,
+          isDeleted: true,
+          lockedUntil: true,
         },
       });
 
       if (!user || !user.passwordHash) {
         return null;
+      }
+
+      // SECURITY: Check if account is locked (brute-force protection)
+      const lockStatus = await isAccountLocked(user.id);
+      if (lockStatus.locked) {
+        const minutesRemaining = lockStatus.lockedUntil
+          ? Math.ceil((lockStatus.lockedUntil.getTime() - Date.now()) / 60000)
+          : 5;
+        throw new Error(`Account temporarily locked. Try again in ${minutesRemaining} minutes.`);
+      }
+
+      // Block soft-deleted users (deactivated accounts)
+      if (user.isDeleted) {
+        throw new Error('This account has been deactivated');
       }
 
       // Block users who cannot login (non-login employees like drivers)
@@ -110,8 +131,19 @@ providers.push(
       // Verify password
       const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
       if (!isValid) {
+        // SECURITY: Record failed login attempt
+        const lockResult = await recordFailedLogin(user.id);
+        if (lockResult.locked) {
+          const minutesRemaining = lockResult.lockedUntil
+            ? Math.ceil((lockResult.lockedUntil.getTime() - Date.now()) / 60000)
+            : 5;
+          throw new Error(`Too many failed attempts. Account locked for ${minutesRemaining} minutes.`);
+        }
         return null;
       }
+
+      // SECURITY: Clear failed login attempts on successful login
+      await clearFailedLogins(user.id);
 
       return {
         id: user.id,
@@ -265,6 +297,12 @@ export const authOptions: NextAuthOptions = {
             include: { accounts: true },
           });
 
+          // Block soft-deleted users (deactivated accounts)
+          if (existingUser && existingUser.isDeleted) {
+            console.log(`Login blocked for deactivated user: ${normalizedEmail}`);
+            return '/login?error=AccountDeactivated';
+          }
+
           // Block users who cannot login (non-login employees like drivers)
           if (existingUser && !existingUser.canLogin) {
             console.log(`Login blocked for non-login user: ${normalizedEmail}`);
@@ -407,6 +445,32 @@ export const authOptions: NextAuthOptions = {
 
     async jwt({ token, user, trigger, session }) {
       try {
+        // SECURITY: Check if password was changed after token was issued
+        // This invalidates all existing sessions when password is reset
+        if (!user && token.id && token.iat) {
+          const securityCheck = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { passwordChangedAt: true, canLogin: true },
+          });
+
+          if (securityCheck) {
+            // If user can't login, invalidate the session
+            if (!securityCheck.canLogin) {
+              console.log(`[Auth] User ${token.id} login disabled, invalidating session`);
+              return { ...token, id: undefined };
+            }
+
+            // If password was changed after token was issued, invalidate the session
+            if (securityCheck.passwordChangedAt) {
+              const tokenIssuedAt = (token.iat as number) * 1000; // iat is in seconds, convert to ms
+              if (securityCheck.passwordChangedAt.getTime() > tokenIssuedAt) {
+                console.log(`[Auth] Password changed after token issued for user ${token.id}, invalidating session`);
+                return { ...token, id: undefined };
+              }
+            }
+          }
+        }
+
         // Initial sign in
         if (user) {
           token.id = user.id;

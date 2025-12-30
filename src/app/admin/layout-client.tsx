@@ -7,14 +7,16 @@ import { ImpersonationHandler, ImpersonationBanner } from '@/components/imperson
 import { AdminTopNav } from '@/components/layout/admin-top-nav';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { CommandPalette } from '@/components/layout/command-palette';
+import { ChatWidget } from '@/components/chat/chat-widget';
 
 interface AdminLayoutClientProps {
   children: React.ReactNode;
   badgeCounts: BadgeCounts;
   enabledModules: string[];
+  aiChatEnabled: boolean;
 }
 
-export function AdminLayoutClient({ children, badgeCounts, enabledModules }: AdminLayoutClientProps) {
+export function AdminLayoutClient({ children, badgeCounts, enabledModules, aiChatEnabled }: AdminLayoutClientProps) {
   const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
 
   // Keyboard shortcut for command palette (Cmd/Ctrl + K)
@@ -61,6 +63,9 @@ export function AdminLayoutClient({ children, badgeCounts, enabledModules }: Adm
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav badgeCounts={badgeCounts} enabledModules={enabledModules} />
+
+      {/* AI Chat Widget - only shown if enabled for organization */}
+      {aiChatEnabled && <ChatWidget />}
     </>
   );
 }

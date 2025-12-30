@@ -2,7 +2,7 @@
  * Subdomain Utilities for Multi-Tenant Routing
  *
  * Handles subdomain extraction, validation, and tenant resolution.
- * Supports both subdomain-based routing (acme.smepp.com) and
+ * Supports both subdomain-based routing (acme.durj.com) and
  * future custom domain support.
  */
 
@@ -13,8 +13,8 @@ import { prisma } from '@/lib/core/prisma';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // The main app domain (without subdomain)
-// In production: smepp.com
-// In development: localhost:3000 or smepp.local:3000
+// In production: durj.com
+// In development: localhost:3000 or durj.local:3000
 export const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 
 // Reserved subdomains that cannot be used by organizations
@@ -94,9 +94,9 @@ export interface SubdomainInfo {
  * Extract subdomain from a hostname
  *
  * Examples:
- * - acme.smepp.com → { subdomain: 'acme', isMainDomain: false }
- * - smepp.com → { subdomain: null, isMainDomain: true }
- * - www.smepp.com → { subdomain: 'www', isMainDomain: false, isReserved: true }
+ * - acme.durj.com → { subdomain: 'acme', isMainDomain: false }
+ * - durj.com → { subdomain: null, isMainDomain: true }
+ * - www.durj.com → { subdomain: 'www', isMainDomain: false, isReserved: true }
  * - acme.localhost:3000 → { subdomain: 'acme', isMainDomain: false }
  */
 export function extractSubdomain(host: string): SubdomainInfo {

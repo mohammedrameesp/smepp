@@ -20,12 +20,14 @@ export interface UnpaidLeaveDeduction {
  * @param year Payroll year
  * @param month Payroll month (1-12)
  * @param dailySalary Daily salary rate (gross / 30)
+ * @param tenantId Organization ID for tenant isolation
  */
 export async function calculateUnpaidLeaveDeductions(
   userId: string,
   year: number,
   month: number,
-  dailySalary: number
+  dailySalary: number,
+  tenantId: string
 ): Promise<UnpaidLeaveDeduction[]> {
   // Get the first and last day of the payroll month
   const periodStart = new Date(year, month - 1, 1);
@@ -35,6 +37,7 @@ export async function calculateUnpaidLeaveDeductions(
   const unpaidLeaves = await prisma.leaveRequest.findMany({
     where: {
       userId,
+      tenantId,
       status: LeaveStatus.APPROVED,
       leaveType: {
         isPaid: false,
@@ -77,12 +80,24 @@ export async function calculateUnpaidLeaveDeductions(
     const effectiveStart = leave.startDate > periodStart ? leave.startDate : periodStart;
     const effectiveEnd = leave.endDate < periodEnd ? leave.endDate : periodEnd;
 
-    // Calculate calendar days in range
-    const daysDiff = Math.ceil(
-      (effectiveEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24)
-    ) + 1;
+    // FIN-001: Use stored totalDays for leaves fully within period (handles half-days correctly)
+    // Half-day leaves are always single-day, so they'll always be fully within a period
+    const leaveFullyInPeriod = leave.startDate >= periodStart && leave.endDate <= periodEnd;
 
-    const deductionAmount = daysDiff * dailySalary;
+    let daysToDeduct: number;
+    if (leaveFullyInPeriod) {
+      // Use the stored totalDays which correctly handles 0.5 for half-days
+      daysToDeduct = parseDecimal(leave.totalDays);
+    } else {
+      // Leave spans multiple months - calculate calendar days in this period
+      // Note: Half-day leaves can't span months (validation enforces single day)
+      const calendarDays = Math.floor(
+        (effectiveEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1;
+      daysToDeduct = calendarDays;
+    }
+
+    const deductionAmount = daysToDeduct * dailySalary;
 
     deductions.push({
       leaveRequestId: leave.id,
@@ -90,7 +105,7 @@ export async function calculateUnpaidLeaveDeductions(
       leaveTypeName: leave.leaveType.name,
       startDate: effectiveStart,
       endDate: effectiveEnd,
-      totalDays: daysDiff,
+      totalDays: daysToDeduct,
       dailyRate: dailySalary,
       deductionAmount: Math.round(deductionAmount * 100) / 100,
     });
@@ -105,7 +120,8 @@ export async function calculateUnpaidLeaveDeductions(
 export async function getUnpaidLeaveDaysInPeriod(
   userId: string,
   year: number,
-  month: number
+  month: number,
+  tenantId: string
 ): Promise<number> {
   const periodStart = new Date(year, month - 1, 1);
   const periodEnd = new Date(year, month, 0);
@@ -113,6 +129,7 @@ export async function getUnpaidLeaveDaysInPeriod(
   const unpaidLeaves = await prisma.leaveRequest.findMany({
     where: {
       userId,
+      tenantId,
       status: LeaveStatus.APPROVED,
       leaveType: {
         isPaid: false,
@@ -151,11 +168,19 @@ export async function getUnpaidLeaveDaysInPeriod(
     const effectiveStart = leave.startDate > periodStart ? leave.startDate : periodStart;
     const effectiveEnd = leave.endDate < periodEnd ? leave.endDate : periodEnd;
 
-    const daysDiff = Math.ceil(
-      (effectiveEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24)
-    ) + 1;
+    // FIN-001: Use stored totalDays for leaves fully within period (handles half-days correctly)
+    const leaveFullyInPeriod = leave.startDate >= periodStart && leave.endDate <= periodEnd;
 
-    totalDays += daysDiff;
+    if (leaveFullyInPeriod) {
+      // Use the stored totalDays which correctly handles 0.5 for half-days
+      totalDays += parseDecimal(leave.totalDays);
+    } else {
+      // Leave spans multiple months - calculate calendar days in this period
+      const calendarDays = Math.floor(
+        (effectiveEnd.getTime() - effectiveStart.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1;
+      totalDays += calendarDays;
+    }
   }
 
   return totalDays;
@@ -167,8 +192,9 @@ export async function getUnpaidLeaveDaysInPeriod(
 export async function hasUnpaidLeaveInPeriod(
   userId: string,
   year: number,
-  month: number
+  month: number,
+  tenantId: string
 ): Promise<boolean> {
-  const days = await getUnpaidLeaveDaysInPeriod(userId, year, month);
+  const days = await getUnpaidLeaveDaysInPeriod(userId, year, month, tenantId);
   return days > 0;
 }

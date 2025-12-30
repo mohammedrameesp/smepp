@@ -1,12 +1,22 @@
 import crypto from 'crypto';
 import { prisma } from '@/lib/core/prisma';
 import { encode } from 'next-auth/jwt';
+import { isAccountLocked, clearFailedLogins } from '@/lib/security/account-lockout';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENCRYPTION CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const ENCRYPTION_KEY = process.env.OAUTH_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || '';
+// SECURITY: Require encryption key - fail fast if not set
+function getOAuthEncryptionKey(): string {
+  const key = process.env.OAUTH_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET;
+  if (!key) {
+    throw new Error(
+      'CRITICAL: OAUTH_ENCRYPTION_KEY or NEXTAUTH_SECRET environment variable is required'
+    );
+  }
+  return key;
+}
 const ALGORITHM = 'aes-256-gcm';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -16,10 +26,14 @@ const ALGORITHM = 'aes-256-gcm';
 /**
  * Encrypt a string (for storing OAuth secrets)
  */
+// Derive a unique salt for OAuth encryption (prevents cross-application key reuse)
+const OAUTH_SALT = crypto.createHash('sha256').update('durj-oauth-encryption-v1').digest();
+
 export function encrypt(text: string): string {
   if (!text) return '';
   const iv = crypto.randomBytes(16);
-  const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+  const encryptionKey = getOAuthEncryptionKey();
+  const key = crypto.scryptSync(encryptionKey, OAUTH_SALT, 32);
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
@@ -36,7 +50,8 @@ export function decrypt(encryptedText: string): string {
     const [ivHex, authTagHex, encrypted] = encryptedText.split(':');
     const iv = Buffer.from(ivHex, 'hex');
     const authTag = Buffer.from(authTagHex, 'hex');
-    const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
+    const encryptionKey = getOAuthEncryptionKey();
+    const key = crypto.scryptSync(encryptionKey, OAUTH_SALT, 32);
     const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
     decipher.setAuthTag(authTag);
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
@@ -58,6 +73,7 @@ interface OAuthState {
   provider: 'google' | 'azure';
   timestamp: number;
   nonce: string;
+  inviteToken?: string; // For invite signup flow
 }
 
 /**
@@ -106,6 +122,94 @@ interface OAuthUserInfo {
   name: string | null;
   image: string | null;
   emailVerified?: boolean;
+}
+
+/**
+ * OAuth security validation result
+ */
+export interface OAuthSecurityCheckResult {
+  allowed: boolean;
+  error?: 'AccountDeactivated' | 'AccountLocked' | 'LoginDisabled' | 'AuthMethodNotAllowed';
+  lockedUntil?: Date;
+}
+
+/**
+ * Validate OAuth login security checks
+ * This mirrors the security checks in NextAuth's signIn callback
+ */
+export async function validateOAuthSecurity(
+  email: string,
+  orgId: string | null,
+  authMethod: 'google' | 'azure-ad'
+): Promise<OAuthSecurityCheckResult> {
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Check if user exists
+  const existingUser = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+    select: {
+      id: true,
+      isDeleted: true,
+      canLogin: true,
+      isSuperAdmin: true,
+    },
+  });
+
+  // For new users, no security restrictions apply yet
+  if (!existingUser) {
+    return { allowed: true };
+  }
+
+  // Block soft-deleted users (deactivated accounts)
+  if (existingUser.isDeleted) {
+    console.log(`[OAuth] Login blocked for deactivated user: ${normalizedEmail}`);
+    return { allowed: false, error: 'AccountDeactivated' };
+  }
+
+  // Block users who cannot login (non-login employees like drivers)
+  if (!existingUser.canLogin) {
+    console.log(`[OAuth] Login blocked for non-login user: ${normalizedEmail}`);
+    return { allowed: false, error: 'LoginDisabled' };
+  }
+
+  // Check account lockout
+  const lockoutCheck = await isAccountLocked(existingUser.id);
+  if (lockoutCheck.locked) {
+    console.log(`[OAuth] Login blocked for locked account: ${normalizedEmail}`);
+    return { allowed: false, error: 'AccountLocked', lockedUntil: lockoutCheck.lockedUntil };
+  }
+
+  // Skip super admins from org-level restrictions
+  if (existingUser.isSuperAdmin) {
+    return { allowed: true };
+  }
+
+  // Check auth method restrictions for ALL user's organizations
+  const memberships = await prisma.organizationUser.findMany({
+    where: { userId: existingUser.id },
+    include: {
+      organization: {
+        select: {
+          name: true,
+          allowedAuthMethods: true,
+        },
+      },
+    },
+  });
+
+  for (const membership of memberships) {
+    const org = membership.organization;
+
+    // Check auth method restriction
+    if (org.allowedAuthMethods.length > 0) {
+      if (!org.allowedAuthMethods.includes(authMethod)) {
+        console.log(`[OAuth] Auth method ${authMethod} not allowed for org ${org.name}`);
+        return { allowed: false, error: 'AuthMethodNotAllowed' };
+      }
+    }
+  }
+
+  return { allowed: true };
 }
 
 /**
@@ -163,6 +267,9 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | n
       });
     }
   }
+
+  // Clear any failed login attempts on successful OAuth login
+  await clearFailedLogins(user.id);
 
   return user;
 }

@@ -12,17 +12,22 @@ const verify2FASchema = z.object({
   isBackupCode: z.boolean().optional().default(false),
 });
 
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret';
+// SECURITY: Fail fast if NEXTAUTH_SECRET is not set
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error('CRITICAL: NEXTAUTH_SECRET environment variable is required');
+}
+const JWT_SECRET = process.env.NEXTAUTH_SECRET;
 
 interface Pending2FAPayload {
   userId: string;
   email: string;
   purpose: string;
+  jti?: string; // Unique token ID for single-use verification
 }
 
 export async function POST(request: NextRequest) {
   // Apply strict rate limiting (5 attempts per 15 minutes)
-  const rateLimitResponse = authRateLimitMiddleware(request);
+  const rateLimitResponse = await authRateLimitMiddleware(request);
   if (rateLimitResponse) {
     return rateLimitResponse;
   }
@@ -69,12 +74,23 @@ export async function POST(request: NextRequest) {
         twoFactorEnabled: true,
         twoFactorSecret: true,
         twoFactorBackupCodes: true,
+        pending2FATokenJti: true,
       },
     });
 
     if (!user || !user.isSuperAdmin || !user.twoFactorEnabled) {
       return NextResponse.json(
         { error: 'Invalid session' },
+        { status: 401 }
+      );
+    }
+
+    // SECURITY: Validate JTI (JWT ID) to prevent token replay attacks
+    // The JTI must match the stored value, indicating this is the current valid token
+    if (!tokenPayload.jti || tokenPayload.jti !== user.pending2FATokenJti) {
+      console.log(`[2FA] Token replay attempt detected for user ${user.email}`);
+      return NextResponse.json(
+        { error: 'Session expired or already used. Please log in again.' },
         { status: 401 }
       );
     }
@@ -93,11 +109,15 @@ export async function POST(request: NextRequest) {
       const matchedIndex = await verifyBackupCode(code, user.twoFactorBackupCodes);
       if (matchedIndex >= 0) {
         isValid = true;
-        // Remove the used backup code
+        // Remove the used backup code, clear the pending token JTI, and record verification time
         const updatedCodes = removeBackupCode(user.twoFactorBackupCodes, matchedIndex);
         await prisma.user.update({
           where: { id: user.id },
-          data: { twoFactorBackupCodes: updatedCodes },
+          data: {
+            twoFactorBackupCodes: updatedCodes,
+            pending2FATokenJti: null, // Invalidate token after use
+            twoFactorVerifiedAt: new Date(), // For sensitive ops re-verification
+          },
         });
       }
     } else {
@@ -110,6 +130,17 @@ export async function POST(request: NextRequest) {
       }
 
       isValid = verifyTOTPCode(user.twoFactorSecret, code);
+
+      // Clear the pending token JTI and record verification time after successful TOTP verification
+      if (isValid) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            pending2FATokenJti: null,
+            twoFactorVerifiedAt: new Date(), // For sensitive ops re-verification
+          },
+        });
+      }
     }
 
     if (!isValid) {

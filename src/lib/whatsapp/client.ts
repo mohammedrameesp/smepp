@@ -173,6 +173,7 @@ export async function logWhatsAppMessage(params: {
   errorMessage?: string;
   entityType?: string;
   entityId?: string;
+  configSource?: 'PLATFORM' | 'CUSTOM';
 }): Promise<void> {
   await prisma.whatsAppMessageLog.create({
     data: {
@@ -184,6 +185,7 @@ export async function logWhatsAppMessage(params: {
       errorMessage: params.errorMessage,
       entityType: params.entityType,
       entityId: params.entityId,
+      configSource: params.configSource,
     },
   });
 }

@@ -1,26 +1,27 @@
 'use client';
 
-import { Sidebar } from '@/components/layout/sidebar';
-import { employeeSidebarConfig, filterSidebarByModules } from '@/components/layout/sidebar-config';
+import { EmployeeTopNav } from '@/components/layout/employee-top-nav';
+import { ChatWidget } from '@/components/chat/chat-widget';
 
 interface EmployeeLayoutClientProps {
   children: React.ReactNode;
   enabledModules: string[];
+  aiChatEnabled: boolean;
 }
 
-export function EmployeeLayoutClient({ children, enabledModules }: EmployeeLayoutClientProps) {
-  // Filter sidebar based on enabled modules (passed from server)
-  const filteredConfig = filterSidebarByModules(employeeSidebarConfig, enabledModules);
-
+export function EmployeeLayoutClient({ children, enabledModules, aiChatEnabled }: EmployeeLayoutClientProps) {
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
-      {/* Desktop sidebar - hidden on mobile */}
-      <Sidebar config={filteredConfig} />
+    <>
+      {/* Top Navigation Header */}
+      <EmployeeTopNav enabledModules={enabledModules} />
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950">
+      <div className="min-h-[calc(100vh-3.5rem)] bg-gray-50">
         {children}
-      </main>
-    </div>
+      </div>
+
+      {/* AI Chat Widget - only shown if enabled for organization */}
+      {aiChatEnabled && <ChatWidget />}
+    </>
   );
 }

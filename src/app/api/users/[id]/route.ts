@@ -44,12 +44,18 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // SECURITY: Filter included relations by tenantId to prevent cross-tenant data leakage
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
-        assets: true,
-        subscriptions: true,
+        assets: {
+          where: { tenantId },
+        },
+        subscriptions: {
+          where: { tenantId },
+        },
         hrProfile: {
+          where: { tenantId },
           select: {
             dateOfJoining: true,
             gender: true,
@@ -57,8 +63,8 @@ export async function GET(
         },
         _count: {
           select: {
-            assets: true,
-            subscriptions: true,
+            assets: { where: { tenantId } },
+            subscriptions: { where: { tenantId } },
           },
         },
       },
@@ -211,12 +217,6 @@ export async function DELETE(
         name: true,
         email: true,
         isSystemAccount: true,
-        _count: {
-          select: {
-            assets: true,
-            subscriptions: true,
-          }
-        }
       },
     });
 
@@ -235,23 +235,51 @@ export async function DELETE(
       );
     }
 
-    // Check if user has assigned items
-    if (user._count.assets > 0 || user._count.subscriptions > 0) {
+    // SECURITY: Count assigned items filtered by tenant to prevent cross-tenant data leakage
+    const [assignedAssets, assignedSubscriptions] = await Promise.all([
+      prisma.asset.count({
+        where: { assignedUserId: id, tenantId },
+      }),
+      prisma.subscription.count({
+        where: { assignedUserId: id, tenantId },
+      }),
+    ]);
+
+    // Check if user has assigned items in this tenant
+    if (assignedAssets > 0 || assignedSubscriptions > 0) {
       return NextResponse.json(
         {
           error: 'Cannot delete user with assigned assets or subscriptions',
           details: {
-            assignedAssets: user._count.assets,
-            assignedSubscriptions: user._count.subscriptions
+            assignedAssets,
+            assignedSubscriptions
           }
         },
         { status: 409 }
       );
     }
 
-    // Permanently delete user
-    await prisma.user.delete({
+    const now = new Date();
+    const scheduledDeletionAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+
+    // Soft-delete user (7-day recovery period before permanent deletion)
+    await prisma.user.update({
       where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: now,
+        scheduledDeletionAt,
+        deletedByUserId: session.user.id,
+        canLogin: false, // Block login immediately
+      },
+    });
+
+    // Set termination date on HR profile if exists (stops gratuity/service calculations)
+    await prisma.hRProfile.updateMany({
+      where: { userId: id },
+      data: {
+        terminationDate: now,
+      },
     });
 
     // Log activity
@@ -260,16 +288,23 @@ export async function DELETE(
       ActivityActions.USER_DELETED,
       'User',
       user.id,
-      { userName: user.name, userEmail: user.email }
+      {
+        userName: user.name,
+        userEmail: user.email,
+        softDelete: true,
+        scheduledDeletionAt: scheduledDeletionAt.toISOString(),
+      }
     );
 
     return NextResponse.json({
-      message: 'User deleted successfully',
+      message: 'Employee scheduled for deletion',
+      details: 'The employee has been deactivated and will be permanently deleted in 7 days. You can restore them during this period.',
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-      }
+      },
+      scheduledDeletionAt: scheduledDeletionAt.toISOString(),
     });
 
   } catch (error) {

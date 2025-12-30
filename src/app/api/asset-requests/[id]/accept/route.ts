@@ -137,6 +137,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     // Send email and in-app notifications to admins (tenant-scoped)
     try {
+      // Get org slug for email URLs
+      const org = await prisma.organization.findUnique({
+        where: { id: tenantId },
+        select: { slug: true },
+      });
+      const orgSlug = org?.slug || 'app';
+
       const admins = await prisma.user.findMany({
         where: {
           role: Role.ADMIN,
@@ -152,6 +159,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         assetType: assetRequest.asset.type,
         userName: assetRequest.user.name || assetRequest.user.email,
         userEmail: assetRequest.user.email,
+        orgSlug,
       });
       await sendBatchEmails(admins.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
 

@@ -22,6 +22,47 @@ function getAnnualLeaveEntitlement(serviceMonths: number): number {
 }
 
 /**
+ * FIN-008: Calculate pro-rata entitlement for new employees
+ * If employee joins mid-year, they get proportional leave based on remaining months
+ *
+ * @param fullEntitlement - Full annual entitlement (e.g., 30 days)
+ * @param dateOfJoining - Employee's date of joining
+ * @param year - The leave year to calculate for
+ * @returns Pro-rated entitlement rounded to nearest 0.5
+ */
+function calculateProRataEntitlement(
+  fullEntitlement: number,
+  dateOfJoining: Date | null | undefined,
+  year: number
+): number {
+  if (!dateOfJoining) return fullEntitlement;
+
+  const joinDate = new Date(dateOfJoining);
+  const joinYear = joinDate.getFullYear();
+
+  // If joined before this leave year, give full entitlement
+  if (joinYear < year) {
+    return fullEntitlement;
+  }
+
+  // If joined after this leave year, no entitlement
+  if (joinYear > year) {
+    return 0;
+  }
+
+  // Joined in this leave year - calculate pro-rata
+  // Calculate remaining months in the year from join date
+  const joinMonth = joinDate.getMonth(); // 0-indexed (Jan = 0)
+  const remainingMonths = 12 - joinMonth;
+
+  // Pro-rata: (remaining months / 12) * full entitlement
+  const proRata = (remainingMonths / 12) * fullEntitlement;
+
+  // Round to nearest 0.5
+  return Math.round(proRata * 2) / 2;
+}
+
+/**
  * Initialize leave balances for a user
  * Creates balances for STANDARD and MEDICAL leave types based on service requirements
  * Skips PARENTAL and RELIGIOUS (admin assigns)
@@ -48,22 +89,8 @@ export async function initializeUserLeaveBalances(
   const dateOfJoining = hrProfile?.dateOfJoining;
   const serviceMonths = dateOfJoining ? getServiceMonths(dateOfJoining, now) : 0;
 
-  // Get all active leave types
-  const leaveTypes = await prisma.leaveType.findMany({
-    where: { isActive: true },
-  });
-
-  // Get existing balances for this user and year
-  const existingBalances = await prisma.leaveBalance.findMany({
-    where: { userId, year },
-    select: { leaveTypeId: true },
-  });
-  const existingLeaveTypeIds = new Set(existingBalances.map(b => b.leaveTypeId));
-
-  let created = 0;
-  let skipped = 0;
-
   // Get tenantId from user if not provided (using organizationMemberships relation)
+  // This must be done BEFORE querying leave types to filter by tenant
   let effectiveTenantId: string;
   if (tenantId) {
     effectiveTenantId = tenantId;
@@ -79,6 +106,21 @@ export async function initializeUserLeaveBalances(
     });
     effectiveTenantId = user?.organizationMemberships[0]?.organizationId || 'SYSTEM';
   }
+
+  // Get all active leave types for this tenant
+  const leaveTypes = await prisma.leaveType.findMany({
+    where: { isActive: true, tenantId: effectiveTenantId },
+  });
+
+  // Get existing balances for this user and year
+  const existingBalances = await prisma.leaveBalance.findMany({
+    where: { userId, year, tenantId: effectiveTenantId },
+    select: { leaveTypeId: true },
+  });
+  const existingLeaveTypeIds = new Set(existingBalances.map(b => b.leaveTypeId));
+
+  let created = 0;
+  let skipped = 0;
 
   const balancesToCreate: {
     userId: string;
@@ -116,6 +158,15 @@ export async function initializeUserLeaveBalances(
     // For Annual Leave, check service-based entitlement
     if (leaveType.name === 'Annual Leave') {
       entitlement = getAnnualLeaveEntitlement(serviceMonths);
+    }
+
+    // FIN-008: Apply pro-rata for employees who joined mid-year
+    entitlement = calculateProRataEntitlement(entitlement, dateOfJoining, year);
+
+    // Skip if pro-rata results in 0 entitlement
+    if (entitlement <= 0) {
+      skipped++;
+      continue;
     }
 
     balancesToCreate.push({
@@ -182,14 +233,14 @@ export async function reinitializeUserLeaveBalances(
     effectiveTenantId = user?.organizationMemberships[0]?.organizationId || 'SYSTEM';
   }
 
-  // Get all active leave types
+  // Get all active leave types for this tenant
   const leaveTypes = await prisma.leaveType.findMany({
-    where: { isActive: true },
+    where: { isActive: true, tenantId: effectiveTenantId },
   });
 
   // Get existing balances for this user and year
   const existingBalances = await prisma.leaveBalance.findMany({
-    where: { userId, year },
+    where: { userId, year, tenantId: effectiveTenantId },
     include: { leaveType: true },
   });
 
@@ -215,6 +266,9 @@ export async function reinitializeUserLeaveBalances(
       if (leaveType.name === 'Annual Leave') {
         entitlement = getAnnualLeaveEntitlement(serviceMonths);
       }
+
+      // FIN-008: Apply pro-rata for employees who joined mid-year
+      entitlement = calculateProRataEntitlement(entitlement, dateOfJoining, year);
 
       if (existingBalance) {
         // Update entitlement if it changed (and nothing has been used)

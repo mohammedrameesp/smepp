@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     const backupData = {
       _metadata: {
         version: '2.1',
-        application: 'SME++',
+        application: 'Durj',
         createdAt: timestamp,
         organizationId: tenantId || 'ALL',
         description: tenantId ? 'Organization backup' : 'Full platform backup (cron)',
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
 
     const backupJson = JSON.stringify(backupData, null, 2);
     const orgSlug = tenantId ? `-org-${tenantId.substring(0, 8)}` : '';
-    const filename = `smepp-backup${orgSlug}-${timestamp.replace(/[:.]/g, '-')}.json`;
+    const filename = `durj-backup${orgSlug}-${timestamp.replace(/[:.]/g, '-')}.json`;
 
     // If cron job, save to Supabase Storage
     if (isCronJob) {

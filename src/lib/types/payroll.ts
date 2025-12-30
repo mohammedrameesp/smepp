@@ -246,6 +246,9 @@ export interface GratuityCalculation {
     fullYearsAmount: number;
     partialYearAmount: number;
   };
+  // FIN-006: Eligibility fields for minimum service requirement
+  ineligible?: boolean;
+  ineligibleReason?: string;
 }
 
 export interface GratuityProjection {

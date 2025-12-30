@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, Shield, Clock, Database } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function BackupDownload() {
   const [isDownloading, setIsDownloading] = useState(false);
@@ -37,7 +38,7 @@ export function BackupDownload() {
       setLastBackup(new Date().toLocaleString());
     } catch (error) {
       console.error('Backup failed:', error);
-      alert('Failed to download backup. Please try again.');
+      toast.error('Failed to download backup. Please try again.');
     } finally {
       setIsDownloading(false);
     }

@@ -365,8 +365,8 @@ export default function SetupPage() {
       {/* Header */}
       <header className="py-6 px-4 border-b border-slate-200 bg-white">
         <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <img src="/sme-icon-shield-512.png" alt="SME++" className="h-10 w-10" />
-          <span className="text-xl font-semibold text-slate-900">SME++</span>
+          <img src="/sme-icon-shield-512.png" alt="Durj" className="h-10 w-10" />
+          <span className="text-xl font-semibold text-slate-900">Durj</span>
         </div>
       </header>
 

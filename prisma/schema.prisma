@@ -229,6 +229,13 @@ model User {
   resetToken       String?   @unique
   resetTokenExpiry DateTime?
 
+  // Session security - used to invalidate sessions on password change
+  passwordChangedAt DateTime? // Set when password is changed, checked against session iat
+
+  // Account lockout (brute-force protection)
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime? // Account locked until this time
+
   // Initial password setup (for new employees)
   setupToken       String?   @unique
   setupTokenExpiry DateTime?
@@ -243,6 +250,8 @@ model User {
   twoFactorSecret      String? // Encrypted TOTP secret
   twoFactorEnabled     Boolean  @default(false)
   twoFactorBackupCodes String[] // Hashed backup codes
+  pending2FATokenJti   String?  // Current pending 2FA token's unique ID (prevents replay)
+  twoFactorVerifiedAt  DateTime? // Last 2FA verification timestamp (for sensitive ops re-verification)
 
   accounts                     Account[]
   sessions                     Session[]
@@ -317,6 +326,7 @@ model User {
   // Chat relations
   chatConversations ChatConversation[]
   aiChatUsage       AIChatUsage[]
+  aiChatAuditLogs   AIChatAuditLog[]
 
   // WhatsApp integration
   whatsAppPhone WhatsAppUserPhone?
@@ -371,7 +381,8 @@ model Organization {
   enabledModules String[] @default(["assets", "subscriptions", "suppliers"])
 
   // AI Chat feature (super-admin controlled)
-  aiChatEnabled Boolean @default(false)
+  aiChatEnabled        Boolean @default(false)
+  aiTokenBudgetMonthly Int?    // Custom monthly AI token limit (null = use tier default)
 
   // Additional currencies beyond QAR (e.g., ["USD", "EUR"])
   additionalCurrencies String[] @default([])
@@ -448,6 +459,7 @@ model Organization {
   depreciationRecords   DepreciationRecord[]
   chatConversations     ChatConversation[]
   aiChatUsage           AIChatUsage[]
+  aiChatAuditLogs       AIChatAuditLog[]
 
   // Access Control
   rolePermissions RolePermission[]
@@ -928,13 +940,14 @@ model SystemSettings {
   id        String       @id @default(cuid())
   tenantId  String
   tenant    Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  key       String       @unique
+  key       String       // Removed @unique - now part of composite unique constraint
   value     String
   updatedBy String?
   updater   User?        @relation("SystemSettingsUpdater", fields: [updatedBy], references: [id])
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
+  @@unique([tenantId, key]) // SECURITY: Each tenant can have their own settings
   @@index([key])
   @@index([tenantId])
 }
@@ -1032,6 +1045,16 @@ model HRProfile {
   @@index([passportNumber])
   @@index([employeeId])
   @@index([tenantId])
+  // SECURITY: Indexes for document expiry cron jobs (prevents full table scans)
+  @@index([qidExpiry])
+  @@index([passportExpiry])
+  @@index([healthCardExpiry])
+  @@index([contractExpiry])
+  @@index([licenseExpiry])
+  // Compound index for tenant-scoped expiry queries
+  @@index([tenantId, qidExpiry])
+  @@index([tenantId, passportExpiry])
+  @@index([tenantId, contractExpiry])
 }
 
 enum ProfileChangeRequestStatus {
@@ -1910,6 +1933,8 @@ model CompanyDocument {
   @@index([documentTypeId])
   @@index([assetId])
   @@index([tenantId])
+  // SECURITY: Compound index for tenant-scoped expiry alerts (prevents full table scan)
+  @@index([tenantId, expiryDate])
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1976,6 +2001,44 @@ model AIChatUsage {
   @@index([tenantId])
   @@index([tenantId, createdAt])
   @@index([userId])
+}
+
+// AI Chat Audit Log - For security monitoring and compliance
+model AIChatAuditLog {
+  id             String   @id @default(cuid())
+  tenantId       String
+  userId         String
+  conversationId String?
+
+  // Privacy-friendly query tracking
+  queryHash      String   // SHA-256 hash of the query (for pattern detection without storing content)
+  queryLength    Int      // Character count of original query
+
+  // What was accessed
+  functionsCalled Json     // Array of function names called
+  dataAccessed    Json     // Summary of data types accessed
+
+  // Performance & usage
+  tokensUsed     Int
+  responseTimeMs Int
+
+  // Security metadata
+  ipAddress      String?
+  userAgent      String?
+
+  // Risk assessment
+  flagged        Boolean  @default(false)
+  flagReasons    String[] @default([])
+  riskScore      Int      @default(0)
+
+  createdAt      DateTime @default(now())
+
+  tenant Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@index([userId, createdAt])
+  @@index([flagged])
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

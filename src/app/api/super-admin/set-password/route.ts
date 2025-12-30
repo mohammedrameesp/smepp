@@ -13,10 +13,13 @@ export async function POST(request: Request) {
     // Hash the password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Update the user
+    // Update the user and invalidate existing sessions
     const user = await prisma.user.update({
       where: { email },
-      data: { passwordHash },
+      data: {
+        passwordHash,
+        passwordChangedAt: new Date(), // SECURITY: Invalidates all existing sessions
+      },
       select: { id: true, email: true, name: true },
     });
 

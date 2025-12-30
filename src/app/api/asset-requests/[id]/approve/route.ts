@@ -156,6 +156,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     // Send email notifications
     try {
+      // Get org slug for email URLs
+      const org = await prisma.organization.findUnique({
+        where: { id: tenantId },
+        select: { slug: true },
+      });
+      const orgSlug = org?.slug || 'app';
+
       if (assetRequest.type === AssetRequestType.EMPLOYEE_REQUEST) {
         // Notify user that their request was approved (pending their acceptance)
         const emailData = assetAssignmentPendingEmail({
@@ -167,6 +174,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           userName: assetRequest.user.name || assetRequest.user.email,
           assignerName: session.user.name || session.user.email || 'Admin',
           reason: notes || undefined,
+          orgSlug,
         });
         await sendEmail({ to: assetRequest.user.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
       } else if (assetRequest.type === AssetRequestType.RETURN_REQUEST) {
@@ -179,6 +187,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           assetType: assetRequest.asset.type,
           userName: assetRequest.user.name || assetRequest.user.email,
           approverName: session.user.name || session.user.email || 'Admin',
+          orgSlug,
         });
         await sendEmail({ to: assetRequest.user.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
       }

@@ -7,6 +7,7 @@ import { hrProfileSchema, hrProfileEmployeeSchema } from '@/lib/validations/hr-p
 import { withErrorHandler } from '@/lib/http/handler';
 import { Role } from '@prisma/client';
 import { sendEmail } from '@/lib/email';
+import { initializeUserLeaveBalances } from '@/lib/leave-balance-init';
 
 // GET /api/users/me/hr-profile - Get current user's HR profile
 async function getHRProfileHandler(request: NextRequest) {
@@ -196,6 +197,16 @@ async function updateHRProfileHandler(request: NextRequest) {
     } catch (emailError) {
       // Log error but don't fail the request
       console.error('Failed to send onboarding completion email:', emailError);
+    }
+
+    // Initialize leave balances when onboarding is completed with dateOfJoining
+    if (hrProfile.dateOfJoining) {
+      try {
+        await initializeUserLeaveBalances(session.user.id, new Date().getFullYear(), session.user.organizationId!);
+      } catch (leaveError) {
+        console.error('[Leave] Failed to initialize leave balances on onboarding completion:', leaveError);
+        // Don't fail the request if leave balance initialization fails
+      }
     }
   }
 

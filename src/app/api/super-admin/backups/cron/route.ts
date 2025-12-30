@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { createClient } from '@supabase/supabase-js';
 import logger from '@/lib/log';
+import { encryptBackup, redactBackupData } from '@/lib/security/backup-encryption';
 
 const BACKUP_BUCKET = 'database-backups';
 
@@ -148,7 +149,7 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
     const backupData = {
       _metadata: {
         version: '3.0',
-        application: 'SME++',
+        application: 'Durj',
         type: 'full',
         createdAt: new Date().toISOString(),
         trigger: 'cron',
@@ -193,8 +194,11 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
       notifications,
     };
 
-    const backupJson = JSON.stringify(backupData, null, 2);
-    await saveToSupabase(backupJson, `full/${filename}`);
+    // SECURITY: Redact sensitive fields and encrypt before storage
+    const redactedData = redactBackupData(backupData);
+    const backupJson = JSON.stringify(redactedData, null, 2);
+    const encryptedBackup = encryptBackup(backupJson);
+    await saveToSupabase(encryptedBackup, `full/${filename.replace('.json', '.enc')}`);
 
     // Clean up old full backups (keep last 30)
     await cleanupOldBackups('full');
@@ -290,7 +294,7 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
     const backupData = {
       _metadata: {
         version: '3.0',
-        application: 'SME++',
+        application: 'Durj',
         type: 'organization',
         organizationId: tenantId,
         organizationSlug: orgSlug,
@@ -336,8 +340,11 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
       notifications,
     };
 
-    const backupJson = JSON.stringify(backupData, null, 2);
-    await saveToSupabase(backupJson, `orgs/${orgSlug}/${filename}`);
+    // SECURITY: Redact sensitive fields and encrypt before storage
+    const redactedData = redactBackupData(backupData);
+    const backupJson = JSON.stringify(redactedData, null, 2);
+    const encryptedBackup = encryptBackup(backupJson);
+    await saveToSupabase(encryptedBackup, `orgs/${orgSlug}/${filename.replace('.json', '.enc')}`);
 
     // Clean up old backups for this org (keep last 30)
     await cleanupOldBackups(`orgs/${orgSlug}`);
@@ -350,7 +357,7 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
   }
 }
 
-async function saveToSupabase(backupJson: string, path: string) {
+async function saveToSupabase(backupData: Buffer, path: string) {
   const supabase = getSupabaseClient();
 
   // Ensure bucket exists
@@ -359,11 +366,11 @@ async function saveToSupabase(backupJson: string, path: string) {
     await supabase.storage.createBucket(BACKUP_BUCKET, { public: false });
   }
 
-  // Upload backup
+  // Upload encrypted backup
   const { error } = await supabase.storage
     .from(BACKUP_BUCKET)
-    .upload(path, Buffer.from(backupJson, 'utf-8'), {
-      contentType: 'application/json',
+    .upload(path, backupData, {
+      contentType: 'application/octet-stream', // Encrypted binary data
       upsert: true,
     });
 
@@ -377,7 +384,7 @@ async function cleanupOldBackups(folder: string) {
 
     if (files && files.length > 30) {
       const oldFiles = files
-        .filter(f => f.name.endsWith('.json'))
+        .filter(f => f.name.endsWith('.json') || f.name.endsWith('.enc'))
         .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
         .slice(0, files.length - 30)
         .map(f => `${folder}/${f.name}`);

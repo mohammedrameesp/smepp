@@ -65,13 +65,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }, { status: 400 });
     }
 
-    // Get company settings for WPS
+    // Get company settings for WPS (tenant-scoped)
     const molIdSetting = await prisma.systemSettings.findUnique({
-      where: { key: 'COMPANY_MOL_ID' },
+      where: {
+        tenantId_key: { tenantId, key: 'COMPANY_MOL_ID' },
+      },
     });
 
     const companyNameSetting = await prisma.systemSettings.findUnique({
-      where: { key: 'COMPANY_NAME' },
+      where: {
+        tenantId_key: { tenantId, key: 'COMPANY_NAME' },
+      },
     });
 
     const employerMolId = molIdSetting?.value || '0000000000';

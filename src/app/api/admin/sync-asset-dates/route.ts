@@ -8,12 +8,20 @@ import { prisma } from '@/lib/core/prisma';
  * ONE-TIME SCRIPT: Sync dates with purchase dates
  * - Sets createdAt to purchaseDate for all assets and subscriptions
  * - Sets assignment dates in history to purchaseDate
+ *
+ * SECURITY: All queries are filtered by tenantId to ensure tenant isolation
  */
 export async function POST(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user.role !== Role.ADMIN) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // SECURITY: Get tenant ID from session - required for data isolation
+    const tenantId = session.user.organizationId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 400 });
     }
 
     const results = {
@@ -26,9 +34,10 @@ export async function POST(_request: NextRequest) {
       errors: [] as string[],
     };
 
-    // Get all assets with purchase dates
+    // Get all assets with purchase dates (filtered by tenant)
     const assets = await prisma.asset.findMany({
       where: {
+        tenantId,
         purchaseDate: { not: null },
       },
       orderBy: {
@@ -87,9 +96,10 @@ export async function POST(_request: NextRequest) {
       }
     }
 
-    // Count assets without purchase dates
+    // Count assets without purchase dates (filtered by tenant)
     const assetsWithoutPurchaseDate = await prisma.asset.findMany({
       where: {
+        tenantId,
         purchaseDate: null,
       },
       select: {
@@ -119,9 +129,10 @@ export async function POST(_request: NextRequest) {
 
     // ========== SUBSCRIPTIONS ==========
 
-    // Get all subscriptions with purchase dates
+    // Get all subscriptions with purchase dates (filtered by tenant)
     const subscriptions = await prisma.subscription.findMany({
       where: {
+        tenantId,
         purchaseDate: { not: null },
       },
       orderBy: {
@@ -182,9 +193,10 @@ export async function POST(_request: NextRequest) {
       }
     }
 
-    // Count subscriptions without purchase dates
+    // Count subscriptions without purchase dates (filtered by tenant)
     const subscriptionsWithoutPurchaseDate = await prisma.subscription.findMany({
       where: {
+        tenantId,
         purchaseDate: null,
       },
       select: {

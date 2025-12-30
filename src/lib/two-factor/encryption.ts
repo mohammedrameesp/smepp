@@ -11,13 +11,24 @@ function getEncryptionKey(): Buffer {
   const key = process.env.TWO_FACTOR_ENCRYPTION_KEY;
 
   if (!key) {
+    // In production, require dedicated encryption key
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'CRITICAL: TWO_FACTOR_ENCRYPTION_KEY is required in production. ' +
+        'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+      );
+    }
+    // In development, derive from NEXTAUTH_SECRET (but NEXTAUTH_SECRET is still required)
+    if (!process.env.NEXTAUTH_SECRET) {
+      throw new Error('CRITICAL: NEXTAUTH_SECRET environment variable is required');
+    }
     console.warn(
-      'WARNING: TWO_FACTOR_ENCRYPTION_KEY not set. Using a derived key from NEXTAUTH_SECRET. ' +
+      'WARNING: TWO_FACTOR_ENCRYPTION_KEY not set. Using derived key from NEXTAUTH_SECRET. ' +
       'Set TWO_FACTOR_ENCRYPTION_KEY in production for better security.'
     );
-    // Derive key from NEXTAUTH_SECRET as fallback
-    const secret = process.env.NEXTAUTH_SECRET || 'default-secret-key';
-    return crypto.scryptSync(secret, 'salt', 32);
+    // Use a unique salt derived from app name to prevent cross-application key reuse
+    const salt = crypto.createHash('sha256').update('durj-2fa-encryption').digest();
+    return crypto.scryptSync(process.env.NEXTAUTH_SECRET, salt, 32);
   }
 
   // Key should be 32 bytes (256 bits) hex encoded = 64 characters

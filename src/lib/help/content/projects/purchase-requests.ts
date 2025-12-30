@@ -1,0 +1,323 @@
+import type { HelpModule } from '../../help-types';
+
+export const purchaseRequestsContent: HelpModule = {
+  id: 'purchase-requests',
+  categoryId: 'projects',
+  name: 'Purchase Requests',
+  description: 'Internal procurement workflow and approval process',
+  icon: 'ShoppingCart',
+  adminOnly: false,
+  keywords: ['purchase', 'procurement', 'request', 'approval', 'buy', 'order'],
+
+  overview: {
+    summary:
+      'The Purchase Requests module streamlines internal procurement. Employees can submit purchase requests for approval, and admins can review, approve, or reject them. Track all purchases from request to completion.',
+    keyFeatures: [
+      'Submit purchase requests with line items',
+      'Multi-level approval workflow',
+      'Track request status from submission to completion',
+      'Attach supporting documents',
+      'Link to projects for cost tracking',
+      'Support for recurring and one-time purchases',
+    ],
+    benefits: [
+      'Streamlined procurement process',
+      'Clear approval workflow',
+      'Spending visibility and control',
+      'Audit trail for all purchases',
+    ],
+  },
+
+  adminContent: {
+    capabilities: [
+      'Review pending purchase requests',
+      'Approve or reject requests',
+      'Track all requests across the organization',
+      'Mark requests as completed',
+      'Generate purchase reports',
+    ],
+    workflows: [
+      {
+        id: 'review-request',
+        title: 'How to Review Purchase Requests',
+        description: 'Evaluate and process pending purchase requests.',
+        steps: [
+          {
+            step: 1,
+            title: 'View Pending Requests',
+            description:
+              'Go to Projects > Purchase Requests. Check the pending badge count.',
+          },
+          {
+            step: 2,
+            title: 'Open Request',
+            description: 'Click on a request to see full details and line items.',
+          },
+          {
+            step: 3,
+            title: 'Review Items',
+            description:
+              'Check each item, quantities, prices, and justification.',
+            tip: 'Verify budget availability before approving large requests.',
+          },
+          {
+            step: 4,
+            title: 'Check Project Link',
+            description:
+              'If linked to a project, verify it\'s the correct cost center.',
+          },
+          {
+            step: 5,
+            title: 'Approve or Reject',
+            description:
+              'Click "Approve" with notes, or "Reject" with a reason.',
+          },
+        ],
+        roles: ['ADMIN'],
+      },
+      {
+        id: 'complete-request',
+        title: 'Marking Request as Completed',
+        description: 'Record when a purchase has been fulfilled.',
+        steps: [
+          {
+            step: 1,
+            title: 'Find Approved Request',
+            description: 'Filter for approved requests that have been purchased.',
+          },
+          {
+            step: 2,
+            title: 'Mark Complete',
+            description:
+              'Click "Mark Complete" and add completion notes (e.g., invoice number).',
+          },
+        ],
+        roles: ['ADMIN'],
+      },
+    ],
+    tips: [
+      'Process requests within 48 hours to avoid delays.',
+      'Check vendor options before approving large purchases.',
+      'Require quotes for purchases over certain amounts.',
+      'Ensure project codes are correctly linked for cost tracking.',
+    ],
+  },
+
+  employeeContent: {
+    capabilities: [
+      'Submit new purchase requests',
+      'Add multiple line items',
+      'Track request status',
+      'Cancel pending requests',
+      'View request history',
+    ],
+    workflows: [
+      {
+        id: 'submit-request',
+        title: 'How to Submit a Purchase Request',
+        description: 'Create a new purchase request for approval.',
+        steps: [
+          {
+            step: 1,
+            title: 'Navigate to Purchase Requests',
+            description: 'Go to Requests > New Request from the sidebar.',
+          },
+          {
+            step: 2,
+            title: 'Enter Request Details',
+            description:
+              'Add a title and optional description for the purchase.',
+          },
+          {
+            step: 3,
+            title: 'Add Line Items',
+            description:
+              'Add each item with description, quantity, and estimated unit price.',
+            tip: 'Include product URLs or links for easier procurement.',
+          },
+          {
+            step: 4,
+            title: 'Set Priority',
+            description: 'Choose priority level: Low, Medium, High, or Urgent.',
+          },
+          {
+            step: 5,
+            title: 'Link to Project (Optional)',
+            description:
+              'If this is a project expense, select the project.',
+          },
+          {
+            step: 6,
+            title: 'Add Justification',
+            description: 'Explain why this purchase is needed.',
+          },
+          {
+            step: 7,
+            title: 'Submit',
+            description:
+              'Click "Submit Request". It will be sent for approval.',
+          },
+        ],
+        roles: ['USER'],
+      },
+      {
+        id: 'track-request',
+        title: 'How to Track Your Requests',
+        description: 'Check the status of your submitted requests.',
+        steps: [
+          {
+            step: 1,
+            title: 'View My Requests',
+            description: 'Go to Requests > Purchase Requests.',
+          },
+          {
+            step: 2,
+            title: 'Check Status',
+            description:
+              'See status: Pending, Under Review, Approved, Rejected, or Completed.',
+          },
+          {
+            step: 3,
+            title: 'View Details',
+            description: 'Click on a request to see approval notes or rejection reason.',
+          },
+        ],
+        roles: ['USER'],
+      },
+    ],
+    tips: [
+      'Provide clear descriptions for faster approval.',
+      'Include product links to help procurement.',
+      'Set realistic needed-by dates.',
+      'Follow up on pending requests if urgent.',
+    ],
+  },
+
+  validationRules: [
+    {
+      field: 'Title',
+      rule: 'Required. Maximum 200 characters.',
+      required: true,
+      example: 'Office Supplies - Q1 2024',
+    },
+    {
+      field: 'Items',
+      rule: 'At least one item is required.',
+      required: true,
+      example: 'Paper, Pens, Notebooks',
+    },
+    {
+      field: 'Item Description',
+      rule: 'Required per item. Maximum 500 characters.',
+      required: true,
+      example: 'A4 Paper 500 sheets',
+    },
+    {
+      field: 'Quantity',
+      rule: 'Required. Must be at least 1.',
+      required: true,
+      example: '10',
+    },
+    {
+      field: 'Unit Price',
+      rule: 'Required. Must be zero or positive.',
+      required: true,
+      example: '25.00',
+    },
+    {
+      field: 'Priority',
+      rule: 'Select from Low, Medium, High, Urgent.',
+      example: 'Medium',
+    },
+    {
+      field: 'Project Name',
+      rule: 'Required when cost type is "Project Cost".',
+      example: 'Website Redesign',
+    },
+    {
+      field: 'Product URL',
+      rule: 'Optional. Must be a valid URL if provided.',
+      example: 'https://vendor.com/product',
+    },
+  ],
+
+  faqs: [
+    {
+      id: 'request-status',
+      question: 'What do the request statuses mean?',
+      answer:
+        'PENDING: Awaiting initial review. UNDER_REVIEW: Being evaluated. APPROVED: Purchase authorized. REJECTED: Request denied. COMPLETED: Purchase fulfilled.',
+      roles: ['ADMIN', 'USER'],
+      tags: ['status'],
+    },
+    {
+      id: 'approval-time',
+      question: 'How long does approval take?',
+      answer:
+        'Standard requests are typically processed within 24-48 hours. Urgent requests may be expedited. Large purchases may require additional approvals.',
+      roles: ['USER'],
+      tags: ['approval', 'time'],
+    },
+    {
+      id: 'edit-request',
+      question: 'Can I edit a submitted request?',
+      answer:
+        'You cannot edit a request after submission. If changes are needed, cancel the pending request and submit a new one.',
+      roles: ['USER'],
+      tags: ['edit'],
+    },
+    {
+      id: 'recurring-purchase',
+      question: 'How do I handle recurring purchases?',
+      answer:
+        'For recurring items (e.g., subscriptions), select "Monthly" or "Yearly" billing cycle. The system can track recurring costs separately.',
+      roles: ['ADMIN', 'USER'],
+      tags: ['recurring'],
+    },
+    {
+      id: 'budget-limit',
+      question: 'Is there a spending limit?',
+      answer:
+        'Limits depend on your organization\'s approval policies. Large purchases may require additional approval levels.',
+      roles: ['USER'],
+      tags: ['budget', 'limit'],
+    },
+    {
+      id: 'vendor-selection',
+      question: 'Can I specify a preferred vendor?',
+      answer:
+        'Yes, you can add vendor name and contact in the request. Include product URLs to help procurement source the exact items.',
+      roles: ['USER'],
+      tags: ['vendor'],
+    },
+  ],
+
+  videos: [
+    {
+      id: 'purchase-overview',
+      title: 'Purchase Requests Overview',
+      description: 'Learn how the purchase request process works.',
+      duration: '4:00',
+      isPlaceholder: true,
+      roles: ['ADMIN', 'USER'],
+    },
+    {
+      id: 'submit-request-video',
+      title: 'Submitting a Purchase Request',
+      description: 'Step-by-step guide to creating purchase requests.',
+      duration: '3:00',
+      isPlaceholder: true,
+      roles: ['USER'],
+    },
+    {
+      id: 'approve-request-video',
+      title: 'Processing Purchase Requests',
+      description: 'How to review and approve purchase requests.',
+      duration: '4:00',
+      isPlaceholder: true,
+      roles: ['ADMIN'],
+    },
+  ],
+
+  relatedModules: ['projects', 'suppliers'],
+};

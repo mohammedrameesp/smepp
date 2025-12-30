@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
             dateOfJoining: true,
             designation: true,
             employeeId: true,
+            terminationDate: true, // For soft-deleted employees
           },
         },
       },
@@ -73,7 +74,16 @@ export async function GET(request: NextRequest) {
 
     const basicSalary = parseDecimal(user.salaryStructure.basicSalary);
     const dateOfJoining = new Date(user.hrProfile.dateOfJoining);
-    const termDate = terminationDate ? new Date(terminationDate) : new Date();
+
+    // Use termination date priority: query param > HR profile > today
+    // If employee is terminated (soft-deleted), use their termination date to freeze calculations
+    const termDate = terminationDate
+      ? new Date(terminationDate)
+      : user.hrProfile.terminationDate
+        ? new Date(user.hrProfile.terminationDate)
+        : new Date();
+
+    const isTerminated = !!user.hrProfile.terminationDate;
 
     // Calculate current gratuity
     const gratuityCalculation = calculateGratuity(basicSalary, dateOfJoining, termDate);
@@ -89,8 +99,9 @@ export async function GET(request: NextRequest) {
       dateOfJoining: user.hrProfile.dateOfJoining,
       basicSalary,
       terminationDate: termDate.toISOString(),
+      isTerminated, // True if employee is soft-deleted/terminated
       calculation: gratuityCalculation,
-      projections,
+      projections: isTerminated ? [] : projections, // No future projections for terminated employees
     });
   } catch (error) {
     console.error('Gratuity GET error:', error);

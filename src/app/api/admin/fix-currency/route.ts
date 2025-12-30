@@ -44,13 +44,19 @@ export async function POST(request: NextRequest) {
       costQAR = cost / USD_TO_QAR_RATE;
     }
 
-    await prisma.subscription.update({
-      where: { id: subscriptionId },
+    // SECURITY: Use updateMany with tenantId for defense in depth
+    // This prevents IDOR even if findFirst check is bypassed
+    const updateResult = await prisma.subscription.updateMany({
+      where: { id: subscriptionId, tenantId },
       data: {
         costCurrency: currency,
         costQAR: costQAR,
       },
     });
+
+    if (updateResult.count === 0) {
+      return NextResponse.json({ error: 'Subscription not found or access denied' }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true, currency, costQAR });
 

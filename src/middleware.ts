@@ -3,7 +3,7 @@ import { getToken } from 'next-auth/jwt';
 import * as jose from 'jose';
 
 // Impersonation cookie name (must match the one in verify route)
-const IMPERSONATION_COOKIE = 'smepp-impersonation';
+const IMPERSONATION_COOKIE = 'durj-impersonation';
 
 // Interface for impersonation data
 interface ImpersonationData {
@@ -28,7 +28,11 @@ async function getImpersonationData(request: NextRequest): Promise<Impersonation
   if (!cookie?.value) return null;
 
   try {
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'fallback-secret');
+    if (!process.env.NEXTAUTH_SECRET) {
+      console.error('CRITICAL: NEXTAUTH_SECRET is not set');
+      return null;
+    }
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
     const { payload } = await jose.jwtVerify(cookie.value, secret);
 
     // Verify the token purpose
@@ -69,7 +73,11 @@ async function verifyImpersonationToken(token: string): Promise<{
   enabledModules: string[];
 } | null> {
   try {
-    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET || 'fallback-secret');
+    if (!process.env.NEXTAUTH_SECRET) {
+      console.error('CRITICAL: NEXTAUTH_SECRET is not set');
+      return null;
+    }
+    const secret = new TextEncoder().encode(process.env.NEXTAUTH_SECRET);
     const { payload } = await jose.jwtVerify(token, secret);
 
     // Verify the token purpose
@@ -161,7 +169,7 @@ function checkModuleAccess(
  * Multi-Tenant Middleware
  *
  * Handles:
- * 1. Subdomain-based tenant routing (acme.smepp.com)
+ * 1. Subdomain-based tenant routing (acme.durj.com)
  * 2. Authentication and session validation
  * 3. Smart redirects based on auth/org status
  * 4. Tenant context injection via headers
@@ -189,11 +197,13 @@ const PUBLIC_ROUTES = [
   '/signup',
   '/forgot-password',
   '/reset-password',
+  '/set-password', // Initial password setup for new employees
   '/get-started', // Public signup page
   '/platform-login', // Super admin login (legacy)
   '/api/auth',
   '/api/webhooks',
   '/api/public', // Public APIs (tenant branding, etc.)
+  '/api/invitations', // Invitation APIs (fetch details before auth)
   '/api/super-admin/auth', // Super admin auth APIs (login, verify-2fa)
   '/api/super-admin/stats', // Platform stats for login page
   '/api/super-admin/import-becreative', // Data import endpoint (temporary)
@@ -346,13 +356,13 @@ export async function middleware(request: NextRequest) {
         response.headers.set('x-impersonator-email', tokenData.superAdminEmail);
 
         // Store the ORIGINAL token as the cookie (already signed by the API)
-        // This avoids creating a new JWT in middleware which can be problematic
+        // SECURITY: Short TTL (15 minutes) to limit exposure if token is compromised
         response.cookies.set(IMPERSONATION_COOKIE, impersonateToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
+          sameSite: 'strict', // Changed from 'lax' for additional CSRF protection
           path: '/',
-          maxAge: 4 * 60 * 60, // 4 hours
+          maxAge: 15 * 60, // 15 minutes (reduced from 4 hours)
         });
 
         return response;

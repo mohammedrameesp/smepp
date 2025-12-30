@@ -1,8 +1,8 @@
-# SME++ Comprehensive Manual Testing Document
+# Durj Comprehensive Manual Testing Document
 
 **Version:** 1.0
 **Date:** December 28, 2025
-**Platform:** SME++ Multi-Tenant Business Management Platform
+**Platform:** Durj Multi-Tenant Business Management Platform
 **Total Features:** 200+ across 11 modules, 170+ API routes, 89 pages
 
 ---
@@ -20,13 +20,15 @@
 
 ## 1.1 Login Page (`/login`)
 
-### Main Domain Login (app.smepp.com or localhost:3000)
+### Main Domain Login (app.durj.com or localhost:3000)
+
+> **Note:** OAuth buttons are hidden on main domain. Users should login from their organization's subdomain for SSO.
 
 | # | Test Case | Expected Result | Pass | Notes |
 |---|-----------|-----------------|------|-------|
-| 1.1.1 | Navigate to /login | Login page displays with SME++ branding | [ ] | |
-| 1.1.2 | Verify Google OAuth button visible | "Continue with Google" button shown | [ ] | |
-| 1.1.3 | Verify Microsoft OAuth button visible | "Continue with Microsoft" button shown | [ ] | |
+| 1.1.1 | Navigate to /login | Login page displays with Durj branding | [ ] | |
+| 1.1.2 | Verify OAuth buttons hidden | No Google/Microsoft buttons on main domain | [ ] | |
+| 1.1.3 | Verify subdomain hint shown | Shows "Login from your organization subdomain for SSO" | [ ] | |
 | 1.1.4 | Verify email/password form visible | Email and password fields shown | [ ] | |
 | 1.1.5 | Enter valid email and password | Successful login, redirect to /admin or /employee | [ ] | |
 | 1.1.6 | Enter invalid email format | Validation error shown | [ ] | |
@@ -34,23 +36,28 @@
 | 1.1.8 | Leave email empty, submit | Required field validation | [ ] | |
 | 1.1.9 | Leave password empty, submit | Required field validation | [ ] | |
 | 1.1.10 | Click "Forgot password?" link | Navigates to /forgot-password | [ ] | |
-| 1.1.11 | Click "Sign up free" link | Navigates to /signup | [ ] | |
-| 1.1.12 | Login with Google OAuth | Redirects to Google, returns authenticated | [ ] | |
-| 1.1.13 | Login with Microsoft OAuth | Redirects to Microsoft, returns authenticated | [ ] | |
-| 1.1.14 | Already logged in user visits /login | Auto-redirects to /admin or /pending | [ ] | |
+| 1.1.11 | Already logged in user visits /login | Auto-redirects to /admin or /pending | [ ] | |
 
-### Subdomain Login (org-slug.smepp.com)
+### Subdomain Login (org-slug.durj.com)
 
 | # | Test Case | Expected Result | Pass | Notes |
 |---|-----------|-----------------|------|-------|
-| 1.1.15 | Visit org subdomain login | Displays org branding (logo, colors) | [ ] | |
-| 1.1.16 | Verify welcome title/subtitle | Uses org's custom welcome text | [ ] | |
-| 1.1.17 | Verify primary color applied | Login button uses org's primary color | [ ] | |
-| 1.1.18 | OAuth buttons visibility | Only shows if org has configured OAuth credentials | [ ] | |
-| 1.1.19 | No "Sign up" link on subdomain | Sign up link hidden on tenant subdomains | [ ] | |
-| 1.1.20 | Invalid subdomain | Shows "Organization Not Found" error | [ ] | |
-| 1.1.21 | Domain restriction enforced | Only allowed email domains can login | [ ] | |
-| 1.1.22 | Auth method restriction | Disabled methods don't show buttons | [ ] | |
+| 1.1.12 | Visit org subdomain login | Displays org branding (logo, colors) | [ ] | |
+| 1.1.13 | Verify welcome title/subtitle | Uses org's custom welcome text | [ ] | |
+| 1.1.14 | Verify primary color applied | Login button uses org's primary color | [ ] | |
+| 1.1.15 | OAuth buttons visibility | Only shows if org has configured OAuth credentials | [ ] | |
+| 1.1.16 | No "Sign up" link on subdomain | Sign up link hidden on tenant subdomains | [ ] | |
+| 1.1.17 | Invalid subdomain | Shows "Organization Not Found" error | [ ] | |
+| 1.1.18 | Domain restriction enforced | Only allowed email domains can login | [ ] | |
+| 1.1.19 | Auth method restriction | Disabled methods don't show buttons | [ ] | |
+
+### Cross-Organization Login Behavior
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 1.1.20 | Login on wrong org subdomain | Shows "You belong to [OrgName]" message | [ ] | |
+| 1.1.21 | Auto-redirect to correct subdomain | Redirects to user's org after 2 seconds | [ ] | |
+| 1.1.22 | Org not found page countdown | Shows 5-second countdown, redirects to home | [ ] | |
 
 **Tested By:** _____________ **Date:** _____________ **Signature:** _____________
 
@@ -58,25 +65,44 @@
 
 ## 1.2 Signup Page (`/signup`)
 
+> **Note:** The signup page is now **invite-only**. Direct access without an invite token shows an "invitation only" message. For self-service organization creation, use `/get-started`.
+
+### Direct Access (No Invite Token)
+
 | # | Test Case | Expected Result | Pass | Notes |
 |---|-----------|-----------------|------|-------|
-| 1.2.1 | Navigate to /signup | Signup page displays | [ ] | |
-| 1.2.2 | Enter valid name | Field accepts input | [ ] | |
-| 1.2.3 | Enter valid email | Field accepts valid email format | [ ] | |
-| 1.2.4 | Enter invalid email | Validation error shown | [ ] | |
-| 1.2.5 | Enter password < 8 chars | Strength indicator shows weak | [ ] | |
-| 1.2.6 | Enter password with only lowercase | Missing uppercase warning | [ ] | |
-| 1.2.7 | Enter password with uppercase + lowercase | Medium strength shown | [ ] | |
-| 1.2.8 | Enter password with numbers added | Better strength shown | [ ] | |
-| 1.2.9 | Enter password with special chars | Strong password indicator | [ ] | |
-| 1.2.10 | Organization name required | Field required validation | [ ] | |
-| 1.2.11 | Organization slug auto-generated | Slug generated from name | [ ] | |
-| 1.2.12 | Custom slug accepted | Can override auto-generated slug | [ ] | |
-| 1.2.13 | Duplicate slug rejected | Error if slug already exists | [ ] | |
-| 1.2.14 | Terms acceptance required | Cannot submit without accepting | [ ] | |
-| 1.2.15 | Successful signup | Creates account and organization | [ ] | |
-| 1.2.16 | Duplicate email rejected | Error if email already registered | [ ] | |
-| 1.2.17 | Redirect to onboarding after signup | Goes to /setup or /onboarding | [ ] | |
+| 1.2.1 | Navigate to /signup directly | "Signup by Invitation Only" message displayed | [ ] | |
+| 1.2.2 | Verify "Go to Login" button | Navigates to /login | [ ] | |
+| 1.2.3 | Verify "Back to Home" button | Navigates to / | [ ] | |
+| 1.2.4 | Verify explanation text | Shows "Durj accounts are created by organization administrators" | [ ] | |
+
+### Invite Signup (With Valid Invite Token)
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 1.2.5 | Access /signup?invite=TOKEN&email=... | Signup form displays | [ ] | |
+| 1.2.6 | Verify email is prefilled and locked | Email field disabled with invite email | [ ] | |
+| 1.2.7 | Enter valid name | Field accepts input | [ ] | |
+| 1.2.8 | Enter password < 8 chars | Strength indicator shows weak | [ ] | |
+| 1.2.9 | Enter password with mixed case | Medium strength shown | [ ] | |
+| 1.2.10 | Enter password with numbers + special chars | Strong password indicator | [ ] | |
+| 1.2.11 | Passwords don't match | Error "Passwords do not match" | [ ] | |
+| 1.2.12 | Passwords match | Checkmark shown on confirm field | [ ] | |
+| 1.2.13 | Successful signup | Account created, redirects to /invite/TOKEN | [ ] | |
+| 1.2.14 | Duplicate email rejected | Error if email already registered | [ ] | |
+
+### SSO Signup (Org with Custom OAuth Configured)
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 1.2.15 | Invite from org with Google SSO | Google OAuth button displayed | [ ] | |
+| 1.2.16 | Invite from org with Azure SSO | Microsoft OAuth button displayed | [ ] | |
+| 1.2.17 | Invite from org without SSO | No OAuth buttons, only email/password form | [ ] | |
+| 1.2.18 | Click Google OAuth button | Redirects to Google with invite token in state | [ ] | |
+| 1.2.19 | Click Microsoft OAuth button | Redirects to Microsoft with invite token in state | [ ] | |
+| 1.2.20 | Complete OAuth signup | Account created, redirects to /invite/TOKEN | [ ] | |
+| 1.2.21 | OAuth email matches invite email | Successfully creates account | [ ] | |
+| 1.2.22 | OAuth email differs from invite email | Error shown on invite page | [ ] | |
 
 **Tested By:** _____________ **Date:** _____________ **Signature:** _____________
 
@@ -113,16 +139,52 @@
 
 ## 1.4 Team Invitations
 
+### Sending Invitations
+
 | # | Test Case | Expected Result | Pass | Notes |
 |---|-----------|-----------------|------|-------|
 | 1.4.1 | Admin invites new member | Invitation sent successfully | [ ] | |
 | 1.4.2 | Invitation email received | Email contains invite link | [ ] | |
-| 1.4.3 | New user opens invite link | Signup form with prefilled email/org | [ ] | |
-| 1.4.4 | New user completes signup | Account created, joined to org | [ ] | |
-| 1.4.5 | Existing user opens invite link | Joins organization without new account | [ ] | |
-| 1.4.6 | Expired invitation | Error message shown | [ ] | |
-| 1.4.7 | Cancel pending invitation | Invitation removed from list | [ ] | |
-| 1.4.8 | Resend invitation | New email sent | [ ] | |
+| 1.4.3 | Cancel pending invitation | Invitation removed from list | [ ] | |
+| 1.4.4 | Resend invitation | New email sent | [ ] | |
+
+### Accepting Invitations (New User - No Account)
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 1.4.5 | New user opens invite link | Shows invite page with org info | [ ] | |
+| 1.4.6 | Click "Create Account & Join" | Redirects to /signup with prefilled email | [ ] | |
+| 1.4.7 | Signup form shows locked email | Email field disabled with invite email | [ ] | |
+| 1.4.8 | Complete password signup | Account created, auto-accepts invite | [ ] | |
+| 1.4.9 | Redirects to org subdomain | User lands on org's /setup or /admin | [ ] | |
+
+### Accepting Invitations (New User - With SSO)
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 1.4.10 | Org has Google SSO configured | Google button shown on signup | [ ] | |
+| 1.4.11 | Org has Azure SSO configured | Microsoft button shown on signup | [ ] | |
+| 1.4.12 | Org has no SSO | Only email/password form shown | [ ] | |
+| 1.4.13 | Complete SSO signup | Account created via OAuth | [ ] | |
+| 1.4.14 | SSO redirects to invite page | Returns to /invite/TOKEN after OAuth | [ ] | |
+| 1.4.15 | Auto-accepts invitation | User joined to organization | [ ] | |
+
+### Accepting Invitations (Existing User)
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 1.4.16 | Existing user opens invite link | Shows "Accept Invitation" button | [ ] | |
+| 1.4.17 | Click Accept Invitation | User joined to organization | [ ] | |
+| 1.4.18 | Email mismatch warning | Shows warning if logged in with different email | [ ] | |
+| 1.4.19 | Already a member | Shows "already a member" message | [ ] | |
+
+### Invitation Errors
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 1.4.20 | Expired invitation | "Invitation has expired" error | [ ] | |
+| 1.4.21 | Already used invitation | "Invitation already used" error | [ ] | |
+| 1.4.22 | Invalid token | "Invitation not found" error | [ ] | |
 
 **Tested By:** _____________ **Date:** _____________ **Signature:** _____________
 
@@ -321,6 +383,117 @@
 | 3.4.9 | Reject reason required | Cannot reject without reason | [ ] | |
 | 3.4.10 | Asset assigned on approve | Asset status changes to IN_USE | [ ] | |
 | 3.4.11 | Notification sent | Requester gets notification | [ ] | |
+
+**Tested By:** _____________ **Date:** _____________ **Signature:** _____________
+
+---
+
+## 3.5 Asset Depreciation (`/admin/assets/[id]`)
+
+### Depreciation Card Display
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 3.5.1 | Load asset detail with no depreciation | Shows "No depreciation configured" message | [ ] | |
+| 3.5.2 | Configure button visible (admin) | "Configure" button shown for admins | [ ] | |
+| 3.5.3 | Configure button hidden (non-admin) | Button not visible for employees | [ ] | |
+| 3.5.4 | Load asset with depreciation category | Shows depreciation card with values | [ ] | |
+| 3.5.5 | Acquisition cost displayed | Shows original purchase price in QAR | [ ] | |
+| 3.5.6 | Salvage value displayed | Shows configured salvage value | [ ] | |
+| 3.5.7 | Accumulated depreciation | Shows total depreciation to date | [ ] | |
+| 3.5.8 | Net book value | Shows current NBV (Cost - Accumulated) | [ ] | |
+| 3.5.9 | Depreciation progress bar | Shows % depreciated visually | [ ] | |
+| 3.5.10 | Last depreciation date | Shows when last calculated | [ ] | |
+| 3.5.11 | Fully depreciated indicator | Green checkmark when complete | [ ] | |
+
+### Assign Depreciation Category
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 3.5.12 | Open configure dialog | Dialog opens with category dropdown | [ ] | |
+| 3.5.13 | Category dropdown populated | Shows all active categories | [ ] | |
+| 3.5.14 | Buildings category | 4% annual rate, 25 years | [ ] | |
+| 3.5.15 | Machinery category | 20% annual rate, 5 years | [ ] | |
+| 3.5.16 | Vehicles category | 20% annual rate, 5 years | [ ] | |
+| 3.5.17 | Furniture category | 20% annual rate, 5 years | [ ] | |
+| 3.5.18 | IT Equipment category | 20% annual rate, 5 years | [ ] | |
+| 3.5.19 | Intangible Assets category | Custom useful life required | [ ] | |
+| 3.5.20 | Salvage value input | Accepts 0 or positive number | [ ] | |
+| 3.5.21 | Salvage value validation | Cannot be negative | [ ] | |
+| 3.5.22 | Assign category | Updates asset, shows success toast | [ ] | |
+| 3.5.23 | Net book value initialized | NBV = acquisition cost after assign | [ ] | |
+| 3.5.24 | Change category | Resets accumulated depreciation | [ ] | |
+
+### Manual Depreciation Calculation
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 3.5.25 | Calculate button visible | Shows for assets with category | [ ] | |
+| 3.5.26 | Calculate button hidden | Hidden for fully depreciated assets | [ ] | |
+| 3.5.27 | Trigger calculation | Creates depreciation record | [ ] | |
+| 3.5.28 | Accumulated updated | Accumulated depreciation increases | [ ] | |
+| 3.5.29 | NBV updated | Net book value decreases | [ ] | |
+| 3.5.30 | Last date updated | Shows current period end date | [ ] | |
+| 3.5.31 | Duplicate period blocked | Error if same period calculated twice | [ ] | |
+| 3.5.32 | Pro-rata first month | Partial month calculated correctly | [ ] | |
+| 3.5.33 | Fully depreciated status | Marked complete when NBV = salvage | [ ] | |
+
+### Depreciation Schedule Table
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 3.5.34 | Schedule section visible | Collapsible schedule section shown | [ ] | |
+| 3.5.35 | Expand/collapse toggle | Click header toggles visibility | [ ] | |
+| 3.5.36 | Summary statistics | Monthly/annual depreciation shown | [ ] | |
+| 3.5.37 | Useful life displayed | Shows total months/years | [ ] | |
+| 3.5.38 | Schedule table columns | Period, Amount, Accumulated, NBV, Status | [ ] | |
+| 3.5.39 | Recorded periods highlighted | Green background for recorded | [ ] | |
+| 3.5.40 | Projected periods shown | Gray "Projected" badge | [ ] | |
+| 3.5.41 | Pro-rata indicator | Shows "(pro-rata)" for partial months | [ ] | |
+| 3.5.42 | Load more button | Shows more periods when clicked | [ ] | |
+| 3.5.43 | Show less button | Collapses back to 12 periods | [ ] | |
+| 3.5.44 | Final period shows 0 NBV | Last period reaches salvage value | [ ] | |
+
+### Depreciation Calculations (Qatar Tax Rates)
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 3.5.45 | Buildings: 25-year useful life | Monthly = (Cost-Salvage)/300 | [ ] | |
+| 3.5.46 | IT Equipment: 5-year useful life | Monthly = (Cost-Salvage)/60 | [ ] | |
+| 3.5.47 | Vehicles: 5-year useful life | Monthly = (Cost-Salvage)/60 | [ ] | |
+| 3.5.48 | Example: 10,000 QAR laptop, 0 salvage | Monthly = 166.67 QAR | [ ] | |
+| 3.5.49 | Example: 100,000 QAR vehicle, 10,000 salvage | Monthly = 1,500 QAR | [ ] | |
+| 3.5.50 | Rounding to 2 decimals | All amounts rounded to .00 | [ ] | |
+
+### Depreciation API (`/api/assets/[id]/depreciation`)
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 3.5.51 | GET records - authenticated | Returns depreciation records | [ ] | |
+| 3.5.52 | GET records - unauthenticated | 401 Unauthorized | [ ] | |
+| 3.5.53 | GET records - wrong tenant | 404 Not Found | [ ] | |
+| 3.5.54 | POST assign - admin only | 403 for non-admin | [ ] | |
+| 3.5.55 | POST calculate - admin only | 403 for non-admin | [ ] | |
+| 3.5.56 | GET schedule | Returns projected schedule | [ ] | |
+
+### Depreciation Categories API (`/api/depreciation/categories`)
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 3.5.57 | GET categories | Returns all active categories | [ ] | |
+| 3.5.58 | Include inactive | ?includeInactive=true returns all | [ ] | |
+| 3.5.59 | POST seed - super admin | Seeds Qatar tax categories | [ ] | |
+| 3.5.60 | POST create - super admin only | 403 for regular admin | [ ] | |
+
+### Cron Job (`/api/cron/depreciation`)
+
+| # | Test Case | Expected Result | Pass | Notes |
+|---|-----------|-----------------|------|-------|
+| 3.5.61 | POST without auth | 401 Unauthorized | [ ] | |
+| 3.5.62 | POST with CRON_SECRET | Processes all tenants | [ ] | |
+| 3.5.63 | Skips disposed assets | DISPOSED status not processed | [ ] | |
+| 3.5.64 | Skips fully depreciated | Already complete assets skipped | [ ] | |
+| 3.5.65 | GET health check | Returns status and asset counts | [ ] | |
 
 **Tested By:** _____________ **Date:** _____________ **Signature:** _____________
 
@@ -1429,8 +1602,8 @@
 
 | # | Test Case | Expected Result | Pass | Notes |
 |---|-----------|-----------------|------|-------|
-| 15.2.1 | org1.smepp.com | Routes to org1 | [ ] | |
-| 15.2.2 | org2.smepp.com | Routes to org2 | [ ] | |
+| 15.2.1 | org1.durj.com | Routes to org1 | [ ] | |
+| 15.2.2 | org2.durj.com | Routes to org2 | [ ] | |
 | 15.2.3 | Invalid subdomain | Organization not found | [ ] | |
 | 15.2.4 | User from org1 on org2 | Access denied | [ ] | |
 | 15.2.5 | Redirect to correct subdomain | Auto-redirect | [ ] | |

@@ -25,6 +25,26 @@ export interface WhatsAppConfigData {
   isActive: boolean;
 }
 
+export interface PlatformWhatsAppConfigInput {
+  phoneNumberId: string;
+  businessAccountId: string;
+  accessToken: string;
+  displayPhoneNumber?: string;
+  businessName?: string;
+}
+
+export interface PlatformWhatsAppConfigData extends WhatsAppConfigData {
+  displayPhoneNumber?: string;
+  businessName?: string;
+}
+
+export type WhatsAppSourceType = 'NONE' | 'PLATFORM' | 'CUSTOM';
+
+export interface EffectiveWhatsAppConfig {
+  config: WhatsAppConfigData;
+  source: 'PLATFORM' | 'CUSTOM';
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MESSAGE TYPES
 // ═══════════════════════════════════════════════════════════════════════════════

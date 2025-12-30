@@ -2,6 +2,7 @@
  * WhatsApp Configuration API
  *
  * CRUD endpoints for managing WhatsApp Business API configuration.
+ * Supports hybrid mode: tenants can use platform WhatsApp or their own.
  * Admin only - requires ADMIN or OWNER role.
  */
 
@@ -10,11 +11,10 @@ import { z } from 'zod';
 import { withErrorHandler } from '@/lib/http/handler';
 import { prisma } from '@/lib/core/prisma';
 import {
-  getWhatsAppConfig,
   saveWhatsAppConfig,
   disableWhatsApp,
   WhatsAppClient,
-  decrypt,
+  updateTenantWhatsAppSource,
 } from '@/lib/whatsapp';
 
 // Validation schema for config input
@@ -24,44 +24,80 @@ const configSchema = z.object({
   accessToken: z.string().min(1, 'Access Token is required'),
 });
 
+// Validation schema for source update
+const sourceSchema = z.object({
+  source: z.enum(['NONE', 'PLATFORM', 'CUSTOM']),
+});
+
 /**
  * GET /api/whatsapp/config
  *
- * Get the current WhatsApp configuration for the tenant.
- * Returns masked access token for security.
+ * Get the current WhatsApp configuration status for the tenant.
+ * Returns both source preference and platform/custom config details.
  */
 export const GET = withErrorHandler(async (request: NextRequest, { tenant }) => {
   if (!tenant?.tenantId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
-  const config = await prisma.whatsAppConfig.findUnique({
-    where: { tenantId: tenant.tenantId },
-    select: {
-      id: true,
-      phoneNumberId: true,
-      businessAccountId: true,
-      webhookVerifyToken: true,
-      isActive: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+  // Get tenant's organization settings and custom config
+  const [org, platformConfig] = await Promise.all([
+    prisma.organization.findUnique({
+      where: { id: tenant.tenantId },
+      select: {
+        whatsAppSource: true,
+        whatsAppPlatformEnabled: true,
+        whatsAppConfig: {
+          select: {
+            id: true,
+            phoneNumberId: true,
+            businessAccountId: true,
+            webhookVerifyToken: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    }),
+    prisma.platformWhatsAppConfig.findFirst({
+      where: { isActive: true },
+      select: {
+        displayPhoneNumber: true,
+        businessName: true,
+      },
+    }),
+  ]);
 
-  if (!config) {
-    return NextResponse.json({ configured: false });
+  if (!org) {
+    return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
   }
 
   // Get webhook URL for display
   const baseUrl = process.env.NEXTAUTH_URL || 'https://your-domain.com';
   const webhookUrl = `${baseUrl}/api/webhooks/whatsapp`;
 
+  // Platform is available if:
+  // 1. Super admin has enabled platform access for this tenant (whatsAppPlatformEnabled)
+  // 2. Platform config exists and is active
+  const platformAvailable = org.whatsAppPlatformEnabled && !!platformConfig;
+
   return NextResponse.json({
-    configured: true,
-    config: {
-      ...config,
+    // Source preference
+    source: org.whatsAppSource,
+
+    // Platform info
+    platformAvailable,
+    platformDisplayPhone: platformConfig?.displayPhoneNumber || null,
+    platformBusinessName: platformConfig?.businessName || null,
+
+    // Custom config
+    customConfigured: !!org.whatsAppConfig,
+    customConfig: org.whatsAppConfig ? {
+      ...org.whatsAppConfig,
       accessToken: '••••••••', // Never expose the actual token
-    },
+    } : null,
+
     webhookUrl,
   });
 }, { requireAuth: true, requireAdmin: true });
@@ -69,8 +105,9 @@ export const GET = withErrorHandler(async (request: NextRequest, { tenant }) => 
 /**
  * POST /api/whatsapp/config
  *
- * Save or update WhatsApp configuration.
+ * Save or update custom WhatsApp configuration.
  * Validates the credentials by testing the connection.
+ * Automatically sets source to CUSTOM.
  */
 export const POST = withErrorHandler(async (request: NextRequest, { tenant }) => {
   if (!tenant?.tenantId) {
@@ -99,8 +136,11 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
     );
   }
 
-  // Save the configuration
-  await saveWhatsAppConfig(tenant.tenantId, validatedInput);
+  // Save the configuration and set source to CUSTOM
+  await Promise.all([
+    saveWhatsAppConfig(tenant.tenantId, validatedInput),
+    updateTenantWhatsAppSource(tenant.tenantId, 'CUSTOM'),
+  ]);
 
   // Get the saved config to return
   const savedConfig = await prisma.whatsAppConfig.findUnique({
@@ -122,7 +162,8 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
   return NextResponse.json({
     success: true,
     message: 'WhatsApp configuration saved successfully',
-    config: {
+    source: 'CUSTOM',
+    customConfig: {
       ...savedConfig,
       accessToken: '••••••••',
     },
@@ -133,7 +174,8 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
 /**
  * DELETE /api/whatsapp/config
  *
- * Disable WhatsApp integration for the tenant.
+ * Disable custom WhatsApp configuration for the tenant.
+ * Note: This only disables the custom config, not the source selection.
  */
 export const DELETE = withErrorHandler(async (request: NextRequest, { tenant }) => {
   if (!tenant?.tenantId) {
@@ -144,6 +186,82 @@ export const DELETE = withErrorHandler(async (request: NextRequest, { tenant }) 
 
   return NextResponse.json({
     success: true,
-    message: 'WhatsApp integration disabled',
+    message: 'Custom WhatsApp configuration disabled',
+  });
+}, { requireAuth: true, requireAdmin: true });
+
+/**
+ * PATCH /api/whatsapp/config
+ *
+ * Update WhatsApp source preference (NONE, PLATFORM, CUSTOM).
+ * Used to switch between platform WhatsApp, custom config, or disabled.
+ */
+export const PATCH = withErrorHandler(async (request: NextRequest, { tenant }) => {
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const result = sourceSchema.safeParse(body);
+
+  if (!result.success) {
+    return NextResponse.json(
+      { error: 'Invalid source', details: result.error.flatten().fieldErrors },
+      { status: 400 }
+    );
+  }
+
+  const { source } = result.data;
+
+  // Validate the source can be selected
+  const [org, platformConfig] = await Promise.all([
+    prisma.organization.findUnique({
+      where: { id: tenant.tenantId },
+      select: {
+        whatsAppPlatformEnabled: true,
+        whatsAppConfig: { select: { isActive: true } },
+      },
+    }),
+    prisma.platformWhatsAppConfig.findFirst({
+      where: { isActive: true },
+      select: { id: true },
+    }),
+  ]);
+
+  if (!org) {
+    return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+  }
+
+  // Validate PLATFORM selection
+  if (source === 'PLATFORM') {
+    if (!org.whatsAppPlatformEnabled) {
+      return NextResponse.json(
+        { error: 'Platform WhatsApp is not enabled for your organization. Contact your administrator.' },
+        { status: 400 }
+      );
+    }
+    if (!platformConfig) {
+      return NextResponse.json(
+        { error: 'Platform WhatsApp is not configured yet.' },
+        { status: 400 }
+      );
+    }
+  }
+
+  // Validate CUSTOM selection
+  if (source === 'CUSTOM' && !org.whatsAppConfig?.isActive) {
+    return NextResponse.json(
+      { error: 'You must configure your custom WhatsApp credentials first.' },
+      { status: 400 }
+    );
+  }
+
+  // Update the source
+  await updateTenantWhatsAppSource(tenant.tenantId, source);
+
+  return NextResponse.json({
+    success: true,
+    message: `WhatsApp source updated to ${source}`,
+    source,
   });
 }, { requireAuth: true, requireAdmin: true });

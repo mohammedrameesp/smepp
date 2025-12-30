@@ -5,7 +5,7 @@ import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
 import { z } from 'zod';
 import { sendBatchEmails } from '@/lib/email';
-import { changeRequestEmail } from '@/lib/email-templates';
+import { changeRequestEmail } from '@/lib/core/email-templates';
 import { Role } from '@prisma/client';
 
 const createRequestSchema = z.object({
@@ -111,6 +111,12 @@ async function createChangeRequestHandler(request: NextRequest) {
 
   // Send email notification to all admins in the same organization (non-blocking)
   try {
+    // Get org slug for email URL
+    const org = await prisma.organization.findUnique({
+      where: { id: session.user.organizationId },
+      select: { slug: true },
+    });
+
     const admins = await prisma.user.findMany({
       where: {
         role: Role.ADMIN,
@@ -128,6 +134,7 @@ async function createChangeRequestHandler(request: NextRequest) {
         requestedValue: 'See description',
         reason: validation.data.description,
         submittedDate: new Date(),
+        orgSlug: org?.slug || 'app',
       });
 
       const emailsToSend = admins.map((admin) => ({

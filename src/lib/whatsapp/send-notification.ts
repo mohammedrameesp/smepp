@@ -6,7 +6,7 @@
  */
 
 import { WhatsAppClient, logWhatsAppMessage } from './client';
-import { getWhatsAppConfig, getUserWhatsAppPhone } from './config';
+import { getEffectiveWhatsAppConfig, getUserWhatsAppPhone } from './config';
 import { generateActionTokenPair } from './action-tokens';
 import { buildApprovalTemplate, buildActionConfirmationText } from './templates';
 import type {
@@ -31,14 +31,15 @@ export async function sendApprovalNotification(
   data: ApprovalNotificationData
 ): Promise<SendNotificationResult> {
   try {
-    // 1. Get tenant's WhatsApp configuration
-    const config = await getWhatsAppConfig(data.tenantId);
-    if (!config) {
+    // 1. Get effective WhatsApp configuration (platform or custom)
+    const configResult = await getEffectiveWhatsAppConfig(data.tenantId);
+    if (!configResult) {
       return {
         success: false,
         error: 'WhatsApp not configured for this organization',
       };
     }
+    const { config, source } = configResult;
 
     // 2. Get approver's WhatsApp phone number
     const approverPhone = await getUserWhatsAppPhone(data.approverId);
@@ -71,7 +72,7 @@ export async function sendApprovalNotification(
     const response = await client.sendTemplateMessage(message);
     const messageId = response.messages[0]?.id;
 
-    // 6. Log the message
+    // 6. Log the message with config source
     await logWhatsAppMessage({
       tenantId: data.tenantId,
       messageId,
@@ -80,6 +81,7 @@ export async function sendApprovalNotification(
       status: 'sent',
       entityType: data.entityType,
       entityId: data.entityId,
+      configSource: source,
     });
 
     return {
@@ -125,8 +127,8 @@ export async function sendActionConfirmation(params: {
   details: { requesterName: string; title?: string };
 }): Promise<SendNotificationResult> {
   try {
-    const config = await getWhatsAppConfig(params.tenantId);
-    if (!config) {
+    const configResult = await getEffectiveWhatsAppConfig(params.tenantId);
+    if (!configResult) {
       return { success: false, error: 'WhatsApp not configured' };
     }
 
@@ -136,7 +138,7 @@ export async function sendActionConfirmation(params: {
       params.details
     );
 
-    const client = new WhatsAppClient(config);
+    const client = new WhatsAppClient(configResult.config);
     const response = await client.sendTextMessage(params.recipientPhone, text);
     const messageId = response.messages[0]?.id;
 
@@ -156,8 +158,8 @@ export async function canSendWhatsAppNotification(
   tenantId: string,
   userId: string
 ): Promise<{ canSend: boolean; reason?: string }> {
-  const config = await getWhatsAppConfig(tenantId);
-  if (!config) {
+  const configResult = await getEffectiveWhatsAppConfig(tenantId);
+  if (!configResult) {
     return { canSend: false, reason: 'WhatsApp not configured' };
   }
 

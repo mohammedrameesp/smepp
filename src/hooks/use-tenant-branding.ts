@@ -35,7 +35,7 @@ export function useTenantBranding(subdomain: string | null): TenantBrandingState
       setState({
         branding: {
           organizationId: '',
-          organizationName: 'SME++',
+          organizationName: 'Durj',
           organizationSlug: '',
           logoUrl: null,
           primaryColor: DEFAULT_TENANT_BRANDING.primaryColor!,

@@ -74,7 +74,7 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
           {/* Left: Logo + Org Name */}
           <div className="flex items-center gap-6">
             <Link href="/admin" className="flex items-center gap-3">
-              <img src="/sme-wordmark-white.png" alt="SME++" className="h-7 w-auto" />
+              <img src="/sme-wordmark-white.png" alt="Durj" className="h-7 w-auto" />
               <span className="text-slate-500 hidden sm:inline">|</span>
               <span className="text-sm font-medium text-slate-200 hidden sm:inline">
                 {session?.user?.organizationName || 'Organization'}

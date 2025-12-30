@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
+import { requireRecent2FA } from '@/lib/two-factor';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/super-admin/admins - List all super admins
@@ -55,6 +56,11 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.isSuperAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    // SECURITY: Require recent 2FA verification for super admin management
+    // Creating/promoting super admins is a high-privilege operation
+    const require2FAResult = await requireRecent2FA(session.user.id);
+    if (require2FAResult) return require2FAResult;
 
     const body = await request.json();
     const { email, name } = inviteSchema.parse(body);

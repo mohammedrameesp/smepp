@@ -17,8 +17,8 @@ export interface SubdomainState {
  *
  * @example
  * const { subdomain, isMainDomain, isLoading } = useSubdomain();
- * // On acme.smepp.qa: { subdomain: 'acme', isMainDomain: false, isLoading: false }
- * // On smepp.qa: { subdomain: null, isMainDomain: true, isLoading: false }
+ * // On acme.durj.qa: { subdomain: 'acme', isMainDomain: false, isLoading: false }
+ * // On durj.qa: { subdomain: null, isMainDomain: true, isLoading: false }
  */
 export function useSubdomain(): SubdomainState {
   const [state, setState] = useState<SubdomainState>({

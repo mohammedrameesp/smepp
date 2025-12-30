@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
     // Send professional invitation email (email-client safe styling)
     const emailResult = await sendEmail({
       to: email,
-      subject: `${inviterName} invited you to join ${org.name} on SME++`,
+      subject: `${inviterName} invited you to join ${org.name} on Durj`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
           <!-- Header -->
           <tr>
             <td align="center" style="background-color: #2563eb; padding: 40px 40px 30px;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">SME++</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Durj</h1>
               <p style="color: #bfdbfe; margin: 8px 0 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Business Management Platform</p>
             </td>
           </tr>
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
               </p>
 
               <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
-                <strong style="color: #1e293b;">${inviterName}</strong> has invited you to join <strong style="color: #1e293b;">${org.name}</strong> on SME++ as a <strong>${roleName}</strong>.
+                <strong style="color: #1e293b;">${inviterName}</strong> has invited you to join <strong style="color: #1e293b;">${org.name}</strong> on Durj as a <strong>${roleName}</strong>.
               </p>
 
               <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 30px; font-family: Arial, Helvetica, sans-serif;">
@@ -249,7 +249,7 @@ export async function POST(request: NextRequest) {
                 If you did not expect this invitation, you can safely ignore this email.
               </p>
               <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
-                © ${new Date().getFullYear()} SME++. All rights reserved.
+                © ${new Date().getFullYear()} Durj. All rights reserved.
               </p>
             </td>
           </tr>
@@ -262,7 +262,7 @@ export async function POST(request: NextRequest) {
       `,
       text: `Hello,
 
-${inviterName} has invited you to join ${org.name} on SME++ as a ${roleName}.
+${inviterName} has invited you to join ${org.name} on Durj as a ${roleName}.
 
 Accept your invitation: ${inviteUrl}
 
@@ -270,7 +270,7 @@ Note: This invitation will expire in 7 days.
 
 If you did not expect this invitation, you can safely ignore this email.
 
-- The SME++ Team`,
+- The Durj Team`,
     });
 
     return NextResponse.json(

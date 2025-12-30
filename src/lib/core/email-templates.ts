@@ -1,8 +1,19 @@
-// Email Templates for SME++
+// Email Templates for Durj
 // Brand color: #3B82F6 (blue-500)
 
 const BRAND_COLOR = '#3B82F6';
-const PORTAL_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+
+/**
+ * Get tenant-specific portal URL
+ * @param orgSlug - Organization slug for subdomain
+ * @param path - Optional path to append (e.g., '/admin', '/profile')
+ */
+function getTenantPortalUrl(orgSlug: string, path: string = ''): string {
+  const isLocalhost = APP_DOMAIN.includes('localhost');
+  const protocol = isLocalhost ? 'http' : 'https';
+  return `${protocol}://${orgSlug}.${APP_DOMAIN}${path}`;
+}
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -46,7 +57,7 @@ function emailWrapper(content: string): string {
     <!-- Header -->
     <tr>
       <td style="background-color: ${BRAND_COLOR}; padding: 30px 40px; text-align: center;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">SME++</h1>
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">Durj</h1>
       </td>
     </tr>
 
@@ -61,7 +72,7 @@ function emailWrapper(content: string): string {
     <tr>
       <td style="background-color: #f8f9fa; padding: 25px 40px; text-align: center; border-top: 1px solid #eeeeee;">
         <p style="color: #888888; font-size: 12px; margin: 0 0 10px 0;">
-          This is an automated message from SME++.
+          This is an automated message from Durj.
         </p>
         <p style="color: #888888; font-size: 12px; margin: 0;">
           Generated on ${formatTimestamp()}
@@ -95,7 +106,7 @@ export function supplierApprovalEmail(data: SupplierApprovalData): { subject: st
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      We are pleased to inform you that your supplier registration with SME++ has been approved. You are now an approved vendor in our system.
+      We are pleased to inform you that your supplier registration with Durj has been approved. You are now an approved vendor in our system.
     </p>
 
     <!-- Supplier Details Box -->
@@ -132,12 +143,12 @@ export function supplierApprovalEmail(data: SupplierApprovalData): { subject: st
     </ul>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Thank you for partnering with SME++. We look forward to working with you.
+      Thank you for partnering with Durj. We look forward to working with you.
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>SME++ Procurement Team</strong>
+      <strong>Durj Procurement Team</strong>
     </p>
   `);
 
@@ -146,7 +157,7 @@ Congratulations! Your Supplier Registration is Approved
 
 Dear ${data.companyName},
 
-We are pleased to inform you that your supplier registration with SME++ has been approved.
+We are pleased to inform you that your supplier registration with Durj has been approved.
 
 Your Supplier Details:
 - Company Name: ${data.companyName}
@@ -158,10 +169,10 @@ What's Next?
 - Please keep your contact information up to date
 - Maintain proper documentation for all business transactions
 
-Thank you for partnering with SME++. We look forward to working with you.
+Thank you for partnering with Durj. We look forward to working with you.
 
 Best regards,
-SME++ Procurement Team
+Durj Procurement Team
 `.trim();
 
   return { subject, html, text };
@@ -238,12 +249,12 @@ export function assetAssignmentEmail(data: AssetAssignmentData): { subject: stri
     </ul>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      You can view all your assigned assets by logging into the SME++ Portal and navigating to "My Assets".
+      You can view all your assigned assets by logging into the Durj Portal and navigating to "My Assets".
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>SME++ IT Team</strong>
+      <strong>Durj IT Team</strong>
     </p>
   `);
 
@@ -267,10 +278,10 @@ Your Responsibilities:
 - Do not transfer this asset to another person without authorization
 - Return the asset when requested or upon leaving the company
 
-You can view all your assigned assets in the SME++ Portal under "My Assets".
+You can view all your assigned assets in the Durj Portal under "My Assets".
 
 Best regards,
-SME++ IT Team
+Durj IT Team
 `.trim();
 
   return { subject, html, text };
@@ -288,6 +299,7 @@ interface ChangeRequestData {
   requestedValue: string;
   reason: string;
   submittedDate: Date;
+  orgSlug: string;
 }
 
 export function changeRequestEmail(data: ChangeRequestData): { subject: string; html: string; text: string } {
@@ -359,14 +371,14 @@ export function changeRequestEmail(data: ChangeRequestData): { subject: string; 
     </table>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Please log in to the SME++ Portal to review and approve or reject this request.
+      Please log in to the Durj Portal to review and approve or reject this request.
     </p>
 
     <!-- CTA Button -->
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${PORTAL_URL}/admin/employees"
+          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/employees')}"
              style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Request
           </a>
@@ -376,7 +388,7 @@ export function changeRequestEmail(data: ChangeRequestData): { subject: string; 
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>SME++ Portal</strong>
+      <strong>Durj Portal</strong>
     </p>
   `);
 
@@ -396,11 +408,11 @@ Request Details:
 Reason for Change:
 ${data.reason || 'No reason provided'}
 
-Please log in to the SME++ Portal to review and approve or reject this request.
-${PORTAL_URL}/admin/employees
+Please log in to the Durj Portal to review and approve or reject this request.
+${getTenantPortalUrl(data.orgSlug, '/admin/employees')}
 
 Best regards,
-SME++ Portal
+Durj Portal
 `.trim();
 
   return { subject, html, text };
@@ -414,23 +426,51 @@ interface WelcomeUserData {
   userName: string;
   userEmail: string;
   userRole: string;
+  orgSlug: string;
+  authMethods: {
+    hasGoogle: boolean;
+    hasMicrosoft: boolean;
+    hasPassword: boolean;
+  };
 }
 
 export function welcomeUserEmail(data: WelcomeUserData): { subject: string; html: string; text: string } {
-  const subject = `Welcome to SME++ Portal - ${data.userName}`;
+  const subject = `Welcome to Durj Portal - ${data.userName}`;
 
   // Format role for display
   const roleDisplay = data.userRole.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
+  // Get tenant-specific portal URL
+  const portalUrl = getTenantPortalUrl(data.orgSlug, '/login');
+
+  // Build sign-in instruction based on auth methods
+  const signInMethods: string[] = [];
+  if (data.authMethods.hasGoogle) {
+    signInMethods.push('Sign in using your Google account');
+  }
+  if (data.authMethods.hasMicrosoft) {
+    signInMethods.push('Sign in using your Microsoft account');
+  }
+  if (data.authMethods.hasPassword) {
+    signInMethods.push('Sign in using your email and password');
+  }
+  // Fallback if no methods specified
+  if (signInMethods.length === 0) {
+    signInMethods.push('Sign in using your email and password');
+  }
+
+  const signInInstructionsHtml = signInMethods.map(m => `<li>${m}</li>`).join('\n      ');
+  const signInInstructionsText = signInMethods.map(m => `- ${m}`).join('\n');
+
   const html = emailWrapper(`
-    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Welcome to SME++!</h2>
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Welcome to Durj!</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
       Dear <strong>${data.userName}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Your account has been created on the SME++ Portal. You can now access the system using your company email address.
+      Your account has been created on the Durj Portal. You can now access the system using your company email address.
     </p>
 
     <!-- Account Details Box -->
@@ -461,7 +501,7 @@ export function welcomeUserEmail(data: WelcomeUserData): { subject: string; html
     </p>
 
     <ul style="color: #555555; font-size: 14px; line-height: 1.8; margin: 0 0 20px 0; padding-left: 20px;">
-      <li>Sign in using your Microsoft account (company email)</li>
+      ${signInInstructionsHtml}
       <li>Complete your HR profile with personal and emergency contact information</li>
       <li>View your assigned assets and subscriptions</li>
       <li>Keep your documents up to date (QID, Passport, Health Card)</li>
@@ -471,7 +511,7 @@ export function welcomeUserEmail(data: WelcomeUserData): { subject: string; html
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${PORTAL_URL}"
+          <a href="${portalUrl}"
              style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Access Portal
           </a>
@@ -485,16 +525,16 @@ export function welcomeUserEmail(data: WelcomeUserData): { subject: string; html
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Welcome aboard!<br>
-      <strong>SME++ Team</strong>
+      <strong>Durj Team</strong>
     </p>
   `);
 
   const text = `
-Welcome to SME++!
+Welcome to Durj!
 
 Dear ${data.userName},
 
-Your account has been created on the SME++ Portal.
+Your account has been created on the Durj Portal.
 
 Your Account Details:
 - Name: ${data.userName}
@@ -502,17 +542,141 @@ Your Account Details:
 - Role: ${roleDisplay}
 
 Getting Started:
-- Sign in using your Microsoft account (company email)
+${signInInstructionsText}
 - Complete your HR profile with personal and emergency contact information
 - View your assigned assets and subscriptions
 - Keep your documents up to date (QID, Passport, Health Card)
 
-Access the portal at: ${PORTAL_URL}
+Access the portal at: ${portalUrl}
 
 If you have any questions or need assistance, please contact the IT support team.
 
 Welcome aboard!
-SME++ Team
+Durj Team
+`.trim();
+
+  return { subject, html, text };
+}
+
+// ============================================================================
+// WELCOME EMAIL WITH PASSWORD SETUP
+// For new employees in organizations using email/password authentication
+// ============================================================================
+
+interface WelcomeUserWithPasswordSetupData {
+  userName: string;
+  userEmail: string;
+  userRole: string;
+  orgSlug: string;
+  setupToken: string;
+}
+
+export function welcomeUserWithPasswordSetupEmail(data: WelcomeUserWithPasswordSetupData): { subject: string; html: string; text: string } {
+  const subject = `Welcome! Set Up Your Password - Durj Portal`;
+
+  // Format role for display
+  const roleDisplay = data.userRole.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+  // Get tenant-specific password setup URL
+  const setupUrl = getTenantPortalUrl(data.orgSlug, `/set-password/${data.setupToken}`);
+
+  const html = emailWrapper(`
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Welcome to Durj!</h2>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      Dear <strong>${data.userName}</strong>,
+    </p>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      Your account has been created on the Durj Portal. To get started, please set up your password using the link below.
+    </p>
+
+    <!-- Account Details Box -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
+      <tr>
+        <td style="padding: 25px;">
+          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Your Account Details</h3>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Name:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${data.userName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Email:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.userEmail}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Role:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${roleDisplay}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- CTA Button -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
+      <tr>
+        <td align="center">
+          <a href="${setupUrl}"
+             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+            Set Your Password
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="color: #888888; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0; text-align: center;">
+      This link will expire in 7 days.
+    </p>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      <strong>After setting your password, you can:</strong>
+    </p>
+
+    <ul style="color: #555555; font-size: 14px; line-height: 1.8; margin: 0 0 20px 0; padding-left: 20px;">
+      <li>Sign in using your email and password</li>
+      <li>Complete your HR profile with personal and emergency contact information</li>
+      <li>View your assigned assets and subscriptions</li>
+      <li>Keep your documents up to date (QID, Passport, Health Card)</li>
+    </ul>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      If you have any questions or need assistance, please contact the IT support team.
+    </p>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
+      Welcome aboard!<br>
+      <strong>Durj Team</strong>
+    </p>
+  `);
+
+  const text = `
+Welcome to Durj!
+
+Dear ${data.userName},
+
+Your account has been created on the Durj Portal. To get started, please set up your password.
+
+Your Account Details:
+- Name: ${data.userName}
+- Email: ${data.userEmail}
+- Role: ${roleDisplay}
+
+Set your password here: ${setupUrl}
+
+This link will expire in 7 days.
+
+After setting your password, you can:
+- Sign in using your email and password
+- Complete your HR profile with personal and emergency contact information
+- View your assigned assets and subscriptions
+- Keep your documents up to date (QID, Passport, Health Card)
+
+If you have any questions or need assistance, please contact the IT support team.
+
+Welcome aboard!
+Durj Team
 `.trim();
 
   return { subject, html, text };
@@ -532,6 +696,7 @@ interface ExpiringDocument {
 interface DocumentExpiryAlertData {
   userName: string;
   documents: ExpiringDocument[];
+  orgSlug: string;
 }
 
 export function documentExpiryAlertEmail(data: DocumentExpiryAlertData): { subject: string; html: string; text: string } {
@@ -646,7 +811,7 @@ export function documentExpiryAlertEmail(data: DocumentExpiryAlertData): { subje
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${PORTAL_URL}/profile"
+          <a href="${getTenantPortalUrl(data.orgSlug, '/profile')}"
              style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Update My Profile
           </a>
@@ -656,7 +821,7 @@ export function documentExpiryAlertEmail(data: DocumentExpiryAlertData): { subje
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>SME++ HR Team</strong>
+      <strong>Durj HR Team</strong>
     </p>
   `);
 
@@ -684,10 +849,10 @@ What to do:
 - Upload the new document copies to your profile in the portal
 - Contact HR if you need any assistance with the renewal process
 
-Update your profile at: ${PORTAL_URL}/profile
+Update your profile at: ${getTenantPortalUrl(data.orgSlug, '/profile')}
 
 Best regards,
-SME++ HR Team
+Durj HR Team
 `.trim();
 
   return { subject, html, text };
@@ -711,6 +876,7 @@ interface AdminDocumentExpiryAlertData {
   totalEmployees: number;
   expiredCount: number;
   expiringCount: number;
+  orgSlug: string;
 }
 
 export function adminDocumentExpiryAlertEmail(data: AdminDocumentExpiryAlertData): { subject: string; html: string; text: string } {
@@ -819,7 +985,7 @@ export function adminDocumentExpiryAlertEmail(data: AdminDocumentExpiryAlertData
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${PORTAL_URL}/admin/employees/document-expiry"
+          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/employees/document-expiry')}"
              style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             View All Expiring Documents
           </a>
@@ -829,7 +995,7 @@ export function adminDocumentExpiryAlertEmail(data: AdminDocumentExpiryAlertData
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>SME++ Portal</strong>
+      <strong>Durj Portal</strong>
     </p>
   `);
 
@@ -857,10 +1023,10 @@ ${data.totalEmployees} employee(s) have documents expiring or expired:
 
 ${employeeList}
 
-View all expiring documents at: ${PORTAL_URL}/admin/employees/document-expiry
+View all expiring documents at: ${getTenantPortalUrl(data.orgSlug, '/admin/employees/document-expiry')}
 
 Best regards,
-SME++ Portal
+Durj Portal
 `.trim();
 
   return { subject, html, text };
@@ -877,6 +1043,7 @@ interface NewSupplierRegistrationData {
   contactEmail: string | null;
   country: string | null;
   registrationDate: Date;
+  orgSlug: string;
 }
 
 export function newSupplierRegistrationEmail(data: NewSupplierRegistrationData): { subject: string; html: string; text: string } {
@@ -897,7 +1064,7 @@ export function newSupplierRegistrationEmail(data: NewSupplierRegistrationData):
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">New Supplier Registration</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      A new supplier has registered on the SME++ Portal and is pending your approval.
+      A new supplier has registered on the Durj Portal and is pending your approval.
     </p>
 
     <!-- Supplier Details Box -->
@@ -943,7 +1110,7 @@ export function newSupplierRegistrationEmail(data: NewSupplierRegistrationData):
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${PORTAL_URL}/admin/suppliers"
+          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/suppliers')}"
              style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Supplier
           </a>
@@ -953,14 +1120,14 @@ export function newSupplierRegistrationEmail(data: NewSupplierRegistrationData):
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>SME++ Portal</strong>
+      <strong>Durj Portal</strong>
     </p>
   `);
 
   const text = `
 New Supplier Registration - Pending Review
 
-A new supplier has registered on the SME++ Portal and is pending your approval.
+A new supplier has registered on the Durj Portal and is pending your approval.
 
 Supplier Details:
 - Company Name: ${data.companyName}
@@ -971,10 +1138,10 @@ Supplier Details:
 - Registration Date: ${formatDate(data.registrationDate)}
 
 Please log in to the portal to review and approve or reject this registration.
-${PORTAL_URL}/admin/suppliers
+${getTenantPortalUrl(data.orgSlug, '/admin/suppliers')}
 
 Best regards,
-SME++ Portal
+Durj Portal
 `.trim();
 
   return { subject, html, text };
@@ -991,6 +1158,7 @@ interface AccreditationSubmittedData {
   projectName: string;
   submittedBy: string;
   submissionDate: Date;
+  orgSlug: string;
 }
 
 export function accreditationSubmittedEmail(data: AccreditationSubmittedData): { subject: string; html: string; text: string } {
@@ -1057,7 +1225,7 @@ export function accreditationSubmittedEmail(data: AccreditationSubmittedData): {
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${PORTAL_URL}/admin/accreditation"
+          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/accreditation')}"
              style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Accreditation
           </a>
@@ -1067,7 +1235,7 @@ export function accreditationSubmittedEmail(data: AccreditationSubmittedData): {
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>SME++ Portal</strong>
+      <strong>Durj Portal</strong>
     </p>
   `);
 
@@ -1085,10 +1253,10 @@ Accreditation Details:
 - Submission Date: ${formatDate(data.submissionDate)}
 
 Please log in to the portal to review and approve or reject this accreditation.
-${PORTAL_URL}/admin/accreditation
+${getTenantPortalUrl(data.orgSlug, '/admin/accreditation')}
 
 Best regards,
-SME++ Portal
+Durj Portal
 `.trim();
 
   return { subject, html, text };
@@ -1106,6 +1274,7 @@ interface PurchaseRequestSubmittedData {
   currency: string;
   itemCount: number;
   priority: string;
+  orgSlug: string;
 }
 
 export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData): { subject: string; html: string; text: string } {
@@ -1193,7 +1362,7 @@ export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${PORTAL_URL}/admin/purchase-requests"
+          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/purchase-requests')}"
              style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Request
           </a>
@@ -1203,7 +1372,7 @@ export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>SME++ Portal</strong>
+      <strong>Durj Portal</strong>
     </p>
   `);
 
@@ -1221,10 +1390,10 @@ Request Details:
 - Total Amount: ${data.currency} ${formattedAmount}
 
 Please log in to the portal to review and approve or reject this request.
-${PORTAL_URL}/admin/purchase-requests
+${getTenantPortalUrl(data.orgSlug, '/admin/purchase-requests')}
 
 Best regards,
-SME++ Portal
+Durj Portal
 `.trim();
 
   return { subject, html, text };
@@ -1242,6 +1411,7 @@ interface PurchaseRequestStatusData {
   newStatus: string;
   reviewNotes?: string;
   reviewerName: string;
+  orgSlug: string;
 }
 
 export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { subject: string; html: string; text: string } {
@@ -1353,7 +1523,7 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${PORTAL_URL}/employee/purchase-requests"
+          <a href="${getTenantPortalUrl(data.orgSlug, '/employee/purchase-requests')}"
              style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             View My Requests
           </a>
@@ -1363,7 +1533,7 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>SME++ Procurement Team</strong>
+      <strong>Durj Procurement Team</strong>
     </p>
   `);
 
@@ -1383,10 +1553,10 @@ Request Details:
 ${data.reviewNotes ? `\nReviewer Notes:\n${data.reviewNotes}` : ''}
 
 ${isNegative ? 'If you have any questions about this decision or would like to submit a revised request, please contact your manager or the procurement team.\n' : ''}
-View your requests at: ${PORTAL_URL}/employee/purchase-requests
+View your requests at: ${getTenantPortalUrl(data.orgSlug, '/employee/purchase-requests')}
 
 Best regards,
-SME++ Procurement Team
+Durj Procurement Team
 `.trim();
 
   return { subject, html, text };
@@ -1409,6 +1579,7 @@ interface CompanyDocumentExpiryAlertData {
   documents: CompanyDocumentExpiryAlert[];
   expiredCount: number;
   expiringCount: number;
+  orgSlug: string;
 }
 
 export function companyDocumentExpiryAlertEmail(data: CompanyDocumentExpiryAlertData): { subject: string; html: string; text: string } {
@@ -1489,7 +1660,7 @@ export function companyDocumentExpiryAlertEmail(data: CompanyDocumentExpiryAlert
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${PORTAL_URL}/admin/company-documents"
+          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/company-documents')}"
              style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             View Company Documents
           </a>
@@ -1521,12 +1692,128 @@ Summary:
 Documents requiring attention:
 ${documentsList}
 
-View documents at: ${PORTAL_URL}/admin/company-documents
+View documents at: ${getTenantPortalUrl(data.orgSlug, '/admin/company-documents')}
 
 Please renew these documents before they expire to avoid any compliance issues.
 
 Best regards,
-SME++ Portal
+Durj Portal
+`.trim();
+
+  return { subject, html, text };
+}
+
+// ============================================================================
+// NEW ORGANIZATION SIGNUP NOTIFICATION (Super Admin)
+// ============================================================================
+
+interface NewOrganizationSignupData {
+  organizationName: string;
+  organizationSlug: string;
+  adminEmail: string;
+  adminName?: string | null;
+  industry?: string | null;
+  companySize?: string | null;
+  signupDate: Date;
+}
+
+export function newOrganizationSignupEmail(data: NewOrganizationSignupData): { subject: string; html: string; text: string } {
+  const subject = `🎉 New Organization Signup: ${data.organizationName}`;
+
+  const portalUrl = getTenantPortalUrl(data.organizationSlug, '');
+  const superAdminUrl = `${process.env.NEXT_PUBLIC_APP_DOMAIN?.includes('localhost') ? 'http' : 'https'}://${process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000'}/super-admin/organizations`;
+
+  const html = emailWrapper(`
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">New Organization Has Joined Durj</h2>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      A new organization has signed up for Durj. Here are the details:
+    </p>
+
+    <!-- Organization Details Box -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f0f9ff; border-radius: 8px; border-left: 4px solid ${BRAND_COLOR}; margin: 25px 0;">
+      <tr>
+        <td style="padding: 25px;">
+          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Organization Details</h3>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Organization Name:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${data.organizationName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Subdomain:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">
+                <a href="${portalUrl}" style="color: ${BRAND_COLOR}; text-decoration: none;">${data.organizationSlug}</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Admin Email:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.adminEmail}</td>
+            </tr>
+            ${data.adminName ? `
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Admin Name:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.adminName}</td>
+            </tr>
+            ` : ''}
+            ${data.industry ? `
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Industry:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.industry}</td>
+            </tr>
+            ` : ''}
+            ${data.companySize ? `
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Company Size:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.companySize}</td>
+            </tr>
+            ` : ''}
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Signup Date:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${formatDate(data.signupDate)}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- CTA Button -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
+      <tr>
+        <td align="center">
+          <a href="${superAdminUrl}"
+             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+            View All Organizations
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="color: #888888; font-size: 12px; margin-top: 20px;">
+      The organization admin will receive a separate email with setup instructions.
+    </p>
+  `);
+
+  const text = `
+New Organization Has Joined Durj
+
+A new organization has signed up for Durj. Here are the details:
+
+Organization Details:
+- Organization Name: ${data.organizationName}
+- Subdomain: ${data.organizationSlug}
+- Admin Email: ${data.adminEmail}
+${data.adminName ? `- Admin Name: ${data.adminName}` : ''}
+${data.industry ? `- Industry: ${data.industry}` : ''}
+${data.companySize ? `- Company Size: ${data.companySize}` : ''}
+- Signup Date: ${formatDate(data.signupDate)}
+
+View all organizations at: ${superAdminUrl}
+
+The organization admin will receive a separate email with setup instructions.
+
+Best regards,
+Durj Platform
 `.trim();
 
   return { subject, html, text };

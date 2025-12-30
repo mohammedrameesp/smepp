@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/core/email';
+
+/**
+ * Hash reset token for storage
+ * SECURITY: We store only the hash in DB so if DB is compromised,
+ * attackers cannot use the tokens to reset passwords
+ */
+function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -51,11 +60,13 @@ export async function POST(request: NextRequest) {
       const resetToken = randomBytes(32).toString('hex');
       const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-      // Store token
+      // SECURITY: Store hashed token in database
+      // This prevents token theft if database is compromised
+      const hashedToken = hashToken(resetToken);
       await prisma.user.update({
         where: { id: user.id },
         data: {
-          resetToken,
+          resetToken: hashedToken, // Store hash, not plaintext
           resetTokenExpiry,
         },
       });
@@ -71,7 +82,7 @@ export async function POST(request: NextRequest) {
       // Send password reset email
       await sendEmail({
         to: user.email,
-        subject: 'Reset your SME++ password',
+        subject: 'Reset your Durj password',
         html: `
 <!DOCTYPE html>
 <html>
@@ -87,7 +98,7 @@ export async function POST(request: NextRequest) {
           <!-- Header -->
           <tr>
             <td align="center" style="background-color: #2563eb; padding: 40px 40px 30px;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">SME++</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Durj</h1>
               <p style="color: #bfdbfe; margin: 8px 0 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Business Management Platform</p>
             </td>
           </tr>
@@ -149,10 +160,10 @@ export async function POST(request: NextRequest) {
           <tr>
             <td style="background-color: #f8fafc; padding: 30px 40px; border-top: 1px solid #e2e8f0;">
               <p style="color: #64748b; font-size: 14px; line-height: 21px; margin: 0 0 10px; font-family: Arial, Helvetica, sans-serif;">
-                This is an automated message from SME++.
+                This is an automated message from Durj.
               </p>
               <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
-                © ${new Date().getFullYear()} SME++. All rights reserved.
+                © ${new Date().getFullYear()} Durj. All rights reserved.
               </p>
             </td>
           </tr>
@@ -165,7 +176,7 @@ export async function POST(request: NextRequest) {
         `,
         text: `Hello${user.name ? ` ${user.name}` : ''},
 
-We received a request to reset your password for SME++.
+We received a request to reset your password for Durj.
 
 Reset your password: ${resetUrl}
 
@@ -173,7 +184,7 @@ This link will expire in 1 hour for security reasons.
 
 If you didn't request a password reset, you can safely ignore this email.
 
-- The SME++ Team`,
+- The Durj Team`,
       });
 
       console.log(`[Password Reset] Email sent to ${user.email}`);

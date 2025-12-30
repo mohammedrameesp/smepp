@@ -9,7 +9,7 @@ authenticator.options = {
   window: 1, // Allow 1 step before/after for clock drift
 };
 
-const APP_NAME = 'SME++ Admin';
+const APP_NAME = 'Durj Admin';
 
 export interface TOTPSetupData {
   secret: string; // Encrypted secret for storage

@@ -18,12 +18,16 @@ const DEFAULT_PERCENTAGES = {
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session || !session.user.organizationId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const tenantId = session.user.organizationId;
+
     const setting = await prisma.systemSettings.findUnique({
-      where: { key: SETTINGS_KEY },
+      where: {
+        tenantId_key: { tenantId, key: SETTINGS_KEY },
+      },
     });
 
     if (!setting) {
@@ -82,9 +86,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upsert the setting
+    const tenantId = session.user.organizationId!;
+
+    // Upsert the setting (tenant-scoped)
     await prisma.systemSettings.upsert({
-      where: { key: SETTINGS_KEY },
+      where: {
+        tenantId_key: { tenantId, key: SETTINGS_KEY },
+      },
       update: {
         value: JSON.stringify(percentages),
         updatedBy: session.user.id,
@@ -93,7 +101,7 @@ export async function POST(request: NextRequest) {
         key: SETTINGS_KEY,
         value: JSON.stringify(percentages),
         updatedBy: session.user.id,
-        tenantId: session.user.organizationId!,
+        tenantId,
       },
     });
 

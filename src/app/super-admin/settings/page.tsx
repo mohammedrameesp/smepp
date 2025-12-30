@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Wrench, ChevronRight } from 'lucide-react';
+import { Shield, Wrench, ChevronRight, MessageCircle } from 'lucide-react';
 
 export default function SuperAdminSettingsPage() {
   return (
@@ -24,6 +24,26 @@ export default function SuperAdminSettingsPage() {
                 <h3 className="text-lg font-semibold">Security</h3>
                 <p className="text-muted-foreground text-sm">
                   Two-factor authentication and account security
+                </p>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-slate-400" />
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* WhatsApp Integration */}
+      <Link href="/super-admin/settings/whatsapp">
+        <Card className="hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer">
+          <CardContent className="flex items-center justify-between py-6">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center">
+                <MessageCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">WhatsApp Integration</h3>
+                <p className="text-muted-foreground text-sm">
+                  Platform WhatsApp Business API configuration
                 </p>
               </div>
             </div>

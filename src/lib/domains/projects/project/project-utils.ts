@@ -26,12 +26,17 @@ export async function generateProjectCode(): Promise<string> {
 
 /**
  * Get exchange rate for currency conversion to QAR
+ * @param currency - Source currency code
+ * @param tenantId - The organization/tenant ID
  */
-export async function getExchangeRate(currency: string): Promise<number> {
+export async function getExchangeRate(currency: string, tenantId: string): Promise<number> {
   if (currency === 'QAR') return 1;
 
   const settings = await prisma.systemSettings.findFirst({
-    where: { key: `exchange_rate_${currency.toUpperCase()}_QAR` },
+    where: {
+      tenantId,
+      key: `exchange_rate_${currency.toUpperCase()}_QAR`,
+    },
   });
 
   if (settings?.value) {
@@ -51,9 +56,12 @@ export async function getExchangeRate(currency: string): Promise<number> {
 
 /**
  * Convert amount to QAR
+ * @param amount - Amount to convert
+ * @param currency - Source currency code
+ * @param tenantId - The organization/tenant ID
  */
-export async function convertToQAR(amount: number, currency: string): Promise<number> {
-  const rate = await getExchangeRate(currency);
+export async function convertToQAR(amount: number, currency: string, tenantId: string): Promise<number> {
+  const rate = await getExchangeRate(currency, tenantId);
   return Math.round(amount * rate * 100) / 100;
 }
 

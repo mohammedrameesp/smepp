@@ -9,7 +9,7 @@ export default function LandingPage() {
         <div className="container">
           <div className="nav-inner">
             <Link href="/" className="logo">
-              <img src="/sme-wordmark-transparent.png" alt="SME++" className="h-8 w-auto" />
+              <img src="/sme-wordmark-transparent.png" alt="Durj" className="h-8 w-auto" />
             </Link>
             <ul className="nav-links">
               <li><a href="#features">Features</a></li>
@@ -132,7 +132,7 @@ export default function LandingPage() {
             </div>
             <h2 className="pain-points-title">Sound <span>Familiar?</span></h2>
             <p className="pain-points-subtitle">
-              These common headaches cost businesses time and money. SME++ solves them all.
+              These common headaches cost businesses time and money. Durj solves them all.
             </p>
           </div>
           <div className="pain-points-grid">
@@ -175,7 +175,7 @@ export default function LandingPage() {
             </div>
             <h2 className="section-title">Everything You Need to Run Your Business</h2>
             <p className="section-description">
-              From asset tracking to payroll management, SME++ provides a comprehensive suite
+              From asset tracking to payroll management, Durj provides a comprehensive suite
               of tools designed specifically for SMEs in Qatar.
             </p>
           </div>
@@ -282,7 +282,7 @@ export default function LandingPage() {
             <div className="qatar-text">
               <h2>Built Specifically for Qatar</h2>
               <p>
-                SME++ is designed from the ground up for businesses operating in Qatar.
+                Durj is designed from the ground up for businesses operating in Qatar.
                 From QAR currency handling to WPS compliance, every feature understands
                 the local business landscape.
               </p>
@@ -378,7 +378,7 @@ export default function LandingPage() {
             <div className="security-text">
               <h2>Enterprise-Grade Security</h2>
               <p>
-                Your business data deserves the highest level of protection. SME++ implements
+                Your business data deserves the highest level of protection. Durj implements
                 industry-leading security measures to keep your information safe.
               </p>
               <div className="security-badges">
@@ -481,7 +481,7 @@ export default function LandingPage() {
           <div className="footer-grid">
             <div className="footer-brand">
               <Link href="/" className="logo" style={{ color: 'white' }}>
-                <img src="/sme-wordmark-white.png" alt="SME++" className="h-8 w-auto" />
+                <img src="/sme-wordmark-white.png" alt="Durj" className="h-8 w-auto" />
               </Link>
               <p>
                 Operations, Upgraded. The all-in-one business operations platform for Qatar SMEs.
@@ -506,14 +506,14 @@ export default function LandingPage() {
             <div>
               <div className="footer-title">Contact</div>
               <ul className="footer-links">
-                <li><a href="mailto:hello@smepp.com">hello@smepp.com</a></li>
+                <li><a href="mailto:hello@durj.com">hello@durj.com</a></li>
                 <li><a href="#qatar">Why Qatar</a></li>
               </ul>
             </div>
           </div>
           <div className="footer-bottom">
             <div className="footer-copyright">
-              © 2025 SME++. All rights reserved. Built with ❤️ in Qatar.
+              © 2025 Durj. All rights reserved. Built with ❤️ in Qatar.
             </div>
           </div>
         </div>

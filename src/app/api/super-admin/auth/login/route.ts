@@ -3,6 +3,7 @@ import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { authRateLimitMiddleware } from '@/lib/security/rateLimit';
 
 const loginSchema = z.object({
@@ -10,12 +11,16 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret';
+// SECURITY: Fail fast if NEXTAUTH_SECRET is not set
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error('CRITICAL: NEXTAUTH_SECRET environment variable is required');
+}
+const JWT_SECRET = process.env.NEXTAUTH_SECRET;
 const PENDING_2FA_TOKEN_EXPIRY = '5m'; // 5 minutes to enter 2FA code
 
 export async function POST(request: NextRequest) {
   // Apply strict rate limiting (5 attempts per 15 minutes)
-  const rateLimitResponse = authRateLimitMiddleware(request);
+  const rateLimitResponse = await authRateLimitMiddleware(request);
   if (rateLimitResponse) {
     return rateLimitResponse;
   }
@@ -83,12 +88,22 @@ export async function POST(request: NextRequest) {
 
     // Check if 2FA is enabled
     if (user.twoFactorEnabled && user.twoFactorSecret) {
-      // Generate a pending 2FA token
+      // Generate a unique JTI (JWT ID) to prevent token replay attacks
+      const jti = crypto.randomBytes(32).toString('hex');
+
+      // Store the JTI in the database - invalidates any previous pending 2FA tokens
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { pending2FATokenJti: jti },
+      });
+
+      // Generate a pending 2FA token with unique session binding
       const pending2faToken = jwt.sign(
         {
           userId: user.id,
           email: user.email,
           purpose: 'pending-2fa',
+          jti, // Unique token ID for single-use verification
         },
         JWT_SECRET,
         { expiresIn: PENDING_2FA_TOKEN_EXPIRY }

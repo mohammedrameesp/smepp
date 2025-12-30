@@ -4,13 +4,16 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { AdminLayoutClient } from './layout-client';
 
-// Get enabled modules from database (fresh, not from session)
-async function getEnabledModules(tenantId: string): Promise<string[]> {
+// Get organization settings from database (fresh, not from session)
+async function getOrgSettings(tenantId: string): Promise<{ enabledModules: string[]; aiChatEnabled: boolean }> {
   const org = await prisma.organization.findUnique({
     where: { id: tenantId },
-    select: { enabledModules: true },
+    select: { enabledModules: true, aiChatEnabled: true },
   });
-  return org?.enabledModules?.length ? org.enabledModules : ['assets', 'subscriptions', 'suppliers'];
+  return {
+    enabledModules: org?.enabledModules?.length ? org.enabledModules : ['assets', 'subscriptions', 'suppliers'],
+    aiChatEnabled: org?.aiChatEnabled ?? false,
+  };
 }
 
 // Get badge counts with tenant filtering (no caching to ensure tenant isolation)
@@ -66,10 +69,10 @@ export default async function AdminLayout({
 
   // Get tenant-scoped data
   const tenantId = session?.user?.organizationId;
-  const [badgeCounts, enabledModules] = tenantId
+  const [badgeCounts, orgSettings] = tenantId
     ? await Promise.all([
         getBadgeCounts(tenantId),
-        getEnabledModules(tenantId),
+        getOrgSettings(tenantId),
       ])
     : [
         {
@@ -80,8 +83,16 @@ export default async function AdminLayout({
           pendingAssetRequests: 0,
           pendingApprovals: 0,
         },
-        ['assets', 'subscriptions', 'suppliers'],
+        { enabledModules: ['assets', 'subscriptions', 'suppliers'], aiChatEnabled: false },
       ];
 
-  return <AdminLayoutClient badgeCounts={badgeCounts} enabledModules={enabledModules}>{children}</AdminLayoutClient>;
+  return (
+    <AdminLayoutClient
+      badgeCounts={badgeCounts}
+      enabledModules={orgSettings.enabledModules}
+      aiChatEnabled={orgSettings.aiChatEnabled}
+    >
+      {children}
+    </AdminLayoutClient>
+  );
 }

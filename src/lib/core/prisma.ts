@@ -4,6 +4,9 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+// Query timeout in milliseconds (30 seconds default, configurable via env)
+const QUERY_TIMEOUT_MS = parseInt(process.env.PRISMA_QUERY_TIMEOUT_MS || '30000', 10);
+
 // Build connection URL with pool settings for serverless
 function getConnectionUrl(): string {
   const baseUrl = process.env.DATABASE_URL || '';
@@ -13,7 +16,8 @@ function getConnectionUrl(): string {
 
   // Limit connections per serverless instance to prevent pool exhaustion
   // connection_limit=1 is recommended for serverless to prevent MaxClientsInSessionMode
-  return `${baseUrl}${separator}connection_limit=1&pool_timeout=10`;
+  // statement_timeout limits query execution time (in ms) to prevent long-running queries
+  return `${baseUrl}${separator}connection_limit=1&pool_timeout=10&statement_timeout=${QUERY_TIMEOUT_MS}`;
 }
 
 export const prisma =
@@ -24,6 +28,11 @@ export const prisma =
       db: {
         url: getConnectionUrl(),
       },
+    },
+    // Transaction settings
+    transactionOptions: {
+      maxWait: 5000, // Max time to wait for a transaction slot (5s)
+      timeout: QUERY_TIMEOUT_MS, // Max transaction duration
     },
   });
 

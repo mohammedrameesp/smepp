@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { createClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/log';
+import { requireRecent2FA } from '@/lib/two-factor';
 
 const BACKUP_BUCKET = 'database-backups';
 
@@ -31,6 +32,13 @@ export async function POST(request: NextRequest) {
 
     if (!path) {
       return NextResponse.json({ error: 'Backup path is required' }, { status: 400 });
+    }
+
+    // SECURITY: Require recent 2FA verification for actual restore (not preview)
+    // Restore operations can overwrite production data
+    if (mode === 'restore') {
+      const require2FAResult = await requireRecent2FA(session.user.id);
+      if (require2FAResult) return require2FAResult;
     }
 
     const supabase = getSupabaseClient();

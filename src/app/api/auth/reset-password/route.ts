@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { hash } from 'bcryptjs';
+import { createHash } from 'crypto';
 import { z } from 'zod';
+
+/**
+ * Hash reset token for comparison
+ * SECURITY: Tokens are stored hashed in DB
+ */
+function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Token is required'),
@@ -20,10 +29,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ valid: false }, { status: 400 });
     }
 
+    // SECURITY: Hash the token before comparing with stored hash
+    const hashedToken = hashToken(token);
+
     // Find user with this token that hasn't expired
     const user = await prisma.user.findFirst({
       where: {
-        resetToken: token,
+        resetToken: hashedToken,
         resetTokenExpiry: {
           gt: new Date(),
         },
@@ -55,10 +67,13 @@ export async function POST(request: NextRequest) {
 
     const { token, password } = result.data;
 
+    // SECURITY: Hash the token before comparing with stored hash
+    const hashedToken = hashToken(token);
+
     // Find user with valid token
     const user = await prisma.user.findFirst({
       where: {
-        resetToken: token,
+        resetToken: hashedToken,
         resetTokenExpiry: {
           gt: new Date(),
         },
@@ -75,13 +90,14 @@ export async function POST(request: NextRequest) {
     // Hash new password
     const passwordHash = await hash(password, 12);
 
-    // Update user: set new password and clear reset token
+    // Update user: set new password, clear reset token, and invalidate existing sessions
     await prisma.user.update({
       where: { id: user.id },
       data: {
         passwordHash,
         resetToken: null,
         resetTokenExpiry: null,
+        passwordChangedAt: new Date(), // SECURITY: Invalidates all existing sessions
       },
     });
 

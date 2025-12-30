@@ -6,6 +6,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { companyDocumentSchema } from '@/lib/validations/system/company-documents';
 import { getDocumentExpiryInfo } from '@/lib/domains/system/company-documents/document-utils';
 import { logAction, ActivityActions } from '@/lib/core/activity';
+import { cleanupStorageFile } from '@/lib/storage/cleanup';
 
 // GET /api/company-documents/[id] - Get a single document
 export const GET = withErrorHandler(async (
@@ -206,6 +207,11 @@ export const DELETE = withErrorHandler(async (
   await prisma.companyDocument.delete({
     where: { id },
   });
+
+  // STORAGE-003: Clean up associated file from storage
+  if (existing.documentUrl) {
+    await cleanupStorageFile(existing.documentUrl, tenantId);
+  }
 
   // Log activity
   await logAction(

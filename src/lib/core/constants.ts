@@ -10,30 +10,33 @@ import { prisma } from './prisma';
  */
 export const USD_TO_QAR_RATE = 3.64;
 
-// Cache for exchange rate (avoid repeated DB calls)
-let cachedRate: number | null = null;
-let cacheTime: number = 0;
+// Cache for exchange rate per tenant (avoid repeated DB calls)
+const rateCache: Map<string, { rate: number; time: number }> = new Map();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 /**
  * Get current exchange rate from database (server-side only)
  * Falls back to constant if database unavailable
+ * @param tenantId - The organization/tenant ID
  */
-export async function getExchangeRate(): Promise<number> {
+export async function getExchangeRate(tenantId: string): Promise<number> {
   // Return cached value if still fresh
-  if (cachedRate !== null && Date.now() - cacheTime < CACHE_DURATION) {
-    return cachedRate;
+  const cached = rateCache.get(tenantId);
+  if (cached && Date.now() - cached.time < CACHE_DURATION) {
+    return cached.rate;
   }
 
   try {
     const setting = await prisma.systemSettings.findUnique({
-      where: { key: 'USD_TO_QAR_RATE' },
+      where: {
+        tenantId_key: { tenantId, key: 'USD_TO_QAR_RATE' },
+      },
     });
 
     if (setting?.value) {
-      cachedRate = parseFloat(setting.value);
-      cacheTime = Date.now();
-      return cachedRate;
+      const rate = parseFloat(setting.value);
+      rateCache.set(tenantId, { rate, time: Date.now() });
+      return rate;
     }
   } catch (error) {
     console.error('Failed to fetch exchange rate from database:', error);
@@ -59,16 +62,20 @@ export function convertQarToUsd(qarAmount: number): number {
 
 /**
  * Convert USD amount to QAR using database rate (server-side only)
+ * @param usdAmount - Amount in USD
+ * @param tenantId - The organization/tenant ID
  */
-export async function convertUsdToQarAsync(usdAmount: number): Promise<number> {
-  const rate = await getExchangeRate();
+export async function convertUsdToQarAsync(usdAmount: number, tenantId: string): Promise<number> {
+  const rate = await getExchangeRate(tenantId);
   return usdAmount * rate;
 }
 
 /**
  * Convert QAR amount to USD using database rate (server-side only)
+ * @param qarAmount - Amount in QAR
+ * @param tenantId - The organization/tenant ID
  */
-export async function convertQarToUsdAsync(qarAmount: number): Promise<number> {
-  const rate = await getExchangeRate();
+export async function convertQarToUsdAsync(qarAmount: number, tenantId: string): Promise<number> {
+  const rate = await getExchangeRate(tenantId);
   return qarAmount / rate;
 }

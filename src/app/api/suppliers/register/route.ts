@@ -7,7 +7,7 @@ import { logAction } from '@/lib/activity';
 export async function POST(request: NextRequest) {
   try {
     // Apply rate limiting (100 req/15min per IP as specified)
-    const { allowed } = checkRateLimit(request);
+    const { allowed } = await checkRateLimit(request);
     if (!allowed) {
       return NextResponse.json(
         {

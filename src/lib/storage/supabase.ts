@@ -1,6 +1,57 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const bucketName = process.env.SUPABASE_BUCKET || 'smepp-storage';
+const bucketName = process.env.SUPABASE_BUCKET || 'durj-storage';
+
+/**
+ * SECURITY: Validate file path to prevent path traversal attacks
+ * @param path - The file path to validate
+ * @param tenantId - Optional tenant ID to enforce tenant-scoped paths
+ * @returns Sanitized path
+ * @throws Error if path is invalid
+ */
+function validateAndSanitizePath(path: string, tenantId?: string): string {
+  // Reject empty paths
+  if (!path || path.trim() === '') {
+    throw new Error('SECURITY: Path cannot be empty');
+  }
+
+  // Reject path traversal attempts
+  if (path.includes('..')) {
+    throw new Error('SECURITY: Path traversal detected - ".." is not allowed');
+  }
+
+  // Reject absolute paths (shouldn't start with /)
+  if (path.startsWith('/')) {
+    throw new Error('SECURITY: Absolute paths are not allowed');
+  }
+
+  // Reject null bytes (can bypass some security checks)
+  if (path.includes('\0')) {
+    throw new Error('SECURITY: Null bytes are not allowed in path');
+  }
+
+  // Only allow safe characters: alphanumeric, dash, underscore, dot, forward slash
+  const safePathPattern = /^[a-zA-Z0-9\-_./]+$/;
+  if (!safePathPattern.test(path)) {
+    throw new Error('SECURITY: Path contains invalid characters. Only alphanumeric, dash, underscore, dot, and forward slash are allowed');
+  }
+
+  // Prevent double slashes
+  if (path.includes('//')) {
+    throw new Error('SECURITY: Double slashes are not allowed in path');
+  }
+
+  // If tenantId is provided, ensure path is tenant-scoped
+  if (tenantId) {
+    const expectedPrefix = `tenants/${tenantId}/`;
+    if (!path.startsWith(expectedPrefix)) {
+      // Auto-prefix with tenant path for safety
+      return `${expectedPrefix}${path}`;
+    }
+  }
+
+  return path;
+}
 
 // Lazy-initialized Supabase client to avoid build-time errors
 let supabase: SupabaseClient | null = null;
@@ -33,13 +84,48 @@ export interface UploadParams {
   path: string;
   bytes: Buffer;
   contentType: string;
+  tenantId?: string; // SECURITY: Optional tenant ID for path enforcement
 }
 
-export async function sbUpload({ path, bytes, contentType }: UploadParams) {
+// SECURITY: Allowed MIME types for uploads
+const ALLOWED_MIME_TYPES = new Set([
+  // Images
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+  // Documents
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  // Text
+  'text/plain', 'text/csv',
+  // Archives (be careful with these)
+  'application/zip',
+]);
+
+// SECURITY: Maximum file size (10MB)
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+export async function sbUpload({ path, bytes, contentType, tenantId }: UploadParams) {
+  // SECURITY: Validate path
+  const sanitizedPath = validateAndSanitizePath(path, tenantId);
+
+  // SECURITY: Validate content type
+  if (!ALLOWED_MIME_TYPES.has(contentType)) {
+    throw new Error(`SECURITY: Content type "${contentType}" is not allowed`);
+  }
+
+  // SECURITY: Validate file size
+  if (bytes.length > MAX_FILE_SIZE) {
+    throw new Error(`SECURITY: File size exceeds maximum allowed (${MAX_FILE_SIZE / 1024 / 1024}MB)`);
+  }
+
   const client = getSupabaseClient();
   const { data, error } = await client.storage
     .from(bucketName)
-    .upload(path, bytes, {
+    .upload(sanitizedPath, bytes, {
       contentType,
       upsert: true,
     });
@@ -52,20 +138,30 @@ export async function sbUpload({ path, bytes, contentType }: UploadParams) {
   return data;
 }
 
-export async function sbPublicUrl(path: string) {
+export async function sbPublicUrl(path: string, tenantId?: string) {
+  // SECURITY: Validate path even for reads
+  const sanitizedPath = validateAndSanitizePath(path, tenantId);
+
   const client = getSupabaseClient();
   const { data } = client.storage
     .from(bucketName)
-    .getPublicUrl(path);
+    .getPublicUrl(sanitizedPath);
 
   return data.publicUrl;
 }
 
-export async function sbSignedUrl(path: string, expiresInSec: number = 3600) {
+export async function sbSignedUrl(path: string, expiresInSec: number = 3600, tenantId?: string) {
+  // SECURITY: Validate path
+  const sanitizedPath = validateAndSanitizePath(path, tenantId);
+
+  // SECURITY: Limit maximum expiry to 1 hour for sensitive files
+  const maxExpiry = 3600;
+  const safeExpiry = Math.min(expiresInSec, maxExpiry);
+
   const client = getSupabaseClient();
   const { data, error } = await client.storage
     .from(bucketName)
-    .createSignedUrl(path, expiresInSec);
+    .createSignedUrl(sanitizedPath, safeExpiry);
 
   if (error) {
     console.error('Supabase signed URL error:', error);
@@ -75,11 +171,14 @@ export async function sbSignedUrl(path: string, expiresInSec: number = 3600) {
   return data.signedUrl;
 }
 
-export async function sbRemove(path: string) {
+export async function sbRemove(path: string, tenantId?: string) {
+  // SECURITY: Validate path
+  const sanitizedPath = validateAndSanitizePath(path, tenantId);
+
   const client = getSupabaseClient();
   const { data, error } = await client.storage
     .from(bucketName)
-    .remove([path]);
+    .remove([sanitizedPath]);
 
   if (error) {
     console.error('Supabase remove error:', error);
@@ -89,11 +188,20 @@ export async function sbRemove(path: string) {
   return data;
 }
 
-export async function sbList(prefix?: string) {
+export async function sbList(prefix?: string, tenantId?: string) {
+  // SECURITY: Validate prefix if provided
+  let sanitizedPrefix = prefix;
+  if (prefix) {
+    sanitizedPrefix = validateAndSanitizePath(prefix, tenantId);
+  } else if (tenantId) {
+    // If no prefix but tenantId provided, scope to tenant directory
+    sanitizedPrefix = `tenants/${tenantId}`;
+  }
+
   const client = getSupabaseClient();
   const { data, error } = await client.storage
     .from(bucketName)
-    .list(prefix);
+    .list(sanitizedPrefix);
 
   if (error) {
     console.error('Supabase list error:', error);
@@ -102,3 +210,6 @@ export async function sbList(prefix?: string) {
 
   return data;
 }
+
+// Export for testing
+export { validateAndSanitizePath };

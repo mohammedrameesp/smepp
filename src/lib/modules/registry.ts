@@ -1,7 +1,7 @@
 /**
  * Central Module Registry
  *
- * Single source of truth for all module definitions in SME++.
+ * Single source of truth for all module definitions in Durj.
  * This replaces scattered module definitions across the codebase.
  */
 

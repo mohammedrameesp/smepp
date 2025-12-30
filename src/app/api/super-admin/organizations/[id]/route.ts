@@ -161,6 +161,7 @@ const updateOrgSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   maxUsers: z.number().min(1).optional(),
   maxAssets: z.number().min(1).optional(),
+  aiChatEnabled: z.boolean().optional(),
 });
 
 export async function PATCH(
@@ -196,7 +197,7 @@ export async function PATCH(
       );
     }
 
-    const { name, maxUsers, maxAssets } = result.data;
+    const { name, maxUsers, maxAssets, aiChatEnabled } = result.data;
 
     const organization = await prisma.organization.update({
       where: { id },
@@ -204,6 +205,7 @@ export async function PATCH(
         ...(name && { name }),
         ...(maxUsers && { maxUsers }),
         ...(maxAssets && { maxAssets }),
+        ...(aiChatEnabled !== undefined && { aiChatEnabled }),
       },
     });
 

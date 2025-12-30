@@ -65,6 +65,8 @@ import {
   Settings,
   Eye,
   EyeOff,
+  Sparkles,
+  MessageCircle,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -76,6 +78,7 @@ interface Organization {
   logoUrl: string | null;
   subscriptionTier: string;
   enabledModules: string[];
+  aiChatEnabled: boolean;
   createdAt: string;
   industry: string | null;
   companySize: string | null;
@@ -135,6 +138,28 @@ interface AuthConfig {
   customGoogleClientId: string | null;
   customAzureClientId: string | null;
   customAzureTenantId: string | null;
+}
+
+interface AIUsageStats {
+  organizationId: string;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  totalCostUsd: number;
+  apiCallCount: number;
+}
+
+interface WhatsAppStatus {
+  source: 'NONE' | 'PLATFORM' | 'CUSTOM';
+  platformEnabled: boolean;
+  platformAvailable: boolean;
+  hasCustomConfig: boolean;
+  customConfigActive: boolean;
+  stats?: {
+    messagesSentThisMonth: number;
+    messagesDelivered: number;
+    messagesFailed: number;
+  };
 }
 
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
@@ -197,6 +222,17 @@ export default function OrganizationDetailPage() {
   const [showAzureSecret, setShowAzureSecret] = useState(false);
   const [oauthSuccess, setOauthSuccess] = useState<string | null>(null);
 
+  // AI Chat toggle state
+  const [togglingAiChat, setTogglingAiChat] = useState(false);
+
+  // AI Usage stats state
+  const [aiUsage, setAiUsage] = useState<AIUsageStats | null>(null);
+  const [aiUsageLoading, setAiUsageLoading] = useState(false);
+
+  // WhatsApp state
+  const [whatsAppStatus, setWhatsAppStatus] = useState<WhatsAppStatus | null>(null);
+  const [togglingWhatsAppPlatform, setTogglingWhatsAppPlatform] = useState(false);
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -233,6 +269,24 @@ export default function OrganizationDetailPage() {
           if (authData.authConfig?.customAzureTenantId) {
             setAzureTenantId(authData.authConfig.customAzureTenantId);
           }
+        }
+
+        // Fetch AI usage stats
+        setAiUsageLoading(true);
+        const usageRes = await fetch(`/api/super-admin/ai-usage?orgId=${orgId}&period=month`);
+        if (usageRes.ok) {
+          const usageData = await usageRes.json();
+          if (usageData.organizations && usageData.organizations.length > 0) {
+            setAiUsage(usageData.organizations[0]);
+          }
+        }
+        setAiUsageLoading(false);
+
+        // Fetch WhatsApp status
+        const whatsAppRes = await fetch(`/api/super-admin/organizations/${orgId}/whatsapp`);
+        if (whatsAppRes.ok) {
+          const whatsAppData = await whatsAppRes.json();
+          setWhatsAppStatus(whatsAppData.whatsApp);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load organization');
@@ -644,6 +698,53 @@ export default function OrganizationDetailPage() {
     }
   };
 
+  const handleToggleAiChat = async (enabled: boolean) => {
+    setTogglingAiChat(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/super-admin/organizations/${orgId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ aiChatEnabled: enabled }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update AI chat setting');
+      }
+
+      setOrg(prev => prev ? { ...prev, aiChatEnabled: enabled } : null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update');
+    } finally {
+      setTogglingAiChat(false);
+    }
+  };
+
+  const handleToggleWhatsAppPlatform = async (enabled: boolean) => {
+    setTogglingWhatsAppPlatform(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/super-admin/organizations/${orgId}/whatsapp`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ whatsAppPlatformEnabled: enabled }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update WhatsApp setting');
+      }
+
+      const data = await response.json();
+      setWhatsAppStatus(data.whatsApp);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update');
+    } finally {
+      setTogglingWhatsAppPlatform(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -834,6 +935,172 @@ export default function OrganizationDetailPage() {
               })
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Features */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5" />
+            AI Features
+          </CardTitle>
+          <CardDescription>Control AI-powered features for this organization</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="font-medium">AI Chat Assistant</p>
+                <p className="text-sm text-muted-foreground">
+                  Allow users to query company data using natural language
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {togglingAiChat && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              <Switch
+                checked={org.aiChatEnabled}
+                onCheckedChange={handleToggleAiChat}
+                disabled={togglingAiChat}
+              />
+            </div>
+          </div>
+
+          {/* AI Usage Stats */}
+          {org.aiChatEnabled && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-medium text-gray-700">Usage This Month</h4>
+                {aiUsageLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              </div>
+              {aiUsage ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">API Calls</p>
+                    <p className="text-lg font-semibold">{aiUsage.apiCallCount.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Total Tokens</p>
+                    <p className="text-lg font-semibold">{aiUsage.totalTokens.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Prompt Tokens</p>
+                    <p className="text-lg font-semibold">{aiUsage.promptTokens.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Cost (USD)</p>
+                    <p className="text-lg font-semibold text-green-600">
+                      ${aiUsage.totalCostUsd.toFixed(4)}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No usage data yet</p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* WhatsApp Integration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5" />
+            WhatsApp Integration
+            {togglingWhatsAppPlatform && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+          </CardTitle>
+          <CardDescription>Control WhatsApp notification access for this organization</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {whatsAppStatus ? (
+            <>
+              {/* Current Status */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                    whatsAppStatus.source !== 'NONE' ? 'bg-green-100' : 'bg-slate-100'
+                  }`}>
+                    <MessageCircle className={`h-5 w-5 ${
+                      whatsAppStatus.source !== 'NONE' ? 'text-green-600' : 'text-slate-500'
+                    }`} />
+                  </div>
+                  <div>
+                    <p className="font-medium">WhatsApp Status</p>
+                    <p className="text-sm text-muted-foreground">
+                      {whatsAppStatus.source === 'NONE' && 'Disabled'}
+                      {whatsAppStatus.source === 'PLATFORM' && 'Using Platform WhatsApp'}
+                      {whatsAppStatus.source === 'CUSTOM' && 'Using Custom WhatsApp'}
+                    </p>
+                  </div>
+                </div>
+                <Badge variant={whatsAppStatus.source !== 'NONE' ? 'default' : 'secondary'}>
+                  {whatsAppStatus.source}
+                </Badge>
+              </div>
+
+              {/* Platform Access Toggle */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <p className="font-medium">Allow Platform WhatsApp</p>
+                  <p className="text-sm text-muted-foreground">
+                    {whatsAppStatus.platformAvailable
+                      ? 'Enable this organization to use the platform WhatsApp account'
+                      : 'Platform WhatsApp is not configured yet'}
+                  </p>
+                </div>
+                <Switch
+                  checked={whatsAppStatus.platformEnabled}
+                  onCheckedChange={handleToggleWhatsAppPlatform}
+                  disabled={togglingWhatsAppPlatform || !whatsAppStatus.platformAvailable}
+                />
+              </div>
+
+              {/* Custom Config Status */}
+              {whatsAppStatus.hasCustomConfig && (
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">Custom WhatsApp Config</p>
+                    <p className="text-sm text-muted-foreground">
+                      Organization has their own WhatsApp Business API configured
+                    </p>
+                  </div>
+                  <Badge variant={whatsAppStatus.customConfigActive ? 'default' : 'secondary'}>
+                    {whatsAppStatus.customConfigActive ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Usage Stats */}
+              {whatsAppStatus.stats && whatsAppStatus.source !== 'NONE' && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">Usage This Month</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Messages Sent</p>
+                      <p className="text-lg font-semibold">{whatsAppStatus.stats.messagesSentThisMonth.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Delivered</p>
+                      <p className="text-lg font-semibold text-green-600">{whatsAppStatus.stats.messagesDelivered.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Failed</p>
+                      <p className="text-lg font-semibold text-red-600">{whatsAppStatus.stats.messagesFailed.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">Loading WhatsApp status...</p>
+          )}
         </CardContent>
       </Card>
 

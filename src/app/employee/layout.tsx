@@ -4,13 +4,16 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { EmployeeLayoutClient } from './layout-client';
 
-// Get enabled modules from database (fresh, not from session)
-async function getEnabledModules(tenantId: string): Promise<string[]> {
+// Get organization settings from database (fresh, not from session)
+async function getOrgSettings(tenantId: string): Promise<{ enabledModules: string[]; aiChatEnabled: boolean }> {
   const org = await prisma.organization.findUnique({
     where: { id: tenantId },
-    select: { enabledModules: true },
+    select: { enabledModules: true, aiChatEnabled: true },
   });
-  return org?.enabledModules?.length ? org.enabledModules : ['assets', 'subscriptions', 'suppliers'];
+  return {
+    enabledModules: org?.enabledModules?.length ? org.enabledModules : ['assets', 'subscriptions', 'suppliers'],
+    aiChatEnabled: org?.aiChatEnabled ?? false,
+  };
 }
 
 export default async function EmployeeLayout({
@@ -25,10 +28,17 @@ export default async function EmployeeLayout({
     redirect('/login');
   }
 
-  // Get enabled modules from database
-  const enabledModules = session?.user?.organizationId
-    ? await getEnabledModules(session.user.organizationId)
-    : ['assets', 'subscriptions', 'suppliers'];
+  // Get organization settings from database
+  const orgSettings = session?.user?.organizationId
+    ? await getOrgSettings(session.user.organizationId)
+    : { enabledModules: ['assets', 'subscriptions', 'suppliers'], aiChatEnabled: false };
 
-  return <EmployeeLayoutClient enabledModules={enabledModules}>{children}</EmployeeLayoutClient>;
+  return (
+    <EmployeeLayoutClient
+      enabledModules={orgSettings.enabledModules}
+      aiChatEnabled={orgSettings.aiChatEnabled}
+    >
+      {children}
+    </EmployeeLayoutClient>
+  );
 }

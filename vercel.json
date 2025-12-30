@@ -7,6 +7,10 @@
     {
       "path": "/api/super-admin/backups/cron",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-deleted-users",
+      "schedule": "0 2 * * *"
     }
   ],
   "functions": {

@@ -45,6 +45,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // SECURITY: Require tenant context for file isolation
+    const tenantId = session.user.organizationId;
+    if (!tenantId) {
+      return NextResponse.json(
+        { error: 'Organization context required' },
+        { status: 403 }
+      );
+    }
+
     // Parse the multipart form data using Next.js built-in API
     let formData: FormData;
     try {
@@ -111,10 +120,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique file path
+    // Generate unique file path with tenant isolation
+    // Files are stored under: {tenantId}/{timestamp}.{ext}
     const timestamp = Date.now();
     const fileName = `${timestamp}${extension}`;
-    const filePath = fileName; // File will be stored directly in the bucket root
+    const filePath = `${tenantId}/${fileName}`; // Tenant-scoped path for isolation
 
     // Upload to Supabase storage
     try {
@@ -149,6 +159,7 @@ export async function POST(request: NextRequest) {
         'file',
         filePath,
         {
+          tenantId,
           fileName: file.name,
           fileSize: file.size,
           mimeType: file.type,

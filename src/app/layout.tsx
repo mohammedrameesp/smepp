@@ -27,7 +27,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "SME++ | Business Management Platform",
+  title: "Durj | Business Management Platform",
   description: "All-in-one asset, HR, and operations management for SMBs",
   manifest: "/manifest.json",
   robots: {
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "SME++",
+    title: "Durj",
   },
   other: {
     "mobile-web-app-capable": "yes",

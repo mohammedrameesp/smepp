@@ -199,7 +199,7 @@ export default function GetStartedPage() {
       <div className="get-started-page">
         <nav className="gs-nav">
           <div className="gs-nav-inner">
-            <Link href="/" className="gs-logo">SME<span>++</span></Link>
+            <Link href="/" className="gs-logo">Durj</Link>
           </div>
         </nav>
 
@@ -241,7 +241,7 @@ export default function GetStartedPage() {
       {/* Navigation */}
       <nav className="gs-nav">
         <div className="gs-nav-inner">
-          <Link href="/" className="gs-logo">SME<span>++</span></Link>
+          <Link href="/" className="gs-logo">Durj</Link>
           <div className="gs-nav-right">
             <span className="gs-nav-text">Already have an account?</span>
             <Link href="/login" className="gs-nav-link">Sign in</Link>

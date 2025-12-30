@@ -11,7 +11,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
   logoUrl: null,
   primaryColor: '#1E40AF', // Deep Blue - brand primary
   secondaryColor: null, // No secondary color by default - solid color instead of gradient
-  companyName: 'SME++',
+  companyName: 'Durj',
 };
 
 let cachedBranding: BrandingSettings | null = null;

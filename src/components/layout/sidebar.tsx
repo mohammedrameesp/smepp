@@ -95,7 +95,7 @@ export function Sidebar({ config, badgeCounts = {} }: SidebarProps) {
       {/* Footer */}
       {!collapsed && (
         <div className="p-3 border-t border-slate-200 dark:border-slate-800">
-          <p className="text-xs text-slate-400 text-center">SME++</p>
+          <p className="text-xs text-slate-400 text-center">Durj</p>
         </div>
       )}
     </aside>

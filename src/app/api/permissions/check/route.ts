@@ -44,13 +44,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
-    // Fetch enabled modules
-    const org = await prisma.organization.findUnique({
-      where: { id: orgId },
-      select: { enabledModules: true },
+    // SECURITY: Validate user membership in the organization (defense-in-depth)
+    // This prevents potential session manipulation attacks
+    const membership = await prisma.organizationUser.findUnique({
+      where: {
+        organizationId_userId: {
+          organizationId: orgId,
+          userId: session.user.id,
+        },
+      },
+      include: {
+        organization: {
+          select: { enabledModules: true },
+        },
+      },
     });
 
-    const enabledModules = org?.enabledModules || [];
+    if (!membership) {
+      console.log(`[Permissions Check] User ${session.user.id} not a member of org ${orgId}`);
+      return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
+    }
+
+    const enabledModules = membership.organization.enabledModules || [];
 
     // Single permission check
     if (singlePermission) {
