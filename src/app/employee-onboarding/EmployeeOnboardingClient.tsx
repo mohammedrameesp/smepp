@@ -301,7 +301,7 @@ export function EmployeeOnboardingClient() {
       }
 
       // Redirect to dashboard
-      router.push('/admin');
+      router.push('/employee');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -320,7 +320,7 @@ export function EmployeeOnboardingClient() {
 
   // Skip onboarding (go directly to dashboard)
   const handleSkip = () => {
-    router.push('/admin');
+    router.push('/employee');
   };
 
   // Loading state
@@ -349,7 +349,7 @@ export function EmployeeOnboardingClient() {
             You've already completed your employee onboarding.
           </p>
           <Button
-            onClick={() => router.push('/admin')}
+            onClick={() => router.push('/employee')}
             className="bg-slate-900 hover:bg-slate-800"
           >
             Go to Dashboard
@@ -417,7 +417,19 @@ export function EmployeeOnboardingClient() {
       <header className="py-6 px-4 border-b border-slate-200 bg-white">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/sme-icon-shield-512.png" alt="Durj" className="h-10 w-10" />
+            {session?.user?.organizationLogoUrl ? (
+              <img
+                src={session.user.organizationLogoUrl}
+                alt={session.user.organizationName || 'Organization'}
+                className="h-10 w-10 rounded-lg object-contain"
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-lg bg-slate-200 flex items-center justify-center">
+                <span className="text-lg font-bold text-slate-600">
+                  {session?.user?.organizationName?.charAt(0) || 'O'}
+                </span>
+              </div>
+            )}
             <div>
               <span className="text-xl font-semibold text-slate-900">Employee Onboarding</span>
               <p className="text-sm text-slate-500">Complete your profile</p>

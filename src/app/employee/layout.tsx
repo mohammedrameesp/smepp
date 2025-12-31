@@ -40,12 +40,10 @@ export default async function EmployeeLayout({
     redirect('/login');
   }
 
-  // Check if employee has completed onboarding (redirect if not)
+  // Check onboarding status - no longer force redirect, allow employees to skip
+  let onboardingComplete = true;
   if (session?.user?.id && session?.user?.role !== 'ADMIN') {
-    const onboardingComplete = await checkOnboardingComplete(session.user.id);
-    if (!onboardingComplete) {
-      redirect('/employee-onboarding');
-    }
+    onboardingComplete = await checkOnboardingComplete(session.user.id);
   }
 
   // Get organization settings from database
@@ -57,6 +55,7 @@ export default async function EmployeeLayout({
     <EmployeeLayoutClient
       enabledModules={orgSettings.enabledModules}
       aiChatEnabled={orgSettings.aiChatEnabled}
+      onboardingComplete={onboardingComplete}
     >
       {children}
     </EmployeeLayoutClient>
