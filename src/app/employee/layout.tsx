@@ -16,6 +16,15 @@ async function getOrgSettings(tenantId: string): Promise<{ enabledModules: strin
   };
 }
 
+// Check if user has completed HR profile onboarding
+async function checkOnboardingComplete(userId: string): Promise<boolean> {
+  const profile = await prisma.hRProfile.findUnique({
+    where: { userId },
+    select: { onboardingComplete: true },
+  });
+  return profile?.onboardingComplete ?? false;
+}
+
 export default async function EmployeeLayout({
   children,
 }: {
@@ -29,6 +38,14 @@ export default async function EmployeeLayout({
   // Redirect unauthenticated users
   if (!session && !devAuthEnabled) {
     redirect('/login');
+  }
+
+  // Check if employee has completed onboarding (redirect if not)
+  if (session?.user?.id && session?.user?.role !== 'ADMIN') {
+    const onboardingComplete = await checkOnboardingComplete(session.user.id);
+    if (!onboardingComplete) {
+      redirect('/employee-onboarding');
+    }
   }
 
   // Get organization settings from database
