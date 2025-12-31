@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAMP Product Review - Business Analysis</title>
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-light: #3b82f6;
+            --success: #059669;
+            --success-light: #10b981;
+            --success-bg: #d1fae5;
+            --warning: #d97706;
+            --warning-light: #f59e0b;
+            --warning-bg: #fef3c7;
+            --danger: #dc2626;
+            --danger-light: #ef4444;
+            --danger-bg: #fee2e2;
+            --info: #0891b2;
+            --info-bg: #cffafe;
+            --purple: #7c3aed;
+            --purple-bg: #ede9fe;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-900);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%);
+            color: white;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 40px rgba(30, 64, 175, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header .subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+        }
+
+        .header .meta {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Score Card */
+        .score-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .score-item {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: var(--gray-50);
+        }
+
+        .score-item.primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+        }
+
+        .score-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .score-label {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.8;
+        }
+
+        /* Section Styles */
+        .section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .section-number {
+            background: var(--primary);
+            color: white;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: var(--gray-900);
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: var(--gray-700);
+            margin: 1.5rem 0 1rem;
+        }
+
+        .section h4 {
+            font-size: 1rem;
+            color: var(--gray-700);
+            margin: 1.25rem 0 0.75rem;
+        }
+
+        /* Strengths and Weaknesses */
+        .highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .highlight-card {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border-left: 4px solid;
+        }
+
+        .highlight-card.strength {
+            background: var(--success-bg);
+            border-color: var(--success);
+        }
+
+        .highlight-card.weakness {
+            background: var(--danger-bg);
+            border-color: var(--danger);
+        }
+
+        .highlight-card h4 {
+            margin: 0 0 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .highlight-card.strength h4 {
+            color: var(--success);
+        }
+
+        .highlight-card.weakness h4 {
+            color: var(--danger);
+        }
+
+        .highlight-card ol {
+            margin: 0;
+            padding-left: 1.25rem;
+        }
+
+        .highlight-card li {
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight-card strong {
+            color: var(--gray-900);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .badge-core {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .badge-supporting {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .badge-out-of-scope {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .badge-complete {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .badge-missing {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .badge-partial {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .badge-critical {
+            background: var(--danger);
+            color: white;
+        }
+
+        .badge-important {
+            background: var(--warning);
+            color: white;
+        }
+
+        .badge-nice {
+            background: var(--info);
+            color: white;
+        }
+
+        .badge-low {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .badge-medium {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        .badge-high {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .badge-yes {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .badge-no {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .badge-questionable {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+
+        /* Status Icons */
+        .icon {
+            display: inline-block;
+            width: 1.25rem;
+            height: 1.25rem;
+            text-align: center;
+            line-height: 1.25rem;
+            border-radius: 50%;
+            font-size: 0.75rem;
+        }
+
+        .icon-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .icon-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .icon-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: var(--gray-50);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .card-rating {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .card-rating.good { color: var(--success); }
+        .card-rating.medium { color: var(--warning); }
+        .card-rating.poor { color: var(--danger); }
+
+        /* Recommendation Boxes */
+        .recommendation {
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+
+        .recommendation.remove {
+            background: var(--danger-bg);
+            border-color: var(--danger);
+        }
+
+        .recommendation.add-critical {
+            background: #fef2f2;
+            border-color: var(--danger);
+        }
+
+        .recommendation.add-important {
+            background: var(--warning-bg);
+            border-color: var(--warning);
+        }
+
+        .recommendation.nice-to-have {
+            background: var(--info-bg);
+            border-color: var(--info);
+        }
+
+        .recommendation h4 {
+            margin: 0 0 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Timeline */
+        .timeline {
+            margin: 1.5rem 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 1rem;
+            padding-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .timeline-item:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: 1.125rem;
+            top: 2.5rem;
+            bottom: 0;
+            width: 2px;
+            background: var(--gray-300);
+        }
+
+        .timeline-marker {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .timeline-content {
+            flex: 1;
+            padding-top: 0.25rem;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-desc {
+            color: var(--gray-500);
+            font-size: 0.9rem;
+        }
+
+        /* Comparison Table */
+        .comparison-table td:first-child {
+            font-weight: 600;
+        }
+
+        /* Progress Bars */
+        .progress-container {
+            margin: 0.5rem 0;
+        }
+
+        .progress-bar {
+            height: 0.5rem;
+            background: var(--gray-200);
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.good { background: var(--success); }
+        .progress-fill.medium { background: var(--warning); }
+        .progress-fill.poor { background: var(--danger); }
+
+        /* Callout */
+        .callout {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin: 1.5rem 0;
+        }
+
+        .callout.info {
+            background: var(--info-bg);
+            border: 1px solid var(--info);
+        }
+
+        .callout.warning {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning);
+        }
+
+        .callout.success {
+            background: var(--success-bg);
+            border: 1px solid var(--success);
+        }
+
+        .callout.primary {
+            background: #dbeafe;
+            border: 1px solid var(--primary);
+        }
+
+        .callout h4 {
+            margin: 0 0 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Two Column Layout */
+        .two-column {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Print Styles */
+        @media print {
+            body { background: white; }
+            .container { max-width: 100%; padding: 0; }
+            .section { box-shadow: none; border: 1px solid var(--gray-200); }
+            .header { background: var(--primary) !important; -webkit-print-color-adjust: exact; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header { padding: 2rem 1rem; }
+            .header h1 { font-size: 1.75rem; }
+            .score-card { grid-template-columns: 1fr 1fr; }
+            .two-column { grid-template-columns: 1fr; }
+            table { font-size: 0.8rem; }
+            th, td { padding: 0.5rem; }
+        }
+
+        /* Feature Table Specific */
+        .feature-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .check { color: var(--success); font-weight: bold; }
+        .cross { color: var(--danger); font-weight: bold; }
+        .partial { color: var(--warning); font-weight: bold; }
+
+        /* Executive Summary Box */
+        .exec-summary {
+            background: linear-gradient(135deg, #1e3a8a 0%, var(--primary) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            margin: 2rem 0;
+        }
+
+        .exec-summary h3 {
+            color: white;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .exec-summary p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            opacity: 0.95;
+        }
+
+        .exec-summary strong {
+            color: #fbbf24;
+        }
+
+        /* Module Cards */
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .module-card {
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            transition: all 0.2s;
+        }
+
+        .module-card:hover {
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .module-card.core {
+            border-left: 4px solid var(--success);
+        }
+
+        .module-card.supporting {
+            border-left: 4px solid var(--warning);
+        }
+
+        .module-card.out-of-scope {
+            border-left: 4px solid var(--danger);
+        }
+
+        .module-card h5 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .module-card p {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin: 0;
+        }
+
+        /* Action Items */
+        .action-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .action-list li {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .action-number {
+            background: var(--primary);
+            color: white;
+            width: 1.75rem;
+            height: 1.75rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .action-content strong {
+            display: block;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .action-content span {
+            color: var(--gray-500);
+            font-size: 0.9rem;
+        }
+
+        /* Risk Matrix */
+        .risk-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .risk-item {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .risk-item.low {
+            background: var(--success-bg);
+            border: 1px solid var(--success);
+        }
+
+        .risk-item.medium {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning);
+        }
+
+        .risk-item.high {
+            background: var(--danger-bg);
+            border: 1px solid var(--danger);
+        }
+
+        .risk-item .risk-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .risk-item .risk-value {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        /* Divider */
+        hr {
+            border: none;
+            border-top: 2px solid var(--gray-200);
+            margin: 2rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>DAMP Product Review</h1>
+            <p class="subtitle">Comprehensive Business Analysis & Strategic Recommendations</p>
+            <div class="meta">
+                <span><strong>Application:</strong> Digital Asset & Subscription Manager</span>
+                <span><strong>Review Date:</strong> December 2024</span>
+                <span><strong>Reviewer:</strong> Senior Product Manager / Business Analyst</span>
+            </div>
+        </header>
+
+        <!-- Score Card -->
+        <div class="score-card">
+            <div class="score-item primary">
+                <div class="score-value">7.2/10</div>
+                <div class="score-label">Product Health Score</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value" style="color: var(--success);">High</div>
+                <div class="score-label">Technical Maturity</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value" style="color: var(--warning);">Medium</div>
+                <div class="score-label">Product Coherence</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value" style="color: var(--warning);">Narrow</div>
+                <div class="score-label">Market Fit</div>
+            </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">0</div>
+                <h2>Executive Summary</h2>
+            </div>
+
+            <div class="highlights">
+                <div class="highlight-card strength">
+                    <h4>Top 3 Strengths</h4>
+                    <ol>
+                        <li><strong>Comprehensive Core Operations</strong> - Assets, Subscriptions, and Suppliers modules are feature-rich with full CRUD, history tracking, export/import, and reporting</li>
+                        <li><strong>Strong Payroll Implementation</strong> - Qatar-specific WPS file generation, gratuity calculations based on local labor law, comprehensive salary structures</li>
+                        <li><strong>Robust Technical Foundation</strong> - Modern Next.js 15/React 19 stack, comprehensive testing (unit, integration, E2E), proper security measures</li>
+                    </ol>
+                </div>
+                <div class="highlight-card weakness">
+                    <h4>Top 3 Weaknesses</h4>
+                    <ol>
+                        <li><strong>Scope Creep</strong> - Accreditation module is fundamentally different from other modules (event-based vs. ongoing operations)</li>
+                        <li><strong>Limited Analytics</strong> - Reports page shows counts but lacks trend analysis, forecasting, or actionable insights</li>
+                        <li><strong>Missing Integrations</strong> - No external system connections (accounting, HR systems, asset procurement)</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="exec-summary">
+                <h3>Final Assessment</h3>
+                <p><strong>DAMP is a technically solid application with significant scope creep issues.</strong> The core asset/subscription/supplier management functionality is well-implemented with proper history tracking, validation, and security measures. However, the addition of full payroll, leave management, and especially accreditation has diluted the product identity.</p>
+                <p style="margin-top: 1rem;"><strong>Primary Recommendation:</strong> Refocus on being the best IT Asset & Subscription Management tool for Qatar SMEs, leveraging the Qatar-specific features (QAR currency, local labor law calculations, WPS) as competitive advantages rather than trying to be a full business operations suite.</p>
+            </div>
+        </div>
+
+        <!-- Section 1: Module Coherence Analysis -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">1</div>
+                <h2>Module Coherence Analysis</h2>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Module</th>
+                        <th>Relevance</th>
+                        <th>Belongs?</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Assets</strong></td>
+                        <td><span class="badge badge-core">Core</span></td>
+                        <td><span class="badge badge-yes">Yes</span></td>
+                        <td>Foundational IT asset management</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Subscriptions</strong></td>
+                        <td><span class="badge badge-core">Core</span></td>
+                        <td><span class="badge badge-yes">Yes</span></td>
+                        <td>SaaS tracking essential for IT departments</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Suppliers</strong></td>
+                        <td><span class="badge badge-core">Core</span></td>
+                        <td><span class="badge badge-yes">Yes</span></td>
+                        <td>Vendor management with approval workflow</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Employees/HR</strong></td>
+                        <td><span class="badge badge-core">Core</span></td>
+                        <td><span class="badge badge-yes">Yes</span></td>
+                        <td>Employee data ties to asset assignments</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Leave Management</strong></td>
+                        <td><span class="badge badge-supporting">Supporting</span></td>
+                        <td><span class="badge badge-yes">Kept</span></td>
+                        <td>Kept for employee self-service - not expanding</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Payroll</strong></td>
+                        <td><span class="badge badge-supporting">Supporting</span></td>
+                        <td><span class="badge badge-yes">Kept</span></td>
+                        <td>Qatar WPS/Gratuity is competitive advantage</td>
+                    </tr>
+                    <tr style="background: var(--success-bg);">
+                        <td><strong>Tasks</strong></td>
+                        <td><span class="badge badge-out-of-scope">Removed</span></td>
+                        <td><span class="badge badge-complete">✓ DONE</span></td>
+                        <td>Kanban board module completely removed (Dec 2024)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Purchase Requests</strong></td>
+                        <td><span class="badge badge-core">Core</span></td>
+                        <td><span class="badge badge-yes">Yes</span></td>
+                        <td>Procurement workflow for asset acquisition</td>
+                    </tr>
+                    <tr style="background: var(--success-bg);">
+                        <td><strong>Accreditation</strong></td>
+                        <td><span class="badge badge-out-of-scope">Removed</span></td>
+                        <td><span class="badge badge-complete">✓ DONE</span></td>
+                        <td>Spun off as separate product (Dec 2024)</td>
+                    </tr>
+                    <tr style="background: var(--success-bg);">
+                        <td><strong>Projects (Budget)</strong></td>
+                        <td><span class="badge badge-out-of-scope">Simplified</span></td>
+                        <td><span class="badge badge-complete">✓ DONE</span></td>
+                        <td>Budget/revenue fields removed, basic tracking only</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Key Findings</h3>
+
+            <div class="two-column">
+                <div class="callout success">
+                    <h4>✓ Feature Overlap - RESOLVED (Dec 2024)</h4>
+                    <ul>
+                        <li><s><strong>Purchase Requests + Projects Budget Items</strong></s> - Project budget removed</li>
+                        <li><strong>HR Profile + User Management</strong> - employee data scattered (kept as-is)</li>
+                        <li><s><strong>Tasks + Projects</strong></s> - Tasks module completely removed</li>
+                    </ul>
+                </div>
+                <div class="callout success">
+                    <h4>✓ Modules Split/Removed (Dec 2024)</h4>
+                    <ol>
+                        <li><strong>Accreditation</strong> &rarr; ✅ Spun off as separate project</li>
+                        <li><strong>Payroll + Leave</strong> &rarr; Kept (Qatar competitive advantage)</li>
+                        <li><strong>Projects (Budget/Revenue)</strong> &rarr; ✅ Removed, simplified to basic tracking</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Feature Gap Analysis -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">2</div>
+                <h2>Feature Gap Analysis</h2>
+            </div>
+
+            <h3>Assets Module <span class="badge badge-core">Core</span></h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Status</th>
+                        <th>Industry Standard</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CRUD Operations</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Assignment History</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Warranty Tracking</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Maintenance Records</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td></td>
+                    </tr>
+                    <tr style="background: var(--danger-bg);">
+                        <td>QR/Barcode Labels</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td><span class="badge badge-critical">Critical</span> for physical asset tracking</td>
+                    </tr>
+                    <tr style="background: var(--warning-bg);">
+                        <td>Depreciation Calculation</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td><span class="badge badge-important">Important</span> for accounting</td>
+                    </tr>
+                    <tr style="background: var(--warning-bg);">
+                        <td>Bulk Disposal Workflow</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td><span class="badge badge-important">Important</span></td>
+                    </tr>
+                    <tr>
+                        <td>Integration w/ Procurement</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td>Auto-create asset from Purchase Request</td>
+                    </tr>
+                    <tr>
+                        <td>Check-in/Check-out</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td>Equipment lending workflow</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Subscriptions Module <span class="badge badge-core">Core</span></h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Status</th>
+                        <th>Industry Standard</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Lifecycle Management</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Renewal Alerts</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Cost Tracking</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td></td>
+                    </tr>
+                    <tr style="background: var(--danger-bg);">
+                        <td>License Count Tracking</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td><span class="badge badge-critical">Critical</span> - "10 of 25 licenses used"</td>
+                    </tr>
+                    <tr style="background: var(--warning-bg);">
+                        <td>Usage Analytics</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td><span class="badge badge-important">Important</span> - SaaS optimization</td>
+                    </tr>
+                    <tr>
+                        <td>Contract Upload</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td>Store license agreements</td>
+                    </tr>
+                    <tr>
+                        <td>Auto-Renewal Toggle</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Spending Trends</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td>Month-over-month analysis</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Leave Management <span class="badge badge-supporting">Supporting</span></h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Status</th>
+                        <th>Industry Standard</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Request/Approval Workflow</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Balance Tracking</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Qatar Labor Law Compliance</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td>Hajj, service-based entitlements</td>
+                    </tr>
+                    <tr>
+                        <td>Team Calendar</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td></td>
+                    </tr>
+                    <tr style="background: var(--warning-bg);">
+                        <td>Public Holidays Integration</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td><span class="badge badge-important">Important</span></td>
+                    </tr>
+                    <tr>
+                        <td>Overlap Detection</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td>Warn if team member already off</td>
+                    </tr>
+                    <tr>
+                        <td>Manager Delegation</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td>Alternative approver when away</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Payroll Module <span class="badge badge-supporting">Supporting</span></h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Status</th>
+                        <th>Industry Standard</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Salary Structures</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>WPS File Generation</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td>Qatar-specific</td>
+                    </tr>
+                    <tr>
+                        <td>Gratuity Calculation</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td>Qatar labor law</td>
+                    </tr>
+                    <tr>
+                        <td>Loans/Advances</td>
+                        <td><span class="check">&#10003;</span> Complete</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Tax Calculations</td>
+                        <td>N/A</td>
+                        <td>Qatar has no income tax</td>
+                    </tr>
+                    <tr style="background: var(--warning-bg);">
+                        <td>Bonus/Variable Pay</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td><span class="badge badge-important">Important</span></td>
+                    </tr>
+                    <tr>
+                        <td>Payroll Reports</td>
+                        <td><span class="partial">&#8776;</span> Basic</td>
+                        <td>No year-to-date or comparative analysis</td>
+                    </tr>
+                    <tr>
+                        <td>Bank Reconciliation</td>
+                        <td><span class="cross">&#10007;</span> Missing</td>
+                        <td>Match payments to bank statements</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color: var(--gray-500);"><s>Accreditation Module</s> <span class="badge badge-complete">✓ REMOVED - Dec 2024</span></h3>
+            <div class="callout success" style="margin: 1rem 0;">
+                <p><strong>This module has been spun off as a separate project.</strong></p>
+                <p style="margin-top: 0.5rem;">Location: <code>D:\Projects\Accreditation</code></p>
+                <p style="margin-top: 0.5rem;">The accreditation functionality now exists as a standalone application with its own database, authentication, and deployment.</p>
+            </div>
+        </div>
+
+        <!-- Section 3: Scope Creep Identification -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">3</div>
+                <h2>Scope Creep Identification</h2>
+            </div>
+
+            <h3 style="color: var(--success);">High Scope Creep Risk - RESOLVED ✓</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature/Module</th>
+                        <th>Concern</th>
+                        <th>Action Taken (Dec 2024)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background: var(--success-bg);">
+                        <td><strong>Accreditation</strong></td>
+                        <td>Completely different domain - event management vs IT operations</td>
+                        <td><span class="badge badge-complete">✓ REMOVED</span> - Spun off as separate project</td>
+                    </tr>
+                    <tr style="background: var(--warning-bg);">
+                        <td><strong>Full Payroll</strong></td>
+                        <td>Enterprise HRIS feature requiring deep compliance knowledge</td>
+                        <td><span class="badge badge-yes">KEPT</span> - Qatar WPS is competitive advantage</td>
+                    </tr>
+                    <tr style="background: var(--success-bg);">
+                        <td><strong>Project Budget Tracking</strong></td>
+                        <td>Complex accounting features (tranches, revenue, P&L)</td>
+                        <td><span class="badge badge-complete">✓ REMOVED</span> - Budget fields deleted</td>
+                    </tr>
+                    <tr style="background: var(--success-bg);">
+                        <td><strong>Kanban Tasks</strong></td>
+                        <td>Full PM tool competing with established players</td>
+                        <td><span class="badge badge-complete">✓ REMOVED</span> - Entire module deleted</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color: var(--warning);">Medium Scope Creep Risk</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Concern</th>
+                        <th>Recommendation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Leave Management</td>
+                        <td>HR feature, but useful for employee self-service</td>
+                        <td>Keep, but don't expand</td>
+                    </tr>
+                    <tr>
+                        <td>Gratuity Calculations</td>
+                        <td>Nice-to-have, not core to asset management</td>
+                        <td>Keep as read-only projection</td>
+                    </tr>
+                    <tr>
+                        <td>Supplier Engagements</td>
+                        <td>CRM-like feature</td>
+                        <td>Keep minimal</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section 4: User Journey Analysis -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">4</div>
+                <h2>User Journey Analysis</h2>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Admin Persona</span>
+                        <span class="card-rating medium">7/10</span>
+                    </div>
+                    <table style="margin: 0; font-size: 0.85rem;">
+                        <tr>
+                            <td>Managing assets</td>
+                            <td><span style="color: var(--success);">Excellent</span></td>
+                        </tr>
+                        <tr>
+                            <td>Approving requests</td>
+                            <td><span style="color: var(--success);">Good</span></td>
+                        </tr>
+                        <tr>
+                            <td>Running payroll</td>
+                            <td><span style="color: var(--warning);">Complex</span></td>
+                        </tr>
+                        <tr>
+                            <td>Generating reports</td>
+                            <td><span style="color: var(--warning);">Limited</span></td>
+                        </tr>
+                    </table>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--gray-200);">
+                        <strong style="font-size: 0.8rem; color: var(--gray-500);">MISSING:</strong>
+                        <ul style="font-size: 0.85rem; margin: 0.5rem 0 0; padding-left: 1.25rem;">
+                            <li>Actionable dashboard</li>
+                            <li>Bulk operations</li>
+                            <li>One-click from notification to action</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Employee Persona</span>
+                        <span class="card-rating medium">6/10</span>
+                    </div>
+                    <table style="margin: 0; font-size: 0.85rem;">
+                        <tr>
+                            <td>Viewing my assets</td>
+                            <td><span style="color: var(--success);">Good</span></td>
+                        </tr>
+                        <tr>
+                            <td>Requesting leave</td>
+                            <td><span style="color: var(--success);">Good</span></td>
+                        </tr>
+                        <tr>
+                            <td>Viewing payslips</td>
+                            <td><span style="color: var(--success);">Good</span></td>
+                        </tr>
+                        <tr>
+                            <td>Purchase requests</td>
+                            <td><span style="color: var(--warning);">Complex</span></td>
+                        </tr>
+                    </table>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--gray-200);">
+                        <strong style="font-size: 0.8rem; color: var(--gray-500);">MISSING:</strong>
+                        <ul style="font-size: 0.85rem; margin: 0.5rem 0 0; padding-left: 1.25rem;">
+                            <li>Mobile-optimized views</li>
+                            <li>Asset request workflow</li>
+                            <li>Onboarding progress visible</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card" style="background: var(--gray-200); opacity: 0.7;">
+                    <div class="card-header">
+                        <span class="card-title"><s>Validator Persona</s></span>
+                        <span class="badge badge-complete">REMOVED</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--gray-500); margin-top: 0.5rem;">
+                        <strong>Dec 2024:</strong> Validator role and accreditation module spun off as separate product.
+                        This persona no longer exists in DAMP.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: Competitive Positioning -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">5</div>
+                <h2>Competitive Positioning</h2>
+            </div>
+
+            <p style="margin-bottom: 1rem;"><strong>Current Positioning:</strong> "All-in-One Business Operations Platform"</p>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Competitor</th>
+                        <th>Category</th>
+                        <th>DAMP Comparison</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Snipe-IT</td>
+                        <td>Asset Management</td>
+                        <td>DAMP comparable but less mature</td>
+                    </tr>
+                    <tr>
+                        <td>Asset Panda</td>
+                        <td>Asset Management</td>
+                        <td><span style="color: var(--danger);">DAMP lacks mobile app, barcode scanning</span></td>
+                    </tr>
+                    <tr>
+                        <td>BambooHR</td>
+                        <td>HRIS/Leave/Payroll</td>
+                        <td>DAMP HR features are rudimentary</td>
+                    </tr>
+                    <tr>
+                        <td>Factorial</td>
+                        <td>HR + Payroll</td>
+                        <td><span style="color: var(--success);">DAMP payroll is Qatar-specific advantage</span></td>
+                    </tr>
+                    <tr>
+                        <td>Cledara</td>
+                        <td>Subscription Management</td>
+                        <td><span style="color: var(--danger);">DAMP lacks usage insights, optimization</span></td>
+                    </tr>
+                    <tr>
+                        <td>Zluri</td>
+                        <td>SaaS Management</td>
+                        <td><span style="color: var(--danger);">DAMP lacks discovery, SSO integration</span></td>
+                    </tr>
+                    <tr>
+                        <td>Jira</td>
+                        <td>Task Management</td>
+                        <td>DAMP tasks are toy-level comparison</td>
+                    </tr>
+                    <tr>
+                        <td>Eventbrite</td>
+                        <td>Event Accreditation</td>
+                        <td>Completely different domain</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Strategic Recommendation: <span style="color: var(--primary);">FOCUS</span></h3>
+
+            <div class="two-column" style="margin-top: 1rem;">
+                <div class="callout success">
+                    <h4 style="color: var(--success);">Option A: IT Asset & Subscription Management (Recommended)</h4>
+                    <ul>
+                        <li><strong>Core:</strong> Assets, Subscriptions, Suppliers, Purchase Requests</li>
+                        <li><strong>Target:</strong> IT departments in Qatar SMEs</li>
+                        <li><strong>Remove:</strong> Accreditation, Payroll, Leave</li>
+                        <li><strong>Differentiation:</strong> Qatar-specific (QAR, local vendors)</li>
+                    </ul>
+                </div>
+                <div class="callout warning">
+                    <h4 style="color: var(--warning);">Option B: Qatar Business Operations Suite</h4>
+                    <ul>
+                        <li>Keep everything, accept feature sprawl</li>
+                        <li><strong>Target:</strong> Small businesses wanting single system</li>
+                        <li><strong>Risk:</strong> Jack of all trades, master of none</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6: Product Recommendations -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">6</div>
+                <h2>Product Recommendations</h2>
+            </div>
+
+            <div class="recommendation" style="background: var(--success-bg); border-color: var(--success);">
+                <h4 style="color: var(--success);">✓ Removed or Deprecated (Dec 2024)</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Status</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background: var(--success-bg);">
+                            <td>Accreditation module</td>
+                            <td><span class="badge badge-complete">✓ DONE</span></td>
+                            <td>Spun off as separate project at D:\Projects\Accreditation</td>
+                        </tr>
+                        <tr style="background: var(--success-bg);">
+                            <td>Project budget/revenue tracking</td>
+                            <td><span class="badge badge-complete">✓ DONE</span></td>
+                            <td>Budget fields removed from Project model</td>
+                        </tr>
+                        <tr>
+                            <td>Payroll processing</td>
+                            <td><span class="badge badge-yes">KEPT</span></td>
+                            <td>Decided to keep - Qatar WPS is competitive advantage</td>
+                        </tr>
+                        <tr style="background: var(--success-bg);">
+                            <td>Task management</td>
+                            <td><span class="badge badge-complete">✓ DONE</span></td>
+                            <td>Entire Kanban module removed (~30k lines deleted)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="recommendation add-critical">
+                <h4 style="color: var(--danger);">Must Add - Critical</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Priority</th>
+                            <th>Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>QR/Barcode labels for assets</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                            <td>Industry standard for physical asset tracking</td>
+                        </tr>
+                        <tr>
+                            <td>License count tracking for subscriptions</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                            <td>"15 of 25 licenses in use"</td>
+                        </tr>
+                        <tr>
+                            <td>Dashboard with actionable items</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                            <td>Current dashboard is just navigation</td>
+                        </tr>
+                        <tr>
+                            <td>Asset disposal workflow</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                            <td>Complete lifecycle management</td>
+                        </tr>
+                        <tr>
+                            <td>Role-based data scoping</td>
+                            <td><span class="badge badge-critical">Critical</span></td>
+                            <td>Department-level asset views</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="recommendation add-important">
+                <h4 style="color: var(--warning);">Must Add - Important</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Priority</th>
+                            <th>Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Depreciation tracking</td>
+                            <td><span class="badge badge-important">Important</span></td>
+                            <td>Accounting compliance</td>
+                        </tr>
+                        <tr>
+                            <td>Export to Excel/PDF</td>
+                            <td><span class="badge badge-important">Important</span></td>
+                            <td>Partially exists, needs enhancement</td>
+                        </tr>
+                        <tr>
+                            <td>Date range filtering on reports</td>
+                            <td><span class="badge badge-important">Important</span></td>
+                            <td>"Last quarter" analysis</td>
+                        </tr>
+                        <tr>
+                            <td>Email notifications</td>
+                            <td><span class="badge badge-important">Important</span></td>
+                            <td>Cron jobs exist but no email sending</td>
+                        </tr>
+                        <tr>
+                            <td>Audit trail export</td>
+                            <td><span class="badge badge-important">Important</span></td>
+                            <td>Compliance requirement</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="recommendation nice-to-have">
+                <h4 style="color: var(--info);">Nice to Have</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Priority</th>
+                            <th>Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Mobile app</td>
+                            <td><span class="badge badge-nice">Nice</span></td>
+                            <td>Physical asset scanning in field</td>
+                        </tr>
+                        <tr>
+                            <td>Integration with MS365/Google</td>
+                            <td><span class="badge badge-nice">Nice</span></td>
+                            <td>User sync, SSO</td>
+                        </tr>
+                        <tr>
+                            <td>Slack/Teams notifications</td>
+                            <td><span class="badge badge-nice">Nice</span></td>
+                            <td>Real-time alerts</td>
+                        </tr>
+                        <tr>
+                            <td>SaaS usage analytics</td>
+                            <td><span class="badge badge-nice">Nice</span></td>
+                            <td>Subscription optimization</td>
+                        </tr>
+                        <tr>
+                            <td>API for external systems</td>
+                            <td><span class="badge badge-nice">Nice</span></td>
+                            <td>Enterprise integration</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 7: Business Risk Assessment -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">7</div>
+                <h2>Business Risk Assessment</h2>
+            </div>
+
+            <h3>Single Points of Failure</h3>
+            <div class="risk-grid">
+                <div class="risk-item medium">
+                    <div class="risk-label">Supabase Dependency</div>
+                    <div class="risk-value">Medium Risk</div>
+                    <div style="font-size: 0.8rem; margin-top: 0.5rem;">File storage locked to one provider</div>
+                </div>
+                <div class="risk-item medium">
+                    <div class="risk-label">Azure AD Only</div>
+                    <div class="risk-value">Medium Risk</div>
+                    <div style="font-size: 0.8rem; margin-top: 0.5rem;">No alternative auth for non-MS shops</div>
+                </div>
+                <div class="risk-item low">
+                    <div class="risk-label">PostgreSQL Specific</div>
+                    <div class="risk-value">Low Risk</div>
+                    <div style="font-size: 0.8rem; margin-top: 0.5rem;">Standard, Prisma abstracts</div>
+                </div>
+                <div class="risk-item medium">
+                    <div class="risk-label">Qatar-Specific Features</div>
+                    <div class="risk-value">Medium Risk</div>
+                    <div style="font-size: 0.8rem; margin-top: 0.5rem;">Limits international expansion</div>
+                </div>
+            </div>
+
+            <h3>Scalability Concerns</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Issue</th>
+                        <th>Current State</th>
+                        <th>Risk Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Database queries</td>
+                        <td>Optimized with indexes</td>
+                        <td><span class="badge badge-low">Low</span></td>
+                    </tr>
+                    <tr>
+                        <td>File storage</td>
+                        <td>Supabase buckets</td>
+                        <td><span class="badge badge-low">Low</span></td>
+                    </tr>
+                    <tr>
+                        <td>Session management</td>
+                        <td>JWT-based</td>
+                        <td><span class="badge badge-low">Low</span></td>
+                    </tr>
+                    <tr>
+                        <td>Reports page</td>
+                        <td>All queries in parallel</td>
+                        <td><span class="badge badge-medium">Medium</span> (could timeout with large data)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Compliance Risks</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Area</th>
+                        <th>Status</th>
+                        <th>Risk</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>GDPR</td>
+                        <td><span class="partial">&#8776;</span> Partial</td>
+                        <td>No data export/delete user feature</td>
+                    </tr>
+                    <tr>
+                        <td>Qatar PDPL</td>
+                        <td><span class="cross">?</span> Unknown</td>
+                        <td>Needs legal review</td>
+                    </tr>
+                    <tr>
+                        <td>Labor Law (Payroll)</td>
+                        <td><span class="check">&#10003;</span> Good</td>
+                        <td>WPS, gratuity properly implemented</td>
+                    </tr>
+                    <tr>
+                        <td>SOC 2</td>
+                        <td><span class="cross">&#10007;</span> Not ready</td>
+                        <td>No audit logging export</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Vendor Lock-in</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Vendor</th>
+                        <th>Risk Level</th>
+                        <th>Mitigation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Supabase</td>
+                        <td><span class="badge badge-medium">Medium</span></td>
+                        <td>Abstract storage layer already exists</td>
+                    </tr>
+                    <tr>
+                        <td>Azure AD</td>
+                        <td><span class="badge badge-medium">Medium</span></td>
+                        <td>NextAuth supports multiple providers</td>
+                    </tr>
+                    <tr>
+                        <td>Vercel</td>
+                        <td><span class="badge badge-low">Low</span></td>
+                        <td>Standard Next.js, portable</td>
+                    </tr>
+                    <tr>
+                        <td>Prisma</td>
+                        <td><span class="badge badge-low">Low</span></td>
+                        <td>Can switch to raw SQL if needed</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section 8: Action Plan -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">8</div>
+                <h2>Recommended Action Plan</h2>
+            </div>
+
+            <h3>Immediate Actions (Next 30 Days)</h3>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-marker" style="background: var(--success);">✓</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title" style="color: var(--success);">✓ Week 1-2: Decision on Accreditation Module - DONE</div>
+                        <div class="timeline-desc">Spun off as separate project at D:\Projects\Accreditation (Dec 2024)</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker">2</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Week 1-2: Add Asset QR/Barcode Generation</div>
+                        <div class="timeline-desc">Essential missing feature - industry standard for physical asset tracking.</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker">3</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Week 1-2: Implement License Count for Subscriptions</div>
+                        <div class="timeline-desc">Track "15 of 25 licenses in use" - critical for SaaS management.</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker">4</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Week 3-4: Create Actionable Dashboard</div>
+                        <div class="timeline-desc">Replace navigation-only dashboard with expiring warranties, pending approvals, action items.</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker">5</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Week 3-4: Add Basic Reporting Exports</div>
+                        <div class="timeline-desc">PDF/Excel export for all list views. Partially exists, needs enhancement.</div>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker">6</div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">Week 3-4: Implement Email Notifications</div>
+                        <div class="timeline-desc">Leverage existing cron infrastructure with Resend email integration.</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Strategic Roadmap (Next 6 Months)</h3>
+
+            <div class="cards-grid">
+                <div class="card" style="border: 2px solid var(--success); background: var(--success-bg);">
+                    <div class="card-header">
+                        <span class="card-title">Month 1-2: Focus & Simplify</span>
+                        <span class="badge badge-complete">✓ COMPLETE</span>
+                    </div>
+                    <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.9rem;">
+                        <li><s>Remove or spin off Accreditation</s> ✓</li>
+                        <li><s>Simplify Task Management (remove Kanban)</s> ✓</li>
+                        <li><s>Remove Project Budget/Revenue tracking</s> ✓</li>
+                    </ul>
+                    <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--success);"><strong>Completed Dec 2024</strong> - ~30k lines removed</p>
+                </div>
+
+                <div class="card" style="border: 2px solid var(--primary);">
+                    <div class="card-header">
+                        <span class="card-title">Month 3-4: Strengthen Core</span>
+                        <span class="badge" style="background: var(--primary); color: white;">NEXT</span>
+                    </div>
+                    <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.9rem;">
+                        <li>Add depreciation tracking for assets</li>
+                        <li>Implement asset disposal workflow</li>
+                        <li>Add subscription license management</li>
+                        <li>Build proper analytics dashboard</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Month 5-6: Scale Readiness</span>
+                    </div>
+                    <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.9rem;">
+                        <li>Add multi-department support</li>
+                        <li>Implement role-based data access</li>
+                        <li>Build API layer for integrations</li>
+                        <li>Add data export for compliance</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Assessment Appendix -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-number">A</div>
+                <h2>Appendix: Technical Assessment Summary</h2>
+            </div>
+
+            <div class="two-column">
+                <div>
+                    <h3>Codebase Statistics <span class="badge badge-complete">Updated Dec 2024</span></h3>
+                    <table>
+                        <tr>
+                            <td>Lines of Code</td>
+                            <td><strong>~78,000</strong> <span style="color: var(--success);">(was ~108k, -28%)</span></td>
+                        </tr>
+                        <tr>
+                            <td>Source Files</td>
+                            <td><strong>511 files</strong></td>
+                        </tr>
+                        <tr>
+                            <td>API Endpoints</td>
+                            <td><strong>~85 routes</strong> (was 100+)</td>
+                        </tr>
+                        <tr>
+                            <td>Admin Pages</td>
+                            <td><strong>~55 pages</strong> (was 68)</td>
+                        </tr>
+                        <tr>
+                            <td>Database Models</td>
+                            <td><strong>~30 Prisma models</strong> (was 40+)</td>
+                        </tr>
+                        <tr>
+                            <td>Test Coverage</td>
+                            <td>887 tests passing (Unit, Integration, E2E)</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div>
+                    <h3>Tech Stack</h3>
+                    <table>
+                        <tr>
+                            <td>Framework</td>
+                            <td>Next.js 15 (App Router)</td>
+                        </tr>
+                        <tr>
+                            <td>Frontend</td>
+                            <td>React 19, TypeScript</td>
+                        </tr>
+                        <tr>
+                            <td>Database</td>
+                            <td>PostgreSQL via Prisma</td>
+                        </tr>
+                        <tr>
+                            <td>Hosting</td>
+                            <td>Vercel</td>
+                        </tr>
+                        <tr>
+                            <td>Storage</td>
+                            <td>Supabase</td>
+                        </tr>
+                        <tr>
+                            <td>Auth</td>
+                            <td>NextAuth.js + Azure AD</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <h3>Security Measures Implemented</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                <span class="badge badge-complete">Rate Limiting</span>
+                <span class="badge badge-complete">IDOR Protection</span>
+                <span class="badge badge-complete">File Upload Validation</span>
+                <span class="badge badge-complete">Role-Based Access</span>
+                <span class="badge badge-complete">Activity Logging</span>
+                <span class="badge badge-complete">CSRF Protection</span>
+            </div>
+
+            <h3>Infrastructure</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                <span class="badge" style="background: #dbeafe; color: var(--primary);">Vercel Hosting</span>
+                <span class="badge" style="background: #dcfce7; color: #166534;">PostgreSQL (Supabase)</span>
+                <span class="badge" style="background: #fef3c7; color: #92400e;">Supabase Storage</span>
+                <span class="badge" style="background: #ede9fe; color: #5b21b6;">NextAuth.js</span>
+                <span class="badge" style="background: #fee2e2; color: #991b1b;">Resend Email (configured)</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>DAMP Business Review &bull; December 2024</p>
+            <p style="margin-top: 0.5rem;">Generated for strategic planning and product roadmap development</p>
+            <p style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--gray-300);">
+                <strong style="color: var(--success);">✓ Last Updated: December 22, 2024</strong><br>
+                Phase 1 (Focus & Simplify) completed: Accreditation spun off, Tasks removed, Project budget simplified
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Admin - Executive Dashboard (Updated)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <!-- Layout Label -->
+  <div class="fixed top-0 left-0 right-0 z-50 bg-indigo-600 text-white text-center py-2 text-sm font-medium">
+    Executive Dashboard - With Communication, Health, Security, Engagement & Feature Adoption Metrics
+  </div>
+
+  <div class="flex pt-10">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 h-screen sticky top-10 flex flex-col">
+      <!-- Logo -->
+      <div class="p-5 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+          <div class="flex items-baseline">
+            <span class="text-slate-900 font-black text-2xl tracking-tight">SME</span>
+            <span class="text-slate-900 font-black text-sm relative -top-2">++</span>
+          </div>
+          <span class="text-[10px] font-semibold text-white bg-slate-900 px-2 py-0.5 rounded">ADMIN</span>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="p-3">
+        <div class="relative">
+          <i class="fas fa-search text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 text-sm"></i>
+          <input type="text" placeholder="Search..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900">
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 px-3 space-y-1 overflow-y-auto">
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-slate-900 text-white rounded-lg text-sm font-medium">
+          <i class="fas fa-th-large w-5"></i>
+          Dashboard
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 rounded-lg text-sm font-medium">
+          <i class="fas fa-building w-5"></i>
+          Organizations
+          <span class="ml-auto bg-slate-100 text-slate-600 text-xs font-medium px-2 py-0.5 rounded-full">47</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 rounded-lg text-sm font-medium">
+          <i class="fas fa-users w-5"></i>
+          Users
+          <span class="ml-auto bg-slate-100 text-slate-600 text-xs font-medium px-2 py-0.5 rounded-full">312</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 rounded-lg text-sm font-medium">
+          <i class="fas fa-envelope w-5"></i>
+          Invitations
+          <span class="ml-auto bg-amber-100 text-amber-700 text-xs font-medium px-2 py-0.5 rounded-full">5</span>
+        </a>
+
+        <div class="pt-4 pb-2">
+          <span class="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">System</span>
+        </div>
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 rounded-lg text-sm font-medium">
+          <i class="fas fa-chart-bar w-5"></i>
+          Analytics
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 rounded-lg text-sm font-medium">
+          <i class="fas fa-shield-alt w-5"></i>
+          Security
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 rounded-lg text-sm font-medium">
+          <i class="fas fa-cog w-5"></i>
+          Settings
+        </a>
+      </nav>
+
+      <!-- User -->
+      <div class="p-4 border-t border-slate-100">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
+            <span class="text-white text-sm font-medium">SA</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-slate-900 truncate">Super Admin</p>
+            <p class="text-xs text-slate-500 truncate">admin@smepp.com</p>
+          </div>
+          <button class="text-slate-400 hover:text-slate-600">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 min-w-0">
+      <!-- Header -->
+      <div class="bg-white border-b border-slate-200 px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-xl font-bold text-slate-900">Dashboard</h1>
+            <p class="text-sm text-slate-500">Platform overview and metrics</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button class="p-2 text-slate-400 hover:text-slate-600 relative">
+              <i class="fas fa-bell"></i>
+              <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            </button>
+            <button class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800">
+              <i class="fas fa-plus text-xs"></i>
+              New Organization
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-6">
+        <div class="grid grid-cols-12 gap-6">
+
+          <!-- Main Content Area -->
+          <div class="col-span-9 space-y-6">
+
+            <!-- Hero Stats Row -->
+            <div class="grid grid-cols-4 gap-4">
+              <!-- Organizations -->
+              <div class="bg-white rounded-xl p-5 border border-slate-200">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-building text-blue-600"></i>
+                  </div>
+                  <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+3</span>
+                </div>
+                <p class="text-2xl font-bold text-slate-900">47</p>
+                <p class="text-xs text-slate-500 mt-1">Organizations</p>
+                <div class="mt-3 flex items-end gap-0.5 h-6">
+                  <div class="flex-1 bg-blue-100 rounded-sm" style="height: 40%"></div>
+                  <div class="flex-1 bg-blue-100 rounded-sm" style="height: 55%"></div>
+                  <div class="flex-1 bg-blue-100 rounded-sm" style="height: 45%"></div>
+                  <div class="flex-1 bg-blue-100 rounded-sm" style="height: 70%"></div>
+                  <div class="flex-1 bg-blue-200 rounded-sm" style="height: 85%"></div>
+                  <div class="flex-1 bg-blue-500 rounded-sm" style="height: 100%"></div>
+                </div>
+              </div>
+
+              <!-- Users -->
+              <div class="bg-white rounded-xl p-5 border border-slate-200">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-emerald-600"></i>
+                  </div>
+                  <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+18</span>
+                </div>
+                <p class="text-2xl font-bold text-slate-900">312</p>
+                <p class="text-xs text-slate-500 mt-1">Total Users</p>
+                <div class="mt-3 flex items-end gap-0.5 h-6">
+                  <div class="flex-1 bg-emerald-100 rounded-sm" style="height: 50%"></div>
+                  <div class="flex-1 bg-emerald-100 rounded-sm" style="height: 65%"></div>
+                  <div class="flex-1 bg-emerald-100 rounded-sm" style="height: 55%"></div>
+                  <div class="flex-1 bg-emerald-100 rounded-sm" style="height: 75%"></div>
+                  <div class="flex-1 bg-emerald-200 rounded-sm" style="height: 90%"></div>
+                  <div class="flex-1 bg-emerald-500 rounded-sm" style="height: 100%"></div>
+                </div>
+              </div>
+
+              <!-- Active Now -->
+              <div class="bg-white rounded-xl p-5 border border-slate-200">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 bg-cyan-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-signal text-cyan-600"></i>
+                  </div>
+                  <span class="flex items-center gap-1 text-xs font-medium text-green-600">
+                    <span class="w-2 h-2 bg-green-500 rounded-full pulse"></span>Live
+                  </span>
+                </div>
+                <p class="text-2xl font-bold text-slate-900">23</p>
+                <p class="text-xs text-slate-500 mt-1">Active Now</p>
+                <div class="mt-3 text-xs text-slate-400">
+                  <span class="text-green-600 font-medium">15 orgs</span> with active sessions
+                </div>
+              </div>
+
+              <!-- Emails Today -->
+              <div class="bg-white rounded-xl p-5 border border-slate-200">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="w-10 h-10 bg-violet-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-paper-plane text-violet-600"></i>
+                  </div>
+                  <span class="text-xs font-medium text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">Today</span>
+                </div>
+                <p class="text-2xl font-bold text-slate-900">156</p>
+                <p class="text-xs text-slate-500 mt-1">Emails Sent</p>
+                <div class="mt-3 flex items-end gap-0.5 h-6">
+                  <div class="flex-1 bg-violet-100 rounded-sm" style="height: 30%"></div>
+                  <div class="flex-1 bg-violet-100 rounded-sm" style="height: 45%"></div>
+                  <div class="flex-1 bg-violet-100 rounded-sm" style="height: 60%"></div>
+                  <div class="flex-1 bg-violet-100 rounded-sm" style="height: 50%"></div>
+                  <div class="flex-1 bg-violet-200 rounded-sm" style="height: 75%"></div>
+                  <div class="flex-1 bg-violet-500 rounded-sm" style="height: 100%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Second Row - Communication & System Health -->
+            <div class="grid grid-cols-2 gap-6">
+              <!-- Communication Panel -->
+              <div class="bg-white rounded-xl p-5 border border-slate-200">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-sm font-semibold text-slate-900">
+                    <i class="fas fa-comments text-indigo-500 mr-2"></i>Communication
+                  </h3>
+                  <span class="text-xs text-slate-400">Today</span>
+                </div>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-envelope text-slate-400 w-4"></i>
+                      <span class="text-sm text-slate-600">Emails</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <div class="w-24 bg-slate-100 rounded-full h-2">
+                        <div class="bg-indigo-500 h-2 rounded-full" style="width: 65%"></div>
+                      </div>
+                      <span class="text-sm font-semibold text-slate-900 w-10 text-right">156</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fab fa-whatsapp text-green-500 w-4"></i>
+                      <span class="text-sm text-slate-600">WhatsApp</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <div class="w-24 bg-slate-100 rounded-full h-2">
+                        <div class="bg-green-500 h-2 rounded-full" style="width: 45%"></div>
+                      </div>
+                      <span class="text-sm font-semibold text-slate-900 w-10 text-right">89</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-sms text-blue-500 w-4"></i>
+                      <span class="text-sm text-slate-600">SMS</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <div class="w-24 bg-slate-100 rounded-full h-2">
+                        <div class="bg-blue-500 h-2 rounded-full" style="width: 25%"></div>
+                      </div>
+                      <span class="text-sm font-semibold text-slate-900 w-10 text-right">34</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-bell text-amber-500 w-4"></i>
+                      <span class="text-sm text-slate-600">Push</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <div class="w-24 bg-slate-100 rounded-full h-2">
+                        <div class="bg-amber-500 h-2 rounded-full" style="width: 80%"></div>
+                      </div>
+                      <span class="text-sm font-semibold text-slate-900 w-10 text-right">203</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                  <span class="text-xs text-slate-500">Delivery Success Rate</span>
+                  <span class="text-sm font-bold text-green-600">98.5%</span>
+                </div>
+              </div>
+
+              <!-- System Health Panel -->
+              <div class="bg-white rounded-xl p-5 border border-slate-200">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-sm font-semibold text-slate-900">
+                    <i class="fas fa-heartbeat text-red-500 mr-2"></i>System Health
+                  </h3>
+                  <span class="flex items-center gap-1 text-xs text-green-600">
+                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>All Systems OK
+                  </span>
+                </div>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">API Status</span>
+                    <div class="flex items-center gap-2">
+                      <span class="flex items-center gap-1 text-xs text-green-600">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>OK
+                      </span>
+                      <span class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">45ms</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">Database</span>
+                    <div class="flex items-center gap-2">
+                      <span class="flex items-center gap-1 text-xs text-green-600">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>OK
+                      </span>
+                      <span class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">12 conn</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">Background Jobs</span>
+                    <div class="flex items-center gap-2">
+                      <span class="flex items-center gap-1 text-xs text-green-600">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>OK
+                      </span>
+                      <span class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">3 queued</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">Error Rate (24h)</span>
+                    <span class="text-sm font-semibold text-green-600">0.02%</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">Uptime</span>
+                    <span class="text-sm font-semibold text-slate-900">99.99%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Third Row - Security & Engagement -->
+            <div class="grid grid-cols-2 gap-6">
+              <!-- Security Panel -->
+              <div class="bg-white rounded-xl p-5 border border-slate-200">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-sm font-semibold text-slate-900">
+                    <i class="fas fa-shield-alt text-amber-500 mr-2"></i>Security
+                  </h3>
+                  <span class="text-xs text-slate-400">Last 24h</span>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="bg-slate-50 rounded-lg p-3">
+                    <div class="flex items-center gap-2 mb-1">
+                      <i class="fas fa-times-circle text-red-500 text-xs"></i>
+                      <span class="text-xs text-slate-500">Failed Logins</span>
+                    </div>
+                    <p class="text-xl font-bold text-slate-900">12</p>
+                    <p class="text-xs text-red-500 mt-1">+3 from yesterday</p>
+                  </div>
+                  <div class="bg-slate-50 rounded-lg p-3">
+                    <div class="flex items-center gap-2 mb-1">
+                      <i class="fas fa-lock text-green-500 text-xs"></i>
+                      <span class="text-xs text-slate-500">2FA Adoption</span>
+                    </div>
+                    <p class="text-xl font-bold text-slate-900">78%</p>
+                    <p class="text-xs text-green-500 mt-1">+5% this week</p>
+                  </div>
+                  <div class="bg-slate-50 rounded-lg p-3">
+                    <div class="flex items-center gap-2 mb-1">
+                      <i class="fas fa-exclamation-triangle text-amber-500 text-xs"></i>
+                      <span class="text-xs text-slate-500">Alerts</span>
+                    </div>
+                    <p class="text-xl font-bold text-slate-900">2</p>
+                    <p class="text-xs text-amber-500 mt-1">Action required</p>
+                  </div>
+                  <div class="bg-slate-50 rounded-lg p-3">
+                    <div class="flex items-center gap-2 mb-1">
+                      <i class="fas fa-key text-blue-500 text-xs"></i>
+                      <span class="text-xs text-slate-500">Password Resets</span>
+                    </div>
+                    <p class="text-xl font-bold text-slate-900">5</p>
+                    <p class="text-xs text-slate-400 mt-1">Normal rate</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Engagement Panel -->
+              <div class="bg-white rounded-xl p-5 border border-slate-200">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-sm font-semibold text-slate-900">
+                    <i class="fas fa-chart-line text-cyan-500 mr-2"></i>Engagement
+                  </h3>
+                  <select class="text-xs text-slate-500 bg-slate-50 border-0 rounded px-2 py-1">
+                    <option>This Week</option>
+                    <option>This Month</option>
+                  </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <div class="flex items-baseline gap-2">
+                      <p class="text-2xl font-bold text-slate-900">89</p>
+                      <span class="text-xs text-green-500">+12%</span>
+                    </div>
+                    <p class="text-xs text-slate-500">Daily Active Users</p>
+                  </div>
+                  <div>
+                    <div class="flex items-baseline gap-2">
+                      <p class="text-2xl font-bold text-slate-900">234</p>
+                      <span class="text-xs text-green-500">+8%</span>
+                    </div>
+                    <p class="text-xs text-slate-500">Weekly Active</p>
+                  </div>
+                  <div>
+                    <div class="flex items-baseline gap-2">
+                      <p class="text-2xl font-bold text-slate-900">298</p>
+                      <span class="text-xs text-green-500">+15%</span>
+                    </div>
+                    <p class="text-xs text-slate-500">Monthly Active</p>
+                  </div>
+                  <div>
+                    <div class="flex items-baseline gap-2">
+                      <p class="text-2xl font-bold text-amber-600">14</p>
+                      <span class="text-xs text-red-500">+2</span>
+                    </div>
+                    <p class="text-xs text-slate-500">Dormant (30+ days)</p>
+                  </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-100">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-500">Power Users (daily login)</span>
+                    <span class="font-semibold text-slate-900">23</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fourth Row - Feature Adoption -->
+            <div class="bg-white rounded-xl p-5 border border-slate-200">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-slate-900">
+                  <i class="fas fa-puzzle-piece text-purple-500 mr-2"></i>Feature Adoption
+                </h3>
+                <div class="flex items-center gap-4 text-xs">
+                  <span class="flex items-center gap-1">
+                    <i class="fas fa-desktop text-slate-400"></i>
+                    Desktop: <span class="font-semibold text-slate-700">77%</span>
+                  </span>
+                  <span class="flex items-center gap-1">
+                    <i class="fas fa-mobile-alt text-slate-400"></i>
+                    Mobile: <span class="font-semibold text-slate-700">23%</span>
+                  </span>
+                </div>
+              </div>
+              <div class="grid grid-cols-4 gap-4">
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs text-slate-600">Assets</span>
+                    <span class="text-xs font-semibold text-slate-900">89%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-2">
+                    <div class="bg-blue-500 h-2 rounded-full" style="width: 89%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs text-slate-600">Employees</span>
+                    <span class="text-xs font-semibold text-slate-900">72%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-2">
+                    <div class="bg-emerald-500 h-2 rounded-full" style="width: 72%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs text-slate-600">Leave Mgmt</span>
+                    <span class="text-xs font-semibold text-slate-900">56%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-2">
+                    <div class="bg-amber-500 h-2 rounded-full" style="width: 56%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs text-slate-600">Payroll</span>
+                    <span class="text-xs font-semibold text-slate-900">34%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-2">
+                    <div class="bg-purple-500 h-2 rounded-full" style="width: 34%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Organizations Table -->
+            <div class="bg-white rounded-xl border border-slate-200">
+              <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-slate-900">
+                  <i class="fas fa-building text-slate-400 mr-2"></i>Organizations
+                </h2>
+                <div class="flex items-center gap-3">
+                  <div class="relative">
+                    <i class="fas fa-search text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 text-xs"></i>
+                    <input type="text" placeholder="Search..." class="pl-8 pr-3 py-1.5 bg-slate-50 border-0 rounded text-sm w-48 focus:outline-none focus:ring-2 focus:ring-slate-900">
+                  </div>
+                  <button class="text-xs text-slate-500 hover:text-slate-700">
+                    <i class="fas fa-filter mr-1"></i>Filter
+                  </button>
+                  <a href="#" class="text-xs text-indigo-600 hover:text-indigo-700 font-medium">View all</a>
+                </div>
+              </div>
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-slate-100 bg-slate-50">
+                    <th class="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Organization</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Tier</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Users</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Status</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase">Last Active</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase"></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                  <tr class="hover:bg-slate-50">
+                    <td class="px-5 py-3">
+                      <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-medium text-sm">AC</div>
+                        <div>
+                          <p class="font-medium text-slate-900">Acme Corporation</p>
+                          <p class="text-xs text-slate-400">acme-corp</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-5 py-3"><span class="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-1 rounded-full">Enterprise</span></td>
+                    <td class="px-5 py-3 text-slate-600">48</td>
+                    <td class="px-5 py-3"><span class="inline-flex items-center gap-1.5 text-xs font-medium text-green-700"><span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>Active</span></td>
+                    <td class="px-5 py-3 text-slate-400 text-xs">2 min ago</td>
+                    <td class="px-5 py-3"><button class="text-slate-400 hover:text-slate-600"><i class="fas fa-ellipsis-h"></i></button></td>
+                  </tr>
+                  <tr class="hover:bg-slate-50">
+                    <td class="px-5 py-3">
+                      <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-medium text-sm">TS</div>
+                        <div>
+                          <p class="font-medium text-slate-900">TechStart Inc</p>
+                          <p class="text-xs text-slate-400">techstart</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-5 py-3"><span class="text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-1 rounded-full">Professional</span></td>
+                    <td class="px-5 py-3 text-slate-600">24</td>
+                    <td class="px-5 py-3"><span class="inline-flex items-center gap-1.5 text-xs font-medium text-green-700"><span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>Active</span></td>
+                    <td class="px-5 py-3 text-slate-400 text-xs">15 min ago</td>
+                    <td class="px-5 py-3"><button class="text-slate-400 hover:text-slate-600"><i class="fas fa-ellipsis-h"></i></button></td>
+                  </tr>
+                  <tr class="hover:bg-slate-50">
+                    <td class="px-5 py-3">
+                      <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white font-medium text-sm">GS</div>
+                        <div>
+                          <p class="font-medium text-slate-900">Green Solutions</p>
+                          <p class="text-xs text-slate-400">green-sol</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-5 py-3"><span class="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-1 rounded-full">Starter</span></td>
+                    <td class="px-5 py-3 text-slate-600">8</td>
+                    <td class="px-5 py-3"><span class="inline-flex items-center gap-1.5 text-xs font-medium text-green-700"><span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>Active</span></td>
+                    <td class="px-5 py-3 text-slate-400 text-xs">1 hour ago</td>
+                    <td class="px-5 py-3"><button class="text-slate-400 hover:text-slate-600"><i class="fas fa-ellipsis-h"></i></button></td>
+                  </tr>
+                  <tr class="hover:bg-slate-50">
+                    <td class="px-5 py-3">
+                      <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white font-medium text-sm">DC</div>
+                        <div>
+                          <p class="font-medium text-slate-900">DataCore Systems</p>
+                          <p class="text-xs text-slate-400">datacore</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-5 py-3"><span class="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded-full">Free</span></td>
+                    <td class="px-5 py-3 text-slate-600">3</td>
+                    <td class="px-5 py-3"><span class="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700"><span class="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>Trial</span></td>
+                    <td class="px-5 py-3 text-slate-400 text-xs">3 days ago</td>
+                    <td class="px-5 py-3"><button class="text-slate-400 hover:text-slate-600"><i class="fas fa-ellipsis-h"></i></button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Right Sidebar - Activity Feed -->
+          <div class="col-span-3 space-y-6">
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-xl p-4 border border-slate-200">
+              <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Quick Actions</h3>
+              <div class="grid grid-cols-2 gap-2">
+                <button class="flex flex-col items-center gap-1.5 p-3 text-center text-xs text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
+                  <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-plus text-blue-600 text-sm"></i>
+                  </div>
+                  New Org
+                </button>
+                <button class="flex flex-col items-center gap-1.5 p-3 text-center text-xs text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
+                  <div class="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-file-alt text-emerald-600 text-sm"></i>
+                  </div>
+                  Reports
+                </button>
+                <button class="flex flex-col items-center gap-1.5 p-3 text-center text-xs text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
+                  <div class="w-8 h-8 bg-violet-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-paper-plane text-violet-600 text-sm"></i>
+                  </div>
+                  Broadcast
+                </button>
+                <button class="flex flex-col items-center gap-1.5 p-3 text-center text-xs text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
+                  <div class="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-download text-amber-600 text-sm"></i>
+                  </div>
+                  Export
+                </button>
+              </div>
+            </div>
+
+            <!-- Activity Feed -->
+            <div class="bg-white rounded-xl border border-slate-200">
+              <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-slate-900">Activity Feed</h3>
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 bg-green-500 rounded-full pulse"></span>
+                  <span class="text-xs text-slate-400">Live</span>
+                </div>
+              </div>
+              <div class="divide-y divide-slate-50 max-h-96 overflow-y-auto">
+                <div class="p-4 flex gap-3 hover:bg-slate-50">
+                  <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-user-plus text-green-600 text-xs"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-slate-900"><span class="font-medium">New user</span> joined Acme Corp</p>
+                    <p class="text-xs text-slate-400 mt-0.5">john@acme.com • Just now</p>
+                  </div>
+                </div>
+                <div class="p-4 flex gap-3 hover:bg-slate-50">
+                  <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-arrow-up text-indigo-600 text-xs"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-slate-900"><span class="font-medium">TechStart</span> upgraded to Pro</p>
+                    <p class="text-xs text-slate-400 mt-0.5">5 min ago</p>
+                  </div>
+                </div>
+                <div class="p-4 flex gap-3 hover:bg-slate-50">
+                  <div class="w-8 h-8 bg-violet-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-envelope text-violet-600 text-xs"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-slate-900"><span class="font-medium">12 emails</span> sent to Green Sol</p>
+                    <p class="text-xs text-slate-400 mt-0.5">12 min ago</p>
+                  </div>
+                </div>
+                <div class="p-4 flex gap-3 hover:bg-slate-50">
+                  <div class="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-building text-cyan-600 text-xs"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-slate-900"><span class="font-medium">New org</span> CloudSync Ltd</p>
+                    <p class="text-xs text-slate-400 mt-0.5">18 min ago</p>
+                  </div>
+                </div>
+                <div class="p-4 flex gap-3 hover:bg-slate-50">
+                  <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-shield-alt text-amber-600 text-xs"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-slate-900"><span class="font-medium">2FA enabled</span> by admin</p>
+                    <p class="text-xs text-slate-400 mt-0.5">techstart • 25 min ago</p>
+                  </div>
+                </div>
+                <div class="p-4 flex gap-3 hover:bg-slate-50">
+                  <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-credit-card text-green-600 text-xs"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-slate-900"><span class="font-medium">Payment</span> $499 received</p>
+                    <p class="text-xs text-slate-400 mt-0.5">Acme Corp • 32 min ago</p>
+                  </div>
+                </div>
+                <div class="p-4 flex gap-3 hover:bg-slate-50">
+                  <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-times text-red-600 text-xs"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm text-slate-900"><span class="font-medium">Failed login</span> attempt</p>
+                    <p class="text-xs text-slate-400 mt-0.5">unknown@test.com • 45 min ago</p>
+                  </div>
+                </div>
+              </div>
+              <div class="p-3 border-t border-slate-100">
+                <button class="w-full text-xs text-slate-500 hover:text-slate-900 py-1.5">
+                  View all activity <i class="fas fa-arrow-right ml-1"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="bg-white rounded-xl p-4 border border-slate-200">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Alerts</h3>
+                <span class="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center text-[10px] font-bold text-red-600">2</span>
+              </div>
+              <div class="space-y-2">
+                <div class="flex items-start gap-2 p-2 bg-red-50 rounded-lg">
+                  <i class="fas fa-exclamation-circle text-red-500 text-xs mt-0.5"></i>
+                  <div>
+                    <p class="text-xs text-red-700 font-medium">Payment failed</p>
+                    <p class="text-[10px] text-red-500">TechStart Inc • 2h ago</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-2 p-2 bg-amber-50 rounded-lg">
+                  <i class="fas fa-clock text-amber-500 text-xs mt-0.5"></i>
+                  <div>
+                    <p class="text-xs text-amber-700 font-medium">5 trials expiring</p>
+                    <p class="text-[10px] text-amber-500">Within 3 days</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+</body>
+</html>

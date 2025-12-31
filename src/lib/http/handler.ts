@@ -63,6 +63,7 @@ import { hasPermission as checkPermission } from '@/lib/access-control';
 import { OrgRole } from '@prisma/client';
 import { MAX_BODY_SIZE_BYTES } from '@/lib/constants/limits';
 import { isTokenRevoked } from '@/lib/security/impersonation';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 
 // Maximum JSON body size - uses constant from limits.ts, can be overridden via env
 const MAX_BODY_SIZE = parseInt(process.env.MAX_BODY_SIZE || String(MAX_BODY_SIZE_BYTES), 10);
@@ -222,11 +223,22 @@ export function withErrorHandler(
       if (isImpersonating && impersonationJti) {
         const revoked = await isTokenRevoked(impersonationJti);
         if (revoked) {
-          console.log('[SECURITY] Blocked request with revoked impersonation token:', {
-            jti: impersonationJti,
-            tenantId: tenantContext?.tenantId,
-            path: request.url,
-          });
+          // Log to audit trail instead of console (SEC-010)
+          if (tenantContext?.tenantId) {
+            logAction(
+              tenantContext.tenantId,
+              null, // No actor - this is a security system event
+              ActivityActions.SECURITY_IMPERSONATION_BLOCKED,
+              'SECURITY',
+              impersonationJti,
+              {
+                jti: impersonationJti,
+                path: request.url,
+                reason: 'Token revoked',
+                timestamp: new Date().toISOString(),
+              }
+            );
+          }
 
           const response = errorResponse('Unauthorized', 401, {
             message: 'Impersonation session has been revoked',

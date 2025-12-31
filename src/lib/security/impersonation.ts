@@ -12,6 +12,7 @@
 
 import { prisma } from '@/lib/core/prisma';
 import { randomBytes } from 'crypto';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 
 /**
  * Generate a unique JWT ID for impersonation tokens
@@ -81,18 +82,31 @@ export async function revokeToken(params: {
 export async function revokeAllTokensForSuperAdmin(
   superAdminId: string,
   revokedBy: string,
-  reason?: string
+  reason?: string,
+  organizationId?: string
 ): Promise<number> {
   // We can't revoke tokens we don't know about, but we can mark a timestamp
   // Any token issued before this time will be treated as revoked
   // For now, we'll rely on short expiry times (15 minutes)
   // This function is a placeholder for future enhancement
-  console.log('[AUDIT] Revoke all tokens requested for super admin:', {
-    superAdminId,
-    revokedBy,
-    reason,
-    timestamp: new Date().toISOString(),
-  });
+
+  // Log to audit trail if organizationId is provided
+  if (organizationId) {
+    await logAction(
+      organizationId,
+      revokedBy,
+      ActivityActions.SECURITY_IMPERSONATION_REVOKED,
+      'SECURITY',
+      superAdminId,
+      {
+        superAdminId,
+        revokedBy,
+        reason,
+        action: 'REVOKE_ALL_TOKENS',
+        timestamp: new Date().toISOString(),
+      }
+    );
+  }
 
   return 0; // No active tokens database yet
 }

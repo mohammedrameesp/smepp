@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Expiry Alert - Be Creative Portal</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <!-- Header -->
+    <tr>
+      <td style="background-color: #73c5d1; padding: 30px 40px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">Be Creative Portal</h1>
+      </td>
+    </tr>
+
+    <!-- Main Content -->
+    <tr>
+      <td style="padding: 40px;">
+        <!-- Alert Banner -->
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; margin: 0 0 25px 0;">
+          <tr>
+            <td style="padding: 15px 20px;">
+              <p style="color: #856404; font-size: 14px; margin: 0; font-weight: bold;">
+                Action Required: Document(s) Expiring Soon
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Document Expiry Reminder</h2>
+
+        <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+          Dear <strong>{{USER_NAME}}</strong>,
+        </p>
+
+        <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+          This is a reminder that the following document(s) in your profile are expiring soon or have already expired. Please take action to renew them.
+        </p>
+
+        <!-- Expiring Documents List -->
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
+          <!-- Document 1 - Example for QID -->
+          <tr>
+            <td style="padding: 0 0 15px 0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: {{QID_BG_COLOR}}; border-radius: 8px; border-left: 4px solid {{QID_BORDER_COLOR}};">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="color: #333333; font-size: 16px; font-weight: bold;">Qatar ID (QID)</td>
+                        <td align="right">
+                          <span style="display: inline-block; padding: 4px 12px; background-color: {{QID_BADGE_COLOR}}; color: #ffffff; font-size: 12px; border-radius: 12px; font-weight: bold;">
+                            {{QID_STATUS}}
+                          </span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="padding-top: 10px;">
+                          <span style="color: #666666; font-size: 14px;">Expiry Date: </span>
+                          <span style="color: #333333; font-size: 14px; font-weight: bold;">{{QID_EXPIRY_DATE}}</span>
+                          <span style="color: {{QID_DAYS_COLOR}}; font-size: 14px; margin-left: 10px;">{{QID_DAYS_TEXT}}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Document 2 - Example for Passport -->
+          <tr>
+            <td style="padding: 0 0 15px 0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: {{PASSPORT_BG_COLOR}}; border-radius: 8px; border-left: 4px solid {{PASSPORT_BORDER_COLOR}};">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="color: #333333; font-size: 16px; font-weight: bold;">Passport</td>
+                        <td align="right">
+                          <span style="display: inline-block; padding: 4px 12px; background-color: {{PASSPORT_BADGE_COLOR}}; color: #ffffff; font-size: 12px; border-radius: 12px; font-weight: bold;">
+                            {{PASSPORT_STATUS}}
+                          </span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="padding-top: 10px;">
+                          <span style="color: #666666; font-size: 14px;">Expiry Date: </span>
+                          <span style="color: #333333; font-size: 14px; font-weight: bold;">{{PASSPORT_EXPIRY_DATE}}</span>
+                          <span style="color: {{PASSPORT_DAYS_COLOR}}; font-size: 14px; margin-left: 10px;">{{PASSPORT_DAYS_TEXT}}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Document 3 - Example for Health Card -->
+          <tr>
+            <td style="padding: 0 0 15px 0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: {{HEALTH_BG_COLOR}}; border-radius: 8px; border-left: 4px solid {{HEALTH_BORDER_COLOR}};">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="color: #333333; font-size: 16px; font-weight: bold;">Health Card</td>
+                        <td align="right">
+                          <span style="display: inline-block; padding: 4px 12px; background-color: {{HEALTH_BADGE_COLOR}}; color: #ffffff; font-size: 12px; border-radius: 12px; font-weight: bold;">
+                            {{HEALTH_STATUS}}
+                          </span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="padding-top: 10px;">
+                          <span style="color: #666666; font-size: 14px;">Expiry Date: </span>
+                          <span style="color: #333333; font-size: 14px; font-weight: bold;">{{HEALTH_EXPIRY_DATE}}</span>
+                          <span style="color: {{HEALTH_DAYS_COLOR}}; font-size: 14px; margin-left: 10px;">{{HEALTH_DAYS_TEXT}}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Document 4 - Example for Driving License -->
+          <tr>
+            <td style="padding: 0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: {{LICENSE_BG_COLOR}}; border-radius: 8px; border-left: 4px solid {{LICENSE_BORDER_COLOR}};">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="color: #333333; font-size: 16px; font-weight: bold;">Driving License</td>
+                        <td align="right">
+                          <span style="display: inline-block; padding: 4px 12px; background-color: {{LICENSE_BADGE_COLOR}}; color: #ffffff; font-size: 12px; border-radius: 12px; font-weight: bold;">
+                            {{LICENSE_STATUS}}
+                          </span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="padding-top: 10px;">
+                          <span style="color: #666666; font-size: 14px;">Expiry Date: </span>
+                          <span style="color: #333333; font-size: 14px; font-weight: bold;">{{LICENSE_EXPIRY_DATE}}</span>
+                          <span style="color: {{LICENSE_DAYS_COLOR}}; font-size: 14px; margin-left: 10px;">{{LICENSE_DAYS_TEXT}}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Color Legend -->
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
+          <tr>
+            <td style="padding: 15px 20px;">
+              <p style="color: #666666; font-size: 12px; margin: 0;">
+                <span style="display: inline-block; width: 12px; height: 12px; background-color: #dc3545; border-radius: 50%; margin-right: 5px; vertical-align: middle;"></span> Expired
+                <span style="margin-left: 15px; display: inline-block; width: 12px; height: 12px; background-color: #ffc107; border-radius: 50%; margin-right: 5px; vertical-align: middle;"></span> Expiring Soon (within 30 days)
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+          <strong>What to do:</strong>
+        </p>
+
+        <ul style="color: #555555; font-size: 14px; line-height: 1.8; margin: 0 0 20px 0; padding-left: 20px;">
+          <li>Renew your expired or expiring documents as soon as possible</li>
+          <li>Upload the new document copies to your profile in the portal</li>
+          <li>Contact HR if you need any assistance with the renewal process</li>
+        </ul>
+
+        <!-- CTA Button -->
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
+          <tr>
+            <td align="center">
+              <a href="{{PORTAL_URL}}/profile"
+                 style="display: inline-block; padding: 14px 30px; background-color: #73c5d1; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+                Update My Profile
+              </a>
+            </td>
+          </tr>
+        </table>
+
+        <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
+          Best regards,<br>
+          <strong>Be Creative HR Team</strong>
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color: #f8f9fa; padding: 25px 40px; text-align: center; border-top: 1px solid #eeeeee;">
+        <p style="color: #888888; font-size: 12px; margin: 0 0 10px 0;">
+          This is an automated message from Be Creative Portal.
+        </p>
+        <p style="color: #888888; font-size: 12px; margin: 0;">
+          Generated on {{TIMESTAMP}}
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

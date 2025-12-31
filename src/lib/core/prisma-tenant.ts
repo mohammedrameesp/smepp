@@ -75,9 +75,12 @@ const TENANT_MODELS = [
 
 type TenantModel = (typeof TENANT_MODELS)[number];
 
-// Check if a model has tenant isolation
+// Set for O(1) tenant model lookups (called on every DB query)
+const TENANT_MODELS_SET: Set<string> = new Set(TENANT_MODELS);
+
+// Check if a model has tenant isolation - O(1) lookup
 function isTenantModel(model: string): model is TenantModel {
-  return TENANT_MODELS.includes(model as TenantModel);
+  return TENANT_MODELS_SET.has(model);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

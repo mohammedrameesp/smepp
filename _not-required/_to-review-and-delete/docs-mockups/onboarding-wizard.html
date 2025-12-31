@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SME++ Onboarding Wizard - Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+
+    .step-enter { animation: slideIn 0.3s ease-out; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .module-card {
+      transition: all 0.2s ease;
+    }
+    .module-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .module-card.selected {
+      border-color: #3b82f6;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Navigation to switch between steps -->
+  <div class="fixed top-0 left-0 right-0 bg-white border-b z-50 px-4 py-2">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <span class="text-sm text-gray-500">Mockup Navigation:</span>
+      <div class="flex gap-2">
+        <button onclick="showStep(1)" class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded">Step 1</button>
+        <button onclick="showStep(2)" class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded">Step 2</button>
+        <button onclick="showStep(3)" class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded">Step 3</button>
+        <button onclick="showStep(4)" class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded">Step 4</button>
+        <button onclick="showStep(5)" class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded">Step 5</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pt-16 min-h-screen flex flex-col">
+
+    <!-- Header with Logo -->
+    <header class="py-6 px-4">
+      <div class="max-w-4xl mx-auto">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span class="text-white font-bold text-lg">S+</span>
+          </div>
+          <span class="text-xl font-semibold text-gray-900">SME++</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="px-4 mb-8">
+      <div class="max-w-4xl mx-auto">
+        <div class="flex items-center justify-between mb-2">
+          <span id="stepLabel" class="text-sm font-medium text-gray-600">Step 1 of 5</span>
+          <span id="stepTitle" class="text-sm text-gray-500">Organization Basics</span>
+        </div>
+        <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div id="progressBar" class="h-full bg-blue-600 rounded-full transition-all duration-300" style="width: 20%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 px-4 pb-8">
+      <div class="max-w-2xl mx-auto">
+
+        <!-- STEP 1: Organization Basics -->
+        <div id="step1" class="step-enter">
+          <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-3">Let's set up your organization</h1>
+            <p class="text-gray-600">Tell us a bit about your company</p>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-sm border p-8 space-y-6">
+            <!-- Organization Name -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Organization Name</label>
+              <input type="text" value="Acme Corporation"
+                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg">
+            </div>
+
+            <!-- Timezone (Fixed) -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
+              <div class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 flex items-center justify-between">
+                <span>Asia/Qatar (UTC+3)</span>
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+              </div>
+              <p class="mt-1 text-xs text-gray-500">All organizations operate in Qatar timezone</p>
+            </div>
+
+            <!-- Primary Currency (Fixed) -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Primary Currency</label>
+              <div class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-600 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">🇶🇦</span>
+                  <span>QAR - Qatari Riyal</span>
+                </div>
+                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">Primary</span>
+              </div>
+            </div>
+
+            <!-- Additional Currencies -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Additional Currencies <span class="text-gray-400 font-normal">(optional)</span></label>
+              <p class="text-sm text-gray-500 mb-3">Select currencies you'll use alongside QAR for transactions</p>
+
+              <div class="grid grid-cols-2 gap-3">
+                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input type="checkbox" checked class="w-5 h-5 text-blue-600 rounded">
+                  <span class="text-lg">🇺🇸</span>
+                  <span class="text-sm">USD - US Dollar</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                  <span class="text-lg">🇪🇺</span>
+                  <span class="text-sm">EUR - Euro</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                  <span class="text-lg">🇬🇧</span>
+                  <span class="text-sm">GBP - British Pound</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                  <span class="text-lg">🇸🇦</span>
+                  <span class="text-sm">SAR - Saudi Riyal</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                  <span class="text-lg">🇦🇪</span>
+                  <span class="text-sm">AED - UAE Dirham</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                  <span class="text-lg">🇰🇼</span>
+                  <span class="text-sm">KWD - Kuwaiti Dinar</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="flex justify-end mt-6">
+            <button class="px-8 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+              Continue
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 2: Branding -->
+        <div id="step2" class="step-enter hidden">
+          <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-3">Customize your brand</h1>
+            <p class="text-gray-600">Add your logo and colors to personalize your workspace</p>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-sm border p-8 space-y-8">
+            <!-- Logo Upload -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-3">Company Logo</label>
+              <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
+                <div class="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+                <p class="text-gray-600 mb-1">Drag and drop your logo here, or click to browse</p>
+                <p class="text-sm text-gray-400">PNG, JPG, SVG up to 2MB</p>
+              </div>
+            </div>
+
+            <!-- Color Pickers -->
+            <div class="grid grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">Primary Color</label>
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-xl bg-blue-600 border-2 border-white shadow-md cursor-pointer"></div>
+                  <input type="text" value="#1E40AF" class="flex-1 px-4 py-2 border rounded-lg font-mono text-sm">
+                </div>
+                <div class="flex gap-2 mt-3">
+                  <div class="w-8 h-8 rounded-lg bg-blue-600 cursor-pointer ring-2 ring-blue-600 ring-offset-2"></div>
+                  <div class="w-8 h-8 rounded-lg bg-indigo-600 cursor-pointer hover:ring-2 hover:ring-indigo-600 hover:ring-offset-2"></div>
+                  <div class="w-8 h-8 rounded-lg bg-purple-600 cursor-pointer hover:ring-2 hover:ring-purple-600 hover:ring-offset-2"></div>
+                  <div class="w-8 h-8 rounded-lg bg-green-600 cursor-pointer hover:ring-2 hover:ring-green-600 hover:ring-offset-2"></div>
+                  <div class="w-8 h-8 rounded-lg bg-red-600 cursor-pointer hover:ring-2 hover:ring-red-600 hover:ring-offset-2"></div>
+                  <div class="w-8 h-8 rounded-lg bg-orange-600 cursor-pointer hover:ring-2 hover:ring-orange-600 hover:ring-offset-2"></div>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">Secondary Color <span class="text-gray-400 font-normal">(optional)</span></label>
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-xl bg-sky-500 border-2 border-white shadow-md cursor-pointer"></div>
+                  <input type="text" value="#0EA5E9" class="flex-1 px-4 py-2 border rounded-lg font-mono text-sm">
+                </div>
+              </div>
+            </div>
+
+            <!-- Preview -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-3">Preview</label>
+              <div class="border rounded-xl p-4 bg-gray-50">
+                <div class="flex items-center gap-3 mb-4">
+                  <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">A</div>
+                  <span class="font-semibold text-gray-900">Acme Corporation</span>
+                </div>
+                <div class="flex gap-2">
+                  <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">Primary Button</button>
+                  <button class="px-4 py-2 bg-sky-500 text-white rounded-lg text-sm">Secondary Button</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="flex justify-between mt-6">
+            <button class="px-6 py-3 text-gray-600 hover:text-gray-900 font-medium flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+              Back
+            </button>
+            <div class="flex gap-3">
+              <button class="px-6 py-3 text-gray-500 hover:text-gray-700 font-medium">Skip for now</button>
+              <button class="px-8 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+                Continue
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: Module Selection -->
+        <div id="step3" class="step-enter hidden">
+          <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-3">Choose your modules</h1>
+            <p class="text-gray-600">Select the features you need for your business</p>
+          </div>
+
+          <div class="space-y-6">
+            <!-- Operations -->
+            <div>
+              <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
+                Operations
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="module-card selected bg-white border-2 rounded-xl p-5 cursor-pointer">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
+                      </svg>
+                    </div>
+                    <div class="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                    </div>
+                  </div>
+                  <h4 class="font-semibold text-gray-900 mb-1">Assets</h4>
+                  <p class="text-sm text-gray-500">Track company assets, assignments & maintenance</p>
+                </div>
+
+                <div class="module-card selected bg-white border-2 rounded-xl p-5 cursor-pointer">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                      </svg>
+                    </div>
+                    <div class="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                    </div>
+                  </div>
+                  <h4 class="font-semibold text-gray-900 mb-1">Subscriptions</h4>
+                  <p class="text-sm text-gray-500">Manage software subscriptions & renewals</p>
+                </div>
+
+                <div class="module-card bg-white border-2 border-gray-200 rounded-xl p-5 cursor-pointer hover:border-gray-300">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                      <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                      </svg>
+                    </div>
+                    <div class="w-6 h-6 border-2 border-gray-300 rounded-full"></div>
+                  </div>
+                  <h4 class="font-semibold text-gray-900 mb-1">Suppliers</h4>
+                  <p class="text-sm text-gray-500">Vendor management & engagement tracking</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- HR -->
+            <div>
+              <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                Human Resources
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="module-card selected bg-white border-2 rounded-xl p-5 cursor-pointer">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                      <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                      </svg>
+                    </div>
+                    <div class="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                    </div>
+                  </div>
+                  <h4 class="font-semibold text-gray-900 mb-1">Employees</h4>
+                  <p class="text-sm text-gray-500">Employee profiles & HR data management</p>
+                </div>
+
+                <div class="module-card bg-white border-2 border-gray-200 rounded-xl p-5 cursor-pointer hover:border-gray-300">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                      <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                      </svg>
+                    </div>
+                    <div class="w-6 h-6 border-2 border-gray-300 rounded-full"></div>
+                  </div>
+                  <h4 class="font-semibold text-gray-900 mb-1">Leave Management</h4>
+                  <p class="text-sm text-gray-500">Leave types, balances & request workflow</p>
+                </div>
+
+                <div class="module-card bg-white border-2 border-gray-200 rounded-xl p-5 cursor-pointer hover:border-gray-300">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                      <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    </div>
+                    <div class="w-6 h-6 border-2 border-gray-300 rounded-full"></div>
+                  </div>
+                  <h4 class="font-semibold text-gray-900 mb-1">Payroll</h4>
+                  <p class="text-sm text-gray-500">Salary structures, payslips & loans</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Projects & Procurement -->
+            <div>
+              <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                <span class="w-2 h-2 bg-purple-500 rounded-full"></span>
+                Projects & Procurement
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="module-card bg-white border-2 border-gray-200 rounded-xl p-5 cursor-pointer hover:border-gray-300">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                      <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                      </svg>
+                    </div>
+                    <div class="w-6 h-6 border-2 border-gray-300 rounded-full"></div>
+                  </div>
+                  <h4 class="font-semibold text-gray-900 mb-1">Projects</h4>
+                  <p class="text-sm text-gray-500">Project management with tasks</p>
+                </div>
+
+                <div class="module-card bg-white border-2 border-gray-200 rounded-xl p-5 cursor-pointer hover:border-gray-300">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                      <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                      </svg>
+                    </div>
+                    <div class="w-6 h-6 border-2 border-gray-300 rounded-full"></div>
+                  </div>
+                  <h4 class="font-semibold text-gray-900 mb-1">Purchase Requests</h4>
+                  <p class="text-sm text-gray-500">Procurement workflow with approvals</p>
+                </div>
+
+                <div class="module-card bg-white border-2 border-gray-200 rounded-xl p-5 cursor-pointer hover:border-gray-300">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                      <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    </div>
+                    <div class="w-6 h-6 border-2 border-gray-300 rounded-full"></div>
+                  </div>
+                  <h4 class="font-semibold text-gray-900 mb-1">Approvals</h4>
+                  <p class="text-sm text-gray-500">Multi-level approval workflows</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Documents -->
+            <div>
+              <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
+                <span class="w-2 h-2 bg-orange-500 rounded-full"></span>
+                Documents
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="module-card bg-white border-2 border-gray-200 rounded-xl p-5 cursor-pointer hover:border-gray-300">
+                  <div class="flex items-start justify-between mb-3">
+                    <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                      <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                    </div>
+                    <div class="w-6 h-6 border-2 border-gray-300 rounded-full"></div>
+                  </div>
+                  <h4 class="font-semibold text-gray-900 mb-1">Company Documents</h4>
+                  <p class="text-sm text-gray-500">Document management with expiry tracking</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected Summary -->
+          <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-sm font-medium text-blue-900">3 modules selected</span>
+                <span class="text-sm text-blue-600 ml-2">Assets, Subscriptions, Employees</span>
+              </div>
+              <button class="text-sm text-blue-600 hover:text-blue-800 font-medium">Select All</button>
+            </div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="flex justify-between mt-6">
+            <button class="px-6 py-3 text-gray-600 hover:text-gray-900 font-medium flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+              Back
+            </button>
+            <button class="px-8 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+              Continue
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 4: Team Setup -->
+        <div id="step4" class="step-enter hidden">
+          <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-3">Invite your team</h1>
+            <p class="text-gray-600">Add team members to get started together</p>
+          </div>
+
+          <div class="bg-white rounded-2xl shadow-sm border p-8">
+            <!-- Invite Form -->
+            <div class="space-y-4">
+              <div class="flex gap-3">
+                <div class="flex-1">
+                  <input type="email" placeholder="Email address"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="w-40">
+                  <select class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+                    <option>Admin</option>
+                    <option>Manager</option>
+                    <option>Member</option>
+                  </select>
+                </div>
+                <button class="px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Added Members -->
+              <div class="border-t pt-4 mt-4">
+                <h4 class="text-sm font-medium text-gray-700 mb-3">Invitations to send</h4>
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-sm font-medium text-blue-600">JD</span>
+                      </div>
+                      <div>
+                        <p class="text-sm font-medium text-gray-900">john.doe@company.com</p>
+                        <p class="text-xs text-gray-500">Admin</p>
+                      </div>
+                    </div>
+                    <button class="text-gray-400 hover:text-red-500">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="text-sm font-medium text-green-600">JS</span>
+                      </div>
+                      <div>
+                        <p class="text-sm font-medium text-gray-900">jane.smith@company.com</p>
+                        <p class="text-xs text-gray-500">Manager</p>
+                      </div>
+                    </div>
+                    <button class="text-gray-400 hover:text-red-500">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bulk Invite -->
+              <div class="border-t pt-4 mt-4">
+                <button class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  Import from CSV
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation -->
+          <div class="flex justify-between mt-6">
+            <button class="px-6 py-3 text-gray-600 hover:text-gray-900 font-medium flex items-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+              Back
+            </button>
+            <div class="flex gap-3">
+              <button class="px-6 py-3 text-gray-500 hover:text-gray-700 font-medium">Skip for now</button>
+              <button class="px-8 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+                Send Invites & Continue
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 5: Welcome / Complete -->
+        <div id="step5" class="step-enter hidden">
+          <div class="text-center py-12">
+            <!-- Success Animation -->
+            <div class="w-24 h-24 mx-auto mb-6 bg-green-100 rounded-full flex items-center justify-center">
+              <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+
+            <h1 class="text-3xl font-bold text-gray-900 mb-3">You're all set!</h1>
+            <p class="text-gray-600 mb-8 max-w-md mx-auto">
+              Welcome to <span class="font-semibold">Acme Corporation</span>. Your workspace is ready to use.
+            </p>
+
+            <!-- Summary -->
+            <div class="bg-white rounded-2xl shadow-sm border p-6 max-w-md mx-auto mb-8 text-left">
+              <h3 class="font-semibold text-gray-900 mb-4">Setup Summary</h3>
+              <div class="space-y-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">3 modules enabled</p>
+                    <p class="text-xs text-gray-500">Assets, Subscriptions, Employees</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">2 team invitations sent</p>
+                    <p class="text-xs text-gray-500">john.doe@company.com, jane.smith@company.com</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">Currencies configured</p>
+                    <p class="text-xs text-gray-500">QAR (Primary), USD</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-col items-center gap-3">
+              <button class="px-8 py-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors text-lg">
+                Go to Dashboard
+              </button>
+              <button class="text-sm text-gray-500 hover:text-gray-700">
+                View setup checklist
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function showStep(step) {
+      // Hide all steps
+      for (let i = 1; i <= 5; i++) {
+        document.getElementById('step' + i).classList.add('hidden');
+      }
+      // Show selected step
+      document.getElementById('step' + step).classList.remove('hidden');
+
+      // Update progress
+      const progress = (step / 5) * 100;
+      document.getElementById('progressBar').style.width = progress + '%';
+      document.getElementById('stepLabel').textContent = 'Step ' + step + ' of 5';
+
+      const titles = ['Organization Basics', 'Branding', 'Choose Modules', 'Invite Team', 'Complete'];
+      document.getElementById('stepTitle').textContent = titles[step - 1];
+    }
+
+    // Initialize with step 1
+    showStep(1);
+  </script>
+</body>
+</html>

@@ -6,7 +6,7 @@
 
 // Simple client-side cache with expiration
 export class Cache {
-  private static readonly PREFIX = 'accreditation_cache_';
+  private static readonly PREFIX = 'durj_cache_';
 
   static set<T>(key: string, data: T, expirationMinutes: number = 5): void {
     if (typeof window === 'undefined') return;

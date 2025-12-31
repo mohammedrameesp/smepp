@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizations - Super Admin - SME++</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .glass { background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+    .stagger-1 { animation-delay: 0.05s; }
+    .stagger-2 { animation-delay: 0.1s; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-white to-slate-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 px-4 py-3">
+    <div class="max-w-7xl mx-auto">
+      <div class="glass rounded-2xl border border-slate-200/50 shadow-sm px-5 py-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-6">
+            <a href="super-admin-v1.html" class="flex items-center gap-2.5">
+              <div class="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center">
+                <span class="text-white text-sm font-bold">S+</span>
+              </div>
+              <div class="hidden sm:flex items-center gap-2">
+                <span class="font-semibold text-slate-900">SME++</span>
+                <span class="text-[10px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-medium uppercase">Super Admin</span>
+              </div>
+            </a>
+            <nav class="hidden md:flex items-center">
+              <a href="super-admin-v1.html" class="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900">Dashboard</a>
+              <a href="organizations.html" class="px-3 py-1.5 text-sm font-medium text-slate-900 bg-slate-100 rounded-lg">Organizations</a>
+              <a href="users.html" class="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900">Users</a>
+              <a href="communication.html" class="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900">Communication</a>
+              <a href="system-health.html" class="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900">System</a>
+            </nav>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
+              <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+              <span class="text-xs font-medium text-emerald-700">All Systems OK</span>
+            </div>
+            <button class="w-9 h-9 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center">
+              <span class="text-white text-xs font-medium">SA</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Page Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 animate-fade-in-up">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Organizations</h1>
+        <p class="text-slate-500 text-sm">Manage all tenant organizations on the platform</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="px-4 py-2 text-sm bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+          <i class="fas fa-download mr-2 text-slate-400"></i>Export
+        </button>
+        <button class="px-4 py-2 text-sm bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors">
+          <i class="fas fa-plus mr-2"></i>Add Organization
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6 animate-fade-in-up stagger-1">
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="flex-1 min-w-[200px]">
+          <div class="relative">
+            <i class="fas fa-search text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input type="text" placeholder="Search organizations..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+        <select class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none">
+          <option>All Tiers</option>
+          <option>Free</option>
+          <option>Starter</option>
+          <option>Professional</option>
+          <option>Enterprise</option>
+        </select>
+        <select class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none">
+          <option>All Status</option>
+          <option>Active</option>
+          <option>Inactive</option>
+          <option>Suspended</option>
+        </select>
+        <button class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+          <i class="fas fa-filter mr-2"></i>More Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Organizations Table -->
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden animate-fade-in-up stagger-2">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-slate-100 bg-slate-50">
+              <th class="text-left text-xs font-medium text-slate-500 uppercase tracking-wide px-4 py-3">
+                <input type="checkbox" class="rounded border-slate-300">
+              </th>
+              <th class="text-left text-xs font-medium text-slate-500 uppercase tracking-wide px-4 py-3">Organization</th>
+              <th class="text-left text-xs font-medium text-slate-500 uppercase tracking-wide px-4 py-3">Tier</th>
+              <th class="text-left text-xs font-medium text-slate-500 uppercase tracking-wide px-4 py-3">Users</th>
+              <th class="text-left text-xs font-medium text-slate-500 uppercase tracking-wide px-4 py-3">Employees</th>
+              <th class="text-left text-xs font-medium text-slate-500 uppercase tracking-wide px-4 py-3">MRR</th>
+              <th class="text-left text-xs font-medium text-slate-500 uppercase tracking-wide px-4 py-3">Status</th>
+              <th class="text-left text-xs font-medium text-slate-500 uppercase tracking-wide px-4 py-3">Created</th>
+              <th class="text-right text-xs font-medium text-slate-500 uppercase tracking-wide px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <!-- DUMMY DATA -->
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-4 py-3"><input type="checkbox" class="rounded border-slate-300"></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-sm font-medium">AC</span>
+                  </div>
+                  <div>
+                    <p class="font-medium text-slate-900">Acme Corporation</p>
+                    <p class="text-xs text-slate-500">acme-corp <!-- DUMMY --></p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Professional</span>
+              </td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-900">24 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-500">156 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3"><span class="text-sm font-medium text-slate-900">$99 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-1.5">
+                  <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span class="text-sm text-slate-600">Active</span>
+                </div>
+              </td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-500">Jan 15, 2024 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3 text-right">
+                <button class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Impersonate">
+                  <i class="fas fa-user-shield"></i>
+                </button>
+                <button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="More">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+              </td>
+            </tr>
+
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-4 py-3"><input type="checkbox" class="rounded border-slate-300"></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-sm font-medium">GX</span>
+                  </div>
+                  <div>
+                    <p class="font-medium text-slate-900">Globex Inc</p>
+                    <p class="text-xs text-slate-500">globex <!-- DUMMY --></p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Enterprise</span>
+              </td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-900">89 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-500">412 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3"><span class="text-sm font-medium text-slate-900">$299 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-1.5">
+                  <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span class="text-sm text-slate-600">Active</span>
+                </div>
+              </td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-500">Dec 3, 2023 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3 text-right">
+                <button class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Impersonate">
+                  <i class="fas fa-user-shield"></i>
+                </button>
+                <button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="More">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+              </td>
+            </tr>
+
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-4 py-3"><input type="checkbox" class="rounded border-slate-300"></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-gradient-to-br from-rose-400 to-pink-500 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-sm font-medium">TS</span>
+                  </div>
+                  <div>
+                    <p class="font-medium text-slate-900">TechStart Inc</p>
+                    <p class="text-xs text-slate-500">techstart <!-- DUMMY --></p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Starter</span>
+              </td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-900">8 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-500">45 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3"><span class="text-sm font-medium text-slate-900">$29 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-1.5">
+                  <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span class="text-sm text-slate-600">Active</span>
+                </div>
+              </td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-500">Feb 20, 2024 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3 text-right">
+                <button class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Impersonate">
+                  <i class="fas fa-user-shield"></i>
+                </button>
+                <button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="More">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+              </td>
+            </tr>
+
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-4 py-3"><input type="checkbox" class="rounded border-slate-300"></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-gradient-to-br from-violet-400 to-purple-500 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-sm font-medium">JA</span>
+                  </div>
+                  <div>
+                    <p class="font-medium text-slate-900">Jasira Trading</p>
+                    <p class="text-xs text-slate-500">jasira <!-- DUMMY --></p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">Free</span>
+              </td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-900">3 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-500">18 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3"><span class="text-sm font-medium text-slate-400">$0 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-1.5">
+                  <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
+                  <span class="text-sm text-slate-600">Inactive</span>
+                </div>
+              </td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-500">Mar 10, 2024 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3 text-right">
+                <button class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Impersonate">
+                  <i class="fas fa-user-shield"></i>
+                </button>
+                <button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="More">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+              </td>
+            </tr>
+
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-4 py-3"><input type="checkbox" class="rounded border-slate-300"></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-sm font-medium">QH</span>
+                  </div>
+                  <div>
+                    <p class="font-medium text-slate-900">Quriosity Hub</p>
+                    <p class="text-xs text-slate-500">quriosity-hub <!-- DUMMY --></p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Starter</span>
+              </td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-900">12 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-500">67 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3"><span class="text-sm font-medium text-slate-900">$29 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-1.5">
+                  <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span class="text-sm text-slate-600">Active</span>
+                </div>
+              </td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-500">Nov 5, 2023 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3 text-right">
+                <button class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Impersonate">
+                  <i class="fas fa-user-shield"></i>
+                </button>
+                <button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="More">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+              </td>
+            </tr>
+
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-4 py-3"><input type="checkbox" class="rounded border-slate-300"></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-sky-500 rounded-lg flex items-center justify-center">
+                    <span class="text-white text-sm font-medium">NV</span>
+                  </div>
+                  <div>
+                    <p class="font-medium text-slate-900">Nova Dynamics</p>
+                    <p class="text-xs text-slate-500">nova-dynamics <!-- DUMMY --></p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700">Professional</span>
+              </td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-900">35 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-500">189 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3"><span class="text-sm font-medium text-slate-900">$99 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-1.5">
+                  <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span class="text-sm text-slate-600">Active</span>
+                </div>
+              </td>
+              <td class="px-4 py-3"><span class="text-sm text-slate-500">Oct 18, 2023 <!-- DUMMY --></span></td>
+              <td class="px-4 py-3 text-right">
+                <button class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Impersonate">
+                  <i class="fas fa-user-shield"></i>
+                </button>
+                <button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="More">
+                  <i class="fas fa-ellipsis-v"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="px-4 py-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-slate-500">Showing 1-6 of 12 organizations <!-- DUMMY --></p>
+        <div class="flex items-center gap-1">
+          <button class="px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 rounded-lg disabled:opacity-50" disabled>Previous</button>
+          <button class="px-3 py-1.5 text-sm bg-slate-900 text-white rounded-lg">1</button>
+          <button class="px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">2</button>
+          <button class="px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100 rounded-lg">Next</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-2 z-50">
+    <div class="flex items-center justify-around">
+      <a href="super-admin-v1.html" class="flex flex-col items-center gap-1 px-3 py-1 text-slate-400">
+        <i class="fas fa-home text-lg"></i>
+        <span class="text-[10px] font-medium">Dashboard</span>
+      </a>
+      <a href="organizations.html" class="flex flex-col items-center gap-1 px-3 py-1 text-rose-600 relative">
+        <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-rose-600 rounded-full"></div>
+        <i class="fas fa-building text-lg"></i>
+        <span class="text-[10px] font-medium">Orgs</span>
+      </a>
+      <a href="users.html" class="flex flex-col items-center gap-1 px-3 py-1 text-slate-400">
+        <i class="fas fa-users text-lg"></i>
+        <span class="text-[10px] font-medium">Users</span>
+      </a>
+      <a href="system-health.html" class="flex flex-col items-center gap-1 px-3 py-1 text-slate-400">
+        <i class="fas fa-server text-lg"></i>
+        <span class="text-[10px] font-medium">System</span>
+      </a>
+    </div>
+  </nav>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Templates - Be Creative Portal</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background-color: #f4f4f4;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .brand-badge {
+      display: inline-block;
+      background-color: #73c5d1;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    .templates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .template-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .template-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    .template-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .template-header h3 {
+      color: #333;
+      font-size: 16px;
+      margin-bottom: 5px;
+    }
+    .template-header p {
+      color: #888;
+      font-size: 12px;
+    }
+    .template-body {
+      padding: 20px;
+    }
+    .template-type {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .type-notification {
+      background-color: #e8f4fd;
+      color: #0c5460;
+    }
+    .type-alert {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+    .type-approval {
+      background-color: #dcfce7;
+      color: #15803d;
+    }
+    .type-status {
+      background-color: #f3e8ff;
+      color: #7c3aed;
+    }
+    .template-desc {
+      color: #666;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+    .template-link {
+      display: inline-block;
+      background-color: #73c5d1;
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    .template-link:hover {
+      background-color: #5fb5c2;
+    }
+    .section-title {
+      color: #333;
+      font-size: 18px;
+      margin: 40px 0 20px 0;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #73c5d1;
+    }
+    .info-box {
+      background: #e8f4fd;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    .info-box h4 {
+      color: #0c5460;
+      margin-bottom: 10px;
+    }
+    .info-box p {
+      color: #0c5460;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .info-box code {
+      background: rgba(0,0,0,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Email Templates <span class="brand-badge">Be Creative Portal</span></h1>
+    <p class="subtitle">Preview all email templates used in the system. Brand color: #73c5d1</p>
+
+    <div class="info-box">
+      <h4>Template Variables</h4>
+      <p>
+        Templates use <code>{{VARIABLE_NAME}}</code> placeholders that are replaced with actual values when emails are sent.
+        Common variables include: <code>{{USER_NAME}}</code>, <code>{{PORTAL_URL}}</code>, <code>{{TIMESTAMP}}</code>
+      </p>
+    </div>
+
+    <h2 class="section-title">User & Employee Notifications</h2>
+    <div class="templates-grid">
+      <div class="template-card">
+        <div class="template-header">
+          <h3>Welcome User</h3>
+          <p>Sent to: New Users</p>
+        </div>
+        <div class="template-body">
+          <span class="template-type type-notification">Notification</span>
+          <p class="template-desc">Welcome email sent when a new user account is created with their login details and getting started guide.</p>
+          <a href="welcome-user.html" class="template-link">Preview Template</a>
+        </div>
+      </div>
+
+      <div class="template-card">
+        <div class="template-header">
+          <h3>Asset Assignment</h3>
+          <p>Sent to: Employee</p>
+        </div>
+        <div class="template-body">
+          <span class="template-type type-notification">Notification</span>
+          <p class="template-desc">Notification when an asset is assigned to an employee with asset details and responsibilities.</p>
+          <a href="asset-assignment.html" class="template-link">Preview Template</a>
+        </div>
+      </div>
+
+      <div class="template-card">
+        <div class="template-header">
+          <h3>Document Expiry Alert</h3>
+          <p>Sent to: Employee</p>
+        </div>
+        <div class="template-body">
+          <span class="template-type type-alert">Alert</span>
+          <p class="template-desc">Alert for expiring or expired documents (QID, Passport, Health Card) with renewal instructions.</p>
+          <a href="document-expiry-alert.html" class="template-link">Preview Template</a>
+        </div>
+      </div>
+
+      <div class="template-card">
+        <div class="template-header">
+          <h3>Profile Change Request</h3>
+          <p>Sent to: Admins</p>
+        </div>
+        <div class="template-body">
+          <span class="template-type type-alert">Action Required</span>
+          <p class="template-desc">Notification to admins when an employee submits a profile change request for review.</p>
+          <a href="change-request-submitted.html" class="template-link">Preview Template</a>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">Supplier Management</h2>
+    <div class="templates-grid">
+      <div class="template-card">
+        <div class="template-header">
+          <h3>New Supplier Registration</h3>
+          <p>Sent to: Admins</p>
+        </div>
+        <div class="template-body">
+          <span class="template-type type-alert">Action Required</span>
+          <p class="template-desc">Notification to admins when a new supplier registers, pending approval review.</p>
+          <a href="new-supplier-registration.html" class="template-link">Preview Template</a>
+        </div>
+      </div>
+
+      <div class="template-card">
+        <div class="template-header">
+          <h3>Supplier Approval</h3>
+          <p>Sent to: Supplier</p>
+        </div>
+        <div class="template-body">
+          <span class="template-type type-approval">Approval</span>
+          <p class="template-desc">Confirmation email to supplier when their registration is approved with supplier code.</p>
+          <a href="supplier-approval.html" class="template-link">Preview Template</a>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">Accreditation</h2>
+    <div class="templates-grid">
+      <div class="template-card">
+        <div class="template-header">
+          <h3>Accreditation Submitted</h3>
+          <p>Sent to: Approvers/Admins</p>
+        </div>
+        <div class="template-body">
+          <span class="template-type type-alert">Action Required</span>
+          <p class="template-desc">Notification when an accreditation is submitted for approval with person and project details.</p>
+          <a href="accreditation-submitted.html" class="template-link">Preview Template</a>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">Purchase Requests</h2>
+    <div class="templates-grid">
+      <div class="template-card">
+        <div class="template-header">
+          <h3>Purchase Request Submitted</h3>
+          <p>Sent to: Admins</p>
+        </div>
+        <div class="template-body">
+          <span class="template-type type-alert">Action Required</span>
+          <p class="template-desc">Notification when a new purchase request is submitted with items and amount details.</p>
+          <a href="purchase-request-submitted.html" class="template-link">Preview Template</a>
+        </div>
+      </div>
+
+      <div class="template-card">
+        <div class="template-header">
+          <h3>Purchase Request - Approved</h3>
+          <p>Sent to: Requester</p>
+        </div>
+        <div class="template-body">
+          <span class="template-type type-status">Status Update</span>
+          <p class="template-desc">Status update when a purchase request is approved with reviewer notes.</p>
+          <a href="purchase-request-status.html" class="template-link">Preview Template</a>
+        </div>
+      </div>
+
+      <div class="template-card">
+        <div class="template-header">
+          <h3>Purchase Request - Rejected</h3>
+          <p>Sent to: Requester</p>
+        </div>
+        <div class="template-body">
+          <span class="template-type type-status">Status Update</span>
+          <p class="template-desc">Status update when a purchase request is rejected with reason and next steps.</p>
+          <a href="purchase-request-rejected.html" class="template-link">Preview Template</a>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #888; font-size: 12px;">
+      <p>Be Creative Portal - Email Template Library</p>
+      <p style="margin-top: 5px;">Total Templates: 9</p>
+    </div>
+  </div>
+</body>
+</html>

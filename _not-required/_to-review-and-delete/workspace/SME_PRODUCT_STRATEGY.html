@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAMP SME Product Strategy - New Modules</title>
+    <style>
+        :root {
+            --primary: #0f766e;
+            --primary-light: #14b8a6;
+            --primary-dark: #115e59;
+            --secondary: #7c3aed;
+            --success: #059669;
+            --success-light: #10b981;
+            --success-bg: #d1fae5;
+            --warning: #d97706;
+            --warning-light: #f59e0b;
+            --warning-bg: #fef3c7;
+            --danger: #dc2626;
+            --danger-light: #ef4444;
+            --danger-bg: #fee2e2;
+            --info: #0891b2;
+            --info-bg: #cffafe;
+            --purple: #7c3aed;
+            --purple-bg: #ede9fe;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f0fdfa 0%, #f0f9ff 100%);
+            color: var(--gray-900);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 60px rgba(15, 118, 110, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .header .subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            position: relative;
+        }
+
+        .header .tagline {
+            margin-top: 1.5rem;
+            padding: 1rem 1.5rem;
+            background: rgba(255,255,255,0.15);
+            border-radius: 0.75rem;
+            display: inline-block;
+            font-size: 1.1rem;
+            font-weight: 600;
+            position: relative;
+        }
+
+        /* Target Market Card */
+        .target-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-left: 5px solid var(--primary);
+        }
+
+        .target-card h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .target-card .audience {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .target-card .description {
+            color: var(--gray-600);
+            font-size: 1.1rem;
+        }
+
+        /* Section Styles */
+        .section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .section-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: var(--gray-900);
+        }
+
+        .section h3 {
+            font-size: 1.2rem;
+            color: var(--gray-700);
+            margin: 1.5rem 0 1rem;
+        }
+
+        /* Module Cards */
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .module-card {
+            background: var(--gray-50);
+            border-radius: 1rem;
+            padding: 1.75rem;
+            border: 2px solid var(--gray-200);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .module-card:hover {
+            border-color: var(--primary-light);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(15, 118, 110, 0.15);
+        }
+
+        .module-card.priority-1 { border-left: 5px solid var(--success); }
+        .module-card.priority-2 { border-left: 5px solid var(--primary); }
+        .module-card.priority-3 { border-left: 5px solid var(--info); }
+        .module-card.priority-4 { border-left: 5px solid var(--warning); }
+        .module-card.priority-5 { border-left: 5px solid var(--purple); }
+
+        .module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .module-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .module-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-new {
+            background: var(--success);
+            color: white;
+        }
+
+        .badge-keep {
+            background: var(--primary);
+            color: white;
+        }
+
+        .badge-priority {
+            background: var(--warning);
+            color: white;
+        }
+
+        .module-pain {
+            background: var(--danger-bg);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: var(--danger);
+            font-style: italic;
+        }
+
+        .module-pain::before {
+            content: '"';
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .module-pain::after {
+            content: '"';
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .module-features {
+            margin: 1rem 0;
+        }
+
+        .module-features h4 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-500);
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .module-meta {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 0.5rem;
+        }
+
+        .meta-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            margin-bottom: 0.25rem;
+        }
+
+        .meta-value {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .meta-value.low { color: var(--success); }
+        .meta-value.medium { color: var(--warning); }
+        .meta-value.high { color: var(--danger); }
+        .meta-value.very-high { color: var(--primary); }
+
+        /* Priority Order */
+        .priority-order {
+            position: absolute;
+            top: -0.75rem;
+            right: 1rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(15, 118, 110, 0.4);
+        }
+
+        /* Current Modules Section */
+        .current-modules {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .current-module {
+            background: var(--gray-50);
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            border: 2px solid var(--gray-200);
+        }
+
+        .current-module.keep {
+            border-color: var(--success);
+            background: var(--success-bg);
+        }
+
+        .current-module.simplify {
+            border-color: var(--warning);
+            background: var(--warning-bg);
+        }
+
+        .current-module.remove {
+            border-color: var(--danger);
+            background: var(--danger-bg);
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .current-module h4 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .current-module span {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success { background: var(--success-bg); color: var(--success); }
+        .badge-warning { background: var(--warning-bg); color: var(--warning); }
+        .badge-danger { background: var(--danger-bg); color: var(--danger); }
+        .badge-info { background: var(--info-bg); color: var(--info); }
+        .badge-purple { background: var(--purple-bg); color: var(--purple); }
+
+        /* Skip List */
+        .skip-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .skip-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: 0.5rem;
+            border-left: 4px solid var(--danger);
+        }
+
+        .skip-item .icon {
+            font-size: 1.5rem;
+            opacity: 0.5;
+        }
+
+        .skip-item h4 {
+            font-size: 0.95rem;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .skip-item p {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+
+        /* Winning Combo */
+        .winning-combo {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .winning-combo h3 {
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .winning-combo .tagline {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+        }
+
+        .combo-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .combo-column h4 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.7;
+            margin-bottom: 1rem;
+        }
+
+        .combo-column ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .combo-column li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .combo-column li::before {
+            content: '→';
+            opacity: 0.7;
+        }
+
+        .combo-plus {
+            font-size: 2rem;
+            font-weight: 300;
+            opacity: 0.5;
+            align-self: center;
+        }
+
+        /* Dashboard Preview */
+        .dashboard-preview {
+            background: var(--gray-900);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            color: white;
+        }
+
+        .dashboard-preview h4 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.5;
+            margin-bottom: 1rem;
+        }
+
+        .dashboard-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .dashboard-item {
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .dashboard-item .label {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 0.25rem;
+        }
+
+        .dashboard-item .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .dashboard-item .value.alert {
+            color: #fbbf24;
+        }
+
+        /* Competitive Advantages */
+        .advantages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .advantage-card {
+            background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            border: 1px solid var(--gray-200);
+        }
+
+        .advantage-card .icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .advantage-card h4 {
+            font-size: 1rem;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .advantage-card p {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+        }
+
+        /* Roadmap */
+        .roadmap {
+            display: flex;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+        }
+
+        .roadmap-phase {
+            flex: 1;
+            min-width: 250px;
+            background: var(--gray-50);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .roadmap-phase::after {
+            content: '→';
+            position: absolute;
+            right: -1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            color: var(--gray-300);
+        }
+
+        .roadmap-phase:last-child::after {
+            display: none;
+        }
+
+        .phase-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .phase-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.75rem;
+        }
+
+        .phase-items {
+            list-style: none;
+            padding: 0;
+            font-size: 0.85rem;
+        }
+
+        .phase-items li {
+            padding: 0.35rem 0;
+            color: var(--gray-600);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header { padding: 2rem 1rem; }
+            .header h1 { font-size: 1.75rem; }
+            .module-grid { grid-template-columns: 1fr; }
+            .combo-grid { grid-template-columns: 1fr; text-align: center; }
+            .combo-plus { display: none; }
+        }
+
+        /* Print */
+        @media print {
+            body { background: white; }
+            .section { box-shadow: none; border: 1px solid var(--gray-200); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>DAMP SME Product Strategy</h1>
+            <p class="subtitle">New Modules & Feature Roadmap for Small Business Owners</p>
+            <div class="tagline">"Never Miss a Renewal Again"</div>
+        </header>
+
+        <!-- Target Market -->
+        <div class="target-card">
+            <h2>🎯 Target Market</h2>
+            <div class="audience">Small Business Owners in Qatar (5-50 employees)</div>
+            <div class="description">
+                Owners who currently juggle Excel spreadsheets, WhatsApp groups, and scattered tools to manage their business operations.
+                They need one simple dashboard to track everything that expires, renews, or needs approval.
+            </div>
+        </div>
+
+        <!-- Current Modules Status -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon" style="background: var(--info-bg); color: var(--info);">📦</div>
+                <h2>Current Modules - What to Keep</h2>
+            </div>
+
+            <div class="current-modules">
+                <div class="current-module keep">
+                    <h4>Employees</h4>
+                    <span>Keep - Simplified</span>
+                </div>
+                <div class="current-module keep">
+                    <h4>Assets</h4>
+                    <span>Keep - Core</span>
+                </div>
+                <div class="current-module keep">
+                    <h4>Subscriptions</h4>
+                    <span>Keep - Core</span>
+                </div>
+                <div class="current-module keep">
+                    <h4>Suppliers</h4>
+                    <span>Keep - Simplified</span>
+                </div>
+                <div class="current-module keep">
+                    <h4>Leave</h4>
+                    <span>Keep - Everyone needs it</span>
+                </div>
+                <div class="current-module simplify">
+                    <h4>Purchase Requests</h4>
+                    <span>Simplify - Fewer fields</span>
+                </div>
+                <div class="current-module remove">
+                    <h4>Full Payroll/WPS</h4>
+                    <span>Remove - Use accountants</span>
+                </div>
+                <div class="current-module remove">
+                    <h4>Tasks/Kanban</h4>
+                    <span>Remove - Use WhatsApp/Trello</span>
+                </div>
+                <div class="current-module remove">
+                    <h4>Projects</h4>
+                    <span>Remove - Over-engineered</span>
+                </div>
+                <div class="current-module remove">
+                    <h4>Accreditation</h4>
+                    <span>Spin off - Separate product</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Modules -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon" style="background: var(--success-bg); color: var(--success);">🚀</div>
+                <h2>New Modules to Build</h2>
+            </div>
+
+            <div class="module-grid">
+                <!-- Module 1: Company Documents -->
+                <div class="module-card priority-1">
+                    <div class="priority-order">1</div>
+                    <div class="module-header">
+                        <div class="module-title">📄 Company Documents & Licenses</div>
+                        <span class="module-badge badge-new">NEW</span>
+                    </div>
+                    <div class="module-pain">My trade license expired and I got fined</div>
+                    <div class="module-features">
+                        <h4>What to Track</h4>
+                        <ul class="feature-list">
+                            <li>Trade License (CR) with 30/60/90 day alerts</li>
+                            <li>Municipality License - auto-reminder</li>
+                            <li>Chamber of Commerce - annual renewal</li>
+                            <li>Insurance Policies - before lapse</li>
+                            <li>Office Lease - renewal negotiation time</li>
+                            <li>Bank Guarantees - release dates</li>
+                        </ul>
+                    </div>
+                    <div class="module-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Effort</span>
+                            <span class="meta-value low">Low</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Value</span>
+                            <span class="meta-value very-high">Very High</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Priority</span>
+                            <span class="meta-value" style="color: var(--success);">Build 1st</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 2: Compliance Calendar -->
+                <div class="module-card priority-2">
+                    <div class="priority-order">2</div>
+                    <div class="module-header">
+                        <div class="module-title">📅 Compliance Calendar</div>
+                        <span class="module-badge badge-new">NEW</span>
+                    </div>
+                    <div class="module-pain">I can't remember what's due when</div>
+                    <div class="module-features">
+                        <h4>Unified View Showing</h4>
+                        <ul class="feature-list">
+                            <li>Document expirations (QID, passport, visa)</li>
+                            <li>License renewals (CR, municipality)</li>
+                            <li>Vehicle registrations (Istimara)</li>
+                            <li>Subscription renewals</li>
+                            <li>Contract end dates</li>
+                            <li>Insurance renewals</li>
+                        </ul>
+                    </div>
+                    <div class="module-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Effort</span>
+                            <span class="meta-value low">Low</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Value</span>
+                            <span class="meta-value very-high">Very High</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Priority</span>
+                            <span class="meta-value" style="color: var(--success);">Build 2nd</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 3: Vehicles/Fleet -->
+                <div class="module-card priority-3">
+                    <div class="priority-order">3</div>
+                    <div class="module-header">
+                        <div class="module-title">🚗 Vehicles & Fleet</div>
+                        <span class="module-badge badge-new">NEW</span>
+                    </div>
+                    <div class="module-pain">Istimara expired, driver got stopped</div>
+                    <div class="module-features">
+                        <h4>What to Track</h4>
+                        <ul class="feature-list">
+                            <li>Vehicle Registration (Istimara) - expiry + renewal</li>
+                            <li>Insurance - mandatory tracking</li>
+                            <li>Assigned Driver - who has which car</li>
+                            <li>Fuel Cards - track spending</li>
+                            <li>Mulkiya (Ownership) - document storage</li>
+                            <li>Service History - basic maintenance log</li>
+                        </ul>
+                    </div>
+                    <div class="module-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Effort</span>
+                            <span class="meta-value medium">Medium</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Value</span>
+                            <span class="meta-value very-high">High</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Priority</span>
+                            <span class="meta-value" style="color: var(--info);">Build 3rd</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 4: Expense Tracking -->
+                <div class="module-card priority-4">
+                    <div class="priority-order">4</div>
+                    <div class="module-header">
+                        <div class="module-title">💰 Expense Tracking & Petty Cash</div>
+                        <span class="module-badge badge-new">NEW</span>
+                    </div>
+                    <div class="module-pain">Where did QAR 5,000 in petty cash go?</div>
+                    <div class="module-features">
+                        <h4>Features</h4>
+                        <ul class="feature-list">
+                            <li>Quick expense entry - photo of receipt + amount</li>
+                            <li>Categories - Office, Travel, Marketing, etc.</li>
+                            <li>Petty cash balance - running total</li>
+                            <li>Monthly summary - export for accountant</li>
+                            <li>Optional approval workflow for larger expenses</li>
+                        </ul>
+                    </div>
+                    <div class="module-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Effort</span>
+                            <span class="meta-value medium">Medium</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Value</span>
+                            <span class="meta-value very-high">High</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Priority</span>
+                            <span class="meta-value" style="color: var(--warning);">Build 4th</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 5: Contracts Manager -->
+                <div class="module-card priority-5">
+                    <div class="priority-order">5</div>
+                    <div class="module-header">
+                        <div class="module-title">📝 Contracts Manager</div>
+                        <span class="module-badge badge-new">NEW</span>
+                    </div>
+                    <div class="module-pain">I forgot the client contract auto-renewed at bad terms</div>
+                    <div class="module-features">
+                        <h4>What to Track</h4>
+                        <ul class="feature-list">
+                            <li>Client contracts - renewal/end dates</li>
+                            <li>Vendor contracts - payment terms</li>
+                            <li>Service agreements - SLA tracking</li>
+                            <li>NDAs/Legal docs - expiry</li>
+                            <li>Auto-renewal clauses - warning before trigger</li>
+                        </ul>
+                    </div>
+                    <div class="module-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Effort</span>
+                            <span class="meta-value low">Low</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Value</span>
+                            <span class="meta-value medium">Medium-High</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Priority</span>
+                            <span class="meta-value" style="color: var(--purple);">Build 5th</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module 6: Simple Invoicing (Optional) -->
+                <div class="module-card" style="border-left: 5px solid var(--gray-400); opacity: 0.8;">
+                    <div class="module-header">
+                        <div class="module-title">🧾 Simple Invoicing</div>
+                        <span class="module-badge" style="background: var(--gray-200); color: var(--gray-600);">OPTIONAL</span>
+                    </div>
+                    <div class="module-pain">Client owes me money, I lost track</div>
+                    <div class="module-features">
+                        <h4>Features (Keep Simple)</h4>
+                        <ul class="feature-list">
+                            <li>Create invoice - PDF with company logo</li>
+                            <li>Track payment status - Paid / Partial / Overdue</li>
+                            <li>Payment reminders - auto-email or WhatsApp</li>
+                            <li>Aging report - who owes what, how long</li>
+                        </ul>
+                    </div>
+                    <div class="module-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Effort</span>
+                            <span class="meta-value high">High</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Value</span>
+                            <span class="meta-value medium">Medium</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Priority</span>
+                            <span class="meta-value" style="color: var(--gray-500);">Later/Never</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Priority Matrix -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon" style="background: var(--warning-bg); color: var(--warning);">📊</div>
+                <h2>Module Priority Matrix</h2>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Module</th>
+                        <th>Effort</th>
+                        <th>Value</th>
+                        <th>Build Order</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Company Documents</strong></td>
+                        <td><span class="badge badge-success">Low</span></td>
+                        <td><span class="badge badge-success">Very High</span></td>
+                        <td><strong style="color: var(--success);">1st</strong></td>
+                        <td>Just a document list with expiry dates</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Compliance Calendar</strong></td>
+                        <td><span class="badge badge-success">Low</span></td>
+                        <td><span class="badge badge-success">Very High</span></td>
+                        <td><strong style="color: var(--success);">2nd</strong></td>
+                        <td>Aggregates existing data - killer feature</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Vehicles/Fleet</strong></td>
+                        <td><span class="badge badge-warning">Medium</span></td>
+                        <td><span class="badge badge-info">High</span></td>
+                        <td><strong style="color: var(--info);">3rd</strong></td>
+                        <td>Similar structure to Assets module</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Expense Tracking</strong></td>
+                        <td><span class="badge badge-warning">Medium</span></td>
+                        <td><span class="badge badge-info">High</span></td>
+                        <td><strong style="color: var(--warning);">4th</strong></td>
+                        <td>Every SME struggles with this</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Contracts Manager</strong></td>
+                        <td><span class="badge badge-success">Low</span></td>
+                        <td><span class="badge badge-purple">Medium</span></td>
+                        <td><strong style="color: var(--purple);">5th</strong></td>
+                        <td>Document storage + dates</td>
+                    </tr>
+                    <tr style="opacity: 0.6;">
+                        <td>Simple Invoicing</td>
+                        <td><span class="badge badge-danger">High</span></td>
+                        <td><span class="badge badge-purple">Medium</span></td>
+                        <td style="color: var(--gray-500);">Later/Never</td>
+                        <td>Many use separate accounting tools</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- What NOT to Build -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon" style="background: var(--danger-bg); color: var(--danger);">🚫</div>
+                <h2>What NOT to Build</h2>
+            </div>
+
+            <p style="color: var(--gray-600); margin-bottom: 1rem;">Don't compete with established tools. Let them handle these:</p>
+
+            <div class="skip-grid">
+                <div class="skip-item">
+                    <div class="icon">📊</div>
+                    <div>
+                        <h4>Full Accounting</h4>
+                        <p>Use QuickBooks / Zoho Books</p>
+                    </div>
+                </div>
+                <div class="skip-item">
+                    <div class="icon">👥</div>
+                    <div>
+                        <h4>CRM / Sales Pipeline</h4>
+                        <p>Use HubSpot Free / Zoho CRM</p>
+                    </div>
+                </div>
+                <div class="skip-item">
+                    <div class="icon">📦</div>
+                    <div>
+                        <h4>Inventory Management</h4>
+                        <p>Separate beast entirely</p>
+                    </div>
+                </div>
+                <div class="skip-item">
+                    <div class="icon">📋</div>
+                    <div>
+                        <h4>Project Management</h4>
+                        <p>Use Trello / Notion</p>
+                    </div>
+                </div>
+                <div class="skip-item">
+                    <div class="icon">⏱️</div>
+                    <div>
+                        <h4>Time Tracking</h4>
+                        <p>Use Toggl / Clockify</p>
+                    </div>
+                </div>
+                <div class="skip-item">
+                    <div class="icon">🎯</div>
+                    <div>
+                        <h4>Full HR / Recruitment</h4>
+                        <p>Use Bayt / LinkedIn</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- The Winning Combination -->
+        <div class="winning-combo">
+            <h3>The Winning Combination</h3>
+            <p class="tagline">"Never Miss a Renewal Again" - One dashboard for everything that expires</p>
+
+            <div class="combo-grid">
+                <div class="combo-column">
+                    <h4>Current (Simplified)</h4>
+                    <ul>
+                        <li>Employees</li>
+                        <li>Assets</li>
+                        <li>Subscriptions</li>
+                        <li>Suppliers</li>
+                        <li>Leave</li>
+                        <li>Purchase Requests</li>
+                    </ul>
+                </div>
+                <div class="combo-plus">+</div>
+                <div class="combo-column">
+                    <h4>New Modules</h4>
+                    <ul>
+                        <li>Company Documents</li>
+                        <li>Vehicles/Fleet</li>
+                        <li>Expense Tracking</li>
+                        <li>Contracts Manager</li>
+                        <li>Compliance Calendar</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Preview -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon" style="background: var(--gray-900); color: white;">🖥️</div>
+                <h2>Unified Dashboard - What SME Owners See</h2>
+            </div>
+
+            <div class="dashboard-preview">
+                <h4>Your Business at a Glance</h4>
+                <div class="dashboard-items">
+                    <div class="dashboard-item">
+                        <div class="label">Expiring Documents</div>
+                        <div class="value alert">3 in next 30 days</div>
+                    </div>
+                    <div class="dashboard-item">
+                        <div class="label">Upcoming Renewals</div>
+                        <div class="value alert">2 subscriptions next week</div>
+                    </div>
+                    <div class="dashboard-item">
+                        <div class="label">Pending Approvals</div>
+                        <div class="value alert">1 leave, 2 expenses</div>
+                    </div>
+                    <div class="dashboard-item">
+                        <div class="label">Monthly Spending</div>
+                        <div class="value">QAR 12,450</div>
+                    </div>
+                    <div class="dashboard-item">
+                        <div class="label">Vehicle Alerts</div>
+                        <div class="value alert">1 Istimara expiring</div>
+                    </div>
+                    <div class="dashboard-item">
+                        <div class="label">Contract Renewals</div>
+                        <div class="value">None this month</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Competitive Advantages -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon" style="background: var(--purple-bg); color: var(--purple);">🏆</div>
+                <h2>Competitive Advantage in Qatar</h2>
+            </div>
+
+            <div class="advantages-grid">
+                <div class="advantage-card">
+                    <div class="icon">🇶🇦</div>
+                    <h4>Local Compliance</h4>
+                    <p>QID tracking, Qatar labor law awareness</p>
+                </div>
+                <div class="advantage-card">
+                    <div class="icon">💵</div>
+                    <h4>QAR as Default</h4>
+                    <p>No currency confusion</p>
+                </div>
+                <div class="advantage-card">
+                    <div class="icon">🌐</div>
+                    <h4>Arabic/English</h4>
+                    <p>Bilingual interface</p>
+                </div>
+                <div class="advantage-card">
+                    <div class="icon">📱</div>
+                    <h4>WhatsApp Integration</h4>
+                    <p>Where Qatar does business</p>
+                </div>
+                <div class="advantage-card">
+                    <div class="icon">📦</div>
+                    <h4>All-in-One</h4>
+                    <p>No juggling 5 different tools</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Angle -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon" style="background: var(--success-bg); color: var(--success);">💡</div>
+                <h2>Positioning: Replace Excel + Reduce Surprises</h2>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pain Point</th>
+                        <th>Your Solution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>"I forgot to renew the trade license"</td>
+                        <td><strong>Expiry alerts for everything</strong></td>
+                    </tr>
+                    <tr>
+                        <td>"Which laptop does Ahmed have?"</td>
+                        <td><strong>Asset assignment in one click</strong></td>
+                    </tr>
+                    <tr>
+                        <td>"How much are we spending on software?"</td>
+                        <td><strong>Subscription cost dashboard</strong></td>
+                    </tr>
+                    <tr>
+                        <td>"Someone's passport is expiring?"</td>
+                        <td><strong>Document expiry tracking</strong></td>
+                    </tr>
+                    <tr>
+                        <td>"Who approved this purchase?"</td>
+                        <td><strong>Simple purchase approval trail</strong></td>
+                    </tr>
+                    <tr>
+                        <td>"The car registration expired!"</td>
+                        <td><strong>Vehicle/Istimara tracking</strong></td>
+                    </tr>
+                    <tr>
+                        <td>"Where did the petty cash go?"</td>
+                        <td><strong>Simple expense tracking</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Development Roadmap -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-icon" style="background: var(--primary-light); color: white;">🗓️</div>
+                <h2>Development Roadmap</h2>
+            </div>
+
+            <div class="roadmap">
+                <div class="roadmap-phase">
+                    <div class="phase-label">Phase 1</div>
+                    <div class="phase-title">Foundation</div>
+                    <ul class="phase-items">
+                        <li>Simplify existing modules</li>
+                        <li>Build Company Documents</li>
+                        <li>Create Compliance Calendar</li>
+                        <li>New dashboard with alerts</li>
+                    </ul>
+                </div>
+                <div class="roadmap-phase">
+                    <div class="phase-label">Phase 2</div>
+                    <div class="phase-title">Expansion</div>
+                    <ul class="phase-items">
+                        <li>Vehicles/Fleet module</li>
+                        <li>Expense Tracking</li>
+                        <li>WhatsApp notifications</li>
+                        <li>Mobile-friendly views</li>
+                    </ul>
+                </div>
+                <div class="roadmap-phase">
+                    <div class="phase-label">Phase 3</div>
+                    <div class="phase-title">Polish</div>
+                    <ul class="phase-items">
+                        <li>Contracts Manager</li>
+                        <li>Arabic language support</li>
+                        <li>Monthly summary reports</li>
+                        <li>Export for accountants</li>
+                    </ul>
+                </div>
+                <div class="roadmap-phase">
+                    <div class="phase-label">Future</div>
+                    <div class="phase-title">Optional</div>
+                    <ul class="phase-items">
+                        <li>Simple Invoicing</li>
+                        <li>MS365 integration</li>
+                        <li>Advanced analytics</li>
+                        <li>Mobile app</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="section" style="background: linear-gradient(135deg, var(--gray-900) 0%, #1f2937 100%); color: white;">
+            <h2 style="color: white; margin-bottom: 1rem;">Summary: The SME Business Manager</h2>
+            <p style="font-size: 1.1rem; opacity: 0.9; margin-bottom: 1.5rem;">
+                A focused tool for Qatar small business owners to track <strong style="color: #fbbf24;">everything that expires, renews, or needs approval</strong> —
+                in one simple dashboard. No enterprise complexity, no feature bloat.
+            </p>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <span class="badge" style="background: rgba(255,255,255,0.2); color: white;">6 Core Modules</span>
+                <span class="badge" style="background: rgba(255,255,255,0.2); color: white;">5 New Modules</span>
+                <span class="badge" style="background: rgba(255,255,255,0.2); color: white;">1 Unified Dashboard</span>
+                <span class="badge" style="background: rgba(255,255,255,0.2); color: white;">Qatar-First Design</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>DAMP SME Product Strategy &bull; December 2024</p>
+            <p style="margin-top: 0.5rem;">Target Market: Small Business Owners in Qatar (5-50 employees)</p>
+        </footer>
+    </div>
+</body>
+</html>

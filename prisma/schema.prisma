@@ -562,8 +562,6 @@ model RevokedImpersonationToken {
   @@index([expiresAt]) // For cleanup of expired entries
 }
 
-// Project model removed - projects are now handled separately by accreditation module
-
 model Asset {
   id              String          @id @default(cuid())
   tenantId        String

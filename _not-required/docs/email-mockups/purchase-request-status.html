@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purchase Request Status Update - Be Creative Portal</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <!-- Header -->
+    <tr>
+      <td style="background-color: #73c5d1; padding: 30px 40px; text-align: center;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">Be Creative Portal</h1>
+      </td>
+    </tr>
+
+    <!-- Main Content -->
+    <tr>
+      <td style="padding: 40px;">
+        <!-- Status Banner - Approved Example -->
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #dcfce7; border-left: 4px solid #86efac; border-radius: 4px; margin: 0 0 25px 0;">
+          <tr>
+            <td style="padding: 15px 20px;">
+              <p style="color: #15803d; font-size: 14px; margin: 0; font-weight: bold;">
+                Purchase Request {{STATUS}}
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Purchase Request Status Update</h2>
+
+        <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+          Dear <strong>{{USER_NAME}}</strong>,
+        </p>
+
+        <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+          {{STATUS_MESSAGE}}
+        </p>
+
+        <!-- Request Details Box -->
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
+          <tr>
+            <td style="padding: 25px;">
+              <h3 style="color: #73c5d1; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Reference Number:</td>
+                  <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">{{REFERENCE_NUMBER}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666666; font-size: 14px;">Title:</td>
+                  <td style="padding: 8px 0; color: #333333; font-size: 14px;">{{TITLE}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666666; font-size: 14px;">Previous Status:</td>
+                  <td style="padding: 8px 0; color: #333333; font-size: 14px;">{{PREVIOUS_STATUS}}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666666; font-size: 14px;">New Status:</td>
+                  <td style="padding: 8px 0;">
+                    <span style="display: inline-block; padding: 4px 12px; background-color: #dcfce7; color: #15803d; font-size: 12px; border-radius: 12px; font-weight: bold; border: 1px solid #86efac;">
+                      {{NEW_STATUS}}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #666666; font-size: 14px;">Reviewed By:</td>
+                  <td style="padding: 8px 0; color: #333333; font-size: 14px;">{{REVIEWER_NAME}}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Review Notes Box (conditional) -->
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-radius: 8px; margin: 0 0 25px 0;">
+          <tr>
+            <td style="padding: 20px;">
+              <h4 style="color: #73c5d1; margin: 0 0 10px 0; font-size: 14px;">Reviewer Notes:</h4>
+              <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">
+                {{REVIEW_NOTES}}
+              </p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- CTA Button -->
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
+          <tr>
+            <td align="center">
+              <a href="{{PORTAL_URL}}/employee/purchase-requests"
+                 style="display: inline-block; padding: 14px 30px; background-color: #73c5d1; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+                View My Requests
+              </a>
+            </td>
+          </tr>
+        </table>
+
+        <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
+          Best regards,<br>
+          <strong>Be Creative Procurement Team</strong>
+        </p>
+      </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+      <td style="background-color: #f8f9fa; padding: 25px 40px; text-align: center; border-top: 1px solid #eeeeee;">
+        <p style="color: #888888; font-size: 12px; margin: 0 0 10px 0;">
+          This is an automated message from Be Creative Portal.
+        </p>
+        <p style="color: #888888; font-size: 12px; margin: 0;">
+          Generated on {{TIMESTAMP}}
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

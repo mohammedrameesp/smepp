@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Health - Super Admin | SME++</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .glass { background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    @keyframes liveIndicator {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.7; }
+    }
+    .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+    .animate-live { animation: liveIndicator 2s ease-in-out infinite; }
+    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    .stagger-1 { animation-delay: 0.05s; }
+    .stagger-2 { animation-delay: 0.1s; }
+    .stagger-3 { animation-delay: 0.15s; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-white to-slate-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 px-4 py-3">
+    <div class="max-w-7xl mx-auto">
+      <div class="glass rounded-2xl border border-slate-200/50 shadow-sm px-5 py-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-6">
+            <a href="super-admin-v1.html" class="flex items-center gap-2.5">
+              <div class="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center">
+                <span class="text-white text-sm font-bold">S+</span>
+              </div>
+              <div class="hidden sm:flex items-center gap-2">
+                <span class="font-semibold text-slate-900">SME++</span>
+                <span class="text-[10px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-medium uppercase">Super Admin</span>
+              </div>
+            </a>
+            <nav class="hidden md:flex items-center">
+              <a href="super-admin-v1.html" class="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900">Dashboard</a>
+              <a href="organizations.html" class="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900">Organizations</a>
+              <a href="users.html" class="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900">Users</a>
+              <a href="communication.html" class="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900">Communication</a>
+              <a href="system-health.html" class="px-3 py-1.5 text-sm font-medium text-slate-900 bg-slate-100 rounded-lg">System</a>
+            </nav>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- Live Status -->
+            <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
+              <div class="w-2 h-2 bg-emerald-500 rounded-full animate-live"></div>
+              <span class="text-xs font-medium text-emerald-700">All Systems Operational</span>
+            </div>
+            <button class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center">
+              <span class="text-white text-xs font-medium">SA</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+
+    <!-- Page Header -->
+    <div class="flex items-center justify-between mb-6 opacity-0 animate-fade-in-up">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">System Health</h1>
+        <p class="text-slate-500 text-sm">Real-time monitoring of platform services and infrastructure</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-400">Last updated: Just now</span>
+        <button class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-xl transition-colors flex items-center gap-2">
+          <i class="fas fa-bell text-xs"></i>
+          Configure Alerts
+        </button>
+      </div>
+    </div>
+
+    <!-- Overall Status Banner -->
+    <div class="mb-6 opacity-0 animate-fade-in-up stagger-1">
+      <div class="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl p-6 text-white">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+              <i class="fas fa-check-circle text-3xl"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold">All Systems Operational</h2>
+              <p class="text-emerald-100 mt-1">No incidents reported in the last 24 hours</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="text-4xl font-bold">99.99%</p>
+            <p class="text-emerald-100 text-sm">Uptime (30 days)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service Status Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 opacity-0 animate-fade-in-up stagger-2">
+      <!-- API -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 hover:shadow-lg transition-all">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center">
+            <i class="fas fa-code text-white"></i>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-live"></div>
+            <span class="text-xs text-emerald-600 font-medium">Healthy</span>
+          </div>
+        </div>
+        <h3 class="font-semibold text-slate-900">API Server</h3>
+        <div class="mt-3 space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">Response Time</span>
+            <span class="font-medium text-slate-900">45ms</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">Requests/min</span>
+            <span class="font-medium text-slate-900">1,234</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Database -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 hover:shadow-lg transition-all">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center">
+            <i class="fas fa-database text-white"></i>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-live"></div>
+            <span class="text-xs text-emerald-600 font-medium">Healthy</span>
+          </div>
+        </div>
+        <h3 class="font-semibold text-slate-900">Database</h3>
+        <div class="mt-3 space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">Connections</span>
+            <span class="font-medium text-slate-900">24/100</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">Query Time</span>
+            <span class="font-medium text-slate-900">12ms</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auth Service -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 hover:shadow-lg transition-all">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-violet-500 rounded-xl flex items-center justify-center">
+            <i class="fas fa-shield-alt text-white"></i>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-live"></div>
+            <span class="text-xs text-emerald-600 font-medium">Healthy</span>
+          </div>
+        </div>
+        <h3 class="font-semibold text-slate-900">Auth Service</h3>
+        <div class="mt-3 space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">Active Sessions</span>
+            <span class="font-medium text-slate-900">89</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">Token Refresh</span>
+            <span class="font-medium text-slate-900">OK</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Storage -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 hover:shadow-lg transition-all">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center">
+            <i class="fas fa-cloud text-white"></i>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <div class="w-2 h-2 bg-emerald-500 rounded-full animate-live"></div>
+            <span class="text-xs text-emerald-600 font-medium">Healthy</span>
+          </div>
+        </div>
+        <h3 class="font-semibold text-slate-900">Storage</h3>
+        <div class="mt-3 space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">Used</span>
+            <span class="font-medium text-slate-900">2.4 GB</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="text-slate-500">Files</span>
+            <span class="font-medium text-slate-900">12,456</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metrics & Charts -->
+    <div class="grid lg:grid-cols-3 gap-4 mb-6 opacity-0 animate-fade-in-up stagger-2">
+      <!-- Response Time Chart -->
+      <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-slate-900">API Response Time (Last 24h)</h3>
+          <div class="flex items-center gap-4 text-xs">
+            <span class="flex items-center gap-1"><span class="w-3 h-1 bg-blue-500 rounded"></span> Avg: 45ms</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-1 bg-emerald-500 rounded"></span> P95: 120ms</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-1 bg-amber-500 rounded"></span> P99: 250ms</span>
+          </div>
+        </div>
+        <div class="h-48 flex items-end gap-1">
+          <!-- Simplified bar chart representation -->
+          <div class="flex-1 bg-blue-100 rounded-t relative group" style="height: 40%">
+            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">42ms</div>
+          </div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 45%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 38%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 52%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 48%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 55%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 62%"></div>
+          <div class="flex-1 bg-amber-200 rounded-t" style="height: 85%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 58%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 45%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 42%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 48%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 44%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 40%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 38%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 42%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 46%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 50%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 48%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 44%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 42%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 45%"></div>
+          <div class="flex-1 bg-blue-100 rounded-t" style="height: 43%"></div>
+          <div class="flex-1 bg-blue-500 rounded-t" style="height: 45%"></div>
+        </div>
+        <div class="flex justify-between mt-2 text-xs text-slate-400">
+          <span>00:00</span>
+          <span>06:00</span>
+          <span>12:00</span>
+          <span>18:00</span>
+          <span>Now</span>
+        </div>
+      </div>
+
+      <!-- Resource Usage -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <h3 class="font-semibold text-slate-900 mb-4">Resource Usage</h3>
+        <div class="space-y-4">
+          <!-- CPU -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-slate-600">CPU</span>
+              <span class="text-sm font-medium text-slate-900">32%</span>
+            </div>
+            <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full" style="width: 32%"></div>
+            </div>
+          </div>
+          <!-- Memory -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-slate-600">Memory</span>
+              <span class="text-sm font-medium text-slate-900">58%</span>
+            </div>
+            <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-full" style="width: 58%"></div>
+            </div>
+          </div>
+          <!-- Disk -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-slate-600">Disk</span>
+              <span class="text-sm font-medium text-slate-900">24%</span>
+            </div>
+            <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-purple-400 to-purple-500 rounded-full" style="width: 24%"></div>
+            </div>
+          </div>
+          <!-- Network -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-slate-600">Network I/O</span>
+              <span class="text-sm font-medium text-slate-900">12 MB/s</span>
+            </div>
+            <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full" style="width: 45%"></div>
+            </div>
+          </div>
+          <!-- DB Connections -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-slate-600">DB Connections</span>
+              <span class="text-sm font-medium text-slate-900">24/100</span>
+            </div>
+            <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-teal-400 to-teal-500 rounded-full" style="width: 24%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Services & Incidents -->
+    <div class="grid lg:grid-cols-3 gap-4 opacity-0 animate-fade-in-up stagger-3">
+
+      <!-- Detailed Service Status -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl border border-slate-200">
+          <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="font-semibold text-slate-900 text-sm">Service Status</h2>
+            <span class="text-xs text-slate-400">Last checked: 30 sec ago</span>
+          </div>
+          <div class="divide-y divide-slate-100">
+            <!-- Service Row -->
+            <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-server text-blue-600"></i>
+                </div>
+                <div>
+                  <p class="font-medium text-slate-900 text-sm">Web Server (Next.js)</p>
+                  <p class="text-xs text-slate-500">vercel.app</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="text-right">
+                  <p class="text-sm font-medium text-slate-900">45ms</p>
+                  <p class="text-xs text-slate-400">response</p>
+                </div>
+                <div class="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 rounded-full">
+                  <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span class="text-xs text-emerald-700 font-medium">Operational</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-database text-emerald-600"></i>
+                </div>
+                <div>
+                  <p class="font-medium text-slate-900 text-sm">PostgreSQL Database</p>
+                  <p class="text-xs text-slate-500">supabase.com</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="text-right">
+                  <p class="text-sm font-medium text-slate-900">12ms</p>
+                  <p class="text-xs text-slate-400">latency</p>
+                </div>
+                <div class="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 rounded-full">
+                  <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span class="text-xs text-emerald-700 font-medium">Operational</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-lock text-purple-600"></i>
+                </div>
+                <div>
+                  <p class="font-medium text-slate-900 text-sm">Authentication (NextAuth)</p>
+                  <p class="text-xs text-slate-500">OAuth providers</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="text-right">
+                  <p class="text-sm font-medium text-slate-900">89</p>
+                  <p class="text-xs text-slate-400">sessions</p>
+                </div>
+                <div class="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 rounded-full">
+                  <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span class="text-xs text-emerald-700 font-medium">Operational</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-cloud-upload-alt text-amber-600"></i>
+                </div>
+                <div>
+                  <p class="font-medium text-slate-900 text-sm">File Storage</p>
+                  <p class="text-xs text-slate-500">Supabase Storage</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="text-right">
+                  <p class="text-sm font-medium text-slate-900">2.4 GB</p>
+                  <p class="text-xs text-slate-400">used</p>
+                </div>
+                <div class="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 rounded-full">
+                  <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span class="text-xs text-emerald-700 font-medium">Operational</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-credit-card text-rose-600"></i>
+                </div>
+                <div>
+                  <p class="font-medium text-slate-900 text-sm">Payment Gateway</p>
+                  <p class="text-xs text-slate-500">Stripe</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="text-right">
+                  <p class="text-sm font-medium text-slate-900">78ms</p>
+                  <p class="text-xs text-slate-400">response</p>
+                </div>
+                <div class="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 rounded-full">
+                  <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span class="text-xs text-emerald-700 font-medium">Operational</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-envelope text-indigo-600"></i>
+                </div>
+                <div>
+                  <p class="font-medium text-slate-900 text-sm">Email Service</p>
+                  <p class="text-xs text-slate-500">Resend</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="text-right">
+                  <p class="text-sm font-medium text-slate-900">156</p>
+                  <p class="text-xs text-slate-400">sent today</p>
+                </div>
+                <div class="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 rounded-full">
+                  <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span class="text-xs text-emerald-700 font-medium">Operational</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Sidebar -->
+      <div class="space-y-4">
+        <!-- Recent Incidents -->
+        <div class="bg-white rounded-xl border border-slate-200">
+          <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="font-semibold text-slate-900 text-sm">Recent Incidents</h2>
+            <a href="#" class="text-xs text-blue-600 hover:text-blue-700">History</a>
+          </div>
+          <div class="p-4">
+            <div class="flex items-center justify-center py-8">
+              <div class="text-center">
+                <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <i class="fas fa-check text-emerald-600 text-lg"></i>
+                </div>
+                <p class="text-sm font-medium text-slate-900">No incidents</p>
+                <p class="text-xs text-slate-500 mt-1">Last 30 days</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Uptime History -->
+        <div class="bg-white rounded-xl border border-slate-200">
+          <div class="px-4 py-3 border-b border-slate-100">
+            <h2 class="font-semibold text-slate-900 text-sm">Uptime (Last 30 days)</h2>
+          </div>
+          <div class="p-4">
+            <div class="flex gap-0.5 mb-3">
+              <!-- 30 small bars representing each day -->
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm" title="Dec 25"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-400 rounded-sm"></div>
+              <div class="flex-1 h-8 bg-emerald-500 rounded-sm" title="Today"></div>
+            </div>
+            <div class="flex justify-between text-xs text-slate-400">
+              <span>30 days ago</span>
+              <span>Today</span>
+            </div>
+            <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+              <span class="text-sm text-slate-600">Average uptime</span>
+              <span class="text-lg font-bold text-emerald-600">99.99%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-xl border border-slate-200">
+          <div class="px-4 py-3 border-b border-slate-100">
+            <h2 class="font-semibold text-slate-900 text-sm">Quick Actions</h2>
+          </div>
+          <div class="p-3 space-y-2">
+            <button class="w-full p-3 bg-slate-50 hover:bg-slate-100 rounded-lg text-left transition-colors flex items-center gap-3">
+              <i class="fas fa-sync-alt text-blue-500"></i>
+              <span class="text-sm font-medium text-slate-700">Force Health Check</span>
+            </button>
+            <button class="w-full p-3 bg-slate-50 hover:bg-slate-100 rounded-lg text-left transition-colors flex items-center gap-3">
+              <i class="fas fa-broom text-emerald-500"></i>
+              <span class="text-sm font-medium text-slate-700">Clear Cache</span>
+            </button>
+            <button class="w-full p-3 bg-slate-50 hover:bg-slate-100 rounded-lg text-left transition-colors flex items-center gap-3">
+              <i class="fas fa-redo text-amber-500"></i>
+              <span class="text-sm font-medium text-slate-700">Restart Services</span>
+            </button>
+            <button class="w-full p-3 bg-slate-50 hover:bg-slate-100 rounded-lg text-left transition-colors flex items-center gap-3">
+              <i class="fas fa-file-download text-purple-500"></i>
+              <span class="text-sm font-medium text-slate-700">Download Logs</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Database Stats -->
+    <div class="mt-6 opacity-0 animate-fade-in-up stagger-3">
+      <div class="bg-white rounded-xl border border-slate-200">
+        <div class="px-4 py-3 border-b border-slate-100">
+          <h2 class="font-semibold text-slate-900 text-sm">Database Statistics</h2>
+        </div>
+        <div class="p-4">
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <div class="text-center p-4 bg-slate-50 rounded-xl">
+              <p class="text-2xl font-bold text-slate-900">12</p>
+              <p class="text-xs text-slate-500 mt-1">Organizations</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-xl">
+              <p class="text-2xl font-bold text-slate-900">156</p>
+              <p class="text-xs text-slate-500 mt-1">Users</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-xl">
+              <p class="text-2xl font-bold text-slate-900">2,340</p>
+              <p class="text-xs text-slate-500 mt-1">Assets</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-xl">
+              <p class="text-2xl font-bold text-slate-900">892</p>
+              <p class="text-xs text-slate-500 mt-1">Employees</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-xl">
+              <p class="text-2xl font-bold text-slate-900">1,456</p>
+              <p class="text-xs text-slate-500 mt-1">Leave Requests</p>
+            </div>
+            <div class="text-center p-4 bg-slate-50 rounded-xl">
+              <p class="text-2xl font-bold text-slate-900">45.2 MB</p>
+              <p class="text-xs text-slate-500 mt-1">DB Size</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-2 z-50">
+    <div class="flex items-center justify-around">
+      <a href="super-admin-v1.html" class="flex flex-col items-center gap-1 px-3 py-1 text-slate-400">
+        <i class="fas fa-home text-lg"></i>
+        <span class="text-[10px] font-medium">Dashboard</span>
+      </a>
+      <a href="organizations.html" class="flex flex-col items-center gap-1 px-3 py-1 text-slate-400">
+        <i class="fas fa-building text-lg"></i>
+        <span class="text-[10px] font-medium">Orgs</span>
+      </a>
+      <a href="users.html" class="flex flex-col items-center gap-1 px-3 py-1 text-slate-400">
+        <i class="fas fa-user-circle text-lg"></i>
+        <span class="text-[10px] font-medium">Users</span>
+      </a>
+      <a href="communication.html" class="flex flex-col items-center gap-1 px-3 py-1 text-slate-400">
+        <i class="fas fa-bullhorn text-lg"></i>
+        <span class="text-[10px] font-medium">Comms</span>
+      </a>
+      <a href="system-health.html" class="flex flex-col items-center gap-1 px-3 py-1 text-rose-600 relative">
+        <div class="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-rose-600 rounded-full"></div>
+        <i class="fas fa-server text-lg"></i>
+        <span class="text-[10px] font-medium">System</span>
+      </a>
+    </div>
+  </nav>
+
+</body>
+</html>

@@ -265,7 +265,7 @@ export function DataExportImport() {
             <CardContent>
               <Alert className="mb-4">
                 <AlertDescription>
-                  Exports 14 sheets: Users, Assets, Subscriptions, Suppliers, Projects, Accreditations, plus all history and activity logs
+                  Exports all data sheets: Users, Assets, Subscriptions, Suppliers, Purchase Requests, plus all history and activity logs
                 </AlertDescription>
               </Alert>
               <Button

@@ -48,51 +48,65 @@ interface CommandPaletteProps {
   enabledModules?: string[];
 }
 
+// Static command items - defined outside component to avoid recreation
+const COMMAND_ITEMS: CommandItem[] = [
+  // Quick Actions
+  { id: 'add-employee', label: 'Add Employee', description: 'Create a new team member', icon: UserPlus, href: '/admin/employees/new', shortcut: 'N E', moduleId: 'employees', category: 'action' },
+  { id: 'add-asset', label: 'Add Asset', description: 'Register new asset', icon: Plus, href: '/admin/assets/new', shortcut: 'N A', moduleId: 'assets', category: 'action' },
+  { id: 'run-payroll', label: 'Run Payroll', description: 'Process monthly payroll', icon: DollarSign, href: '/admin/payroll/runs/new', shortcut: 'P', moduleId: 'payroll', category: 'action' },
+  { id: 'add-leave-type', label: 'Add Leave Type', description: 'Create new leave type', icon: Calendar, href: '/admin/leave/types/new', moduleId: 'leave', category: 'action' },
+  { id: 'add-subscription', label: 'Add Subscription', description: 'Track new SaaS subscription', icon: CreditCard, href: '/admin/subscriptions/new', moduleId: 'subscriptions', category: 'action' },
+  { id: 'add-supplier', label: 'Add Supplier', description: 'Register new supplier', icon: Truck, href: '/admin/suppliers/new', moduleId: 'suppliers', category: 'action' },
+
+  // Navigation
+  { id: 'nav-dashboard', label: 'Dashboard', icon: Building2, href: '/admin', category: 'navigation' },
+  { id: 'nav-employees', label: 'Employees', icon: Users, href: '/admin/employees', moduleId: 'employees', category: 'navigation' },
+  { id: 'nav-assets', label: 'Assets', icon: Box, href: '/admin/assets', moduleId: 'assets', category: 'navigation' },
+  { id: 'nav-leave', label: 'Leave Requests', icon: Calendar, href: '/admin/leave/requests', moduleId: 'leave', category: 'navigation' },
+  { id: 'nav-payroll', label: 'Payroll', icon: DollarSign, href: '/admin/payroll/runs', moduleId: 'payroll', category: 'navigation' },
+  { id: 'nav-subscriptions', label: 'Subscriptions', icon: CreditCard, href: '/admin/subscriptions', moduleId: 'subscriptions', category: 'navigation' },
+  { id: 'nav-suppliers', label: 'Suppliers', icon: Truck, href: '/admin/suppliers', moduleId: 'suppliers', category: 'navigation' },
+  { id: 'nav-purchase-requests', label: 'Purchase Requests', icon: ShoppingCart, href: '/admin/purchase-requests', moduleId: 'purchase-requests', category: 'navigation' },
+  { id: 'nav-reports', label: 'Reports', icon: BarChart3, href: '/admin/reports', category: 'navigation' },
+  { id: 'nav-activity', label: 'Activity Log', icon: Activity, href: '/admin/activity', category: 'navigation' },
+  { id: 'nav-settings', label: 'Settings', icon: Settings, href: '/admin/settings', category: 'navigation' },
+];
+
 export function CommandPalette({ open, onOpenChange, enabledModules = [] }: CommandPaletteProps) {
   const router = useRouter();
   const [search, setSearch] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const isModuleEnabled = (moduleId?: string) => !moduleId || enabledModules.includes(moduleId);
+  // Memoize enabled modules set for O(1) lookups
+  const enabledModulesSet = React.useMemo(() => new Set(enabledModules), [enabledModules]);
 
-  // Define all command items
-  const allItems: CommandItem[] = [
-    // Quick Actions
-    { id: 'add-employee', label: 'Add Employee', description: 'Create a new team member', icon: UserPlus, href: '/admin/employees/new', shortcut: 'N E', moduleId: 'employees', category: 'action' },
-    { id: 'add-asset', label: 'Add Asset', description: 'Register new asset', icon: Plus, href: '/admin/assets/new', shortcut: 'N A', moduleId: 'assets', category: 'action' },
-    { id: 'run-payroll', label: 'Run Payroll', description: 'Process monthly payroll', icon: DollarSign, href: '/admin/payroll/runs/new', shortcut: 'P', moduleId: 'payroll', category: 'action' },
-    { id: 'add-leave-type', label: 'Add Leave Type', description: 'Create new leave type', icon: Calendar, href: '/admin/leave/types/new', moduleId: 'leave', category: 'action' },
-    { id: 'add-subscription', label: 'Add Subscription', description: 'Track new SaaS subscription', icon: CreditCard, href: '/admin/subscriptions/new', moduleId: 'subscriptions', category: 'action' },
-    { id: 'add-supplier', label: 'Add Supplier', description: 'Register new supplier', icon: Truck, href: '/admin/suppliers/new', moduleId: 'suppliers', category: 'action' },
+  // Memoize module-filtered items (only recompute when enabledModules changes)
+  const moduleFilteredItems = React.useMemo(() =>
+    COMMAND_ITEMS.filter(item => !item.moduleId || enabledModulesSet.has(item.moduleId)),
+    [enabledModulesSet]
+  );
 
-    // Navigation
-    { id: 'nav-dashboard', label: 'Dashboard', icon: Building2, href: '/admin', category: 'navigation' },
-    { id: 'nav-employees', label: 'Employees', icon: Users, href: '/admin/employees', moduleId: 'employees', category: 'navigation' },
-    { id: 'nav-assets', label: 'Assets', icon: Box, href: '/admin/assets', moduleId: 'assets', category: 'navigation' },
-    { id: 'nav-leave', label: 'Leave Requests', icon: Calendar, href: '/admin/leave/requests', moduleId: 'leave', category: 'navigation' },
-    { id: 'nav-payroll', label: 'Payroll', icon: DollarSign, href: '/admin/payroll/runs', moduleId: 'payroll', category: 'navigation' },
-    { id: 'nav-subscriptions', label: 'Subscriptions', icon: CreditCard, href: '/admin/subscriptions', moduleId: 'subscriptions', category: 'navigation' },
-    { id: 'nav-suppliers', label: 'Suppliers', icon: Truck, href: '/admin/suppliers', moduleId: 'suppliers', category: 'navigation' },
-    { id: 'nav-purchase-requests', label: 'Purchase Requests', icon: ShoppingCart, href: '/admin/purchase-requests', moduleId: 'purchase-requests', category: 'navigation' },
-    { id: 'nav-reports', label: 'Reports', icon: BarChart3, href: '/admin/reports', category: 'navigation' },
-    { id: 'nav-activity', label: 'Activity Log', icon: Activity, href: '/admin/activity', category: 'navigation' },
-    { id: 'nav-settings', label: 'Settings', icon: Settings, href: '/admin/settings', category: 'navigation' },
-  ];
-
-  // Filter items based on enabled modules and search
-  const filteredItems = allItems.filter(item => {
-    if (!isModuleEnabled(item.moduleId)) return false;
-    if (!search) return true;
-    return (
-      item.label.toLowerCase().includes(search.toLowerCase()) ||
-      item.description?.toLowerCase().includes(search.toLowerCase())
+  // Filter by search term
+  const filteredItems = React.useMemo(() => {
+    if (!search) return moduleFilteredItems;
+    const searchLower = search.toLowerCase();
+    return moduleFilteredItems.filter(item =>
+      item.label.toLowerCase().includes(searchLower) ||
+      item.description?.toLowerCase().includes(searchLower)
     );
-  });
+  }, [moduleFilteredItems, search]);
 
-  const actionItems = filteredItems.filter(item => item.category === 'action');
-  const navigationItems = filteredItems.filter(item => item.category === 'navigation');
+  const actionItems = React.useMemo(() =>
+    filteredItems.filter(item => item.category === 'action'),
+    [filteredItems]
+  );
 
-  const handleSelect = (item: CommandItem) => {
+  const navigationItems = React.useMemo(() =>
+    filteredItems.filter(item => item.category === 'navigation'),
+    [filteredItems]
+  );
+
+  const handleSelect = React.useCallback((item: CommandItem) => {
     onOpenChange(false);
     setSearch('');
     if (item.action) {
@@ -100,7 +114,7 @@ export function CommandPalette({ open, onOpenChange, enabledModules = [] }: Comm
     } else if (item.href) {
       router.push(item.href);
     }
-  };
+  }, [onOpenChange, router]);
 
   // Focus input when dialog opens
   React.useEffect(() => {
