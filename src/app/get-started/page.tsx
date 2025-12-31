@@ -18,6 +18,7 @@ import {
   ArrowLeft,
   Sparkles,
 } from 'lucide-react';
+import { detectServiceEmail } from '@/lib/utils/email-pattern-detection';
 import './get-started.css';
 
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
@@ -83,6 +84,11 @@ export default function GetStartedPage() {
     MODULES.filter(m => m.defaultEnabled).map(m => m.id)
   );
 
+  // Employee status (for the admin creating the org)
+  const [isEmployee, setIsEmployee] = useState(true);
+  const [isOnWps, setIsOnWps] = useState(true);
+  const [showEmployeeOptions, setShowEmployeeOptions] = useState(false);
+
   // Subdomain validation
   const [checkingSubdomain, setCheckingSubdomain] = useState(false);
   const [subdomainStatus, setSubdomainStatus] = useState<{
@@ -138,6 +144,28 @@ export default function GetStartedPage() {
     setSubdomainStatus(null);
   };
 
+  // Smart email detection for employee status
+  const handleEmailChange = (email: string) => {
+    setAdminEmail(email);
+    setError(null);
+    if (email.includes('@')) {
+      const detection = detectServiceEmail(email);
+      // Only show employee options for non-system emails
+      setShowEmployeeOptions(!detection.isLikelyServiceEmail);
+      if (detection.isLikelyServiceEmail) {
+        // System emails - hide options, default to not employee
+        setIsEmployee(false);
+        setIsOnWps(false);
+      } else {
+        // Personal emails - show options, default to employee on WPS
+        setIsEmployee(true);
+        setIsOnWps(true);
+      }
+    } else {
+      setShowEmployeeOptions(false);
+    }
+  };
+
   const handleModuleToggle = (moduleId: string) => {
     setEnabledModules(prev =>
       prev.includes(moduleId)
@@ -176,6 +204,8 @@ export default function GetStartedPage() {
           industry: industry || undefined,
           companySize: companySize || undefined,
           enabledModules,
+          isEmployee: isEmployee,
+          isOnWps: isEmployee ? isOnWps : false,
         }),
       });
 
@@ -425,12 +455,36 @@ export default function GetStartedPage() {
                       type="email"
                       placeholder="you@company.com"
                       value={adminEmail}
-                      onChange={(e) => {
-                        setAdminEmail(e.target.value);
-                        setError(null);
-                      }}
+                      onChange={(e) => handleEmailChange(e.target.value)}
                     />
                   </div>
+
+                  {/* Employee/WPS options - only shown for non-system emails */}
+                  {showEmployeeOptions && (
+                    <div className="gs-inline-checkboxes">
+                      <label className="gs-inline-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={isEmployee}
+                          onChange={(e) => {
+                            setIsEmployee(e.target.checked);
+                            if (!e.target.checked) setIsOnWps(false);
+                          }}
+                        />
+                        <span>Employee</span>
+                      </label>
+                      {isEmployee && (
+                        <label className="gs-inline-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={isOnWps}
+                            onChange={(e) => setIsOnWps(e.target.checked)}
+                          />
+                          <span>On WPS</span>
+                        </label>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="gs-field">

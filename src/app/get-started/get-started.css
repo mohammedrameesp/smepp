@@ -376,6 +376,94 @@
   color: #ef4444;
 }
 
+.gs-field-hint.warning {
+  color: #d97706;
+  background: #fef3c7;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  display: block;
+}
+
+/* Checkbox Fields */
+.gs-checkbox-field {
+  margin-top: 0.5rem;
+}
+
+.gs-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gs-checkbox-label:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.gs-checkbox-label input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.125rem;
+  accent-color: #0f172a;
+  cursor: pointer;
+}
+
+.gs-checkbox-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.gs-checkbox-text strong {
+  font-size: 0.875rem;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+.gs-checkbox-text small {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Inline Checkboxes (for Employee/WPS options) */
+.gs-inline-checkboxes {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.gs-inline-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.gs-inline-checkbox input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #0f172a;
+  cursor: pointer;
+}
+
+.gs-inline-checkbox span {
+  user-select: none;
+}
+
+.gs-inline-checkbox:hover {
+  color: #0f172a;
+}
+
 /* Modules Grid */
 .gs-modules-grid {
   display: grid;
@@ -500,6 +588,11 @@
   cursor: not-allowed;
 }
 
+.gs-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #2563eb;
+}
+
 .gs-btn-primary {
   background: #0f172a;
   color: white;
@@ -508,6 +601,10 @@
 .gs-btn-primary:hover:not(:disabled) {
   background: #1e293b;
   transform: translateY(-1px);
+}
+
+.gs-btn-primary:focus-visible {
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #0f172a;
 }
 
 .gs-btn-outline {
@@ -521,12 +618,20 @@
   background: #f8fafc;
 }
 
+.gs-btn-outline:focus-visible {
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #64748b;
+}
+
 .gs-btn-submit {
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
 }
 
 .gs-btn-submit:hover:not(:disabled) {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+}
+
+.gs-btn-submit:focus-visible {
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #2563eb;
 }
 
 .gs-btn-icon {
