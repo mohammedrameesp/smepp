@@ -80,6 +80,7 @@ temp-*.js
 /_TO_DELETE/
 /_workspace/
 /_to-review-and-delete/
+/_not-required/
 /docs/email-mockups/
 /docs/mockups/
 /docs/status/
