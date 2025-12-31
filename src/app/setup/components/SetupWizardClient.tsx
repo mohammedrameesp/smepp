@@ -40,6 +40,8 @@ const TOTAL_STEPS = 7;
 interface TeamInvite {
   email: string;
   role: 'ADMIN' | 'MANAGER' | 'MEMBER';
+  isEmployee?: boolean;
+  onWPS?: boolean;
 }
 
 export function SetupWizardClient() {
@@ -192,16 +194,48 @@ export function SetupWizardClient() {
       });
 
       // 4. Send team invites
+      const inviteResults: { email: string; success: boolean; error?: string }[] = [];
       for (const invite of teamInvites) {
         try {
-          await fetch('/api/organizations/invite', {
+          const inviteResponse = await fetch('/api/admin/team/invitations', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: invite.email, role: invite.role }),
+            body: JSON.stringify({
+              email: invite.email,
+              role: invite.role,
+              isEmployee: invite.isEmployee,
+              onWPS: invite.onWPS,
+            }),
           });
-        } catch {
-          console.warn(`Failed to send invite to ${invite.email}`);
+
+          if (!inviteResponse.ok) {
+            const errorData = await inviteResponse.json().catch(() => ({}));
+            console.error(`Failed to send invite to ${invite.email}:`, errorData);
+            inviteResults.push({
+              email: invite.email,
+              success: false,
+              error: errorData.error || `HTTP ${inviteResponse.status}`
+            });
+          } else {
+            const successData = await inviteResponse.json();
+            console.log(`Invite sent to ${invite.email}:`, successData.emailSent ? 'email sent' : 'email not sent');
+            inviteResults.push({ email: invite.email, success: true });
+          }
+        } catch (inviteErr) {
+          console.error(`Exception sending invite to ${invite.email}:`, inviteErr);
+          inviteResults.push({
+            email: invite.email,
+            success: false,
+            error: inviteErr instanceof Error ? inviteErr.message : 'Network error'
+          });
         }
+      }
+
+      // Log summary of invite results
+      const successCount = inviteResults.filter(r => r.success).length;
+      const failCount = inviteResults.filter(r => !r.success).length;
+      if (failCount > 0) {
+        console.warn(`Invitations: ${successCount} sent, ${failCount} failed`, inviteResults.filter(r => !r.success));
       }
 
       // Refresh session

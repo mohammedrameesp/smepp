@@ -132,7 +132,7 @@ export const hrProfileSchema = z.object({
     .nullable()
     .transform((val) => val?.replace(/\s/g, '').toUpperCase() || val)
     .refine((val) => !val || ibanRegex.test(val), {
-      message: 'Invalid IBAN format (e.g., QA12ABCD123456789012345678901)',
+      message: 'Invalid IBAN format (e.g., QA00XXXX0000000000XXXXXXXXXXX)',
     }),
 
   // Education

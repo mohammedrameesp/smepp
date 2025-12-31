@@ -71,23 +71,23 @@ function randomIBAN(): string {
   return 'QA' + String(randomInt(10, 99)) + randomElement(bankCodes) + accountPart;
 }
 
-// Employee data for a creative agency
+// Employee data for demo organization (all data is fictional)
 const EMPLOYEES = [
-  { name: 'Ramees Ahmed', email: 'ramees@becreative.qa', role: Role.ADMIN, designation: 'CEO & Founder', gender: 'Male', nationality: 'India', salary: 55000 },
-  { name: 'Sara Al-Khalifa', email: 'sara@becreative.qa', role: Role.HR_MANAGER, designation: 'HR Director', gender: 'Female', nationality: 'Qatar', salary: 32000 },
-  { name: 'Khalid Rahman', email: 'khalid@becreative.qa', role: Role.FINANCE_MANAGER, designation: 'Finance Manager', gender: 'Male', nationality: 'Pakistan', salary: 35000 },
-  { name: 'Maya Johnson', email: 'maya@becreative.qa', role: Role.MANAGER, designation: 'Creative Director', gender: 'Female', nationality: 'United States', salary: 28000 },
-  { name: 'Ahmad Mansour', email: 'ahmad@becreative.qa', role: Role.EMPLOYEE, designation: 'Senior Art Director', gender: 'Male', nationality: 'Lebanon', salary: 18000 },
-  { name: 'Lisa Chen', email: 'lisa@becreative.qa', role: Role.EMPLOYEE, designation: 'Senior Graphic Designer', gender: 'Female', nationality: 'China', salary: 14000 },
-  { name: 'Omar El-Said', email: 'omar@becreative.qa', role: Role.EMPLOYEE, designation: 'Motion Graphics Designer', gender: 'Male', nationality: 'Egypt', salary: 12000 },
-  { name: 'Priya Nair', email: 'priya@becreative.qa', role: Role.MANAGER, designation: 'Digital Director', gender: 'Female', nationality: 'India', salary: 25000 },
-  { name: 'James Wilson', email: 'james@becreative.qa', role: Role.EMPLOYEE, designation: 'Senior Web Developer', gender: 'Male', nationality: 'United Kingdom', salary: 20000 },
-  { name: 'Fatima Al-Zahra', email: 'fatima@becreative.qa', role: Role.EMPLOYEE, designation: 'UX/UI Designer', gender: 'Female', nationality: 'Morocco', salary: 15000 },
-  { name: 'David Brown', email: 'david@becreative.qa', role: Role.MANAGER, designation: 'Account Director', gender: 'Male', nationality: 'South Africa', salary: 22000 },
-  { name: 'Nadia Khoury', email: 'nadia@becreative.qa', role: Role.EMPLOYEE, designation: 'Account Manager', gender: 'Female', nationality: 'Lebanon', salary: 13000 },
-  { name: 'Aisha Rahman', email: 'aisha@becreative.qa', role: Role.EMPLOYEE, designation: 'Office Administrator', gender: 'Female', nationality: 'Bangladesh', salary: 8000 },
-  { name: 'Ravi Kumar', email: 'ravi@becreative.qa', role: Role.EMPLOYEE, designation: 'IT Support Specialist', gender: 'Male', nationality: 'India', salary: 10000 },
-  { name: 'Layla Hassan', email: 'layla@becreative.qa', role: Role.TEMP_STAFF, designation: 'Design Intern', gender: 'Female', nationality: 'Qatar', salary: 4500 },
+  { name: 'John Smith', email: 'john.smith@example.com', role: Role.ADMIN, designation: 'CEO & Founder', gender: 'Male', nationality: 'United Kingdom', salary: 55000 },
+  { name: 'Sarah Johnson', email: 'sarah.johnson@example.com', role: Role.HR_MANAGER, designation: 'HR Director', gender: 'Female', nationality: 'United States', salary: 32000 },
+  { name: 'Michael Brown', email: 'michael.brown@example.com', role: Role.FINANCE_MANAGER, designation: 'Finance Manager', gender: 'Male', nationality: 'Canada', salary: 35000 },
+  { name: 'Emily Davis', email: 'emily.davis@example.com', role: Role.MANAGER, designation: 'Creative Director', gender: 'Female', nationality: 'Australia', salary: 28000 },
+  { name: 'Robert Wilson', email: 'robert.wilson@example.com', role: Role.EMPLOYEE, designation: 'Senior Art Director', gender: 'Male', nationality: 'Germany', salary: 18000 },
+  { name: 'Jennifer Lee', email: 'jennifer.lee@example.com', role: Role.EMPLOYEE, designation: 'Senior Graphic Designer', gender: 'Female', nationality: 'South Korea', salary: 14000 },
+  { name: 'David Martinez', email: 'david.martinez@example.com', role: Role.EMPLOYEE, designation: 'Motion Graphics Designer', gender: 'Male', nationality: 'Spain', salary: 12000 },
+  { name: 'Amanda Taylor', email: 'amanda.taylor@example.com', role: Role.MANAGER, designation: 'Digital Director', gender: 'Female', nationality: 'Ireland', salary: 25000 },
+  { name: 'James Anderson', email: 'james.anderson@example.com', role: Role.EMPLOYEE, designation: 'Senior Web Developer', gender: 'Male', nationality: 'New Zealand', salary: 20000 },
+  { name: 'Maria Garcia', email: 'maria.garcia@example.com', role: Role.EMPLOYEE, designation: 'UX/UI Designer', gender: 'Female', nationality: 'Mexico', salary: 15000 },
+  { name: 'Thomas Moore', email: 'thomas.moore@example.com', role: Role.MANAGER, designation: 'Account Director', gender: 'Male', nationality: 'France', salary: 22000 },
+  { name: 'Lisa White', email: 'lisa.white@example.com', role: Role.EMPLOYEE, designation: 'Account Manager', gender: 'Female', nationality: 'Netherlands', salary: 13000 },
+  { name: 'Nicole Harris', email: 'nicole.harris@example.com', role: Role.EMPLOYEE, designation: 'Office Administrator', gender: 'Female', nationality: 'Sweden', salary: 8000 },
+  { name: 'Kevin Clark', email: 'kevin.clark@example.com', role: Role.EMPLOYEE, designation: 'IT Support Specialist', gender: 'Male', nationality: 'Denmark', salary: 10000 },
+  { name: 'Emma Lewis', email: 'emma.lewis@example.com', role: Role.TEMP_STAFF, designation: 'Design Intern', gender: 'Female', nationality: 'Norway', salary: 4500 },
 ];
 
 export async function POST(request: NextRequest) {
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     const tenantId = org.id;
     const today = new Date();
     const currentYear = today.getFullYear();
-    const passwordHash = await bcrypt.hash('BeCreative123!', 10);
+    const passwordHash = await bcrypt.hash('Demo123!', 10);
 
     const results = {
       organization: { id: org.id, name: org.name, slug: org.slug },
@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
             qatarMobile: randomPhone(),
             otherMobileCode: '+' + randomInt(1, 999),
             otherMobileNumber: String(randomInt(1000000000, 9999999999)),
-            personalEmail: emp.email.replace('@becreative.qa', '.personal@gmail.com'),
+            personalEmail: emp.email.replace('@example.com', '.personal@gmail.com'),
             qatarZone: String(randomInt(1, 99)),
             qatarStreet: String(randomInt(100, 999)),
             qatarBuilding: String(randomInt(1, 200)),
@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
             passportExpiry,
             healthCardExpiry,
             sponsorshipType: i < 3 ? 'Self' : 'Company',
-            employeeId: `BC-${currentYear}-${String(i + 1).padStart(3, '0')}`,
+            employeeId: `DEMO-${currentYear}-${String(i + 1).padStart(3, '0')}`,
             designation: emp.designation,
             dateOfJoining,
             hajjLeaveTaken: i === 2,
@@ -359,7 +359,7 @@ export async function POST(request: NextRequest) {
         await prisma.leaveRequest.create({
           data: {
             tenantId,
-            requestNumber: `BC-LR-${String(lrNum++).padStart(5, '0')}`,
+            requestNumber: `DEMO-LR-${String(lrNum++).padStart(5, '0')}`,
             userId: createdUsers[req.userIdx].user.id,
             leaveTypeId: req.type,
             startDate,
@@ -384,21 +384,21 @@ export async function POST(request: NextRequest) {
     const createdAssets: { id: string; status: AssetStatus; assignedUserId: string | null }[] = [];
     if (existingAssets < 10) {
       const assetData = [
-        { tag: 'BC-LAP-001', type: 'Laptop', brand: 'Apple', model: 'MacBook Pro 16" M3 Max', price: 22000, userIdx: 0 },
-        { tag: 'BC-LAP-002', type: 'Laptop', brand: 'Apple', model: 'MacBook Pro 14" M3 Pro', price: 16000, userIdx: 3 },
-        { tag: 'BC-LAP-003', type: 'Laptop', brand: 'Apple', model: 'MacBook Pro 14" M3', price: 12000, userIdx: 4 },
-        { tag: 'BC-LAP-004', type: 'Laptop', brand: 'Apple', model: 'MacBook Pro 14" M2', price: 10500, userIdx: 5 },
-        { tag: 'BC-LAP-005', type: 'Laptop', brand: 'Dell', model: 'XPS 15 9530', price: 9500, userIdx: 8 },
-        { tag: 'BC-MON-001', type: 'Monitor', brand: 'Apple', model: 'Pro Display XDR', price: 19000, userIdx: 3 },
-        { tag: 'BC-MON-002', type: 'Monitor', brand: 'LG', model: 'UltraFine 5K', price: 5500, userIdx: 4 },
-        { tag: 'BC-MON-003', type: 'Monitor', brand: 'ASUS', model: 'ProArt PA32UCX', price: 8500, userIdx: 6 },
-        { tag: 'BC-TAB-001', type: 'Tablet', brand: 'Apple', model: 'iPad Pro 12.9"', price: 6500, userIdx: 5 },
-        { tag: 'BC-TAB-002', type: 'Tablet', brand: 'Wacom', model: 'Cintiq Pro 24', price: 9000, userIdx: 4 },
-        { tag: 'BC-CAM-001', type: 'Camera', brand: 'Sony', model: 'Alpha 7R V', price: 15000, userIdx: null },
-        { tag: 'BC-CAM-002', type: 'Camera', brand: 'Sony', model: 'FX6', price: 25000, userIdx: null },
-        { tag: 'BC-PHN-001', type: 'Mobile Phone', brand: 'Apple', model: 'iPhone 15 Pro Max', price: 6000, userIdx: 0 },
-        { tag: 'BC-LAP-006', type: 'Laptop', brand: 'Apple', model: 'MacBook Air M2', price: 6500, userIdx: null, status: AssetStatus.SPARE },
-        { tag: 'BC-PRN-001', type: 'Printer', brand: 'Canon', model: 'imagePROGRAF PRO-1000', price: 5500, userIdx: null, status: AssetStatus.REPAIR },
+        { tag: 'DEMO-LAP-001', type: 'Laptop', brand: 'Apple', model: 'MacBook Pro 16" M3 Max', price: 22000, userIdx: 0 },
+        { tag: 'DEMO-LAP-002', type: 'Laptop', brand: 'Apple', model: 'MacBook Pro 14" M3 Pro', price: 16000, userIdx: 3 },
+        { tag: 'DEMO-LAP-003', type: 'Laptop', brand: 'Apple', model: 'MacBook Pro 14" M3', price: 12000, userIdx: 4 },
+        { tag: 'DEMO-LAP-004', type: 'Laptop', brand: 'Apple', model: 'MacBook Pro 14" M2', price: 10500, userIdx: 5 },
+        { tag: 'DEMO-LAP-005', type: 'Laptop', brand: 'Dell', model: 'XPS 15 9530', price: 9500, userIdx: 8 },
+        { tag: 'DEMO-MON-001', type: 'Monitor', brand: 'Apple', model: 'Pro Display XDR', price: 19000, userIdx: 3 },
+        { tag: 'DEMO-MON-002', type: 'Monitor', brand: 'LG', model: 'UltraFine 5K', price: 5500, userIdx: 4 },
+        { tag: 'DEMO-MON-003', type: 'Monitor', brand: 'ASUS', model: 'ProArt PA32UCX', price: 8500, userIdx: 6 },
+        { tag: 'DEMO-TAB-001', type: 'Tablet', brand: 'Apple', model: 'iPad Pro 12.9"', price: 6500, userIdx: 5 },
+        { tag: 'DEMO-TAB-002', type: 'Tablet', brand: 'Wacom', model: 'Cintiq Pro 24', price: 9000, userIdx: 4 },
+        { tag: 'DEMO-CAM-001', type: 'Camera', brand: 'Sony', model: 'Alpha 7R V', price: 15000, userIdx: null },
+        { tag: 'DEMO-CAM-002', type: 'Camera', brand: 'Sony', model: 'FX6', price: 25000, userIdx: null },
+        { tag: 'DEMO-PHN-001', type: 'Mobile Phone', brand: 'Apple', model: 'iPhone 15 Pro Max', price: 6000, userIdx: 0 },
+        { tag: 'DEMO-LAP-006', type: 'Laptop', brand: 'Apple', model: 'MacBook Air M2', price: 6500, userIdx: null, status: AssetStatus.SPARE },
+        { tag: 'DEMO-PRN-001', type: 'Printer', brand: 'Canon', model: 'imagePROGRAF PRO-1000', price: 5500, userIdx: null, status: AssetStatus.REPAIR },
       ];
 
       for (const asset of assetData) {
@@ -496,7 +496,7 @@ export async function POST(request: NextRequest) {
         const created = await prisma.supplier.create({
           data: {
             tenantId,
-            suppCode: `BC-SUPP-${String(suppNum++).padStart(3, '0')}`,
+            suppCode: `DEMO-SUPP-${String(suppNum++).padStart(3, '0')}`,
             name: sup.name,
             category: sup.category,
             status: sup.status,
@@ -541,7 +541,7 @@ export async function POST(request: NextRequest) {
         const purchaseRequest = await prisma.purchaseRequest.create({
           data: {
             tenantId,
-            referenceNumber: `BC-PR-${currentYear}${String(today.getMonth() + 1).padStart(2, '0')}-${String(prNum++).padStart(4, '0')}`,
+            referenceNumber: `DEMO-PR-${currentYear}${String(today.getMonth() + 1).padStart(2, '0')}-${String(prNum++).padStart(4, '0')}`,
             title: pr.title,
             description: `Purchase request for ${pr.title.toLowerCase()}`,
             justification: 'Required for ongoing operations and client projects',
@@ -648,7 +648,7 @@ export async function POST(request: NextRequest) {
           data: {
             tenantId,
             documentTypeId: docTypes[i].id,
-            referenceNumber: `BC-DOC-${currentYear}-${String(i + 1).padStart(5, '0')}`,
+            referenceNumber: `DEMO-DOC-${currentYear}-${String(i + 1).padStart(5, '0')}`,
             issuedBy: 'Ministry of Commerce',
             expiryDate: addMonths(today, randomInt(-2, 24)),
             renewalCost: randomInt(200, 5000),
@@ -666,14 +666,14 @@ export async function POST(request: NextRequest) {
 
     if (existingNotifs < 10) {
       const notifData = [
-        { recipientIdx: 1, type: NotificationType.LEAVE_REQUEST_SUBMITTED, title: 'New Leave Request', message: 'Ahmad Mansour has submitted a leave request for 7 days' },
-        { recipientIdx: 1, type: NotificationType.LEAVE_REQUEST_SUBMITTED, title: 'New Leave Request', message: 'Lisa Chen has submitted a leave request for 7 days' },
+        { recipientIdx: 1, type: NotificationType.LEAVE_REQUEST_SUBMITTED, title: 'New Leave Request', message: 'Robert Wilson has submitted a leave request for 7 days' },
+        { recipientIdx: 1, type: NotificationType.LEAVE_REQUEST_SUBMITTED, title: 'New Leave Request', message: 'Jennifer Lee has submitted a leave request for 7 days' },
         { recipientIdx: 4, type: NotificationType.LEAVE_REQUEST_APPROVED, title: 'Leave Approved', message: 'Your leave request has been approved' },
         { recipientIdx: 3, type: NotificationType.DOCUMENT_EXPIRY_WARNING, title: 'QID Expiring Soon', message: 'Your QID will expire in 15 days' },
         { recipientIdx: 5, type: NotificationType.DOCUMENT_EXPIRY_WARNING, title: 'Passport Expiring Soon', message: 'Your passport will expire in 30 days' },
         { recipientIdx: 8, type: NotificationType.DOCUMENT_EXPIRY_WARNING, title: 'Health Card Expiring', message: 'Your health card will expire in 10 days' },
         { recipientIdx: 7, type: NotificationType.ASSET_ASSIGNED, title: 'Asset Assigned', message: 'Dell XPS 15 laptop has been assigned to you' },
-        { recipientIdx: 2, type: NotificationType.PURCHASE_REQUEST_SUBMITTED, title: 'New Purchase Request', message: 'Maya Johnson submitted a purchase request' },
+        { recipientIdx: 2, type: NotificationType.PURCHASE_REQUEST_SUBMITTED, title: 'New Purchase Request', message: 'Emily Davis submitted a purchase request' },
         { recipientIdx: 0, type: NotificationType.APPROVAL_PENDING, title: 'Approval Required', message: 'You have 3 pending approvals waiting' },
         { recipientIdx: 0, type: NotificationType.GENERAL, title: 'System Maintenance', message: 'Scheduled maintenance on Sunday 2AM-4AM' },
       ];
@@ -733,10 +733,10 @@ export async function POST(request: NextRequest) {
       message: `Comprehensive data seeded for ${org.name}`,
       results,
       credentials: {
-        password: 'BeCreative123!',
-        ceo: 'ramees@becreative.qa',
-        hr: 'sara@becreative.qa',
-        finance: 'khalid@becreative.qa',
+        password: 'Demo123!',
+        ceo: 'john.smith@example.com',
+        hr: 'sarah.johnson@example.com',
+        finance: 'michael.brown@example.com',
       },
     });
   } catch (error) {

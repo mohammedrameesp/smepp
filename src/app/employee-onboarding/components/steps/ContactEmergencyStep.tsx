@@ -57,7 +57,7 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
               <div className="space-y-2">
                 <Label>Other Mobile</Label>
                 <PhoneInput
-                  codeValue={(formData.otherMobileCode as string) || '+961'}
+                  codeValue={(formData.otherMobileCode as string) || '+91'}
                   numberValue={(formData.otherMobileNumber as string) || ''}
                   onCodeChange={(val) => updateField('otherMobileCode', val)}
                   onNumberChange={(val) => updateField('otherMobileNumber', val)}
@@ -227,7 +227,7 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
                 <div className="sm:col-span-2 space-y-1">
                   <Label className="text-xs">Phone</Label>
                   <PhoneInput
-                    codeValue={(formData.homeEmergencyPhoneCode as string) || '+961'}
+                    codeValue={(formData.homeEmergencyPhoneCode as string) || '+91'}
                     numberValue={(formData.homeEmergencyPhone as string) || ''}
                     onCodeChange={(val) => updateField('homeEmergencyPhoneCode', val)}
                     onNumberChange={(val) => updateField('homeEmergencyPhone', val)}

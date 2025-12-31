@@ -53,7 +53,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                 <Input
                   value={(formData.qidNumber as string) || ''}
                   onChange={(e) => updateField('qidNumber', e.target.value)}
-                  placeholder="28412345678"
+                  placeholder="284XXXXXXXX"
                   maxLength={11}
                   className={errors.qidNumber ? 'border-red-500' : ''}
                 />
@@ -67,7 +67,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                 <DatePicker
                   value={formatDateForPicker(formData.qidExpiry as string)}
                   onChange={(val) => updateField('qidExpiry', val)}
-                  placeholder="Select date"
+                  placeholder="DD/MM/YYYY"
                 />
                 {errors.qidExpiry && (
                   <p className="text-sm text-red-600">{errors.qidExpiry}</p>
@@ -102,7 +102,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                 <DatePicker
                   value={formatDateForPicker(formData.passportExpiry as string)}
                   onChange={(val) => updateField('passportExpiry', val)}
-                  placeholder="Select date"
+                  placeholder="DD/MM/YYYY"
                 />
                 {errors.passportExpiry && (
                   <p className="text-sm text-red-600">{errors.passportExpiry}</p>
@@ -124,7 +124,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                 <DatePicker
                   value={formatDateForPicker(formData.healthCardExpiry as string)}
                   onChange={(val) => updateField('healthCardExpiry', val)}
-                  placeholder="Select date"
+                  placeholder="DD/MM/YYYY"
                 />
               </div>
               <div className="space-y-2">

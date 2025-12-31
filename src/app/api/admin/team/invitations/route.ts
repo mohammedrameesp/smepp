@@ -59,6 +59,8 @@ export async function GET() {
 const createInviteSchema = z.object({
   email: z.string().email('Invalid email address'),
   role: z.enum(['ADMIN', 'MANAGER', 'MEMBER']).default('MEMBER'),
+  isEmployee: z.boolean().optional(),
+  onWPS: z.boolean().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -84,7 +86,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, role } = result.data;
+    const { email, role, isEmployee, onWPS } = result.data;
 
     // Check org limits
     const org = await prisma.organization.findUnique({
@@ -156,6 +158,8 @@ export async function POST(request: NextRequest) {
         token,
         expiresAt,
         invitedById: session.user.id,
+        isEmployee: isEmployee,
+        isOnWps: onWPS,
       },
     });
 

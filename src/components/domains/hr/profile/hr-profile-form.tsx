@@ -85,7 +85,7 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
       maritalStatus: initialData?.maritalStatus || '',
       nationality: initialData?.nationality || '',
       qatarMobile: initialData?.qatarMobile || '',
-      otherMobileCode: initialData?.otherMobileCode || '+961',
+      otherMobileCode: initialData?.otherMobileCode || '+91',
       otherMobileNumber: initialData?.otherMobileNumber || '',
       personalEmail: initialData?.personalEmail || '',
       qatarZone: initialData?.qatarZone || '',
@@ -99,7 +99,7 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
       localEmergencyPhone: initialData?.localEmergencyPhone || '',
       homeEmergencyName: initialData?.homeEmergencyName || '',
       homeEmergencyRelation: initialData?.homeEmergencyRelation || '',
-      homeEmergencyPhoneCode: initialData?.homeEmergencyPhoneCode || '+961',
+      homeEmergencyPhoneCode: initialData?.homeEmergencyPhoneCode || '+91',
       homeEmergencyPhone: initialData?.homeEmergencyPhone || '',
       qidNumber: initialData?.qidNumber || '',
       qidExpiry: formatDateForPicker(initialData?.qidExpiry),
@@ -498,7 +498,7 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
                 <Input
                   id="qidNumber"
                   {...register('qidNumber')}
-                  placeholder="28412345678"
+                  placeholder="284XXXXXXXX"
                   maxLength={11}
                 />
                 {errors.qidNumber && (
@@ -661,7 +661,7 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
             <Input
               id="iban"
               {...register('iban')}
-              placeholder="QA12ABCD123456789012345678901"
+              placeholder="QA00XXXX0000000000XXXXXXXXXXX"
             />
             {errors.iban && (
               <p className="text-sm text-red-600">{errors.iban.message}</p>

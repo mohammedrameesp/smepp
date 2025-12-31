@@ -655,7 +655,7 @@ function ContactInfoStep({ formData, updateField, errors, workEmail }: StepProps
           <div className="space-y-2">
             <Label>Other Mobile</Label>
             <PhoneInput
-              codeValue={(formData.otherMobileCode as string) || '+961'}
+              codeValue={(formData.otherMobileCode as string) || '+91'}
               numberValue={(formData.otherMobileNumber as string) || ''}
               onCodeChange={(val) => updateField('otherMobileCode', val)}
               onNumberChange={(val) => updateField('otherMobileNumber', val)}
@@ -842,7 +842,7 @@ function EmergencyContactStep({ formData, updateField, errors }: StepProps) {
           <div className="sm:col-span-2 space-y-2">
             <Label className="text-sm">Phone Number</Label>
             <PhoneInput
-              codeValue={(formData.homeEmergencyPhoneCode as string) || '+961'}
+              codeValue={(formData.homeEmergencyPhoneCode as string) || '+91'}
               numberValue={(formData.homeEmergencyPhone as string) || ''}
               onCodeChange={(val) => updateField('homeEmergencyPhoneCode', val)}
               onNumberChange={(val) => updateField('homeEmergencyPhone', val)}
@@ -869,7 +869,7 @@ function IdentificationStep({ formData, updateField, errors }: StepProps) {
             <Input
               value={(formData.qidNumber as string) || ''}
               onChange={(e) => updateField('qidNumber', e.target.value)}
-              placeholder="28412345678"
+              placeholder="284XXXXXXXX"
               maxLength={11}
               className={errors.qidNumber ? 'border-red-500' : ''}
             />
@@ -986,7 +986,7 @@ function BankDetailsStep({ formData, updateField, errors }: StepProps) {
           <Input
             value={(formData.iban as string) || ''}
             onChange={(e) => updateField('iban', e.target.value)}
-            placeholder="QA12ABCD123456789012345678901"
+            placeholder="QA00XXXX0000000000XXXXXXXXXXX"
             className={errors.iban ? 'border-red-500' : ''}
           />
           <FieldError error={errors.iban} />

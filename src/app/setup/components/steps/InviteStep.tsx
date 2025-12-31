@@ -6,14 +6,19 @@
  * @module setup/steps
  */
 
-import { useState } from 'react';
-import { UserPlus, Plus, Trash2, Users } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { UserPlus, Plus, Trash2, Users, UserCheck, Banknote } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { detectServiceEmail } from '@/lib/utils/email-pattern-detection';
 
 interface TeamInvite {
   email: string;
   role: 'ADMIN' | 'MANAGER' | 'MEMBER';
+  isEmployee?: boolean;
+  onWPS?: boolean;
 }
 
 interface InviteStepProps {
@@ -26,6 +31,12 @@ interface InviteStepProps {
 export function InviteStep({ invites, onChange, error, onError }: InviteStepProps) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'ADMIN' | 'MANAGER' | 'MEMBER'>('MEMBER');
+  const [isEmployee, setIsEmployee] = useState(true);
+  const [onWPS, setOnWPS] = useState(true);
+
+  // Detect if email looks like a service/system account
+  const emailDetection = useMemo(() => detectServiceEmail(email), [email]);
+  const showEmployeeOptions = email.includes('@') && !emailDetection.isLikelyServiceEmail;
 
   const addInvite = () => {
     if (!email || !email.includes('@')) {
@@ -36,8 +47,16 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
       onError('This email has already been added');
       return;
     }
-    onChange([...invites, { email, role }]);
+    // Only include employee options if they were shown (i.e., not a service email)
+    const invite: TeamInvite = { email, role };
+    if (showEmployeeOptions) {
+      invite.isEmployee = isEmployee;
+      invite.onWPS = isEmployee ? onWPS : false;
+    }
+    onChange([...invites, invite]);
     setEmail('');
+    setIsEmployee(true);
+    setOnWPS(true);
     onError(null);
   };
 
@@ -94,6 +113,39 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
           </Button>
         </div>
 
+        {/* Employee options - only shown for non-system emails */}
+        {showEmployeeOptions && (
+          <div className="mt-3 flex flex-wrap gap-4 px-1">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="isEmployee"
+                checked={isEmployee}
+                onCheckedChange={(checked) => {
+                  setIsEmployee(!!checked);
+                  if (!checked) setOnWPS(false);
+                }}
+              />
+              <Label htmlFor="isEmployee" className="text-sm text-slate-600 cursor-pointer flex items-center gap-1.5">
+                <UserCheck className="w-3.5 h-3.5" />
+                Employee
+              </Label>
+            </div>
+            {isEmployee && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="onWPS"
+                  checked={onWPS}
+                  onCheckedChange={(checked) => setOnWPS(!!checked)}
+                />
+                <Label htmlFor="onWPS" className="text-sm text-slate-600 cursor-pointer flex items-center gap-1.5">
+                  <Banknote className="w-3.5 h-3.5" />
+                  On WPS
+                </Label>
+              </div>
+            )}
+          </div>
+        )}
+
         {error && (
           <p className="mt-2 text-sm text-red-600">{error}</p>
         )}
@@ -120,7 +172,21 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
                       <p className="text-sm font-medium text-slate-900">
                         {invite.email}
                       </p>
-                      <p className="text-xs text-slate-500">{invite.role}</p>
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <span>{invite.role}</span>
+                        {invite.isEmployee && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded">
+                            <UserCheck className="w-3 h-3" />
+                            Employee
+                          </span>
+                        )}
+                        {invite.onWPS && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-green-50 text-green-600 rounded">
+                            <Banknote className="w-3 h-3" />
+                            WPS
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <button

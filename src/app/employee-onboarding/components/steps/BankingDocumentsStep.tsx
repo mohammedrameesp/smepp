@@ -67,7 +67,7 @@ export function BankingDocumentsStep({ formData, updateField, errors }: BankingD
                 <Input
                   value={(formData.iban as string) || ''}
                   onChange={(e) => updateField('iban', e.target.value.toUpperCase())}
-                  placeholder="QA12ABCD123456789012345678901"
+                  placeholder="QA00XXXX0000000000XXXXXXXXXXX"
                   className={errors.iban ? 'border-red-500' : ''}
                 />
                 {errors.iban && (

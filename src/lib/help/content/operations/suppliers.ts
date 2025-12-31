@@ -222,7 +222,7 @@ export const suppliersContent: HelpModule = {
     {
       field: 'Phone',
       rule: 'Should be 5-15 digits.',
-      example: '+974 44556677',
+      example: '+974 XXXX XXXX',
     },
   ],
 

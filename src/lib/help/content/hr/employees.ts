@@ -160,17 +160,17 @@ export const employeesContent: HelpModule = {
       field: 'QID Number',
       rule: 'Must be exactly 11 digits.',
       required: true,
-      example: '28712345678',
+      example: '287XXXXXXXX',
     },
     {
       field: 'Qatar Mobile',
       rule: 'Must be exactly 8 digits.',
-      example: '55123456',
+      example: '5XXXXXXX',
     },
     {
       field: 'Other Mobile',
       rule: 'Must be 5-15 digits with optional country code.',
-      example: '+91 9876543210',
+      example: '+91 XXXXXXXXXX',
     },
     {
       field: 'Passport Number',
@@ -180,7 +180,7 @@ export const employeesContent: HelpModule = {
     {
       field: 'IBAN',
       rule: 'Qatar IBAN format (spaces allowed).',
-      example: 'QA58 DOHA 0000 0012 3456 7890 12345',
+      example: 'QA00 XXXX 0000 0000 00XX XXXX XXXXX',
     },
     {
       field: 'Email',
@@ -204,7 +204,7 @@ export const employeesContent: HelpModule = {
       id: 'qid-format',
       question: 'What is the correct format for QID numbers?',
       answer:
-        'Qatar ID (QID) numbers must be exactly 11 digits. They typically start with 2 or 3 depending on the document type. Example: 28712345678',
+        'Qatar ID (QID) numbers must be exactly 11 digits. They typically start with 2 or 3 depending on the document type. Example: 287XXXXXXXX',
       roles: ['ADMIN'],
       tags: ['qid', 'format'],
     },
