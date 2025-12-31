@@ -23,7 +23,6 @@ import {
   Building2,
   Activity,
   ShoppingCart,
-  Briefcase,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -34,7 +33,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { NotificationBell } from '@/components/domains/system/notifications';
-import { type BadgeCounts, getBadgeCount } from '@/components/layout/sidebar-config';
+import { type BadgeCounts, getBadgeCount } from '@/components/layout/badge-types';
 import { cn } from '@/lib/utils';
 
 interface AdminTopNavProps {
@@ -63,13 +62,12 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
       { label: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard, moduleId: 'subscriptions' },
       { label: 'Suppliers', href: '/admin/suppliers', icon: Truck, moduleId: 'suppliers', badgeKey: 'pendingSuppliers' },
     ].filter(item => isModuleEnabled(item.moduleId)),
-    projects: [
-      { label: 'Projects', href: '/admin/projects', icon: Briefcase, moduleId: 'projects' },
+    procurement: [
       { label: 'Purchase Requests', href: '/admin/purchase-requests', icon: ShoppingCart, moduleId: 'purchase-requests', badgeKey: 'pendingPurchaseRequests' },
     ].filter(item => isModuleEnabled(item.moduleId)),
   };
 
-  const hasMoreItems = moreItems.operations.length > 0 || moreItems.projects.length > 0;
+  const hasMoreItems = moreItems.operations.length > 0 || moreItems.procurement.length > 0;
 
 
   return (
@@ -152,10 +150,10 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
                           <DropdownMenuSeparator />
                         </>
                       )}
-                      {moreItems.projects.length > 0 && (
+                      {moreItems.procurement.length > 0 && (
                         <>
-                          <DropdownMenuLabel className="text-xs text-slate-400 font-normal">Projects</DropdownMenuLabel>
-                          {moreItems.projects.map((item) => (
+                          <DropdownMenuLabel className="text-xs text-slate-400 font-normal">Procurement</DropdownMenuLabel>
+                          {moreItems.procurement.map((item) => (
                             <DropdownMenuItem key={item.href} asChild>
                               <Link href={item.href} className="flex items-center gap-2 cursor-pointer">
                                 <item.icon className="h-4 w-4 text-slate-400" />

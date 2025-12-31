@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth';
 import { createClient } from '@supabase/supabase-js';
-import logger from '@/lib/log';
+import logger from '@/lib/core/log';
 
 const BACKUP_BUCKET = 'database-backups';
 function validateBackupPath(path: string): string | null {

@@ -1,7 +1,7 @@
 /**
  * @file delete-button.tsx
- * @description Reusable delete button with confirmation dialog
- * @module components/shared
+ * @description Delete button with confirmation dialog (legacy - prefer shared/delete-button)
+ * @module components
  */
 
 'use client';

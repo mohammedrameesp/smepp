@@ -73,7 +73,6 @@ async function getDetailedAnalytics() {
           firstAssetAdded: true,
           firstTeamMemberInvited: true,
           firstEmployeeAdded: true,
-          firstProjectCreated: true,
         },
       },
     },
@@ -88,7 +87,6 @@ async function getDetailedAnalytics() {
     'leave',
     'payroll',
     'purchase-requests',
-    'projects',
   ];
 
   const totalOrgs = organizations.length;
@@ -130,7 +128,6 @@ async function getDetailedAnalytics() {
     firstAssetAdded: 0,
     firstTeamMemberInvited: 0,
     firstEmployeeAdded: 0,
-    firstProjectCreated: 0,
   };
 
   organizations.forEach((org) => {
@@ -140,7 +137,6 @@ async function getDetailedAnalytics() {
     if (org.setupProgress?.firstAssetAdded) onboardingStats.firstAssetAdded++;
     if (org.setupProgress?.firstTeamMemberInvited) onboardingStats.firstTeamMemberInvited++;
     if (org.setupProgress?.firstEmployeeAdded) onboardingStats.firstEmployeeAdded++;
-    if (org.setupProgress?.firstProjectCreated) onboardingStats.firstProjectCreated++;
   });
 
   const onboardingFunnel = [
@@ -173,11 +169,6 @@ async function getDetailedAnalytics() {
       step: 'Add First Employee',
       count: onboardingStats.firstEmployeeAdded,
       percentage: totalOrgs > 0 ? Math.round((onboardingStats.firstEmployeeAdded / totalOrgs) * 100) : 0,
-    },
-    {
-      step: 'Create First Project',
-      count: onboardingStats.firstProjectCreated,
-      percentage: totalOrgs > 0 ? Math.round((onboardingStats.firstProjectCreated / totalOrgs) * 100) : 0,
     },
   ];
 

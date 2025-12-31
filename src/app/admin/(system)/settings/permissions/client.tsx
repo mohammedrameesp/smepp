@@ -71,7 +71,6 @@ export function PermissionsClient({
         leave: 'leave',
         payroll: 'payroll',
         purchase: 'purchase-requests',
-        projects: 'projects',
       };
 
       const moduleSlug = moduleMap[module];

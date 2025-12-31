@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { createClient } from '@supabase/supabase-js';
-import logger from '@/lib/log';
+import logger from '@/lib/core/log';
 import { encryptBackup, redactBackupData } from '@/lib/security/backup-encryption';
 import crypto from 'crypto';
 
@@ -168,7 +168,6 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
       payrollRuns,
       payslips,
       employeeLoans,
-      projects,
       approvalPolicies,
       companyDocumentTypes,
       companyDocuments,
@@ -199,7 +198,6 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
       safeQuery(prisma.payrollRun.findMany(), []),
       safeQuery(prisma.payslip.findMany(), []),
       safeQuery(prisma.employeeLoan.findMany(), []),
-      safeQuery(prisma.project.findMany(), []),
       safeQuery(prisma.approvalPolicy.findMany(), []),
       safeQuery(prisma.companyDocumentType.findMany(), []),
       safeQuery(prisma.companyDocument.findMany(), []),
@@ -247,7 +245,6 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
       payrollRuns,
       payslips,
       employeeLoans,
-      projects,
       approvalPolicies,
       companyDocumentTypes,
       companyDocuments,
@@ -315,7 +312,6 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
       payrollRuns,
       payslips,
       employeeLoans,
-      projects,
       approvalPolicies,
       companyDocumentTypes,
       companyDocuments,
@@ -344,7 +340,6 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
       safeQuery(prisma.payrollRun.findMany({ where: tenantFilter }), []),
       safeQuery(prisma.payslip.findMany({ where: { payrollRun: { tenantId } } }), []),
       safeQuery(prisma.employeeLoan.findMany({ where: tenantFilter }), []),
-      safeQuery(prisma.project.findMany({ where: tenantFilter }), []),
       safeQuery(prisma.approvalPolicy.findMany({ where: tenantFilter }), []),
       safeQuery(prisma.companyDocumentType.findMany({ where: tenantFilter }), []),
       safeQuery(prisma.companyDocument.findMany({ where: tenantFilter }), []),
@@ -393,7 +388,6 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
       payrollRuns,
       payslips,
       employeeLoans,
-      projects,
       approvalPolicies,
       companyDocumentTypes,
       companyDocuments,

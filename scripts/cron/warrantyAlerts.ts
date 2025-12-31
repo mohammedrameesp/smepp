@@ -64,24 +64,35 @@ async function checkWarrantyExpirations() {
         }
       }
 
-      // Log activity
-      await logAction(
-        null, // System action
-        ActivityActions.ALERT_WARRANTY_EXPIRY,
-        'Asset',
-        undefined,
-        {
-          windowDays,
-          count: assets.length,
-          assets: assets.map(a => ({
-            id: a.id,
-            assetTag: a.assetTag,
-            model: a.model,
-            type: a.type,
-            warrantyExpiry: a.warrantyExpiry,
-          })),
+      // Log activity per tenant
+      const assetsByTenant = assets.reduce((acc, asset) => {
+        if (!acc[asset.tenantId]) {
+          acc[asset.tenantId] = [];
         }
-      );
+        acc[asset.tenantId].push(asset);
+        return acc;
+      }, {} as Record<string, typeof assets>);
+
+      for (const [tenantId, tenantAssets] of Object.entries(assetsByTenant)) {
+        await logAction(
+          tenantId,
+          null, // System action
+          ActivityActions.ALERT_WARRANTY_EXPIRY,
+          'Asset',
+          undefined,
+          {
+            windowDays,
+            count: tenantAssets.length,
+            assets: tenantAssets.map(a => ({
+              id: a.id,
+              assetTag: a.assetTag,
+              model: a.model,
+              type: a.type,
+              warrantyExpiry: a.warrantyExpiry,
+            })),
+          }
+        );
+      }
     } else {
       console.log(`✅ No warranties expiring in ${windowDays} days`);
     }

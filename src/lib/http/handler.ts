@@ -48,7 +48,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { formatError, errorResponse, ErrorCodes } from './errors';
-import { logRequest, generateRequestId } from '@/lib/log';
+import { logRequest, generateRequestId } from '@/lib/core/log';
 import { checkRateLimit } from '@/lib/security/rateLimit';
 import {
   TenantContext,

@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/date-format';
 import { parseJsonArray, getExpiryStatus } from '@/lib/hr-utils';
-import { ExpiryDateDisplay, DocumentLink } from '@/components/hr';
+import { ExpiryDateDisplay, DocumentLink } from '@/components/domains/hr/profile';
 import {
   User,
   Phone,

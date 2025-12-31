@@ -227,23 +227,6 @@ export const chatFunctions: ChatFunction[] = [
       },
     },
   },
-  {
-    name: 'getProjectProgress',
-    description: 'Get project status and progress information',
-    parameters: {
-      type: 'object',
-      properties: {
-        projectId: {
-          type: 'string',
-          description: 'Optional project ID or name to look up specific project',
-        },
-        status: {
-          type: 'string',
-          description: 'Filter by status (PLANNING, ACTIVE, ON_HOLD, COMPLETED, CANCELLED)',
-        },
-      },
-    },
-  },
 ];
 
 /**
@@ -810,9 +793,6 @@ export async function executeFunction(
           primaryContactEmail: true,
           primaryContactMobile: true,
           status: true,
-          _count: {
-            select: { projects: true },
-          },
         },
         take: 15,
       });
@@ -824,54 +804,6 @@ export async function executeFunction(
         contactName: s.primaryContactName,
         contactEmail: s.primaryContactEmail,
         contactPhone: s.primaryContactMobile,
-        projectCount: s._count.projects,
-      }));
-    }
-
-    case 'getProjectProgress': {
-      const projectId = args.projectId as string | undefined;
-      const status = args.status as string | undefined;
-
-      const projects = await prisma.project.findMany({
-        where: {
-          tenantId,
-          ...(projectId && {
-            OR: [
-              { id: projectId },
-              { name: { contains: projectId, mode: 'insensitive' } },
-              { code: { contains: projectId, mode: 'insensitive' } },
-            ],
-          }),
-          ...(status && { status: status as 'PLANNING' | 'ACTIVE' | 'ON_HOLD' | 'COMPLETED' | 'CANCELLED' }),
-        },
-        select: {
-          id: true,
-          code: true,
-          name: true,
-          status: true,
-          startDate: true,
-          endDate: true,
-          description: true,
-          manager: { select: { name: true } },
-          _count: {
-            select: {
-              purchaseRequests: true,
-            },
-          },
-        },
-        orderBy: { updatedAt: 'desc' },
-        take: 10,
-      });
-
-      return projects.map(p => ({
-        code: p.code,
-        name: p.name,
-        status: p.status,
-        description: p.description,
-        startDate: p.startDate,
-        endDate: p.endDate,
-        manager: p.manager?.name,
-        purchaseRequestCount: p._count.purchaseRequests,
       }));
     }
 

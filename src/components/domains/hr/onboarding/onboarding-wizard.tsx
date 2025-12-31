@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Progress } from '@/components/ui/progress';
-import { PhoneInput, QatarPhoneInput, DocumentUpload, MultiSelectTags, TagsInput } from '@/components/hr';
+import { PhoneInput, QatarPhoneInput, DocumentUpload, MultiSelectTags, TagsInput } from '@/components/domains/hr/profile';
 import {
   COUNTRIES,
   QATAR_BANKS,

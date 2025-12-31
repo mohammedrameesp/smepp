@@ -115,7 +115,6 @@ const MODULE_ROUTES: Record<string, string[]> = {
   employees: ['/admin/employees'],
   leave: ['/admin/leave', '/employee/leave'],
   payroll: ['/admin/payroll', '/employee/payroll'],
-  projects: ['/admin/projects', '/employee/projects'],
   'purchase-requests': ['/admin/purchase-requests', '/employee/purchase-requests'],
   documents: ['/admin/company-documents'],
 };
@@ -129,7 +128,6 @@ const MODULE_TIERS: Record<string, string> = {
   employees: 'FREE',
   leave: 'FREE',
   payroll: 'FREE',
-  projects: 'FREE',
   'purchase-requests': 'FREE',
   documents: 'FREE',
 };

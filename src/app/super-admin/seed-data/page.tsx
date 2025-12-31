@@ -15,7 +15,6 @@ interface Organization {
     assets: number;
     subscriptions: number;
     suppliers: number;
-    projects: number;
   };
 }
 
@@ -116,7 +115,6 @@ export default function SeedDataPage() {
                     <Badge variant="outline">Assets: {selectedOrgData.counts.assets}</Badge>
                     <Badge variant="outline">Subscriptions: {selectedOrgData.counts.subscriptions}</Badge>
                     <Badge variant="outline">Suppliers: {selectedOrgData.counts.suppliers}</Badge>
-                    <Badge variant="outline">Projects: {selectedOrgData.counts.projects}</Badge>
                   </div>
                 </div>
               )}

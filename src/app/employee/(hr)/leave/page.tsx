@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Clock, FileText } from 'lucide-react';
-import { LeaveBalanceCard } from '@/components/leave';
+import { LeaveBalanceCard } from '@/components/domains/hr/leave';
 import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays, getAnnualLeaveDetails } from '@/lib/leave-utils';
 
 export default async function EmployeeLeavePage() {

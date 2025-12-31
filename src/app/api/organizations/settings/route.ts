@@ -13,7 +13,6 @@ const VALID_MODULES = [
   'employees',
   'leave',
   'payroll',
-  'projects',
   'purchase-requests',
   'documents',
 ];

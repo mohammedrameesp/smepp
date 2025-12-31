@@ -2,7 +2,7 @@ import type { HelpModule } from '../../help-types';
 
 export const purchaseRequestsContent: HelpModule = {
   id: 'purchase-requests',
-  categoryId: 'projects',
+  categoryId: 'procurement',
   name: 'Purchase Requests',
   description: 'Internal procurement workflow and approval process',
   icon: 'ShoppingCart',
@@ -17,7 +17,6 @@ export const purchaseRequestsContent: HelpModule = {
       'Multi-level approval workflow',
       'Track request status from submission to completion',
       'Attach supporting documents',
-      'Link to projects for cost tracking',
       'Support for recurring and one-time purchases',
     ],
     benefits: [
@@ -46,7 +45,7 @@ export const purchaseRequestsContent: HelpModule = {
             step: 1,
             title: 'View Pending Requests',
             description:
-              'Go to Projects > Purchase Requests. Check the pending badge count.',
+              'Go to Operations > Purchase Requests. Check the pending badge count.',
           },
           {
             step: 2,
@@ -62,12 +61,6 @@ export const purchaseRequestsContent: HelpModule = {
           },
           {
             step: 4,
-            title: 'Check Project Link',
-            description:
-              'If linked to a project, verify it\'s the correct cost center.',
-          },
-          {
-            step: 5,
             title: 'Approve or Reject',
             description:
               'Click "Approve" with notes, or "Reject" with a reason.',
@@ -99,7 +92,6 @@ export const purchaseRequestsContent: HelpModule = {
       'Process requests within 48 hours to avoid delays.',
       'Check vendor options before approving large purchases.',
       'Require quotes for purchases over certain amounts.',
-      'Ensure project codes are correctly linked for cost tracking.',
     ],
   },
 
@@ -142,17 +134,11 @@ export const purchaseRequestsContent: HelpModule = {
           },
           {
             step: 5,
-            title: 'Link to Project (Optional)',
-            description:
-              'If this is a project expense, select the project.',
-          },
-          {
-            step: 6,
             title: 'Add Justification',
             description: 'Explain why this purchase is needed.',
           },
           {
-            step: 7,
+            step: 6,
             title: 'Submit',
             description:
               'Click "Submit Request". It will be sent for approval.',
@@ -228,11 +214,6 @@ export const purchaseRequestsContent: HelpModule = {
       field: 'Priority',
       rule: 'Select from Low, Medium, High, Urgent.',
       example: 'Medium',
-    },
-    {
-      field: 'Project Name',
-      rule: 'Required when cost type is "Project Cost".',
-      example: 'Website Redesign',
     },
     {
       field: 'Product URL',
@@ -319,5 +300,5 @@ export const purchaseRequestsContent: HelpModule = {
     },
   ],
 
-  relatedModules: ['projects', 'suppliers'],
+  relatedModules: ['suppliers'],
 };

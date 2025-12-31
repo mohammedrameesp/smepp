@@ -5,7 +5,7 @@
  */
 
 import { ReactNode } from 'react';
-import { theme } from '@/lib/theme';
+import { theme } from '@/lib/core/theme';
 
 interface PageWrapperProps {
   children: ReactNode;

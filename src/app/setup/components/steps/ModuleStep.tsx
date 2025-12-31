@@ -13,7 +13,6 @@ import {
   Users,
   Calendar,
   DollarSign,
-  ClipboardList,
   ShoppingCart,
   FileText,
   Check,
@@ -60,10 +59,9 @@ const MODULE_CATEGORIES: Category[] = [
     ],
   },
   {
-    name: 'Projects & Procurement',
+    name: 'Procurement',
     color: '#a855f7',
     modules: [
-      { id: 'projects', name: 'Projects', description: 'Project management', icon: ClipboardList, defaultOn: false },
       { id: 'purchase-requests', name: 'Purchase Requests', description: 'Procurement workflow', icon: ShoppingCart, defaultOn: false },
     ],
   },

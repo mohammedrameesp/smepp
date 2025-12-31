@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { PurchaseRequestListTable } from '@/components/purchase-requests';
+import { PurchaseRequestListTable } from '@/components/domains/projects/purchase-requests';
 
 export default async function EmployeePurchaseRequestsPage() {
   const session = await getServerSession(authOptions);

@@ -103,32 +103,24 @@ export const hrCategory: CategoryInfo = {
 };
 
 // ============================================================================
-// Projects Category
+// Procurement Category
 // ============================================================================
 
-export const projectsCategory: CategoryInfo = {
-  id: 'projects',
-  name: 'Projects',
-  description: 'Project management and procurement',
-  icon: 'FolderKanban',
+export const procurementCategory: CategoryInfo = {
+  id: 'procurement',
+  name: 'Procurement',
+  description: 'Internal procurement and purchase requests',
+  icon: 'ShoppingCart',
   color: 'text-purple-600',
   bgColor: 'bg-purple-50',
   modules: [
-    {
-      id: 'projects',
-      name: 'Project Management',
-      description: 'Track projects, tasks, and resource allocation',
-      icon: 'Briefcase',
-      adminOnly: false,
-      href: '/help/projects/projects',
-    },
     {
       id: 'purchase-requests',
       name: 'Purchase Requests',
       description: 'Internal procurement workflow and approval process',
       icon: 'ShoppingCart',
       adminOnly: false,
-      href: '/help/projects/purchase-requests',
+      href: '/help/procurement/purchase-requests',
     },
   ],
 };
@@ -187,7 +179,7 @@ export const systemCategory: CategoryInfo = {
 export const helpCategories: CategoryInfo[] = [
   operationsCategory,
   hrCategory,
-  projectsCategory,
+  procurementCategory,
   systemCategory,
 ];
 

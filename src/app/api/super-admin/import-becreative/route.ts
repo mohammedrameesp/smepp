@@ -354,7 +354,6 @@ export async function POST(request: NextRequest) {
               currency: pr.currency || 'QAR',
               totalAmountQAR: pr.totalAmountQAR ? parseFloat(pr.totalAmountQAR) : undefined,
               vendorName: pr.vendorName,
-              projectId: pr.projectId,
               additionalNotes: pr.notes || pr.additionalNotes,
               createdAt: new Date(pr.createdAt),
               updatedAt: new Date(pr.updatedAt),

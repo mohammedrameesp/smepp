@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { getAssetHistory } from '@/lib/asset-history';
+import { getAssetHistory } from '@/lib/domains/operations/assets/asset-history';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getAssetHistoryHandler(request: NextRequest, context: APIContext) {

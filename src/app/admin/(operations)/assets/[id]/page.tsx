@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 import { Role, AssetRequestStatus } from '@prisma/client';
 import Link from 'next/link';
-import AssetHistory from '@/components/AssetHistory';
+import { AssetHistory } from '@/components/domains/operations/assets';
 import { formatDate, formatDateTime } from '@/lib/date-format';
 import { AssetCostBreakdown } from '@/components/domains/operations/assets/asset-cost-breakdown';
 import { CloneAssetButton } from '@/components/domains/operations/assets/clone-asset-button';

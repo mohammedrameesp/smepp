@@ -13,8 +13,7 @@ export type SetupProgressField =
   | 'brandingConfigured'
   | 'firstAssetAdded'
   | 'firstTeamMemberInvited'
-  | 'firstEmployeeAdded'
-  | 'firstProjectCreated';
+  | 'firstEmployeeAdded';
 
 export interface SetupProgressStatus {
   progress: OrganizationSetupProgress | null;
@@ -31,7 +30,6 @@ const CHECKLIST_FIELDS: SetupProgressField[] = [
   'firstAssetAdded',
   'firstTeamMemberInvited',
   'firstEmployeeAdded',
-  'firstProjectCreated',
 ];
 
 /**
@@ -184,12 +182,5 @@ export const CHECKLIST_ITEMS = [
     description: 'Create your first employee record',
     link: '/admin/employees/new',
     icon: 'Users',
-  },
-  {
-    field: 'firstProjectCreated' as const,
-    title: 'Create your first project',
-    description: 'Start managing your projects',
-    link: '/admin/projects/new',
-    icon: 'FolderKanban',
   },
 ];

@@ -1,12 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ConditionalHeader } from "@/components/conditional-header";
 import { Providers } from "@/components/providers";
 import MainContent from "@/components/main-content";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/core/auth";
-import { prisma } from "@/lib/core/prisma";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +25,6 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Durj | Business Management Platform",
   description: "All-in-one asset, HR, and operations management for SMBs",
-  manifest: "/manifest.json",
   robots: {
     index: false,
     follow: false,
@@ -38,39 +33,17 @@ export const metadata: Metadata = {
       follow: false,
     },
   },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Durj",
-  },
-  other: {
-    "mobile-web-app-capable": "yes",
-  },
   icons: {
     icon: "/sme-icon-shield-512.png",
     apple: "/sme-icon-shield-512.png",
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Get enabled modules from database for header/mobile sidebar
-  const session = await getServerSession(authOptions);
-  let enabledModules: string[] = ['assets', 'subscriptions', 'suppliers'];
-
-  if (session?.user?.organizationId) {
-    const org = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
-      select: { enabledModules: true },
-    });
-    if (org?.enabledModules?.length) {
-      enabledModules = org.enabledModules;
-    }
-  }
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -78,7 +51,6 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <Providers>
-          <ConditionalHeader enabledModules={enabledModules} />
           <MainContent>{children}</MainContent>
         </Providers>
       </body>

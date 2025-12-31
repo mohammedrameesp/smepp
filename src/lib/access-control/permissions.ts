@@ -68,13 +68,6 @@ export const PERMISSIONS = {
   PURCHASE_APPROVE: 'purchase:approve',
   PURCHASE_EXPORT: 'purchase:export',
 
-  // Projects Module
-  PROJECTS_VIEW: 'projects:view',
-  PROJECTS_CREATE: 'projects:create',
-  PROJECTS_EDIT: 'projects:edit',
-  PROJECTS_DELETE: 'projects:delete',
-  PROJECTS_MANAGE_TASKS: 'projects:manage-tasks',
-
   // Users/Team Module
   USERS_VIEW: 'users:view',
   USERS_INVITE: 'users:invite',
@@ -196,16 +189,6 @@ export const PERMISSION_GROUPS: Record<string, { label: string; permissions: { k
       { key: 'purchase:export', label: 'Export Requests', description: 'Export purchase request data' },
     ],
   },
-  projects: {
-    label: 'Projects',
-    permissions: [
-      { key: 'projects:view', label: 'View Projects', description: 'View project list and boards' },
-      { key: 'projects:create', label: 'Create Projects', description: 'Create new projects' },
-      { key: 'projects:edit', label: 'Edit Projects', description: 'Modify project settings' },
-      { key: 'projects:delete', label: 'Delete Projects', description: 'Remove projects' },
-      { key: 'projects:manage-tasks', label: 'Manage Tasks', description: 'Create and manage project tasks' },
-    ],
-  },
   users: {
     label: 'Team Management',
     permissions: [
@@ -306,11 +289,6 @@ export const DEFAULT_MANAGER_PERMISSIONS: string[] = [
   'purchase:create',
   'purchase:approve',
   'purchase:export',
-  // Projects
-  'projects:view',
-  'projects:create',
-  'projects:edit',
-  'projects:manage-tasks',
   // Team - view and invite
   'users:view',
   'users:invite',
@@ -350,9 +328,6 @@ export const DEFAULT_MEMBER_PERMISSIONS: string[] = [
   // Purchase requests - can create
   'purchase:view',
   'purchase:create',
-  // Projects - view and manage own tasks
-  'projects:view',
-  'projects:manage-tasks',
   // Team - view only
   'users:view',
   // Documents - view only
@@ -371,7 +346,6 @@ export const MODULE_PERMISSION_MAP: Record<string, string[]> = {
   employees: ['employees'],
   leave: ['leave'],
   payroll: ['payroll'],
-  projects: ['projects'],
   'purchase-requests': ['purchase'],
   'company-documents': ['documents'],
 };

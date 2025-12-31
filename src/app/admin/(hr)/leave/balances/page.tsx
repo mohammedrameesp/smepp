@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AdjustBalanceDialog } from '@/components/leave';
+import { AdjustBalanceDialog } from '@/components/domains/hr/leave';
 import { Search, ChevronLeft, ChevronRight, Plus, User, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import { calculateRemainingBalance, getAnnualLeaveDetails } from '@/lib/leave-utils';
 import Link from 'next/link';

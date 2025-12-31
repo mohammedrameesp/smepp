@@ -1,10 +1,8 @@
 /**
  * @file index.ts
- * @description Barrel export for projects validation schemas (projects, purchase requests)
+ * @description Barrel export for purchase request validation schemas
  * @module validations/projects
  */
 
-// Projects Validations
-export * from './projects';
+// Purchase Request Validations
 export * from './purchase-request';
-export * from './project';

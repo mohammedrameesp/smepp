@@ -10,7 +10,7 @@ import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updateAssetSchema } from '@/lib/validations/assets';
 import { logAction, ActivityActions } from '@/lib/activity';
-import { recordAssetUpdate } from '@/lib/asset-history';
+import { recordAssetUpdate } from '@/lib/domains/operations/assets/asset-history';
 import { sendEmail } from '@/lib/email';
 import { assetAssignmentEmail } from '@/lib/email-templates';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -170,7 +170,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       updateData.assignedUserId = null;
 
       // Record unassignment in history
-      const { recordAssetAssignment } = await import('@/lib/asset-history');
+      const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
       await recordAssetAssignment(
         id,
         currentAsset.assignedUserId,
@@ -182,7 +182,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
 
     // Track location changes
     if (data.location !== undefined && data.location !== currentAsset.location) {
-      const { recordAssetLocationChange } = await import('@/lib/asset-history');
+      const { recordAssetLocationChange } = await import('@/lib/domains/operations/assets/asset-history');
       await recordAssetLocationChange(
         id,
         currentAsset.location,
@@ -211,7 +211,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
 
     if (userChanged) {
       // User assignment changed - create new history record
-      const { recordAssetAssignment } = await import('@/lib/asset-history');
+      const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
       const assignmentDate = data.assignmentDate ? new Date(data.assignmentDate) : new Date();
 
       await recordAssetAssignment(
@@ -281,7 +281,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         }
       } else {
         // No history record exists - create one for the current assignment
-        const { recordAssetAssignment } = await import('@/lib/asset-history');
+        const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
         await recordAssetAssignment(
           id,
           null,  // No previous user

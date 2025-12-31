@@ -1,5 +1,6 @@
 export { AssetActions } from './asset-actions';
 export { AssetCostBreakdown } from './asset-cost-breakdown';
+export { default as AssetHistory } from './asset-history';
 export { AssetListTable } from './asset-list-table';
 export { AssetListTableServerSearch } from './asset-list-table-server-search';
 export { AssetMaintenanceRecords } from './asset-maintenance-records';

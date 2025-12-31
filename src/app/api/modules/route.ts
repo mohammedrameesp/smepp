@@ -310,10 +310,6 @@ async function deleteModuleData(tenantId: string, moduleId: string): Promise<voi
       await prisma.salaryStructure.deleteMany({ where: { tenantId } });
       break;
 
-    case 'projects':
-      await prisma.project.deleteMany({ where: { tenantId } });
-      break;
-
     case 'purchase-requests':
       await prisma.purchaseRequestHistory.deleteMany({
         where: { purchaseRequest: { tenantId } },

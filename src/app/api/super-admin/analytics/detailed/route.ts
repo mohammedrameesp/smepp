@@ -35,7 +35,6 @@ export async function GET() {
             firstAssetAdded: true,
             firstTeamMemberInvited: true,
             firstEmployeeAdded: true,
-            firstProjectCreated: true,
           },
         },
         _count: {
@@ -56,7 +55,6 @@ export async function GET() {
       'leave',
       'payroll',
       'purchase-requests',
-      'projects',
     ];
 
     allModules.forEach((module) => {
@@ -88,7 +86,6 @@ export async function GET() {
       firstAssetAdded: 0,
       firstTeamMemberInvited: 0,
       firstEmployeeAdded: 0,
-      firstProjectCreated: 0,
     };
 
     const orgsWithProgress = organizations.filter((org) => org.setupProgress);
@@ -99,7 +96,6 @@ export async function GET() {
       if (org.setupProgress?.firstAssetAdded) onboardingStats.firstAssetAdded++;
       if (org.setupProgress?.firstTeamMemberInvited) onboardingStats.firstTeamMemberInvited++;
       if (org.setupProgress?.firstEmployeeAdded) onboardingStats.firstEmployeeAdded++;
-      if (org.setupProgress?.firstProjectCreated) onboardingStats.firstProjectCreated++;
     });
 
     // Calculate percentages
@@ -134,11 +130,6 @@ export async function GET() {
         step: 'Add First Employee',
         count: onboardingStats.firstEmployeeAdded,
         percentage: totalOrgs > 0 ? Math.round((onboardingStats.firstEmployeeAdded / totalOrgs) * 100) : 0,
-      },
-      {
-        step: 'Create First Project',
-        count: onboardingStats.firstProjectCreated,
-        percentage: totalOrgs > 0 ? Math.round((onboardingStats.firstProjectCreated / totalOrgs) * 100) : 0,
       },
     ];
 

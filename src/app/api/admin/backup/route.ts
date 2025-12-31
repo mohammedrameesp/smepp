@@ -3,7 +3,7 @@ import { prisma } from '@/lib/core/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth';
 import { createClient } from '@supabase/supabase-js';
-import logger from '@/lib/log';
+import logger from '@/lib/core/log';
 
 const BACKUP_BUCKET = 'database-backups';
 

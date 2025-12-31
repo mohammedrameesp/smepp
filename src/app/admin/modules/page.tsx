@@ -54,7 +54,6 @@ const ICONS: Record<string, React.ElementType> = {
 const CATEGORY_LABELS: Record<string, string> = {
   operations: 'Operations',
   hr: 'Human Resources',
-  projects: 'Projects',
   system: 'System',
 };
 

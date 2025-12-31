@@ -38,6 +38,8 @@
   "exclude": [
     "node_modules",
     "prisma/seed.ts",
-    "scripts/**/*"
+    "scripts/**/*",
+    "_to-review-and-delete/**/*",
+    "_production-cleanup/**/*"
   ]
 }

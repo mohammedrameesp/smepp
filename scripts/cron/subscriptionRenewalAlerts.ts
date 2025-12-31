@@ -62,22 +62,33 @@ async function checkSubscriptionRenewals() {
         }
       }
 
-      // Log activity
-      await logAction(
-        null, // System action
-        ActivityActions.ALERT_SUBSCRIPTION_RENEWAL,
-        'Subscription',
-        undefined,
-        {
-          windowDays,
-          count: subscriptions.length,
-          subscriptions: subscriptions.map(s => ({
-            id: s.id,
-            serviceName: s.serviceName,
-            renewalDate: s.renewalDate,
-          })),
+      // Log activity per tenant
+      const subscriptionsByTenant = subscriptions.reduce((acc, subscription) => {
+        if (!acc[subscription.tenantId]) {
+          acc[subscription.tenantId] = [];
         }
-      );
+        acc[subscription.tenantId].push(subscription);
+        return acc;
+      }, {} as Record<string, typeof subscriptions>);
+
+      for (const [tenantId, tenantSubscriptions] of Object.entries(subscriptionsByTenant)) {
+        await logAction(
+          tenantId,
+          null, // System action
+          ActivityActions.ALERT_SUBSCRIPTION_RENEWAL,
+          'Subscription',
+          undefined,
+          {
+            windowDays,
+            count: tenantSubscriptions.length,
+            subscriptions: tenantSubscriptions.map(s => ({
+              id: s.id,
+              serviceName: s.serviceName,
+              renewalDate: s.renewalDate,
+            })),
+          }
+        );
+      }
     } else {
       console.log(`✅ No subscriptions expiring in ${windowDays} days`);
     }

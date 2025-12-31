@@ -14,7 +14,6 @@ import {
   Calendar,
   DollarSign,
   ShoppingCart,
-  FolderKanban,
   FileCheck,
   type LucideIcon,
 } from 'lucide-react';
@@ -23,7 +22,7 @@ import {
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export type ModuleCategory = 'operations' | 'hr' | 'projects' | 'system';
+export type ModuleCategory = 'operations' | 'hr' | 'system';
 
 export interface ModuleDefinition {
   id: string;
@@ -200,37 +199,18 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // PROJECT MODULES (All FREE for now - pricing tiers to be defined later)
+  // PROCUREMENT MODULE
   // ─────────────────────────────────────────────────────────────────────────────
-  projects: {
-    id: 'projects',
-    name: 'Project Management',
-    description: 'Track projects, tasks, and resource allocation',
-    icon: FolderKanban,
-    iconName: 'FolderKanban',
-    category: 'projects',
-    tier: 'FREE',
-    isFree: true,
-    requires: [],
-    requiredBy: ['purchase-requests'],
-    adminRoutes: ['/admin/projects'],
-    employeeRoutes: ['/employee/projects'],
-    apiRoutes: ['/api/projects'],
-    isCore: false,
-    isBeta: false,
-    isDeprecated: false,
-  },
-
   'purchase-requests': {
     id: 'purchase-requests',
     name: 'Purchase Requests',
     description: 'Internal procurement workflow and approval process',
     icon: ShoppingCart,
     iconName: 'ShoppingCart',
-    category: 'projects',
+    category: 'operations',
     tier: 'FREE',
     isFree: true,
-    requires: [], // projects is optional
+    requires: [],
     requiredBy: [],
     adminRoutes: ['/admin/purchase-requests'],
     employeeRoutes: ['/employee/purchase-requests'],

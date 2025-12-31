@@ -9,7 +9,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth';
 import { createClient } from '@supabase/supabase-js';
 import { prisma } from '@/lib/core/prisma';
-import logger from '@/lib/log';
+import logger from '@/lib/core/log';
 import { requireRecent2FA } from '@/lib/two-factor';
 
 const BACKUP_BUCKET = 'database-backups';
@@ -100,7 +100,6 @@ export async function POST(request: NextRequest) {
         await tx.companyDocument.deleteMany({ where: { tenantId } });
         await tx.companyDocumentType.deleteMany({ where: { tenantId } });
         await tx.approvalPolicy.deleteMany({ where: { tenantId } });
-        await tx.project.deleteMany({ where: { tenantId } });
         await tx.employeeLoan.deleteMany({ where: { tenantId } });
         await tx.payslip.deleteMany({ where: { payrollRun: { tenantId } } });
         await tx.payrollRun.deleteMany({ where: { tenantId } });
@@ -227,11 +226,6 @@ export async function POST(request: NextRequest) {
         if (backupData.employeeLoans?.length) {
           await tx.employeeLoan.createMany({ data: backupData.employeeLoans, skipDuplicates: true });
           results.push({ table: 'employeeLoans', count: backupData.employeeLoans.length, success: true });
-        }
-
-        if (backupData.projects?.length) {
-          await tx.project.createMany({ data: backupData.projects, skipDuplicates: true });
-          results.push({ table: 'projects', count: backupData.projects.length, success: true });
         }
 
         if (backupData.approvalPolicies?.length) {

@@ -2,10 +2,8 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  // Skip type checking during build (legacy routes need updates)
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  // PROD-002: TypeScript errors must be fixed before build
+  // Removed ignoreBuildErrors to catch type issues in CI/CD
   // Note: eslint config moved to eslint.config.js (Next.js 15+ change)
   // Allow larger file uploads (10MB)
   experimental: {
@@ -51,6 +49,36 @@ const nextConfig: NextConfig = {
     ];
 
     return [
+      // SEC-008: CORS policy for API routes
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Credentials',
+            value: 'true',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            // Allow same-origin and tenant subdomains only
+            // PROD-001: Use environment variable for domain
+            value: process.env.NODE_ENV === 'production'
+              ? `https://*.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'example.com'}`
+              : 'http://localhost:3000',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization',
+          },
+          {
+            key: 'Access-Control-Max-Age',
+            value: '86400',
+          },
+        ],
+      },
       {
         source: '/(.*)',
         headers: [

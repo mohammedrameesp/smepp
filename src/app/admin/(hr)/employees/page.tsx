@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
-import { EmployeeListTable } from '@/components/employees';
+import { EmployeeListTable } from '@/components/domains/hr/employees';
 import { prisma } from '@/lib/core/prisma';
 import { UserPlus, ClipboardList, AlertTriangle, Calendar } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';

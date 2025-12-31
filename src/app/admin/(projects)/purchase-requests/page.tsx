@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { Role } from '@prisma/client';
-import { PurchaseRequestListTable } from '@/components/purchase-requests';
+import { PurchaseRequestListTable } from '@/components/domains/projects/purchase-requests';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 export default async function AdminPurchaseRequestsPage() {

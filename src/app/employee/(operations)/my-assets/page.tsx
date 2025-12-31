@@ -6,8 +6,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getUserSubscriptionHistory } from '@/lib/subscription-lifecycle';
 import { getUserAssetHistory } from '@/lib/asset-lifecycle';
-import { UserSubscriptionHistory } from '@/components/users/user-subscription-history';
-import { UserAssetHistory } from '@/components/users/user-asset-history';
+import { UserSubscriptionHistory, UserAssetHistory } from '@/components/domains/system/users';
 
 export default async function MyHoldingsPage() {
   const session = await getServerSession(authOptions);

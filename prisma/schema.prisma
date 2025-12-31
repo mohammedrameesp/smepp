@@ -166,24 +166,6 @@ enum WhatsAppSource {
   CUSTOM // Use tenant's own config
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PROJECT MODULE ENUMS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-enum ProjectStatus {
-  PLANNING
-  ACTIVE
-  ON_HOLD
-  COMPLETED
-  CANCELLED
-}
-
-enum ClientType {
-  INTERNAL
-  EXTERNAL
-  SUPPLIER
-}
-
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -248,9 +230,9 @@ model User {
 
   // Two-Factor Authentication (for super admins)
   twoFactorSecret      String? // Encrypted TOTP secret
-  twoFactorEnabled     Boolean  @default(false)
+  twoFactorEnabled     Boolean   @default(false)
   twoFactorBackupCodes String[] // Hashed backup codes
-  pending2FATokenJti   String?  // Current pending 2FA token's unique ID (prevents replay)
+  pending2FATokenJti   String? // Current pending 2FA token's unique ID (prevents replay)
   twoFactorVerifiedAt  DateTime? // Last 2FA verification timestamp (for sensitive ops re-verification)
 
   accounts                     Account[]
@@ -296,10 +278,6 @@ model User {
   createdLoans            EmployeeLoan[]           @relation("LoanCreator")
   recordedRepayments      LoanRepayment[]          @relation("RepaymentRecorder")
 
-  // Project Management relations
-  managedProjects Project[] @relation("ProjectManager")
-  createdProjects Project[] @relation("ProjectCreator")
-
   // Asset Request relations
   assetRequests                AssetRequest[]        @relation("AssetRequestUser")
   assetRequestsAssigned        AssetRequest[]        @relation("AssetRequestAssigner")
@@ -333,6 +311,9 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Index for scheduled deletion cron job
+  @@index([scheduledDeletionAt])
 }
 
 model VerificationToken {
@@ -382,7 +363,7 @@ model Organization {
 
   // AI Chat feature (super-admin controlled)
   aiChatEnabled        Boolean @default(false)
-  aiTokenBudgetMonthly Int?    // Custom monthly AI token limit (null = use tier default)
+  aiTokenBudgetMonthly Int? // Custom monthly AI token limit (null = use tier default)
 
   // Additional currencies beyond QAR (e.g., ["USD", "EUR"])
   additionalCurrencies String[] @default([])
@@ -432,6 +413,7 @@ model Organization {
 
   // Tenant-scoped data relations
   assets                Asset[]
+  assetHistories        AssetHistory[]
   subscriptions         Subscription[]
   activityLogs          ActivityLog[]
   notifications         Notification[]
@@ -452,7 +434,6 @@ model Organization {
   payrollRuns           PayrollRun[]
   payslips              Payslip[]
   employeeLoans         EmployeeLoan[]
-  projects              Project[]
   assetRequests         AssetRequest[]
   companyDocumentTypes  CompanyDocumentType[]
   companyDocuments      CompanyDocument[]
@@ -548,7 +529,6 @@ model OrganizationSetupProgress {
   firstAssetAdded        Boolean @default(false) // At least one asset created
   firstTeamMemberInvited Boolean @default(false) // At least one invitation sent
   firstEmployeeAdded     Boolean @default(false) // At least one HR profile created
-  firstProjectCreated    Boolean @default(false) // At least one project created
 
   // Allow users to dismiss the checklist
   isDismissed Boolean @default(false)
@@ -557,6 +537,29 @@ model OrganizationSetupProgress {
   updatedAt DateTime @updatedAt
 
   @@index([organizationId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPERSONATION TOKEN REVOCATION (Super Admin Security)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model RevokedImpersonationToken {
+  id        String   @id @default(cuid())
+  jti       String   @unique // JWT ID from the impersonation token
+  revokedAt DateTime @default(now())
+  revokedBy String // Super admin ID who revoked
+  reason    String? // Optional reason for revocation
+
+  // Token metadata (for audit purposes)
+  superAdminId     String // Original token issuer
+  organizationId   String // Target organization
+  organizationSlug String
+  issuedAt         DateTime // When the original token was issued
+  expiresAt        DateTime // When the original token would have expired
+
+  @@index([jti])
+  @@index([superAdminId])
+  @@index([expiresAt]) // For cleanup of expired entries
 }
 
 // Project model removed - projects are now handled separately by accreditation module
@@ -578,7 +581,7 @@ model Asset {
   invoiceNumber   String? // #12 Invoice/PO Number
   assignedUserId  String? // #13 Assigned To/User
   assignedUser    User?           @relation(fields: [assignedUserId], references: [id])
-  assignmentDate  String? // When the asset was assigned to current user
+  assignmentDate  DateTime? // When the asset was assigned to current user
   status          AssetStatus     @default(IN_USE) // #14 Status/Condition
   acquisitionType AcquisitionType @default(NEW_PURCHASE) // #15 Asset Movement (New/Transferred)
   transferNotes   String? // Notes for transferred assets
@@ -632,6 +635,8 @@ enum AssetHistoryAction {
 
 model AssetHistory {
   id             String             @id @default(cuid())
+  tenantId       String
+  tenant         Organization       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assetId        String
   asset          Asset              @relation(fields: [assetId], references: [id], onDelete: Cascade)
   action         AssetHistoryAction
@@ -653,6 +658,7 @@ model AssetHistory {
   @@index([assetId])
   @@index([createdAt])
   @@index([toUserId])
+  @@index([tenantId])
 }
 
 model Subscription {
@@ -830,6 +836,8 @@ model ApprovalStep {
   @@index([requiredRole, status])
   @@index([approverId])
   @@index([tenantId])
+  @@index([tenantId, status, requiredRole])
+  @@index([tenantId, approverId, status])
 }
 
 model ApproverDelegation {
@@ -899,7 +907,6 @@ model Supplier {
   approvedById           String?
   approvedBy             User?                @relation("SupplierApprover", fields: [approvedById], references: [id])
   engagements            SupplierEngagement[]
-  projects               Project[]
   createdAt              DateTime             @default(now())
   updatedAt              DateTime             @updatedAt
 
@@ -940,7 +947,7 @@ model SystemSettings {
   id        String       @id @default(cuid())
   tenantId  String
   tenant    Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  key       String       // Removed @unique - now part of composite unique constraint
+  key       String // Removed @unique - now part of composite unique constraint
   value     String
   updatedBy String?
   updater   User?        @relation("SystemSettingsUpdater", fields: [updatedBy], references: [id])
@@ -1055,6 +1062,9 @@ model HRProfile {
   @@index([tenantId, qidExpiry])
   @@index([tenantId, passportExpiry])
   @@index([tenantId, contractExpiry])
+  // Service date indexes for gratuity/anniversary queries
+  @@index([tenantId, dateOfJoining])
+  @@index([tenantId, terminationDate])
 }
 
 enum ProfileChangeRequestStatus {
@@ -1182,10 +1192,6 @@ model PurchaseRequest {
   completedAt     DateTime?
   completionNotes String?
 
-  // Link to Project module
-  projectId String?
-  project   Project? @relation(fields: [projectId], references: [id])
-
   // Relations
   items   PurchaseRequestItem[]
   history PurchaseRequestHistory[]
@@ -1200,7 +1206,6 @@ model PurchaseRequest {
   @@index([createdAt])
   @@index([purchaseType])
   @@index([costType])
-  @@index([projectId])
   @@index([tenantId])
 }
 
@@ -1317,7 +1322,7 @@ model LeaveBalance {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, leaveTypeId, year])
+  @@unique([tenantId, userId, leaveTypeId, year])
   @@index([userId])
   @@index([leaveTypeId])
   @@index([year])
@@ -1376,6 +1381,9 @@ model LeaveRequest {
   @@index([startDate])
   @@index([endDate])
   @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, userId])
+  @@index([tenantId, startDate, status])
 }
 
 model LeaveRequestHistory {
@@ -1543,6 +1551,7 @@ model PayrollRun {
   @@index([year, month])
   @@index([referenceNumber])
   @@index([tenantId])
+  @@index([tenantId, status])
 }
 
 model PayrollHistory {
@@ -1616,6 +1625,7 @@ model Payslip {
   @@index([userId])
   @@index([payslipNumber])
   @@index([tenantId])
+  @@index([tenantId, isPaid])
 }
 
 model PayslipDeduction {
@@ -1712,52 +1722,6 @@ model LoanRepayment {
 
   @@index([loanId])
   @@index([paymentDate])
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// PROJECT MODULE - Simple project tracking for linking modules
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model Project {
-  id          String        @id @default(cuid())
-  tenantId    String
-  tenant      Organization  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  code        String // {PREFIX}-PRJ-YYYY-XXXX (tenant-scoped unique)
-  name        String
-  description String?
-  status      ProjectStatus @default(PLANNING)
-
-  // Client Info (simplified)
-  clientType    ClientType @default(INTERNAL)
-  supplierId    String?
-  supplier      Supplier?  @relation(fields: [supplierId], references: [id])
-  clientName    String? // For external clients not in Supplier table
-  clientContact String?
-
-  // Timeline
-  startDate DateTime?
-  endDate   DateTime?
-
-  // Ownership
-  managerId       String
-  manager         User    @relation("ProjectManager", fields: [managerId], references: [id])
-  documentHandler String? // Name of person handling documentation
-
-  // Cross-module relations (simple links - no cost tracking)
-  purchaseRequests PurchaseRequest[]
-
-  // Audit
-  createdById String
-  createdBy   User     @relation("ProjectCreator", fields: [createdById], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([tenantId, code])
-  @@index([status])
-  @@index([code])
-  @@index([managerId])
-  @@index([startDate, endDate])
-  @@index([tenantId])
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2005,33 +1969,33 @@ model AIChatUsage {
 
 // AI Chat Audit Log - For security monitoring and compliance
 model AIChatAuditLog {
-  id             String   @id @default(cuid())
+  id             String  @id @default(cuid())
   tenantId       String
   userId         String
   conversationId String?
 
   // Privacy-friendly query tracking
-  queryHash      String   // SHA-256 hash of the query (for pattern detection without storing content)
-  queryLength    Int      // Character count of original query
+  queryHash   String // SHA-256 hash of the query (for pattern detection without storing content)
+  queryLength Int // Character count of original query
 
   // What was accessed
-  functionsCalled Json     // Array of function names called
-  dataAccessed    Json     // Summary of data types accessed
+  functionsCalled Json // Array of function names called
+  dataAccessed    Json // Summary of data types accessed
 
   // Performance & usage
   tokensUsed     Int
   responseTimeMs Int
 
   // Security metadata
-  ipAddress      String?
-  userAgent      String?
+  ipAddress String?
+  userAgent String?
 
   // Risk assessment
-  flagged        Boolean  @default(false)
-  flagReasons    String[] @default([])
-  riskScore      Int      @default(0)
+  flagged     Boolean  @default(false)
+  flagReasons String[] @default([])
+  riskScore   Int      @default(0)
 
-  createdAt      DateTime @default(now())
+  createdAt DateTime @default(now())
 
   tenant Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)

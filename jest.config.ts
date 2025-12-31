@@ -33,16 +33,30 @@ const config: Config = {
     '!src/app/**', // Exclude Next.js app directory (test via integration tests)
   ],
 
-  // Coverage thresholds disabled - most code in src/app excluded from coverage
-  // Re-enable when lib/ and components/ have sufficient test coverage
-  // coverageThreshold: {
-  //   global: {
-  //     branches: 50,
-  //     functions: 50,
-  //     lines: 50,
-  //     statements: 50,
-  //   },
-  // },
+  // Coverage thresholds for library code (src/app excluded from coverage)
+  // Note: Global thresholds are conservative as some modules (whatsapp, etc.) lack tests
+  // Core business logic in domains/ has much higher coverage
+  coverageThreshold: {
+    global: {
+      branches: 5,
+      functions: 25,
+      lines: 8,
+      statements: 8,
+    },
+    // Higher thresholds for critical business logic (these directories have good coverage)
+    'src/lib/domains/hr/payroll/': {
+      branches: 40,
+      functions: 45,
+      lines: 50,
+      statements: 50,
+    },
+    'src/lib/domains/hr/leave/': {
+      branches: 30,
+      functions: 40,
+      lines: 40,
+      statements: 40,
+    },
+  },
 
   // Ignore patterns
   testPathIgnorePatterns: [

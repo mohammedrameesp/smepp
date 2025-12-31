@@ -20,8 +20,6 @@ import {
   LeaveRequestType,
   LeaveCategory,
   SupplierStatus,
-  ProjectStatus,
-  ClientType,
   NotificationType,
   PurchaseRequestStatus,
   PurchaseRequestPriority,
@@ -149,7 +147,6 @@ export async function POST(request: NextRequest) {
       subscriptions: { created: 0 },
       suppliers: { created: 0 },
       supplierEngagements: { created: 0 },
-      projects: { created: 0 },
       purchaseRequests: { created: 0 },
       salaryStructures: { created: 0 },
       payrollRuns: { created: 0 },
@@ -519,48 +516,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ============================================
-    // 8. CREATE PROJECTS (10)
-    // ============================================
-    const existingProjects = await prisma.project.count({ where: { tenantId } });
-
-    const createdProjects: { id: string }[] = [];
-    if (existingProjects < 10) {
-      const projectData = [
-        { name: 'Qatar Airways Brand Refresh', client: 'Qatar Airways', status: ProjectStatus.ACTIVE, managerIdx: 3 },
-        { name: 'Ooredoo Digital Campaign 2024', client: 'Ooredoo Qatar', status: ProjectStatus.ACTIVE, managerIdx: 7 },
-        { name: 'Lusail City Branding', client: 'Lusail City', status: ProjectStatus.ACTIVE, managerIdx: 4 },
-        { name: 'Internal Website Redesign', client: null, status: ProjectStatus.ACTIVE, managerIdx: 8 },
-        { name: 'QNB Social Media Management', client: 'Qatar National Bank', status: ProjectStatus.ACTIVE, managerIdx: 10 },
-        { name: 'FIFA World Cup Legacy Content', client: 'Supreme Committee', status: ProjectStatus.PLANNING, managerIdx: 3 },
-        { name: 'Hamad Medical Awareness Campaign', client: 'Hamad Medical Corporation', status: ProjectStatus.PLANNING, managerIdx: 6 },
-        { name: 'Vodafone Product Launch', client: 'Vodafone Qatar', status: ProjectStatus.COMPLETED, managerIdx: 10 },
-        { name: 'Katara Annual Report', client: 'Katara Cultural Village', status: ProjectStatus.COMPLETED, managerIdx: 4 },
-        { name: 'Al Jazeera Rebranding Pitch', client: 'Al Jazeera', status: ProjectStatus.ON_HOLD, managerIdx: 3 },
-      ];
-
-      let prjNum = 1;
-      for (const prj of projectData) {
-        const created = await prisma.project.create({
-          data: {
-            tenantId,
-            code: `BC-PRJ-${currentYear}-${String(prjNum++).padStart(3, '0')}`,
-            name: prj.name,
-            status: prj.status,
-            clientType: prj.client ? ClientType.EXTERNAL : ClientType.INTERNAL,
-            clientName: prj.client,
-            startDate: addMonths(today, -randomInt(1, 12)),
-            endDate: prj.status === ProjectStatus.COMPLETED ? addMonths(today, -randomInt(1, 6)) : addMonths(today, randomInt(1, 6)),
-            managerId: createdUsers[prj.managerIdx].user.id,
-            createdById: createdUsers[0].user.id,
-          },
-        });
-        createdProjects.push({ id: created.id });
-        results.projects.created++;
-      }
-    }
-
-    // ============================================
-    // 9. CREATE PURCHASE REQUESTS (12)
+    // 8. CREATE PURCHASE REQUESTS (12)
     // ============================================
     const existingPRs = await prisma.purchaseRequest.count({ where: { tenantId } });
 
@@ -751,7 +707,6 @@ export async function POST(request: NextRequest) {
         { action: 'LEAVE_REQUEST_SUBMITTED', entityType: 'LeaveRequest', userIdx: 4 },
         { action: 'LEAVE_REQUEST_APPROVED', entityType: 'LeaveRequest', userIdx: 1 },
         { action: 'SALARY_STRUCTURE_CREATED', entityType: 'SalaryStructure', userIdx: 2 },
-        { action: 'PROJECT_CREATED', entityType: 'Project', userIdx: 0 },
         { action: 'SUPPLIER_APPROVED', entityType: 'Supplier', userIdx: 0 },
         { action: 'SUBSCRIPTION_CREATED', entityType: 'Subscription', userIdx: 13 },
         { action: 'PURCHASE_REQUEST_SUBMITTED', entityType: 'PurchaseRequest', userIdx: 3 },
@@ -810,7 +765,6 @@ export async function GET() {
             assets: true,
             subscriptions: true,
             suppliers: true,
-            projects: true,
           },
         },
       },

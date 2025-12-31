@@ -14,7 +14,6 @@ import {
   Package,
   UserPlus,
   Users,
-  FolderKanban,
   Loader2,
   Sparkles,
 } from 'lucide-react';
@@ -30,7 +29,6 @@ interface SetupProgressData {
     firstAssetAdded: boolean;
     firstTeamMemberInvited: boolean;
     firstEmployeeAdded: boolean;
-    firstProjectCreated: boolean;
   } | null;
   completedCount: number;
   totalCount: number;
@@ -88,13 +86,6 @@ const CHECKLIST_ITEMS: ChecklistItemConfig[] = [
     description: 'Create your first employee record',
     link: '/admin/employees/new',
     icon: Users,
-  },
-  {
-    field: 'firstProjectCreated',
-    title: 'Create your first project',
-    description: 'Start managing your projects',
-    link: '/admin/projects/new',
-    icon: FolderKanban,
   },
 ];
 

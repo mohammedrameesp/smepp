@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Suspense } from 'react';
-import { type BadgeCounts } from '@/components/layout/sidebar-config';
+import { type BadgeCounts } from '@/components/layout/badge-types';
 import { ImpersonationHandler, ImpersonationBanner } from '@/components/impersonation';
 import { AdminTopNav } from '@/components/layout/admin-top-nav';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';

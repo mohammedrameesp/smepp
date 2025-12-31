@@ -10,15 +10,17 @@ import Link from 'next/link';
 import { formatDate, formatDateTime } from '@/lib/date-format';
 import { Edit, User, AlertTriangle, Package, CreditCard, FileText, Calendar, Clock, Mail, Trash2 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
-import { EmployeeHRViewSection } from '@/components/employees';
+import { EmployeeHRViewSection } from '@/components/domains/hr/employees';
 import { getUserSubscriptionHistory } from '@/lib/subscription-lifecycle';
 import { getUserAssetHistory } from '@/lib/asset-lifecycle';
-import { UserSubscriptionHistory } from '@/components/users/user-subscription-history';
-import { UserAssetHistory } from '@/components/users/user-asset-history';
-import { DeleteUserButton } from '@/components/users/delete-user-button';
-import { ExportUserPDFButton } from '@/components/users/export-user-pdf-button';
-import { EmployeeLeaveSection } from '@/components/employees';
-import { RestoreUserButton } from '@/components/users/restore-user-button';
+import {
+  UserSubscriptionHistory,
+  UserAssetHistory,
+  DeleteUserButton,
+  ExportUserPDFButton,
+  RestoreUserButton
+} from '@/components/domains/system/users';
+import { EmployeeLeaveSection } from '@/components/domains/hr/employees';
 
 interface Props {
   params: Promise<{ id: string }>;

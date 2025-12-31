@@ -9,7 +9,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { assignAssetSchema } from '@/lib/validations/assets';
 import { logAction, ActivityActions } from '@/lib/activity';
-import { recordAssetAssignment } from '@/lib/asset-history';
+import { recordAssetAssignment } from '@/lib/domains/operations/assets/asset-history';
 import { sendEmail } from '@/lib/email';
 import { assetAssignmentEmail } from '@/lib/email-templates';
 import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';

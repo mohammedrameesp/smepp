@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { LeaveRequestsTable } from '@/components/leave';
+import { LeaveRequestsTable } from '@/components/domains/hr/leave';
 
 export default async function EmployeeLeaveRequestsPage() {
   const session = await getServerSession(authOptions);

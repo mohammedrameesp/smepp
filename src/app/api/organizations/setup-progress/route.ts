@@ -24,7 +24,6 @@ const VALID_FIELDS: SetupProgressField[] = [
   'firstAssetAdded',
   'firstTeamMemberInvited',
   'firstEmployeeAdded',
-  'firstProjectCreated',
 ];
 
 const updateProgressSchema = z.object({
@@ -35,7 +34,6 @@ const updateProgressSchema = z.object({
     'firstAssetAdded',
     'firstTeamMemberInvited',
     'firstEmployeeAdded',
-    'firstProjectCreated',
   ]),
   value: z.boolean().default(true),
 });
@@ -49,7 +47,6 @@ const bulkUpdateSchema = z.object({
       'firstAssetAdded',
       'firstTeamMemberInvited',
       'firstEmployeeAdded',
-      'firstProjectCreated',
     ]),
     z.boolean()
   ),

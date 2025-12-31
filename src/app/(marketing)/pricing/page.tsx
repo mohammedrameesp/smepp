@@ -29,7 +29,6 @@ const ALL_MODULES = [
   'payroll',
   'purchase-requests',
   'approvals',
-  'projects',
   'documents',
 ];
 

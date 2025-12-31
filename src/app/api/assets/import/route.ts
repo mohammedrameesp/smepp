@@ -130,7 +130,7 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
             results.updated++;
           } else {
             // Record asset creation history
-            const { recordAssetCreation } = await import('@/lib/asset-history');
+            const { recordAssetCreation } = await import('@/lib/domains/operations/assets/asset-history');
             await recordAssetCreation(
               asset.id,
               session.user.id,
@@ -212,7 +212,7 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
         );
 
         // Record asset creation history
-        const { recordAssetCreation } = await import('@/lib/asset-history');
+        const { recordAssetCreation } = await import('@/lib/domains/operations/assets/asset-history');
         await recordAssetCreation(
           asset.id,
           session.user.id,

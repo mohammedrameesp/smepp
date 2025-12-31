@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Role } from '@prisma/client';
-import logger from '@/lib/log';
+import logger from '@/lib/core/log';
 import { formatErrorResponse, validationErrorResponse } from '@/lib/http/errors';
 import { z } from 'zod';
 

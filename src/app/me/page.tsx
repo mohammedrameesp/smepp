@@ -4,8 +4,7 @@ import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { getUserSubscriptionHistory } from '@/lib/subscription-lifecycle';
 import { getUserAssetHistory } from '@/lib/asset-lifecycle';
-import { UserSubscriptionHistory } from '@/components/users/user-subscription-history';
-import { UserAssetHistory } from '@/components/users/user-asset-history';
+import { UserSubscriptionHistory, UserAssetHistory } from '@/components/domains/system/users';
 
 export default async function MePage() {
   const session = await getServerSession(authOptions);

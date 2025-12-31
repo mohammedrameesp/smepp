@@ -38,7 +38,6 @@ const ALL_MODULES = [
   'payroll',
   'purchase-requests',
   'approvals',
-  'projects',
   'documents',
 ];
 
@@ -134,6 +133,5 @@ export const MODULE_METADATA: Record<string, { name: string; description: string
   payroll: { name: 'Payroll Processing', description: 'Salary structures, payslips, and loans', icon: 'DollarSign' },
   'purchase-requests': { name: 'Purchase Requests', description: 'Internal procurement workflow', icon: 'ShoppingCart' },
   approvals: { name: 'Approval Workflows', description: 'Multi-level approval chains', icon: 'CheckSquare' },
-  projects: { name: 'Project Management', description: 'Track projects and assign resources', icon: 'FolderKanban' },
   documents: { name: 'Company Documents', description: 'Track licenses, certifications, and compliance', icon: 'FileCheck' },
 };

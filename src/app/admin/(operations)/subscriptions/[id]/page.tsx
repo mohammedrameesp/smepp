@@ -8,7 +8,7 @@ import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { SubscriptionRenewalDisplay } from '@/components/domains/operations/subscriptions/subscription-renewal-display';
 import { formatDate, formatDateTime } from '@/lib/date-format';
-import { DeleteButton } from '@/components/delete-button';
+import { DeleteButton } from '@/components/shared/delete-button';
 import { formatBillingCycle } from '@/lib/utils/format-billing-cycle';
 import { SubscriptionLifecycleActions } from '@/components/domains/operations/subscriptions/subscription-lifecycle-actions';
 import { HistoryTimeline } from '@/components/domains/operations/subscriptions/history-timeline';

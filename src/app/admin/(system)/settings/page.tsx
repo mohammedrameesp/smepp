@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { Role } from '@prisma/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DataExportImport, ExchangeRateSettings, DatabaseStats, PayrollSettings, CodeFormatSettings } from '@/components/settings';
+import { DataExportImport, ExchangeRateSettings, DatabaseStats, PayrollSettings, CodeFormatSettings } from '@/components/domains/system/settings';
 import { DocumentTypeSettings } from '@/components/domains/system/settings/DocumentTypeSettings';
 import { OrganizationSettings, TeamMembers } from '@/components/domains/system/organization';
 import { prisma } from '@/lib/core/prisma';
@@ -27,7 +27,6 @@ export default async function SettingsPage() {
     prisma.asset.count(),
     prisma.subscription.count(),
     prisma.supplier.count(),
-    prisma.project.count(),
     prisma.activityLog.count(),
   ]);
 
@@ -36,7 +35,6 @@ export default async function SettingsPage() {
     assetCount,
     subscriptionCount,
     supplierCount,
-    projectCount,
     activityLogCount,
   ] = stats;
 
@@ -45,7 +43,6 @@ export default async function SettingsPage() {
     assets: assetCount,
     subscriptions: subscriptionCount,
     suppliers: supplierCount,
-    projects: projectCount,
     activityLogs: activityLogCount,
   };
 

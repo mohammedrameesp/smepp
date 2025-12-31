@@ -11,8 +11,7 @@ import { employeesContent } from './hr/employees';
 import { leaveContent } from './hr/leave';
 import { payrollContent } from './hr/payroll';
 
-// Projects
-import { projectsContent } from './projects/projects';
+// Procurement
 import { purchaseRequestsContent } from './projects/purchase-requests';
 
 // System
@@ -33,8 +32,7 @@ const contentRegistry: Record<string, Record<string, HelpModule>> = {
     leave: leaveContent,
     payroll: payrollContent,
   },
-  projects: {
-    projects: projectsContent,
+  procurement: {
     'purchase-requests': purchaseRequestsContent,
   },
   system: {

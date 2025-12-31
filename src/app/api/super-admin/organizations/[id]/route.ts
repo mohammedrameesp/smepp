@@ -64,7 +64,6 @@ export async function GET(
       employeesCount,
       leaveRequestsCount,
       payrollRunsCount,
-      projectsCount,
       purchaseRequestsCount,
       companyDocsCount,
       assetRequestsCount,
@@ -74,7 +73,6 @@ export async function GET(
       prisma.hRProfile.count({ where: { tenantId: id } }),
       prisma.leaveRequest.count({ where: { tenantId: id } }),
       prisma.payrollRun.count({ where: { tenantId: id } }),
-      prisma.project.count({ where: { tenantId: id } }),
       prisma.purchaseRequest.count({ where: { tenantId: id } }),
       prisma.companyDocument.count({ where: { tenantId: id } }),
       prisma.assetRequest.count({ where: { tenantId: id } }),
@@ -128,9 +126,6 @@ export async function GET(
       },
       payroll: {
         totalRuns: payrollRunsCount,
-      },
-      projects: {
-        total: projectsCount,
       },
       'purchase-requests': {
         total: purchaseRequestsCount,
