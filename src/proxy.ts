@@ -170,7 +170,7 @@ function checkModuleAccess(
 }
 
 /**
- * Multi-Tenant Middleware
+ * Multi-Tenant Proxy (Next.js 16+)
  *
  * Handles:
  * 1. Subdomain-based tenant routing (acme.durj.com)
@@ -286,10 +286,10 @@ function extractSubdomain(host: string): SubdomainInfo {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MIDDLEWARE
+// PROXY (formerly Middleware - renamed for Next.js 16+)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get('host') || APP_DOMAIN;
 
