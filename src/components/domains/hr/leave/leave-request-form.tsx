@@ -1,11 +1,16 @@
+/**
+ * @file leave-request-form.tsx
+ * @description Form component for submitting leave requests with balance validation
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
 import { createLeaveRequestSchema } from '@/lib/validations/leave';
@@ -13,6 +18,7 @@ import { useState, useEffect } from 'react';
 import { calculateWorkingDays, formatLeaveDays, calculateRemainingBalance } from '@/lib/leave-utils';
 import { LeaveRequestType } from '@prisma/client';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 // Define form data type that matches form structure
 interface FormData {
@@ -60,9 +66,11 @@ interface LeaveRequestFormProps {
   balances: LeaveBalance[];
   onSuccess?: () => void;
   isAdmin?: boolean;
+  // For admin to create leave request on behalf of an employee
+  employeeId?: string;
 }
 
-export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = false }: LeaveRequestFormProps) {
+export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = false, employeeId }: LeaveRequestFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [calculatedDays, setCalculatedDays] = useState<number | null>(null);
@@ -166,10 +174,13 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
     setError(null);
 
     try {
+      // Include employeeId if admin is creating request on behalf of someone
+      const requestData = employeeId ? { ...data, employeeId } : data;
+
       const response = await fetch('/api/leave/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
@@ -179,9 +190,12 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
 
       form.reset();
       setCalculatedDays(null);
+      toast.success('Leave request submitted successfully');
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

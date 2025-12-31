@@ -7,6 +7,7 @@ const IMPERSONATION_COOKIE = 'durj-impersonation';
 
 // Interface for impersonation data
 interface ImpersonationData {
+  jti: string | null; // JWT ID for revocation
   superAdminId: string;
   superAdminEmail: string;
   superAdminName: string | null;
@@ -42,6 +43,7 @@ async function getImpersonationData(request: NextRequest): Promise<Impersonation
 
     // Map the API token structure to ImpersonationData
     return {
+      jti: (payload.jti as string) || null, // JWT ID for revocation
       superAdminId: payload.superAdminId as string,
       superAdminEmail: payload.superAdminEmail as string,
       superAdminName: (payload.superAdminName as string) || null,
@@ -63,6 +65,7 @@ async function getImpersonationData(request: NextRequest): Promise<Impersonation
  * This is used when the super admin first lands on the subdomain
  */
 async function verifyImpersonationToken(token: string): Promise<{
+  jti: string | null;
   superAdminId: string;
   superAdminEmail: string;
   superAdminName: string | null;
@@ -86,6 +89,7 @@ async function verifyImpersonationToken(token: string): Promise<{
     }
 
     return {
+      jti: (payload.jti as string) || null,
       superAdminId: payload.superAdminId as string,
       superAdminEmail: payload.superAdminEmail as string,
       superAdminName: (payload.superAdminName as string) || null,
@@ -354,6 +358,9 @@ export async function middleware(request: NextRequest) {
         response.headers.set('x-subscription-tier', tokenData.subscriptionTier);
         response.headers.set('x-impersonating', 'true');
         response.headers.set('x-impersonator-email', tokenData.superAdminEmail);
+        if (tokenData.jti) {
+          response.headers.set('x-impersonation-jti', tokenData.jti);
+        }
 
         // Store the ORIGINAL token as the cookie (already signed by the API)
         // SECURITY: Short TTL (15 minutes) to limit exposure if token is compromised
@@ -397,6 +404,9 @@ export async function middleware(request: NextRequest) {
       response.headers.set('x-subscription-tier', subscriptionTier);
       response.headers.set('x-impersonating', 'true'); // Flag for impersonation
       response.headers.set('x-impersonator-email', impersonation.superAdminEmail);
+      if (impersonation.jti) {
+        response.headers.set('x-impersonation-jti', impersonation.jti);
+      }
       return response;
     }
 

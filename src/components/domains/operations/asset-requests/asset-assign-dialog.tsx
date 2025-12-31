@@ -1,3 +1,8 @@
+/**
+ * @file asset-assign-dialog.tsx
+ * @description Dialog component for admins to assign assets to users
+ * @module components/domains/operations/asset-requests
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle, UserPlus } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Asset {
   id: string;
@@ -97,9 +103,12 @@ export function AssetAssignDialog({ asset, trigger }: AssetAssignDialogProps) {
       setOpen(false);
       setSelectedUserId('');
       setNotes('');
+      toast.success('Asset assigned successfully');
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create assignment');
+      const message = err instanceof Error ? err.message : 'Failed to create assignment';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

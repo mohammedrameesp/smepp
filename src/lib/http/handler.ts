@@ -1,7 +1,53 @@
+/**
+ * @file handler.ts
+ * @description Central API route handler wrapper with authentication, authorization,
+ *              tenant isolation, rate limiting, and error handling.
+ * @module http
+ *
+ * PURPOSE:
+ * Wraps all API route handlers with standardized security and observability:
+ * - Authentication (NextAuth session)
+ * - Authorization (role-based, permission-based, module-based)
+ * - Tenant isolation (via prisma-tenant extension)
+ * - Rate limiting (token bucket per tenant)
+ * - Request/response logging
+ * - Error formatting
+ *
+ * USAGE:
+ * ```typescript
+ * // Simple authenticated route
+ * export const GET = withErrorHandler(handler, { requireAuth: true });
+ *
+ * // Admin-only route with module requirement
+ * export const POST = withErrorHandler(handler, {
+ *   requireAdmin: true,
+ *   requireModule: 'payroll'
+ * });
+ *
+ * // Route with specific permission
+ * export const DELETE = withErrorHandler(handler, {
+ *   requireAuth: true,
+ *   requirePermission: 'assets:delete'
+ * });
+ * ```
+ *
+ * SECURITY FLOW:
+ * 1. Rate limit check (if mutation)
+ * 2. Body size validation (if mutation)
+ * 3. Session authentication
+ * 4. Admin role check (if required)
+ * 5. Tenant context extraction
+ * 6. Module access check (if required)
+ * 7. Organization role check (if required)
+ * 8. Permission check (if required)
+ * 9. Execute handler with tenant-scoped Prisma
+ * 10. Log and return response
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { formatError } from './errors';
+import { formatError, errorResponse, ErrorCodes } from './errors';
 import { logRequest, generateRequestId } from '@/lib/log';
 import { checkRateLimit } from '@/lib/security/rateLimit';
 import {
@@ -15,6 +61,11 @@ import { hasModuleAccess, moduleNotInstalledResponse } from '@/lib/modules/acces
 import { MODULE_REGISTRY } from '@/lib/modules/registry';
 import { hasPermission as checkPermission } from '@/lib/access-control';
 import { OrgRole } from '@prisma/client';
+import { MAX_BODY_SIZE_BYTES } from '@/lib/constants/limits';
+import { isTokenRevoked } from '@/lib/security/impersonation';
+
+// Maximum JSON body size - uses constant from limits.ts, can be overridden via env
+const MAX_BODY_SIZE = parseInt(process.env.MAX_BODY_SIZE || String(MAX_BODY_SIZE_BYTES), 10);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -39,7 +90,10 @@ export interface HandlerOptions {
   requirePermission?: string; // Require a specific permission (e.g., 'payroll:run', 'assets:edit')
   requireOrgRole?: OrgRole[]; // Require one of these organization roles
   skipLogging?: boolean;
-  rateLimit?: boolean;
+  rateLimit?: boolean; // Enable rate limiting (default: true for POST/PUT/PATCH/DELETE)
+  skipRateLimit?: boolean; // Explicitly skip rate limiting even for mutations
+  maxBodySize?: number; // Maximum request body size in bytes (default: 1MB)
+  skipBodySizeCheck?: boolean; // Skip body size validation (for file uploads)
 }
 
 // Next.js 15 route handler type
@@ -57,25 +111,42 @@ export function withErrorHandler(
     const requestId = request.headers.get('x-request-id') || generateRequestId();
 
     try {
-      // Rate limiting check
-      if (options.rateLimit) {
+      const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method);
+
+      // Body size validation for requests with body (API-003)
+      if (isMutation && !options.skipBodySizeCheck) {
+        const contentLength = request.headers.get('content-length');
+        const maxSize = options.maxBodySize || MAX_BODY_SIZE;
+
+        if (contentLength && parseInt(contentLength, 10) > maxSize) {
+          const response = errorResponse('Payload Too Large', 413, {
+            message: `Request body exceeds maximum size of ${Math.round(maxSize / 1024)}KB`,
+            code: ErrorCodes.INVALID_REQUEST,
+          });
+          response.headers.set('x-request-id', requestId);
+
+          if (!options.skipLogging) {
+            logRequest(request.method, request.url, 413, Date.now() - startTime, requestId);
+          }
+
+          return response;
+        }
+      }
+
+      // Rate limiting check (API-002: enabled by default for mutations)
+      const shouldRateLimit = options.rateLimit ?? (isMutation && !options.skipRateLimit);
+
+      if (shouldRateLimit) {
         const { allowed } = await checkRateLimit(request);
         if (!allowed) {
-          const response = NextResponse.json(
-            {
-              error: 'Rate limit exceeded',
-              message: 'Too many requests. Please try again later.',
-              requestId
-            },
-            {
-              status: 429,
-              headers: {
-                'Retry-After': '60',
-                'X-RateLimit-Limit': process.env.RATE_LIMIT_MAX || '60',
-                'X-RateLimit-Window': process.env.RATE_LIMIT_WINDOW_MS || '60000',
-              }
-            }
-          );
+          const response = errorResponse('Rate Limit Exceeded', 429, {
+            message: 'Too many requests. Please try again later.',
+            code: ErrorCodes.RATE_LIMITED,
+          });
+          response.headers.set('x-request-id', requestId);
+          response.headers.set('Retry-After', '60');
+          response.headers.set('X-RateLimit-Limit', process.env.RATE_LIMIT_MAX || '60');
+          response.headers.set('X-RateLimit-Window', process.env.RATE_LIMIT_WINDOW_MS || '60000');
 
           if (!options.skipLogging) {
             logRequest(
@@ -105,41 +176,32 @@ export function withErrorHandler(
       // Authentication check
       if (options.requireAuth || options.requireAdmin) {
         const session = await getServerSession(authOptions);
-        
+
         if (!session) {
-          const response = NextResponse.json(
-            { error: 'Authentication required', requestId },
-            { status: 401 }
-          );
-          
+          const response = errorResponse('Unauthorized', 401, {
+            message: 'Authentication required',
+            code: ErrorCodes.AUTH_REQUIRED,
+          });
+          response.headers.set('x-request-id', requestId);
+
           if (!options.skipLogging) {
-            logRequest(
-              request.method,
-              request.url,
-              401,
-              Date.now() - startTime,
-              requestId
-            );
+            logRequest(request.method, request.url, 401, Date.now() - startTime, requestId);
           }
-          
+
           return response;
         }
 
         if (options.requireAdmin && session.user.role !== 'ADMIN') {
-          const response = NextResponse.json(
-            { error: 'Admin access required', requestId },
-            { status: 403 }
-          );
+          const response = errorResponse('Forbidden', 403, {
+            message: 'Admin access required',
+            code: ErrorCodes.ADMIN_REQUIRED,
+          });
+          response.headers.set('x-request-id', requestId);
 
           if (!options.skipLogging) {
             logRequest(
-              request.method,
-              request.url,
-              403,
-              Date.now() - startTime,
-              requestId,
-              session.user.id,
-              session.user.email
+              request.method, request.url, 403, Date.now() - startTime,
+              requestId, session.user.id, session.user.email
             );
           }
 
@@ -150,23 +212,56 @@ export function withErrorHandler(
       // Extract tenant context from headers (set by middleware)
       const tenantContext = getTenantContextFromHeaders(enhancedRequest.headers);
 
+      // ───────────────────────────────────────────────────────────────────────────
+      // IMPERSONATION TOKEN REVOCATION CHECK (SEC-009)
+      // ───────────────────────────────────────────────────────────────────────────
+      // Check if this is an impersonation request and if the token has been revoked
+      const isImpersonating = enhancedRequest.headers.get('x-impersonating') === 'true';
+      const impersonationJti = enhancedRequest.headers.get('x-impersonation-jti');
+
+      if (isImpersonating && impersonationJti) {
+        const revoked = await isTokenRevoked(impersonationJti);
+        if (revoked) {
+          console.log('[SECURITY] Blocked request with revoked impersonation token:', {
+            jti: impersonationJti,
+            tenantId: tenantContext?.tenantId,
+            path: request.url,
+          });
+
+          const response = errorResponse('Unauthorized', 401, {
+            message: 'Impersonation session has been revoked',
+            code: ErrorCodes.AUTH_REQUIRED,
+          });
+          response.headers.set('x-request-id', requestId);
+          // Clear the impersonation cookie
+          response.cookies.set('durj-impersonation', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/',
+            maxAge: 0,
+          });
+
+          if (!options.skipLogging) {
+            logRequest(request.method, request.url, 401, Date.now() - startTime, requestId);
+          }
+
+          return response;
+        }
+      }
+
       // Check if tenant context is required (default: true for auth routes)
       const requireTenant = options.requireTenant ?? (options.requireAuth || options.requireAdmin);
 
       if (requireTenant && !tenantContext) {
-        const response = NextResponse.json(
-          { error: 'Organization context required', requestId },
-          { status: 403 }
-        );
+        const response = errorResponse('Forbidden', 403, {
+          message: 'Organization context required',
+          code: ErrorCodes.TENANT_REQUIRED,
+        });
+        response.headers.set('x-request-id', requestId);
 
         if (!options.skipLogging) {
-          logRequest(
-            request.method,
-            request.url,
-            403,
-            Date.now() - startTime,
-            requestId
-          );
+          logRequest(request.method, request.url, 403, Date.now() - startTime, requestId);
         }
 
         return response;
@@ -221,25 +316,18 @@ export function withErrorHandler(
       // Organization role check
       if (options.requireOrgRole && options.requireOrgRole.length > 0) {
         if (!tenantContext?.orgRole || !options.requireOrgRole.includes(tenantContext.orgRole as OrgRole)) {
-          const response = NextResponse.json(
-            {
-              error: 'Insufficient role',
-              message: `This action requires one of the following roles: ${options.requireOrgRole.join(', ')}`,
-              requestId
-            },
-            { status: 403 }
-          );
+          const response = errorResponse('Forbidden', 403, {
+            message: `This action requires one of the following roles: ${options.requireOrgRole.join(', ')}`,
+            code: ErrorCodes.INSUFFICIENT_ROLE,
+            details: { requiredRoles: options.requireOrgRole },
+          });
+          response.headers.set('x-request-id', requestId);
 
           if (!options.skipLogging) {
             const session = await getServerSession(authOptions);
             logRequest(
-              request.method,
-              request.url,
-              403,
-              Date.now() - startTime,
-              requestId,
-              session?.user.id,
-              session?.user.email
+              request.method, request.url, 403, Date.now() - startTime,
+              requestId, session?.user.id, session?.user.email
             );
           }
 
@@ -252,20 +340,16 @@ export function withErrorHandler(
         const session = await getServerSession(authOptions);
 
         if (!tenantContext?.tenantId || !tenantContext?.orgRole) {
-          const response = NextResponse.json(
-            { error: 'Permission check requires organization context', requestId },
-            { status: 403 }
-          );
+          const response = errorResponse('Forbidden', 403, {
+            message: 'Permission check requires organization context',
+            code: ErrorCodes.TENANT_REQUIRED,
+          });
+          response.headers.set('x-request-id', requestId);
 
           if (!options.skipLogging) {
             logRequest(
-              request.method,
-              request.url,
-              403,
-              Date.now() - startTime,
-              requestId,
-              session?.user.id,
-              session?.user.email
+              request.method, request.url, 403, Date.now() - startTime,
+              requestId, session?.user.id, session?.user.email
             );
           }
 
@@ -290,25 +374,17 @@ export function withErrorHandler(
         );
 
         if (!hasRequiredPermission) {
-          const response = NextResponse.json(
-            {
-              error: 'Permission denied',
-              message: `You do not have the required permission: ${options.requirePermission}`,
-              required: options.requirePermission,
-              requestId
-            },
-            { status: 403 }
-          );
+          const response = errorResponse('Forbidden', 403, {
+            message: `You do not have the required permission: ${options.requirePermission}`,
+            code: ErrorCodes.PERMISSION_DENIED,
+            details: { requiredPermission: options.requirePermission },
+          });
+          response.headers.set('x-request-id', requestId);
 
           if (!options.skipLogging) {
             logRequest(
-              request.method,
-              request.url,
-              403,
-              Date.now() - startTime,
-              requestId,
-              session?.user.id,
-              session?.user.email
+              request.method, request.url, 403, Date.now() - startTime,
+              requestId, session?.user.id, session?.user.email
             );
           }
 

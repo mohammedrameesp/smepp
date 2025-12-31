@@ -1,20 +1,20 @@
+/**
+ * @file route.ts
+ * @description Impersonate an organization for support and debugging purposes
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import jwt from 'jsonwebtoken';
 import { requireRecent2FA } from '@/lib/two-factor';
+import { generateJti } from '@/lib/security/impersonation';
 
-// SECURITY: NEXTAUTH_SECRET is required - validated in auth.ts at module load
 const JWT_SECRET = process.env.NEXTAUTH_SECRET!;
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
-
-// Impersonation token expiry - reduced from 4 hours to 15 minutes for security
-const IMPERSONATION_EXPIRY_SECONDS = 15 * 60; // 15 minutes
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// POST /api/super-admin/impersonate - Start impersonating an organization
-// ═══════════════════════════════════════════════════════════════════════════════
+const IMPERSONATION_EXPIRY_SECONDS = 15 * 60;
 
 export async function POST(request: NextRequest) {
   try {
@@ -85,8 +85,14 @@ export async function POST(request: NextRequest) {
 
     // Create an impersonation token that will be verified by the middleware
     // This token contains the super admin's original ID and the target org with all context
+    // JTI (JWT ID) allows individual token revocation
+    const jti = generateJti();
+    const iat = Math.floor(Date.now() / 1000);
+    const exp = iat + IMPERSONATION_EXPIRY_SECONDS;
+
     const impersonationToken = jwt.sign(
       {
+        jti, // Unique token ID for revocation
         superAdminId: session.user.id,
         superAdminEmail: session.user.email,
         superAdminName: session.user.name,
@@ -96,8 +102,8 @@ export async function POST(request: NextRequest) {
         subscriptionTier: organization.subscriptionTier || 'FREE',
         enabledModules: organization.enabledModules || ['assets', 'subscriptions', 'suppliers'],
         purpose: 'impersonation',
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + IMPERSONATION_EXPIRY_SECONDS,
+        iat,
+        exp,
       },
       JWT_SECRET
     );

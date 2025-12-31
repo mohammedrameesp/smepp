@@ -1,3 +1,8 @@
+/**
+ * @file leave-type-form.tsx
+ * @description Form component for creating and editing leave type configurations
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -9,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { createLeaveTypeSchema } from '@/lib/validations/leave';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 // Define form data type that matches form structure (with defaults applied)
 interface FormData {
@@ -77,9 +83,12 @@ export function LeaveTypeForm({ onSuccess, initialData, isEdit, leaveTypeId }: L
       }
 
       form.reset();
+      toast.success(isEdit ? 'Leave type updated successfully' : 'Leave type created successfully');
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
