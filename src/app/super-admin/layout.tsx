@@ -20,7 +20,9 @@ import {
   Check,
   KeyRound,
   ClipboardList,
-  HardDrive
+  HardDrive,
+  Menu,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -245,12 +247,18 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (status === 'authenticated' && !session?.user?.isSuperAdmin) {
       router.push('/');
     }
   }, [status, session, router]);
+
+  // Close mobile menu when route changes - MUST be before early returns to maintain consistent hook order
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   if (status === 'loading') {
     return (
@@ -280,65 +288,97 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
   const pageInfo = getPageInfo();
 
+  const SidebarContent = () => (
+    <>
+      <div className="p-5 border-b border-slate-700">
+        <div className="flex items-center gap-2">
+          <img src="/sme-icon-shield-512.png" alt="Durj" className="h-8 w-8" />
+          <span className="font-semibold">Durj Admin</span>
+        </div>
+      </div>
+      <nav className="flex-1 py-4 overflow-y-auto">
+        <div className="px-3 mb-2"><span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Main</span></div>
+        {mainNavItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.href);
+          return (
+            <Link key={item.href} href={item.href} className={cn('flex items-center gap-3 px-4 py-2.5 text-sm transition-colors', active ? 'bg-white/10 text-white border-l-2 border-white' : 'text-slate-300 hover:text-white hover:bg-white/5')}>
+              <Icon className="h-4 w-4 opacity-70" />{item.title}
+            </Link>
+          );
+        })}
+        <div className="px-3 mb-2 mt-6"><span className="text-xs font-medium text-slate-400 uppercase tracking-wider">System</span></div>
+        {systemNavItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.href);
+          return (
+            <Link key={item.href} href={item.href} className={cn('flex items-center gap-3 px-4 py-2.5 text-sm transition-colors', active ? 'bg-white/10 text-white border-l-2 border-white' : 'text-slate-300 hover:text-white hover:bg-white/5')}>
+              <Icon className="h-4 w-4 opacity-70" />{item.title}
+            </Link>
+          );
+        })}
+      </nav>
+      <div className="p-4 border-t border-slate-700">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center text-sm font-medium">{session.user.name?.charAt(0).toUpperCase() || 'SA'}</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium truncate">{session.user.name || 'Super Admin'}</div>
+            <div className="text-xs text-slate-400 truncate">{session.user.email}</div>
+          </div>
+          <button onClick={() => signOut({ callbackUrl: '/super-admin' })} className="text-slate-400 hover:text-white transition-colors" title="Sign Out"><LogOut className="h-4 w-4" /></button>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <aside className="w-56 bg-slate-900 text-white flex flex-col fixed h-full">
-        <div className="p-5 border-b border-slate-700">
-          <div className="flex items-center gap-2">
-            <img src="/sme-icon-shield-512.png" alt="Durj" className="h-8 w-8" />
-            <span className="font-semibold">Durj Admin</span>
-          </div>
-        </div>
-        <nav className="flex-1 py-4">
-          <div className="px-3 mb-2"><span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Main</span></div>
-          {mainNavItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <Link key={item.href} href={item.href} className={cn('flex items-center gap-3 px-4 py-2.5 text-sm transition-colors', active ? 'bg-white/10 text-white border-l-2 border-white' : 'text-slate-300 hover:text-white hover:bg-white/5')}>
-                <Icon className="h-4 w-4 opacity-70" />{item.title}
-              </Link>
-            );
-          })}
-          <div className="px-3 mb-2 mt-6"><span className="text-xs font-medium text-slate-400 uppercase tracking-wider">System</span></div>
-          {systemNavItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <Link key={item.href} href={item.href} className={cn('flex items-center gap-3 px-4 py-2.5 text-sm transition-colors', active ? 'bg-white/10 text-white border-l-2 border-white' : 'text-slate-300 hover:text-white hover:bg-white/5')}>
-                <Icon className="h-4 w-4 opacity-70" />{item.title}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="p-4 border-t border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-slate-600 rounded-full flex items-center justify-center text-sm font-medium">{session.user.name?.charAt(0).toUpperCase() || 'SA'}</div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium truncate">{session.user.name || 'Super Admin'}</div>
-              <div className="text-xs text-slate-400 truncate">{session.user.email}</div>
+      {/* Mobile Sidebar Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setMobileMenuOpen(false)} />
+          <aside className="fixed left-0 top-0 bottom-0 w-64 bg-slate-900 text-white flex flex-col z-50">
+            <div className="absolute right-2 top-2">
+              <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            <button onClick={() => signOut({ callbackUrl: '/super-admin' })} className="text-slate-400 hover:text-white transition-colors" title="Sign Out"><LogOut className="h-4 w-4" /></button>
-          </div>
+            <SidebarContent />
+          </aside>
         </div>
+      )}
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex w-56 bg-slate-900 text-white flex-col fixed h-full">
+        <SidebarContent />
       </aside>
-      <main className="flex-1 ml-56">
+
+      <main className="flex-1 lg:ml-56">
         <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="px-8 py-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">{pageInfo.title}</h1>
-              <p className="text-sm text-gray-500">{pageInfo.description}</p>
+          <div className="px-4 lg:px-8 py-4 flex items-center justify-between gap-4">
+            {/* Mobile menu button */}
+            <button onClick={() => setMobileMenuOpen(true)} className="lg:hidden p-2 -ml-2 text-gray-600 hover:text-gray-900">
+              <Menu className="h-5 w-5" />
+            </button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg lg:text-xl font-semibold text-gray-900 truncate">{pageInfo.title}</h1>
+              <p className="text-sm text-gray-500 hidden sm:block">{pageInfo.description}</p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="relative">
+            <div className="flex items-center gap-2 lg:gap-4">
+              <div className="relative hidden md:block">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <input type="text" placeholder="Search organizations..." className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
+                <input type="text" placeholder="Search organizations..." className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm w-48 lg:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
               </div>
-              <Link href="/super-admin/organizations/new"><Button className="bg-indigo-600 hover:bg-indigo-700"><Plus className="h-4 w-4 mr-2" />New Organization</Button></Link>
+              <Link href="/super-admin/organizations/new">
+                <Button className="bg-indigo-600 hover:bg-indigo-700" size="sm">
+                  <Plus className="h-4 w-4 lg:mr-2" />
+                  <span className="hidden lg:inline">New Organization</span>
+                </Button>
+              </Link>
             </div>
           </div>
         </header>
-        <div className="p-8">{children}</div>
+        <div className="p-4 lg:p-8">{children}</div>
       </main>
     </div>
   );
