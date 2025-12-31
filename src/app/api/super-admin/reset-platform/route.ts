@@ -27,7 +27,20 @@ export async function POST() {
 
     // 1. Delete all tenant-scoped data first
 
+    // WhatsApp
+    results.whatsAppMessageLogs = (await prisma.whatsAppMessageLog.deleteMany()).count;
+    results.whatsAppActionTokens = (await prisma.whatsAppActionToken.deleteMany()).count;
+    results.whatsAppUserPhones = (await prisma.whatsAppUserPhone.deleteMany()).count;
+    results.whatsAppConfigs = (await prisma.whatsAppConfig.deleteMany()).count;
+
+    // AI Chat
+    results.aiChatAuditLogs = (await prisma.aIChatAuditLog.deleteMany()).count;
+    results.aiChatUsage = (await prisma.aIChatUsage.deleteMany()).count;
+    results.chatMessages = (await prisma.chatMessage.deleteMany()).count;
+    results.chatConversations = (await prisma.chatConversation.deleteMany()).count;
+
     // Leave & Payroll
+    results.payslipDeductions = (await prisma.payslipDeduction.deleteMany()).count;
     results.payslips = (await prisma.payslip.deleteMany()).count;
     results.payrollHistory = (await prisma.payrollHistory.deleteMany()).count;
     results.payrollRuns = (await prisma.payrollRun.deleteMany()).count;
@@ -50,6 +63,8 @@ export async function POST() {
     results.purchaseRequests = (await prisma.purchaseRequest.deleteMany()).count;
 
     // Assets
+    results.depreciationRecords = (await prisma.depreciationRecord.deleteMany()).count;
+    results.depreciationCategories = (await prisma.depreciationCategory.deleteMany()).count;
     results.assetRequestHistory = (await prisma.assetRequestHistory.deleteMany()).count;
     results.assetRequests = (await prisma.assetRequest.deleteMany()).count;
     results.maintenanceRecords = (await prisma.maintenanceRecord.deleteMany()).count;
@@ -71,21 +86,26 @@ export async function POST() {
     // Approvals
     results.approverDelegations = (await prisma.approverDelegation.deleteMany()).count;
     results.approvalSteps = (await prisma.approvalStep.deleteMany()).count;
+    results.approvalLevels = (await prisma.approvalLevel.deleteMany()).count;
     results.approvalPolicies = (await prisma.approvalPolicy.deleteMany()).count;
 
     // System
     results.notifications = (await prisma.notification.deleteMany()).count;
     results.activityLogs = (await prisma.activityLog.deleteMany()).count;
     results.systemSettings = (await prisma.systemSettings.deleteMany()).count;
+    results.appSettings = (await prisma.appSetting.deleteMany()).count;
 
-    // 2. Delete organization memberships and invitations
+    // 2. Delete organization-related data
+    results.rolePermissions = (await prisma.rolePermission.deleteMany()).count;
+    results.setupProgress = (await prisma.organizationSetupProgress.deleteMany()).count;
     results.invitations = (await prisma.organizationInvitation.deleteMany()).count;
     results.orgUsers = (await prisma.organizationUser.deleteMany()).count;
 
     // 3. Delete organizations
     results.organizations = (await prisma.organization.deleteMany()).count;
 
-    // 4. Delete sessions and accounts for non-super-admins
+    // 4. Delete sessions and tokens
+    results.revokedTokens = (await prisma.revokedImpersonationToken.deleteMany()).count;
     results.sessions = (await prisma.session.deleteMany()).count;
     results.verificationTokens = (await prisma.verificationToken.deleteMany()).count;
 
