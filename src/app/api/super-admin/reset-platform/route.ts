@@ -9,6 +9,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { requireRecent2FA } from '@/lib/two-factor';
+import { createClient } from '@supabase/supabase-js';
 export async function POST() {
   try {
     const session = await getServerSession(authOptions);
@@ -121,9 +122,63 @@ export async function POST() {
       where: { isSuperAdmin: false },
     })).count;
 
+    // 7. Delete all files from Supabase storage
+    let storageDeleted = 0;
+    try {
+      const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const bucketName = process.env.SUPABASE_BUCKET || 'durj-storage';
+
+      if (supabaseUrl && supabaseKey) {
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        // List and delete all files in the bucket
+        const folders = ['orgs', 'tenants', 'uploads', 'documents', 'assets'];
+
+        for (const folder of folders) {
+          try {
+            const { data: files } = await supabase.storage.from(bucketName).list(folder, {
+              limit: 1000,
+            });
+
+            if (files && files.length > 0) {
+              const filePaths = files.map(f => `${folder}/${f.name}`);
+              await supabase.storage.from(bucketName).remove(filePaths);
+              storageDeleted += files.length;
+            }
+          } catch {
+            // Folder might not exist, continue
+          }
+        }
+
+        // Also try to list root level files
+        try {
+          const { data: rootFiles } = await supabase.storage.from(bucketName).list('', {
+            limit: 1000,
+          });
+
+          if (rootFiles && rootFiles.length > 0) {
+            // Filter out folders (they have null id in some cases)
+            const filePaths = rootFiles
+              .filter(f => f.id !== null)
+              .map(f => f.name);
+            if (filePaths.length > 0) {
+              await supabase.storage.from(bucketName).remove(filePaths);
+              storageDeleted += filePaths.length;
+            }
+          }
+        } catch {
+          // Continue even if root listing fails
+        }
+      }
+    } catch (storageError) {
+      console.error('Storage cleanup error (non-fatal):', storageError);
+    }
+    results.storageFiles = storageDeleted;
+
     return NextResponse.json({
       success: true,
-      message: 'Platform reset complete. All data deleted except super admin accounts.',
+      message: 'Platform reset complete. All data and files deleted except super admin accounts.',
       deleted: results,
     });
   } catch (error) {
