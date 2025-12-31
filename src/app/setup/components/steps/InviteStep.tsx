@@ -36,7 +36,8 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
 
   // Detect if email looks like a service/system account
   const emailDetection = useMemo(() => detectServiceEmail(email), [email]);
-  const showEmployeeOptions = email.includes('@') && !emailDetection.isLikelyServiceEmail;
+  // Show employee options always, unless email is detected as a system/service email
+  const showEmployeeOptions = !emailDetection.isLikelyServiceEmail;
 
   const addInvite = () => {
     if (!email || !email.includes('@')) {
