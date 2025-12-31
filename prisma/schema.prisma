@@ -487,6 +487,10 @@ model OrganizationInvitation {
   role  OrgRole @default(MEMBER)
   token String  @unique @default(cuid())
 
+  // Employee classification - null means user will confirm during signup
+  isEmployee Boolean? // true = employee (requires HR profile), false = system/service account
+  isOnWps    Boolean? // true = on Wage Protection System (only relevant if isEmployee = true)
+
   invitedById String? // User who sent the invitation
 
   expiresAt  DateTime
