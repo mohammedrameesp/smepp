@@ -284,10 +284,10 @@ function extractSubdomain(host: string): SubdomainInfo {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PROXY (formerly Middleware - renamed for Next.js 16+)
+// MIDDLEWARE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get('host') || APP_DOMAIN;
 
