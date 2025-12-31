@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '10mb',
     },
   },
-  // Configure image domains for Supabase
+  // Configure image domains for Supabase with optimization
   images: {
     remotePatterns: [
       {
@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
+    formats: ['image/avif', 'image/webp'],
   },
   // Security headers
   async headers() {
