@@ -203,6 +203,7 @@ const PUBLIC_ROUTES = [
   '/get-started', // Public signup page
   '/platform-login', // Super admin login (legacy)
   '/api/auth',
+  '/api/health', // Health check endpoint for monitoring
   '/api/webhooks',
   '/api/public', // Public APIs (tenant branding, etc.)
   '/api/invitations', // Invitation APIs (fetch details before auth)
