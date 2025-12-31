@@ -24,6 +24,12 @@ const ibanRegex = /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/i;
 // Passport number: alphanumeric, 5-20 characters
 const passportRegex = /^[A-Z0-9]{5,20}$/i;
 
+// Helper to strip non-digits from a string
+const stripNonDigits = (val: string | null | undefined): string => {
+  if (!val) return '';
+  return val.replace(/\D/g, '');
+};
+
 // Note: healthCardNumber and licenseNumber removed - QID serves as unique identifier
 
 // Helper for optional string that can be empty
@@ -43,6 +49,7 @@ export const hrProfileSchema = z.object({
   qatarMobile: z.string()
     .optional()
     .nullable()
+    .transform((val) => val ? stripNonDigits(val) : val)
     .refine((val) => !val || qatarMobileRegex.test(val), {
       message: 'Qatar mobile must be exactly 8 digits',
     }),
@@ -50,12 +57,14 @@ export const hrProfileSchema = z.object({
   otherMobileNumber: z.string()
     .optional()
     .nullable()
+    .transform((val) => val ? stripNonDigits(val) : val)
     .refine((val) => !val || mobileRegex.test(val), {
       message: 'Invalid mobile number format',
     }),
   personalEmail: z.string()
     .optional()
     .nullable()
+    .transform((val) => val?.trim() || val)
     .refine((val) => !val || emailRegex.test(val), {
       message: 'Invalid email address',
     }),
@@ -72,6 +81,7 @@ export const hrProfileSchema = z.object({
   localEmergencyPhone: z.string()
     .optional()
     .nullable()
+    .transform((val) => val ? stripNonDigits(val) : val)
     .refine((val) => !val || mobileRegex.test(val), {
       message: 'Invalid phone number format',
     }),
@@ -83,6 +93,7 @@ export const hrProfileSchema = z.object({
   homeEmergencyPhone: z.string()
     .optional()
     .nullable()
+    .transform((val) => val ? stripNonDigits(val) : val)
     .refine((val) => !val || mobileRegex.test(val), {
       message: 'Invalid phone number format',
     }),
@@ -91,6 +102,7 @@ export const hrProfileSchema = z.object({
   qidNumber: z.string()
     .optional()
     .nullable()
+    .transform((val) => val ? stripNonDigits(val) : val)
     .refine((val) => !val || qidRegex.test(val), {
       message: 'QID must be exactly 11 digits',
     }),
@@ -98,6 +110,7 @@ export const hrProfileSchema = z.object({
   passportNumber: z.string()
     .optional()
     .nullable()
+    .transform((val) => val?.trim().toUpperCase() || val)
     .refine((val) => !val || passportRegex.test(val), {
       message: 'Invalid passport number format (5-20 alphanumeric characters)',
     }),
@@ -117,7 +130,8 @@ export const hrProfileSchema = z.object({
   iban: z.string()
     .optional()
     .nullable()
-    .refine((val) => !val || ibanRegex.test(val.replace(/\s/g, '')), {
+    .transform((val) => val?.replace(/\s/g, '').toUpperCase() || val)
+    .refine((val) => !val || ibanRegex.test(val), {
       message: 'Invalid IBAN format (e.g., QA12ABCD123456789012345678901)',
     }),
 
