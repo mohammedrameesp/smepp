@@ -1,3 +1,8 @@
+/**
+ * @file depreciation-schedule-table.tsx
+ * @description Table component showing projected and recorded depreciation schedule
+ * @module components/domains/operations/assets
+ */
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';

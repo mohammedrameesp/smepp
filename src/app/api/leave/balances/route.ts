@@ -1,25 +1,19 @@
+/**
+ * @file route.ts
+ * @description Leave balance CRUD operations - list and initialize leave balances
+ * @module hr/leave
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { leaveBalanceQuerySchema, initializeLeaveBalanceSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { getCurrentYear } from '@/lib/leave-utils';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
+async function getLeaveBalancesHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -35,8 +29,8 @@ export async function GET(request: NextRequest) {
     const { userId, leaveTypeId, year, p, ps } = validation.data;
 
     // Non-admin users can only see their own balances
-    const isAdmin = session.user.role === Role.ADMIN;
-    const effectiveUserId = isAdmin ? userId : session.user.id;
+    const isAdmin = tenant!.userRole === 'ADMIN';
+    const effectiveUserId = isAdmin ? userId : tenant!.userId;
 
     // Build where clause with tenant filter
     const where: Record<string, unknown> = { tenantId };
@@ -97,25 +91,14 @@ export async function GET(request: NextRequest) {
         hasMore: skip + ps < total,
       },
     });
-  } catch (error) {
-    console.error('Leave balances GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch leave balances' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = withErrorHandler(getLeaveBalancesHandler, { requireAuth: true, requireModule: 'leave' });
 
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
+async function createLeaveBalanceHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
 
     const body = await request.json();
     const validation = initializeLeaveBalanceSchema.safeParse(body);
@@ -128,7 +111,6 @@ export async function POST(request: NextRequest) {
     }
 
     const { userId, leaveTypeId, year, entitlement, carriedForward } = validation.data;
-    const tenantId = session.user.organizationId;
 
     // Check if user exists and belongs to this tenant
     const userMembership = await prisma.organizationUser.findUnique({
@@ -156,7 +138,8 @@ export async function POST(request: NextRequest) {
     // Check if balance already exists for this user/type/year
     const existing = await prisma.leaveBalance.findUnique({
       where: {
-        userId_leaveTypeId_year: {
+        tenantId_userId_leaveTypeId_year: {
+          tenantId,
           userId,
           leaveTypeId,
           year,
@@ -198,7 +181,8 @@ export async function POST(request: NextRequest) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.LEAVE_BALANCE_CREATED,
       'LeaveBalance',
       balance.id,
@@ -206,11 +190,6 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json(balance, { status: 201 });
-  } catch (error) {
-    console.error('Leave balances POST error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create leave balance' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(createLeaveBalanceHandler, { requireAdmin: true, requireModule: 'leave' });

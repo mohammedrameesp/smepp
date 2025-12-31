@@ -1,3 +1,9 @@
+/**
+ * @file cache.ts
+ * @description Simple client-side cache with expiration using localStorage
+ * @module lib/core
+ */
+
 // Simple client-side cache with expiration
 export class Cache {
   private static readonly PREFIX = 'accreditation_cache_';

@@ -1,3 +1,9 @@
+/**
+ * @file stats-card.tsx
+ * @description Statistics card components for displaying key metrics and KPIs
+ * @module components/ui
+ */
+
 'use client';
 
 import { ReactNode } from 'react';

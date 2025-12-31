@@ -1,3 +1,9 @@
+/**
+ * @file button.tsx
+ * @description Versatile button component with multiple variants and sizes
+ * @module components/ui
+ */
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"

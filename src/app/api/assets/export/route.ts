@@ -1,3 +1,8 @@
+/**
+ * @file route.ts
+ * @description Asset export to CSV/Excel API endpoint
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';

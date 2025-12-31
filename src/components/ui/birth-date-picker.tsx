@@ -1,3 +1,9 @@
+/**
+ * @file birth-date-picker.tsx
+ * @description Birth date picker with year/month dropdowns for easy navigation to past dates
+ * @module components/ui
+ */
+
 'use client';
 
 import * as React from 'react';

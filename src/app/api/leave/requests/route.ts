@@ -1,6 +1,10 @@
+/**
+ * @file route.ts
+ * @description Leave request CRUD operations - list and create leave requests
+ * @module hr/leave
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createLeaveRequestSchema, leaveRequestQuerySchema } from '@/lib/validations/leave';
@@ -9,29 +13,25 @@ import { createBulkNotifications, createNotification, NotificationTemplates } fr
 import { findApplicablePolicy, initializeApprovalChain } from '@/lib/domains/system/approvals';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 import {
-  calculateWorkingDays,
-  meetsNoticeDaysRequirement,
-  exceedsMaxConsecutiveDays,
-  calculateAvailableBalance,
-  meetsServiceRequirement,
   getServiceBasedEntitlement,
-  formatServiceDuration,
   ServiceBasedEntitlement,
   getAnnualLeaveDetails,
+  calculateAvailableBalance,
 } from '@/lib/leave-utils';
+import {
+  validateLeaveTypeEligibility,
+  validateOnceInEmploymentLeave,
+  validateLeaveRequestDates,
+  validateNoOverlap,
+  validateSufficientBalance,
+  validateDocumentRequirement,
+} from '@/lib/domains/hr/leave/leave-request-validation';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
+async function getLeaveRequestsHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -47,12 +47,12 @@ export async function GET(request: NextRequest) {
     const { q, status, userId, leaveTypeId, year, startDate, endDate, p, ps, sort, order } = validation.data;
 
     // Non-admin users can only see their own requests
-    const isAdmin = session.user.role === Role.ADMIN;
-    const effectiveUserId = isAdmin ? userId : session.user.id;
+    const isAdmin = tenant!.userRole === 'ADMIN';
+    const effectiveUserId = isAdmin ? userId : tenant!.userId;
 
     // Build where clause with tenant filtering
     const where: Record<string, unknown> = {
-      tenantId: session.user.organizationId,
+      tenantId,
     };
 
     if (effectiveUserId) {
@@ -135,25 +135,15 @@ export async function GET(request: NextRequest) {
         hasMore: skip + ps < total,
       },
     });
-  } catch (error) {
-    console.error('Leave requests GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch leave requests' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = withErrorHandler(getLeaveRequestsHandler, { requireAuth: true, requireModule: 'leave' });
 
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
+async function createLeaveRequestHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
+    const sessionUserId = tenant!.userId;
+    const isAdmin = tenant!.userRole === 'ADMIN';
 
     const body = await request.json();
     const validation = createLeaveRequestSchema.safeParse(body);
@@ -166,10 +156,6 @@ export async function POST(request: NextRequest) {
     }
 
     const data = validation.data;
-    const sessionUserId = session.user.id;
-    const isAdmin = session.user.role === Role.ADMIN;
-
-    const tenantId = session.user.organizationId;
 
     // Handle on-behalf-of requests (admin creating request for another employee)
     let targetUserId = sessionUserId;
@@ -236,79 +222,31 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Check if this leave type requires admin assignment (PARENTAL or RELIGIOUS categories)
-    if (leaveType.category === 'PARENTAL' || leaveType.category === 'RELIGIOUS') {
-      // Check if user already has a balance for this leave type (admin-assigned)
-      const existingBalance = await prisma.leaveBalance.findUnique({
-        where: {
-          userId_leaveTypeId_year: {
-            userId,
-            leaveTypeId: data.leaveTypeId,
-            year: startDate.getFullYear(),
-          },
+    // Check if user has existing balance for admin-assigned leave types
+    const existingBalance = await prisma.leaveBalance.findUnique({
+      where: {
+        tenantId_userId_leaveTypeId_year: {
+          tenantId,
+          userId,
+          leaveTypeId: data.leaveTypeId,
+          year: startDate.getFullYear(),
         },
-      });
+      },
+    });
 
-      if (!existingBalance) {
-        return NextResponse.json({
-          error: `${leaveType.name} must be assigned by an administrator. Please contact HR to request this leave type.`,
-        }, { status: 400 });
-      }
-    }
-
-    // Validate gender restriction for parental leave
-    if (leaveType.genderRestriction) {
-      if (!hrProfile?.gender) {
-        return NextResponse.json({
-          error: 'Your gender is not recorded in your HR profile. Please contact HR to update your profile.',
-        }, { status: 400 });
-      }
-
-      if (hrProfile.gender.toUpperCase() !== leaveType.genderRestriction) {
-        return NextResponse.json({
-          error: `${leaveType.name} is only available for ${leaveType.genderRestriction.toLowerCase()} employees.`,
-        }, { status: 400 });
-      }
-    }
-
-    // Check minimum service requirement (Qatar Labor Law)
-    if (leaveType.minimumServiceMonths > 0) {
-      if (!hrProfile?.dateOfJoining) {
-        return NextResponse.json({
-          error: 'Your date of joining is not recorded. Please contact HR to update your profile.',
-        }, { status: 400 });
-      }
-
-      if (!meetsServiceRequirement(hrProfile.dateOfJoining, leaveType.minimumServiceMonths, startDate)) {
-        const requiredMonths = leaveType.minimumServiceMonths;
-        const requiredYears = Math.floor(requiredMonths / 12);
-        const remainingMonths = requiredMonths % 12;
-
-        let requirement = '';
-        if (requiredYears > 0 && remainingMonths > 0) {
-          requirement = `${requiredYears} year(s) and ${remainingMonths} month(s)`;
-        } else if (requiredYears > 0) {
-          requirement = `${requiredYears} year(s)`;
-        } else {
-          requirement = `${remainingMonths} month(s)`;
-        }
-
-        return NextResponse.json({
-          error: `You must complete ${requirement} of service to be eligible for ${leaveType.name}. Your current service: ${formatServiceDuration(hrProfile.dateOfJoining)}`,
-        }, { status: 400 });
-      }
+    // Validate leave type eligibility (admin assignment, gender, service requirement)
+    const eligibilityResult = validateLeaveTypeEligibility({
+      leaveType,
+      hrProfile,
+      startDate,
+      hasExistingBalance: !!existingBalance,
+    });
+    if (!eligibilityResult.valid) {
+      return NextResponse.json({ error: eligibilityResult.error }, { status: 400 });
     }
 
     // Check if this is a "once in employment" leave type (e.g., Hajj leave)
     if (leaveType.isOnceInEmployment) {
-      // Check if user has already taken this type of leave (using flag, not name)
-      if (hrProfile?.hajjLeaveTaken) {
-        return NextResponse.json({
-          error: `${leaveType.name} can only be taken once during your employment. You have already used this leave.`,
-        }, { status: 400 });
-      }
-
-      // Also check for any existing approved Hajj leave requests (as backup check)
       const existingOnceLeave = await prisma.leaveRequest.findFirst({
         where: {
           userId,
@@ -317,44 +255,33 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      if (existingOnceLeave) {
-        return NextResponse.json({
-          error: `${leaveType.name} can only be taken once during your employment. You already have a ${existingOnceLeave.status.toLowerCase()} request.`,
-        }, { status: 400 });
+      const onceResult = validateOnceInEmploymentLeave(leaveType, hrProfile, existingOnceLeave);
+      if (!onceResult.valid) {
+        return NextResponse.json({ error: onceResult.error }, { status: 400 });
       }
     }
 
-    // Calculate days - Accrual-based leave (Annual Leave) includes weekends, others exclude weekends
-    const includeWeekends = leaveType.accrualBased === true;
-    // isAdmin already defined at the top of the function
-    const totalDays = calculateWorkingDays(startDate, endDate, data.requestType, includeWeekends);
+    // Validate dates, notice period, and consecutive days limit
+    const dateValidation = validateLeaveRequestDates({
+      startDate,
+      endDate,
+      requestType: data.requestType,
+      leaveType,
+      isAdmin,
+      adminOverrideNotice: data.adminOverrideNotice,
+      bypassNoticeRequirement: hrProfile?.bypassNoticeRequirement,
+    });
 
-    if (totalDays === 0) {
-      return NextResponse.json({
-        error: 'No working days in the selected date range',
-      }, { status: 400 });
+    if (dateValidation.error) {
+      return NextResponse.json({ error: dateValidation.error }, { status: 400 });
     }
 
-    // Check minimum notice days (skip if: admin override OR user has bypass flag set by admin)
-    const skipNoticeCheck = (isAdmin && data.adminOverrideNotice === true) || hrProfile?.bypassNoticeRequirement === true;
-    if (!skipNoticeCheck && !meetsNoticeDaysRequirement(startDate, leaveType.minNoticeDays)) {
-      return NextResponse.json({
-        error: `This leave type requires at least ${leaveType.minNoticeDays} days advance notice`,
-      }, { status: 400 });
-    }
-
-    // Check max consecutive days
-    if (exceedsMaxConsecutiveDays(totalDays, leaveType.maxConsecutiveDays)) {
-      return NextResponse.json({
-        error: `This leave type allows a maximum of ${leaveType.maxConsecutiveDays} consecutive days`,
-      }, { status: 400 });
-    }
+    const totalDays = dateValidation.totalDays;
 
     // Check for document requirement
-    if (leaveType.requiresDocument && !data.documentUrl) {
-      return NextResponse.json({
-        error: 'This leave type requires a supporting document',
-      }, { status: 400 });
+    const docResult = validateDocumentRequirement(leaveType, data.documentUrl);
+    if (!docResult.valid) {
+      return NextResponse.json({ error: docResult.error }, { status: 400 });
     }
 
     // Check for overlapping requests within tenant (pre-check before transaction)
@@ -374,10 +301,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (overlappingRequests.length > 0) {
-      return NextResponse.json({
-        error: 'You already have a pending or approved leave request that overlaps with these dates',
-      }, { status: 400 });
+    const overlapResult = validateNoOverlap(startDate, endDate, overlappingRequests);
+    if (!overlapResult.valid) {
+      return NextResponse.json({ error: overlapResult.error }, { status: 400 });
     }
 
     const year = startDate.getFullYear();
@@ -387,7 +313,8 @@ export async function POST(request: NextRequest) {
       // Get or create leave balance inside transaction to prevent race conditions
       let balance = await tx.leaveBalance.findUnique({
         where: {
-          userId_leaveTypeId_year: {
+          tenantId_userId_leaveTypeId_year: {
+            tenantId,
             userId,
             leaveTypeId: data.leaveTypeId,
             year,
@@ -421,7 +348,7 @@ export async function POST(request: NextRequest) {
             leaveTypeId: data.leaveTypeId,
             year,
             entitlement,
-            tenantId: session.user.organizationId!,
+            tenantId: tenantId!,
           },
         });
       }
@@ -441,11 +368,11 @@ export async function POST(request: NextRequest) {
       }
 
       // Get organization's code prefix
-      const codePrefix = await getOrganizationCodePrefix(session.user.organizationId!);
+      const codePrefix = await getOrganizationCodePrefix(tenantId!);
 
       // Generate unique request number: {PREFIX}-LR-XXXXX
       const leaveCount = await tx.leaveRequest.count({
-        where: { tenantId: session.user.organizationId! }
+        where: { tenantId: tenantId! }
       });
       const requestNumber = `${codePrefix}-LR-${String(leaveCount + 1).padStart(5, '0')}`;
 
@@ -464,7 +391,7 @@ export async function POST(request: NextRequest) {
           emergencyContact: data.emergencyContact,
           emergencyPhone: data.emergencyPhone,
           status: 'PENDING',
-          tenantId: session.user.organizationId!,
+          tenantId: tenantId!,
           // Track who submitted the request (if on behalf of another employee)
           createdById,
         },
@@ -489,7 +416,8 @@ export async function POST(request: NextRequest) {
       // Update balance pending days
       await tx.leaveBalance.update({
         where: {
-          userId_leaveTypeId_year: {
+          tenantId_userId_leaveTypeId_year: {
+            tenantId,
             userId,
             leaveTypeId: data.leaveTypeId,
             year,
@@ -517,6 +445,7 @@ export async function POST(request: NextRequest) {
     });
 
     await logAction(
+      tenantId,
       sessionUserId,
       ActivityActions.LEAVE_REQUEST_CREATED,
       'LeaveRequest',
@@ -533,16 +462,16 @@ export async function POST(request: NextRequest) {
 
     // Check for multi-level approval policy
     try {
-      const approvalPolicy = await findApplicablePolicy('LEAVE_REQUEST', { days: totalDays, tenantId: session.user.organizationId! });
+      const approvalPolicy = await findApplicablePolicy('LEAVE_REQUEST', { days: totalDays, tenantId: tenantId! });
 
       if (approvalPolicy && approvalPolicy.levels.length > 0) {
         // Initialize approval chain
-        const steps = await initializeApprovalChain('LEAVE_REQUEST', leaveRequest.id, approvalPolicy, session.user.organizationId!);
+        const steps = await initializeApprovalChain('LEAVE_REQUEST', leaveRequest.id, approvalPolicy, tenantId!);
 
         // Send WhatsApp notifications to approvers (non-blocking)
         if (steps.length > 0) {
           notifyApproversViaWhatsApp(
-            session.user.organizationId!,
+            tenantId!,
             'LEAVE_REQUEST',
             leaveRequest.id,
             steps[0].requiredRole
@@ -555,7 +484,7 @@ export async function POST(request: NextRequest) {
           const approvers = await prisma.user.findMany({
             where: {
               role: firstStep.requiredRole,
-              organizationMemberships: { some: { organizationId: session.user.organizationId! } },
+              organizationMemberships: { some: { organizationId: tenantId! } },
             },
             select: { id: true },
           });
@@ -565,11 +494,11 @@ export async function POST(request: NextRequest) {
               recipientId: approver.id,
               type: 'APPROVAL_PENDING',
               title: 'Leave Request Approval Required',
-              message: `${session.user.name || session.user.email || 'Employee'} submitted a ${leaveType.name} request (${leaveRequest.requestNumber}) for ${totalDays} day${totalDays === 1 ? '' : 's'}. Your approval is required.`,
+              message: `${leaveRequest.user.name || leaveRequest.user.email || 'Employee'} submitted a ${leaveType.name} request (${leaveRequest.requestNumber}) for ${totalDays} day${totalDays === 1 ? '' : 's'}. Your approval is required.`,
               link: `/admin/leave/requests/${leaveRequest.id}`,
               entityType: 'LeaveRequest',
               entityId: leaveRequest.id,
-            });
+            }, tenantId);
           }
         }
       } else {
@@ -577,7 +506,7 @@ export async function POST(request: NextRequest) {
         const admins = await prisma.user.findMany({
           where: {
             role: Role.ADMIN,
-            organizationMemberships: { some: { organizationId: session.user.organizationId! } },
+            organizationMemberships: { some: { organizationId: tenantId! } },
           },
           select: { id: true },
         });
@@ -586,14 +515,14 @@ export async function POST(request: NextRequest) {
           const notifications = admins.map(admin =>
             NotificationTemplates.leaveSubmitted(
               admin.id,
-              session.user.name || session.user.email || 'Employee',
+              leaveRequest.user.name || leaveRequest.user.email || 'Employee',
               leaveRequest.requestNumber,
               leaveType.name,
               totalDays,
               leaveRequest.id
             )
           );
-          await createBulkNotifications(notifications);
+          await createBulkNotifications(notifications, tenantId);
         }
       }
     } catch (notifyError) {
@@ -601,19 +530,6 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(leaveRequest, { status: 201 });
-  } catch (error) {
-    // Handle insufficient balance error thrown from transaction
-    if (error instanceof Error && error.message.startsWith('INSUFFICIENT_BALANCE:')) {
-      const available = error.message.split(':')[1];
-      return NextResponse.json({
-        error: `Insufficient leave balance. Available: ${available} days`,
-      }, { status: 400 });
-    }
-
-    console.error('Leave requests POST error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create leave request' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(createLeaveRequestHandler, { requireAuth: true, requireModule: 'leave' });

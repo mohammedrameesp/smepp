@@ -57,13 +57,17 @@ export default async function AdminLayout({
 }) {
   const session = await getServerSession(authOptions);
 
+  // PROD-003: Auth bypass only when DEV_AUTH_ENABLED is explicitly set
+  // Never bypass auth based on NODE_ENV alone (could be misconfigured in production)
+  const devAuthEnabled = process.env.DEV_AUTH_ENABLED === 'true';
+
   // Redirect unauthenticated users
-  if (!session && process.env.NODE_ENV !== 'development') {
+  if (!session && !devAuthEnabled) {
     redirect('/login');
   }
 
   // Redirect non-admin users
-  if (session?.user?.role !== 'ADMIN' && process.env.NODE_ENV !== 'development') {
+  if (session?.user?.role !== 'ADMIN' && !devAuthEnabled) {
     redirect('/employee');
   }
 

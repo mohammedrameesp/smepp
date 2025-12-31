@@ -1,3 +1,9 @@
+/**
+ * @file header.tsx
+ * @description Main application header with navigation and user controls
+ * @module components
+ */
+
 'use client';
 
 import { useSession, signOut } from 'next-auth/react';

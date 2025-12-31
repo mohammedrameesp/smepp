@@ -1,29 +1,23 @@
+/**
+ * @file route.ts
+ * @description Subscription active billing periods endpoint
+ * @module operations/subscriptions
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { getActivePeriods } from '@/lib/subscription-lifecycle';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function getSubscriptionPeriodsHandler(_request: NextRequest, context: APIContext) {
+    const { params } = context;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    const { id } = await params;
 
     const periods = await getActivePeriods(id);
 
     return NextResponse.json({ periods });
-  } catch (error) {
-    console.error('Error getting active periods:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to get active periods' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(getSubscriptionPeriodsHandler, { requireAuth: true, requireModule: 'subscriptions' });

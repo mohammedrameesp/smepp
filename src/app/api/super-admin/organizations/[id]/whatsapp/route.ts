@@ -1,13 +1,15 @@
+/**
+ * @file route.ts
+ * @description Manage tenant WhatsApp configuration and usage statistics
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import { setTenantPlatformWhatsAppAccess, getTenantWhatsAppStatus } from '@/lib/whatsapp/config';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// VALIDATION SCHEMAS
-// ═══════════════════════════════════════════════════════════════════════════════
 
 const updateSchema = z.object({
   whatsAppPlatformEnabled: z.boolean().optional(),

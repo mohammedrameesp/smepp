@@ -1,12 +1,17 @@
+/**
+ * @file notification-dropdown.tsx
+ * @description Dropdown component displaying list of notifications with mark as read functionality
+ * @module components/domains/system/notifications
+ */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { NotificationItem } from './notification-item';
 import { useNotifications } from './notification-provider';
-import { Loader2, CheckCheck, Bell } from 'lucide-react';
+import { Loader2, CheckCheck, Bell, RefreshCw } from 'lucide-react';
 
 interface Notification {
   id: string;
@@ -21,14 +26,12 @@ interface Notification {
 export function NotificationDropdown() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [markingAllRead, setMarkingAllRead] = useState(false);
-  const { refreshCount } = useNotifications();
+  const { refreshCount, refreshTrigger, lastUpdated } = useNotifications();
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async (showRefreshing = false) => {
+    if (showRefreshing) setRefreshing(true);
     try {
       const res = await fetch('/api/notifications?ps=10');
       if (res.ok) {
@@ -39,8 +42,21 @@ export function NotificationDropdown() {
       console.error('Failed to fetch notifications:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  // Refresh when trigger changes (from context)
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      fetchNotifications(true);
+    }
+  }, [refreshTrigger, fetchNotifications]);
 
   const handleMarkAllRead = async () => {
     setMarkingAllRead(true);
@@ -75,26 +91,60 @@ export function NotificationDropdown() {
 
   const hasUnread = notifications.some((n) => !n.isRead);
 
+  const handleRefresh = () => {
+    fetchNotifications(true);
+  };
+
+  // Format relative time (e.g., "2 min ago")
+  const formatRelativeTime = (date: Date | null) => {
+    if (!date) return '';
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (seconds < 60) return 'just now';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    return `${hours}h ago`;
+  };
+
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between p-3 border-b">
-        <h4 className="font-semibold text-sm">Notifications</h4>
-        {hasUnread && (
+        <div className="flex items-center gap-2">
+          <h4 className="font-semibold text-sm">Notifications</h4>
           <Button
             variant="ghost"
-            size="sm"
-            onClick={handleMarkAllRead}
-            disabled={markingAllRead}
-            className="text-xs h-7 px-2"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="h-6 w-6"
+            title="Refresh notifications"
           >
-            {markingAllRead ? (
-              <Loader2 className="h-3 w-3 animate-spin mr-1" />
-            ) : (
-              <CheckCheck className="h-3 w-3 mr-1" />
-            )}
-            Mark all read
+            <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
-        )}
+        </div>
+        <div className="flex items-center gap-2">
+          {lastUpdated && (
+            <span className="text-[10px] text-muted-foreground">
+              {formatRelativeTime(lastUpdated)}
+            </span>
+          )}
+          {hasUnread && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleMarkAllRead}
+              disabled={markingAllRead}
+              className="text-xs h-7 px-2"
+            >
+              {markingAllRead ? (
+                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+              ) : (
+                <CheckCheck className="h-3 w-3 mr-1" />
+              )}
+              Mark all read
+            </Button>
+          )}
+        </div>
       </div>
       <ScrollArea className="h-80">
         {loading ? (

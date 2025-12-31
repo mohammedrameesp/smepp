@@ -1,30 +1,25 @@
+/**
+ * @file route.ts
+ * @description Reject a pending leave request
+ * @module hr/leave
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { rejectLeaveRequestSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidateTokensForEntity } from '@/lib/whatsapp';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function rejectLeaveRequestHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     const body = await request.json();
     const validation = rejectLeaveRequestSchema.safeParse(body);
@@ -71,7 +66,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         where: { id },
         data: {
           status: 'REJECTED',
-          approverId: session.user.id,
+          approverId: currentUserId,
           rejectedAt: now,
           rejectionReason: reason,
         },
@@ -102,7 +97,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       // Update balance: pending -= totalDays
       await tx.leaveBalance.update({
         where: {
-          userId_leaveTypeId_year: {
+          tenantId_userId_leaveTypeId_year: {
+            tenantId,
             userId: existing.userId,
             leaveTypeId: existing.leaveTypeId,
             year,
@@ -123,7 +119,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           oldStatus: 'PENDING',
           newStatus: 'REJECTED',
           notes: reason,
-          performedById: session.user.id,
+          performedById: currentUserId,
         },
       });
 
@@ -131,7 +127,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.LEAVE_REQUEST_REJECTED,
       'LeaveRequest',
       leaveRequest.id,
@@ -143,6 +140,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     );
 
+    // NOTIF-004: Invalidate any pending WhatsApp action tokens for this request
+    await invalidateTokensForEntity('LEAVE_REQUEST', id);
+
     // Send notification to the requester
     await createNotification(
       NotificationTemplates.leaveRejected(
@@ -151,15 +151,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         existing.leaveType?.name || 'Leave',
         reason,
         leaveRequest.id
-      )
+      ),
+      tenantId
     );
 
     return NextResponse.json(leaveRequest);
-  } catch (error) {
-    console.error('Leave request reject error:', error);
-    return NextResponse.json(
-      { error: 'Failed to reject leave request' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(rejectLeaveRequestHandler, { requireAdmin: true, requireModule: 'leave' });

@@ -1,3 +1,9 @@
+/**
+ * @file depreciation.ts
+ * @description Validation schemas for asset depreciation management including categories and calculation
+ * @module validations/operations
+ */
+
 import { z } from 'zod';
 
 /**

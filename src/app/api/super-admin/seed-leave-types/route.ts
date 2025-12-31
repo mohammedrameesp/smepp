@@ -1,10 +1,14 @@
+/**
+ * @file route.ts
+ * @description Seed default leave types and balances for organizations
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { LeaveCategory } from '@prisma/client';
-
-// Qatar Labor Law compliant leave types
 const DEFAULT_LEAVE_TYPES = [
   {
     name: 'Annual Leave',

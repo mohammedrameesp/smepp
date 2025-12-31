@@ -1,3 +1,8 @@
+/**
+ * @file expiry-badge.tsx
+ * @description Badge components for displaying document expiry status with visual indicators
+ * @module components/domains/hr
+ */
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +11,6 @@ import { formatDate } from '@/lib/date-format';
 import {
   getExpiryStatus as getExpiryStatusUtil,
   getDaysRemaining,
-  type ExpiryStatus,
 } from '@/lib/hr-utils';
 
 interface ExpiryBadgeProps {

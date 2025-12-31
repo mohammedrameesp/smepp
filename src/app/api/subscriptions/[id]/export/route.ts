@@ -1,28 +1,21 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
+/**
+ * @file route.ts
+ * @description Single subscription export to Excel endpoint
+ * @module operations/subscriptions
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { arrayToCSV, formatDateForCSV, formatCurrencyForCSV } from '@/lib/csv-utils';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-interface Props {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(request: Request, { params }: Props) {
-  try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function exportSingleSubscriptionHandler(_request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     // Fetch subscription within tenant with related data
     const subscription = await prisma.subscription.findFirst({
@@ -95,8 +88,6 @@ export async function GET(request: Request, { params }: Props) {
         'Content-Disposition': `attachment; filename="${filename}"`,
       },
     });
-  } catch (error) {
-    console.error('Subscription export error:', error);
-    return NextResponse.json({ error: 'Failed to export subscription' }, { status: 500 });
-  }
 }
+
+export const GET = withErrorHandler(exportSingleSubscriptionHandler, { requireAdmin: true, requireModule: 'subscriptions' });

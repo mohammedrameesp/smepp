@@ -1,3 +1,9 @@
+/**
+ * @file asset-lifecycle.ts
+ * @description Asset lifecycle management - assignment periods, utilization tracking, and user asset history
+ * @module domains/operations/assets
+ */
+
 import { prisma } from '@/lib/core/prisma';
 
 export interface AssignmentPeriod {

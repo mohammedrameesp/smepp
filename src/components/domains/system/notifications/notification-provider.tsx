@@ -1,3 +1,16 @@
+/**
+ * @file notification-provider.tsx
+ * @description Context provider for managing notification state with smart polling
+ * @module components/domains/system/notifications
+ *
+ * Smart Polling Features:
+ * - Polls every 30s when tab is active
+ * - Stops polling when tab is hidden
+ * - Resumes and fetches immediately on tab focus
+ * - Exponential backoff on errors (30s → 60s → 120s → max 5min)
+ * - Resets backoff on successful fetch
+ * - Provides last updated timestamp
+ */
 'use client';
 
 import React, {
@@ -6,20 +19,31 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from 'react';
 import { useSession } from 'next-auth/react';
 
 interface NotificationContextType {
   unreadCount: number;
+  lastUpdated: Date | null;
+  isPolling: boolean;
+  refreshTrigger: number;
   refreshCount: () => Promise<void>;
+  refreshNotifications: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
   unreadCount: 0,
+  lastUpdated: null,
+  isPolling: true,
+  refreshTrigger: 0,
   refreshCount: async () => {},
+  refreshNotifications: () => {},
 });
 
-const POLL_INTERVAL = 30000; // 30 seconds
+const BASE_POLL_INTERVAL = 30000; // 30 seconds
+const MAX_POLL_INTERVAL = 300000; // 5 minutes max backoff
+const BACKOFF_MULTIPLIER = 2;
 
 export function NotificationProvider({
   children,
@@ -28,6 +52,15 @@ export function NotificationProvider({
 }) {
   const { status } = useSession();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [isPolling, setIsPolling] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Refs for managing polling state
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const currentIntervalMs = useRef(BASE_POLL_INTERVAL);
+  const consecutiveErrors = useRef(0);
+  const isTabVisible = useRef(true);
 
   const fetchCount = useCallback(async () => {
     if (status !== 'authenticated') return;
@@ -37,45 +70,112 @@ export function NotificationProvider({
       if (res.ok) {
         const data = await res.json();
         setUnreadCount(data.count);
+        setLastUpdated(new Date());
+        // Reset backoff on success
+        consecutiveErrors.current = 0;
+        currentIntervalMs.current = BASE_POLL_INTERVAL;
+      } else {
+        throw new Error('Failed to fetch');
       }
-    } catch (error) {
-      console.error('Failed to fetch notification count:', error);
+    } catch {
+      // Apply exponential backoff on error
+      consecutiveErrors.current += 1;
+      currentIntervalMs.current = Math.min(
+        BASE_POLL_INTERVAL * Math.pow(BACKOFF_MULTIPLIER, consecutiveErrors.current),
+        MAX_POLL_INTERVAL
+      );
     }
   }, [status]);
+
+  // Function to trigger notification list refresh in dropdown
+  const refreshNotifications = useCallback(() => {
+    setRefreshTrigger((v) => v + 1);
+    fetchCount();
+  }, [fetchCount]);
+
+  // Start polling
+  const startPolling = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    setIsPolling(true);
+    intervalRef.current = setInterval(() => {
+      if (isTabVisible.current) {
+        fetchCount();
+      }
+    }, currentIntervalMs.current);
+  }, [fetchCount]);
+
+  // Stop polling
+  const stopPolling = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsPolling(false);
+  }, []);
 
   useEffect(() => {
     if (status !== 'authenticated') {
       setUnreadCount(0);
+      setLastUpdated(null);
+      stopPolling();
       return;
     }
 
     // Initial fetch
     fetchCount();
 
-    // Set up polling
-    const interval = setInterval(fetchCount, POLL_INTERVAL);
+    // Start polling
+    startPolling();
 
-    // Pause polling when tab is hidden
+    // Handle visibility change - stop polling when hidden, resume when visible
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        // Tab is hidden, we'll resume on next visible
+        isTabVisible.current = false;
+        stopPolling();
       } else {
-        // Tab is visible again, fetch immediately
+        isTabVisible.current = true;
+        // Fetch immediately and restart polling
+        fetchCount();
+        startPolling();
+      }
+    };
+
+    // Handle window focus - refresh immediately
+    const handleFocus = () => {
+      if (!document.hidden) {
         fetchCount();
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
 
     return () => {
-      clearInterval(interval);
+      stopPolling();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
     };
-  }, [status, fetchCount]);
+  }, [status, fetchCount, startPolling, stopPolling]);
+
+  // Re-setup polling when interval changes due to backoff
+  useEffect(() => {
+    if (status === 'authenticated' && isTabVisible.current && consecutiveErrors.current > 0) {
+      startPolling();
+    }
+  }, [currentIntervalMs.current, status, startPolling]);
 
   return (
     <NotificationContext.Provider
-      value={{ unreadCount, refreshCount: fetchCount }}
+      value={{
+        unreadCount,
+        lastUpdated,
+        isPolling,
+        refreshTrigger,
+        refreshCount: fetchCount,
+        refreshNotifications,
+      }}
     >
       {children}
     </NotificationContext.Provider>

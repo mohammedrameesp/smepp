@@ -1,3 +1,9 @@
+/**
+ * @file admin-top-nav.tsx
+ * @description Admin dashboard top navigation bar with user menu and notifications
+ * @module components/layout
+ */
+
 'use client';
 
 import * as React from 'react';
@@ -27,7 +33,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
 import { NotificationBell } from '@/components/domains/system/notifications';
 import { type BadgeCounts, getBadgeCount } from '@/components/layout/sidebar-config';
 import { cn } from '@/lib/utils';
@@ -74,7 +79,11 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
           {/* Left: Logo + Org Name */}
           <div className="flex items-center gap-6">
             <Link href="/admin" className="flex items-center gap-3">
-              <img src="/sme-wordmark-white.png" alt="Durj" className="h-7 w-auto" />
+              {session?.user?.organizationLogoUrl ? (
+                <img src={session.user.organizationLogoUrl} alt={session.user.organizationName || 'Organization'} className="h-7 w-auto max-w-[120px] object-contain" />
+              ) : (
+                <img src="/sme-wordmark-white.png" alt="Durj" className="h-7 w-auto" />
+              )}
               <span className="text-slate-500 hidden sm:inline">|</span>
               <span className="text-sm font-medium text-slate-200 hidden sm:inline">
                 {session?.user?.organizationName || 'Organization'}
@@ -185,8 +194,11 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
 
               {/* User Menu */}
               <DropdownMenu>
-                <DropdownMenuTrigger className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center cursor-pointer outline-none ring-2 ring-slate-700">
-                  <span className="text-white text-xs font-medium">
+                <DropdownMenuTrigger
+                  className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center cursor-pointer outline-none ring-2 ring-slate-700"
+                  aria-label="User menu"
+                >
+                  <span className="text-white text-xs font-medium" aria-hidden="true">
                     {session?.user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
                   </span>
                 </DropdownMenuTrigger>

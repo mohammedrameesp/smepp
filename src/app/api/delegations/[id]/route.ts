@@ -136,6 +136,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
+      tenantId,
       session.user.id,
       'DELEGATION_UPDATED',
       'ApproverDelegation',
@@ -194,6 +195,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
+      tenantId,
       session.user.id,
       'DELEGATION_DELETED',
       'ApproverDelegation',

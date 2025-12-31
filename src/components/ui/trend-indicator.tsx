@@ -1,3 +1,9 @@
+/**
+ * @file trend-indicator.tsx
+ * @description Trend indicator components for displaying value changes and comparisons
+ * @module components/ui
+ */
+
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';

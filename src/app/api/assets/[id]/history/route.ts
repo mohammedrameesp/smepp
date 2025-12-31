@@ -1,31 +1,29 @@
+/**
+ * @file route.ts
+ * @description Asset history retrieval API endpoint
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { getAssetHistory } from '@/lib/asset-history';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    // Check authentication
+async function getAssetHistoryHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
-    const { id } = await params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     // Get asset history
     const history = await getAssetHistory(id);
 
     return NextResponse.json(history);
-
-  } catch (error) {
-    console.error('Asset history GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch asset history' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(getAssetHistoryHandler, { requireAuth: true, requireModule: 'assets' });

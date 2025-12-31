@@ -1,3 +1,9 @@
+/**
+ * @file popover.tsx
+ * @description Popover component for floating contextual content
+ * @module components/ui
+ */
+
 'use client';
 
 import * as React from 'react';

@@ -194,6 +194,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
   // Log activity
   await logAction(
+    tenantId,
     session.user.id,
     ActivityActions.COMPANY_DOCUMENT_CREATED,
     'CompanyDocument',

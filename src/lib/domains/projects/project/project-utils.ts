@@ -1,3 +1,10 @@
+/**
+ * @file project-utils.ts
+ * @description Project utility functions. Provides project code generation (PRJ-YYYY-NNNN format),
+ *              exchange rate retrieval, and currency conversion to QAR.
+ * @module domains/projects/project
+ */
+
 import { prisma } from '@/lib/core/prisma';
 
 /**

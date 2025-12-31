@@ -1,3 +1,9 @@
+/**
+ * @file gratuity.ts
+ * @description Qatar End of Service Benefits (Gratuity) calculation utilities
+ * @module domains/hr/payroll
+ */
+
 import { GratuityCalculation, GratuityProjection } from '@/lib/types/payroll';
 
 /**
@@ -37,12 +43,22 @@ export function calculateServiceYears(dateOfJoining: Date, referenceDate: Date =
 }
 
 /**
+ * Minimum months of service required to be eligible for gratuity
+ * FIN-006: Employee must complete 12 months to receive any gratuity
+ */
+const MINIMUM_MONTHS_FOR_GRATUITY = 12;
+
+/**
  * Calculate gratuity based on basic salary and service duration
  *
  * Formula: 3 weeks of basic salary per year of service
  * - Weekly rate = (Basic Salary / 30) * 7
  * - Gratuity = Years of Service * 3 * Weekly Rate
  * - Pro-rated for partial years
+ *
+ * FIN-006: Minimum 12 months required for eligibility
+ * - Less than 12 months = 0 gratuity
+ * - 12+ months = gratuity for ALL months worked (including first 12)
  *
  * @param basicSalary Monthly basic salary in QAR
  * @param dateOfJoining Employee's date of joining
@@ -66,6 +82,27 @@ export function calculateGratuity(
   // Daily rate * 7 = weekly rate
   const dailyRate = basicSalary / 30;
   const weeklyRate = dailyRate * 7;
+
+  // FIN-006: Check minimum eligibility (12 months)
+  // Less than 12 months = no gratuity at all
+  if (monthsOfService < MINIMUM_MONTHS_FOR_GRATUITY) {
+    return {
+      basicSalary,
+      yearsOfService: 0,
+      monthsOfService,
+      daysOfService,
+      weeksPerYear: WEEKS_PER_YEAR,
+      gratuityAmount: 0,
+      dailyRate: Math.round(dailyRate * 100) / 100,
+      weeklyRate: Math.round(weeklyRate * 100) / 100,
+      breakdown: {
+        fullYearsAmount: 0,
+        partialYearAmount: 0,
+      },
+      ineligible: true,
+      ineligibleReason: `Minimum ${MINIMUM_MONTHS_FOR_GRATUITY} months of service required. Current: ${monthsOfService} months.`,
+    };
+  }
 
   // Full years gratuity: years * 3 weeks * weekly rate
   const fullYearsAmount = yearsOfService * WEEKS_PER_YEAR * weeklyRate;

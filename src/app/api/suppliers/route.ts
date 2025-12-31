@@ -1,15 +1,16 @@
+/**
+ * @file route.ts
+ * @description List suppliers with filtering, pagination and search
+ * @module operations/suppliers
+ */
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { supplierQuerySchema } from '@/lib/validations/suppliers';
 import { Role } from '@prisma/client';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler } from '@/lib/http/handler';
 
 export const GET = withErrorHandler(
-  async (request, { prisma }) => {
-    const session = await getServerSession(authOptions);
-
+  async (request, { prisma, tenant }) => {
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -29,7 +30,7 @@ export const GET = withErrorHandler(
 
     // EMPLOYEE can only see APPROVED suppliers
     // ADMIN can see all suppliers
-    if (session!.user.role === Role.EMPLOYEE) {
+    if (tenant!.userRole !== Role.ADMIN) {
       filters.status = 'APPROVED';
     } else if (status) {
       // Admin can filter by status

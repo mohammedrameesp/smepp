@@ -32,8 +32,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const result = await processApproval(id, session.user.id, 'APPROVE', validation.data.notes);
 
+    const tenantId = session.user.organizationId!;
+
     // Log the action
     await logAction(
+      tenantId,
       session.user.id,
       'APPROVAL_STEP_APPROVED',
       'ApprovalStep',
@@ -48,12 +51,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // If chain is complete and all approved, update the original entity and notify requester
     if (result.isChainComplete && result.allApproved) {
-      await handleFinalApproval(result.step.entityType, result.step.entityId, session.user.id);
-    } else if (!result.isChainComplete && session.user.organizationId) {
+      await handleFinalApproval(result.step.entityType, result.step.entityId, session.user.id, tenantId);
+    } else if (!result.isChainComplete) {
       // Notify next approver (tenant-scoped)
       const nextStep = await getCurrentPendingStep(result.step.entityType, result.step.entityId);
       if (nextStep) {
-        await notifyNextApprover(result.step.entityType, result.step.entityId, nextStep.requiredRole, session.user.organizationId);
+        await notifyNextApprover(result.step.entityType, result.step.entityId, nextStep.requiredRole, tenantId);
       }
     }
 
@@ -65,7 +68,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-async function handleFinalApproval(entityType: string, entityId: string, approverId: string) {
+async function handleFinalApproval(entityType: string, entityId: string, approverId: string, tenantId: string) {
   // Update the original entity status and notify requester
   if (entityType === 'LEAVE_REQUEST') {
     const leaveRequest = await prisma.leaveRequest.update({
@@ -85,7 +88,8 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
     const year = leaveRequest.startDate.getFullYear();
     await prisma.leaveBalance.update({
       where: {
-        userId_leaveTypeId_year: {
+        tenantId_userId_leaveTypeId_year: {
+          tenantId: leaveRequest.tenantId,
           userId: leaveRequest.userId,
           leaveTypeId: leaveRequest.leaveTypeId,
           year,
@@ -104,7 +108,8 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
         leaveRequest.requestNumber,
         leaveRequest.leaveType?.name || 'Leave',
         entityId
-      )
+      ),
+      tenantId
     );
   } else if (entityType === 'PURCHASE_REQUEST') {
     const purchaseRequest = await prisma.purchaseRequest.update({
@@ -124,7 +129,8 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
         purchaseRequest.requesterId,
         purchaseRequest.referenceNumber,
         entityId
-      )
+      ),
+      tenantId
     );
   } else if (entityType === 'ASSET_REQUEST') {
     const assetRequest = await prisma.assetRequest.update({
@@ -146,7 +152,8 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
         assetRequest.asset?.assetTag || '',
         assetRequest.requestNumber,
         entityId
-      )
+      ),
+      tenantId
     );
   }
 }
@@ -223,6 +230,6 @@ async function notifyNextApprover(entityType: string, entityId: string, required
       link: entityDetails.link,
       entityType,
       entityId,
-    });
+    }, tenantId);
   }
 }

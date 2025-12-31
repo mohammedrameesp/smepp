@@ -1,3 +1,9 @@
+/**
+ * @file asset-request-utils.ts
+ * @description Utility functions for asset request workflow - request generation, validation, and status management
+ * @module domains/operations/asset-requests
+ */
+
 import { prisma, PrismaTransactionClient } from '@/lib/core/prisma';
 import { AssetStatus, AssetRequestStatus, AssetRequestType } from '@prisma/client';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';

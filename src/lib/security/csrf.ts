@@ -1,29 +1,16 @@
+/**
+ * @file csrf.ts
+ * @description CSRF (Cross-Site Request Forgery) protection using signed tokens for form submissions
+ *              and origin validation for JSON API requests.
+ * @module security
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes, createHmac } from 'crypto';
 
 const CSRF_SECRET = process.env.NEXTAUTH_SECRET || 'dev-csrf-secret';
 const CSRF_COOKIE_NAME = '__Host-csrf-token';
 const CSRF_HEADER_NAME = 'x-csrf-token';
-
-// Get allowed origins from environment
-function getAllowedOrigins(): string[] {
-  const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
-  const protocol = appDomain.includes('localhost') ? 'http' : 'https';
-
-  // Allow main domain and all subdomains
-  const origins = [
-    `${protocol}://${appDomain}`,
-    `${protocol}://www.${appDomain}`,
-  ];
-
-  // In development, also allow localhost variants
-  if (process.env.NODE_ENV !== 'production') {
-    origins.push('http://localhost:3000');
-    origins.push('http://127.0.0.1:3000');
-  }
-
-  return origins;
-}
 
 export function generateCSRFToken(): string {
   const token = randomBytes(32).toString('hex');
@@ -163,8 +150,6 @@ export function csrfMiddleware(request: NextRequest): NextResponse | null {
   if (shouldProtect && !validateCSRF(request)) {
     const contentType = request.headers.get('content-type');
     const isJSON = contentType?.includes('application/json');
-
-    console.log(`[CSRF] Blocked request to ${url.pathname} - ${isJSON ? 'invalid origin' : 'missing token'}`);
 
     return NextResponse.json(
       {

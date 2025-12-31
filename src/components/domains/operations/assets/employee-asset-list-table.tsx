@@ -1,3 +1,8 @@
+/**
+ * @file employee-asset-list-table.tsx
+ * @description Table component for employee asset view with assignment filtering
+ * @module components/domains/operations/assets
+ */
 'use client';
 
 import { useState, useMemo } from 'react';

@@ -1,53 +1,80 @@
+/**
+ * @file branding.ts
+ * @description Tenant branding settings - fetches and caches organization branding
+ *              (logo, colors, company name, timezone) for UI customization
+ * @module lib/core
+ */
+
 import { prisma } from '@/lib/core/prisma';
 
 export interface BrandingSettings {
   logoUrl: string | null;
   primaryColor: string;
-  secondaryColor: string | null; // Optional - if null, use solid primary color (no gradient)
+  secondaryColor: string | null;
   companyName: string;
+  timezone: string;
 }
 
 const DEFAULT_BRANDING: BrandingSettings = {
   logoUrl: null,
-  primaryColor: '#1E40AF', // Deep Blue - brand primary
-  secondaryColor: null, // No secondary color by default - solid color instead of gradient
+  primaryColor: '#1E40AF',
+  secondaryColor: null,
   companyName: 'Durj',
+  timezone: 'Asia/Qatar',
 };
 
-let cachedBranding: BrandingSettings | null = null;
-let cacheExpiry: number = 0;
+// Tenant-aware cache using Map with tenantId as key
+const brandingCache = new Map<string, { settings: BrandingSettings; expiry: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-export async function getBrandingSettings(): Promise<BrandingSettings> {
-  // Return cached version if still valid
-  if (cachedBranding && Date.now() < cacheExpiry) {
-    return cachedBranding;
+/**
+ * Get branding settings for a specific tenant (organization).
+ * Uses a per-tenant cache with 5-minute TTL.
+ */
+export async function getBrandingSettings(tenantId: string): Promise<BrandingSettings> {
+  if (!tenantId) {
+    console.warn('getBrandingSettings called without tenantId - returning defaults');
+    return DEFAULT_BRANDING;
+  }
+
+  // Check cache
+  const cached = brandingCache.get(tenantId);
+  if (cached && Date.now() < cached.expiry) {
+    return cached.settings;
   }
 
   try {
-    const settings = await prisma.appSetting.findMany({
-      where: {
-        key: {
-          in: ['branding.logoUrl', 'branding.primaryColor', 'branding.secondaryColor', 'branding.companyName']
-        }
-      }
+    const org = await prisma.organization.findUnique({
+      where: { id: tenantId },
+      select: {
+        name: true,
+        logoUrl: true,
+        primaryColor: true,
+        secondaryColor: true,
+        timezone: true,
+      },
     });
 
-    const branding = settings.reduce((acc, setting) => {
-      const key = setting.key.replace('branding.', '') as keyof BrandingSettings;
-      (acc as any)[key] = setting.value;
-      return acc;
-    }, {} as Partial<BrandingSettings>);
+    if (!org) {
+      console.warn(`Organization not found for tenantId: ${tenantId}`);
+      return DEFAULT_BRANDING;
+    }
 
-    cachedBranding = {
-      logoUrl: branding.logoUrl || DEFAULT_BRANDING.logoUrl,
-      primaryColor: branding.primaryColor || DEFAULT_BRANDING.primaryColor,
-      secondaryColor: branding.secondaryColor || DEFAULT_BRANDING.secondaryColor,
-      companyName: branding.companyName || DEFAULT_BRANDING.companyName,
+    const settings: BrandingSettings = {
+      logoUrl: org.logoUrl || DEFAULT_BRANDING.logoUrl,
+      primaryColor: org.primaryColor || DEFAULT_BRANDING.primaryColor,
+      secondaryColor: org.secondaryColor || DEFAULT_BRANDING.secondaryColor,
+      companyName: org.name || DEFAULT_BRANDING.companyName,
+      timezone: org.timezone || DEFAULT_BRANDING.timezone,
     };
 
-    cacheExpiry = Date.now() + CACHE_TTL;
-    return cachedBranding;
+    // Cache the result
+    brandingCache.set(tenantId, {
+      settings,
+      expiry: Date.now() + CACHE_TTL,
+    });
+
+    return settings;
 
   } catch (error) {
     console.error('Failed to fetch branding settings:', error);
@@ -55,7 +82,21 @@ export async function getBrandingSettings(): Promise<BrandingSettings> {
   }
 }
 
-export function clearBrandingCache(): void {
-  cachedBranding = null;
-  cacheExpiry = 0;
+/**
+ * Clear branding cache for a specific tenant.
+ * Call this after branding settings are updated.
+ */
+export function clearBrandingCache(tenantId?: string): void {
+  if (tenantId) {
+    brandingCache.delete(tenantId);
+  } else {
+    brandingCache.clear();
+  }
+}
+
+/**
+ * Get default branding settings (for unauthenticated pages).
+ */
+export function getDefaultBranding(): BrandingSettings {
+  return { ...DEFAULT_BRANDING };
 }

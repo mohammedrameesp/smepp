@@ -1,3 +1,9 @@
+/**
+ * @file employee-top-nav.tsx
+ * @description Employee self-service top navigation bar with user menu
+ * @module components/layout
+ */
+
 'use client';
 
 import * as React from 'react';
@@ -52,7 +58,11 @@ export function EmployeeTopNav({ enabledModules = [] }: EmployeeTopNavProps) {
           {/* Left: Logo + Org Name */}
           <div className="flex items-center gap-6">
             <Link href="/employee" className="flex items-center gap-3">
-              <img src="/sme-wordmark-white.png" alt="Durj" className="h-7 w-auto" />
+              {session?.user?.organizationLogoUrl ? (
+                <img src={session.user.organizationLogoUrl} alt={session.user.organizationName || 'Organization'} className="h-7 w-auto max-w-[120px] object-contain" />
+              ) : (
+                <img src="/sme-wordmark-white.png" alt="Durj" className="h-7 w-auto" />
+              )}
               <span className="text-slate-500 hidden sm:inline">|</span>
               <span className="text-sm font-medium text-slate-200 hidden sm:inline">
                 {session?.user?.organizationName || 'Organization'}

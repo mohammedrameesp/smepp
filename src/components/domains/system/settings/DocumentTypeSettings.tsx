@@ -1,3 +1,8 @@
+/**
+ * @file DocumentTypeSettings.tsx
+ * @description Settings component for managing company and vehicle document types with CRUD operations
+ * @module components/domains/system/settings
+ */
 'use client';
 
 import { useState, useEffect } from 'react';

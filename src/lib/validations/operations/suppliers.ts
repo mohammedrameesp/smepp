@@ -1,3 +1,9 @@
+/**
+ * @file suppliers.ts
+ * @description Validation schemas for supplier management including creation, approval workflow, and engagements
+ * @module validations/operations
+ */
+
 import { z } from 'zod';
 import { SupplierStatus } from '@prisma/client';
 

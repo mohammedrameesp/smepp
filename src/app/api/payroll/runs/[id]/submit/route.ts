@@ -1,29 +1,24 @@
+/**
+ * @file route.ts
+ * @description Submit a processed payroll run for approval API
+ * @module hr/payroll
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role, PayrollStatus } from '@prisma/client';
+import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { submitPayrollSchema } from '@/lib/validations/payroll';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function submitPayrollHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
     const body = await request.json().catch(() => ({}));
     const validation = submitPayrollSchema.safeParse(body);
 
@@ -50,7 +45,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         where: { id },
         data: {
           status: PayrollStatus.PENDING_APPROVAL,
-          submittedById: session.user.id,
+          submittedById: currentUserId,
           submittedAt: new Date(),
         },
       });
@@ -62,7 +57,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           previousStatus: PayrollStatus.PROCESSED,
           newStatus: PayrollStatus.PENDING_APPROVAL,
           notes,
-          performedById: session.user.id,
+          performedById: currentUserId,
         },
       });
 
@@ -70,7 +65,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.PAYROLL_RUN_SUBMITTED,
       'PayrollRun',
       id,
@@ -78,11 +74,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     );
 
     return NextResponse.json({ success: true, status: updatedRun.status });
-  } catch (error) {
-    console.error('Payroll submit error:', error);
-    return NextResponse.json(
-      { error: 'Failed to submit payroll' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(submitPayrollHandler, { requireAdmin: true, requireModule: 'payroll' });

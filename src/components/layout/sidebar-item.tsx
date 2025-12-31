@@ -1,3 +1,9 @@
+/**
+ * @file sidebar-item.tsx
+ * @description Individual sidebar navigation item component
+ * @module components/layout
+ */
+
 'use client';
 
 import Link from 'next/link';

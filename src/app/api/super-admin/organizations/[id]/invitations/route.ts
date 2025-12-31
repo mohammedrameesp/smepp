@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Get pending invitations and create new invitations for an organization
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -5,10 +11,6 @@ import { prisma } from '@/lib/core/prisma';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/core/email';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// GET /api/super-admin/organizations/[id]/invitations - Get org's invitations
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export async function GET(
   request: NextRequest,

@@ -1,7 +1,10 @@
+/**
+ * @file route.ts
+ * @description Leave request detail operations - get, update, delete individual requests
+ * @module hr/leave
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updateLeaveRequestSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/activity';
@@ -9,26 +12,17 @@ import {
   calculateWorkingDays,
   canEditLeaveRequest,
 } from '@/lib/leave-utils';
+import { validateNoOverlap } from '@/lib/domains/hr/leave/leave-request-validation';
 import { cleanupStorageFile } from '@/lib/storage/cleanup';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function getLeaveRequestHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     // Use findFirst with tenantId to prevent IDOR attacks
     const leaveRequest = await prisma.leaveRequest.findFirst({
@@ -83,34 +77,23 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Non-admin users can only see their own requests
-    if (session.user.role !== Role.ADMIN && leaveRequest.userId !== session.user.id) {
+    if (tenant!.userRole !== 'ADMIN' && leaveRequest.userId !== tenant!.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     return NextResponse.json(leaveRequest);
-  } catch (error) {
-    console.error('Leave request GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch leave request' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = withErrorHandler(getLeaveRequestHandler, { requireAuth: true, requireModule: 'leave' });
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+async function updateLeaveRequestHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     const body = await request.json();
     const validation = updateLeaveRequestSchema.safeParse(body);
@@ -137,7 +120,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     // Only owner can edit their request
-    if (existing.userId !== session.user.id && session.user.role !== Role.ADMIN) {
+    if (existing.userId !== currentUserId && tenant!.userRole !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -176,21 +159,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         userId: existing.userId,
         tenantId,
         status: { in: ['PENDING', 'APPROVED'] },
-        OR: [
-          {
-            AND: [
-              { startDate: { lte: endDate } },
-              { endDate: { gte: startDate } },
-            ],
-          },
-        ],
       },
+      select: { startDate: true, endDate: true },
     });
 
-    if (overlappingRequests.length > 0) {
-      return NextResponse.json({
-        error: 'These dates overlap with another pending or approved leave request',
-      }, { status: 400 });
+    const overlapResult = validateNoOverlap(startDate, endDate, overlappingRequests);
+    if (!overlapResult.valid) {
+      return NextResponse.json({ error: overlapResult.error }, { status: 400 });
     }
 
     // Calculate new working days (include weekends for accrual-based leave like Annual Leave)
@@ -243,7 +218,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         const year = startDate.getFullYear();
         await tx.leaveBalance.update({
           where: {
-            userId_leaveTypeId_year: {
+            tenantId_userId_leaveTypeId_year: {
+              tenantId,
               userId: existing.userId,
               leaveTypeId: existing.leaveTypeId,
               year,
@@ -265,7 +241,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
           oldStatus: existing.status,
           newStatus: existing.status,
           changes: data,
-          performedById: session.user.id,
+          performedById: currentUserId,
         },
       });
 
@@ -273,7 +249,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.LEAVE_REQUEST_UPDATED,
       'LeaveRequest',
       leaveRequest.id,
@@ -281,29 +258,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     );
 
     return NextResponse.json(leaveRequest);
-  } catch (error) {
-    console.error('Leave request PUT error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update leave request' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const PUT = withErrorHandler(updateLeaveRequestHandler, { requireAuth: true, requireModule: 'leave' });
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+async function deleteLeaveRequestHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     // Get existing request within tenant
     const existing = await prisma.leaveRequest.findFirst({
@@ -315,8 +281,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     // Only admin can delete requests (or owner if draft/pending)
-    const isOwner = existing.userId === session.user.id;
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isOwner = existing.userId === currentUserId;
+    const isAdmin = tenant!.userRole === 'ADMIN';
 
     if (!isAdmin && (!isOwner || existing.status !== 'PENDING')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -329,7 +295,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         const year = existing.startDate.getFullYear();
         await tx.leaveBalance.update({
           where: {
-            userId_leaveTypeId_year: {
+            tenantId_userId_leaveTypeId_year: {
+              tenantId,
               userId: existing.userId,
               leaveTypeId: existing.leaveTypeId,
               year,
@@ -355,7 +322,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.LEAVE_REQUEST_DELETED,
       'LeaveRequest',
       id,
@@ -363,11 +331,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     );
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Leave request DELETE error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete leave request' },
-      { status: 500 }
-    );
-  }
 }
+
+export const DELETE = withErrorHandler(deleteLeaveRequestHandler, { requireAuth: true, requireModule: 'leave' });

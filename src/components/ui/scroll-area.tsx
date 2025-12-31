@@ -1,3 +1,9 @@
+/**
+ * @file scroll-area.tsx
+ * @description Custom scrollable container with styled scrollbars
+ * @module components/ui
+ */
+
 "use client"
 
 import * as React from "react"

@@ -1,11 +1,32 @@
+/**
+ * @file error-utils.ts
+ * @description Error handling utilities - toast notifications, API error parsing,
+ *              and standardized error responses for the frontend
+ * @module lib/core
+ */
+
 import { toast } from 'sonner';
+
+/**
+ * Validation error detail from Zod or similar validators.
+ */
+export interface ValidationErrorDetail {
+  path?: string[];
+  message: string;
+  code?: string;
+}
+
+/**
+ * Additional context in error responses - either validation errors or key-value data.
+ */
+export type ErrorDetails = ValidationErrorDetail[] | Record<string, unknown>;
 
 /**
  * Standard error response from API
  */
 export interface ApiErrorResponse {
   error: string;
-  details?: any;
+  details?: ErrorDetails;
   message?: string;
 }
 
@@ -33,8 +54,8 @@ export function showErrorToast(
 
     // If there are validation details, format them
     if (apiError.details && Array.isArray(apiError.details)) {
-      const validationErrors = apiError.details
-        .map((detail: any) => {
+      const validationErrors = (apiError.details as ValidationErrorDetail[])
+        .map((detail) => {
           const path = detail.path?.join('.') || 'Field';
           return `${path}: ${detail.message}`;
         })
@@ -73,13 +94,13 @@ export async function handleApiError(
 }
 
 /**
- * Custom API Error class
+ * Custom API Error class with status code and optional details.
  */
 export class ApiError extends Error {
   constructor(
     message: string,
     public statusCode: number,
-    public details?: any
+    public details?: ErrorDetails
   ) {
     super(message);
     this.name = 'ApiError';
@@ -87,9 +108,10 @@ export class ApiError extends Error {
 }
 
 /**
- * Wrap fetch calls with error handling
+ * Wrap fetch calls with error handling.
+ * @template T - Expected response type (defaults to unknown for type safety)
  */
-export async function apiFetch<T = any>(
+export async function apiFetch<T = unknown>(
   url: string,
   options?: RequestInit
 ): Promise<T> {

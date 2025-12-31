@@ -1,3 +1,9 @@
+/**
+ * @file sidebar-group.tsx
+ * @description Collapsible sidebar group component for organizing navigation items
+ * @module components/layout
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

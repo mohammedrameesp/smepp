@@ -1,32 +1,21 @@
+/**
+ * @file route.ts
+ * @description Single payroll run details and deletion API
+ * @module hr/payroll
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role, PayrollStatus } from '@prisma/client';
+import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { parseDecimal } from '@/lib/payroll/utils';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function getPayrollRunHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     // Use findFirst with tenantId to prevent cross-tenant access
     const payrollRun = await prisma.payrollRun.findFirst({
@@ -93,29 +82,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     };
 
     return NextResponse.json(response);
-  } catch (error) {
-    console.error('Payroll run GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch payroll run' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = withErrorHandler(getPayrollRunHandler, { requireAdmin: true, requireModule: 'payroll' });
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+async function deletePayrollRunHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     // Use findFirst with tenantId to prevent cross-tenant access
     const payrollRun = await prisma.payrollRun.findFirst({
@@ -139,11 +116,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Payroll run DELETE error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete payroll run' },
-      { status: 500 }
-    );
-  }
 }
+
+export const DELETE = withErrorHandler(deletePayrollRunHandler, { requireAdmin: true, requireModule: 'payroll' });

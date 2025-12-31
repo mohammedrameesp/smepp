@@ -1,3 +1,8 @@
+/**
+ * @file leave-requests-table.tsx
+ * @description Paginated table component for displaying and filtering leave requests
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';

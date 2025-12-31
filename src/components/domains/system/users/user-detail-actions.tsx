@@ -1,3 +1,8 @@
+/**
+ * @file user-detail-actions.tsx
+ * @description Action buttons for user detail page including edit, export, and delete operations
+ * @module components/domains/system/users
+ */
 'use client';
 
 import Link from 'next/link';

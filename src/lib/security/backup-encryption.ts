@@ -1,3 +1,10 @@
+/**
+ * @file backup-encryption.ts
+ * @description AES-256-GCM encryption for database backups with sensitive data redaction.
+ *              Provides defense-in-depth by both encrypting backups and redacting sensitive fields.
+ * @module security
+ */
+
 import crypto from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';

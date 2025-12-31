@@ -1,30 +1,116 @@
+/**
+ * @file log.ts
+ * @description Simple structured logger for all environments - provides info, warn,
+ *              error, and debug levels with request context support
+ * @module lib/core
+ */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Structured log data that can be passed to any log level.
+ * Supports common fields for request tracing and error details.
+ */
+export interface LogDataObject {
+  requestId?: string;
+  userId?: string;
+  userEmail?: string;
+  tenantId?: string;
+  method?: string;
+  url?: string;
+  status?: number;
+  duration?: number;
+  error?: string;
+  stack?: string;
+  [key: string]: unknown; // Allow additional fields
+}
+
+/**
+ * Log data can be either a structured object or a simple string message.
+ * This allows both `logger.info({ requestId: '123' }, 'Processing')` and
+ * `logger.info('Simple message')` calling conventions.
+ */
+export type LogData = LogDataObject | string;
+
+/**
+ * Context object for child loggers - typically request-scoped data.
+ */
+export interface LogContext {
+  requestId?: string;
+  userId?: string;
+  userEmail?: string;
+  tenantId?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Logger interface with standard log levels plus child logger factory.
+ */
+export interface Logger {
+  info: (data: LogData, message?: string) => void;
+  warn: (data: LogData, message?: string) => void;
+  error: (data: LogData, message?: string) => void;
+  debug: (data: LogData, message?: string) => void;
+  child: (context: LogContext) => Omit<Logger, 'child'>;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOGGER IMPLEMENTATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
 // Simple logger that works in all environments
 const isDev = process.env.NODE_ENV === 'development';
 
-const logger = {
-  info: (data: any, message?: string) => {
+// Helper to normalize log data - strings become the message, objects stay as data
+function normalizeLogData(data: LogData, message?: string): { data: LogDataObject; message?: string } {
+  if (typeof data === 'string') {
+    return { data: {}, message: data };
+  }
+  return { data, message };
+}
+
+const logger: Logger = {
+  info: (data: LogData, message?: string) => {
     if (isDev) {
-      console.log(`[INFO] ${message || ''}`, data);
+      const { data: d, message: m } = normalizeLogData(data, message);
+      console.log(`[INFO] ${m || ''}`, Object.keys(d).length > 0 ? d : '');
     }
   },
-  warn: (data: any, message?: string) => {
+  warn: (data: LogData, message?: string) => {
     if (isDev) {
-      console.warn(`[WARN] ${message || ''}`, data);
+      const { data: d, message: m } = normalizeLogData(data, message);
+      console.warn(`[WARN] ${m || ''}`, Object.keys(d).length > 0 ? d : '');
     }
   },
-  error: (data: any, message?: string) => {
-    console.error(`[ERROR] ${message || ''}`, data);
+  error: (data: LogData, message?: string) => {
+    const { data: d, message: m } = normalizeLogData(data, message);
+    console.error(`[ERROR] ${m || ''}`, Object.keys(d).length > 0 ? d : '');
   },
-  debug: (data: any, message?: string) => {
+  debug: (data: LogData, message?: string) => {
     if (isDev) {
-      console.debug(`[DEBUG] ${message || ''}`, data);
+      const { data: d, message: m } = normalizeLogData(data, message);
+      console.debug(`[DEBUG] ${m || ''}`, Object.keys(d).length > 0 ? d : '');
     }
   },
-  child: (context: any) => ({
-    info: (data: any, message?: string) => logger.info({ ...context, ...data }, message),
-    warn: (data: any, message?: string) => logger.warn({ ...context, ...data }, message),
-    error: (data: any, message?: string) => logger.error({ ...context, ...data }, message),
-    debug: (data: any, message?: string) => logger.debug({ ...context, ...data }, message),
+  child: (context: LogContext) => ({
+    info: (data: LogData, message?: string) => {
+      const normalized = typeof data === 'string' ? { message: data } : data;
+      logger.info({ ...context, ...normalized }, message);
+    },
+    warn: (data: LogData, message?: string) => {
+      const normalized = typeof data === 'string' ? { message: data } : data;
+      logger.warn({ ...context, ...normalized }, message);
+    },
+    error: (data: LogData, message?: string) => {
+      const normalized = typeof data === 'string' ? { message: data } : data;
+      logger.error({ ...context, ...normalized }, message);
+    },
+    debug: (data: LogData, message?: string) => {
+      const normalized = typeof data === 'string' ? { message: data } : data;
+      logger.debug({ ...context, ...normalized }, message);
+    },
   }),
 };
 

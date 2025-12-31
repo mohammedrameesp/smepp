@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Download or delete specific backup files with path validation
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth';
@@ -5,12 +11,6 @@ import { createClient } from '@supabase/supabase-js';
 import logger from '@/lib/log';
 
 const BACKUP_BUCKET = 'database-backups';
-
-/**
- * SECURITY: Validate and sanitize backup file path to prevent path traversal
- * @param path - The path to validate
- * @returns Validated path or null if invalid
- */
 function validateBackupPath(path: string): string | null {
   // Reject empty paths
   if (!path || path.trim() === '') {
@@ -99,7 +99,7 @@ export async function GET(
       .download(filePath);
 
     if (error) {
-      logger.error({ error, filePath }, 'Failed to download backup');
+      logger.error({ error: error.message, filePath }, 'Failed to download backup');
       return NextResponse.json({ error: 'Backup not found' }, { status: 404 });
     }
 
@@ -113,7 +113,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    logger.error({ error }, 'Failed to download backup');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Failed to download backup');
     return NextResponse.json(
       { error: 'Download failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -148,14 +148,14 @@ export async function DELETE(
       .remove([filePath]);
 
     if (error) {
-      logger.error({ error, filePath }, 'Failed to delete backup');
+      logger.error({ error: error.message, filePath }, 'Failed to delete backup');
       return NextResponse.json({ error: 'Delete failed' }, { status: 500 });
     }
 
     logger.info(`Backup deleted: ${filePath}`);
     return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error({ error }, 'Failed to delete backup');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Failed to delete backup');
     return NextResponse.json(
       { error: 'Delete failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

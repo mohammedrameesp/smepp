@@ -1,3 +1,10 @@
+/**
+ * @file require-recent-2fa.ts
+ * @description Enforces recent 2FA verification for sensitive operations.
+ *              Provides defense-in-depth by requiring re-verification within a time window.
+ * @module two-factor
+ */
+
 import { prisma } from '@/lib/core/prisma';
 import { NextResponse } from 'next/server';
 
@@ -94,7 +101,6 @@ export async function requireRecent2FA(
   const result = await checkRecent2FA(userId, maxAgeMs);
 
   if (!result.verified) {
-    console.log(`[2FA] Sensitive operation blocked for user ${userId}: ${result.error}`);
     return NextResponse.json(
       {
         error: 'Recent2FARequired',

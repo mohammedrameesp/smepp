@@ -19,9 +19,9 @@ function getTenantPortalUrl(orgSlug: string, path: string = ''): string {
 // HELPER FUNCTIONS
 // ============================================================================
 
-function formatTimestamp(): string {
+function formatTimestamp(timezone: string = 'Asia/Qatar'): string {
   return new Date().toLocaleString('en-GB', {
-    timeZone: 'Asia/Qatar',
+    timeZone: timezone,
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -44,7 +44,7 @@ function formatDate(date: Date | string | null): string {
 // BASE EMAIL WRAPPER
 // ============================================================================
 
-function emailWrapper(content: string): string {
+function emailWrapper(content: string, orgName: string, timezone?: string): string {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -57,7 +57,7 @@ function emailWrapper(content: string): string {
     <!-- Header -->
     <tr>
       <td style="background-color: ${BRAND_COLOR}; padding: 30px 40px; text-align: center;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">Durj</h1>
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">${orgName}</h1>
       </td>
     </tr>
 
@@ -72,10 +72,10 @@ function emailWrapper(content: string): string {
     <tr>
       <td style="background-color: #f8f9fa; padding: 25px 40px; text-align: center; border-top: 1px solid #eeeeee;">
         <p style="color: #888888; font-size: 12px; margin: 0 0 10px 0;">
-          This is an automated message from Durj.
+          This is an automated message from ${orgName}.
         </p>
         <p style="color: #888888; font-size: 12px; margin: 0;">
-          Generated on ${formatTimestamp()}
+          Generated on ${formatTimestamp(timezone)}
         </p>
       </td>
     </tr>
@@ -93,6 +93,7 @@ interface SupplierApprovalData {
   companyName: string;
   serviceCategory: string;
   approvalDate: Date;
+  orgName: string;
 }
 
 export function supplierApprovalEmail(data: SupplierApprovalData): { subject: string; html: string; text: string } {
@@ -106,7 +107,7 @@ export function supplierApprovalEmail(data: SupplierApprovalData): { subject: st
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      We are pleased to inform you that your supplier registration with Durj has been approved. You are now an approved vendor in our system.
+      We are pleased to inform you that your supplier registration with ${data.orgName} has been approved. You are now an approved vendor in our system.
     </p>
 
     <!-- Supplier Details Box -->
@@ -143,21 +144,21 @@ export function supplierApprovalEmail(data: SupplierApprovalData): { subject: st
     </ul>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Thank you for partnering with Durj. We look forward to working with you.
+      Thank you for partnering with ${data.orgName}. We look forward to working with you.
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>Durj Procurement Team</strong>
+      <strong>${data.orgName} Procurement Team</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 Congratulations! Your Supplier Registration is Approved
 
 Dear ${data.companyName},
 
-We are pleased to inform you that your supplier registration with Durj has been approved.
+We are pleased to inform you that your supplier registration with ${data.orgName} has been approved.
 
 Your Supplier Details:
 - Company Name: ${data.companyName}
@@ -169,10 +170,10 @@ What's Next?
 - Please keep your contact information up to date
 - Maintain proper documentation for all business transactions
 
-Thank you for partnering with Durj. We look forward to working with you.
+Thank you for partnering with ${data.orgName}. We look forward to working with you.
 
 Best regards,
-Durj Procurement Team
+${data.orgName} Procurement Team
 `.trim();
 
   return { subject, html, text };
@@ -190,6 +191,7 @@ interface AssetAssignmentData {
   model: string;
   serialNumber: string | null;
   assignmentDate: Date;
+  orgName: string;
 }
 
 export function assetAssignmentEmail(data: AssetAssignmentData): { subject: string; html: string; text: string } {
@@ -249,14 +251,14 @@ export function assetAssignmentEmail(data: AssetAssignmentData): { subject: stri
     </ul>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      You can view all your assigned assets by logging into the Durj Portal and navigating to "My Assets".
+      You can view all your assigned assets by logging into the portal and navigating to "My Assets".
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>Durj IT Team</strong>
+      <strong>${data.orgName} IT Team</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 Asset Assignment Notification
@@ -278,10 +280,10 @@ Your Responsibilities:
 - Do not transfer this asset to another person without authorization
 - Return the asset when requested or upon leaving the company
 
-You can view all your assigned assets in the Durj Portal under "My Assets".
+You can view all your assigned assets in the portal under "My Assets".
 
 Best regards,
-Durj IT Team
+${data.orgName} IT Team
 `.trim();
 
   return { subject, html, text };
@@ -300,6 +302,7 @@ interface ChangeRequestData {
   reason: string;
   submittedDate: Date;
   orgSlug: string;
+  orgName: string;
 }
 
 export function changeRequestEmail(data: ChangeRequestData): { subject: string; html: string; text: string } {
@@ -371,7 +374,7 @@ export function changeRequestEmail(data: ChangeRequestData): { subject: string; 
     </table>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Please log in to the Durj Portal to review and approve or reject this request.
+      Please log in to the portal to review and approve or reject this request.
     </p>
 
     <!-- CTA Button -->
@@ -388,9 +391,9 @@ export function changeRequestEmail(data: ChangeRequestData): { subject: string; 
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>Durj Portal</strong>
+      <strong>${data.orgName}</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 Profile Change Request - Action Required
@@ -408,11 +411,11 @@ Request Details:
 Reason for Change:
 ${data.reason || 'No reason provided'}
 
-Please log in to the Durj Portal to review and approve or reject this request.
+Please log in to the portal to review and approve or reject this request.
 ${getTenantPortalUrl(data.orgSlug, '/admin/employees')}
 
 Best regards,
-Durj Portal
+${data.orgName}
 `.trim();
 
   return { subject, html, text };
@@ -427,6 +430,7 @@ interface WelcomeUserData {
   userEmail: string;
   userRole: string;
   orgSlug: string;
+  orgName: string;
   authMethods: {
     hasGoogle: boolean;
     hasMicrosoft: boolean;
@@ -435,7 +439,7 @@ interface WelcomeUserData {
 }
 
 export function welcomeUserEmail(data: WelcomeUserData): { subject: string; html: string; text: string } {
-  const subject = `Welcome to Durj Portal - ${data.userName}`;
+  const subject = `Welcome to ${data.orgName} - ${data.userName}`;
 
   // Format role for display
   const roleDisplay = data.userRole.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -463,14 +467,14 @@ export function welcomeUserEmail(data: WelcomeUserData): { subject: string; html
   const signInInstructionsText = signInMethods.map(m => `- ${m}`).join('\n');
 
   const html = emailWrapper(`
-    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Welcome to Durj!</h2>
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Welcome to ${data.orgName}!</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
       Dear <strong>${data.userName}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Your account has been created on the Durj Portal. You can now access the system using your company email address.
+      Your account has been created on the ${data.orgName} Portal. You can now access the system using your company email address.
     </p>
 
     <!-- Account Details Box -->
@@ -525,16 +529,16 @@ export function welcomeUserEmail(data: WelcomeUserData): { subject: string; html
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Welcome aboard!<br>
-      <strong>Durj Team</strong>
+      <strong>${data.orgName} Team</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
-Welcome to Durj!
+Welcome to ${data.orgName}!
 
 Dear ${data.userName},
 
-Your account has been created on the Durj Portal.
+Your account has been created on the ${data.orgName} Portal.
 
 Your Account Details:
 - Name: ${data.userName}
@@ -552,7 +556,7 @@ Access the portal at: ${portalUrl}
 If you have any questions or need assistance, please contact the IT support team.
 
 Welcome aboard!
-Durj Team
+${data.orgName} Team
 `.trim();
 
   return { subject, html, text };
@@ -568,11 +572,12 @@ interface WelcomeUserWithPasswordSetupData {
   userEmail: string;
   userRole: string;
   orgSlug: string;
+  orgName: string;
   setupToken: string;
 }
 
 export function welcomeUserWithPasswordSetupEmail(data: WelcomeUserWithPasswordSetupData): { subject: string; html: string; text: string } {
-  const subject = `Welcome! Set Up Your Password - Durj Portal`;
+  const subject = `Welcome! Set Up Your Password - ${data.orgName}`;
 
   // Format role for display
   const roleDisplay = data.userRole.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -581,14 +586,14 @@ export function welcomeUserWithPasswordSetupEmail(data: WelcomeUserWithPasswordS
   const setupUrl = getTenantPortalUrl(data.orgSlug, `/set-password/${data.setupToken}`);
 
   const html = emailWrapper(`
-    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Welcome to Durj!</h2>
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Welcome to ${data.orgName}!</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
       Dear <strong>${data.userName}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Your account has been created on the Durj Portal. To get started, please set up your password using the link below.
+      Your account has been created on the ${data.orgName} Portal. To get started, please set up your password using the link below.
     </p>
 
     <!-- Account Details Box -->
@@ -647,16 +652,16 @@ export function welcomeUserWithPasswordSetupEmail(data: WelcomeUserWithPasswordS
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Welcome aboard!<br>
-      <strong>Durj Team</strong>
+      <strong>${data.orgName} Team</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
-Welcome to Durj!
+Welcome to ${data.orgName}!
 
 Dear ${data.userName},
 
-Your account has been created on the Durj Portal. To get started, please set up your password.
+Your account has been created on the ${data.orgName} Portal. To get started, please set up your password.
 
 Your Account Details:
 - Name: ${data.userName}
@@ -676,7 +681,7 @@ After setting your password, you can:
 If you have any questions or need assistance, please contact the IT support team.
 
 Welcome aboard!
-Durj Team
+${data.orgName} Team
 `.trim();
 
   return { subject, html, text };
@@ -697,6 +702,7 @@ interface DocumentExpiryAlertData {
   userName: string;
   documents: ExpiringDocument[];
   orgSlug: string;
+  orgName: string;
 }
 
 export function documentExpiryAlertEmail(data: DocumentExpiryAlertData): { subject: string; html: string; text: string } {
@@ -821,9 +827,9 @@ export function documentExpiryAlertEmail(data: DocumentExpiryAlertData): { subje
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>Durj HR Team</strong>
+      <strong>${data.orgName} HR Team</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const documentListText = data.documents
     .map((doc) => {
@@ -852,7 +858,7 @@ What to do:
 Update your profile at: ${getTenantPortalUrl(data.orgSlug, '/profile')}
 
 Best regards,
-Durj HR Team
+${data.orgName} HR Team
 `.trim();
 
   return { subject, html, text };
@@ -877,6 +883,7 @@ interface AdminDocumentExpiryAlertData {
   expiredCount: number;
   expiringCount: number;
   orgSlug: string;
+  orgName: string;
 }
 
 export function adminDocumentExpiryAlertEmail(data: AdminDocumentExpiryAlertData): { subject: string; html: string; text: string } {
@@ -995,9 +1002,9 @@ export function adminDocumentExpiryAlertEmail(data: AdminDocumentExpiryAlertData
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>Durj Portal</strong>
+      <strong>${data.orgName}</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const employeeList = Array.from(employeeMap.entries())
     .map(([, docs]) => {
@@ -1026,7 +1033,7 @@ ${employeeList}
 View all expiring documents at: ${getTenantPortalUrl(data.orgSlug, '/admin/employees/document-expiry')}
 
 Best regards,
-Durj Portal
+${data.orgName}
 `.trim();
 
   return { subject, html, text };
@@ -1044,6 +1051,7 @@ interface NewSupplierRegistrationData {
   country: string | null;
   registrationDate: Date;
   orgSlug: string;
+  orgName: string;
 }
 
 export function newSupplierRegistrationEmail(data: NewSupplierRegistrationData): { subject: string; html: string; text: string } {
@@ -1064,7 +1072,7 @@ export function newSupplierRegistrationEmail(data: NewSupplierRegistrationData):
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">New Supplier Registration</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      A new supplier has registered on the Durj Portal and is pending your approval.
+      A new supplier has registered on the ${data.orgName} Portal and is pending your approval.
     </p>
 
     <!-- Supplier Details Box -->
@@ -1120,14 +1128,14 @@ export function newSupplierRegistrationEmail(data: NewSupplierRegistrationData):
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>Durj Portal</strong>
+      <strong>${data.orgName}</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 New Supplier Registration - Pending Review
 
-A new supplier has registered on the Durj Portal and is pending your approval.
+A new supplier has registered on the ${data.orgName} Portal and is pending your approval.
 
 Supplier Details:
 - Company Name: ${data.companyName}
@@ -1141,7 +1149,7 @@ Please log in to the portal to review and approve or reject this registration.
 ${getTenantPortalUrl(data.orgSlug, '/admin/suppliers')}
 
 Best regards,
-Durj Portal
+${data.orgName}
 `.trim();
 
   return { subject, html, text };
@@ -1159,6 +1167,7 @@ interface AccreditationSubmittedData {
   submittedBy: string;
   submissionDate: Date;
   orgSlug: string;
+  orgName: string;
 }
 
 export function accreditationSubmittedEmail(data: AccreditationSubmittedData): { subject: string; html: string; text: string } {
@@ -1235,9 +1244,9 @@ export function accreditationSubmittedEmail(data: AccreditationSubmittedData): {
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>Durj Portal</strong>
+      <strong>${data.orgName}</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 Accreditation Pending Approval - Action Required
@@ -1256,7 +1265,7 @@ Please log in to the portal to review and approve or reject this accreditation.
 ${getTenantPortalUrl(data.orgSlug, '/admin/accreditation')}
 
 Best regards,
-Durj Portal
+${data.orgName}
 `.trim();
 
   return { subject, html, text };
@@ -1275,6 +1284,7 @@ interface PurchaseRequestSubmittedData {
   itemCount: number;
   priority: string;
   orgSlug: string;
+  orgName: string;
 }
 
 export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData): { subject: string; html: string; text: string } {
@@ -1372,9 +1382,9 @@ export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>Durj Portal</strong>
+      <strong>${data.orgName}</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 New Purchase Request - ${data.referenceNumber}
@@ -1393,7 +1403,7 @@ Please log in to the portal to review and approve or reject this request.
 ${getTenantPortalUrl(data.orgSlug, '/admin/purchase-requests')}
 
 Best regards,
-Durj Portal
+${data.orgName}
 `.trim();
 
   return { subject, html, text };
@@ -1412,6 +1422,7 @@ interface PurchaseRequestStatusData {
   reviewNotes?: string;
   reviewerName: string;
   orgSlug: string;
+  orgName: string;
 }
 
 export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { subject: string; html: string; text: string } {
@@ -1533,9 +1544,9 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br>
-      <strong>Durj Procurement Team</strong>
+      <strong>${data.orgName} Procurement Team</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 Purchase Request Status Update - ${data.referenceNumber}
@@ -1556,7 +1567,7 @@ ${isNegative ? 'If you have any questions about this decision or would like to s
 View your requests at: ${getTenantPortalUrl(data.orgSlug, '/employee/purchase-requests')}
 
 Best regards,
-Durj Procurement Team
+${data.orgName} Procurement Team
 `.trim();
 
   return { subject, html, text };
@@ -1580,6 +1591,7 @@ interface CompanyDocumentExpiryAlertData {
   expiredCount: number;
   expiringCount: number;
   orgSlug: string;
+  orgName: string;
 }
 
 export function companyDocumentExpiryAlertEmail(data: CompanyDocumentExpiryAlertData): { subject: string; html: string; text: string } {
@@ -1671,7 +1683,7 @@ export function companyDocumentExpiryAlertEmail(data: CompanyDocumentExpiryAlert
     <p style="color: #888888; font-size: 12px; margin-top: 20px;">
       Please renew these documents before they expire to avoid any compliance issues.
     </p>
-  `);
+  `, data.orgName);
 
   const documentsList = data.documents.map(doc => {
     const isExpired = doc.status === 'expired';
@@ -1697,7 +1709,7 @@ View documents at: ${getTenantPortalUrl(data.orgSlug, '/admin/company-documents'
 Please renew these documents before they expire to avoid any compliance issues.
 
 Best regards,
-Durj Portal
+${data.orgName}
 `.trim();
 
   return { subject, html, text };
@@ -1792,7 +1804,7 @@ export function newOrganizationSignupEmail(data: NewOrganizationSignupData): { s
     <p style="color: #888888; font-size: 12px; margin-top: 20px;">
       The organization admin will receive a separate email with setup instructions.
     </p>
-  `);
+  `, 'Durj Platform');
 
   const text = `
 New Organization Has Joined Durj

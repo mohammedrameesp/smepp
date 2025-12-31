@@ -1,3 +1,8 @@
+/**
+ * @file leave-approval-actions.tsx
+ * @description Approval and rejection action buttons with dialogs for leave requests
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState } from 'react';

@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Seed comprehensive demo data for an organization (employees, assets, etc.)
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -17,19 +23,12 @@ import {
   ProjectStatus,
   ClientType,
   NotificationType,
-  LoanStatus,
   PurchaseRequestStatus,
   PurchaseRequestPriority,
   PurchaseType,
   CostType,
   PaymentMode,
-  PayrollStatus,
-  AssetRequestType,
-  AssetRequestStatus,
-  AssetHistoryAction,
 } from '@prisma/client';
-
-// Helper functions
 function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }

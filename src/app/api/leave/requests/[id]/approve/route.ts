@@ -1,30 +1,25 @@
+/**
+ * @file route.ts
+ * @description Approve a pending leave request
+ * @module hr/leave
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { approveLeaveRequestSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidateTokensForEntity } from '@/lib/whatsapp';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function approveLeaveRequestHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     const body = await request.json();
     const validation = approveLeaveRequestSchema.safeParse(body);
@@ -71,7 +66,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         where: { id },
         data: {
           status: 'APPROVED',
-          approverId: session.user.id,
+          approverId: currentUserId,
           approvedAt: now,
           approverNotes: notes,
         },
@@ -102,7 +97,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       // Update balance: pending -= totalDays, used += totalDays
       await tx.leaveBalance.update({
         where: {
-          userId_leaveTypeId_year: {
+          tenantId_userId_leaveTypeId_year: {
+            tenantId,
             userId: existing.userId,
             leaveTypeId: existing.leaveTypeId,
             year,
@@ -126,7 +122,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           oldStatus: 'PENDING',
           newStatus: 'APPROVED',
           notes,
-          performedById: session.user.id,
+          performedById: currentUserId,
         },
       });
 
@@ -142,7 +138,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.LEAVE_REQUEST_APPROVED,
       'LeaveRequest',
       leaveRequest.id,
@@ -154,6 +151,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     );
 
+    // NOTIF-004: Invalidate any pending WhatsApp action tokens for this request
+    await invalidateTokensForEntity('LEAVE_REQUEST', id);
+
     // Send notification to the requester
     await createNotification(
       NotificationTemplates.leaveApproved(
@@ -161,15 +161,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         leaveRequest.requestNumber,
         existing.leaveType?.name || 'Leave',
         leaveRequest.id
-      )
+      ),
+      tenantId
     );
 
     return NextResponse.json(leaveRequest);
-  } catch (error) {
-    console.error('Leave request approve error:', error);
-    return NextResponse.json(
-      { error: 'Failed to approve leave request' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(approveLeaveRequestHandler, { requireAdmin: true, requireModule: 'leave' });

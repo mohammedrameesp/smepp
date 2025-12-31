@@ -1,3 +1,11 @@
+/**
+ * @file auth.ts
+ * @description NextAuth.js configuration for multi-tenant authentication with support for
+ *              Google OAuth, Azure AD, and email/password credentials. Handles tenant-scoped
+ *              sessions, account linking, and security measures (lockout, 2FA enforcement).
+ * @module auth
+ */
+
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import AzureADProvider from 'next-auth/providers/azure-ad';
@@ -299,13 +307,11 @@ export const authOptions: NextAuthOptions = {
 
           // Block soft-deleted users (deactivated accounts)
           if (existingUser && existingUser.isDeleted) {
-            console.log(`Login blocked for deactivated user: ${normalizedEmail}`);
             return '/login?error=AccountDeactivated';
           }
 
           // Block users who cannot login (non-login employees like drivers)
           if (existingUser && !existingUser.canLogin) {
-            console.log(`Login blocked for non-login user: ${normalizedEmail}`);
             return false;
           }
 
@@ -338,7 +344,6 @@ export const authOptions: NextAuthOptions = {
               // Check auth method restriction
               if (org.allowedAuthMethods.length > 0 && authMethod) {
                 if (!org.allowedAuthMethods.includes(authMethod)) {
-                  console.log(`Auth method ${authMethod} not allowed for org ${org.name}`);
                   return '/login?error=AuthMethodNotAllowed';
                 }
               }
@@ -346,7 +351,6 @@ export const authOptions: NextAuthOptions = {
               // Check email domain restriction
               if (org.enforceDomainRestriction && org.allowedEmailDomains.length > 0) {
                 if (!org.allowedEmailDomains.includes(emailDomain)) {
-                  console.log(`Email domain ${emailDomain} not allowed for org ${org.name}`);
                   return '/login?error=DomainNotAllowed';
                 }
               }
@@ -420,7 +424,6 @@ export const authOptions: NextAuthOptions = {
               // Check auth method restriction
               if (org.allowedAuthMethods.length > 0) {
                 if (!org.allowedAuthMethods.includes('credentials')) {
-                  console.log(`Credentials auth not allowed for org ${org.name}`);
                   return '/login?error=AuthMethodNotAllowed';
                 }
               }
@@ -428,7 +431,6 @@ export const authOptions: NextAuthOptions = {
               // Check email domain restriction
               if (org.enforceDomainRestriction && org.allowedEmailDomains.length > 0) {
                 if (!org.allowedEmailDomains.includes(emailDomain)) {
-                  console.log(`Email domain ${emailDomain} not allowed for org ${org.name}`);
                   return '/login?error=DomainNotAllowed';
                 }
               }
@@ -438,7 +440,7 @@ export const authOptions: NextAuthOptions = {
 
         return true;
       } catch (error) {
-        console.error('Error in signIn callback:', error);
+        console.error('[Auth] Error in signIn callback:', error);
         return false;
       }
     },
@@ -456,7 +458,6 @@ export const authOptions: NextAuthOptions = {
           if (securityCheck) {
             // If user can't login, invalidate the session
             if (!securityCheck.canLogin) {
-              console.log(`[Auth] User ${token.id} login disabled, invalidating session`);
               return { ...token, id: undefined };
             }
 
@@ -464,7 +465,6 @@ export const authOptions: NextAuthOptions = {
             if (securityCheck.passwordChangedAt) {
               const tokenIssuedAt = (token.iat as number) * 1000; // iat is in seconds, convert to ms
               if (securityCheck.passwordChangedAt.getTime() > tokenIssuedAt) {
-                console.log(`[Auth] Password changed after token issued for user ${token.id}, invalidating session`);
                 return { ...token, id: undefined };
               }
             }
@@ -569,7 +569,7 @@ export const authOptions: NextAuthOptions = {
 
         return token;
       } catch (error) {
-        console.error('Error in jwt callback:', error);
+        console.error('[Auth] Error in jwt callback:', error);
         return token;
       }
     },
@@ -597,7 +597,7 @@ export const authOptions: NextAuthOptions = {
 
         return session;
       } catch (error) {
-        console.error('Error in session callback:', error);
+        console.error('[Auth] Error in session callback:', error);
         return session;
       }
     },
@@ -622,7 +622,8 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    // SEC-006: Reduced from 30 to 14 days for security
+    maxAge: 14 * 24 * 60 * 60, // 14 days
   },
 
   // Share cookies across subdomains for multi-tenant support

@@ -1,3 +1,9 @@
+/**
+ * @file empty-state.tsx
+ * @description Empty state components for displaying when no data or results are available
+ * @module components/ui
+ */
+
 'use client';
 
 import * as React from 'react';

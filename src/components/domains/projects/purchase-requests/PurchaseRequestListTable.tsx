@@ -1,3 +1,8 @@
+/**
+ * @file PurchaseRequestListTable.tsx
+ * @description Table component for listing and filtering purchase requests with pagination
+ * @module components/domains/projects/purchase-requests
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';

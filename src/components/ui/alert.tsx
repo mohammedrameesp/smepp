@@ -1,3 +1,9 @@
+/**
+ * @file alert.tsx
+ * @description Alert component for displaying important messages with variant styles
+ * @module components/ui
+ */
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
 

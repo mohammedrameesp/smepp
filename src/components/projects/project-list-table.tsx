@@ -1,7 +1,13 @@
+/**
+ * @file project-list-table.tsx
+ * @description Paginated project list table with filtering and search
+ * @module components/projects
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -61,7 +67,6 @@ const CLIENT_TYPES = [
 ];
 
 export function ProjectListTable() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [projects, setProjects] = useState<Project[]>([]);

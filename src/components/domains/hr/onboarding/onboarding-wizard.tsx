@@ -1,3 +1,8 @@
+/**
+ * @file onboarding-wizard.tsx
+ * @description Multi-step onboarding wizard for new employee profile completion
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
@@ -11,9 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Progress } from '@/components/ui/progress';
-import { PhoneInput, QatarPhoneInput } from '@/components/hr/phone-input';
-import { DocumentUpload } from '@/components/hr/document-upload';
-import { MultiSelectTags, TagsInput } from '@/components/hr/multi-select-tags';
+import { PhoneInput, QatarPhoneInput, DocumentUpload, MultiSelectTags, TagsInput } from '@/components/hr';
 import {
   COUNTRIES,
   QATAR_BANKS,
@@ -37,7 +40,6 @@ import {
   FileText,
   Info,
   Loader2,
-  X,
 } from 'lucide-react';
 
 // Field name to label mapping for user-friendly error messages

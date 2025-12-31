@@ -1,10 +1,28 @@
+/**
+ * @file route.ts
+ * @description Health check endpoint for monitoring and load balancer probes
+ * @module system/health
+ *
+ * Returns system health status including:
+ * - Database connectivity and latency
+ * - Supabase storage connectivity
+ * - Application version (Git SHA)
+ * - Process uptime
+ */
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { sbSignedUrl } from '@/lib/storage/supabase';
 
+interface HealthCheck {
+  status: 'up' | 'down' | 'unknown';
+  latency?: number;
+  error?: string;
+}
+
 export async function GET() {
   const startTime = Date.now();
-  const checks: Record<string, any> = {};
+  const checks: Record<string, HealthCheck> = {};
   let allHealthy = true;
 
   // Database check

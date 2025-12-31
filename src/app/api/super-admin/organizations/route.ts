@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description List all organizations and create new organizations with admin invitations
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -6,10 +12,6 @@ import { z } from 'zod';
 import { validateSlug, isSlugAvailable } from '@/lib/multi-tenant/subdomain';
 import { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/core/email';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// VALIDATION
-// ═══════════════════════════════════════════════════════════════════════════════
 
 const createOrgSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),

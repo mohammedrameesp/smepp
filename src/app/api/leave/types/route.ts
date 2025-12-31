@@ -1,24 +1,18 @@
+/**
+ * @file route.ts
+ * @description Leave type CRUD operations - list and create leave types
+ * @module hr/leave
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createLeaveTypeSchema, leaveTypeQuerySchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/activity';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
+async function getLeaveTypesHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -32,7 +26,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { isActive, includeInactive } = validation.data;
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isAdmin = tenant!.userRole === 'ADMIN';
 
     // Build where clause with tenant filter
     const where: Record<string, unknown> = { tenantId };
@@ -52,7 +46,7 @@ export async function GET(request: NextRequest) {
     // For non-admin users, filter out PARENTAL and RELIGIOUS leave types
     // unless they have an assigned balance for them
     if (!isAdmin) {
-      const userId = session.user.id;
+      const userId = tenant!.userId;
       const currentYear = new Date().getFullYear();
 
       // Get user's assigned balances for special leave types
@@ -103,25 +97,14 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ leaveTypes });
-  } catch (error) {
-    console.error('Leave types GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch leave types' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = withErrorHandler(getLeaveTypesHandler, { requireAuth: true, requireModule: 'leave' });
 
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
+async function createLeaveTypeHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
 
     const body = await request.json();
     const validation = createLeaveTypeSchema.safeParse(body);
@@ -137,7 +120,7 @@ export async function POST(request: NextRequest) {
 
     // Check if leave type with same name already exists in this tenant
     const existing = await prisma.leaveType.findFirst({
-      where: { name: data.name, tenantId: session.user.organizationId },
+      where: { name: data.name, tenantId },
     });
 
     if (existing) {
@@ -156,12 +139,13 @@ export async function POST(request: NextRequest) {
     const leaveType = await prisma.leaveType.create({
       data: {
         ...createData,
-        tenantId: session.user.organizationId,
+        tenantId,
       },
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.LEAVE_TYPE_CREATED,
       'LeaveType',
       leaveType.id,
@@ -169,11 +153,6 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json(leaveType, { status: 201 });
-  } catch (error) {
-    console.error('Leave types POST error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create leave type' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(createLeaveTypeHandler, { requireAdmin: true, requireModule: 'leave' });

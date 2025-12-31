@@ -1,181 +1,79 @@
+/**
+ * @file route.ts
+ * @description Asset CSV import API endpoint
+ * @module operations/assets
+ *
+ * FEATURES:
+ * - Flexible column name matching (accepts various naming conventions)
+ * - Duplicate handling strategies (skip or update)
+ * - ID-based upsert to preserve relationships
+ * - Asset tag auto-generation
+ * - Currency conversion (QAR/USD)
+ * - Activity logging and asset history tracking
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { csvToArray } from '@/lib/csv-utils';
+import {
+  parseImportFile,
+  parseImportRows,
+  getExcelRowNumber,
+  createImportResults,
+  recordImportError,
+  formatImportMessage,
+  type ImportRow,
+} from '@/lib/core/import-utils';
+import { parseAssetRow, buildAssetDbData } from '@/lib/domains/operations/assets/asset-import';
 import { generateAssetTag } from '@/lib/asset-utils';
 import { logAction, ActivityActions } from '@/lib/activity';
-import { recordAssetHistory } from '@/lib/asset-history';
-import { AssetStatus } from '@prisma/client';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-interface ImportRow {
-  [key: string]: string | undefined;
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    // Check authentication
+async function importAssetsHandler(request: NextRequest, _context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    const tenantId = session.user.organizationId;
-    if (!tenantId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
-    // Get file from request
+    const tenantId = session.user.organizationId;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 1: Parse and validate the uploaded file
+    // ─────────────────────────────────────────────────────────────────────────
     const formData = await request.formData();
-    const file = formData.get('file') as File;
-    const duplicateStrategy = (formData.get('duplicateStrategy') as string) || 'skip';
+    const fileResult = await parseImportFile(formData);
+    if ('error' in fileResult) return fileResult.error;
+    const { buffer, duplicateStrategy } = fileResult;
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
-    }
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 2: Parse CSV rows
+    // ─────────────────────────────────────────────────────────────────────────
+    const rowsResult = await parseImportRows<ImportRow>(buffer);
+    if ('error' in rowsResult) return rowsResult.error;
+    const { rows } = rowsResult;
 
-    // Convert file to buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 3: Process each row
+    // ─────────────────────────────────────────────────────────────────────────
+    const results = createImportResults<{ assetTag: string | null; name: string; type: string }>();
 
-    // Parse CSV
-    const rows = await csvToArray<ImportRow>(buffer);
-
-    if (rows.length === 0) {
-      return NextResponse.json({ error: 'No data found in file' }, { status: 400 });
-    }
-
-    const results: {
-      success: number;
-      updated: number;
-      skipped: number;
-      failed: number;
-      errors: { row: number; error: string; data: unknown }[];
-      created: { assetTag: string | null; name: string; type: string }[];
-    } = {
-      success: 0,
-      updated: 0,
-      skipped: 0,
-      failed: 0,
-      errors: [],
-      created: [],
-    };
-
-    // Process each row
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      const rowNumber = i + 2; // +2 because Excel starts at 1 and we have headers
+      const rowNumber = getExcelRowNumber(i);
 
       try {
-        // Helper function to get value from row with flexible column names
-        const getRowValue = (possibleNames: string[]): string | undefined => {
-          for (const name of possibleNames) {
-            const value = row[name];
-            if (value && value.trim()) return value.trim();
-          }
-          return undefined;
-        };
-
-        // Extract values with flexible column name matching
-        const id = getRowValue(['ID', 'id', 'Asset ID']);
-        const assetTag = getRowValue(['Asset Tag', 'asset_tag', 'assetTag', 'Tag']);
-        const type = getRowValue(['Asset Type', 'Type', 'type', 'asset_type']);
-        const category = getRowValue(['Category', 'category', 'Category / Department', 'Department']);
-        const model = getRowValue(['Model', 'model', 'Model / Version']);
-        const brand = getRowValue(['Brand', 'brand', 'Brand / Manufacturer']);
-        const serial = getRowValue(['Serial', 'serial', 'Serial Number']);
-        const configuration = getRowValue(['Configuration', 'configuration', 'Configuration / Specs', 'Specs']);
-        const location = getRowValue(['Location', 'location', 'Physical Location']);
-        const purchaseDateStr = getRowValue(['Purchase Date', 'purchase_date', 'purchaseDate']);
-        const warrantyExpiryStr = getRowValue(['Warranty Expiry', 'warranty_expiry', 'warrantyExpiry', 'Warranty']);
-        const supplier = getRowValue(['Supplier', 'supplier', 'Supplier / Vendor', 'Vendor']);
-        const assignedUserId = getRowValue(['Assigned User ID', 'assignedUserId', 'assigned_user_id']);
-        const assignedUser = getRowValue(['Assigned User', 'assigned_user', 'Assigned To', 'User']);
-        const assignmentDate = getRowValue(['Assignment Date', 'assignmentDate', 'assignment_date']);
-        const statusStr = getRowValue(['Status', 'status']);
-        const priceStr = getRowValue(['Price', 'price', 'Cost', 'Cost / Value']);
-        const currencyStr = getRowValue(['Currency', 'currency']);
-        const acquisitionTypeStr = getRowValue(['Acquisition Type', 'acquisition_type', 'acquisitionType']);
-
-        // Validate required fields
-        if (!type || !model) {
-          results.errors.push({
-            row: rowNumber,
-            error: 'Missing required fields: Need at least Type and Model columns',
-            data: row,
-          });
-          results.failed++;
+        // Parse row using helper function
+        const parseResult = parseAssetRow(row);
+        if (!parseResult.success) {
+          recordImportError(results, row, rowNumber, parseResult.error);
           continue;
         }
 
-        // Parse status
-        let status: AssetStatus = AssetStatus.IN_USE;
-        if (statusStr) {
-          const statusInput = statusStr.toUpperCase().replace(/\s+/g, '_');
-          if (['IN_USE', 'SPARE', 'REPAIR', 'DISPOSED'].includes(statusInput)) {
-            status = statusInput as AssetStatus;
-          }
-        }
+        const { data: parsedData } = parseResult;
+        const { id, assetTag, type } = parsedData;
 
-        // Parse currency
-        let priceCurrency = 'QAR';
-        if (currencyStr) {
-          const currencyInput = currencyStr.toUpperCase();
-          if (['QAR', 'USD'].includes(currencyInput)) {
-            priceCurrency = currencyInput;
-          }
-        }
-
-        // Parse acquisition type
-        let acquisitionType: 'NEW_PURCHASE' | 'TRANSFERRED' = 'NEW_PURCHASE';
-        if (acquisitionTypeStr) {
-          const acqInput = acquisitionTypeStr.toUpperCase().replace(/\s+/g, '_');
-          if (['NEW_PURCHASE', 'TRANSFERRED'].includes(acqInput)) {
-            acquisitionType = acqInput as 'NEW_PURCHASE' | 'TRANSFERRED';
-          }
-        }
-
-        // Parse price
-        let price = null;
-        let priceQAR = null;
-        if (priceStr) {
-          const priceValue = parseFloat(priceStr);
-          if (!isNaN(priceValue)) {
-            if (priceCurrency === 'QAR') {
-              price = priceValue;
-              priceQAR = priceValue / 3.64;
-            } else {
-              priceQAR = priceValue;
-              price = priceValue * 3.64;
-            }
-          }
-        }
-
-        // Parse dates
-        const purchaseDate = purchaseDateStr ? new Date(purchaseDateStr) : null;
-        const warrantyExpiry = warrantyExpiryStr ? new Date(warrantyExpiryStr) : null;
-
-        // Asset data
-        const assetData: any = {
-          type,
-          category: category || null,
-          brand: brand || null,
-          model,
-          serial: serial || null,
-          configuration: configuration || null,
-          location: location || null,
-          supplier: supplier || null,
-          purchaseDate,
-          warrantyExpiry,
-          price,
-          priceCurrency,
-          priceQAR,
-          status,
-          acquisitionType,
-          assignedUserId: assignedUserId || null,
-          assignmentDate: assignmentDate || null,
-        };
+        // Build database-ready asset data
+        const assetData = buildAssetDbData(parsedData);
 
         // If ID is provided, use upsert to preserve relationships
         if (id) {
@@ -203,17 +101,19 @@ export async function POST(request: NextRequest) {
           }
 
           // Use upsert with ID to preserve relationships
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const asset = await prisma.asset.upsert({
             where: { id },
             create: {
               id,
               ...assetData,
-            },
-            update: assetData,
+            } as any,
+            update: assetData as any,
           });
 
           // Log activity
           await logAction(
+            tenantId,
             session.user.id,
             existingAssetById ? ActivityActions.ASSET_UPDATED : ActivityActions.ASSET_CREATED,
             'Asset',
@@ -269,6 +169,7 @@ export async function POST(request: NextRequest) {
               });
 
               await logAction(
+                tenantId,
                 session.user.id,
                 ActivityActions.ASSET_UPDATED,
                 'Asset',
@@ -290,12 +191,14 @@ export async function POST(request: NextRequest) {
         assetData.assetTag = finalAssetTag;
 
         // Create new asset
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const asset = await prisma.asset.create({
-          data: assetData,
+          data: assetData as any,
         });
 
         // Log activity
         await logAction(
+          tenantId,
           session.user.id,
           ActivityActions.ASSET_CREATED,
           'Asset',
@@ -324,32 +227,17 @@ export async function POST(request: NextRequest) {
         });
         results.success++;
       } catch (error) {
-        results.errors.push({
-          row: rowNumber,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          data: row,
-        });
-        results.failed++;
+        recordImportError(results, row, rowNumber, error instanceof Error ? error : 'Unknown error');
       }
     }
 
     return NextResponse.json(
       {
-        message: `Import completed: ${results.success} created, ${results.updated} updated, ${results.skipped} skipped, ${results.failed} failed`,
+        message: formatImportMessage(results),
         results,
       },
       { status: 200 }
     );
-  } catch (error) {
-    console.error('Asset import error:', error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    return NextResponse.json(
-      {
-        error: 'Failed to import assets',
-        details: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(importAssetsHandler, { requireAdmin: true, requireModule: 'assets' });

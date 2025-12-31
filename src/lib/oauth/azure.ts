@@ -1,3 +1,10 @@
+/**
+ * @file azure.ts
+ * @description Azure AD OAuth 2.0 implementation for custom per-organization OAuth apps.
+ *              Supports multi-tenant Azure AD with configurable tenant IDs.
+ * @module oauth
+ */
+
 import { getBaseUrl } from './utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════

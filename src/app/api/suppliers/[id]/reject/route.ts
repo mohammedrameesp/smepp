@@ -1,33 +1,28 @@
+/**
+ * @file route.ts
+ * @description Reject and delete a pending supplier
+ * @module operations/suppliers
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { rejectSupplierSchema } from '@/lib/validations/suppliers';
 import { logAction } from '@/lib/activity';
-import { Role } from '@prisma/client';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    // Check authentication - only ADMIN can reject
+async function rejectSupplierHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
     const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     // Parse and validate request body
     const body = await request.json();
@@ -63,6 +58,7 @@ export async function PATCH(
 
     // Log the rejection activity before deleting
     await logAction(
+      tenantId,
       session.user.id,
       'SUPPLIER_REJECTED',
       'supplier',
@@ -87,12 +83,6 @@ export async function PATCH(
         name: existingSupplier.name,
       },
     });
-
-  } catch (error) {
-    console.error('Reject supplier error:', error);
-    return NextResponse.json(
-      { error: 'Failed to reject supplier' },
-      { status: 500 }
-    );
-  }
 }
+
+export const PATCH = withErrorHandler(rejectSupplierHandler, { requireAdmin: true, requireModule: 'suppliers' });

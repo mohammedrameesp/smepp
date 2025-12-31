@@ -142,6 +142,7 @@ export async function POST(request: NextRequest) {
 
       // Log the cleanup action
       await logAction(
+        tenantId,
         session.user.id,
         ActivityActions.LEAVE_TYPE_UPDATED,
         'LeaveBalance',

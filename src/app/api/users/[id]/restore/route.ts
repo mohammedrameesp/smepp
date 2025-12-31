@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Restore soft-deleted user endpoint
+ * @module system/users
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -86,6 +92,7 @@ export async function POST(
 
     // Log activity
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.USER_UPDATED,
       'User',

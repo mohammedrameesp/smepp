@@ -154,12 +154,12 @@ export async function POST(request: NextRequest) {
     // Log the upload action
     try {
       await logAction(
+        tenantId,
         session.user.id,
         'UPLOAD_FILE',
         'file',
         filePath,
         {
-          tenantId,
           fileName: file.name,
           fileSize: file.size,
           mimeType: file.type,

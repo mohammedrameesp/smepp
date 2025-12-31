@@ -1,12 +1,14 @@
+/**
+ * @file route.ts
+ * @description Manage organization authentication configuration (OAuth, email domains)
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// VALIDATION SCHEMAS
-// ═══════════════════════════════════════════════════════════════════════════════
 
 const authMethodSchema = z.enum(['credentials', 'google', 'azure-ad']);
 

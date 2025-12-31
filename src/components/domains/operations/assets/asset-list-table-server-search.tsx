@@ -1,3 +1,8 @@
+/**
+ * @file asset-list-table-server-search.tsx
+ * @description Table component with server-side search, filtering, and pagination for assets
+ * @module components/domains/operations/assets
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -8,7 +13,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { AssetActions } from './asset-actions';
-import { formatDate } from '@/lib/date-format';
 import { Loader2, Users, MapPin } from 'lucide-react';
 
 interface Asset {

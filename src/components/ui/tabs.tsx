@@ -1,3 +1,9 @@
+/**
+ * @file tabs.tsx
+ * @description Tab navigation component for organizing content into panels
+ * @module components/ui
+ */
+
 "use client"
 
 import * as React from "react"

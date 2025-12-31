@@ -1,3 +1,8 @@
+/**
+ * @file user-actions.tsx
+ * @description Action buttons for user list row, including view details link
+ * @module components/domains/system/users
+ */
 'use client';
 
 import Link from 'next/link';

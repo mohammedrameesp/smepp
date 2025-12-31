@@ -1,3 +1,8 @@
+/**
+ * @file route.ts
+ * @description Process a draft payroll run to generate payslips
+ * @module hr/payroll
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -8,7 +13,6 @@ import {
   generatePayslipNumber,
   parseDecimal,
   calculateDailySalary,
-  toFixed2,
   subtractMoney,
   addMoney
 } from '@/lib/payroll/utils';
@@ -18,7 +22,7 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export async function POST(_request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user.role !== Role.ADMIN) {
@@ -33,12 +37,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Debug: Check database connection and table existence
+    // Check database connection and table existence
     try {
-      const salaryCount = await prisma.salaryStructure.count({
+      await prisma.salaryStructure.count({
         where: { tenantId },
       });
-      console.log(`[Payroll Process] Found ${salaryCount} salary structures for tenant ${tenantId}`);
     } catch (dbError) {
       console.error('[Payroll Process] Database error:', dbError);
       return NextResponse.json({
@@ -112,9 +115,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           startDate: { lte: payrollRun.periodEnd },
         },
       });
-    } catch (loanError) {
-      console.error('Failed to fetch loans:', loanError);
-      // Continue without loans
+    } catch {
+      // Continue without loans if there's an error
     }
 
     // Create a map of loans by userId
@@ -184,8 +186,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
             dailyRate,
             tenantId
           );
-        } catch (leaveError) {
-          console.error('Leave deduction calculation error:', leaveError);
+        } catch {
           // Continue without leave deductions if there's an error
         }
 
@@ -221,11 +222,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         // FIN-004: Validate net salary is not negative
         // Cap deductions at gross salary to prevent negative net
         const cappedDeductions = Math.min(totalDeductionsForEmployee, grossSalary);
-        if (totalDeductionsForEmployee > grossSalary) {
-          console.warn(
-            `[Payroll] Deductions (${totalDeductionsForEmployee}) exceed gross salary (${grossSalary}) for user ${salary.userId}. Capping at gross.`
-          );
-        }
 
         // FIN-003: Use precise subtraction for net salary
         const netSalary = subtractMoney(grossSalary, cappedDeductions);
@@ -363,6 +359,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.PAYROLL_RUN_PROCESSED,
       'PayrollRun',

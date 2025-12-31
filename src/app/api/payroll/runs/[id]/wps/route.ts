@@ -1,3 +1,8 @@
+/**
+ * @file route.ts
+ * @description Generate WPS (Wage Protection System) SIF file for payroll run
+ * @module hr/payroll
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -123,9 +128,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }, { status: 400 });
     }
 
-    // Log warning about skipped employees but continue with valid ones
+    // WPS-001: If some employees have invalid data, require explicit override
     if (validationErrors.length > 0) {
-      console.warn(`WPS: Skipping ${validationErrors.length} employees with invalid data:`, validationErrors);
+      const forcePartial = request.nextUrl.searchParams.get('forcePartial') === 'true';
+
+      if (!forcePartial) {
+        // Return error requiring confirmation to proceed with partial data
+        return NextResponse.json({
+          error: 'Some employees have invalid WPS data and will be excluded from the file.',
+          requiresConfirmation: true,
+          validationErrors,
+          validRecords: wpsRecords.length,
+          invalidRecords: validationErrors.length,
+          message: `${validationErrors.length} employee(s) will be excluded. Add ?forcePartial=true to proceed anyway.`,
+        }, { status: 400 });
+      }
+
     }
 
     // Calculate totals
@@ -170,6 +188,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.PAYROLL_WPS_GENERATED,
       'PayrollRun',

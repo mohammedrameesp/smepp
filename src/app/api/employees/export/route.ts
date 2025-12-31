@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Export employees to Excel with HR profile data
+ * @module hr/employees
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -8,25 +14,13 @@ import {
   getExpiryStatus,
   calculateProfileCompletion,
   maskSensitiveData,
-  PROFILE_COMPLETION_THRESHOLD,
 } from '@/lib/hr-utils';
+import { APIContext } from '@/lib/http/handler';
 
 // GET /api/employees/export - Export all employees to Excel
-export async function GET(request: NextRequest) {
-  try {
+async function exportEmployeesHandler(request: NextRequest, _context: APIContext) {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    // Only admins can export employee data
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
@@ -198,11 +192,4 @@ export async function GET(request: NextRequest) {
         'Content-Disposition': `attachment; filename="employees-${new Date().toISOString().split('T')[0]}.xlsx"`,
       },
     });
-  } catch (error) {
-    console.error('Export employees error:', error);
-    return NextResponse.json(
-      { error: 'Failed to export employees' },
-      { status: 500 }
-    );
-  }
 }

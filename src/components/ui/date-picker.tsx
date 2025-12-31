@@ -1,3 +1,9 @@
+/**
+ * @file date-picker.tsx
+ * @description Date picker component with calendar popup and direct text input
+ * @module components/ui
+ */
+
 'use client';
 
 import * as React from 'react';

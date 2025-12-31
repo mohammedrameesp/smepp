@@ -1,3 +1,8 @@
+/**
+ * @file TeamMembers.tsx
+ * @description Component for managing organization team members, invitations, and roles
+ * @module components/domains/system/organization
+ */
 'use client';
 
 import { useState } from 'react';

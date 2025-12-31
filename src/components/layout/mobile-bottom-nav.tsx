@@ -1,3 +1,9 @@
+/**
+ * @file mobile-bottom-nav.tsx
+ * @description Mobile bottom navigation bar for small screen devices
+ * @module components/layout
+ */
+
 'use client';
 
 import * as React from 'react';

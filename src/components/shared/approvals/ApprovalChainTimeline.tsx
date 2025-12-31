@@ -1,3 +1,9 @@
+/**
+ * @file ApprovalChainTimeline.tsx
+ * @description Timeline component for displaying approval workflow steps and status
+ * @module components/shared
+ */
+
 'use client';
 
 import { useState } from 'react';

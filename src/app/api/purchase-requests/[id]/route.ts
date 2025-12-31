@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Get, update, and delete a single purchase request
+ * @module projects/purchase-requests
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -5,26 +11,21 @@ import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updatePurchaseRequestSchema } from '@/lib/validations/purchase-request';
 import { logAction, ActivityActions } from '@/lib/activity';
-import { USD_TO_QAR_RATE } from '@/lib/constants';
+import { calculatePurchaseRequestItems } from '@/lib/domains/projects/purchase-requests/purchase-request-creation';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // GET - Get single purchase request
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+async function getPurchaseRequestHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id } = await params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     const purchaseRequest = await prisma.purchaseRequest.findFirst({
       where: { id, tenantId },
@@ -71,33 +72,20 @@ export async function GET(
     }
 
     return NextResponse.json(purchaseRequest);
-  } catch (error) {
-    console.error('Purchase request GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch purchase request' },
-      { status: 500 }
-    );
-  }
 }
 
 // PUT - Update purchase request (only when PENDING)
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+async function updatePurchaseRequestHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id } = await params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     // Get current request within tenant
     const currentRequest = await prisma.purchaseRequest.findFirst({
@@ -135,73 +123,25 @@ export async function PUT(
 
     const data = validation.data;
 
-    // Calculate totals if items are being updated
+    // Calculate totals if items are being updated using shared helper
     let totalAmount = Number(currentRequest.totalAmount);
     let totalAmountQAR = Number(currentRequest.totalAmountQAR);
     let totalOneTime = 0;
     let totalMonthly = 0;
     let totalContractValue = 0;
-    let itemsData: any[] | undefined;
+    let itemsData: ReturnType<typeof calculatePurchaseRequestItems>['items'] | undefined;
 
     if (data.items) {
-      totalAmount = 0;
-      totalAmountQAR = 0;
+      const formCurrency = data.items[0]?.currency || 'QAR';
+      const isSubscriptionType = currentRequest.purchaseType === 'SOFTWARE_SUBSCRIPTION';
 
-      itemsData = data.items.map((item, index) => {
-        const totalPrice = item.quantity * item.unitPrice;
-        const totalPriceQAR = item.currency === 'USD'
-          ? totalPrice * USD_TO_QAR_RATE
-          : totalPrice;
-        const unitPriceQAR = item.currency === 'USD'
-          ? item.unitPrice * USD_TO_QAR_RATE
-          : item.unitPrice;
-
-        // Calculate amount per cycle for recurring items
-        const billingCycle = item.billingCycle || 'ONE_TIME';
-        const durationMonths = item.durationMonths || null;
-        const amountPerCycle = billingCycle !== 'ONE_TIME' ? totalPrice : null;
-        const amountPerCycleQAR = amountPerCycle && item.currency === 'USD'
-          ? amountPerCycle * USD_TO_QAR_RATE
-          : amountPerCycle;
-
-        // Calculate totals based on billing cycle
-        if (billingCycle === 'ONE_TIME') {
-          totalOneTime += totalPriceQAR;
-          totalAmount += totalPrice;
-          totalAmountQAR += totalPriceQAR;
-          totalContractValue += totalPriceQAR;
-        } else if (billingCycle === 'MONTHLY') {
-          totalMonthly += totalPriceQAR;
-          const months = durationMonths || 12;
-          const contractValue = totalPriceQAR * months;
-          totalContractValue += contractValue;
-          totalAmount += totalPrice * months;
-          totalAmountQAR += contractValue;
-        } else if (billingCycle === 'YEARLY') {
-          totalMonthly += totalPriceQAR / 12;
-          totalContractValue += totalPriceQAR;
-          totalAmount += totalPrice;
-          totalAmountQAR += totalPriceQAR;
-        }
-
-        return {
-          itemNumber: index + 1,
-          description: item.description,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          currency: item.currency,
-          unitPriceQAR,
-          totalPrice,
-          totalPriceQAR,
-          billingCycle,
-          durationMonths,
-          amountPerCycle: amountPerCycleQAR,
-          productUrl: item.productUrl || null,
-          category: item.category || null,
-          supplier: item.supplier || null,
-          notes: item.notes || null,
-        };
-      });
+      const calculated = calculatePurchaseRequestItems(data.items, formCurrency, isSubscriptionType);
+      itemsData = calculated.items;
+      totalAmount = calculated.totalAmount;
+      totalAmountQAR = calculated.totalAmountQAR;
+      totalOneTime = calculated.totalOneTime;
+      totalMonthly = calculated.totalMonthly;
+      totalContractValue = calculated.totalContractValue;
     }
 
     // Build update data
@@ -287,6 +227,7 @@ export async function PUT(
 
     // Log activity
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.PURCHASE_REQUEST_UPDATED,
       'PurchaseRequest',
@@ -298,33 +239,20 @@ export async function PUT(
     );
 
     return NextResponse.json(purchaseRequest);
-  } catch (error) {
-    console.error('Purchase request PUT error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update purchase request' },
-      { status: 500 }
-    );
-  }
 }
 
 // DELETE - Delete purchase request (only when PENDING)
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+async function deletePurchaseRequestHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id } = await params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     // Get current request within tenant
     const currentRequest = await prisma.purchaseRequest.findFirst({
@@ -355,6 +283,7 @@ export async function DELETE(
 
     // Log activity
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.PURCHASE_REQUEST_DELETED,
       'PurchaseRequest',
@@ -366,11 +295,8 @@ export async function DELETE(
     );
 
     return NextResponse.json({ message: 'Purchase request deleted successfully' });
-  } catch (error) {
-    console.error('Purchase request DELETE error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete purchase request' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(getPurchaseRequestHandler, { requireAuth: true, requireModule: 'purchase-requests' });
+export const PUT = withErrorHandler(updatePurchaseRequestHandler, { requireAuth: true, requireModule: 'purchase-requests' });
+export const DELETE = withErrorHandler(deletePurchaseRequestHandler, { requireAuth: true, requireModule: 'purchase-requests' });

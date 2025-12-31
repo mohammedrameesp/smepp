@@ -1,3 +1,9 @@
+/**
+ * @file collapsible.tsx
+ * @description Collapsible section component for expandable/collapsible content
+ * @module components/ui
+ */
+
 "use client"
 
 import * as React from "react"

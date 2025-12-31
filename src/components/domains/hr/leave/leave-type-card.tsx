@@ -1,3 +1,8 @@
+/**
+ * @file leave-type-card.tsx
+ * @description Card component for displaying leave type configuration with management actions
+ * @module components/domains/hr
+ */
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

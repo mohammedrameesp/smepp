@@ -1,9 +1,12 @@
 /**
- * Feature Flags & Tier Configuration
+ * @file feature-flags.ts
+ * @description Feature flags and subscription tier configuration. Defines available modules
+ *              and features per subscription tier, and provides utilities to check access
+ *              and determine upgrade requirements.
+ * @module multi-tenant
  *
- * NOTE: Tier restrictions are currently disabled.
- * All features and modules are available to all organizations.
- * This will be re-implemented when billing is ready.
+ * @note Tier restrictions are currently disabled. All features and modules are available
+ *       to all organizations. This will be re-implemented when billing is ready.
  */
 
 import { SubscriptionTier } from '@prisma/client';

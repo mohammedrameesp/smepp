@@ -1,3 +1,8 @@
+/**
+ * @file clone-asset-button.tsx
+ * @description Button component with confirmation dialog for cloning assets
+ * @module components/domains/operations/assets
+ */
 'use client';
 
 import { useState } from 'react';

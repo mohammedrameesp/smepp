@@ -129,6 +129,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.APPROVAL_POLICY_UPDATED,
       'ApprovalPolicy',
@@ -193,6 +194,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.APPROVAL_POLICY_DELETED,
       'ApprovalPolicy',

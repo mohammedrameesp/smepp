@@ -1,3 +1,9 @@
+/**
+ * @file supplier-utils.ts
+ * @description Supplier utility functions - code generation and uniqueness validation
+ * @module domains/operations/suppliers
+ */
+
 import { prisma } from '@/lib/core/prisma';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 

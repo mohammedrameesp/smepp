@@ -1,10 +1,14 @@
+/**
+ * @file route.ts
+ * @description Setup and check 2FA status for super admin accounts
+ * @module system/super-admin
+ */
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { generateTOTPSecret } from '@/lib/two-factor/totp';
-
-// POST /api/super-admin/auth/setup-2fa - Generate 2FA secret and QR code
 export async function POST() {
   try {
     const session = await getServerSession(authOptions);

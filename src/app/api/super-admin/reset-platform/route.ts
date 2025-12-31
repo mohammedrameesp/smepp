@@ -1,15 +1,14 @@
+/**
+ * @file route.ts
+ * @description Reset platform by deleting all data except super admin accounts (testing only)
+ * @module system/super-admin
+ */
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { requireRecent2FA } from '@/lib/two-factor';
-
-/**
- * POST /api/super-admin/reset-platform
- *
- * Deletes ALL data except super admin accounts.
- * FOR TESTING PURPOSES ONLY - Remove in production!
- */
 export async function POST() {
   try {
     const session = await getServerSession(authOptions);
@@ -22,8 +21,6 @@ export async function POST() {
     // This is a destructive operation that requires highest level of verification
     const require2FAResult = await requireRecent2FA(session.user.id);
     if (require2FAResult) return require2FAResult;
-
-    console.log('🚨 PLATFORM RESET INITIATED BY SUPER ADMIN:', session.user.email);
 
     // Delete in order to respect foreign key constraints
     const results: Record<string, number> = {};
@@ -103,8 +100,6 @@ export async function POST() {
     results.users = (await prisma.user.deleteMany({
       where: { isSuperAdmin: false },
     })).count;
-
-    console.log('✅ PLATFORM RESET COMPLETE:', results);
 
     return NextResponse.json({
       success: true,

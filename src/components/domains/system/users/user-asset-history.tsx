@@ -1,3 +1,8 @@
+/**
+ * @file user-asset-history.tsx
+ * @description Displays user's asset assignment history including current and past assignments
+ * @module components/domains/system/users
+ */
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

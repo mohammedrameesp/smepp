@@ -1,3 +1,9 @@
+/**
+ * @file card.tsx
+ * @description Card container components for grouping related content
+ * @module components/ui
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

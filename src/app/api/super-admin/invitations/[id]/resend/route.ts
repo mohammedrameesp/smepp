@@ -1,13 +1,15 @@
+/**
+ * @file route.ts
+ * @description Resend or regenerate an organization invitation with new token
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/core/email';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// POST /api/super-admin/invitations/[id]/resend - Resend/regenerate invitation
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export async function POST(
   request: NextRequest,

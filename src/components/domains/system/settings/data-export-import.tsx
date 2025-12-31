@@ -1,3 +1,8 @@
+/**
+ * @file data-export-import.tsx
+ * @description Data export and import component for full backups and individual module data management
+ * @module components/domains/system/settings
+ */
 'use client';
 
 import { useState } from 'react';
@@ -233,25 +238,6 @@ export function DataExportImport() {
       importEndpoint: '/api/suppliers/import',
       supportsImport: true,
       importDescription: 'Import suppliers from CSV. Requires: Name, Category',
-    },
-    {
-      key: 'accreditations',
-      title: 'Accreditations',
-      description: 'Accreditation records and passes',
-      exportEndpoint: '/api/accreditation/export',
-      exportFilename: `accreditations_${new Date().toISOString().split('T')[0]}.csv`,
-      importEndpoint: '/api/accreditation/import',
-      supportsImport: false,
-      importDescription: 'Use project-specific import on the Accreditation page',
-    },
-    {
-      key: 'scans',
-      title: 'Accreditation Scans',
-      description: 'QR code scan history',
-      exportEndpoint: '/api/accreditation/scans/export',
-      exportFilename: `scans_${new Date().toISOString().split('T')[0]}.csv`,
-      importEndpoint: '',
-      supportsImport: false,
     },
   ];
 

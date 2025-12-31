@@ -1,22 +1,16 @@
+/**
+ * @file route.ts
+ * @description Subscription categories autocomplete endpoint
+ * @module operations/subscriptions
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
+async function getCategoriesHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
 
     // Get search query parameter
     const { searchParams } = new URL(request.url);
@@ -45,11 +39,6 @@ export async function GET(request: NextRequest) {
       .sort();
 
     return NextResponse.json(categories);
-  } catch (error) {
-    console.error('Subscription categories GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch subscription categories' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(getCategoriesHandler, { requireAuth: true, requireModule: 'subscriptions' });

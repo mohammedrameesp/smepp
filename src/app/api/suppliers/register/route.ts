@@ -1,23 +1,15 @@
+/**
+ * @file route.ts
+ * @description Public supplier registration endpoint
+ * @module operations/suppliers
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { createSupplierSchema } from '@/lib/validations/suppliers';
-import { checkRateLimit } from '@/lib/security/rateLimit';
 import { logAction } from '@/lib/activity';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function POST(request: NextRequest) {
-  try {
-    // Apply rate limiting (100 req/15min per IP as specified)
-    const { allowed } = await checkRateLimit(request);
-    if (!allowed) {
-      return NextResponse.json(
-        {
-          error: 'Rate limit exceeded',
-          message: 'Too many requests. Please try again later.'
-        },
-        { status: 429 }
-      );
-    }
-
+async function registerSupplierHandler(request: NextRequest, _context: APIContext) {
     // Parse and validate request body
     const body = await request.json();
     const validation = createSupplierSchema.safeParse(body);
@@ -74,6 +66,7 @@ export async function POST(request: NextRequest) {
 
     // Log the registration activity (no user since it's public)
     await logAction(
+      'SYSTEM', // Public registration - no tenant context
       null,
       'SUPPLIER_REGISTERED',
       'supplier',
@@ -84,12 +77,6 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // NOTE: Admin notification is skipped for public registration.
-    // Since this is a public route without tenant context, we cannot notify
-    // tenant-specific admins. Notifications will be handled during approval
-    // when the supplier is associated with a specific tenant.
-    console.log(`[Supplier Registration] New supplier registered: ${supplier.name} (pending approval)`)
-
     return NextResponse.json({
       message: 'Thank you! Your registration is pending approval.',
       supplier: {
@@ -97,12 +84,7 @@ export async function POST(request: NextRequest) {
         name: supplier.name,
       },
     }, { status: 201 });
-
-  } catch (error) {
-    console.error('Supplier registration error:', error);
-    return NextResponse.json(
-      { error: 'Failed to register supplier' },
-      { status: 500 }
-    );
-  }
 }
+
+// Public route with rate limiting - no auth required
+export const POST = withErrorHandler(registerSupplierHandler, { rateLimit: true });

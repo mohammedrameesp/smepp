@@ -1,3 +1,8 @@
+/**
+ * @file subscription-list-table-server-search.tsx
+ * @description Table component with server-side search, filtering, and pagination for subscriptions
+ * @module components/domains/operations/subscriptions
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';

@@ -1,3 +1,9 @@
+/**
+ * @file hr-profile.ts
+ * @description Validation schemas for HR employee profiles including Qatar-specific fields (QID, IBAN, mobile)
+ * @module validations/hr
+ */
+
 import { z } from 'zod';
 
 // Qatar QID: exactly 11 digits

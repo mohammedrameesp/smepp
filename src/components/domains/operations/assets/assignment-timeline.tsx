@@ -1,3 +1,8 @@
+/**
+ * @file assignment-timeline.tsx
+ * @description Timeline component showing complete asset assignment history
+ * @module components/domains/operations/assets
+ */
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

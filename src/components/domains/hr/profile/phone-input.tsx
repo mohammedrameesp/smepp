@@ -1,3 +1,8 @@
+/**
+ * @file phone-input.tsx
+ * @description Phone number input components with country code selection and validation
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState, useRef, useEffect } from 'react';

@@ -1,6 +1,8 @@
 /**
- * Utilities for building database search filters
- * Provides reusable patterns for common search scenarios
+ * @file search-filter.ts
+ * @description Database search filter utilities - provides reusable patterns
+ *              for building Prisma WHERE clauses with case-insensitive search
+ * @module lib/db
  */
 
 export type SearchableField = string;

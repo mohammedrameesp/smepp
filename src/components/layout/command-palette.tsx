@@ -1,3 +1,9 @@
+/**
+ * @file command-palette.tsx
+ * @description Command palette component for quick navigation and actions
+ * @module components/layout
+ */
+
 'use client';
 
 import * as React from 'react';
@@ -19,13 +25,11 @@ import {
   Settings,
   UserPlus,
   Plus,
-  FileText,
   Briefcase,
   ShoppingCart,
   Building2,
   Activity,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface CommandItem {
   id: string;

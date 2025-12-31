@@ -1,3 +1,9 @@
+/**
+ * @file notifications.ts
+ * @description Validation schemas for notification queries and filtering
+ * @module validations/system
+ */
+
 import { z } from 'zod';
 
 /**

@@ -1,12 +1,14 @@
+/**
+ * @file route.ts
+ * @description Get, update, or delete a specific organization
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// GET /api/super-admin/organizations/[id] - Get single organization
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export async function GET(
   request: NextRequest,

@@ -1,0 +1,689 @@
+/**
+ * @file utils.test.ts
+ * @description Unit tests for OAuth utility functions
+ * @module tests/unit/lib/oauth
+ *
+ * Tests cover:
+ * - Encryption/decryption of OAuth secrets (AES-256-GCM)
+ * - OAuth state management with CSRF protection
+ * - State expiration (10 minutes)
+ * - User security validation
+ * - Session token creation
+ * - URL utility functions
+ */
+
+// Mock environment variables before importing
+const originalEnv = process.env;
+beforeAll(() => {
+  process.env = {
+    ...originalEnv,
+    OAUTH_ENCRYPTION_KEY: 'test-encryption-key-at-least-32-chars-long',
+    NEXTAUTH_SECRET: 'test-nextauth-secret-for-testing',
+    NEXTAUTH_URL: 'https://app.example.com',
+    NEXT_PUBLIC_APP_DOMAIN: 'example.com',
+  };
+});
+
+afterAll(() => {
+  process.env = originalEnv;
+});
+
+// Mock Prisma
+jest.mock('@/lib/core/prisma', () => ({
+  prisma: {
+    user: { findUnique: jest.fn(), create: jest.fn(), update: jest.fn() },
+    organizationUser: { findUnique: jest.fn(), findMany: jest.fn(), create: jest.fn() },
+  },
+}));
+
+// Mock account lockout
+jest.mock('@/lib/security/account-lockout', () => ({
+  isAccountLocked: jest.fn(),
+  clearFailedLogins: jest.fn(),
+}));
+
+// Mock next-auth/jwt
+jest.mock('next-auth/jwt', () => ({
+  encode: jest.fn().mockResolvedValue('mock-jwt-token'),
+}));
+
+import {
+  encrypt,
+  decrypt,
+  encryptState,
+  decryptState,
+  validateOAuthSecurity,
+  upsertOAuthUser,
+  createSessionToken,
+  getBaseUrl,
+  getAppDomain,
+  getTenantUrl,
+} from '@/lib/oauth/utils';
+import { prisma } from '@/lib/core/prisma';
+import { isAccountLocked, clearFailedLogins } from '@/lib/security/account-lockout';
+import { encode } from 'next-auth/jwt';
+
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+
+describe('OAuth Utilities', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // ENCRYPTION / DECRYPTION
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('encrypt/decrypt', () => {
+    it('should encrypt and decrypt a string correctly', () => {
+      const original = 'my-secret-oauth-key';
+      const encrypted = encrypt(original);
+      const decrypted = decrypt(encrypted);
+
+      expect(encrypted).not.toBe(original);
+      expect(encrypted).toContain(':'); // Format: iv:authTag:ciphertext
+      expect(decrypted).toBe(original);
+    });
+
+    it('should return empty string for empty input', () => {
+      expect(encrypt('')).toBe('');
+      expect(decrypt('')).toBe('');
+    });
+
+    it('should return empty string for invalid encrypted format', () => {
+      expect(decrypt('not-encrypted')).toBe('');
+      expect(decrypt('invalid:format')).toBe('');
+    });
+
+    it('should produce different ciphertext for same plaintext (random IV)', () => {
+      const original = 'test-secret';
+      const encrypted1 = encrypt(original);
+      const encrypted2 = encrypt(original);
+
+      expect(encrypted1).not.toBe(encrypted2); // Different IVs
+      expect(decrypt(encrypted1)).toBe(original);
+      expect(decrypt(encrypted2)).toBe(original);
+    });
+
+    it('should handle special characters and unicode', () => {
+      const special = 'pass@word!#$%^&*()_+{}[]|\\:";\'<>?,./`~';
+      const unicode = 'パスワード密码пароль';
+
+      expect(decrypt(encrypt(special))).toBe(special);
+      expect(decrypt(encrypt(unicode))).toBe(unicode);
+    });
+
+    it('should handle long strings', () => {
+      const longString = 'a'.repeat(10000);
+      const encrypted = encrypt(longString);
+      const decrypted = decrypt(encrypted);
+
+      expect(decrypted).toBe(longString);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // OAUTH STATE MANAGEMENT
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('encryptState/decryptState', () => {
+    it('should encrypt and decrypt OAuth state', () => {
+      const stateData = {
+        subdomain: 'acme',
+        orgId: 'org-123',
+        provider: 'google' as const,
+      };
+
+      const encrypted = encryptState(stateData);
+      const decrypted = decryptState(encrypted);
+
+      expect(decrypted).not.toBeNull();
+      expect(decrypted!.subdomain).toBe('acme');
+      expect(decrypted!.orgId).toBe('org-123');
+      expect(decrypted!.provider).toBe('google');
+      expect(decrypted!.timestamp).toBeDefined();
+      expect(decrypted!.nonce).toBeDefined();
+    });
+
+    it('should include invite token when provided', () => {
+      const stateData = {
+        subdomain: 'acme',
+        orgId: 'org-123',
+        provider: 'azure' as const,
+        inviteToken: 'invite-abc-123',
+      };
+
+      const encrypted = encryptState(stateData);
+      const decrypted = decryptState(encrypted);
+
+      expect(decrypted!.inviteToken).toBe('invite-abc-123');
+    });
+
+    it('should handle null orgId', () => {
+      const stateData = {
+        subdomain: 'main',
+        orgId: null,
+        provider: 'google' as const,
+      };
+
+      const encrypted = encryptState(stateData);
+      const decrypted = decryptState(encrypted);
+
+      expect(decrypted!.orgId).toBeNull();
+    });
+
+    it('should return null for expired state (>10 minutes)', () => {
+      const stateData = {
+        subdomain: 'acme',
+        orgId: 'org-123',
+        provider: 'google' as const,
+      };
+
+      const encrypted = encryptState(stateData);
+
+      // Mock Date.now to simulate 11 minutes later
+      const originalNow = Date.now;
+      Date.now = jest.fn(() => originalNow() + 11 * 60 * 1000);
+
+      const decrypted = decryptState(encrypted);
+
+      expect(decrypted).toBeNull();
+
+      Date.now = originalNow;
+    });
+
+    it('should return null for tampered state', () => {
+      const stateData = {
+        subdomain: 'acme',
+        orgId: 'org-123',
+        provider: 'google' as const,
+      };
+
+      const encrypted = encryptState(stateData);
+      const tampered = encrypted.slice(0, -5) + 'xxxxx'; // Modify end
+
+      const decrypted = decryptState(tampered);
+
+      expect(decrypted).toBeNull();
+    });
+
+    it('should return null for empty or invalid input', () => {
+      expect(decryptState('')).toBeNull();
+      expect(decryptState('invalid')).toBeNull();
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // OAUTH SECURITY VALIDATION
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('validateOAuthSecurity', () => {
+    it('should allow login for new users', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const result = await validateOAuthSecurity('new@example.com', 'org-123', 'google');
+
+      expect(result.allowed).toBe(true);
+    });
+
+    it('should block deactivated users', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user-123',
+        isDeleted: true,
+        canLogin: true,
+        isSuperAdmin: false,
+      });
+
+      const result = await validateOAuthSecurity('deleted@example.com', 'org-123', 'google');
+
+      expect(result.allowed).toBe(false);
+      expect(result.error).toBe('AccountDeactivated');
+    });
+
+    it('should block users who cannot login', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user-123',
+        isDeleted: false,
+        canLogin: false,
+        isSuperAdmin: false,
+      });
+
+      const result = await validateOAuthSecurity('driver@example.com', 'org-123', 'google');
+
+      expect(result.allowed).toBe(false);
+      expect(result.error).toBe('LoginDisabled');
+    });
+
+    it('should block locked accounts', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user-123',
+        isDeleted: false,
+        canLogin: true,
+        isSuperAdmin: false,
+      });
+
+      const lockoutTime = new Date(Date.now() + 30 * 60 * 1000);
+      (isAccountLocked as jest.Mock).mockResolvedValue({
+        locked: true,
+        lockedUntil: lockoutTime,
+      });
+
+      const result = await validateOAuthSecurity('locked@example.com', 'org-123', 'google');
+
+      expect(result.allowed).toBe(false);
+      expect(result.error).toBe('AccountLocked');
+      expect(result.lockedUntil).toEqual(lockoutTime);
+    });
+
+    it('should allow super admins regardless of org restrictions', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user-123',
+        isDeleted: false,
+        canLogin: true,
+        isSuperAdmin: true,
+      });
+
+      (isAccountLocked as jest.Mock).mockResolvedValue({ locked: false });
+
+      const result = await validateOAuthSecurity('admin@example.com', 'org-123', 'google');
+
+      expect(result.allowed).toBe(true);
+      // Should not check organization memberships for super admins
+      expect(mockPrisma.organizationUser.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should block when auth method not allowed by organization', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user-123',
+        isDeleted: false,
+        canLogin: true,
+        isSuperAdmin: false,
+      });
+
+      (isAccountLocked as jest.Mock).mockResolvedValue({ locked: false });
+
+      (mockPrisma.organizationUser.findMany as jest.Mock).mockResolvedValue([
+        {
+          organization: {
+            name: 'Acme Corp',
+            allowedAuthMethods: ['azure-ad'], // Only Azure allowed
+          },
+        },
+      ]);
+
+      const result = await validateOAuthSecurity('user@example.com', 'org-123', 'google');
+
+      expect(result.allowed).toBe(false);
+      expect(result.error).toBe('AuthMethodNotAllowed');
+    });
+
+    it('should allow when auth method is in allowed list', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user-123',
+        isDeleted: false,
+        canLogin: true,
+        isSuperAdmin: false,
+      });
+
+      (isAccountLocked as jest.Mock).mockResolvedValue({ locked: false });
+
+      (mockPrisma.organizationUser.findMany as jest.Mock).mockResolvedValue([
+        {
+          organization: {
+            name: 'Acme Corp',
+            allowedAuthMethods: ['google', 'azure-ad'],
+          },
+        },
+      ]);
+
+      const result = await validateOAuthSecurity('user@example.com', 'org-123', 'google');
+
+      expect(result.allowed).toBe(true);
+    });
+
+    it('should allow when org has no auth method restrictions', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user-123',
+        isDeleted: false,
+        canLogin: true,
+        isSuperAdmin: false,
+      });
+
+      (isAccountLocked as jest.Mock).mockResolvedValue({ locked: false });
+
+      (mockPrisma.organizationUser.findMany as jest.Mock).mockResolvedValue([
+        {
+          organization: {
+            name: 'Acme Corp',
+            allowedAuthMethods: [], // No restrictions
+          },
+        },
+      ]);
+
+      const result = await validateOAuthSecurity('user@example.com', 'org-123', 'google');
+
+      expect(result.allowed).toBe(true);
+    });
+
+    it('should normalize email to lowercase', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await validateOAuthSecurity('User@EXAMPLE.com', 'org-123', 'google');
+
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'user@example.com' },
+        select: expect.any(Object),
+      });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // UPSERT OAUTH USER
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('upsertOAuthUser', () => {
+    it('should create new user when not exists', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.user.create as jest.Mock).mockResolvedValue({
+        id: 'new-user-123',
+        email: 'new@example.com',
+        name: 'New User',
+      });
+
+      const result = await upsertOAuthUser(
+        {
+          email: 'new@example.com',
+          name: 'New User',
+          image: 'https://example.com/avatar.jpg',
+          emailVerified: true,
+        },
+        null
+      );
+
+      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+        data: {
+          email: 'new@example.com',
+          name: 'New User',
+          image: 'https://example.com/avatar.jpg',
+          emailVerified: expect.any(Date),
+        },
+      });
+      expect(result.id).toBe('new-user-123');
+    });
+
+    it('should update existing user', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'existing-user',
+        email: 'existing@example.com',
+        name: 'Old Name',
+        image: null,
+      });
+
+      (mockPrisma.user.update as jest.Mock).mockResolvedValue({
+        id: 'existing-user',
+        email: 'existing@example.com',
+        name: 'New Name',
+        image: 'https://example.com/new-avatar.jpg',
+      });
+
+      await upsertOAuthUser(
+        {
+          email: 'existing@example.com',
+          name: 'New Name',
+          image: 'https://example.com/new-avatar.jpg',
+          emailVerified: false,
+        },
+        null
+      );
+
+      expect(mockPrisma.user.update).toHaveBeenCalled();
+    });
+
+    it('should add user to organization if specified and not member', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.user.create as jest.Mock).mockResolvedValue({
+        id: 'new-user',
+        email: 'new@example.com',
+      });
+
+      (mockPrisma.organizationUser.findUnique as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.organizationUser.create as jest.Mock).mockResolvedValue({});
+
+      await upsertOAuthUser(
+        { email: 'new@example.com', name: 'New', image: null },
+        'org-123'
+      );
+
+      expect(mockPrisma.organizationUser.create).toHaveBeenCalledWith({
+        data: {
+          organizationId: 'org-123',
+          userId: 'new-user',
+          role: 'MEMBER',
+          isOwner: false,
+        },
+      });
+    });
+
+    it('should not add user to organization if already a member', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.user.create as jest.Mock).mockResolvedValue({
+        id: 'new-user',
+        email: 'new@example.com',
+      });
+
+      (mockPrisma.organizationUser.findUnique as jest.Mock).mockResolvedValue({
+        id: 'membership-123',
+      }); // Already exists
+
+      await upsertOAuthUser(
+        { email: 'new@example.com', name: 'New', image: null },
+        'org-123'
+      );
+
+      expect(mockPrisma.organizationUser.create).not.toHaveBeenCalled();
+    });
+
+    it('should clear failed login attempts on successful login', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.user.create as jest.Mock).mockResolvedValue({
+        id: 'new-user',
+        email: 'new@example.com',
+      });
+
+      await upsertOAuthUser(
+        { email: 'new@example.com', name: 'New', image: null },
+        null
+      );
+
+      expect(clearFailedLogins).toHaveBeenCalledWith('new-user');
+    });
+
+    it('should normalize email to lowercase and trim', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.user.create as jest.Mock).mockResolvedValue({
+        id: 'user',
+        email: 'test@example.com',
+      });
+
+      await upsertOAuthUser(
+        { email: '  TEST@EXAMPLE.COM  ', name: 'Test', image: null },
+        null
+      );
+
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'test@example.com' },
+      });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // SESSION TOKEN CREATION
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('createSessionToken', () => {
+    it('should create JWT token for user with organization', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user-123',
+        email: 'user@example.com',
+        name: 'Test User',
+        image: 'https://example.com/avatar.jpg',
+        organizationMemberships: [
+          {
+            organizationId: 'org-123',
+            role: 'ADMIN',
+            isOwner: false,
+            organization: {
+              id: 'org-123',
+              slug: 'acme',
+              subscriptionTier: 'PROFESSIONAL',
+              enabledModules: ['assets', 'employees'],
+            },
+          },
+        ],
+      });
+
+      const token = await createSessionToken('user-123', 'org-123');
+
+      expect(encode).toHaveBeenCalledWith({
+        token: expect.objectContaining({
+          sub: 'user-123',
+          email: 'user@example.com',
+          name: 'Test User',
+          organizationId: 'org-123',
+          organizationSlug: 'acme',
+          orgRole: 'ADMIN',
+          subscriptionTier: 'PROFESSIONAL',
+        }),
+        secret: process.env.NEXTAUTH_SECRET,
+        maxAge: 30 * 24 * 60 * 60,
+      });
+      expect(token).toBe('mock-jwt-token');
+    });
+
+    it('should use first organization if specified org not found', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user-123',
+        email: 'user@example.com',
+        name: 'Test User',
+        image: null,
+        organizationMemberships: [
+          {
+            organizationId: 'org-456',
+            role: 'MEMBER',
+            isOwner: false,
+            organization: {
+              id: 'org-456',
+              slug: 'other-org',
+              subscriptionTier: 'FREE',
+              enabledModules: [],
+            },
+          },
+        ],
+      });
+
+      await createSessionToken('user-123', 'org-999'); // Non-existent org
+
+      expect(encode).toHaveBeenCalledWith({
+        token: expect.objectContaining({
+          organizationId: 'org-456', // Falls back to first membership
+          organizationSlug: 'other-org',
+        }),
+        secret: expect.any(String),
+        maxAge: expect.any(Number),
+      });
+    });
+
+    it('should create token without org data for user with no memberships', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user-123',
+        email: 'user@example.com',
+        name: 'Test User',
+        image: null,
+        organizationMemberships: [],
+      });
+
+      await createSessionToken('user-123', null);
+
+      expect(encode).toHaveBeenCalledWith({
+        token: expect.not.objectContaining({
+          organizationId: expect.anything(),
+        }),
+        secret: expect.any(String),
+        maxAge: expect.any(Number),
+      });
+    });
+
+    it('should throw error for non-existent user', async () => {
+      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(createSessionToken('non-existent', null)).rejects.toThrow(
+        'User not found'
+      );
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // URL UTILITIES
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('getBaseUrl', () => {
+    it('should return NEXTAUTH_URL when set', () => {
+      expect(getBaseUrl()).toBe('https://app.example.com');
+    });
+
+    it('should return VERCEL_URL with https when NEXTAUTH_URL not set', () => {
+      const nextauthUrl = process.env.NEXTAUTH_URL;
+      delete process.env.NEXTAUTH_URL;
+      process.env.VERCEL_URL = 'my-app.vercel.app';
+
+      expect(getBaseUrl()).toBe('https://my-app.vercel.app');
+
+      process.env.NEXTAUTH_URL = nextauthUrl;
+      delete process.env.VERCEL_URL;
+    });
+
+    it('should return localhost when no env vars set', () => {
+      const nextauthUrl = process.env.NEXTAUTH_URL;
+      delete process.env.NEXTAUTH_URL;
+      delete process.env.VERCEL_URL;
+
+      expect(getBaseUrl()).toBe('http://localhost:3000');
+
+      process.env.NEXTAUTH_URL = nextauthUrl;
+    });
+  });
+
+  describe('getAppDomain', () => {
+    it('should return NEXT_PUBLIC_APP_DOMAIN when set', () => {
+      expect(getAppDomain()).toBe('example.com');
+    });
+
+    it('should return localhost:3000 when not set', () => {
+      const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN;
+      delete process.env.NEXT_PUBLIC_APP_DOMAIN;
+
+      expect(getAppDomain()).toBe('localhost:3000');
+
+      process.env.NEXT_PUBLIC_APP_DOMAIN = appDomain;
+    });
+  });
+
+  describe('getTenantUrl', () => {
+    it('should build https URL for production domain', () => {
+      expect(getTenantUrl('acme', '/admin')).toBe('https://acme.example.com/admin');
+    });
+
+    it('should use default /admin path', () => {
+      expect(getTenantUrl('acme')).toBe('https://acme.example.com/admin');
+    });
+
+    it('should build http URL for localhost', () => {
+      const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN;
+      process.env.NEXT_PUBLIC_APP_DOMAIN = 'localhost:3000';
+
+      expect(getTenantUrl('acme', '/dashboard')).toBe('http://acme.localhost:3000/dashboard');
+
+      process.env.NEXT_PUBLIC_APP_DOMAIN = appDomain;
+    });
+  });
+});

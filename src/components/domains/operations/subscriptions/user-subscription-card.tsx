@@ -1,3 +1,8 @@
+/**
+ * @file user-subscription-card.tsx
+ * @description Card component displaying user subscription summary with renewal info
+ * @module components/domains/operations/subscriptions
+ */
 'use client';
 
 import { getNextRenewalDate, getDaysUntilRenewal } from '@/lib/utils/renewal-date';

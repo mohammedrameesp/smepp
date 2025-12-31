@@ -1,28 +1,27 @@
+/**
+ * @file route.ts
+ * @description Asset cloning API endpoint
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { recordAssetCreation } from '@/lib/asset-history';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    // Check authentication and authorization
+async function cloneAssetHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id } = await params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     // Get the original asset within tenant
     const originalAsset = await prisma.asset.findFirst({
@@ -102,6 +101,7 @@ export async function POST(
 
     // Log activity
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.ASSET_CREATED,
       'Asset',
@@ -118,12 +118,6 @@ export async function POST(
     await recordAssetCreation(clonedAsset.id, session.user.id);
 
     return NextResponse.json(clonedAsset, { status: 201 });
-
-  } catch (error) {
-    console.error('Asset clone error:', error);
-    return NextResponse.json(
-      { error: 'Failed to clone asset' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(cloneAssetHandler, { requireAdmin: true, requireModule: 'assets' });

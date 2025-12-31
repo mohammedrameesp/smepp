@@ -1,24 +1,17 @@
+/**
+ * @file route.ts
+ * @description Payslips listing API
+ * @module hr/payroll
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { payslipQuerySchema } from '@/lib/validations/payroll';
 import { parseDecimal } from '@/lib/payroll/utils';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
+async function getPayslipsHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -34,14 +27,14 @@ export async function GET(request: NextRequest) {
     const { payrollRunId, userId, year, month, p, ps } = validation.data;
     const page = p;
     const pageSize = ps;
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isAdmin = tenant!.userRole === 'ADMIN';
 
     // Build where clause with tenant filter
     const where: Record<string, unknown> = { tenantId };
 
     // Non-admin users can only see their own payslips
     if (!isAdmin) {
-      where.userId = session.user.id;
+      where.userId = tenant!.userId;
     } else if (userId) {
       where.userId = userId;
     }
@@ -127,11 +120,6 @@ export async function GET(request: NextRequest) {
         hasMore: page * pageSize < total,
       },
     });
-  } catch (error) {
-    console.error('Payslips GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch payslips' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(getPayslipsHandler, { requireAuth: true, requireModule: 'payroll' });

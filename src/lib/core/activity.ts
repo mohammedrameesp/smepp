@@ -1,13 +1,24 @@
+/**
+ * @file activity.ts
+ * @description Activity logging service for audit trail - tracks user actions
+ *              across all entities (assets, subscriptions, projects, etc.)
+ * @module lib/core
+ */
+
 import { prisma } from './prisma';
 
 export async function logAction(
+  tenantId: string,
   actorUserId: string | null,
   action: string,
   entityType?: string,
   entityId?: string,
-  payload?: unknown,
-  tenantId?: string
+  payload?: unknown
 ) {
+  if (!tenantId) {
+    console.error('logAction called without tenantId - this is a multi-tenancy violation');
+    return null;
+  }
   try {
     const activity = await prisma.activityLog.create({
       data: {
@@ -16,11 +27,10 @@ export async function logAction(
         entityType,
         entityId,
         payload: payload ? JSON.parse(JSON.stringify(payload)) : null,
-        tenantId: tenantId || 'SYSTEM',
+        tenantId,
       },
     });
 
-    console.log(`Activity logged: ${action} by ${actorUserId || 'system'}`);
     return activity;
   } catch (error) {
     console.error('Failed to log activity:', error);

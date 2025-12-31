@@ -1,3 +1,9 @@
+/**
+ * @file email.ts
+ * @description Email sending service using Resend - handles single and batch email sending
+ * @module lib/core
+ */
+
 import { Resend } from 'resend';
 
 // Lazy initialization to avoid throwing at module load time when API key is missing
@@ -14,7 +20,7 @@ function getResend(): Resend | null {
 }
 
 // Default from address - must use a verified domain in Resend
-const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL || 'Be Creative Portal <noreply@becreative.qa>';
+const DEFAULT_FROM = process.env.RESEND_FROM_EMAIL || 'Durj <noreply@durj.com>';
 
 export interface EmailOptions {
   to: string | string[];
@@ -27,16 +33,11 @@ export interface EmailOptions {
 export async function sendEmail({ to, subject, text, html, from }: EmailOptions) {
   // Skip sending if no API key configured (development mode)
   if (!process.env.RESEND_API_KEY) {
-    console.log('[Email] Skipping email (no RESEND_API_KEY configured)');
-    console.log('[Email] Would send to:', to);
-    console.log('[Email] Subject:', subject);
     return { success: true, messageId: 'dev-mode-skipped' };
   }
 
   const fromAddress = from || DEFAULT_FROM;
   const toAddresses = Array.isArray(to) ? to : [to];
-
-  console.log('[Email] Sending email:', { from: fromAddress, to: toAddresses, subject });
 
   try {
     // Build email payload - at least text or html must be provided
@@ -62,7 +63,6 @@ export async function sendEmail({ to, subject, text, html, from }: EmailOptions)
 
     const resend = getResend();
     if (!resend) {
-      console.log('[Email] Resend not available');
       return { success: false, error: 'Email service not configured' };
     }
     const { data, error } = await resend.emails.send(emailPayload as any);
@@ -72,7 +72,6 @@ export async function sendEmail({ to, subject, text, html, from }: EmailOptions)
       return { success: false, error: error.message };
     }
 
-    console.log('[Email] Sent successfully, messageId:', data?.id);
     return { success: true, messageId: data?.id };
   } catch (error) {
     console.error('[Email] Exception during send:', error instanceof Error ? error.message : error);
@@ -83,7 +82,6 @@ export async function sendEmail({ to, subject, text, html, from }: EmailOptions)
 // Batch send emails (more efficient for multiple recipients)
 export async function sendBatchEmails(emails: EmailOptions[]) {
   if (!process.env.RESEND_API_KEY) {
-    console.log('[Email] Skipping batch emails (no RESEND_API_KEY configured)');
     return { success: true, results: emails.map(() => ({ messageId: 'dev-mode-skipped' })) };
   }
 

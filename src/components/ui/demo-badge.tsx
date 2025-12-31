@@ -1,3 +1,9 @@
+/**
+ * @file demo-badge.tsx
+ * @description Demo badge components for indicating simulated or sample data
+ * @module components/ui
+ */
+
 import { cn } from '@/lib/utils';
 import { FlaskConical } from 'lucide-react';
 

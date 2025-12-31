@@ -1,7 +1,12 @@
+/**
+ * @file route.ts
+ * @description Asset request rejection API endpoint
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role, AssetRequestStatus, AssetRequestType } from '@prisma/client';
+import { AssetRequestStatus, AssetRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { rejectAssetRequestSchema } from '@/lib/validations/operations/asset-request';
 import { logAction, ActivityActions } from '@/lib/activity';
@@ -9,30 +14,21 @@ import { canAdminProcess } from '@/lib/domains/operations/asset-requests/asset-r
 import { sendEmail } from '@/lib/email';
 import { assetRequestRejectedEmail, assetReturnRejectedEmail } from '@/lib/email-templates';
 import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidateTokensForEntity } from '@/lib/whatsapp';
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
-
-export async function POST(request: NextRequest, context: RouteContext) {
-  try {
+async function rejectAssetRequestHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Only admins can reject
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id } = await context.params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
     const body = await request.json();
 
     const validation = rejectAssetRequestSchema.safeParse(body);
@@ -96,6 +92,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     });
 
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.ASSET_REQUEST_REJECTED,
       'AssetRequest',
@@ -107,14 +104,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
     );
 
+    // NOTIF-004: Invalidate any pending WhatsApp action tokens for this request
+    await invalidateTokensForEntity('ASSET_REQUEST', id);
+
     // Send email notification to user
     try {
-      // Get org slug for email URLs
+      // Get org slug/name for email URLs
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
-        select: { slug: true },
+        select: { slug: true, name: true },
       });
       const orgSlug = org?.slug || 'app';
+      const orgName = org?.name || 'Durj';
 
       if (assetRequest.type === AssetRequestType.EMPLOYEE_REQUEST) {
         const emailData = assetRequestRejectedEmail({
@@ -127,6 +128,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           rejectorName: session.user.name || session.user.email || 'Admin',
           reason: reason || 'No reason provided',
           orgSlug,
+          orgName,
         });
         await sendEmail({ to: assetRequest.user.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
       } else if (assetRequest.type === AssetRequestType.RETURN_REQUEST) {
@@ -140,6 +142,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           rejectorName: session.user.name || session.user.email || 'Admin',
           reason: reason || 'No reason provided',
           orgSlug,
+          orgName,
         });
         await sendEmail({ to: assetRequest.user.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
       }
@@ -155,15 +158,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
         assetRequest.requestNumber,
         reason,
         id
-      )
+      ),
+      tenantId
     );
 
     return NextResponse.json(updatedRequest);
-  } catch (error) {
-    console.error('Asset request reject error:', error);
-    return NextResponse.json(
-      { error: 'Failed to reject asset request' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(rejectAssetRequestHandler, { requireAdmin: true, requireModule: 'assets' });

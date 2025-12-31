@@ -1,9 +1,12 @@
 /**
- * Tenant Usage Limits & Enforcement
+ * @file limits.ts
+ * @description Tenant usage limits and enforcement utilities. Provides functions to check
+ *              and enforce resource limits (users, assets, subscriptions, suppliers) per
+ *              organization based on subscription tier.
+ * @module multi-tenant
  *
- * NOTE: Limit enforcement is currently disabled.
- * All limits are unlimited for all organizations.
- * This will be re-implemented when billing is ready.
+ * @note Limit enforcement is currently disabled. All limits are unlimited for all
+ *       organizations. This will be re-implemented when billing is ready.
  */
 
 import { prisma } from '@/lib/core/prisma';

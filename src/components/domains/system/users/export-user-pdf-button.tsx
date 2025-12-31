@@ -1,3 +1,8 @@
+/**
+ * @file export-user-pdf-button.tsx
+ * @description Button component for generating employee exit checklist PDF document
+ * @module components/domains/system/users
+ */
 'use client';
 
 import { Button } from '@/components/ui/button';

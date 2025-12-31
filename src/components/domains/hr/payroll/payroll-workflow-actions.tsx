@@ -1,3 +1,8 @@
+/**
+ * @file payroll-workflow-actions.tsx
+ * @description Workflow action buttons for payroll run management (process, submit, approve, pay)
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState } from 'react';

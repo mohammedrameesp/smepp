@@ -1,3 +1,8 @@
+/**
+ * @file adjust-balance-dialog.tsx
+ * @description Dialog component for adjusting employee leave balances with notes
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState } from 'react';

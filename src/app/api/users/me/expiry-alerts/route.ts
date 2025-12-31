@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Current user's document expiry alerts
+ * @module system/users
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';

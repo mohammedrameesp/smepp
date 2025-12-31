@@ -1,21 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
-
 /**
- * Rate Limiting with Redis (Upstash) and In-Memory Fallback
- *
- * Uses Upstash Redis for distributed rate limiting in production.
- * Falls back to in-memory rate limiting for development or when Redis isn't configured.
- *
- * Required environment variables for Redis:
- * - UPSTASH_REDIS_REST_URL: Upstash Redis REST endpoint
- * - UPSTASH_REDIS_REST_TOKEN: Upstash Redis auth token
+ * @file rateLimit.ts
+ * @description Rate limiting with Redis (Upstash) and in-memory fallback using token bucket algorithm.
+ *              Provides general API rate limiting and stricter authentication endpoint limits.
+ * @module security
  */
+
+import { NextRequest, NextResponse } from 'next/server';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REDIS RATE LIMITER
 // ═══════════════════════════════════════════════════════════════════════════════
 
-let redisRateLimiter: {
+const redisRateLimiter: {
   general: import('@upstash/ratelimit').Ratelimit | null;
   auth: import('@upstash/ratelimit').Ratelimit | null;
 } = { general: null, auth: null };
@@ -31,7 +27,6 @@ async function initRedisRateLimiter() {
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
   if (!url || !token) {
-    console.log('[RateLimit] Redis not configured, using in-memory rate limiting');
     return;
   }
 
@@ -62,7 +57,6 @@ async function initRedisRateLimiter() {
     });
 
     useRedis = true;
-    console.log('[RateLimit] Redis rate limiting initialized');
   } catch (error) {
     console.error('[RateLimit] Failed to initialize Redis, falling back to in-memory:', error);
   }

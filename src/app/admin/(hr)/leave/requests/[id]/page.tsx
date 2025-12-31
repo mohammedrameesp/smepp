@@ -14,9 +14,7 @@ import {
   canCancelLeaveRequest,
   getAnnualLeaveDetails,
 } from '@/lib/leave-utils';
-import { LeaveApprovalActions } from '@/components/leave/leave-approval-actions';
-import { LeaveRequestHistory } from '@/components/leave/leave-request-history';
-import { CancelLeaveDialog } from '@/components/leave/cancel-leave-dialog';
+import { LeaveApprovalActions, LeaveRequestHistory, CancelLeaveDialog } from '@/components/leave';
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 
 interface LeaveRequest {

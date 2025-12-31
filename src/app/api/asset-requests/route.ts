@@ -1,7 +1,10 @@
+/**
+ * @file route.ts
+ * @description Asset requests list and creation API endpoints
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role, AssetRequestStatus, AssetRequestType, AssetStatus } from '@prisma/client';
+import { Role, AssetRequestStatus, AssetRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import {
   createAssetRequestSchema,
@@ -16,29 +19,14 @@ import {
   canAssignAsset,
   canReturnAsset,
 } from '@/lib/domains/operations/asset-requests/asset-request-utils';
-import { sendEmail, sendBatchEmails } from '@/lib/email';
-import { createNotification, createBulkNotifications, NotificationTemplates } from '@/lib/domains/system/notifications';
-import {
-  assetRequestSubmittedEmail,
-  assetAssignmentPendingEmail,
-  assetReturnRequestEmail,
-} from '@/lib/email-templates';
-import { findApplicablePolicy, initializeApprovalChain } from '@/lib/domains/system/approvals';
-import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
+import { sendAssetRequestNotifications } from '@/lib/domains/operations/asset-requests/asset-request-notifications';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
+async function getAssetRequestsHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const userRole = tenant!.userRole;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -51,11 +39,11 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { q, type, status, userId, assetId, p, ps, sort, order } = validation.data;
+    const { q, type, status, userId: filterUserId, assetId, p, ps, sort, order } = validation.data;
 
     // Non-admin users can only see their own requests
-    const isAdmin = session.user.role === Role.ADMIN;
-    const effectiveUserId = isAdmin ? userId : session.user.id;
+    const isAdmin = userRole === Role.ADMIN;
+    const effectiveUserId = isAdmin ? filterUserId : currentUserId;
 
     // Build where clause with tenant filtering
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,31 +125,19 @@ export async function GET(request: NextRequest) {
         hasMore: skip + ps < total,
       },
     });
-  } catch (error) {
-    console.error('Asset requests GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch asset requests' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = withErrorHandler(getAssetRequestsHandler, { requireAuth: true, requireModule: 'assets' });
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
+async function createAssetRequestHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const userRole = tenant!.userRole;
 
-    const tenantId = session.user.organizationId;
     const body = await request.json();
     const requestType = body.type as AssetRequestType | undefined;
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isAdmin = userRole === Role.ADMIN;
 
     // Determine request type and validate accordingly
     let validatedData;
@@ -214,7 +190,7 @@ export async function POST(request: NextRequest) {
 
       validatedData = validation.data;
       assetId = validatedData.assetId;
-      userId = session.user.id;
+      userId = currentUserId;
       reason = validatedData.reason;
       notes = validatedData.notes || null;
       type = AssetRequestType.RETURN_REQUEST;
@@ -239,7 +215,7 @@ export async function POST(request: NextRequest) {
 
       validatedData = validation.data;
       assetId = validatedData.assetId;
-      userId = session.user.id;
+      userId = currentUserId;
       reason = validatedData.reason;
       notes = validatedData.notes || null;
       type = AssetRequestType.EMPLOYEE_REQUEST;
@@ -277,7 +253,7 @@ export async function POST(request: NextRequest) {
           userId,
           reason,
           notes,
-          assignedById: type === AssetRequestType.ADMIN_ASSIGNMENT ? session.user.id : null,
+          assignedById: type === AssetRequestType.ADMIN_ASSIGNMENT ? currentUserId : null,
         },
         include: {
           asset: {
@@ -305,7 +281,7 @@ export async function POST(request: NextRequest) {
           assetRequestId: newRequest.id,
           action: 'CREATED',
           newStatus: status,
-          performedById: session.user.id,
+          performedById: currentUserId,
         },
       });
 
@@ -313,7 +289,8 @@ export async function POST(request: NextRequest) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       activityAction,
       'AssetRequest',
       assetRequest.id,
@@ -326,186 +303,24 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    // Send email and in-app notifications
+    // Send email and in-app notifications (non-blocking)
     try {
-      // Get org slug for email URLs
-      const org = await prisma.organization.findUnique({
-        where: { id: tenantId },
-        select: { slug: true },
+      await sendAssetRequestNotifications({
+        tenantId,
+        currentUserId,
+        assetRequest,
+        asset,
+        type,
+        reason,
+        notes,
+        targetUserId: userId,
       });
-      const orgSlug = org?.slug || 'app';
-
-      if (type === AssetRequestType.EMPLOYEE_REQUEST) {
-        // Get asset price for multi-level approval check - use tenant filter
-        const assetWithPrice = await prisma.asset.findFirst({
-          where: { id: assetId, tenantId },
-          select: { priceQAR: true },
-        });
-        const assetValue = assetWithPrice?.priceQAR ? Number(assetWithPrice.priceQAR) : 0;
-
-        // Check for multi-level approval policy
-        const approvalPolicy = await findApplicablePolicy('ASSET_REQUEST', { amount: assetValue, tenantId });
-
-        if (approvalPolicy && approvalPolicy.levels.length > 0) {
-          // Initialize approval chain
-          const steps = await initializeApprovalChain('ASSET_REQUEST', assetRequest.id, approvalPolicy, tenantId);
-
-          // Send WhatsApp notifications to approvers (non-blocking)
-          if (steps.length > 0) {
-            notifyApproversViaWhatsApp(
-              tenantId,
-              'ASSET_REQUEST',
-              assetRequest.id,
-              steps[0].requiredRole
-            );
-          }
-
-          // Notify users with the first level's required role
-          const firstStep = steps[0];
-          if (firstStep) {
-            // Get approvers within the tenant
-            const approvers = await prisma.user.findMany({
-              where: {
-                role: firstStep.requiredRole,
-                organizationMemberships: { some: { organizationId: tenantId } },
-              },
-              select: { id: true, email: true },
-            });
-
-            // Send email to approvers
-            const emailData = assetRequestSubmittedEmail({
-              requestNumber: assetRequest.requestNumber,
-              assetTag: asset.assetTag,
-              assetModel: asset.model,
-              assetBrand: asset.brand,
-              assetType: assetRequest.asset.type,
-              requesterName: assetRequest.user.name || assetRequest.user.email,
-              requesterEmail: assetRequest.user.email,
-              reason: reason || '',
-              orgSlug,
-            });
-            await sendBatchEmails(approvers.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
-
-            // In-app notifications
-            for (const approver of approvers) {
-              await createNotification({
-                recipientId: approver.id,
-                type: 'APPROVAL_PENDING',
-                title: 'Asset Request Approval Required',
-                message: `${assetRequest.user.name || assetRequest.user.email} requested asset ${asset.model} (${asset.assetTag || 'N/A'}). Your approval is required.`,
-                link: `/admin/asset-requests/${assetRequest.id}`,
-                entityType: 'AssetRequest',
-                entityId: assetRequest.id,
-              });
-            }
-          }
-        } else {
-          // No policy - fall back to notifying all admins (tenant-scoped)
-          const admins = await prisma.user.findMany({
-            where: {
-              role: Role.ADMIN,
-              organizationMemberships: { some: { organizationId: tenantId } },
-            },
-            select: { id: true, email: true },
-          });
-          const emailData = assetRequestSubmittedEmail({
-            requestNumber: assetRequest.requestNumber,
-            assetTag: asset.assetTag,
-            assetModel: asset.model,
-            assetBrand: asset.brand,
-            assetType: assetRequest.asset.type,
-            requesterName: assetRequest.user.name || assetRequest.user.email,
-            requesterEmail: assetRequest.user.email,
-            reason: reason || '',
-            orgSlug,
-          });
-          await sendBatchEmails(admins.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
-
-          // In-app notifications
-          const notifications = admins.map(admin =>
-            NotificationTemplates.assetRequestSubmitted(
-              admin.id,
-              assetRequest.user.name || assetRequest.user.email,
-              asset.assetTag || '',
-              asset.model,
-              assetRequest.requestNumber,
-              assetRequest.id
-            )
-          );
-          await createBulkNotifications(notifications);
-        }
-      } else if (type === AssetRequestType.ADMIN_ASSIGNMENT) {
-        // Notify user about pending assignment
-        const emailData = assetAssignmentPendingEmail({
-          requestNumber: assetRequest.requestNumber,
-          assetTag: asset.assetTag,
-          assetModel: asset.model,
-          assetBrand: asset.brand,
-          assetType: assetRequest.asset.type,
-          userName: assetRequest.user.name || assetRequest.user.email,
-          assignerName: session.user.name || session.user.email || 'Admin',
-          reason: notes || undefined,
-          orgSlug,
-        });
-        await sendEmail({ to: assetRequest.user.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
-
-        // In-app notification
-        await createNotification(
-          NotificationTemplates.assetAssignmentPending(
-            userId,
-            asset.assetTag || '',
-            asset.model,
-            session.user.name || session.user.email || 'Admin',
-            assetRequest.requestNumber,
-            assetRequest.id
-          )
-        );
-      } else if (type === AssetRequestType.RETURN_REQUEST) {
-        // Notify admins about return request (tenant-scoped)
-        const admins = await prisma.user.findMany({
-          where: {
-            role: Role.ADMIN,
-            organizationMemberships: { some: { organizationId: tenantId } },
-          },
-          select: { id: true, email: true },
-        });
-        const emailData = assetReturnRequestEmail({
-          requestNumber: assetRequest.requestNumber,
-          assetTag: asset.assetTag,
-          assetModel: asset.model,
-          assetBrand: asset.brand,
-          assetType: assetRequest.asset.type,
-          userName: assetRequest.user.name || assetRequest.user.email,
-          userEmail: assetRequest.user.email,
-          reason: reason || '',
-          orgSlug,
-        });
-        await sendBatchEmails(admins.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
-
-        // In-app notifications
-        const notifications = admins.map(admin =>
-          NotificationTemplates.assetReturnSubmitted(
-            admin.id,
-            assetRequest.user.name || assetRequest.user.email,
-            asset.assetTag || '',
-            asset.model,
-            assetRequest.requestNumber,
-            assetRequest.id
-          )
-        );
-        await createBulkNotifications(notifications);
-      }
-    } catch (emailError) {
-      console.error('Failed to send notification:', emailError);
+    } catch (notificationError) {
+      console.error('Failed to send notification:', notificationError);
       // Don't fail the request if notifications fail
     }
 
     return NextResponse.json(assetRequest, { status: 201 });
-  } catch (error) {
-    console.error('Asset requests POST error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create asset request' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(createAssetRequestHandler, { requireAuth: true, requireModule: 'assets' });

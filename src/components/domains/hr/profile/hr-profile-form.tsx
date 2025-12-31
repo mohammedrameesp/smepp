@@ -1,6 +1,11 @@
+/**
+ * @file hr-profile-form.tsx
+ * @description Comprehensive HR profile form with collapsible sections for employee data management
+ * @module components/domains/hr
+ */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';

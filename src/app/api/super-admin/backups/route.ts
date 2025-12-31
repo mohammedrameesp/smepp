@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description List backups and trigger manual platform/organization backups
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth';
@@ -135,7 +141,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ backups, organizations });
   } catch (error) {
-    logger.error({ error }, 'Failed to list backups');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Failed to list backups');
     return NextResponse.json(
       { error: 'Failed to list backups', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -188,7 +194,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, results });
   } catch (error) {
-    logger.error({ error }, 'Manual backup failed');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Manual backup failed');
     return NextResponse.json(
       { error: 'Backup failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -332,7 +338,7 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
     logger.info(`Full backup created (encrypted): ${encryptedFilename}`);
     return { filename: encryptedFilename, success: true };
   } catch (error) {
-    logger.error({ error }, 'Full backup failed');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Full backup failed');
     return { filename: '', success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
@@ -479,7 +485,7 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
     logger.info(`Organization backup created (encrypted): ${orgSlug}/${encryptedFilename}`);
     return { filename: encryptedFilename, success: true };
   } catch (error) {
-    logger.error({ error, orgSlug }, 'Organization backup failed');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', orgSlug }, 'Organization backup failed');
     return { filename: '', success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
@@ -522,7 +528,7 @@ async function cleanupOldBackups(folder: string) {
       }
     }
   } catch (error) {
-    logger.warn({ error, folder }, 'Failed to cleanup old backups');
+    logger.warn({ error: error instanceof Error ? error.message : 'Unknown error', folder }, 'Failed to cleanup old backups');
   }
 }
 

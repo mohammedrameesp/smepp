@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/core/auth";
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { format, formatDistanceToNow } from 'date-fns';
+import { SetupChecklist } from '@/components/dashboard/SetupChecklist';
 
 // Avatar color palette - consistent colors based on name
 const AVATAR_COLORS = [
@@ -429,6 +430,9 @@ export default async function AdminDashboard() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-6 pt-10 pb-8">
+        {/* Setup Checklist - shown until all items complete */}
+        <SetupChecklist />
+
         {/* Modules Section */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-gray-900">Modules</h2>

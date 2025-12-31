@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Import backup data into Be Creative organization
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -18,10 +24,6 @@ export async function POST(request: NextRequest) {
 
     const backupData = await request.json();
 
-    console.log('Starting import for Be Creative organization...');
-    console.log('Backup metadata:', backupData._metadata);
-    console.log('Counts:', backupData._counts);
-
     // Find the Be Creative organization
     const org = await prisma.organization.findFirst({
       where: {
@@ -40,8 +42,6 @@ export async function POST(request: NextRequest) {
         availableOrgs: allOrgs,
       }, { status: 404 });
     }
-
-    console.log(`Found organization: ${org.name} (${org.id})`);
 
     // AUDIT: Log import operation for security tracking
     console.log('[AUDIT] Data import initiated:', JSON.stringify({
@@ -186,6 +186,7 @@ export async function POST(request: NextRequest) {
           await prisma.assetHistory.create({
             data: {
               id: history.id,
+              tenantId: org.id,
               assetId: history.assetId,
               action: history.action,
               fromUserId: history.fromUserId || history.userId || null,

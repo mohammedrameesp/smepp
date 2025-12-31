@@ -1,3 +1,8 @@
+/**
+ * @file asset-request-list-table.tsx
+ * @description Table component displaying asset requests with filtering, sorting, and pagination
+ * @module components/domains/operations/asset-requests
+ */
 'use client';
 
 import { useState, useMemo } from 'react';

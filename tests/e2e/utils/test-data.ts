@@ -127,3 +127,87 @@ export function generatePurchaseRequestItemData() {
     category: 'IT Equipment',
   };
 }
+
+/**
+ * Generate test data for Leave Requests
+ */
+export function generateLeaveRequestData() {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() + 7); // Start in 7 days
+  const endDate = new Date(startDate);
+  endDate.setDate(endDate.getDate() + 2); // 3 days total
+
+  return {
+    leaveType: 'Annual Leave',
+    startDate: formatDate(startDate),
+    endDate: formatDate(endDate),
+    reason: 'E2E Test - Vacation time',
+  };
+}
+
+/**
+ * Generate test data for Employees
+ */
+export function generateEmployeeData() {
+  const timestamp = Date.now();
+  return {
+    name: `Test Employee ${timestamp}`,
+    email: `employee${timestamp}@test.local`,
+    employeeId: `EMP-${timestamp}`,
+    designation: 'Software Developer',
+    department: 'IT',
+    dateOfJoining: formatDate(new Date()),
+  };
+}
+
+/**
+ * Generate test data for Payroll Run
+ */
+export function generatePayrollRunData() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+
+  return {
+    name: `${year}-${String(month).padStart(2, '0')} Payroll Run`,
+    periodStart: `${year}-${String(month).padStart(2, '0')}-01`,
+    periodEnd: `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`,
+    payDate: formatDate(new Date(year, month, 5)), // 5th of next month
+  };
+}
+
+/**
+ * Generate test data for Company Documents
+ */
+export function generateCompanyDocumentData() {
+  const timestamp = Date.now();
+  const expiryDate = new Date();
+  expiryDate.setFullYear(expiryDate.getFullYear() + 1); // Expires in 1 year
+
+  return {
+    name: `Test Document ${timestamp}`,
+    documentType: 'Trade License',
+    documentNumber: `DOC-${timestamp}`,
+    issueDate: formatDate(new Date()),
+    expiryDate: formatDate(expiryDate),
+  };
+}
+
+/**
+ * Generate test data for Projects
+ */
+export function generateProjectData() {
+  const timestamp = Date.now();
+  const startDate = new Date();
+  const endDate = new Date();
+  endDate.setMonth(endDate.getMonth() + 3); // 3 months project
+
+  return {
+    name: `Test Project ${timestamp}`,
+    code: `PRJ-${timestamp}`,
+    clientName: 'Test Client',
+    startDate: formatDate(startDate),
+    endDate: formatDate(endDate),
+    budget: '50000',
+  };
+}

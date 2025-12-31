@@ -1,8 +1,12 @@
+/**
+ * @file route.ts
+ * @description Asset depreciation management API endpoints
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Role } from '@prisma/client';
 import {
   assignDepreciationCategorySchema,
   triggerDepreciationSchema,
@@ -14,26 +18,18 @@ import {
   assignDepreciationCategory,
 } from '@/lib/domains/operations/assets/depreciation';
 import { logAction } from '@/lib/activity';
-
-/**
- * GET /api/assets/[id]/depreciation - Get depreciation records for an asset
- */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+async function getDepreciationHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id: assetId } = await params;
+    const assetId = context.params?.id;
+    if (!assetId) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     // Verify asset exists and belongs to tenant
     const asset = await prisma.asset.findFirst({
@@ -112,36 +108,22 @@ export async function GET(
         hasMore,
       },
     });
-  } catch (error) {
-    console.error('Get depreciation records error:', error);
-    return NextResponse.json({ error: 'Failed to fetch depreciation records' }, { status: 500 });
-  }
 }
 
 /**
  * POST /api/assets/[id]/depreciation - Manually trigger depreciation or assign category
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+async function triggerDepreciationHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Only admins can trigger depreciation
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id: assetId } = await params;
+    const assetId = context.params?.id;
+    if (!assetId) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     const body = await request.json();
     const action = body.action as string;
@@ -176,7 +158,7 @@ export async function POST(
           : undefined,
       });
 
-      await logAction(session.user.id, 'DEPRECIATION_CATEGORY_ASSIGNED', 'Asset', assetId, {
+      await logAction(tenantId, session.user.id, 'DEPRECIATION_CATEGORY_ASSIGNED', 'Asset', assetId, {
         assetTag: asset.assetTag,
         model: asset.model,
         categoryId: validation.data.depreciationCategoryId,
@@ -221,7 +203,7 @@ export async function POST(
         return NextResponse.json({ error: result.error }, { status: 400 });
       }
 
-      await logAction(session.user.id, 'DEPRECIATION_CALCULATED', 'Asset', assetId, {
+      await logAction(tenantId, session.user.id, 'DEPRECIATION_CALCULATED', 'Asset', assetId, {
         assetTag: asset.assetTag,
         model: asset.model,
         periodEnd: result.record?.periodEnd,
@@ -234,8 +216,7 @@ export async function POST(
         record: result.record,
       });
     }
-  } catch (error) {
-    console.error('Depreciation action error:', error);
-    return NextResponse.json({ error: 'Failed to process depreciation action' }, { status: 500 });
-  }
 }
+
+export const GET = withErrorHandler(getDepreciationHandler, { requireAuth: true, requireModule: 'assets' });
+export const POST = withErrorHandler(triggerDepreciationHandler, { requireAdmin: true, requireModule: 'assets' });

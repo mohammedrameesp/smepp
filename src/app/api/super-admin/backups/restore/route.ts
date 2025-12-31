@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Restore organization data from backup files
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth';
@@ -49,7 +55,7 @@ export async function POST(request: NextRequest) {
       .download(path);
 
     if (error) {
-      logger.error({ error, path }, 'Failed to download backup for restore');
+      logger.error({ error: error.message, path }, 'Failed to download backup for restore');
       return NextResponse.json({ error: 'Backup not found' }, { status: 404 });
     }
 
@@ -261,7 +267,7 @@ export async function POST(request: NextRequest) {
       message: `Successfully restored ${results.length} tables`,
     });
   } catch (error) {
-    logger.error({ error }, 'Backup restore failed');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Backup restore failed');
     return NextResponse.json(
       { error: 'Restore failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

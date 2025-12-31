@@ -1,3 +1,11 @@
+/**
+ * @file purchase-request-utils.ts
+ * @description Purchase request utility functions. Provides reference number generation,
+ *              category/type/status constants, label helpers, color mappings for UI badges,
+ *              and status transition rules for the purchase request workflow.
+ * @module domains/projects/purchase-requests
+ */
+
 import { PrismaClient } from '@prisma/client';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 

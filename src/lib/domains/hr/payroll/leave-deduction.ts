@@ -1,3 +1,29 @@
+/**
+ * @file leave-deduction.ts
+ * @description Unpaid leave deduction calculations for payroll processing
+ * @module domains/hr/payroll
+ *
+ * PURPOSE:
+ * Calculates salary deductions for unpaid leave taken during a payroll period.
+ * Unpaid leave types (e.g., leave without pay) result in proportional salary reduction.
+ *
+ * BUSINESS RULES:
+ * - Only APPROVED leave requests are considered
+ * - Only leave types with isPaid=false trigger deductions
+ * - Deduction = days × (gross salary / 30)
+ * - Half-days (0.5) are supported via totalDays field
+ * - Leaves spanning multiple months are pro-rated to each period
+ *
+ * COMPLIANCE:
+ * - FIN-001: Half-day leave support using stored totalDays
+ * - Qatar Labor Law: Uses 30-day month for daily rate calculation
+ *
+ * EDGE CASES:
+ * - Leave starts before period: Only days within period counted
+ * - Leave ends after period: Only days within period counted
+ * - Leave spans entire period: Full period days counted
+ */
+
 import { prisma } from '@/lib/core/prisma';
 import { LeaveStatus } from '@prisma/client';
 import { parseDecimal } from './utils';

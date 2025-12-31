@@ -1,4 +1,10 @@
 /**
+ * @file format-billing-cycle.ts
+ * @description Billing cycle formatting utility for display
+ * @module lib/utils
+ */
+
+/**
  * Format billing cycle for display
  * @param billingCycle - The billing cycle enum value
  * @returns Formatted string for display

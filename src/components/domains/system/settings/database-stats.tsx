@@ -1,7 +1,12 @@
+/**
+ * @file database-stats.tsx
+ * @description Dashboard component displaying database record counts and statistics
+ * @module components/domains/system/settings
+ */
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Database, Users, Package, CreditCard, Shield, FolderKanban, Activity } from 'lucide-react';
+import { Database, Users, Package, CreditCard, FolderKanban, Activity } from 'lucide-react';
 
 interface DatabaseStatsProps {
   stats: {
@@ -9,7 +14,6 @@ interface DatabaseStatsProps {
     assets: number;
     subscriptions: number;
     suppliers: number;
-    accreditations: number;
     projects: number;
     activityLogs: number;
   };
@@ -44,13 +48,6 @@ export function DatabaseStats({ stats }: DatabaseStatsProps) {
       icon: Database,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
-    },
-    {
-      label: 'Accreditations',
-      value: stats.accreditations,
-      icon: Shield,
-      color: 'text-indigo-600',
-      bgColor: 'bg-indigo-50',
     },
     {
       label: 'Projects',
@@ -111,38 +108,6 @@ export function DatabaseStats({ stats }: DatabaseStatsProps) {
                 </div>
               );
             })}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Database Information</CardTitle>
-          <CardDescription>
-            Technical details about your database
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <div className="text-sm font-medium text-gray-700 mb-1">Database Type</div>
-              <div className="text-base text-gray-900">PostgreSQL (Supabase)</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700 mb-1">Connection</div>
-              <div className="text-base text-gray-900">Pooled Connection</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700 mb-1">ORM</div>
-              <div className="text-base text-gray-900">Prisma</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-gray-700 mb-1">Status</div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-base text-green-700 font-medium">Healthy</span>
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>

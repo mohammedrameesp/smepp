@@ -1,3 +1,8 @@
+/**
+ * @file user-list-client.tsx
+ * @description Client-side user list table component with role badges and action buttons
+ * @module components/domains/system/users
+ */
 'use client';
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';

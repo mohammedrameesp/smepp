@@ -1,3 +1,9 @@
+/**
+ * @file csv-utils.ts
+ * @description CSV/Excel import and export utilities using ExcelJS
+ * @module lib/core
+ */
+
 import ExcelJS from 'exceljs';
 
 /**

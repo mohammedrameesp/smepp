@@ -1,22 +1,17 @@
+/**
+ * @file route.ts
+ * @description Team leave calendar API - returns leave requests as calendar events
+ * @module hr/leave
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { teamCalendarQuerySchema } from '@/lib/validations/leave';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
+async function getCalendarHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -115,11 +110,6 @@ export async function GET(request: NextRequest) {
     }));
 
     return NextResponse.json({ events });
-  } catch (error) {
-    console.error('Leave calendar GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch calendar events' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(getCalendarHandler, { requireAuth: true, requireModule: 'leave' });

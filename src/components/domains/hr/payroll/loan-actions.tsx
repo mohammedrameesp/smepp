@@ -1,3 +1,8 @@
+/**
+ * @file loan-actions.tsx
+ * @description Action buttons for managing employee loan status (pause, resume, write-off)
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState } from 'react';

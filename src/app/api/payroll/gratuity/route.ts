@@ -1,3 +1,8 @@
+/**
+ * @file route.ts
+ * @description Gratuity calculation API for all employees
+ * @module hr/payroll
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';

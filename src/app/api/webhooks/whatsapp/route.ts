@@ -16,6 +16,39 @@ import {
 } from '@/lib/whatsapp';
 import type { MetaWebhookPayload, ApprovalEntityType } from '@/lib/whatsapp';
 
+// NOTIF-002: Simple in-memory rate limiting for webhook
+// Allows 100 requests per minute per IP
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_REQUESTS = 100;
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkWebhookRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return false;
+  }
+
+  entry.count++;
+  return true;
+}
+
+// Clean up old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap.entries()) {
+    if (now > entry.resetAt) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, RATE_LIMIT_WINDOW_MS);
+
 /**
  * GET /api/webhooks/whatsapp
  *
@@ -62,13 +95,28 @@ export async function GET(request: NextRequest): Promise<Response> {
  */
 export async function POST(request: NextRequest): Promise<Response> {
   try {
+    // NOTIF-002: Apply rate limiting
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || request.headers.get('x-real-ip')
+      || 'unknown';
+
+    if (!checkWebhookRateLimit(clientIp)) {
+      console.warn(`WhatsApp webhook: Rate limited IP ${clientIp}`);
+      return new Response('Rate limit exceeded', { status: 429 });
+    }
+
     // Get raw body for signature verification
     const body = await request.text();
     const signature = request.headers.get('x-hub-signature-256');
 
-    // Verify signature if app secret is configured
+    // NOTIF-005: Verify signature - MUST be present if app secret is configured
     const appSecret = process.env.WHATSAPP_APP_SECRET;
-    if (appSecret && signature) {
+    if (appSecret) {
+      if (!signature) {
+        console.error('WhatsApp webhook: Missing signature header');
+        return new Response('Missing signature', { status: 403 });
+      }
+
       const expectedSignature = 'sha256=' + createHmac('sha256', appSecret)
         .update(body)
         .digest('hex');

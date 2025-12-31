@@ -1,7 +1,8 @@
 /**
- * Date formatting utilities for consistent date display across the application
- * Format: 10 Aug 2025
- * All dates are displayed in Qatar timezone (GST, UTC+3)
+ * @file date-format.ts
+ * @description Date formatting utilities for consistent date display across the application.
+ *              Format: 10 Aug 2025. All dates are displayed in Qatar timezone (GST, UTC+3)
+ * @module lib/core
  */
 
 import { QATAR_TIMEZONE } from './qatar-timezone';

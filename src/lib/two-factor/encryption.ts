@@ -1,3 +1,10 @@
+/**
+ * @file encryption.ts
+ * @description AES-256-GCM encryption for two-factor authentication secrets.
+ *              Provides symmetric encryption for storing TOTP secrets securely.
+ * @module two-factor
+ */
+
 import crypto from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';

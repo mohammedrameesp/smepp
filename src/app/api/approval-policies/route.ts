@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
     });
 
     await logAction(
+      session.user.organizationId!,
       session.user.id,
       ActivityActions.APPROVAL_POLICY_CREATED,
       'ApprovalPolicy',

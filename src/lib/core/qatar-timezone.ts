@@ -1,7 +1,7 @@
 /**
- * Qatar Timezone Utilities
- * Qatar uses Gulf Standard Time (GST): UTC+3
- * No daylight saving time
+ * @file qatar-timezone.ts
+ * @description Qatar timezone utilities - Gulf Standard Time (GST): UTC+3, no daylight saving
+ * @module lib/core
  */
 
 export const QATAR_TIMEZONE = 'Asia/Qatar';

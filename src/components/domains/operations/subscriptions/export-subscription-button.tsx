@@ -1,3 +1,8 @@
+/**
+ * @file export-subscription-button.tsx
+ * @description Button component for exporting subscription data to Excel
+ * @module components/domains/operations/subscriptions
+ */
 'use client';
 
 import { Button } from '@/components/ui/button';

@@ -1,3 +1,9 @@
+/**
+ * @file select.tsx
+ * @description Select dropdown component for single option selection
+ * @module components/ui
+ */
+
 "use client"
 
 import * as React from "react"

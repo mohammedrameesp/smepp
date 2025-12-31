@@ -1,3 +1,9 @@
+/**
+ * @file radio-group.tsx
+ * @description Radio button group component for single selection from multiple options
+ * @module components/ui
+ */
+
 "use client"
 
 import * as React from "react"

@@ -1,3 +1,9 @@
+/**
+ * @file AssetHistory.tsx
+ * @description Asset history timeline component displaying all changes and assignments
+ * @module components/shared
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

@@ -1,3 +1,8 @@
+/**
+ * @file cancel-dialog.tsx
+ * @description Dialog component for cancelling subscriptions with date selection
+ * @module components/domains/operations/subscriptions
+ */
 'use client';
 
 import { useState } from 'react';

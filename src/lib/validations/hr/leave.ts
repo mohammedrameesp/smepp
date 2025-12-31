@@ -1,3 +1,9 @@
+/**
+ * @file leave.ts
+ * @description Validation schemas for leave management including leave types, requests, approvals, and balances
+ * @module validations/hr
+ */
+
 import { z } from 'zod';
 import { LeaveStatus, LeaveRequestType, LeaveCategory } from '@prisma/client';
 

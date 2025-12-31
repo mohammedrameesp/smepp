@@ -1,8 +1,8 @@
 /**
- * Request Deduplication Utility
- *
- * Prevents duplicate API requests from being processed simultaneously.
- * Useful for preventing double-submissions from impatient users clicking multiple times.
+ * @file request-dedup.ts
+ * @description Request deduplication utility - prevents duplicate API requests
+ *              from being processed simultaneously (prevents double-submissions)
+ * @module lib/core
  */
 
 const pendingRequests = new Map<string, Promise<any>>();
@@ -24,11 +24,8 @@ export async function dedupRequest<T>(
 ): Promise<T> {
   // Check if request is already in flight
   if (pendingRequests.has(key)) {
-    console.log(`[DEDUP] Reusing pending request: ${key}`);
     return pendingRequests.get(key)!;
   }
-
-  console.log(`[DEDUP] Executing new request: ${key}`);
 
   // Execute and cache promise
   const promise = fn().finally(() => {

@@ -1,3 +1,8 @@
+/**
+ * @file asset-cost-breakdown.tsx
+ * @description Card component displaying asset utilization metrics and statistics
+ * @module components/domains/operations/assets
+ */
 'use client';
 
 import { useEffect, useState } from 'react';

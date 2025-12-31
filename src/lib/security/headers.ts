@@ -1,3 +1,10 @@
+/**
+ * @file headers.ts
+ * @description Security headers middleware for HTTP responses. Adds standard security headers
+ *              including CSP, X-Frame-Options, HSTS, and other protection mechanisms.
+ * @module security
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 
 export function addSecurityHeaders(response: NextResponse): NextResponse {

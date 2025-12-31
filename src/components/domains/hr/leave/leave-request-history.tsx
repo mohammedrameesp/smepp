@@ -1,3 +1,8 @@
+/**
+ * @file leave-request-history.tsx
+ * @description Timeline component displaying leave request action history
+ * @module components/domains/hr
+ */
 'use client';
 
 import { LeaveStatus } from '@prisma/client';

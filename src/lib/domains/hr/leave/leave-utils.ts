@@ -1,3 +1,10 @@
+/**
+ * @file leave-utils.ts
+ * @description Leave management utility functions for Qatar Labor Law compliance,
+ *              balance calculations, and leave request handling
+ * @module domains/hr/leave
+ */
+
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 

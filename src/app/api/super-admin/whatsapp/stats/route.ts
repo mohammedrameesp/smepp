@@ -1,12 +1,13 @@
+/**
+ * @file route.ts
+ * @description Platform-wide WhatsApp usage statistics and metrics
+ * @module system/super-admin
+ */
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// GET /api/super-admin/whatsapp/stats
-// Get platform-wide WhatsApp usage statistics
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export async function GET() {
   try {

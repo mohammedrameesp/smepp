@@ -153,6 +153,7 @@ export const PUT = withErrorHandler(async (
 
   // Log activity
   await logAction(
+    tenantId,
     session.user.id,
     ActivityActions.COMPANY_DOCUMENT_UPDATED,
     'CompanyDocument',
@@ -215,6 +216,7 @@ export const DELETE = withErrorHandler(async (
 
   // Log activity
   await logAction(
+    tenantId,
     session.user.id,
     ActivityActions.COMPANY_DOCUMENT_DELETED,
     'CompanyDocument',

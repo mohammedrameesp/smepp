@@ -1,3 +1,9 @@
+/**
+ * @file dropdown-menu.tsx
+ * @description Dropdown menu component for contextual actions and navigation
+ * @module components/ui
+ */
+
 'use client';
 
 import * as React from 'react';

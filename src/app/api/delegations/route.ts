@@ -167,6 +167,7 @@ export async function POST(request: NextRequest) {
     });
 
     await logAction(
+      tenantId,
       session.user.id,
       'DELEGATION_CREATED',
       'ApproverDelegation',

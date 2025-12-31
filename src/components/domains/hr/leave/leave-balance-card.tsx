@@ -1,3 +1,8 @@
+/**
+ * @file leave-balance-card.tsx
+ * @description Card component displaying leave balance details with progress visualization
+ * @module components/domains/hr
+ */
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

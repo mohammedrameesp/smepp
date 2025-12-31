@@ -1,6 +1,2 @@
-// Payroll Module Utilities
-
-export * from './gratuity';
-export * from './wps';
-export * from './utils';
-export * from './leave-deduction';
+// Re-export from canonical location for backward compatibility
+export * from '@/lib/domains/hr/payroll';

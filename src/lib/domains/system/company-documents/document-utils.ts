@@ -1,4 +1,9 @@
-// Company Document Utilities - Expiry status and helpers
+/**
+ * @file document-utils.ts
+ * @description Company document utility functions. Provides helpers for document expiry status
+ *              calculation, badge variants for UI display, and human-readable expiry descriptions.
+ * @module domains/system/company-documents
+ */
 
 /** Number of days before expiry to show warning */
 export const DOCUMENT_EXPIRY_WARNING_DAYS = 30;

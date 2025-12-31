@@ -1,3 +1,8 @@
+/**
+ * @file route.ts
+ * @description Get, update and delete individual supplier
+ * @module operations/suppliers
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -5,23 +10,17 @@ import { prisma } from '@/lib/core/prisma';
 import { updateSupplierSchema } from '@/lib/validations/suppliers';
 import { logAction } from '@/lib/activity';
 import { Role } from '@prisma/client';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-
-    // Check authentication
+async function getSupplierHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     const tenantId = session.user.organizationId;
@@ -62,36 +61,17 @@ export async function GET(
     }
 
     return NextResponse.json({ supplier });
-
-  } catch (error) {
-    console.error('Get supplier error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch supplier' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-
-    // Check authentication - only ADMIN can update
+async function updateSupplierHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     const tenantId = session.user.organizationId;
@@ -152,6 +132,7 @@ export async function PATCH(
 
     // Log the update activity
     await logAction(
+      tenantId,
       session.user.id,
       'SUPPLIER_UPDATED',
       'supplier',
@@ -164,36 +145,17 @@ export async function PATCH(
     );
 
     return NextResponse.json({ supplier });
-
-  } catch (error) {
-    console.error('Update supplier error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update supplier' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-
-    // Check authentication - only ADMIN can delete
+async function deleteSupplierHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     const tenantId = session.user.organizationId;
@@ -214,6 +176,7 @@ export async function DELETE(
 
     // Log the deletion activity
     await logAction(
+      tenantId,
       session.user.id,
       'SUPPLIER_DELETED',
       'supplier',
@@ -225,12 +188,8 @@ export async function DELETE(
     );
 
     return NextResponse.json({ message: 'Supplier deleted successfully' });
-
-  } catch (error) {
-    console.error('Delete supplier error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete supplier' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(getSupplierHandler, { requireAuth: true, requireModule: 'suppliers' });
+export const PATCH = withErrorHandler(updateSupplierHandler, { requireAdmin: true, requireModule: 'suppliers' });
+export const DELETE = withErrorHandler(deleteSupplierHandler, { requireAdmin: true, requireModule: 'suppliers' });

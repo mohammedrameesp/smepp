@@ -1,3 +1,11 @@
+/**
+ * @file notification-service.ts
+ * @description Core notification service for creating in-app notifications. Provides functions
+ *              for single and bulk notification creation, plus pre-built templates for common
+ *              scenarios like leave requests, asset assignments, and purchase requests.
+ * @module domains/system/notifications
+ */
+
 import { prisma } from '@/lib/core/prisma';
 import { NotificationType } from '@prisma/client';
 
@@ -14,11 +22,17 @@ export interface CreateNotificationInput {
 /**
  * Creates a single notification for a user.
  * Non-blocking: failures are logged but don't break operations.
+ * @param input - The notification input data
+ * @param tenantId - Required tenant ID for multi-tenancy isolation
  */
 export async function createNotification(
   input: CreateNotificationInput,
-  tenantId?: string
+  tenantId: string
 ): Promise<boolean> {
+  if (!tenantId) {
+    console.error('createNotification called without tenantId - this is a multi-tenancy violation');
+    return false;
+  }
   try {
     await prisma.notification.create({
       data: {
@@ -29,7 +43,7 @@ export async function createNotification(
         link: input.link,
         entityType: input.entityType,
         entityId: input.entityId,
-        tenantId: tenantId || 'SYSTEM',
+        tenantId,
       },
     });
     return true;
@@ -43,11 +57,17 @@ export async function createNotification(
 /**
  * Creates notifications for multiple recipients.
  * Non-blocking: failures are logged but don't break operations.
+ * @param inputs - Array of notification input data
+ * @param tenantId - Required tenant ID for multi-tenancy isolation
  */
 export async function createBulkNotifications(
   inputs: CreateNotificationInput[],
-  tenantId?: string
+  tenantId: string
 ): Promise<number> {
+  if (!tenantId) {
+    console.error('createBulkNotifications called without tenantId - this is a multi-tenancy violation');
+    return 0;
+  }
   try {
     const result = await prisma.notification.createMany({
       data: inputs.map((input) => ({
@@ -58,7 +78,7 @@ export async function createBulkNotifications(
         link: input.link,
         entityType: input.entityType,
         entityId: input.entityId,
-        tenantId: tenantId || 'SYSTEM',
+        tenantId,
       })),
     });
     return result.count;

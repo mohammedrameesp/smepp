@@ -1,25 +1,24 @@
+/**
+ * @file route.ts
+ * @description Import suppliers from CSV file
+ * @module operations/suppliers
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { csvToArray } from '@/lib/csv-utils';
 import { logAction, ActivityActions } from '@/lib/activity';
-import { Role, SupplierStatus } from '@prisma/client';
+import { SupplierStatus } from '@prisma/client';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 interface ImportRow {
   [key: string]: string | undefined;
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    // Check authentication
+async function importSuppliersHandler(request: NextRequest, _context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
@@ -172,6 +171,7 @@ export async function POST(request: NextRequest) {
 
           // Log activity
           await logAction(
+            tenantId,
             session.user.id,
             existingById ? ActivityActions.SUPPLIER_UPDATED : ActivityActions.SUPPLIER_CREATED,
             'Supplier',
@@ -226,6 +226,7 @@ export async function POST(request: NextRequest) {
             });
 
             await logAction(
+              tenantId,
               session.user.id,
               ActivityActions.SUPPLIER_UPDATED,
               'Supplier',
@@ -245,6 +246,7 @@ export async function POST(request: NextRequest) {
 
         // Log activity
         await logAction(
+          tenantId,
           session.user.id,
           'SUPPLIER_CREATED',
           'Supplier',
@@ -275,14 +277,6 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 }
     );
-  } catch (error) {
-    console.error('Supplier import error:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to import suppliers',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(importSuppliersHandler, { requireAdmin: true, requireModule: 'suppliers' });

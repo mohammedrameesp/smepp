@@ -1,3 +1,12 @@
+/**
+ * @file approval-engine.ts
+ * @description Multi-level approval workflow engine. Handles policy matching, approval chain
+ *              initialization, step processing, delegation support, and admin bypass functionality.
+ *              Supports leave requests, purchase requests, and asset requests with configurable
+ *              thresholds and role-based approval levels.
+ * @module domains/system/approvals
+ */
+
 import { prisma } from '@/lib/core/prisma';
 import {
   ApprovalModule,

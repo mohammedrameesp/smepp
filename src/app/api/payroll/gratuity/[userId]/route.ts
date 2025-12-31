@@ -1,33 +1,26 @@
+/**
+ * @file route.ts
+ * @description Gratuity calculation API for a specific user
+ * @module hr/payroll
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { calculateGratuity, projectGratuity, getServiceDurationText } from '@/lib/payroll/gratuity';
 import { parseDecimal } from '@/lib/payroll/utils';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-interface RouteParams {
-  params: Promise<{ userId: string }>;
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function getGratuityHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const userId = params?.userId;
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { userId } = await params;
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isAdmin = tenant!.userRole === 'ADMIN';
 
     // Non-admin users can only view their own gratuity
-    if (!isAdmin && userId !== session.user.id) {
+    if (!isAdmin && userId !== tenant!.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
@@ -89,11 +82,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       calculation: gratuityCalculation,
       projections,
     });
-  } catch (error) {
-    console.error('Gratuity GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to calculate gratuity' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(getGratuityHandler, { requireAuth: true, requireModule: 'payroll' });

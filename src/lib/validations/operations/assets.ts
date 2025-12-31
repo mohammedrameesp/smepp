@@ -1,3 +1,9 @@
+/**
+ * @file assets.ts
+ * @description Validation schemas for asset CRUD operations including creation, updates, and queries
+ * @module validations/operations
+ */
+
 import { z } from 'zod';
 import { AssetStatus, AcquisitionType } from '@prisma/client';
 

@@ -1,3 +1,8 @@
+/**
+ * @file subscription-lifecycle-actions.tsx
+ * @description Action buttons for managing subscription lifecycle (cancel/reactivate)
+ * @module components/domains/operations/subscriptions
+ */
 'use client';
 
 import { useState } from 'react';

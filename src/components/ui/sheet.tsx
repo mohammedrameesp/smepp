@@ -1,3 +1,9 @@
+/**
+ * @file sheet.tsx
+ * @description Slide-out panel component for side content and forms
+ * @module components/ui
+ */
+
 "use client"
 
 import * as React from "react"

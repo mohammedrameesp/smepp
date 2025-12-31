@@ -5,6 +5,7 @@ import { prisma } from '@/lib/core/prisma';
 import { projectCreateSchema, projectModuleQuerySchema } from '@/lib/validations/projects/project';
 import { generateProjectCode } from '@/lib/domains/projects/project/project-utils';
 import { logAction, ActivityActions } from '@/lib/activity';
+import { updateSetupProgress } from '@/lib/domains/system/setup';
 
 // GET /api/projects - List projects with filtering
 export async function GET(request: NextRequest) {
@@ -110,12 +111,16 @@ export async function POST(request: NextRequest) {
     });
 
     await logAction(
+      session.user.organizationId!,
       session.user.id,
       ActivityActions.PROJECT_CREATED,
       'Project',
       project.id,
       { code: project.code, name: project.name }
     );
+
+    // Update setup progress for first project created (non-blocking)
+    updateSetupProgress(session.user.organizationId!, 'firstProjectCreated', true).catch(() => {});
 
     return NextResponse.json({ data: project }, { status: 201 });
   } catch (error) {

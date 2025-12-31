@@ -1,3 +1,8 @@
+/**
+ * @file payroll-settings.tsx
+ * @description Settings component for configuring default salary component percentages
+ * @module components/domains/system/settings
+ */
 'use client';
 
 import { useState, useEffect } from 'react';

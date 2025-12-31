@@ -1,3 +1,9 @@
+/**
+ * @file payroll.ts
+ * @description Validation schemas for payroll operations including salary structures, payroll runs, loans, and deductions
+ * @module validations/hr
+ */
+
 import { z } from 'zod';
 import { PayrollStatus, LoanStatus, DeductionType } from '@prisma/client';
 

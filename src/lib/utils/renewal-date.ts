@@ -1,4 +1,10 @@
 /**
+ * @file renewal-date.ts
+ * @description Subscription renewal date calculation utilities
+ * @module lib/utils
+ */
+
+/**
  * Calculate the next upcoming renewal date based on the original renewal date and billing cycle
  * @param originalRenewalDate - The original/base renewal date
  * @param billingCycle - The billing cycle (MONTHLY, QUARTERLY, YEARLY, etc.)

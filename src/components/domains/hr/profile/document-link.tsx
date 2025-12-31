@@ -1,7 +1,12 @@
+/**
+ * @file document-link.tsx
+ * @description Document link component with preview support for images and PDFs
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState } from 'react';
-import { FileText, ExternalLink, Download, Eye, X, Image as ImageIcon } from 'lucide-react';
+import { FileText, ExternalLink, Download, Eye, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

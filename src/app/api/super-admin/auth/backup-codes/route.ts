@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Get backup codes count and regenerate backup codes for 2FA
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';

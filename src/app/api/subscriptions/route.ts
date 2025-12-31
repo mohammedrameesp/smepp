@@ -1,7 +1,10 @@
+/**
+ * @file route.ts
+ * @description Subscription list and creation endpoints
+ * @module operations/subscriptions
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createSubscriptionSchema, subscriptionQuerySchema } from '@/lib/validations/subscriptions';
 import { logAction, ActivityActions } from '@/lib/activity';
@@ -9,24 +12,16 @@ import { getQatarNow, getQatarStartOfDay } from '@/lib/qatar-timezone';
 import { parseInputDateString } from '@/lib/date-format';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
+async function getSubscriptionsHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
-    
+
     const validation = subscriptionQuerySchema.safeParse(queryParams);
     if (!validation.success) {
       return NextResponse.json({
@@ -57,7 +52,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Add tenant filtering to filters
-    filters.tenantId = session.user.organizationId;
+    filters.tenantId = tenantId;
 
     const where = buildFilterWithSearch({
       searchTerm: q,
@@ -98,28 +93,17 @@ export async function GET(request: NextRequest) {
         hasMore: skip + ps < total,
       },
     });
-
-  } catch (error) {
-    console.error('Subscriptions GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch subscriptions' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    // Check authentication and authorization
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+async function createSubscriptionHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
 
     // Parse and validate request body
     const body = await request.json();
     const validation = createSubscriptionSchema.safeParse(body);
-    
+
     if (!validation.success) {
       return NextResponse.json({
         error: 'Invalid request body',
@@ -163,7 +147,7 @@ export async function POST(request: NextRequest) {
     const subscription = await prisma.subscription.create({
       data: {
         ...subscriptionData,
-        tenantId: session.user.organizationId!,
+        tenantId,
       },
       include: {
         assignedUser: {
@@ -178,7 +162,8 @@ export async function POST(request: NextRequest) {
 
     // Log activity
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.SUBSCRIPTION_CREATED,
       'Subscription',
       subscription.id,
@@ -191,19 +176,14 @@ export async function POST(request: NextRequest) {
         subscriptionId: subscription.id,
         action: 'CREATED',
         newStatus: subscription.status,
-        performedBy: session.user.id,
+        performedBy: currentUserId,
         assignmentDate: subscription.assignedUserId ? assignmentDate : null,
         newUserId: subscription.assignedUserId,
       },
     });
 
     return NextResponse.json(subscription, { status: 201 });
-
-  } catch (error) {
-    console.error('Subscriptions POST error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create subscription' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(getSubscriptionsHandler, { requireAuth: true, requireModule: 'subscriptions' });
+export const POST = withErrorHandler(createSubscriptionHandler, { requireAdmin: true, requireModule: 'subscriptions' });

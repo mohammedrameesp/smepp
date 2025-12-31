@@ -1,13 +1,17 @@
+/**
+ * @file route.ts
+ * @description Asset list and creation API endpoints
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role, AssetStatus, Prisma } from '@prisma/client';
+import { AssetStatus, Prisma } from '@prisma/client';
 import { createAssetSchema, assetQuerySchema } from '@/lib/validations/assets';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { generateAssetTag } from '@/lib/asset-utils';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { updateSetupProgress } from '@/lib/domains/system/setup';
 
 // Type for asset list filters
 interface AssetFilters {
@@ -84,17 +88,9 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
 export const GET = withErrorHandler(getAssetsHandler, { requireAuth: true, rateLimit: true, requireModule: 'assets' });
 
 async function createAssetHandler(request: NextRequest, context: APIContext) {
-  const { prisma } = context;
-
-  // Get session for user info (auth already checked by withErrorHandler)
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  if (!session.user.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-  }
+  const { prisma, tenant } = context;
+  const tenantId = tenant!.tenantId;
+  const userId = tenant!.userId;
 
   // Parse and validate request body
   const body = await request.json();
@@ -110,7 +106,7 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
   const data = validation.data;
 
   // Generate asset tag if not provided, and ensure it's always uppercase
-  let assetTag = data.assetTag || await generateAssetTag(data.type, session.user.organizationId!);
+  let assetTag = data.assetTag || await generateAssetTag(data.type, tenantId);
   if (assetTag) {
     assetTag = assetTag.toUpperCase();
   }
@@ -156,7 +152,7 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
         notes: data.notes || null,
         location: data.location || null,
         isShared: data.isShared || false,
-        tenantId: session.user.organizationId,
+        tenantId,
         assignedUserId: data.assignedUserId || null,
       },
       include: {
@@ -173,7 +169,8 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
     // Log activity (non-critical, don't fail if this errors)
     try {
       await logAction(
-        session.user.id,
+        tenantId,
+        userId,
         ActivityActions.ASSET_CREATED,
         'Asset',
         asset.id,
@@ -182,6 +179,9 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
     } catch {
       // Ignore activity log errors
     }
+
+    // Update setup progress (non-blocking)
+    updateSetupProgress(tenantId, 'firstAssetAdded', true).catch(() => {});
 
     return NextResponse.json(asset, { status: 201 });
   } catch (error) {

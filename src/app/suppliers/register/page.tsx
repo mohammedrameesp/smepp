@@ -163,7 +163,7 @@ export default function SupplierRegistrationPage() {
                   Our team will review your information and get back to you soon.
                 </p>
                 <Button
-                  onClick={() => window.location.href = 'https://becreative.qa'}
+                  onClick={() => window.location.href = 'https://durj.com'}
                   className="mt-4"
                 >
                   Visit our website

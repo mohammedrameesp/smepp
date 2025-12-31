@@ -1,3 +1,8 @@
+/**
+ * @file pending-assignments-alert.tsx
+ * @description Alert banner component showing pending asset assignments awaiting acceptance
+ * @module components/domains/operations/asset-requests
+ */
 'use client';
 
 import { useState, useEffect } from 'react';

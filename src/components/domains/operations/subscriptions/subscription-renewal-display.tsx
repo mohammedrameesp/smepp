@@ -1,3 +1,8 @@
+/**
+ * @file subscription-renewal-display.tsx
+ * @description Component displaying subscription renewal status with visual indicators
+ * @module components/domains/operations/subscriptions
+ */
 'use client';
 
 import { Badge } from '@/components/ui/badge';

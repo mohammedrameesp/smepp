@@ -1,3 +1,9 @@
+/**
+ * @file index.ts
+ * @description Barrel export for operations validation schemas (assets, subscriptions, suppliers)
+ * @module validations/operations
+ */
+
 // Operations Validations
 export * from './assets';
 export * from './asset-request';

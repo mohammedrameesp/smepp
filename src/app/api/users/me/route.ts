@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Current user profile endpoints (self-service)
+ * @module system/users
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -103,6 +109,7 @@ export async function PATCH(request: NextRequest) {
 
     // Log activity
     await logAction(
+      session.user.organizationId!,
       session.user.id,
       ActivityActions.USER_UPDATED,
       'User',

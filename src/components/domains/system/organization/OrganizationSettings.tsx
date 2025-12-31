@@ -1,3 +1,8 @@
+/**
+ * @file OrganizationSettings.tsx
+ * @description Settings component for managing organization details, name, and code prefix
+ * @module components/domains/system/organization
+ */
 'use client';
 
 import { useState } from 'react';

@@ -1,18 +1,18 @@
+/**
+ * @file route.ts
+ * @description User's pending asset requests API endpoint
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { AssetRequestStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(_request: NextRequest) {
-  try {
+async function getMyPendingRequestsHandler(_request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
@@ -82,11 +82,6 @@ export async function GET(_request: NextRequest) {
         total: pendingAssignments.length + pendingRequests.length,
       },
     });
-  } catch (error) {
-    console.error('My pending requests GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch pending requests' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(getMyPendingRequestsHandler, { requireAuth: true, requireModule: 'assets' });

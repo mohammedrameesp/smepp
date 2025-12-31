@@ -10,14 +10,14 @@ import Link from 'next/link';
 import { formatDate, formatDateTime } from '@/lib/date-format';
 import { Edit, User, AlertTriangle, Package, CreditCard, FileText, Calendar, Clock, Mail, Trash2 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
-import { EmployeeHRViewSection } from '@/components/employees/employee-hr-view';
+import { EmployeeHRViewSection } from '@/components/employees';
 import { getUserSubscriptionHistory } from '@/lib/subscription-lifecycle';
 import { getUserAssetHistory } from '@/lib/asset-lifecycle';
 import { UserSubscriptionHistory } from '@/components/users/user-subscription-history';
 import { UserAssetHistory } from '@/components/users/user-asset-history';
 import { DeleteUserButton } from '@/components/users/delete-user-button';
 import { ExportUserPDFButton } from '@/components/users/export-user-pdf-button';
-import { EmployeeLeaveSection } from '@/components/employees/employee-leave-section';
+import { EmployeeLeaveSection } from '@/components/employees';
 import { RestoreUserButton } from '@/components/users/restore-user-button';
 
 interface Props {

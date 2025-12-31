@@ -1,3 +1,9 @@
+/**
+ * @file skeleton.tsx
+ * @description Loading skeleton component for placeholder content during data fetching
+ * @module components/ui
+ */
+
 import { cn } from "@/lib/utils"
 
 function Skeleton({

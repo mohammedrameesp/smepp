@@ -1,11 +1,13 @@
+/**
+ * @file route.ts
+ * @description AI usage statistics per organization for billing and monitoring
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// GET /api/super-admin/ai-usage - Get AI usage stats per organization
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export async function GET(request: NextRequest) {
   try {

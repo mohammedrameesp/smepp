@@ -1,3 +1,9 @@
+/**
+ * @file switch.tsx
+ * @description Toggle switch component for binary on/off settings
+ * @module components/ui
+ */
+
 "use client"
 
 import * as React from "react"

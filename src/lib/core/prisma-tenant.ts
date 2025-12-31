@@ -1,13 +1,34 @@
 /**
- * Tenant-Scoped Prisma Client
+ * @file prisma-tenant.ts
+ * @description Tenant-scoped Prisma client extension that automatically filters all queries
+ *              by tenantId and injects tenantId into all creates/updates. This ensures
+ *              complete data isolation between organizations in the multi-tenant architecture.
+ * @module multi-tenant
  *
- * Creates a Prisma client extension that automatically filters all queries
- * by tenantId and injects tenantId into all creates/updates.
+ * ARCHITECTURE:
+ * This is the CORE security mechanism for multi-tenant isolation. Every database
+ * query from API routes goes through this extension, which:
  *
- * This ensures complete data isolation between organizations.
+ * 1. READS: Automatically adds `WHERE tenantId = ?` to all queries
+ * 2. WRITES: Automatically sets `tenantId` on all creates/upserts
+ * 3. DELETES: Verifies tenant ownership before deleting
+ *
+ * SECURITY:
+ * - Prevents Insecure Direct Object Reference (IDOR) attacks
+ * - Ensures Organization A cannot access Organization B's data
+ * - Works at the database layer (cannot be bypassed by API logic)
+ *
+ * FLOW:
+ * 1. Request comes in → Middleware extracts organizationId from session
+ * 2. Middleware sets x-tenant-id header → API handler reads header
+ * 3. API handler creates tenant-scoped Prisma client → All queries auto-filtered
+ *
+ * IMPORTANT:
+ * - Never use the raw `prisma` client for tenant data
+ * - Always use the tenant-scoped client from API handler context
+ * - Super admin routes use raw prisma for cross-tenant operations
  */
 
-import { Prisma, PrismaClient } from '@prisma/client';
 import { prisma } from './prisma';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -17,13 +38,15 @@ import { prisma } from './prisma';
 export interface TenantContext {
   tenantId: string;
   userId: string;
-  orgRole?: string;
+  userRole?: string; // User's app role (ADMIN/USER)
+  orgRole?: string;  // User's organization role (OWNER/ADMIN/MANAGER/MEMBER)
   subscriptionTier?: string;
 }
 
 // Models that have tenantId field and need tenant isolation
 const TENANT_MODELS = [
   'Asset',
+  'AssetHistory',
   'Subscription',
   'ActivityLog',
   'Notification',
@@ -51,11 +74,6 @@ const TENANT_MODELS = [
 ] as const;
 
 type TenantModel = (typeof TENANT_MODELS)[number];
-
-// Convert model name to Prisma model key (lowercase first letter)
-function toModelKey(model: string): string {
-  return model.charAt(0).toLowerCase() + model.slice(1);
-}
 
 // Check if a model has tenant isolation
 function isTenantModel(model: string): model is TenantModel {
@@ -238,6 +256,7 @@ export function getTenantContextFromHeaders(headers: Headers): TenantContext | n
   return {
     tenantId,
     userId,
+    userRole: headers.get('x-user-role') || undefined,
     orgRole: headers.get('x-org-role') || undefined,
     subscriptionTier: headers.get('x-subscription-tier') || undefined,
   };

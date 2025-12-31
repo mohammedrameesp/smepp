@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Current user's HR profile management (self-service onboarding)
+ * @module system/users
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -137,6 +143,7 @@ async function updateHRProfileHandler(request: NextRequest) {
 
   // Log activity
   await logAction(
+    session.user.organizationId!,
     session.user.id,
     ActivityActions.USER_UPDATED,
     'HRProfile',
@@ -147,11 +154,18 @@ async function updateHRProfileHandler(request: NextRequest) {
   // Send email notification to admins when onboarding is completed
   if (justCompletedOnboarding) {
     try {
-      // Get current user info
-      const currentUser = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { name: true, email: true },
-      });
+      // Get current user info and organization
+      const [currentUser, org] = await Promise.all([
+        prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { name: true, email: true },
+        }),
+        prisma.organization.findUnique({
+          where: { id: session.user.organizationId! },
+          select: { name: true },
+        }),
+      ]);
+      const orgName = org?.name || 'Durj';
 
       // Get all admin users (tenant-scoped)
       const admins = await prisma.user.findMany({
@@ -187,7 +201,7 @@ async function updateHRProfileHandler(request: NextRequest) {
                 </a>
               </div>
               <p style="margin-top: 32px; color: #9ca3af; font-size: 12px;">
-                This is an automated message from the Be Creative Portal.
+                This is an automated message from ${orgName}.
               </p>
             </div>
           `,

@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Profile change requests for employees (self-service)
+ * @module system/users
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -111,10 +117,10 @@ async function createChangeRequestHandler(request: NextRequest) {
 
   // Send email notification to all admins in the same organization (non-blocking)
   try {
-    // Get org slug for email URL
+    // Get org details for email
     const org = await prisma.organization.findUnique({
       where: { id: session.user.organizationId },
-      select: { slug: true },
+      select: { slug: true, name: true },
     });
 
     const admins = await prisma.user.findMany({
@@ -135,6 +141,7 @@ async function createChangeRequestHandler(request: NextRequest) {
         reason: validation.data.description,
         submittedDate: new Date(),
         orgSlug: org?.slug || 'app',
+        orgName: org?.name || 'Organization',
       });
 
       const emailsToSend = admins.map((admin) => ({

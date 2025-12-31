@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Set user password (development utility endpoint)
+ * @module system/super-admin
+ */
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import bcrypt from 'bcryptjs';

@@ -1,3 +1,9 @@
+/**
+ * @file subscriptions.ts
+ * @description Validation schemas for subscription management with Qatar timezone support
+ * @module validations/operations
+ */
+
 import { z } from 'zod';
 import { BillingCycle, SubscriptionStatus } from '@prisma/client';
 import { getQatarNow, getQatarEndOfDay, dateInputToQatarDate } from '@/lib/qatar-timezone';

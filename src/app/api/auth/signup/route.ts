@@ -2,15 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { validatePassword, DEFAULT_PASSWORD_REQUIREMENTS } from '@/lib/security/password-validation';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION SCHEMA
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// SEC-010: Enhanced password validation with complexity requirements
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .superRefine((password, ctx) => {
+      const result = validatePassword(password, DEFAULT_PASSWORD_REQUIREMENTS);
+      if (!result.valid) {
+        result.errors.forEach((error) => {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: error,
+          });
+        });
+      }
+    }),
   inviteToken: z.string().optional(),
 });
 

@@ -1,31 +1,25 @@
+/**
+ * @file route.ts
+ * @description Cancel a leave request (by owner or admin)
+ * @module hr/leave
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { cancelLeaveRequestSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { canCancelLeaveRequest } from '@/lib/leave-utils';
 import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function cancelLeaveRequestHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     const body = await request.json();
     const validation = cancelLeaveRequestSchema.safeParse(body);
@@ -57,8 +51,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Only owner or admin can cancel
-    const isOwner = existing.userId === session.user.id;
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isOwner = existing.userId === currentUserId;
+    const isAdmin = tenant!.userRole === 'ADMIN';
 
     if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -108,7 +102,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         // If was approved, decrement used
         await tx.leaveBalance.update({
           where: {
-            userId_leaveTypeId_year: {
+            tenantId_userId_leaveTypeId_year: {
+              tenantId,
               userId: existing.userId,
               leaveTypeId: existing.leaveTypeId,
               year,
@@ -124,7 +119,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         // If was pending, decrement pending
         await tx.leaveBalance.update({
           where: {
-            userId_leaveTypeId_year: {
+            tenantId_userId_leaveTypeId_year: {
+              tenantId,
               userId: existing.userId,
               leaveTypeId: existing.leaveTypeId,
               year,
@@ -146,7 +142,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           oldStatus: existing.status,
           newStatus: 'CANCELLED',
           notes: reason,
-          performedById: session.user.id,
+          performedById: currentUserId,
         },
       });
 
@@ -154,7 +150,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.LEAVE_REQUEST_CANCELLED,
       'LeaveRequest',
       leaveRequest.id,
@@ -177,16 +174,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           true, // cancelled by admin
           reason,
           leaveRequest.id
-        )
+        ),
+        tenantId
       );
     }
 
     return NextResponse.json(leaveRequest);
-  } catch (error) {
-    console.error('Leave request cancel error:', error);
-    return NextResponse.json(
-      { error: 'Failed to cancel leave request' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(cancelLeaveRequestHandler, { requireAuth: true, requireModule: 'leave' });

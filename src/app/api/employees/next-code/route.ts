@@ -1,19 +1,19 @@
+/**
+ * @file route.ts
+ * @description Generate next employee code for the organization
+ * @module hr/employees
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
+import { APIContext } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
+async function getNextCodeHandler(request: NextRequest, _context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
@@ -37,11 +37,4 @@ export async function GET(request: NextRequest) {
     const nextCode = `${prefix}-${String(count + 1).padStart(3, '0')}`;
 
     return NextResponse.json({ nextCode });
-  } catch (error) {
-    console.error('Next employee code error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate employee code' },
-      { status: 500 }
-    );
-  }
 }

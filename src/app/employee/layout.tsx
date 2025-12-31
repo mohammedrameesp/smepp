@@ -23,8 +23,11 @@ export default async function EmployeeLayout({
 }) {
   const session = await getServerSession(authOptions);
 
+  // PROD-003: Auth bypass only when DEV_AUTH_ENABLED is explicitly set
+  const devAuthEnabled = process.env.DEV_AUTH_ENABLED === 'true';
+
   // Redirect unauthenticated users
-  if (!session && process.env.NODE_ENV !== 'development') {
+  if (!session && !devAuthEnabled) {
     redirect('/login');
   }
 

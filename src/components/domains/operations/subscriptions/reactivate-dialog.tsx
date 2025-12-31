@@ -1,10 +1,14 @@
+/**
+ * @file reactivate-dialog.tsx
+ * @description Dialog component for reactivating cancelled subscriptions
+ * @module components/domains/operations/subscriptions
+ */
 'use client';
 
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { BillingCycle } from '@prisma/client';
 import { calculateNextRenewalDate } from '@/lib/subscription-lifecycle';

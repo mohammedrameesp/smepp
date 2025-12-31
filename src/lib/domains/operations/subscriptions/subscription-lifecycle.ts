@@ -1,3 +1,9 @@
+/**
+ * @file subscription-lifecycle.ts
+ * @description Subscription lifecycle management - activation, cancellation, reactivation, and cost calculations
+ * @module domains/operations/subscriptions
+ */
+
 import { prisma } from '@/lib/core/prisma';
 import { BillingCycle } from '@prisma/client';
 

@@ -1,3 +1,8 @@
+/**
+ * @file employee-actions.tsx
+ * @description Action buttons for employee list rows, providing navigation to employee details
+ * @module components/domains/hr
+ */
 'use client';
 
 import Link from 'next/link';

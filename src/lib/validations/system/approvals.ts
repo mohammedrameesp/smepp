@@ -1,3 +1,9 @@
+/**
+ * @file approvals.ts
+ * @description Validation schemas for multi-level approval workflows, policies, and delegations
+ * @module validations/system
+ */
+
 import { z } from 'zod';
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -1,3 +1,9 @@
+/**
+ * @file input.tsx
+ * @description Text input component for form data entry
+ * @module components/ui
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

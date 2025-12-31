@@ -1,3 +1,8 @@
+/**
+ * @file cancel-leave-dialog.tsx
+ * @description Dialog component for cancelling leave requests with reason
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState } from 'react';

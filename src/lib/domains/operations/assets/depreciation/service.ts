@@ -1,6 +1,7 @@
 /**
- * Asset Depreciation Service
- * Handles database operations for depreciation calculations
+ * @file service.ts
+ * @description Asset depreciation service - database operations for depreciation calculations
+ * @module domains/operations/assets/depreciation
  */
 
 import { prisma } from '@/lib/core/prisma';

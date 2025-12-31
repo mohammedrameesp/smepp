@@ -1,8 +1,15 @@
+/**
+ * @file asset-history.ts
+ * @description Asset history tracking - records assignment, status, location, and lifecycle changes
+ * @module domains/operations/assets
+ */
+
 import { prisma } from '@/lib/core/prisma';
 import { AssetHistoryAction, AssetStatus } from '@prisma/client';
 
 interface RecordAssetHistoryParams {
   assetId: string;
+  tenantId: string;
   action: AssetHistoryAction;
   fromUserId?: string | null;
   toUserId?: string | null;
@@ -16,6 +23,7 @@ interface RecordAssetHistoryParams {
 
 export async function recordAssetHistory({
   assetId,
+  tenantId,
   action,
   fromUserId,
   toUserId,
@@ -29,6 +37,7 @@ export async function recordAssetHistory({
   try {
     await prisma.assetHistory.create({
       data: {
+        tenantId,
         assetId,
         action,
         fromUserId,
@@ -56,6 +65,16 @@ export async function recordAssetAssignment(
   assignmentDate?: Date,
   returnDate?: Date
 ) {
+  // Fetch tenantId from asset
+  const asset = await prisma.asset.findUnique({
+    where: { id: assetId },
+    select: { tenantId: true },
+  });
+  if (!asset) {
+    console.error('Asset not found for recordAssetAssignment');
+    return;
+  }
+
   const action = toUserId
     ? (fromUserId ? AssetHistoryAction.ASSIGNED : AssetHistoryAction.ASSIGNED)
     : AssetHistoryAction.UNASSIGNED;
@@ -65,6 +84,7 @@ export async function recordAssetAssignment(
 
   await recordAssetHistory({
     assetId,
+    tenantId: asset.tenantId,
     action,
     fromUserId,
     toUserId,
@@ -105,8 +125,19 @@ export async function recordAssetStatusChange(
   performedBy: string,
   notes?: string
 ) {
+  // Fetch tenantId from asset
+  const asset = await prisma.asset.findUnique({
+    where: { id: assetId },
+    select: { tenantId: true },
+  });
+  if (!asset) {
+    console.error('Asset not found for recordAssetStatusChange');
+    return;
+  }
+
   await recordAssetHistory({
     assetId,
+    tenantId: asset.tenantId,
     action: AssetHistoryAction.STATUS_CHANGED,
     fromStatus,
     toStatus,
@@ -115,17 +146,20 @@ export async function recordAssetStatusChange(
   });
 }
 
-// PROJECT_CHANGED action is no longer supported as Asset model doesn't have project fields
-// Keeping this function as stub for backward compatibility
+/**
+ * Record asset project change
+ * @deprecated PROJECT_CHANGED action is no longer supported as Asset model doesn't have project fields.
+ * This function is kept as a stub for backward compatibility.
+ */
 export async function recordAssetProjectChange(
-  assetId: string,
-  fromProject: string | null,
-  toProject: string | null,
-  performedBy: string,
-  notes?: string
+  _assetId: string,
+  _fromProject: string | null,
+  _toProject: string | null,
+  _performedBy: string,
+  _notes?: string
 ) {
   // This function is deprecated - PROJECT_CHANGED action is no longer supported
-  console.warn('recordAssetProjectChange is deprecated: Asset model no longer has project fields');
+  // Asset model no longer has project fields
 }
 
 export async function recordAssetLocationChange(
@@ -135,8 +169,19 @@ export async function recordAssetLocationChange(
   performedBy: string,
   notes?: string
 ) {
+  // Fetch tenantId from asset
+  const asset = await prisma.asset.findUnique({
+    where: { id: assetId },
+    select: { tenantId: true },
+  });
+  if (!asset) {
+    console.error('Asset not found for recordAssetLocationChange');
+    return;
+  }
+
   await recordAssetHistory({
     assetId,
+    tenantId: asset.tenantId,
     action: AssetHistoryAction.LOCATION_CHANGED,
     fromLocation,
     toLocation,
@@ -151,8 +196,19 @@ export async function recordAssetCreation(
   initialUserId?: string | null,
   initialProjectId?: string | null
 ) {
+  // Fetch tenantId from asset
+  const asset = await prisma.asset.findUnique({
+    where: { id: assetId },
+    select: { tenantId: true },
+  });
+  if (!asset) {
+    console.error('Asset not found for recordAssetCreation');
+    return;
+  }
+
   await recordAssetHistory({
     assetId,
+    tenantId: asset.tenantId,
     action: AssetHistoryAction.CREATED,
     toUserId: initialUserId,
     performedBy,
@@ -165,8 +221,19 @@ export async function recordAssetUpdate(
   performedBy: string,
   notes?: string
 ) {
+  // Fetch tenantId from asset
+  const asset = await prisma.asset.findUnique({
+    where: { id: assetId },
+    select: { tenantId: true },
+  });
+  if (!asset) {
+    console.error('Asset not found for recordAssetUpdate');
+    return;
+  }
+
   await recordAssetHistory({
     assetId,
+    tenantId: asset.tenantId,
     action: AssetHistoryAction.UPDATED,
     performedBy,
     notes: notes || 'Asset updated',

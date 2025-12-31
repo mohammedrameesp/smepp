@@ -1,3 +1,8 @@
+/**
+ * @file multi-select-tags.tsx
+ * @description Multi-select dropdown with tag chips for selecting multiple values
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState, useRef, useEffect } from 'react';

@@ -90,6 +90,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     });
 
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.PROJECT_UPDATED,
       'Project',
@@ -146,6 +147,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     });
 
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.PROJECT_DELETED,
       'Project',

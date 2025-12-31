@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Super admin login with email/password and optional 2FA
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';

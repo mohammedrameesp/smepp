@@ -1,29 +1,24 @@
+/**
+ * @file route.ts
+ * @description Cancel a payroll run API
+ * @module hr/payroll
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role, PayrollStatus } from '@prisma/client';
+import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { rejectPayrollSchema } from '@/lib/validations/payroll';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function cancelPayrollHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
     const body = await request.json();
     const validation = rejectPayrollSchema.safeParse(body);
 
@@ -119,7 +114,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           previousStatus,
           newStatus: PayrollStatus.CANCELLED,
           notes: reason,
-          performedById: session.user.id,
+          performedById: currentUserId,
         },
       });
 
@@ -127,7 +122,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.PAYROLL_RUN_CANCELLED,
       'PayrollRun',
       id,
@@ -139,11 +135,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     );
 
     return NextResponse.json({ success: true, status: updatedRun.status });
-  } catch (error) {
-    console.error('Payroll cancel error:', error);
-    return NextResponse.json(
-      { error: 'Failed to cancel payroll' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(cancelPayrollHandler, { requireAdmin: true, requireModule: 'payroll' });

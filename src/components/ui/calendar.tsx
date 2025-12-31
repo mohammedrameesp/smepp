@@ -1,3 +1,9 @@
+/**
+ * @file calendar.tsx
+ * @description Calendar component for date selection using react-day-picker
+ * @module components/ui
+ */
+
 'use client';
 
 import * as React from 'react';

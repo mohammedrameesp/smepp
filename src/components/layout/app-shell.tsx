@@ -1,3 +1,9 @@
+/**
+ * @file app-shell.tsx
+ * @description Main application shell with sidebar and content area
+ * @module components/layout
+ */
+
 'use client';
 
 import { Sidebar } from './sidebar';

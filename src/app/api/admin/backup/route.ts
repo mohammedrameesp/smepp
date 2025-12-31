@@ -139,9 +139,10 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error({ error }, '❌ Database backup failed');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    logger.error({ error: errorMessage }, '❌ Database backup failed');
     return NextResponse.json(
-      { error: 'Backup failed', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Backup failed', details: errorMessage },
       { status: 500 }
     );
   }

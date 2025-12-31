@@ -1,11 +1,11 @@
+/**
+ * @file dark-card.tsx
+ * @description Dark themed card components for contrasting sections
+ * @module components/ui
+ */
+
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { theme } from "@/lib/theme"
-
-/**
- * Dark-themed Card components for use with the gradient background
- * These match the professional login page design
- */
 
 function DarkCard({ className, ...props }: React.ComponentProps<"div">) {
   return (

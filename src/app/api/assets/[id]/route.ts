@@ -1,3 +1,8 @@
+/**
+ * @file route.ts
+ * @description Single asset CRUD API endpoints (GET, PUT, DELETE)
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -6,53 +11,27 @@ import { prisma } from '@/lib/core/prisma';
 import { updateAssetSchema } from '@/lib/validations/assets';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { recordAssetUpdate } from '@/lib/asset-history';
-import { USD_TO_QAR_RATE } from '@/lib/constants';
 import { sendEmail } from '@/lib/email';
 import { assetAssignmentEmail } from '@/lib/email-templates';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import {
+  calculateAssetPriceQAR,
+  detectAssetChanges,
+  getFormattedChanges,
+  transformAssetUpdateData,
+} from '@/lib/domains/operations/assets/asset-update';
 
-// Helper to convert field names to human-readable labels
-const fieldLabels: Record<string, string> = {
-  assetTag: 'Asset Tag',
-  brand: 'Brand',
-  model: 'Model',
-  type: 'Type',
-  serial: 'Serial Number',
-  configuration: 'Configuration',
-  purchaseDate: 'Purchase Date',
-  supplier: 'Supplier',
-  invoiceNumber: 'Invoice Number',
-  price: 'Price',
-  priceCurrency: 'Currency',
-  priceQAR: 'Price (QAR)',
-  warrantyExpiry: 'Warranty Expiry',
-  status: 'Status',
-  acquisitionType: 'Acquisition Type',
-  transferNotes: 'Transfer Notes',
-  assignedUserId: 'Assigned User',
-  assignmentDate: 'Assignment Date',
-  notes: 'Notes',
-  location: 'Location',
-  isShared: 'Shared Resource',
-};
-
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    // Check authentication
+async function getAssetHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id } = await params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     // Use findFirst with tenantId to prevent IDOR attacks
     const asset = await prisma.asset.findFirst({
@@ -96,41 +75,25 @@ export async function GET(
       ...asset,
       assignmentDate,
     });
-
-  } catch (error) {
-    console.error('Asset GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch asset' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    // Check authentication and authorization
+async function updateAssetHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id } = await params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     // Parse and validate request body
     const body = await request.json();
     const validation = updateAssetSchema.safeParse(body);
 
     if (!validation.success) {
-      console.error('Asset validation error:', validation.error.issues);
       return NextResponse.json({
         error: 'Invalid request body',
         details: validation.error.issues
@@ -176,75 +139,30 @@ export async function PUT(
       }
     }
 
-    // SAFEGUARD: Always calculate priceQAR to prevent data loss
-    let priceQAR = data.priceQAR;
+    // Calculate priceQAR using helper (handles price/currency updates and conversions)
+    const calculatedPriceQAR = calculateAssetPriceQAR(data, currentAsset, data.priceQAR);
 
-    // If price is being updated, ensure priceQAR is calculated
-    if (data.price !== undefined) {
-      const price = data.price;
-      const currency = data.priceCurrency !== undefined ? data.priceCurrency : currentAsset.priceCurrency;
+    // Transform data for Prisma (converts dates, handles empty strings, removes non-model fields)
+    const updateData = transformAssetUpdateData(data) as Record<string, unknown>;
 
-      if (price && !priceQAR) {
-        if (currency === 'QAR') {
-          // QAR is base currency, no conversion needed
-          priceQAR = price;
-        } else if (currency === 'USD') {
-          // Convert USD to QAR
-          priceQAR = price * USD_TO_QAR_RATE;
-        }
+    // Set calculated priceQAR if available
+    if (calculatedPriceQAR !== undefined) {
+      updateData.priceQAR = calculatedPriceQAR;
+    }
+
+    // Validate that the assigned user belongs to the same organization
+    if (updateData.assignedUserId) {
+      const assignedUser = await prisma.user.findFirst({
+        where: {
+          id: updateData.assignedUserId as string,
+          organizationMemberships: { some: { organizationId: tenantId } },
+        },
+        select: { id: true },
+      });
+
+      if (!assignedUser) {
+        return NextResponse.json({ error: 'Assigned user not found in this organization' }, { status: 400 });
       }
-    }
-
-    // If only currency is changing, recalculate priceQAR
-    if (data.priceCurrency !== undefined && data.price === undefined) {
-      const currentPrice = currentAsset.price ? Number(currentAsset.price) : 0;
-      if (currentPrice > 0) {
-        if (data.priceCurrency === 'QAR') {
-          // QAR is base currency, no conversion needed
-          priceQAR = currentPrice;
-        } else if (data.priceCurrency === 'USD') {
-          // Convert USD to QAR
-          priceQAR = currentPrice * USD_TO_QAR_RATE;
-        }
-      }
-    }
-
-    // Convert date strings to Date objects and remove non-model fields
-    const updateData: any = { ...data };
-
-    // Ensure priceQAR is set if calculated
-    if (priceQAR !== undefined) {
-      updateData.priceQAR = priceQAR;
-    }
-
-    // Remove assignmentDate as it's only used for history tracking, not stored on the asset
-    delete updateData.assignmentDate;
-
-    // Convert empty string to null for assignedUserId (database expects null, not empty string)
-    if (data.assignedUserId !== undefined) {
-      updateData.assignedUserId = data.assignedUserId === '' ? null : data.assignedUserId;
-
-      // Validate that the assigned user belongs to the same organization
-      if (updateData.assignedUserId) {
-        const assignedUser = await prisma.user.findFirst({
-          where: {
-            id: updateData.assignedUserId,
-            organizationMemberships: { some: { organizationId: tenantId } },
-          },
-          select: { id: true },
-        });
-
-        if (!assignedUser) {
-          return NextResponse.json({ error: 'Assigned user not found in this organization' }, { status: 400 });
-        }
-      }
-    }
-
-    if (data.purchaseDate !== undefined) {
-      updateData.purchaseDate = data.purchaseDate ? new Date(data.purchaseDate) : null;
-    }
-    if (data.warrantyExpiry !== undefined) {
-      updateData.warrantyExpiry = data.warrantyExpiry ? new Date(data.warrantyExpiry) : null;
     }
 
     // Auto-unassign if status is changing to anything other than IN_USE
@@ -308,6 +226,12 @@ export async function PUT(
       // Send assignment email to the new user (if assigned, not unassigned)
       if (asset.assignedUser?.email) {
         try {
+          // Get org name for email
+          const org = await prisma.organization.findUnique({
+            where: { id: tenantId },
+            select: { name: true },
+          });
+
           const emailContent = assetAssignmentEmail({
             userName: asset.assignedUser.name || asset.assignedUser.email,
             assetTag: asset.assetTag || 'N/A',
@@ -316,6 +240,7 @@ export async function PUT(
             model: asset.model,
             serialNumber: asset.serial || null,
             assignmentDate: assignmentDate,
+            orgName: org?.name || 'Organization',
           });
           await sendEmail({
             to: asset.assignedUser.email,
@@ -368,11 +293,7 @@ export async function PUT(
       }
     }
 
-    // Detect which fields actually changed and track before/after values
-    const changedFields: string[] = [];
-    const changeDetails: string[] = [];
-
-    // Pre-fetch all user data needed for display (fixes N+1 query)
+    // Pre-fetch user data for change detection display (fixes N+1 query)
     const userIdsToFetch = new Set<string>();
     if (currentAsset.assignedUserId) userIdsToFetch.add(currentAsset.assignedUserId);
     if (data.assignedUserId && typeof data.assignedUserId === 'string') userIdsToFetch.add(data.assignedUserId);
@@ -386,74 +307,17 @@ export async function PUT(
       users.forEach(u => userMap.set(u.id, { name: u.name, email: u.email }));
     }
 
-    // Helper function to format values for display (uses pre-fetched user data)
-    const formatValue = (value: unknown, fieldKey?: string): string => {
-      if (value === null || value === undefined || value === '') {
-        // For user field, show "Unassigned" instead of "(empty)"
-        if (fieldKey === 'assignedUserId') return 'Unassigned';
-        return '(empty)';
-      }
-      if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-      if (typeof value === 'number') return value.toString();
-      if (value instanceof Date) return value.toISOString().split('T')[0];
-
-      // For user ID fields, use pre-fetched user data
-      if (fieldKey === 'assignedUserId' && typeof value === 'string') {
-        const user = userMap.get(value);
-        return user?.name || user?.email || value;
-      }
-
-      return String(value);
-    };
-
-    for (const key in data) {
-      // Skip fields that are not stored on the asset model
-      if (key === 'assignmentDate') continue;
-
-      const newValue = data[key as keyof typeof data];
-      let oldValue = currentAsset[key as keyof typeof currentAsset];
-
-      // Store original values for display
-      const displayOldValue = oldValue;
-      const displayNewValue = newValue;
-
-      // Convert dates to strings for comparison
-      if (oldValue instanceof Date) {
-        oldValue = oldValue.toISOString().split('T')[0] as unknown as typeof oldValue;
-      }
-
-      // Convert Decimal to number for comparison
-      if (oldValue && typeof oldValue === 'object' && 'toNumber' in oldValue) {
-        oldValue = (oldValue as { toNumber: () => number }).toNumber() as unknown as typeof oldValue;
-      }
-
-      // Convert numeric strings to numbers for comparison
-      let normalizedNew: unknown = newValue;
-      if (typeof newValue === 'string' && !isNaN(parseFloat(newValue)) && isFinite(Number(newValue))) {
-        if (typeof oldValue === 'number') {
-          normalizedNew = parseFloat(newValue);
-        }
-      }
-
-      // Normalize empty values (null, undefined, empty string) for comparison
-      const normalizedOld = oldValue === null || oldValue === undefined || oldValue === '' ? null : oldValue;
-      normalizedNew = normalizedNew === null || normalizedNew === undefined || normalizedNew === '' ? null : normalizedNew;
-
-      // Check if value actually changed
-      if (normalizedOld !== normalizedNew) {
-        // Use human-readable label if available
-        const fieldLabel = fieldLabels[key] || key;
-        changedFields.push(fieldLabel);
-
-        // Create before/after message
-        const beforeText = formatValue(displayOldValue, key);
-        const afterText = formatValue(displayNewValue, key);
-        changeDetails.push(`${fieldLabel}: ${beforeText} → ${afterText}`);
-      }
-    }
+    // Detect changes using helper (handles date/decimal normalization, human-readable labels)
+    const changes = detectAssetChanges(
+      data as Record<string, unknown>,
+      currentAsset as unknown as Record<string, unknown>,
+      userMap
+    );
+    const changeDetails = getFormattedChanges(changes);
 
     // Log activity
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.ASSET_UPDATED,
       'Asset',
@@ -472,37 +336,19 @@ export async function PUT(
     }
 
     return NextResponse.json(asset);
-
-  } catch (error) {
-    console.error('Asset PUT error:', error);
-    if (error instanceof Error && error.message.includes('Record to update not found')) {
-      return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
-    }
-    return NextResponse.json(
-      { error: 'Failed to update asset' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    // Check authentication and authorization
+async function deleteAssetHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id } = await params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     // Get asset details within tenant before deletion for logging
     const asset = await prisma.asset.findFirst({
@@ -521,6 +367,7 @@ export async function DELETE(
 
     // Log activity
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.ASSET_DELETED,
       'Asset',
@@ -529,15 +376,8 @@ export async function DELETE(
     );
 
     return NextResponse.json({ message: 'Asset deleted successfully' });
-
-  } catch (error) {
-    console.error('Asset DELETE error:', error);
-    if (error instanceof Error && error.message.includes('Record to delete does not exist')) {
-      return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
-    }
-    return NextResponse.json(
-      { error: 'Failed to delete asset' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(getAssetHandler, { requireAuth: true, requireModule: 'assets' });
+export const PUT = withErrorHandler(updateAssetHandler, { requireAdmin: true, requireModule: 'assets' });
+export const DELETE = withErrorHandler(deleteAssetHandler, { requireAdmin: true, requireModule: 'assets' });

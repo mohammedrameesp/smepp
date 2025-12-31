@@ -1,26 +1,20 @@
+/**
+ * @file route.ts
+ * @description Employee loans listing and creation API
+ * @module hr/payroll
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role, LoanStatus } from '@prisma/client';
+import { LoanStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createLoanSchema, loanQuerySchema } from '@/lib/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { generateLoanNumberWithPrefix, calculateLoanEndDate, parseDecimal } from '@/lib/payroll/utils';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
+async function getLoansHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -36,14 +30,14 @@ export async function GET(request: NextRequest) {
     const { userId, status, type, p, ps } = validation.data;
     const page = p;
     const pageSize = ps;
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isAdmin = tenant!.userRole === 'ADMIN';
 
     // Build where clause with tenant filter
     const where: Record<string, unknown> = { tenantId };
 
     // Non-admin users can only see their own loans
     if (!isAdmin) {
-      where.userId = session.user.id;
+      where.userId = tenant!.userId;
     } else if (userId) {
       where.userId = userId;
     }
@@ -92,21 +86,14 @@ export async function GET(request: NextRequest) {
         hasMore: page * pageSize < total,
       },
     });
-  } catch (error) {
-    console.error('Loans GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch loans' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = withErrorHandler(getLoansHandler, { requireAuth: true, requireModule: 'payroll' });
+
+async function createLoanHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
 
     const body = await request.json();
     const validation = createLoanSchema.safeParse(body);
@@ -119,7 +106,6 @@ export async function POST(request: NextRequest) {
     }
 
     const data = validation.data;
-    const tenantId = session.user.organizationId!;
 
     // Check if user exists and belongs to same organization
     const user = await prisma.user.findFirst({
@@ -173,10 +159,10 @@ export async function POST(request: NextRequest) {
         endDate,
         installments: data.installments,
         status: LoanStatus.ACTIVE,
-        approvedById: session.user.id,
+        approvedById: currentUserId,
         approvedAt: new Date(),
         notes: data.notes,
-        createdById: session.user.id,
+        createdById: currentUserId,
         tenantId,
       },
       include: {
@@ -185,7 +171,8 @@ export async function POST(request: NextRequest) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.LOAN_CREATED,
       'EmployeeLoan',
       loan.id,
@@ -209,11 +196,6 @@ export async function POST(request: NextRequest) {
     };
 
     return NextResponse.json(response, { status: 201 });
-  } catch (error) {
-    console.error('Loan POST error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create loan' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(createLoanHandler, { requireAdmin: true, requireModule: 'payroll' });

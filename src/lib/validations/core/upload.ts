@@ -1,3 +1,9 @@
+/**
+ * @file upload.ts
+ * @description Validation schemas for file upload operations and signed URL requests
+ * @module validations/core
+ */
+
 import { z } from 'zod';
 
 export const uploadSchema = z.object({

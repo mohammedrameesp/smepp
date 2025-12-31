@@ -1,3 +1,8 @@
+/**
+ * @file route.ts
+ * @description Asset assignment decline API endpoint
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -9,26 +14,20 @@ import { canUserRespond } from '@/lib/domains/operations/asset-requests/asset-re
 import { sendBatchEmails } from '@/lib/email';
 import { assetAssignmentDeclinedEmail } from '@/lib/email-templates';
 import { createBulkNotifications, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
-
-export async function POST(request: NextRequest, context: RouteContext) {
-  try {
+async function declineAssetAssignmentHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
-    const { id } = await context.params;
     const body = await request.json();
 
     const validation = declineAssetAssignmentSchema.safeParse(body);
@@ -98,6 +97,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     });
 
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.ASSET_ASSIGNMENT_DECLINED,
       'AssetRequest',
@@ -111,12 +111,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     // Send email and in-app notifications to admins (tenant-scoped)
     try {
-      // Get org slug for email URLs
+      // Get org slug/name for email URLs
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
-        select: { slug: true },
+        select: { slug: true, name: true },
       });
       const orgSlug = org?.slug || 'app';
+      const orgName = org?.name || 'Durj';
 
       const admins = await prisma.user.findMany({
         where: {
@@ -135,6 +136,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         userEmail: assetRequest.user.email,
         reason: reason || 'No reason provided',
         orgSlug,
+        orgName,
       });
       await sendBatchEmails(admins.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
 
@@ -156,11 +158,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     return NextResponse.json(updatedRequest);
-  } catch (error) {
-    console.error('Asset request decline error:', error);
-    return NextResponse.json(
-      { error: 'Failed to decline asset assignment' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(declineAssetAssignmentHandler, { requireAuth: true, requireModule: 'assets' });

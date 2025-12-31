@@ -1,3 +1,8 @@
+/**
+ * @file route.ts
+ * @description Payroll runs listing and creation API
+ * @module hr/payroll
+ */
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -144,7 +149,7 @@ export const POST = withErrorHandler(
 
     // Calculate totals
     let totalGross = 0;
-    let totalDeductions = 0;
+    const totalDeductions = 0;
 
     for (const salary of salaryStructures) {
       totalGross += parseDecimal(salary.grossSalary);
@@ -207,6 +212,7 @@ export const POST = withErrorHandler(
     });
 
     await logAction(
+      tenant!.tenantId,
       session!.user.id,
       ActivityActions.PAYROLL_RUN_CREATED,
       'PayrollRun',

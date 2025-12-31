@@ -1,3 +1,8 @@
+/**
+ * @file depreciation-card.tsx
+ * @description Card component displaying asset depreciation details and management controls
+ * @module components/domains/operations/assets
+ */
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';

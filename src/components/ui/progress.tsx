@@ -1,3 +1,9 @@
+/**
+ * @file progress.tsx
+ * @description Progress bar component for displaying completion status
+ * @module components/ui
+ */
+
 'use client';
 
 import * as React from 'react';

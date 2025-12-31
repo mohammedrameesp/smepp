@@ -1,8 +1,21 @@
+/**
+ * @file utils.ts
+ * @description Payroll utility functions for reference number generation, status management,
+ *              financial calculations, and period handling
+ * @module domains/hr/payroll
+ */
+
 import { PayrollStatus, LoanStatus } from '@prisma/client';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
+import Decimal from 'decimal.js';
+
+// FIN-003: Configure Decimal.js for financial precision
+Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP });
 
 /**
- * Generate payroll run reference number
+ * Generate payroll run reference number (legacy - without org prefix)
  * Format: PAY-YYYY-MM-XXX
+ * @deprecated Use generatePayrollReferenceWithPrefix instead
  */
 export function generatePayrollReference(year: number, month: number, sequence: number): string {
   const monthStr = month.toString().padStart(2, '0');
@@ -11,8 +24,26 @@ export function generatePayrollReference(year: number, month: number, sequence: 
 }
 
 /**
- * Generate payslip number
+ * Generate payroll run reference number with organization prefix
+ * Format: {PREFIX}-PAY-YYYY-MM-XXX
+ * Example: BCE-PAY-2024-12-001, JAS-PAY-2024-12-001
+ */
+export async function generatePayrollReferenceWithPrefix(
+  tenantId: string,
+  year: number,
+  month: number,
+  sequence: number
+): Promise<string> {
+  const codePrefix = await getOrganizationCodePrefix(tenantId);
+  const monthStr = month.toString().padStart(2, '0');
+  const seqStr = sequence.toString().padStart(3, '0');
+  return `${codePrefix}-PAY-${year}-${monthStr}-${seqStr}`;
+}
+
+/**
+ * Generate payslip number (legacy - without org prefix)
  * Format: PS-YYYY-MM-XXXXX
+ * @deprecated Use generatePayslipNumberWithPrefix instead
  */
 export function generatePayslipNumber(year: number, month: number, sequence: number): string {
   const monthStr = month.toString().padStart(2, '0');
@@ -21,11 +52,42 @@ export function generatePayslipNumber(year: number, month: number, sequence: num
 }
 
 /**
- * Generate loan number
+ * Generate payslip number with organization prefix
+ * Format: {PREFIX}-PS-YYYY-MM-XXXXX
+ * Example: BCE-PS-2024-12-00001, JAS-PS-2024-12-00001
+ */
+export async function generatePayslipNumberWithPrefix(
+  tenantId: string,
+  year: number,
+  month: number,
+  sequence: number
+): Promise<string> {
+  const codePrefix = await getOrganizationCodePrefix(tenantId);
+  const monthStr = month.toString().padStart(2, '0');
+  const seqStr = sequence.toString().padStart(5, '0');
+  return `${codePrefix}-PS-${year}-${monthStr}-${seqStr}`;
+}
+
+/**
+ * Generate loan number (legacy - without org prefix)
  * Format: LOAN-XXXXX
+ * @deprecated Use generateLoanNumberWithPrefix instead
  */
 export function generateLoanNumber(sequence: number): string {
   return `LOAN-${sequence.toString().padStart(5, '0')}`;
+}
+
+/**
+ * Generate loan number with organization prefix
+ * Format: {PREFIX}-LOAN-XXXXX
+ * Example: BCE-LOAN-00001, JAS-LOAN-00001
+ */
+export async function generateLoanNumberWithPrefix(
+  tenantId: string,
+  sequence: number
+): Promise<string> {
+  const codePrefix = await getOrganizationCodePrefix(tenantId);
+  return `${codePrefix}-LOAN-${sequence.toString().padStart(5, '0')}`;
 }
 
 /**
@@ -241,35 +303,89 @@ export function getPeriodEndDate(year: number, month: number): Date {
 
 /**
  * Calculate daily salary rate
+ * FIN-003: Uses precise division
  */
 export function calculateDailySalary(grossSalary: number): number {
-  return grossSalary / 30;
+  return divideMoney(grossSalary, 30);
 }
 
 /**
  * Calculate loan end date based on start date and installments
+ * FIN-009: Properly handles month-end edge cases (e.g., Jan 31 + 1 month = Feb 28/29)
  */
 export function calculateLoanEndDate(startDate: Date, installments: number): Date {
-  const endDate = new Date(startDate);
-  endDate.setMonth(endDate.getMonth() + installments - 1);
-  return endDate;
+  const start = new Date(startDate);
+  const targetMonth = start.getMonth() + installments - 1;
+  const targetYear = start.getFullYear() + Math.floor(targetMonth / 12);
+  const normalizedMonth = ((targetMonth % 12) + 12) % 12; // Handle negative months
+
+  // Get the last day of the target month
+  const lastDayOfTargetMonth = new Date(targetYear, normalizedMonth + 1, 0).getDate();
+
+  // Use the original day or the last day of month, whichever is smaller
+  const targetDay = Math.min(start.getDate(), lastDayOfTargetMonth);
+
+  return new Date(targetYear, normalizedMonth, targetDay);
 }
 
 /**
  * Format decimal to 2 decimal places
+ * FIN-003: Uses Decimal.js for precise rounding
  */
 export function toFixed2(value: number): number {
-  return Math.round(value * 100) / 100;
+  return new Decimal(value).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
 }
 
 /**
  * Parse decimal from Prisma Decimal type
+ * FIN-003: Returns Decimal for precise calculations, use .toNumber() when needed for display
  */
 export function parseDecimal(value: unknown): number {
   if (typeof value === 'number') return value;
-  if (typeof value === 'string') return parseFloat(value);
+  if (typeof value === 'string') return new Decimal(value).toNumber();
   if (value && typeof value === 'object' && 'toNumber' in value) {
     return (value as { toNumber: () => number }).toNumber();
   }
   return 0;
+}
+
+/**
+ * FIN-003: Precise addition of financial amounts
+ */
+export function addMoney(...amounts: number[]): number {
+  return amounts
+    .reduce((sum, amt) => sum.plus(new Decimal(amt)), new Decimal(0))
+    .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+    .toNumber();
+}
+
+/**
+ * FIN-003: Precise subtraction of financial amounts
+ */
+export function subtractMoney(from: number, ...amounts: number[]): number {
+  return amounts
+    .reduce((result, amt) => result.minus(new Decimal(amt)), new Decimal(from))
+    .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+    .toNumber();
+}
+
+/**
+ * FIN-003: Precise multiplication for financial amounts
+ */
+export function multiplyMoney(amount: number, multiplier: number): number {
+  return new Decimal(amount)
+    .times(new Decimal(multiplier))
+    .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+    .toNumber();
+}
+
+/**
+ * FIN-003: Precise division for financial amounts
+ */
+export function divideMoney(amount: number, divisor: number): number {
+  if (divisor === 0) return 0;
+  return new Decimal(amount)
+    .dividedBy(new Decimal(divisor))
+    .toDecimalPlaces(2, Decimal.ROUND_HALF_UP)
+    .toNumber();
 }

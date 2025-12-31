@@ -1,3 +1,8 @@
+/**
+ * @file employee-subscription-list-table.tsx
+ * @description Table component for employee subscription view with assignment filtering
+ * @module components/domains/operations/subscriptions
+ */
 'use client';
 
 import { useState, useMemo } from 'react';

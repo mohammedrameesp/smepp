@@ -5,6 +5,7 @@ import { prisma } from '@/lib/core/prisma';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/core/email';
+import { updateSetupProgress } from '@/lib/domains/system/setup';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/admin/team/invitations - Get pending invitations
@@ -272,6 +273,9 @@ If you did not expect this invitation, you can safely ignore this email.
 
 - The Durj Team`,
     });
+
+    // Update setup progress for first team member invited (non-blocking)
+    updateSetupProgress(session.user.organizationId, 'firstTeamMemberInvited', true).catch(() => {});
 
     return NextResponse.json(
       {

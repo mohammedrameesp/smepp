@@ -1,3 +1,10 @@
+/**
+ * @file utils.ts
+ * @description OAuth utility functions including encryption, state management, user management,
+ *              and session creation for custom per-organization OAuth flows.
+ * @module oauth
+ */
+
 import crypto from 'crypto';
 import { prisma } from '@/lib/core/prisma';
 import { encode } from 'next-auth/jwt';
@@ -7,14 +14,31 @@ import { isAccountLocked, clearFailedLogins } from '@/lib/security/account-locko
 // ENCRYPTION CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// SECURITY: Require encryption key - fail fast if not set
+// SEC-007: Require separate encryption key in production
 function getOAuthEncryptionKey(): string {
-  const key = process.env.OAUTH_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET;
+  const key = process.env.OAUTH_ENCRYPTION_KEY;
+
   if (!key) {
-    throw new Error(
-      'CRITICAL: OAUTH_ENCRYPTION_KEY or NEXTAUTH_SECRET environment variable is required'
+    // In production, require a dedicated encryption key
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'CRITICAL: OAUTH_ENCRYPTION_KEY is required in production. ' +
+        'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+      );
+    }
+
+    // In development, fall back to NEXTAUTH_SECRET with warning
+    const fallback = process.env.NEXTAUTH_SECRET;
+    if (!fallback) {
+      throw new Error('CRITICAL: OAUTH_ENCRYPTION_KEY or NEXTAUTH_SECRET environment variable is required');
+    }
+    console.warn(
+      'WARNING: OAUTH_ENCRYPTION_KEY not set. Using NEXTAUTH_SECRET as fallback. ' +
+      'Set OAUTH_ENCRYPTION_KEY in production for better security.'
     );
+    return fallback;
   }
+
   return key;
 }
 const ALGORITHM = 'aes-256-gcm';
@@ -162,20 +186,17 @@ export async function validateOAuthSecurity(
 
   // Block soft-deleted users (deactivated accounts)
   if (existingUser.isDeleted) {
-    console.log(`[OAuth] Login blocked for deactivated user: ${normalizedEmail}`);
     return { allowed: false, error: 'AccountDeactivated' };
   }
 
   // Block users who cannot login (non-login employees like drivers)
   if (!existingUser.canLogin) {
-    console.log(`[OAuth] Login blocked for non-login user: ${normalizedEmail}`);
     return { allowed: false, error: 'LoginDisabled' };
   }
 
   // Check account lockout
   const lockoutCheck = await isAccountLocked(existingUser.id);
   if (lockoutCheck.locked) {
-    console.log(`[OAuth] Login blocked for locked account: ${normalizedEmail}`);
     return { allowed: false, error: 'AccountLocked', lockedUntil: lockoutCheck.lockedUntil };
   }
 
@@ -203,7 +224,6 @@ export async function validateOAuthSecurity(
     // Check auth method restriction
     if (org.allowedAuthMethods.length > 0) {
       if (!org.allowedAuthMethods.includes(authMethod)) {
-        console.log(`[OAuth] Auth method ${authMethod} not allowed for org ${org.name}`);
         return { allowed: false, error: 'AuthMethodNotAllowed' };
       }
     }

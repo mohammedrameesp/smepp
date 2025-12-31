@@ -1,3 +1,8 @@
+/**
+ * @file history-timeline.tsx
+ * @description Timeline component showing complete subscription lifecycle history
+ * @module components/domains/operations/subscriptions
+ */
 'use client';
 
 import { SubscriptionHistory, SubscriptionHistoryAction, SubscriptionStatus } from '@prisma/client';

@@ -1,29 +1,22 @@
+/**
+ * @file route.ts
+ * @description Leave type detail operations - get, update, delete individual leave types
+ * @module hr/leave
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updateLeaveTypeSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/activity';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function getLeaveTypeHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     // Use findFirst with tenantId to prevent IDOR attacks
     const leaveType = await prisma.leaveType.findFirst({
@@ -43,29 +36,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(leaveType);
-  } catch (error) {
-    console.error('Leave type GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch leave type' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = withErrorHandler(getLeaveTypeHandler, { requireAuth: true, requireModule: 'leave' });
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+async function updateLeaveTypeHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     const body = await request.json();
     const validation = updateLeaveTypeSchema.safeParse(body);
@@ -114,7 +96,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.LEAVE_TYPE_UPDATED,
       'LeaveType',
       leaveType.id,
@@ -122,29 +105,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     );
 
     return NextResponse.json(leaveType);
-  } catch (error) {
-    console.error('Leave type PUT error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update leave type' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const PUT = withErrorHandler(updateLeaveTypeHandler, { requireAdmin: true, requireModule: 'leave' });
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+async function deleteLeaveTypeHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     // Check if leave type exists within tenant and has no associated requests
     const leaveType = await prisma.leaveType.findFirst({
@@ -173,7 +145,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.LEAVE_TYPE_DELETED,
       'LeaveType',
       id,
@@ -181,11 +154,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     );
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Leave type DELETE error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete leave type' },
-      { status: 500 }
-    );
-  }
 }
+
+export const DELETE = withErrorHandler(deleteLeaveTypeHandler, { requireAdmin: true, requireModule: 'leave' });

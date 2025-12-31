@@ -1,3 +1,8 @@
+/**
+ * @file subscription-actions.tsx
+ * @description Action buttons component for subscription table rows
+ * @module components/domains/operations/subscriptions
+ */
 'use client';
 
 import Link from 'next/link';

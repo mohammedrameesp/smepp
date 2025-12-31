@@ -1,22 +1,22 @@
+/**
+ * @file route.ts
+ * @description Users list and create API endpoints
+ * @module system/users
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createUserSchema } from '@/lib/validations/users';
 import { logAction, ActivityActions } from '@/lib/activity';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { sendEmail } from '@/lib/email';
 import { welcomeUserEmail, welcomeUserWithPasswordSetupEmail } from '@/lib/core/email-templates';
 import { randomBytes } from 'crypto';
+import { updateSetupProgress } from '@/lib/domains/system/setup';
 
-async function getUsersHandler(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-
-  // Require organization context for tenant isolation
-  if (!session?.user?.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-  }
+async function getUsersHandler(request: NextRequest, context: APIContext) {
+  const { tenant } = context;
+  const tenantId = tenant!.tenantId;
 
   // Parse query parameters
   const { searchParams } = new URL(request.url);
@@ -28,7 +28,7 @@ async function getUsersHandler(request: NextRequest) {
   // Build where clause with tenant filtering
   const where: any = {
     organizationMemberships: {
-      some: { organizationId: session.user.organizationId },
+      some: { organizationId: tenantId },
     },
   };
   if (role) where.role = role;
@@ -81,7 +81,7 @@ async function getUsersHandler(request: NextRequest) {
   // This is needed because hrProfile is a one-to-one relation and can't be filtered in Prisma include
   if (includeHrProfile || includeAll) {
     const filteredUsers = users.map((user: any) => {
-      if (user.hrProfile && user.hrProfile.tenantId !== session.user.organizationId) {
+      if (user.hrProfile && user.hrProfile.tenantId !== tenantId) {
         // hrProfile belongs to different organization, exclude it
         return { ...user, hrProfile: null };
       }
@@ -92,9 +92,13 @@ async function getUsersHandler(request: NextRequest) {
   return NextResponse.json(users);
 }
 
-export const GET = withErrorHandler(getUsersHandler, { requireAdmin: true, rateLimit: true });
+export const GET = withErrorHandler(getUsersHandler, { requireAdmin: true });
 
-async function createUserHandler(request: NextRequest) {
+async function createUserHandler(request: NextRequest, context: APIContext) {
+  const { tenant } = context;
+  const tenantId = tenant!.tenantId;
+  const currentUserId = tenant!.userId;
+
   // Parse and validate request body
   const body = await request.json();
   const validation = createUserSchema.safeParse(body);
@@ -108,12 +112,6 @@ async function createUserHandler(request: NextRequest) {
 
   const { name, email, role, employeeId, designation, isEmployee, canLogin, isOnWps } = validation.data;
 
-  // Get session for tenant context
-  const session = await getServerSession(authOptions);
-  if (!session?.user.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-  }
-
   // Generate email for non-login users (use placeholder to satisfy unique constraint)
   // Format: nologin-{uuid}@{tenantSlug}.internal
   let finalEmail = email;
@@ -121,7 +119,7 @@ async function createUserHandler(request: NextRequest) {
     const crypto = await import('crypto');
     const uniqueId = crypto.randomUUID().split('-')[0]; // Use first segment of UUID for shorter ID
     const org = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
+      where: { id: tenantId },
       select: { slug: true },
     });
     finalEmail = `nologin-${uniqueId}@${org?.slug || 'system'}.internal`;
@@ -165,7 +163,7 @@ async function createUserHandler(request: NextRequest) {
     // Create organization membership so user appears in tenant-filtered queries
     organizationMemberships: {
       create: {
-        organizationId: session.user.organizationId,
+        organizationId: tenantId,
         role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
       }
     }
@@ -179,7 +177,7 @@ async function createUserHandler(request: NextRequest) {
         designation: designation || null,
         onboardingComplete: false,
         onboardingStep: 0,
-        tenantId: session.user.organizationId,
+        tenantId,
       }
     };
   }
@@ -205,15 +203,19 @@ async function createUserHandler(request: NextRequest) {
     },
   });
 
-  // Log activity (session already fetched above)
-  if (session) {
-    await logAction(
-      session.user.id,
-      ActivityActions.USER_CREATED,
-      'User',
-      user.id,
-      { userName: user.name, userEmail: user.email, userRole: user.role }
-    );
+  // Log activity
+  await logAction(
+    tenantId,
+    currentUserId,
+    ActivityActions.USER_CREATED,
+    'User',
+    user.id,
+    { userName: user.name, userEmail: user.email, userRole: user.role }
+  );
+
+  // Update setup progress for first employee (non-blocking)
+  if (isEmployee) {
+    updateSetupProgress(tenantId, 'firstEmployeeAdded', true).catch(() => {});
   }
 
   // Note: Leave balances are initialized when the employee completes
@@ -224,9 +226,10 @@ async function createUserHandler(request: NextRequest) {
     try {
       // Fetch organization with auth config for customized welcome email
       const org = await prisma.organization.findUnique({
-        where: { id: session.user.organizationId },
+        where: { id: tenantId },
         select: {
           slug: true,
+          name: true,
           customGoogleClientId: true,
           customAzureClientId: true,
           allowedAuthMethods: true,
@@ -265,6 +268,7 @@ async function createUserHandler(request: NextRequest) {
           userEmail: user.email,
           userRole: user.role,
           orgSlug: org?.slug || 'app',
+          orgName: org?.name || 'Organization',
           setupToken,
         });
         await sendEmail({
@@ -280,6 +284,7 @@ async function createUserHandler(request: NextRequest) {
           userEmail: user.email,
           userRole: user.role,
           orgSlug: org?.slug || 'app',
+          orgName: org?.name || 'Organization',
           authMethods: {
             hasGoogle,
             hasMicrosoft,
@@ -302,4 +307,4 @@ async function createUserHandler(request: NextRequest) {
   return NextResponse.json(user, { status: 201 });
 }
 
-export const POST = withErrorHandler(createUserHandler, { requireAdmin: true, rateLimit: true });
+export const POST = withErrorHandler(createUserHandler, { requireAdmin: true });

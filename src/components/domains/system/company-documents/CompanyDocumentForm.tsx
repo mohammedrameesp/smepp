@@ -1,3 +1,8 @@
+/**
+ * @file CompanyDocumentForm.tsx
+ * @description Form component for creating and editing company documents with support for document types, vehicle linking, and file uploads
+ * @module components/domains/system/company-documents
+ */
 'use client';
 
 import { useState, useEffect } from 'react';

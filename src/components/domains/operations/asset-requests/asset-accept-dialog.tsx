@@ -1,3 +1,8 @@
+/**
+ * @file asset-accept-dialog.tsx
+ * @description Dialog component for employees to accept or decline assigned assets
+ * @module components/domains/operations/asset-requests
+ */
 'use client';
 
 import { useState } from 'react';

@@ -1,3 +1,9 @@
+/**
+ * @file AssetHistory.tsx
+ * @description Asset history timeline component (legacy - prefer shared/AssetHistory)
+ * @module components
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

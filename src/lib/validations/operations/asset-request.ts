@@ -1,3 +1,9 @@
+/**
+ * @file asset-request.ts
+ * @description Validation schemas for asset request workflows including employee requests, admin assignments, and approvals
+ * @module validations/operations
+ */
+
 import { z } from 'zod';
 import { AssetRequestType, AssetRequestStatus } from '@prisma/client';
 

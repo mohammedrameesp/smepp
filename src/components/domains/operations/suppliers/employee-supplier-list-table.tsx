@@ -1,3 +1,8 @@
+/**
+ * @file employee-supplier-list-table.tsx
+ * @description Table component for employee supplier view with category filtering
+ * @module components/domains/operations/suppliers
+ */
 'use client';
 
 import { useState, useMemo } from 'react';

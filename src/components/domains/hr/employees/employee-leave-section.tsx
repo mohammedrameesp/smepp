@@ -1,3 +1,8 @@
+/**
+ * @file employee-leave-section.tsx
+ * @description Leave management section for employee details page, showing balances and recent requests
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,7 +17,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Progress } from '@/components/ui/progress';
 import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { formatDate } from '@/lib/date-format';

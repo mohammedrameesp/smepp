@@ -1,3 +1,9 @@
+/**
+ * @file wps.ts
+ * @description Qatar Wage Protection System (WPS) SIF file generator for salary payments
+ * @module domains/hr/payroll
+ */
+
 import { WPSEmployeeRecord, WPSFileHeader } from '@/lib/types/payroll';
 
 /**

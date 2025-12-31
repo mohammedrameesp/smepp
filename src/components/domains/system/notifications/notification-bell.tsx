@@ -1,3 +1,8 @@
+/**
+ * @file notification-bell.tsx
+ * @description Notification bell icon component with unread count badge, triggers notification dropdown
+ * @module components/domains/system/notifications
+ */
 'use client';
 
 import { Bell } from 'lucide-react';

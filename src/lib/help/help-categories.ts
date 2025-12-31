@@ -435,15 +435,9 @@ export function getGettingStartedSteps(role: UserRole): GettingStartedStep[] {
 // Support Contact
 // ============================================================================
 
-export const supportContacts: SupportContact[] = [
-  {
-    type: 'email',
-    label: 'Email Support',
-    value: 'support@durj.com',
-    icon: 'Mail',
-    available: '24/7',
-  },
-];
+// Note: Support contacts are tenant-specific. Each organization manages their own support channels.
+// This array is kept empty as a placeholder for future tenant-specific support configuration.
+export const supportContacts: SupportContact[] = [];
 
 // ============================================================================
 // Popular Topics

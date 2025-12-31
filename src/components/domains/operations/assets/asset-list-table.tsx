@@ -1,3 +1,8 @@
+/**
+ * @file asset-list-table.tsx
+ * @description Table component displaying assets with client-side filtering and sorting
+ * @module components/domains/operations/assets
+ */
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -7,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AssetActions } from './asset-actions';
-import { formatDate } from '@/lib/date-format';
 
 interface Asset {
   id: string;

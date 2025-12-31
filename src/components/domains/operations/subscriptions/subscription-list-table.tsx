@@ -1,3 +1,8 @@
+/**
+ * @file subscription-list-table.tsx
+ * @description Table component displaying subscriptions with client-side filtering and sorting
+ * @module components/domains/operations/subscriptions
+ */
 'use client';
 
 import { useState, useMemo } from 'react';

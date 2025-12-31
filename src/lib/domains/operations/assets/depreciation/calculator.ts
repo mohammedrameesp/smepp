@@ -1,7 +1,9 @@
 /**
- * Asset Depreciation Calculator
- * Implements straight-line depreciation method following Qatar Tax Rates and IFRS standards
+ * @file calculator.ts
+ * @description Asset depreciation calculator implementing straight-line depreciation method
+ * @module domains/operations/assets/depreciation
  *
+ * Implements straight-line depreciation method following Qatar Tax Rates and IFRS standards
  * Formula: (Cost - Salvage Value) / Useful Life in Months
  */
 

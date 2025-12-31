@@ -1,3 +1,8 @@
+/**
+ * @file employee-list-table.tsx
+ * @description Paginated employee list table with search, filtering, and export functionality
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';

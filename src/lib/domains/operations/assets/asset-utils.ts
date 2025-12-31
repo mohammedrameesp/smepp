@@ -1,3 +1,9 @@
+/**
+ * @file asset-utils.ts
+ * @description Asset utility functions - tag generation and type prefix mapping
+ * @module domains/operations/assets
+ */
+
 import { prisma } from '@/lib/core/prisma';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 

@@ -1,3 +1,9 @@
+/**
+ * @file leave-balance-init.ts
+ * @description Leave balance initialization utilities for new employees and yearly resets
+ * @module domains/hr/leave
+ */
+
 import { prisma } from '@/lib/core/prisma';
 import { calculateServiceMonths } from '@/lib/leave-utils';
 

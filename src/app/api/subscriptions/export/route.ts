@@ -1,25 +1,17 @@
+/**
+ * @file route.ts
+ * @description Subscription bulk export to Excel endpoint
+ * @module operations/subscriptions
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { arrayToCSV, formatDateForCSV, formatCurrencyForCSV } from '@/lib/csv-utils';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-async function exportSubscriptionsHandler(request: NextRequest) {
-  console.log('Starting subscription export...');
-  // Check authentication
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  console.log('Authentication passed');
-
-  // Require organization context for tenant isolation
-  if (!session.user.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-  }
-
-  const tenantId = session.user.organizationId;
+async function exportSubscriptionsHandler(_request: NextRequest, context: APIContext) {
+  const { tenant } = context;
+  const tenantId = tenant!.tenantId;
 
   // Fetch subscriptions for current tenant only with related data including history
   const subscriptions = await prisma.subscription.findMany({
@@ -39,8 +31,6 @@ async function exportSubscriptionsHandler(request: NextRequest) {
     },
     orderBy: { createdAt: 'desc' },
   });
-
-    console.log(`Fetched ${subscriptions.length} subscriptions`);
 
     // Transform data for CSV - Main subscriptions sheet
     const csvData = subscriptions.map(sub => ({
@@ -69,11 +59,8 @@ async function exportSubscriptionsHandler(request: NextRequest) {
       updatedAt: formatDateForCSV(sub.updatedAt),
     }));
 
-    console.log(`Transformed ${csvData.length} subscription records`);
-
     // Transform subscription history for separate sheet
     const historyData: any[] = [];
-    console.log('Starting history transformation...');
     try {
       subscriptions.forEach(sub => {
         if (sub.history && Array.isArray(sub.history)) {
@@ -95,9 +82,7 @@ async function exportSubscriptionsHandler(request: NextRequest) {
           });
         }
       });
-      console.log(`Transformed ${historyData.length} history records`);
-    } catch (historyError) {
-      console.error('Error transforming history:', historyError);
+    } catch {
       // Continue without history if there's an error
     }
 
@@ -129,7 +114,7 @@ async function exportSubscriptionsHandler(request: NextRequest) {
     ];
 
     // Define headers for history sheet
-    const historyHeaders = [
+    const historyHeaders: { key: string; header: string }[] = [
       { key: 'subscriptionId', header: 'Subscription ID' },
       { key: 'subscriptionName', header: 'Subscription Name' },
       { key: 'action', header: 'Action' },
@@ -144,16 +129,11 @@ async function exportSubscriptionsHandler(request: NextRequest) {
       { key: 'createdAt', header: 'Created At (dd/mm/yyyy)' },
     ];
 
-    console.log('Generating Excel file with sheets...');
-    console.log(`Will create ${historyData.length > 0 ? '2' : '1'} sheets`);
-
     // Generate Excel file with multiple sheets
     const csvBuffer = await arrayToCSV(csvData, headers as any, historyData.length > 0 ? [
       { name: 'Subscriptions', data: csvData, headers: headers as any },
-      { name: 'Subscription History', data: historyData, headers: historyHeaders as any },
+      { name: 'Subscription History', data: historyData, headers: historyHeaders },
     ] : undefined);
-
-    console.log('Excel file generated successfully');
 
     // Return Excel file
     const filename = `subscriptions_export_${new Date().toISOString().split('T')[0]}.xlsx`;

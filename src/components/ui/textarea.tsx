@@ -1,3 +1,9 @@
+/**
+ * @file textarea.tsx
+ * @description Multi-line text input component for longer form content
+ * @module components/ui
+ */
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

@@ -1,3 +1,8 @@
+/**
+ * @file admin-request-actions.tsx
+ * @description Admin actions component for approving or rejecting asset requests
+ * @module components/domains/operations/asset-requests
+ */
 'use client';
 
 import { useState } from 'react';

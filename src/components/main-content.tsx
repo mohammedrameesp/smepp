@@ -1,3 +1,9 @@
+/**
+ * @file main-content.tsx
+ * @description Main content wrapper handling route-specific layouts
+ * @module components
+ */
+
 'use client';
 
 import { usePathname } from 'next/navigation';

@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Export users to Excel/CSV
+ * @module system/users
+ */
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';

@@ -1,3 +1,9 @@
+/**
+ * @file mobile-sidebar.tsx
+ * @description Slide-out mobile sidebar navigation drawer
+ * @module components/layout
+ */
+
 'use client';
 
 import { useState } from 'react';

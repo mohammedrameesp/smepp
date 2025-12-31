@@ -1,8 +1,14 @@
+/**
+ * @file route.ts
+ * @description Asset maintenance records API endpoints
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 const createMaintenanceSchema = z.object({
   maintenanceDate: z.string(),
@@ -10,17 +16,16 @@ const createMaintenanceSchema = z.object({
 });
 
 // GET /api/assets/[id]/maintenance - Get all maintenance records for an asset
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+async function getMaintenanceHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
-    const { id } = await params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     const records = await prisma.maintenanceRecord.findMany({
       where: { assetId: id },
@@ -28,31 +33,19 @@ export async function GET(
     });
 
     return NextResponse.json(records);
-  } catch (error) {
-    console.error('Maintenance GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch maintenance records' },
-      { status: 500 }
-    );
-  }
 }
 
 // POST /api/assets/[id]/maintenance - Add a new maintenance record
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+async function createMaintenanceHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
-    const { id } = await params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     const body = await request.json();
     const validation = createMaintenanceSchema.safeParse(body);
@@ -77,11 +70,7 @@ export async function POST(
     });
 
     return NextResponse.json(record, { status: 201 });
-  } catch (error) {
-    console.error('Maintenance POST error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create maintenance record' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(getMaintenanceHandler, { requireAuth: true, requireModule: 'assets' });
+export const POST = withErrorHandler(createMaintenanceHandler, { requireAuth: true, requireModule: 'assets' });

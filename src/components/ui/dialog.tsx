@@ -1,3 +1,9 @@
+/**
+ * @file dialog.tsx
+ * @description Modal dialog component for forms, confirmations, and focused content
+ * @module components/ui
+ */
+
 "use client"
 
 import * as React from "react"

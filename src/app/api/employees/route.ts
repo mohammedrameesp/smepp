@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Employees list with HR profile data and filtering
+ * @module hr/employees
+ */
+
 import { NextResponse } from 'next/server';
 import { Role } from '@prisma/client';
 import { withErrorHandler } from '@/lib/http/handler';

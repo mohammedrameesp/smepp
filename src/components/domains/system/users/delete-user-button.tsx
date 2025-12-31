@@ -1,3 +1,8 @@
+/**
+ * @file delete-user-button.tsx
+ * @description Confirmation dialog button for permanently deleting a user account
+ * @module components/domains/system/users
+ */
 'use client';
 
 import { useState } from 'react';

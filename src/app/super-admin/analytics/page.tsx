@@ -6,6 +6,9 @@ import {
   TrendingUp,
   TrendingDown,
 } from 'lucide-react';
+import { ModuleUsageChart } from './components/ModuleUsageChart';
+import { OnboardingFunnel } from './components/OnboardingFunnel';
+import { OrganizationBreakdown } from './components/OrganizationBreakdown';
 
 // Prevent static pre-rendering (requires database)
 export const dynamic = 'force-dynamic';
@@ -55,8 +58,147 @@ async function getAnalytics() {
   };
 }
 
+async function getDetailedAnalytics() {
+  // Get all organizations with their settings
+  const organizations = await prisma.organization.findMany({
+    select: {
+      id: true,
+      subscriptionTier: true,
+      enabledModules: true,
+      setupProgress: {
+        select: {
+          profileComplete: true,
+          logoUploaded: true,
+          brandingConfigured: true,
+          firstAssetAdded: true,
+          firstTeamMemberInvited: true,
+          firstEmployeeAdded: true,
+          firstProjectCreated: true,
+        },
+      },
+    },
+  });
+
+  // Module adoption rates
+  const allModules = [
+    'assets',
+    'subscriptions',
+    'suppliers',
+    'employees',
+    'leave',
+    'payroll',
+    'purchase-requests',
+    'projects',
+  ];
+
+  const totalOrgs = organizations.length;
+
+  const moduleUsage = allModules.map((module) => {
+    const count = organizations.filter((org) =>
+      org.enabledModules?.includes(module)
+    ).length;
+    return {
+      name: module
+        .split('-')
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' '),
+      count,
+      percentage: totalOrgs > 0 ? Math.round((count / totalOrgs) * 100) : 0,
+    };
+  }).sort((a, b) => b.count - a.count);
+
+  // Tier distribution
+  const tierDistribution = {
+    FREE: 0,
+    STARTER: 0,
+    PROFESSIONAL: 0,
+    ENTERPRISE: 0,
+  };
+
+  organizations.forEach((org) => {
+    const tier = org.subscriptionTier as keyof typeof tierDistribution;
+    if (tier in tierDistribution) {
+      tierDistribution[tier]++;
+    }
+  });
+
+  // Onboarding funnel
+  const onboardingStats = {
+    profileComplete: 0,
+    logoUploaded: 0,
+    brandingConfigured: 0,
+    firstAssetAdded: 0,
+    firstTeamMemberInvited: 0,
+    firstEmployeeAdded: 0,
+    firstProjectCreated: 0,
+  };
+
+  organizations.forEach((org) => {
+    if (org.setupProgress?.profileComplete) onboardingStats.profileComplete++;
+    if (org.setupProgress?.logoUploaded) onboardingStats.logoUploaded++;
+    if (org.setupProgress?.brandingConfigured) onboardingStats.brandingConfigured++;
+    if (org.setupProgress?.firstAssetAdded) onboardingStats.firstAssetAdded++;
+    if (org.setupProgress?.firstTeamMemberInvited) onboardingStats.firstTeamMemberInvited++;
+    if (org.setupProgress?.firstEmployeeAdded) onboardingStats.firstEmployeeAdded++;
+    if (org.setupProgress?.firstProjectCreated) onboardingStats.firstProjectCreated++;
+  });
+
+  const onboardingFunnel = [
+    {
+      step: 'Complete Profile',
+      count: onboardingStats.profileComplete,
+      percentage: totalOrgs > 0 ? Math.round((onboardingStats.profileComplete / totalOrgs) * 100) : 0,
+    },
+    {
+      step: 'Upload Logo',
+      count: onboardingStats.logoUploaded,
+      percentage: totalOrgs > 0 ? Math.round((onboardingStats.logoUploaded / totalOrgs) * 100) : 0,
+    },
+    {
+      step: 'Configure Branding',
+      count: onboardingStats.brandingConfigured,
+      percentage: totalOrgs > 0 ? Math.round((onboardingStats.brandingConfigured / totalOrgs) * 100) : 0,
+    },
+    {
+      step: 'Add First Asset',
+      count: onboardingStats.firstAssetAdded,
+      percentage: totalOrgs > 0 ? Math.round((onboardingStats.firstAssetAdded / totalOrgs) * 100) : 0,
+    },
+    {
+      step: 'Invite Team Member',
+      count: onboardingStats.firstTeamMemberInvited,
+      percentage: totalOrgs > 0 ? Math.round((onboardingStats.firstTeamMemberInvited / totalOrgs) * 100) : 0,
+    },
+    {
+      step: 'Add First Employee',
+      count: onboardingStats.firstEmployeeAdded,
+      percentage: totalOrgs > 0 ? Math.round((onboardingStats.firstEmployeeAdded / totalOrgs) * 100) : 0,
+    },
+    {
+      step: 'Create First Project',
+      count: onboardingStats.firstProjectCreated,
+      percentage: totalOrgs > 0 ? Math.round((onboardingStats.firstProjectCreated / totalOrgs) * 100) : 0,
+    },
+  ];
+
+  return {
+    totalOrgs,
+    moduleUsage,
+    tierDistribution: [
+      { tier: 'Free', count: tierDistribution.FREE },
+      { tier: 'Starter', count: tierDistribution.STARTER },
+      { tier: 'Professional', count: tierDistribution.PROFESSIONAL },
+      { tier: 'Enterprise', count: tierDistribution.ENTERPRISE },
+    ],
+    onboardingFunnel,
+  };
+}
+
 export default async function AnalyticsPage() {
-  const analytics = await getAnalytics();
+  const [analytics, detailedAnalytics] = await Promise.all([
+    getAnalytics(),
+    getDetailedAnalytics(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -65,6 +207,7 @@ export default async function AnalyticsPage() {
         <p className="text-slate-500">Platform growth and metrics overview</p>
       </div>
 
+      {/* Top Stats */}
       <div className="grid grid-cols-2 gap-4">
         <MetricCard
           icon={Building2}
@@ -86,6 +229,7 @@ export default async function AnalyticsPage() {
         />
       </div>
 
+      {/* Monthly Growth */}
       <Card className="p-6">
         <h3 className="font-semibold text-slate-900 mb-4">Monthly Growth</h3>
         <div className="grid grid-cols-2 gap-6">
@@ -103,6 +247,27 @@ export default async function AnalyticsPage() {
           />
         </div>
       </Card>
+
+      {/* Detailed Analytics Section */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Module Usage */}
+        <ModuleUsageChart
+          data={detailedAnalytics.moduleUsage}
+          totalOrgs={detailedAnalytics.totalOrgs}
+        />
+
+        {/* Tier Distribution */}
+        <OrganizationBreakdown
+          data={detailedAnalytics.tierDistribution}
+          totalOrgs={detailedAnalytics.totalOrgs}
+        />
+      </div>
+
+      {/* Onboarding Funnel */}
+      <OnboardingFunnel
+        data={detailedAnalytics.onboardingFunnel}
+        totalOrgs={detailedAnalytics.totalOrgs}
+      />
     </div>
   );
 }

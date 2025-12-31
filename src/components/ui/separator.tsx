@@ -1,3 +1,9 @@
+/**
+ * @file separator.tsx
+ * @description Visual separator component for dividing content sections
+ * @module components/ui
+ */
+
 "use client"
 
 import * as React from "react"

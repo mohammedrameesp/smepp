@@ -1,20 +1,21 @@
+/**
+ * @file route.ts
+ * @description Subscription cancellation endpoint
+ * @module operations/subscriptions
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { cancelSubscription } from '@/lib/subscription-lifecycle';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function cancelSubscriptionHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const { id } = await params;
     const body = await request.json();
     const { cancellationDate, notes } = body;
 
@@ -57,15 +58,10 @@ export async function POST(
       id,
       parsedDate,
       notes,
-      session.user.id
+      currentUserId
     );
 
     return NextResponse.json(subscription);
-  } catch (error) {
-    console.error('Error cancelling subscription:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to cancel subscription' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(cancelSubscriptionHandler, { requireAdmin: true, requireModule: 'subscriptions' });

@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description HR profile management for a specific user (admin only)
+ * @module system/users
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -178,6 +184,7 @@ export async function PATCH(
 
     // Log activity
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.USER_UPDATED,
       'HRProfile',

@@ -1,7 +1,11 @@
+/**
+ * @file route.ts
+ * @description Platform statistics for super admin dashboard and login page
+ * @module system/super-admin
+ */
+
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-
-// GET /api/super-admin/stats - Platform stats (public for login page)
 export async function GET() {
   try {
     // Get counts

@@ -1,3 +1,8 @@
+/**
+ * @file cost-breakdown.tsx
+ * @description Card component showing subscription cost breakdown by active periods
+ * @module components/domains/operations/subscriptions
+ */
 'use client';
 
 import { useEffect, useState } from 'react';

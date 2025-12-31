@@ -1,3 +1,8 @@
+/**
+ * @file exchange-rate-settings.tsx
+ * @description Settings component for managing USD to QAR currency exchange rate
+ * @module components/domains/system/settings
+ */
 'use client';
 
 import { useState, useEffect } from 'react';

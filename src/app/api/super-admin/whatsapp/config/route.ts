@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Platform-level WhatsApp Business API configuration management
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -6,13 +12,8 @@ import {
   savePlatformWhatsAppConfig,
   disablePlatformWhatsApp,
   getPlatformWhatsAppConfigForDisplay,
-  getPlatformWhatsAppConfig,
 } from '@/lib/whatsapp/config';
 import { WhatsAppClient } from '@/lib/whatsapp/client';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// VALIDATION SCHEMAS
-// ═══════════════════════════════════════════════════════════════════════════════
 
 const platformConfigSchema = z.object({
   phoneNumberId: z.string().min(1, 'Phone Number ID is required'),

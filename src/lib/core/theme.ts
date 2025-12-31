@@ -1,7 +1,8 @@
 /**
- * Theme Configuration
- * Clean white background with slate-blue branding from login page
- * Professional and minimal design
+ * @file theme.ts
+ * @description Theme configuration - clean white background with slate-blue branding,
+ *              WCAG AA compliant colors for professional minimal design
+ * @module lib/core
  */
 
 export const theme = {

@@ -1,3 +1,8 @@
+/**
+ * @file supplier-list-table.tsx
+ * @description Table component displaying suppliers with client-side filtering and sorting
+ * @module components/domains/operations/suppliers
+ */
 'use client';
 
 import { useState, useMemo } from 'react';

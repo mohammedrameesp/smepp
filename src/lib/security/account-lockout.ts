@@ -1,11 +1,11 @@
-import { prisma } from '@/lib/core/prisma';
-
 /**
- * Account Lockout Configuration
- *
- * Protects against brute-force password attacks by temporarily locking
- * accounts after multiple failed login attempts.
+ * @file account-lockout.ts
+ * @description Account lockout protection against brute-force attacks with progressive lockout
+ *              durations. Tracks failed login attempts and temporarily locks accounts.
+ * @module security
  */
+
+import { prisma } from '@/lib/core/prisma';
 
 // Number of failed attempts before lockout
 const MAX_FAILED_ATTEMPTS = parseInt(process.env.ACCOUNT_LOCKOUT_MAX_ATTEMPTS || '5', 10);
@@ -112,8 +112,6 @@ export async function recordFailedLogin(userId: string): Promise<{ locked: boole
       },
     });
 
-    console.log(`[Security] Account ${userId} locked until ${lockedUntil.toISOString()} after ${newAttemptCount} failed attempts`);
-
     return { locked: true, lockedUntil };
   }
 
@@ -172,8 +170,6 @@ export async function unlockAccount(userId: string): Promise<void> {
       lockedUntil: null,
     },
   });
-
-  console.log(`[Security] Account ${userId} unlocked by admin`);
 }
 
 /**

@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Verify 2FA code during super admin login flow
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
@@ -88,7 +94,6 @@ export async function POST(request: NextRequest) {
     // SECURITY: Validate JTI (JWT ID) to prevent token replay attacks
     // The JTI must match the stored value, indicating this is the current valid token
     if (!tokenPayload.jti || tokenPayload.jti !== user.pending2FATokenJti) {
-      console.log(`[2FA] Token replay attempt detected for user ${user.email}`);
       return NextResponse.json(
         { error: 'Session expired or already used. Please log in again.' },
         { status: 401 }

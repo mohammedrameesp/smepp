@@ -1,11 +1,8 @@
 /**
- * Code Format Utilities for Multi-Tenant Reference Code Generation
- *
- * Supports customizable format patterns for different entity types:
- * - Employee IDs: {PREFIX}-{YYYY}-{SEQ:3} → BEC-2024-001
- * - Asset Tags: {PREFIX}-{TYPE}-{YYMM}-{SEQ:3} → BEC-LAP-2412-001
- * - Purchase Requests: {PREFIX}-PR-{YYMM}-{SEQ:3} → BEC-PR-2412-001
- * - Loans: {PREFIX}-LOAN-{SEQ:5} → BEC-LOAN-00001
+ * @file code-prefix.ts
+ * @description Multi-tenant reference code generation utilities - supports customizable
+ *              format patterns for employee IDs, asset tags, purchase requests, and loans
+ * @module lib/utils
  *
  * Format tokens:
  * - {PREFIX} - Organization code prefix (e.g., BEC)
@@ -15,7 +12,7 @@
  * - {YYMM} - Year + Month (e.g., 2412)
  * - {YYYYMM} - Full year + Month (e.g., 202412)
  * - {DD} - 2-digit day (e.g., 28)
- * - {SEQ:n} - Sequential number padded to n digits (e.g., {SEQ:3} → 001)
+ * - {SEQ:n} - Sequential number padded to n digits (e.g., {SEQ:3} -> 001)
  * - {TYPE} - Entity subtype (e.g., LAP for Laptop, used in assets)
  * - Any static text (e.g., PR, LOAN, EMP)
  */

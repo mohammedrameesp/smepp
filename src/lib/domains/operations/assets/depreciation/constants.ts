@@ -1,4 +1,10 @@
 /**
+ * @file constants.ts
+ * @description Qatar Tax depreciation categories and rate calculation utilities
+ * @module domains/operations/assets/depreciation
+ */
+
+/**
  * Qatar Tax Depreciation Categories
  * Based on Qatar Tax Authority guidelines and IFRS compliance
  */

@@ -1,30 +1,22 @@
+/**
+ * @file route.ts
+ * @description Single salary structure details, update, and deletion API
+ * @module hr/payroll
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updateSalaryStructureSchema } from '@/lib/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { calculateGrossSalary, parseDecimal } from '@/lib/payroll/utils';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function getSalaryStructureHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     // Use findFirst with tenantId to prevent cross-tenant access
     const salaryStructure = await prisma.salaryStructure.findFirst({
@@ -62,7 +54,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Non-admin users can only view their own salary structure
-    if (session.user.role !== Role.ADMIN && salaryStructure.userId !== session.user.id) {
+    if (tenant!.userRole !== 'ADMIN' && salaryStructure.userId !== tenant!.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
@@ -79,29 +71,19 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     };
 
     return NextResponse.json(response);
-  } catch (error) {
-    console.error('Salary structure GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch salary structure' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const GET = withErrorHandler(getSalaryStructureHandler, { requireAuth: true, requireModule: 'payroll' });
+
+async function updateSalaryStructureHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
     const body = await request.json();
     const validation = updateSalaryStructureSchema.safeParse(body);
 
@@ -203,7 +185,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
             changes: changes as object,
             previousValues: previousValues as object,
             notes: data.notes,
-            performedById: session.user.id,
+            performedById: currentUserId,
           },
         });
       }
@@ -212,7 +194,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.SALARY_STRUCTURE_UPDATED,
       'SalaryStructure',
       salaryStructure.id,
@@ -236,29 +219,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     };
 
     return NextResponse.json(response);
-  } catch (error) {
-    console.error('Salary structure PUT error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update salary structure' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const PUT = withErrorHandler(updateSalaryStructureHandler, { requireAdmin: true, requireModule: 'payroll' });
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+async function deleteSalaryStructureHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     // Use findFirst with tenantId to prevent cross-tenant access
     const existing = await prisma.salaryStructure.findFirst({
@@ -289,7 +261,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.SALARY_STRUCTURE_DEACTIVATED,
       'SalaryStructure',
       id,
@@ -301,11 +274,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     );
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Salary structure DELETE error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete salary structure' },
-      { status: 500 }
-    );
-  }
 }
+
+export const DELETE = withErrorHandler(deleteSalaryStructureHandler, { requireAdmin: true, requireModule: 'payroll' });

@@ -1,3 +1,9 @@
+/**
+ * @file alert-dialog.tsx
+ * @description Modal dialog for important confirmations and alerts requiring user action
+ * @module components/ui
+ */
+
 "use client"
 
 import * as React from "react"

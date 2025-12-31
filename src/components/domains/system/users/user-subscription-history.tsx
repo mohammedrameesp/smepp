@@ -1,3 +1,8 @@
+/**
+ * @file user-subscription-history.tsx
+ * @description Displays user's subscription history including active and inactive subscriptions with cost tracking
+ * @module components/domains/system/users
+ */
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

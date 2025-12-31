@@ -1,12 +1,14 @@
+/**
+ * @file route.ts
+ * @description Remove super admin privileges from a user
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { requireRecent2FA } from '@/lib/two-factor';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// DELETE /api/super-admin/admins/[id] - Remove super admin privileges
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export async function DELETE(
   request: NextRequest,

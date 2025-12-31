@@ -1,7 +1,11 @@
+/**
+ * @file route.ts
+ * @description Asset assignment API endpoint
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { assignAssetSchema } from '@/lib/validations/assets';
 import { logAction, ActivityActions } from '@/lib/activity';
@@ -9,24 +13,19 @@ import { recordAssetAssignment } from '@/lib/asset-history';
 import { sendEmail } from '@/lib/email';
 import { assetAssignmentEmail } from '@/lib/email-templates';
 import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    // Check authentication and authorization
+async function assignAssetHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     // Parse and validate request body
     const body = await request.json();
@@ -40,8 +39,6 @@ export async function POST(
     }
 
     const { assignedUserId } = validation.data;
-
-    const { id } = await params;
 
     // Use findFirst with tenantId to prevent cross-tenant access
     const currentAsset = await prisma.asset.findFirst({
@@ -86,6 +83,7 @@ export async function POST(
     const newUser = asset.assignedUser;
     
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.ASSET_ASSIGNED,
       'Asset',
@@ -110,6 +108,12 @@ export async function POST(
     // Send assignment email and in-app notification to the new user (non-blocking)
     if (newUser) {
       try {
+        // Get org name for email
+        const org = await prisma.organization.findUnique({
+          where: { id: tenantId },
+          select: { name: true },
+        });
+
         // Email notification
         if (newUser.email) {
           const emailContent = assetAssignmentEmail({
@@ -120,6 +124,7 @@ export async function POST(
             model: asset.model,
             serialNumber: asset.serial || null,
             assignmentDate: new Date(),
+            orgName: org?.name || 'Organization',
           });
           await sendEmail({
             to: newUser.email,
@@ -136,7 +141,8 @@ export async function POST(
             asset.assetTag || '',
             asset.model,
             asset.id
-          )
+          ),
+          tenantId
         );
       } catch {
         // Don't fail the request if notifications fail
@@ -152,7 +158,8 @@ export async function POST(
             asset.assetTag || '',
             asset.model,
             asset.id
-          )
+          ),
+          tenantId
         );
       } catch {
         // Don't fail the request if notification fails
@@ -160,12 +167,6 @@ export async function POST(
     }
 
     return NextResponse.json(asset);
-
-  } catch (error) {
-    console.error('Asset assign error:', error);
-    return NextResponse.json(
-      { error: 'Failed to assign asset' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(assignAssetHandler, { requireAdmin: true, requireModule: 'assets' });

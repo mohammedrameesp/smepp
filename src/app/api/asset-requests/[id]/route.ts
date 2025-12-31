@@ -1,3 +1,8 @@
+/**
+ * @file route.ts
+ * @description Single asset request CRUD API endpoints (GET, DELETE)
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -5,25 +10,19 @@ import { Role, AssetRequestStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { canCancelRequest } from '@/lib/domains/operations/asset-requests/asset-request-utils';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(request: NextRequest, context: RouteContext) {
-  try {
+async function getAssetRequestHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id } = await context.params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     // Use findFirst with tenantId to prevent cross-tenant access
     const assetRequest = await prisma.assetRequest.findFirst({
@@ -88,29 +87,21 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     return NextResponse.json(assetRequest);
-  } catch (error) {
-    console.error('Asset request GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch asset request' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function DELETE(request: NextRequest, context: RouteContext) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = withErrorHandler(getAssetRequestHandler, { requireAuth: true, requireModule: 'assets' });
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+async function deleteAssetRequestHandler(request: NextRequest, context: APIContext) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id } = await context.params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     // Use findFirst with tenantId to prevent cross-tenant access
     const assetRequest = await prisma.assetRequest.findFirst({
@@ -157,6 +148,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     });
 
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.ASSET_REQUEST_CANCELLED,
       'AssetRequest',
@@ -169,11 +161,6 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     );
 
     return NextResponse.json({ success: true, message: 'Request cancelled' });
-  } catch (error) {
-    console.error('Asset request DELETE error:', error);
-    return NextResponse.json(
-      { error: 'Failed to cancel asset request' },
-      { status: 500 }
-    );
-  }
 }
+
+export const DELETE = withErrorHandler(deleteAssetRequestHandler, { requireAuth: true, requireModule: 'assets' });

@@ -1,3 +1,10 @@
+/**
+ * @file backup-codes.ts
+ * @description Two-factor authentication backup codes generation and verification.
+ *              Uses bcrypt hashing for secure storage of one-time recovery codes.
+ * @module two-factor
+ */
+
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 

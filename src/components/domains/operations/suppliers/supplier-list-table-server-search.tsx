@@ -1,3 +1,8 @@
+/**
+ * @file supplier-list-table-server-search.tsx
+ * @description Table component with server-side search, filtering, and pagination for suppliers
+ * @module components/domains/operations/suppliers
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';

@@ -1,16 +1,74 @@
+/**
+ * @file route.ts
+ * @description Automated cron job for scheduled platform and organization backups
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { createClient } from '@supabase/supabase-js';
 import logger from '@/lib/log';
 import { encryptBackup, redactBackupData } from '@/lib/security/backup-encryption';
+import crypto from 'crypto';
 
 const BACKUP_BUCKET = 'database-backups';
+const MAX_TIMESTAMP_DRIFT_MS = 5 * 60 * 1000;
 
-// Verify cron secret
-function verifyCronAuth(request: NextRequest): boolean {
-  const authHeader = request.headers.get('authorization');
+interface CronAuthResult {
+  valid: boolean;
+  error?: string;
+}
+
+function verifyCronAuth(request: NextRequest): CronAuthResult {
   const cronSecret = process.env.CRON_SECRET;
-  return !!cronSecret && authHeader === `Bearer ${cronSecret}`;
+
+  if (!cronSecret) {
+    return { valid: false, error: 'CRON_SECRET not configured' };
+  }
+
+  // Method 1: Simple Bearer token (for Vercel Cron)
+  const authHeader = request.headers.get('authorization');
+  if (authHeader === `Bearer ${cronSecret}`) {
+    return { valid: true };
+  }
+
+  // Method 2: HMAC signature with timestamp (for external cron services)
+  // Headers: X-Cron-Timestamp, X-Cron-Signature
+  const timestamp = request.headers.get('x-cron-timestamp');
+  const signature = request.headers.get('x-cron-signature');
+
+  if (timestamp && signature) {
+    // Validate timestamp to prevent replay attacks
+    const requestTime = parseInt(timestamp, 10);
+    const now = Date.now();
+
+    if (isNaN(requestTime)) {
+      return { valid: false, error: 'Invalid timestamp format' };
+    }
+
+    if (Math.abs(now - requestTime) > MAX_TIMESTAMP_DRIFT_MS) {
+      return { valid: false, error: 'Timestamp too old or too far in future (replay protection)' };
+    }
+
+    // Verify HMAC signature: HMAC-SHA256(timestamp + ":" + path)
+    const path = new URL(request.url).pathname;
+    const payload = `${timestamp}:${path}`;
+    const expectedSignature = crypto
+      .createHmac('sha256', cronSecret)
+      .update(payload)
+      .digest('hex');
+
+    if (crypto.timingSafeEqual(
+      Buffer.from(signature, 'hex'),
+      Buffer.from(expectedSignature, 'hex')
+    )) {
+      return { valid: true };
+    }
+
+    return { valid: false, error: 'Invalid signature' };
+  }
+
+  return { valid: false, error: 'Missing authentication' };
 }
 
 function getSupabaseClient() {
@@ -27,8 +85,10 @@ function getSupabaseClient() {
 // GET - Cron endpoint for automated backups (4 AM Qatar time = 1 AM UTC)
 export async function GET(request: NextRequest) {
   // Verify cron authorization
-  if (!verifyCronAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const authResult = verifyCronAuth(request);
+  if (!authResult.valid) {
+    logger.warn({ error: authResult.error }, 'Cron auth failed');
+    return NextResponse.json({ error: 'Unauthorized', details: authResult.error }, { status: 401 });
   }
 
   logger.info('Starting scheduled backup job (4 AM Qatar time)');
@@ -61,7 +121,7 @@ export async function GET(request: NextRequest) {
       results,
     });
   } catch (error) {
-    logger.error({ error }, 'Scheduled backup job failed');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Scheduled backup job failed');
     return NextResponse.json(
       { error: 'Backup job failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -206,7 +266,7 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
     logger.info(`Full backup created: ${filename}`);
     return { filename, success: true };
   } catch (error) {
-    logger.error({ error }, 'Full backup failed');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Full backup failed');
     return { filename: '', success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
@@ -352,7 +412,7 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
     logger.info(`Organization backup created: ${orgSlug}/${filename}`);
     return { filename, success: true };
   } catch (error) {
-    logger.error({ error, orgSlug }, 'Organization backup failed');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', orgSlug }, 'Organization backup failed');
     return { filename: '', success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
@@ -395,6 +455,6 @@ async function cleanupOldBackups(folder: string) {
       }
     }
   } catch (error) {
-    logger.warn({ error, folder }, 'Failed to cleanup old backups');
+    logger.warn({ error: error instanceof Error ? error.message : 'Unknown error', folder }, 'Failed to cleanup old backups');
   }
 }

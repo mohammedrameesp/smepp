@@ -1,4 +1,9 @@
-// HR Profile Utilities - Shared functions for employee/HR operations
+/**
+ * @file hr-utils.ts
+ * @description Shared utility functions for employee/HR operations including
+ *              profile completion, document expiry tracking, and data formatting
+ * @module domains/hr
+ */
 
 // ============================================================================
 // CONSTANTS

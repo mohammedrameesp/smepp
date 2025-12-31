@@ -1,7 +1,12 @@
+/**
+ * @file route.ts
+ * @description Update purchase request status (approve, reject, complete)
+ * @module projects/purchase-requests
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updatePurchaseRequestStatusSchema } from '@/lib/validations/purchase-request';
 import { logAction, ActivityActions } from '@/lib/activity';
@@ -9,25 +14,21 @@ import { getAllowedStatusTransitions, getStatusLabel } from '@/lib/purchase-requ
 import { sendEmail } from '@/lib/email';
 import { purchaseRequestStatusEmail } from '@/lib/core/email-templates';
 import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { invalidateTokensForEntity } from '@/lib/whatsapp';
 
 // PATCH - Update purchase request status (admin only)
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+async function updateStatusHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id } = await params;
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     // Get current request within tenant
     const currentRequest = await prisma.purchaseRequest.findFirst({
@@ -140,6 +141,7 @@ export async function PATCH(
 
     // Log activity
     await logAction(
+      tenantId,
       session.user.id,
       activityAction,
       'PurchaseRequest',
@@ -152,12 +154,17 @@ export async function PATCH(
       }
     );
 
+    // NOTIF-004: Invalidate any pending WhatsApp action tokens for this request
+    if (status === 'APPROVED' || status === 'REJECTED') {
+      await invalidateTokensForEntity('PURCHASE_REQUEST', id);
+    }
+
     // Send email notification to requester
     try {
-      // Get org slug for email URL
+      // Get org details for email
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
-        select: { slug: true },
+        select: { slug: true, name: true },
       });
 
       if (currentRequest.requester.email) {
@@ -170,6 +177,7 @@ export async function PATCH(
           reviewNotes: reviewNotes || undefined,
           reviewerName: session.user.name || session.user.email,
           orgSlug: org?.slug || 'app',
+          orgName: org?.name || 'Organization',
         });
 
         await sendEmail({
@@ -191,7 +199,8 @@ export async function PATCH(
           currentRequest.requesterId,
           purchaseRequest.referenceNumber,
           purchaseRequest.id
-        )
+        ),
+        tenantId
       );
     } else if (status === 'REJECTED') {
       await createNotification(
@@ -200,16 +209,12 @@ export async function PATCH(
           purchaseRequest.referenceNumber,
           reviewNotes || undefined,
           purchaseRequest.id
-        )
+        ),
+        tenantId
       );
     }
 
     return NextResponse.json(purchaseRequest);
-  } catch (error) {
-    console.error('Purchase request status PATCH error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update purchase request status' },
-      { status: 500 }
-    );
-  }
 }
+
+export const PATCH = withErrorHandler(updateStatusHandler, { requireAdmin: true, requireModule: 'purchase-requests' });

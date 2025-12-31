@@ -10,16 +10,36 @@ import { prisma } from '@/lib/core/prisma';
 import { ApprovalModule } from '@prisma/client';
 import type { ActionTokenPayload, ActionTokenValidationResult, ApprovalEntityType } from './types';
 
-const TOKEN_EXPIRY_MINUTES = 60;
+// NOTIF-003: Reduced from 60 to 15 minutes for security-sensitive approval actions
+const TOKEN_EXPIRY_MINUTES = 15;
 
 /**
  * Get the signing key for tokens
+ * SEC-007: Require separate encryption key in production
  */
 function getSigningKey(): string {
-  const key = process.env.WHATSAPP_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET;
+  const key = process.env.WHATSAPP_ENCRYPTION_KEY;
+
   if (!key) {
-    throw new Error('WHATSAPP_ENCRYPTION_KEY or NEXTAUTH_SECRET must be set');
+    // In production, require a dedicated encryption key
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'CRITICAL: WHATSAPP_ENCRYPTION_KEY is required in production. ' +
+        'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+      );
+    }
+
+    // In development, fall back to NEXTAUTH_SECRET with warning
+    const fallback = process.env.NEXTAUTH_SECRET;
+    if (!fallback) {
+      throw new Error('WHATSAPP_ENCRYPTION_KEY or NEXTAUTH_SECRET must be set');
+    }
+    console.warn(
+      'WARNING: WHATSAPP_ENCRYPTION_KEY not set. Using NEXTAUTH_SECRET as fallback.'
+    );
+    return fallback;
   }
+
   return key;
 }
 

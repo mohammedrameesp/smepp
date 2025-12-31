@@ -1,3 +1,8 @@
+/**
+ * @file supplier-actions.tsx
+ * @description Action buttons component for supplier management (approve, reject, delete, add engagement)
+ * @module components/domains/operations/suppliers
+ */
 'use client';
 
 import { useState } from 'react';

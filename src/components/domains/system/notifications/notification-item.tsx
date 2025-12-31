@@ -1,3 +1,8 @@
+/**
+ * @file notification-item.tsx
+ * @description Individual notification item component with icon mapping and read status indication
+ * @module components/domains/system/notifications
+ */
 'use client';
 
 import Link from 'next/link';

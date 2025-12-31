@@ -1,3 +1,9 @@
+/**
+ * @file label.tsx
+ * @description Form label component for input field descriptions
+ * @module components/ui
+ */
+
 "use client"
 
 import * as React from "react"

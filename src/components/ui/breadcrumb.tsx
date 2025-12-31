@@ -1,3 +1,9 @@
+/**
+ * @file breadcrumb.tsx
+ * @description Breadcrumb navigation component for displaying hierarchical page location
+ * @module components/ui
+ */
+
 import Link from 'next/link';
 import { ChevronRight, Home } from 'lucide-react';
 

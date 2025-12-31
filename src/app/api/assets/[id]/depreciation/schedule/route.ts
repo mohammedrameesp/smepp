@@ -1,28 +1,25 @@
+/**
+ * @file route.ts
+ * @description Asset depreciation schedule projection API endpoint
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { getDepreciationSchedule } from '@/lib/domains/operations/assets/depreciation';
-
-/**
- * GET /api/assets/[id]/depreciation/schedule - Get projected depreciation schedule
- */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+async function getDepreciationScheduleHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
-    const { id: assetId } = await params;
+    const assetId = context.params?.id;
+    if (!assetId) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
 
     // Verify asset exists and belongs to tenant
     const asset = await prisma.asset.findFirst({
@@ -71,11 +68,6 @@ export async function GET(
       recordedCount: recordedPeriods.length,
       projectedCount: enrichedSchedule.filter((s) => s.status === 'projected').length,
     });
-  } catch (error) {
-    console.error('Get depreciation schedule error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch depreciation schedule' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(getDepreciationScheduleHandler, { requireAuth: true, requireModule: 'assets' });

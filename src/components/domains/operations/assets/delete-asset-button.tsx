@@ -1,3 +1,8 @@
+/**
+ * @file delete-asset-button.tsx
+ * @description Button component with confirmation dialog for deleting assets
+ * @module components/domains/operations/assets
+ */
 'use client';
 
 import { useState } from 'react';

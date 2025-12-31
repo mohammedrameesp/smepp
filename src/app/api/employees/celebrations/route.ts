@@ -1,8 +1,15 @@
-import { NextResponse } from 'next/server';
+/**
+ * @file route.ts
+ * @description Employee celebrations (birthdays and work anniversaries)
+ * @module hr/employees
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Role } from '@prisma/client';
+import { APIContext } from '@/lib/http/handler';
 
 interface CelebrationEvent {
   employeeId: string;
@@ -16,21 +23,9 @@ interface CelebrationEvent {
 }
 
 // GET /api/employees/celebrations - Get upcoming birthdays and work anniversaries
-export async function GET() {
-  try {
+async function getCelebrationsHandler(request: NextRequest, _context: APIContext) {
     const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    // Only admins can view celebrations
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
@@ -149,11 +144,4 @@ export async function GET() {
         upcomingAnniversaries,
       },
     });
-  } catch (error) {
-    console.error('Get celebrations error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch celebrations' },
-      { status: 500 }
-    );
-  }
 }

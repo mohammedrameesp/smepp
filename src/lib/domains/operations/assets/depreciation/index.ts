@@ -1,6 +1,7 @@
 /**
- * Asset Depreciation Module
- * Implements straight-line depreciation based on Qatar Tax Rates and IFRS standards
+ * @file index.ts
+ * @description Asset depreciation module entry point - exports depreciation utilities and services
+ * @module domains/operations/assets/depreciation
  */
 
 export * from './constants';

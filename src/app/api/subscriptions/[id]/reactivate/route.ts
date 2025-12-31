@@ -1,20 +1,21 @@
+/**
+ * @file route.ts
+ * @description Subscription reactivation endpoint
+ * @module operations/subscriptions
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { reactivateSubscription } from '@/lib/subscription-lifecycle';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function reactivateSubscriptionHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const { id } = await params;
     const body = await request.json();
     const { reactivationDate, renewalDate, notes } = body;
 
@@ -98,16 +99,11 @@ export async function POST(
       id,
       parsedRenewalDate,
       notes,
-      session.user.id,
+      currentUserId,
       parsedReactivationDate
     );
 
     return NextResponse.json(subscription);
-  } catch (error) {
-    console.error('Error reactivating subscription:', error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to reactivate subscription' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(reactivateSubscriptionHandler, { requireAdmin: true, requireModule: 'subscriptions' });

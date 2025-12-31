@@ -1,3 +1,10 @@
+/**
+ * @file google.ts
+ * @description Google OAuth 2.0 implementation for custom per-organization OAuth apps.
+ *              Handles authorization URL building, token exchange, and user info retrieval.
+ * @module oauth
+ */
+
 import { getBaseUrl } from './utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════

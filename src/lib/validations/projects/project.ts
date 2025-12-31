@@ -1,3 +1,9 @@
+/**
+ * @file project.ts
+ * @description Validation schemas for project module entities with client types and timeline management
+ * @module validations/projects
+ */
+
 import { z } from 'zod';
 
 // ─────────────────────────────────────────────────────────────────

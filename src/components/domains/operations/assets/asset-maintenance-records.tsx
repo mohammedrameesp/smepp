@@ -1,3 +1,8 @@
+/**
+ * @file asset-maintenance-records.tsx
+ * @description Card component for viewing and managing asset maintenance history
+ * @module components/domains/operations/assets
+ */
 'use client';
 
 import { useEffect, useState } from 'react';

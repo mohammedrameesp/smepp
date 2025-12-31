@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description List super admins and invite/promote new super admins
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -5,10 +11,6 @@ import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { requireRecent2FA } from '@/lib/two-factor';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// GET /api/super-admin/admins - List all super admins
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export async function GET() {
   try {
@@ -118,14 +120,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // TODO: Send email with temporary password or setup link
-    // For now, we'll return the temp password (in production, send via email)
+    // Note: In development, temp password is returned in response for convenience.
+    // In production, the creating admin should manually share credentials securely.
+    // Future enhancement: Send welcome email with password setup link.
 
     return NextResponse.json({
       message: 'Super admin created successfully',
       user: newUser,
       isNewUser: true,
-      // In production, remove this and send via email
       tempPassword: process.env.NODE_ENV === 'development' ? tempPassword : undefined,
     });
   } catch (error) {

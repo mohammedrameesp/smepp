@@ -1,19 +1,25 @@
-import { NextResponse } from 'next/server';
+/**
+ * @file route.ts
+ * @description Export suppliers to CSV
+ * @module operations/suppliers
+ */
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Role } from '@prisma/client';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET() {
-  try {
+async function exportSuppliersHandler(request: NextRequest, _context: APIContext) {
     const session = await getServerSession(authOptions);
-
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
-    // Fetch all suppliers with related data
+    const tenantId = session.user.organizationId;
+
+    // Fetch all suppliers with related data - filter by tenant
     const suppliers = await prisma.supplier.findMany({
+      where: { tenantId },
       include: {
         engagements: true,
         approvedBy: {
@@ -100,11 +106,6 @@ export async function GET() {
         'Content-Disposition': `attachment; filename="suppliers_export_${new Date().toISOString().split('T')[0]}.csv"`,
       },
     });
-  } catch (error) {
-    console.error('Suppliers export error:', error);
-    return NextResponse.json(
-      { error: 'Failed to export suppliers' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(exportSuppliersHandler, { requireAdmin: true, requireModule: 'suppliers' });

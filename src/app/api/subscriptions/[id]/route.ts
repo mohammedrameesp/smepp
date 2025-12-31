@@ -1,30 +1,24 @@
+/**
+ * @file route.ts
+ * @description Single subscription CRUD operations endpoint
+ * @module operations/subscriptions
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updateSubscriptionSchema } from '@/lib/validations/subscriptions';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { parseInputDateString } from '@/lib/date-format';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function getSubscriptionHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     // Use findFirst with tenantId to prevent IDOR attacks
     const subscription = await prisma.subscription.findFirst({
@@ -45,34 +39,21 @@ export async function GET(
     }
 
     // Authorization check: Only admins or the assigned user can view the subscription
-    if (session.user.role !== Role.ADMIN && subscription.assignedUserId !== session.user.id) {
+    if (tenant!.userRole !== 'ADMIN' && subscription.assignedUserId !== tenant!.userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     return NextResponse.json(subscription);
-  } catch (error) {
-    console.error('Subscription GET error:', error);
-    return NextResponse.json({ error: 'Failed to fetch subscription' }, { status: 500 });
-  }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function updateSubscriptionHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     const body = await request.json();
     const validation = updateSubscriptionSchema.safeParse(body);
@@ -168,7 +149,7 @@ export async function PUT(
           newUserId: data.assignedUserId,
           assignmentDate: assignmentDate,
           notes: `Reassigned from ${oldUserName} to ${newUserName}`,
-          performedBy: session.user.id,
+          performedBy: currentUserId,
         },
       });
     } else if (data.assignmentDate !== undefined && currentSubscription.assignedUserId) {
@@ -194,7 +175,8 @@ export async function PUT(
     }
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.SUBSCRIPTION_UPDATED,
       'Subscription',
       subscription.id,
@@ -202,29 +184,16 @@ export async function PUT(
     );
 
     return NextResponse.json(subscription);
-  } catch (error) {
-    console.error('Subscription PUT error:', error);
-    return NextResponse.json({ error: 'Failed to update subscription' }, { status: 500 });
-  }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function deleteSubscriptionHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     // Get subscription within tenant
     const subscription = await prisma.subscription.findFirst({
@@ -239,7 +208,8 @@ export async function DELETE(
     await prisma.subscription.delete({ where: { id } });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.SUBSCRIPTION_DELETED,
       'Subscription',
       subscription.id,
@@ -247,8 +217,8 @@ export async function DELETE(
     );
 
     return NextResponse.json({ message: 'Subscription deleted successfully' });
-  } catch (error) {
-    console.error('Subscription DELETE error:', error);
-    return NextResponse.json({ error: 'Failed to delete subscription' }, { status: 500 });
-  }
 }
+
+export const GET = withErrorHandler(getSubscriptionHandler, { requireAuth: true, requireModule: 'subscriptions' });
+export const PUT = withErrorHandler(updateSubscriptionHandler, { requireAdmin: true, requireModule: 'subscriptions' });
+export const DELETE = withErrorHandler(deleteSubscriptionHandler, { requireAdmin: true, requireModule: 'subscriptions' });

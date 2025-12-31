@@ -32,8 +32,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const result = await processApproval(id, session.user.id, 'REJECT', validation.data.notes);
 
+    const tenantId = session.user.organizationId!;
+
     // Log the action
     await logAction(
+      tenantId,
       session.user.id,
       'APPROVAL_STEP_REJECTED',
       'ApprovalStep',
@@ -51,7 +54,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       result.step.entityType,
       result.step.entityId,
       session.user.id,
-      validation.data.notes
+      validation.data.notes,
+      tenantId
     );
 
     return NextResponse.json(result);
@@ -66,7 +70,8 @@ async function handleRejection(
   entityType: string,
   entityId: string,
   approverId: string,
-  reason?: string
+  reason: string | undefined,
+  tenantId: string
 ) {
   if (entityType === 'LEAVE_REQUEST') {
     const leaveRequest = await prisma.leaveRequest.update({
@@ -87,7 +92,8 @@ async function handleRejection(
     const year = leaveRequest.startDate.getFullYear();
     await prisma.leaveBalance.update({
       where: {
-        userId_leaveTypeId_year: {
+        tenantId_userId_leaveTypeId_year: {
+          tenantId: leaveRequest.tenantId,
           userId: leaveRequest.userId,
           leaveTypeId: leaveRequest.leaveTypeId,
           year,
@@ -106,7 +112,8 @@ async function handleRejection(
         leaveRequest.leaveType?.name || 'Leave',
         reason,
         entityId
-      )
+      ),
+      tenantId
     );
   } else if (entityType === 'PURCHASE_REQUEST') {
     const purchaseRequest = await prisma.purchaseRequest.update({
@@ -128,7 +135,8 @@ async function handleRejection(
         purchaseRequest.referenceNumber,
         reason,
         entityId
-      )
+      ),
+      tenantId
     );
   } else if (entityType === 'ASSET_REQUEST') {
     const assetRequest = await prisma.assetRequest.update({
@@ -152,7 +160,8 @@ async function handleRejection(
         assetRequest.requestNumber,
         reason,
         entityId
-      )
+      ),
+      tenantId
     );
   }
 }

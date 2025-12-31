@@ -152,15 +152,8 @@ export function HelpContactSupport({ className }: HelpContactSupportProps) {
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900">Need More Help?</h3>
           <p className="text-sm text-gray-600 mt-1">
-            Can&apos;t find what you&apos;re looking for? Our support team is here to help.
+            Can&apos;t find what you&apos;re looking for? Contact your organization&apos;s administrator for assistance.
           </p>
-          <Link
-            href="mailto:support@durj.com"
-            className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-blue-600 hover:text-blue-700"
-          >
-            Contact Support
-            <ArrowRight className="h-4 w-4" />
-          </Link>
         </div>
       </div>
     </div>

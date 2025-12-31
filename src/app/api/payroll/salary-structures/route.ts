@@ -1,30 +1,18 @@
+/**
+ * @file route.ts
+ * @description Salary structures listing and creation API
+ * @module hr/payroll
+ */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createSalaryStructureSchema, salaryStructureQuerySchema } from '@/lib/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { calculateGrossSalary, parseDecimal } from '@/lib/payroll/utils';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Only admins can view all salary structures
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
+async function getSalaryStructuresHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -109,28 +97,14 @@ export async function GET(request: NextRequest) {
         hasMore: page * pageSize < total,
       },
     });
-  } catch (error) {
-    console.error('Salary structures GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch salary structures' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = withErrorHandler(getSalaryStructuresHandler, { requireAdmin: true, requireModule: 'payroll' });
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
+async function createSalaryStructureHandler(request: NextRequest, context: APIContext) {
+    const { tenant } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
 
     const body = await request.json();
     const validation = createSalaryStructureSchema.safeParse(body);
@@ -195,7 +169,7 @@ export async function POST(request: NextRequest) {
           grossSalary,
           effectiveFrom: new Date(data.effectiveFrom),
           isActive: true,
-          tenantId: session.user.organizationId!,
+          tenantId,
         },
         include: {
           user: {
@@ -210,7 +184,7 @@ export async function POST(request: NextRequest) {
           salaryStructureId: salary.id,
           action: 'CREATED',
           notes: data.notes,
-          performedById: session.user.id,
+          performedById: currentUserId,
         },
       });
 
@@ -218,7 +192,8 @@ export async function POST(request: NextRequest) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.SALARY_STRUCTURE_CREATED,
       'SalaryStructure',
       salaryStructure.id,
@@ -242,11 +217,6 @@ export async function POST(request: NextRequest) {
     };
 
     return NextResponse.json(response, { status: 201 });
-  } catch (error) {
-    console.error('Salary structure POST error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create salary structure' },
-      { status: 500 }
-    );
-  }
 }
+
+export const POST = withErrorHandler(createSalaryStructureHandler, { requireAdmin: true, requireModule: 'payroll' });

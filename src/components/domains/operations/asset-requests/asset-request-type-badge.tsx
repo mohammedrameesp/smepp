@@ -1,3 +1,8 @@
+/**
+ * @file asset-request-type-badge.tsx
+ * @description Badge component displaying asset request type with appropriate styling
+ * @module components/domains/operations/asset-requests
+ */
 'use client';
 
 import { Badge } from '@/components/ui/badge';

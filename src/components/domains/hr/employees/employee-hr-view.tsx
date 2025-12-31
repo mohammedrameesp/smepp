@@ -1,8 +1,12 @@
+/**
+ * @file employee-hr-view.tsx
+ * @description HR profile view section for employee details page, displaying comprehensive employee information
+ * @module components/domains/hr
+ */
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/date-format';
 import { parseJsonArray, getExpiryStatus } from '@/lib/hr-utils';
 import { ExpiryDateDisplay, DocumentLink } from '@/components/hr';
@@ -14,7 +18,6 @@ import {
   Building2,
   GraduationCap,
   Info,
-  Download,
   AlertTriangle,
   FileText,
 } from 'lucide-react';

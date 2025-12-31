@@ -1,3 +1,9 @@
+/**
+ * @file users.ts
+ * @description Validation schemas for user creation and updates
+ * @module validations/core
+ */
+
 import { z } from 'zod';
 import { Role } from '@prisma/client';
 

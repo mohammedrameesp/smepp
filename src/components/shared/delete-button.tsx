@@ -1,3 +1,9 @@
+/**
+ * @file delete-button.tsx
+ * @description Reusable delete button with confirmation dialog
+ * @module components/shared
+ */
+
 'use client';
 
 import { useState } from 'react';

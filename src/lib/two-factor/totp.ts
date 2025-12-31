@@ -1,3 +1,10 @@
+/**
+ * @file totp.ts
+ * @description Time-based One-Time Password (TOTP) implementation for two-factor authentication.
+ *              Generates QR codes for authenticator app setup and verifies TOTP codes.
+ * @module two-factor
+ */
+
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import { encrypt, decrypt } from './encryption';

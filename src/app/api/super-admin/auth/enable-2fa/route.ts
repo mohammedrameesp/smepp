@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Enable or disable 2FA for super admin accounts
+ * @module system/super-admin
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';

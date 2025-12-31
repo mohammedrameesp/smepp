@@ -1,18 +1,17 @@
+/**
+ * @file route.ts
+ * @description Asset categories autocomplete API endpoint
+ * @module operations/assets
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
-    // Check authentication
+async function getCategoriesHandler(request: NextRequest, _context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
@@ -53,8 +52,6 @@ export async function GET(request: NextRequest) {
     categories = categories.slice(0, 10);
 
     return NextResponse.json({ categories });
-  } catch (error) {
-    console.error('Asset categories GET error:', error);
-    return NextResponse.json({ error: 'Failed to fetch asset categories' }, { status: 500 });
-  }
 }
+
+export const GET = withErrorHandler(getCategoriesHandler, { requireAuth: true, requireModule: 'assets' });

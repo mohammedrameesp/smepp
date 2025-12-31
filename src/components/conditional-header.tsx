@@ -1,3 +1,9 @@
+/**
+ * @file conditional-header.tsx
+ * @description Conditionally rendered header based on current route
+ * @module components
+ */
+
 'use client';
 
 import { usePathname } from 'next/navigation';

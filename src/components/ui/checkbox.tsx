@@ -1,3 +1,9 @@
+/**
+ * @file checkbox.tsx
+ * @description Checkbox input component for boolean selections
+ * @module components/ui
+ */
+
 "use client"
 
 import * as React from "react"

@@ -1,29 +1,22 @@
+/**
+ * @file route.ts
+ * @description Leave balance detail operations - get and adjust individual balances
+ * @module hr/leave
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updateLeaveBalanceSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/activity';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+async function getLeaveBalanceHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     // Use findFirst with tenantId to prevent IDOR attacks
     const balance = await prisma.leaveBalance.findFirst({
@@ -52,34 +45,23 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Non-admin users can only see their own balance
-    if (session.user.role !== Role.ADMIN && balance.userId !== session.user.id) {
+    if (tenant!.userRole !== 'ADMIN' && balance.userId !== tenant!.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     return NextResponse.json(balance);
-  } catch (error) {
-    console.error('Leave balance GET error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch leave balance' },
-      { status: 500 }
-    );
-  }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = withErrorHandler(getLeaveBalanceHandler, { requireAuth: true, requireModule: 'leave' });
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+async function updateLeaveBalanceHandler(request: NextRequest, context: APIContext) {
+    const { tenant, params } = context;
+    const tenantId = tenant!.tenantId;
+    const currentUserId = tenant!.userId;
+    const id = params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
 
     const body = await request.json();
     const validation = updateLeaveBalanceSchema.safeParse(body);
@@ -153,7 +135,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     });
 
     await logAction(
-      session.user.id,
+      tenantId,
+      currentUserId,
       ActivityActions.LEAVE_BALANCE_ADJUSTED,
       'LeaveBalance',
       balance.id,
@@ -167,11 +150,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     );
 
     return NextResponse.json(balance);
-  } catch (error) {
-    console.error('Leave balance PUT error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update leave balance' },
-      { status: 500 }
-    );
-  }
 }
+
+export const PUT = withErrorHandler(updateLeaveBalanceHandler, { requireAdmin: true, requireModule: 'leave' });

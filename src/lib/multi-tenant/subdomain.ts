@@ -1,9 +1,10 @@
 /**
- * Subdomain Utilities for Multi-Tenant Routing
- *
- * Handles subdomain extraction, validation, and tenant resolution.
- * Supports both subdomain-based routing (acme.durj.com) and
- * future custom domain support.
+ * @file subdomain.ts
+ * @description Subdomain utilities for multi-tenant routing. Handles subdomain extraction,
+ *              validation, slug generation, and tenant resolution from URL hostnames.
+ *              Supports subdomain-based routing (e.g., acme.durj.com) and future custom
+ *              domain support.
+ * @module multi-tenant
  */
 
 import { prisma } from '@/lib/core/prisma';

@@ -1,33 +1,27 @@
+/**
+ * @file route.ts
+ * @description Approve a pending supplier
+ * @module operations/suppliers
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { logAction } from '@/lib/activity';
 import { generateUniqueSupplierCode } from '@/lib/supplier-utils';
-import { Role } from '@prisma/client';
 import { sendEmail } from '@/lib/email';
 import { supplierApprovalEmail } from '@/lib/email-templates';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-
-    // Check authentication - only ADMIN can approve
+async function approveSupplierHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
+    if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    const id = context.params?.id;
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     const tenantId = session.user.organizationId;
@@ -65,6 +59,7 @@ export async function PATCH(
 
     // Log the approval activity
     await logAction(
+      tenantId,
       session.user.id,
       'SUPPLIER_APPROVED',
       'supplier',
@@ -79,10 +74,17 @@ export async function PATCH(
     // Send approval email to supplier (non-blocking)
     if (supplier.primaryContactEmail) {
       try {
+        // Get org name for email
+        const org = await prisma.organization.findUnique({
+          where: { id: tenantId },
+          select: { name: true },
+        });
+
         const emailContent = supplierApprovalEmail({
           companyName: supplier.name,
           serviceCategory: supplier.category || 'General',
           approvalDate: new Date(),
+          orgName: org?.name || 'Organization',
         });
         await sendEmail({
           to: supplier.primaryContactEmail,
@@ -100,12 +102,6 @@ export async function PATCH(
       message: 'Supplier approved successfully',
       supplier,
     });
-
-  } catch (error) {
-    console.error('Approve supplier error:', error);
-    return NextResponse.json(
-      { error: 'Failed to approve supplier' },
-      { status: 500 }
-    );
-  }
 }
+
+export const PATCH = withErrorHandler(approveSupplierHandler, { requireAdmin: true, requireModule: 'suppliers' });

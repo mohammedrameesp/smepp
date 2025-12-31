@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { formatCurrency } from '@/lib/payroll/utils';
-import { LoanActions } from '@/components/payroll/loan-actions';
+import { LoanActions } from '@/components/payroll';
 
 interface PageProps {
   params: Promise<{ id: string }>;

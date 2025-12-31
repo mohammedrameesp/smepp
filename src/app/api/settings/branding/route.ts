@@ -4,41 +4,46 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Role } from '@prisma/client';
 import logger from '@/lib/log';
-import { formatErrorResponse } from '@/lib/http/errors';
+import { formatErrorResponse, validationErrorResponse } from '@/lib/http/errors';
 import { z } from 'zod';
 
 const brandingSchema = z.object({
-  logoUrl: z.string().url().optional(),
+  logoUrl: z.string().url().optional().nullable(),
   primaryColor: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
-  secondaryColor: z.string().regex(/^#[0-9A-F]{6}$/i).optional(),
+  secondaryColor: z.string().regex(/^#[0-9A-F]{6}$/i).optional().nullable(),
   companyName: z.string().max(100).optional(),
 });
 
 export async function GET() {
   try {
-    const settings = await prisma.appSetting.findMany({
-      where: {
-        key: {
-          in: ['branding.logoUrl', 'branding.primaryColor', 'branding.secondaryColor', 'branding.companyName']
-        }
-      }
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.organizationId) {
+      return formatErrorResponse('Organization context required', 403);
+    }
+
+    const org = await prisma.organization.findUnique({
+      where: { id: session.user.organizationId },
+      select: {
+        name: true,
+        logoUrl: true,
+        primaryColor: true,
+        secondaryColor: true,
+      },
     });
 
-    const branding = settings.reduce((acc, setting) => {
-      const key = setting.key.replace('branding.', '');
-      acc[key] = setting.value;
-      return acc;
-    }, {} as Record<string, string>);
+    if (!org) {
+      return formatErrorResponse('Organization not found', 404);
+    }
 
     return NextResponse.json({
-      logoUrl: branding.logoUrl || null,
-      primaryColor: branding.primaryColor || '#3B82F6',
-      secondaryColor: branding.secondaryColor || null, // No fallback - solid color if not set
-      companyName: branding.companyName || 'Be Creative Portal',
+      logoUrl: org.logoUrl || null,
+      primaryColor: org.primaryColor || '#1E40AF',
+      secondaryColor: org.secondaryColor || null,
+      companyName: org.name || 'Durj',
     });
 
   } catch (error) {
-    logger.error({ error }, 'Failed to fetch branding settings');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Failed to fetch branding settings');
     return formatErrorResponse('Failed to fetch branding settings', 500);
   }
 }
@@ -46,63 +51,35 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
+    if (!session?.user?.organizationId) {
+      return formatErrorResponse('Organization context required', 403);
+    }
+    if (session.user.role !== Role.ADMIN) {
       return formatErrorResponse('Admin access required', 403);
     }
 
+    const tenantId = session.user.organizationId;
     const body = await request.json();
     const validation = brandingSchema.safeParse(body);
-    
+
     if (!validation.success) {
-      return formatErrorResponse('Invalid branding data', 400, validation.error.issues);
+      return validationErrorResponse(validation, 'Invalid branding data');
     }
 
     const { logoUrl, primaryColor, secondaryColor, companyName } = validation.data;
 
-    // Update each setting if provided
-    const updates = [];
-    
-    if (logoUrl !== undefined) {
-      updates.push(
-        prisma.appSetting.upsert({
-          where: { key: 'branding.logoUrl' },
-          update: { value: logoUrl },
-          create: { key: 'branding.logoUrl', value: logoUrl },
-        })
-      );
-    }
-    
-    if (primaryColor !== undefined) {
-      updates.push(
-        prisma.appSetting.upsert({
-          where: { key: 'branding.primaryColor' },
-          update: { value: primaryColor },
-          create: { key: 'branding.primaryColor', value: primaryColor },
-        })
-      );
-    }
-    
-    if (secondaryColor !== undefined) {
-      updates.push(
-        prisma.appSetting.upsert({
-          where: { key: 'branding.secondaryColor' },
-          update: { value: secondaryColor },
-          create: { key: 'branding.secondaryColor', value: secondaryColor },
-        })
-      );
-    }
-    
-    if (companyName !== undefined) {
-      updates.push(
-        prisma.appSetting.upsert({
-          where: { key: 'branding.companyName' },
-          update: { value: companyName },
-          create: { key: 'branding.companyName', value: companyName },
-        })
-      );
-    }
+    // Build update object only for provided fields
+    const updateData: Record<string, string | null> = {};
+    if (logoUrl !== undefined) updateData.logoUrl = logoUrl;
+    if (primaryColor !== undefined) updateData.primaryColor = primaryColor;
+    if (secondaryColor !== undefined) updateData.secondaryColor = secondaryColor;
+    if (companyName !== undefined) updateData.name = companyName;
 
-    await prisma.$transaction(updates);
+    // Update organization branding
+    await prisma.organization.update({
+      where: { id: tenantId },
+      data: updateData,
+    });
 
     // Log the activity
     await prisma.activityLog.create({
@@ -110,19 +87,20 @@ export async function PUT(request: NextRequest) {
         actorUserId: session.user.id,
         action: 'BRANDING_UPDATED',
         payload: validation.data,
-        tenantId: session.user.organizationId!,
+        tenantId,
       },
     });
 
-    logger.info({ 
-      userId: session.user.id, 
-      settings: validation.data 
+    logger.info({
+      userId: session.user.id,
+      tenantId,
+      settings: validation.data
     }, 'Branding settings updated');
 
     return NextResponse.json({ success: true });
 
   } catch (error) {
-    logger.error({ error }, 'Failed to update branding settings');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Failed to update branding settings');
     return formatErrorResponse('Failed to update branding settings', 500);
   }
 }

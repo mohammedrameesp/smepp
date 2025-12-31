@@ -1,5 +1,7 @@
 /**
- * Application-wide constants
+ * @file constants.ts
+ * @description Application-wide constants and exchange rate utilities for currency conversion
+ * @module lib/core
  */
 
 import { prisma } from './prisma';

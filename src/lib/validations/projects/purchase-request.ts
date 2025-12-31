@@ -1,3 +1,9 @@
+/**
+ * @file purchase-request.ts
+ * @description Validation schemas for purchase request workflows including items, vendor details, and status updates
+ * @module validations/projects
+ */
+
 import { z } from 'zod';
 
 // Enum schemas matching Prisma enums

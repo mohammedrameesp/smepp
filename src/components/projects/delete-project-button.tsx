@@ -1,3 +1,9 @@
+/**
+ * @file delete-project-button.tsx
+ * @description Delete project button with confirmation dialog
+ * @module components/projects
+ */
+
 'use client';
 
 import { useState } from 'react';

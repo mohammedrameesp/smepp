@@ -1,3 +1,9 @@
+/**
+ * @file page-wrapper.tsx
+ * @description Page wrapper components for consistent layout and styling
+ * @module components/layout
+ */
+
 import { ReactNode } from 'react';
 import { theme } from '@/lib/theme';
 
@@ -5,11 +11,6 @@ interface PageWrapperProps {
   children: ReactNode;
   className?: string;
 }
-
-/**
- * PageWrapper provides consistent gradient background and styling
- * matching the professional login page design
- */
 export function PageWrapper({ children, className = '' }: PageWrapperProps) {
   return (
     <div className={`min-h-screen bg-gradient-to-br ${theme.loginGradient} ${className}`}>

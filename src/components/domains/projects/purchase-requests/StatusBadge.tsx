@@ -1,3 +1,8 @@
+/**
+ * @file StatusBadge.tsx
+ * @description Badge components for displaying purchase request status and priority
+ * @module components/domains/projects/purchase-requests
+ */
 'use client';
 
 import { Badge } from '@/components/ui/badge';

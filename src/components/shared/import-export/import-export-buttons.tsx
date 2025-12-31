@@ -1,3 +1,9 @@
+/**
+ * @file import-export-buttons.tsx
+ * @description Import and export buttons for Excel data operations
+ * @module components/shared
+ */
+
 'use client';
 
 import { useState } from 'react';

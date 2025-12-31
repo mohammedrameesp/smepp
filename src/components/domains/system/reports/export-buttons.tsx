@@ -1,3 +1,8 @@
+/**
+ * @file export-buttons.tsx
+ * @description Export and backup buttons for assets, subscriptions, users with restore functionality
+ * @module components/domains/system/reports
+ */
 'use client';
 
 import { Button } from '@/components/ui/button';

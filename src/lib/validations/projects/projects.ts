@@ -1,3 +1,9 @@
+/**
+ * @file projects.ts
+ * @description Validation schemas for simple project (cost center) CRUD operations
+ * @module validations/projects
+ */
+
 import { z } from 'zod';
 
 export const createProjectSchema = z.object({

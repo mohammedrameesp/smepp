@@ -1,3 +1,9 @@
+/**
+ * @file sidebar.tsx
+ * @description Collapsible sidebar navigation component for desktop
+ * @module components/layout
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

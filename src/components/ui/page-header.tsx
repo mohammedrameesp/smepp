@@ -1,3 +1,9 @@
+/**
+ * @file page-header.tsx
+ * @description Page header components with breadcrumbs, title, and action buttons
+ * @module components/ui
+ */
+
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';

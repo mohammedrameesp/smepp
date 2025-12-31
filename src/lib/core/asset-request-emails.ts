@@ -15,9 +15,9 @@ function getTenantPortalUrl(orgSlug: string, path: string = ''): string {
   return `${protocol}://${orgSlug}.${APP_DOMAIN}${path}`;
 }
 
-function formatTimestamp(): string {
+function formatTimestamp(timezone: string = 'Asia/Qatar'): string {
   return new Date().toLocaleString('en-GB', {
-    timeZone: 'Asia/Qatar',
+    timeZone: timezone,
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -26,7 +26,7 @@ function formatTimestamp(): string {
   });
 }
 
-function emailWrapper(content: string): string {
+function emailWrapper(content: string, orgName: string): string {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -39,7 +39,7 @@ function emailWrapper(content: string): string {
     <!-- Header -->
     <tr>
       <td style="background-color: ${BRAND_COLOR}; padding: 30px 40px; text-align: center;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">Be Creative Portal</h1>
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">${orgName}</h1>
       </td>
     </tr>
 
@@ -54,7 +54,7 @@ function emailWrapper(content: string): string {
     <tr>
       <td style="background-color: #f8f9fa; padding: 25px 40px; text-align: center; border-top: 1px solid #eeeeee;">
         <p style="color: #888888; font-size: 12px; margin: 0 0 10px 0;">
-          This is an automated message from Be Creative Portal.
+          This is an automated message from ${orgName}.
         </p>
         <p style="color: #888888; font-size: 12px; margin: 0;">
           Generated on ${formatTimestamp()}
@@ -74,6 +74,7 @@ interface AssetRequestEmailData {
   assetBrand: string | null;
   assetType: string;
   orgSlug: string;
+  orgName: string;
 }
 
 // Employee submits asset request -> Admin notification
@@ -153,9 +154,9 @@ export function assetRequestSubmittedEmail(data: AssetRequestSubmittedData): { s
     </table>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
-      Best regards,<br><strong>Be Creative Portal</strong>
+      Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 New Asset Request - ${data.requestNumber}
@@ -261,9 +262,9 @@ export function assetAssignmentPendingEmail(data: AssetAssignmentPendingData): {
     </table>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
-      Best regards,<br><strong>Be Creative IT Team</strong>
+      Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 Asset Assignment Pending Your Acceptance
@@ -336,9 +337,9 @@ export function assetAssignmentAcceptedEmail(data: AssetAssignmentAcceptedData):
     </table>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
-      Best regards,<br><strong>Be Creative Portal</strong>
+      Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 Asset Assignment Accepted
@@ -416,9 +417,9 @@ export function assetAssignmentDeclinedEmail(data: AssetAssignmentDeclinedData):
     </table>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
-      Best regards,<br><strong>Be Creative Portal</strong>
+      Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 Asset Assignment Declined
@@ -510,9 +511,9 @@ export function assetReturnRequestEmail(data: AssetReturnRequestData): { subject
     </table>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
-      Best regards,<br><strong>Be Creative Portal</strong>
+      Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 Asset Return Request - ${data.requestNumber}
@@ -599,9 +600,9 @@ export function assetRequestRejectedEmail(data: AssetRequestRejectedData): { sub
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       If you have questions, please contact IT support.<br><br>
-      Best regards,<br><strong>Be Creative IT Team</strong>
+      Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 Asset Request Rejected
@@ -690,9 +691,9 @@ export function assetReturnRejectedEmail(data: AssetReturnRejectedData): { subje
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       If you have questions, please contact IT support.<br><br>
-      Best regards,<br><strong>Be Creative IT Team</strong>
+      Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 Asset Return Request Rejected
@@ -770,9 +771,9 @@ export function assetReturnApprovedEmail(data: AssetReturnApprovedData): { subje
     </table>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
-      Best regards,<br><strong>Be Creative IT Team</strong>
+      Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `);
+  `, data.orgName);
 
   const text = `
 Asset Return Approved

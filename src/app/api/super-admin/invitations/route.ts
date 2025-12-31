@@ -1,11 +1,13 @@
+/**
+ * @file route.ts
+ * @description List all pending organization invitations across the platform
+ * @module system/super-admin
+ */
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// GET /api/super-admin/invitations - List all pending invitations
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export async function GET() {
   try {

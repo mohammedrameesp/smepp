@@ -1,3 +1,8 @@
+/**
+ * @file document-upload.tsx
+ * @description Document upload component with file validation and preview functionality
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState } from 'react';

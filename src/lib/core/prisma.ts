@@ -1,3 +1,10 @@
+/**
+ * @file prisma.ts
+ * @description Prisma client singleton with serverless-optimized connection pooling
+ *              and query timeout configuration
+ * @module lib/core
+ */
+
 import { PrismaClient } from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as {

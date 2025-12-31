@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description User CRUD operations by ID (get, update, delete)
+ * @module system/users
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -147,6 +153,7 @@ export async function PUT(
 
     // Log activity
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.USER_UPDATED,
       'User',
@@ -284,6 +291,7 @@ export async function DELETE(
 
     // Log activity
     await logAction(
+      tenantId,
       session.user.id,
       ActivityActions.USER_DELETED,
       'User',

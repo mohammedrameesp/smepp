@@ -1,7 +1,12 @@
+/**
+ * @file route.ts
+ * @description Export purchase requests to Excel or JSON
+ * @module projects/purchase-requests
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import ExcelJS from 'exceljs';
 import {
@@ -12,20 +17,21 @@ import {
   getPaymentModeLabel,
   getBillingCycleLabel,
 } from '@/lib/purchase-request-utils';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-export async function GET(request: NextRequest) {
-  try {
+async function exportPurchaseRequestsHandler(request: NextRequest, _context: APIContext) {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user?.organizationId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
+    const tenantId = session.user.organizationId;
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'xlsx';
     const status = searchParams.get('status');
 
-    // Build where clause
-    const where: any = {};
+    // Build where clause with tenant filtering
+    const where: any = { tenantId };
     if (status && status !== 'all') {
       where.status = status;
     }
@@ -59,9 +65,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(requests);
     }
 
+    // Fetch organization name for workbook metadata
+    const org = await prisma.organization.findUnique({
+      where: { id: tenantId },
+      select: { name: true },
+    });
+
     // Create Excel workbook
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'Be Creative Portal';
+    workbook.creator = org?.name || 'Durj';
     workbook.created = new Date();
 
     // Sheet 1: Purchase Requests
@@ -208,11 +220,6 @@ export async function GET(request: NextRequest) {
         'Content-Disposition': `attachment; filename="${filename}"`,
       },
     });
-  } catch (error) {
-    console.error('Purchase requests export error:', error);
-    return NextResponse.json(
-      { error: 'Failed to export purchase requests' },
-      { status: 500 }
-    );
-  }
 }
+
+export const GET = withErrorHandler(exportPurchaseRequestsHandler, { requireAdmin: true, requireModule: 'purchase-requests' });

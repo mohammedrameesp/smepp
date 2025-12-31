@@ -1,4 +1,12 @@
+/**
+ * @file upload.ts
+ * @description File upload utilities - multipart form parsing, file validation,
+ *              and MIME type checking for secure file uploads
+ * @module lib/core
+ */
+
 import { IncomingForm, File } from 'formidable';
+import { IncomingMessage } from 'http';
 import { NextRequest } from 'next/server';
 import mime from 'mime';
 import fs from 'fs/promises';
@@ -59,10 +67,13 @@ export async function parseMultipartForm(req: NextRequest): Promise<ParsedUpload
 
         const buffer = Buffer.concat(chunks);
 
-        // Create a proper mock IncomingMessage with all required properties
+        // Create a mock IncomingMessage for formidable
+        // formidable expects a Node.js IncomingMessage but Next.js provides Web Request
+        // We create a minimal mock that satisfies formidable's requirements
         type EventHandler = (...args: unknown[]) => void;
         const eventHandlers: Record<string, EventHandler[]> = {};
 
+        // Mock object implementing the subset of IncomingMessage needed by formidable
         const mockReq = {
           headers: Object.fromEntries(req.headers.entries()),
           method: req.method,
@@ -71,17 +82,11 @@ export async function parseMultipartForm(req: NextRequest): Promise<ParsedUpload
           httpVersionMajor: 1,
           httpVersionMinor: 1,
           readable: true,
+          aborted: false,
+          complete: false,
           destroyed: false,
-          socket: {
-            readable: true,
-            writable: true,
-            destroyed: false,
-            on: () => {},
-            once: () => {},
-            emit: () => {},
-            removeListener: () => {},
-          },
-          pipe: (dest: any) => {
+          socket: null,
+          pipe: <T extends NodeJS.WritableStream>(dest: T): T => {
             dest.write(buffer);
             dest.end();
             return dest;
@@ -100,7 +105,7 @@ export async function parseMultipartForm(req: NextRequest): Promise<ParsedUpload
             eventHandlers[event].push(cb);
             return mockReq;
           },
-          emit: (event: string, ...args: any[]) => {
+          emit: (event: string, ...args: unknown[]) => {
             const handlers = eventHandlers[event] || [];
             handlers.forEach(handler => handler(...args));
             return true;
@@ -119,9 +124,10 @@ export async function parseMultipartForm(req: NextRequest): Promise<ParsedUpload
           unpipe: () => mockReq,
           unshift: () => {},
           wrap: () => mockReq,
-        } as any;
+        };
 
-        form.parse(mockReq, (err, fields, files) => {
+        // Cast to IncomingMessage - this mock provides enough interface for formidable
+        form.parse(mockReq as unknown as IncomingMessage, (err, fields, files) => {
           if (err) {
             reject(err);
             return;

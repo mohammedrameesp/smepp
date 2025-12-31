@@ -1,3 +1,9 @@
+/**
+ * @file company-documents.ts
+ * @description Validation schemas for company and vehicle document management with expiry tracking
+ * @module validations/system
+ */
+
 import { z } from 'zod';
 
 // ============================================================================

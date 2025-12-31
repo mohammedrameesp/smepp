@@ -1,3 +1,9 @@
+/**
+ * @file providers.tsx
+ * @description Application providers wrapper for session, notifications, and toasts
+ * @module components
+ */
+
 'use client';
 
 import { SessionProvider } from 'next-auth/react';

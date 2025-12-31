@@ -1,3 +1,8 @@
+/**
+ * @file employee-profile-view-only.tsx
+ * @description Read-only employee profile view for employee self-service, with request changes functionality
+ * @module components/domains/hr
+ */
 'use client';
 
 import { useState } from 'react';
