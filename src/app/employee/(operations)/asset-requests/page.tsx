@@ -18,7 +18,7 @@ export default async function EmployeeAssetRequestsPage() {
   // Fetch user's asset requests
   const requests = await prisma.assetRequest.findMany({
     where: {
-      userId: session.user.id,
+      memberId: session.user.id,
     },
     include: {
       asset: {
@@ -30,14 +30,14 @@ export default async function EmployeeAssetRequestsPage() {
           type: true,
         },
       },
-      user: {
+      member: {
         select: {
           id: true,
           name: true,
           email: true,
         },
       },
-      assignedByUser: {
+      assignedByMember: {
         select: {
           id: true,
           name: true,

@@ -35,7 +35,7 @@ interface Subscription {
   autoRenew: boolean;
   paymentMethod?: string;
   notes?: string;
-  assignedUserId?: string;
+  assignedMemberId?: string;
   projectId?: string;
 }
 
@@ -74,7 +74,7 @@ export default function EditSubscriptionPage() {
       autoRenew: true,
       paymentMethod: '',
       notes: '',
-      assignedUserId: '',
+      assignedMemberId: '',
       assignmentDate: ''
     },
     mode: 'onChange',
@@ -87,7 +87,7 @@ export default function EditSubscriptionPage() {
   const watchedPurchaseDate = watch('purchaseDate');
   const watchedBillingCycle = watch('billingCycle');
   const watchedRenewalDate = watch('renewalDate');
-  const watchedAssignedUserId = watch('assignedUserId');
+  const watchedAssignedMemberId = watch('assignedMemberId');
   const watchedAssignmentDate = watch('assignmentDate');
 
   useEffect(() => {
@@ -220,7 +220,7 @@ export default function EditSubscriptionPage() {
 
         // Fetch assignment history to get the last assignment date
         let assignmentDateValue = '';
-        if (subscriptionData.assignedUserId) {
+        if (subscriptionData.assignedMemberId) {
           try {
             // Fetch subscription history
             const historyResponse = await fetch(`/api/subscriptions/${id}`);
@@ -230,7 +230,7 @@ export default function EditSubscriptionPage() {
               const assignmentHistory = data.history
                 ?.filter((h: any) =>
                   (h.action === 'REASSIGNED' || h.action === 'CREATED') &&
-                  h.newUserId === subscriptionData.assignedUserId
+                  h.newUserId === subscriptionData.assignedMemberId
                 )
                 .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -269,7 +269,7 @@ export default function EditSubscriptionPage() {
           autoRenew: subscriptionData.autoRenew ?? true,
           paymentMethod: subscriptionData.paymentMethod || '',
           notes: subscriptionData.notes || '',
-          assignedUserId: subscriptionData.assignedUserId || '',
+          assignedMemberId: subscriptionData.assignedMemberId || '',
           assignmentDate: assignmentDateValue
         });
       } else {
@@ -319,7 +319,7 @@ export default function EditSubscriptionPage() {
           autoRenew: data.autoRenew,
           paymentMethod: data.paymentMethod || null,
           notes: data.notes || null,
-          assignedUserId: data.assignedUserId || null,
+          assignedMemberId: data.assignedMemberId || null,
           assignmentDate: data.assignmentDate || null,
         }),
       });
@@ -348,7 +348,7 @@ export default function EditSubscriptionPage() {
     const newUserId = value === "__none__" ? '' : value;
     const currentAssignmentDate = watch('assignmentDate');
 
-    setValue('assignedUserId', newUserId);
+    setValue('assignedMemberId', newUserId);
 
     // If user is being unassigned, clear assignment date
     if (!newUserId) {
@@ -360,11 +360,12 @@ export default function EditSubscriptionPage() {
 
   if (!subscription) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-2xl mx-auto">
+      <>
+        <PageHeader title="Edit Subscription" subtitle="Loading..." />
+        <PageContent>
           <div className="text-center">Loading...</div>
-        </div>
-      </div>
+        </PageContent>
+      </>
     );
   }
 
@@ -613,12 +614,12 @@ export default function EditSubscriptionPage() {
                 <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Assignment</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="assignedUserId">Assign to User *</Label>
+                    <Label htmlFor="assignedMemberId">Assign to User *</Label>
                     <Select
-                      value={watchedAssignedUserId || "__none__"}
+                      value={watchedAssignedMemberId || "__none__"}
                       onValueChange={handleAssignedUserChange}
                     >
-                      <SelectTrigger className={errors.assignedUserId ? 'border-red-500' : ''}>
+                      <SelectTrigger className={errors.assignedMemberId ? 'border-red-500' : ''}>
                         <SelectValue placeholder="Select user..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -630,14 +631,14 @@ export default function EditSubscriptionPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {errors.assignedUserId && (
-                      <p className="text-sm text-red-500">{errors.assignedUserId.message}</p>
+                    {errors.assignedMemberId && (
+                      <p className="text-sm text-red-500">{errors.assignedMemberId.message}</p>
                     )}
                     <p className="text-xs text-gray-500">
                       Required - Select the user for this subscription
                     </p>
                   </div>
-                  {watchedAssignedUserId && (
+                  {watchedAssignedMemberId && (
                     <div className="space-y-2">
                       <Label htmlFor="assignmentDate">Assignment Date *</Label>
                       <DatePicker

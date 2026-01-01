@@ -242,13 +242,14 @@ export async function executeFunction(
   switch (name) {
     case 'searchEmployees': {
       const query = (args.query as string).toLowerCase();
-      const users = await prisma.user.findMany({
+      const members = await prisma.teamMember.findMany({
         where: {
-          organizationMemberships: { some: { organizationId: tenantId } },
-          isDeleted: false,
+          tenantId,
+          status: 'ACTIVE',
           OR: [
             { name: { contains: query, mode: 'insensitive' } },
             { email: { contains: query, mode: 'insensitive' } },
+            { employeeCode: { contains: query, mode: 'insensitive' } },
           ],
         },
         select: {
@@ -256,36 +257,32 @@ export async function executeFunction(
           name: true,
           email: true,
           role: true,
-          hrProfile: {
-            select: {
-              employeeId: true,
-              designation: true,
-              dateOfJoining: true,
-            },
-          },
+          employeeCode: true,
+          designation: true,
+          dateOfJoining: true,
         },
         take: 10,
       });
-      return users.map((u) => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role,
-        employeeId: u.hrProfile?.employeeId,
-        designation: u.hrProfile?.designation,
-        dateOfJoining: u.hrProfile?.dateOfJoining,
+      return members.map((m) => ({
+        id: m.id,
+        name: m.name,
+        email: m.email,
+        role: m.role,
+        employeeId: m.employeeCode,
+        designation: m.designation,
+        dateOfJoining: m.dateOfJoining,
       }));
     }
 
     case 'getEmployeeDetails': {
       const employeeId = args.employeeId as string;
-      const user = await prisma.user.findFirst({
+      const member = await prisma.teamMember.findFirst({
         where: {
-          organizationMemberships: { some: { organizationId: tenantId } },
-          isDeleted: false,
+          tenantId,
+          status: 'ACTIVE',
           OR: [
             { id: employeeId },
-            { hrProfile: { employeeId: { equals: employeeId, mode: 'insensitive' } } },
+            { employeeCode: { equals: employeeId, mode: 'insensitive' } },
             { name: { contains: employeeId, mode: 'insensitive' } },
           ],
         },
@@ -294,17 +291,13 @@ export async function executeFunction(
           name: true,
           email: true,
           role: true,
-          hrProfile: {
-            select: {
-              employeeId: true,
-              designation: true,
-              dateOfJoining: true,
-              qidNumber: true,
-              qidExpiry: true,
-              passportExpiry: true,
-              nationality: true,
-            },
-          },
+          employeeCode: true,
+          designation: true,
+          dateOfJoining: true,
+          qidNumber: true,
+          qidExpiry: true,
+          passportExpiry: true,
+          nationality: true,
           _count: {
             select: {
               assets: true,
@@ -313,28 +306,28 @@ export async function executeFunction(
           },
         },
       });
-      if (!user) return { error: 'Employee not found' };
+      if (!member) return { error: 'Employee not found' };
       return {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        employeeId: user.hrProfile?.employeeId,
-        designation: user.hrProfile?.designation,
-        dateOfJoining: user.hrProfile?.dateOfJoining,
-        nationality: user.hrProfile?.nationality,
-        qidExpiry: user.hrProfile?.qidExpiry,
-        passportExpiry: user.hrProfile?.passportExpiry,
-        assetCount: user._count.assets,
-        subscriptionCount: user._count.subscriptions,
+        id: member.id,
+        name: member.name,
+        email: member.email,
+        role: member.role,
+        employeeId: member.employeeCode,
+        designation: member.designation,
+        dateOfJoining: member.dateOfJoining,
+        nationality: member.nationality,
+        qidExpiry: member.qidExpiry,
+        passportExpiry: member.passportExpiry,
+        assetCount: member._count.assets,
+        subscriptionCount: member._count.subscriptions,
       };
     }
 
     case 'getEmployeeSalary': {
       const employeeId = args.employeeId as string;
-      const user = await prisma.user.findFirst({
+      const member = await prisma.teamMember.findFirst({
         where: {
-          organizationMemberships: { some: { organizationId: tenantId } },
+          tenantId,
           OR: [
             { id: employeeId },
             { name: { contains: employeeId, mode: 'insensitive' } },
@@ -355,16 +348,16 @@ export async function executeFunction(
           },
         },
       });
-      if (!user) return { error: 'Employee not found' };
-      if (!user.salaryStructure) return { error: 'No salary structure found for this employee' };
+      if (!member) return { error: 'Employee not found' };
+      if (!member.salaryStructure) return { error: 'No salary structure found for this employee' };
       return {
-        name: user.name,
-        basicSalary: Number(user.salaryStructure.basicSalary),
-        housingAllowance: Number(user.salaryStructure.housingAllowance),
-        transportAllowance: Number(user.salaryStructure.transportAllowance),
-        foodAllowance: Number(user.salaryStructure.foodAllowance),
-        otherAllowances: Number(user.salaryStructure.otherAllowances),
-        grossSalary: Number(user.salaryStructure.grossSalary),
+        name: member.name,
+        basicSalary: Number(member.salaryStructure.basicSalary),
+        housingAllowance: Number(member.salaryStructure.housingAllowance),
+        transportAllowance: Number(member.salaryStructure.transportAllowance),
+        foodAllowance: Number(member.salaryStructure.foodAllowance),
+        otherAllowances: Number(member.salaryStructure.otherAllowances),
+        grossSalary: Number(member.salaryStructure.grossSalary),
       };
     }
 
@@ -381,7 +374,7 @@ export async function executeFunction(
           serviceName: true,
           vendor: true,
           costQAR: true,
-          assignedUser: {
+          assignedMember: {
             select: {
               name: true,
               email: true,
@@ -393,8 +386,8 @@ export async function executeFunction(
         serviceName: s.serviceName,
         vendor: s.vendor,
         cost: Number(s.costQAR),
-        assignedTo: s.assignedUser?.name || 'Unassigned',
-        email: s.assignedUser?.email,
+        assignedTo: s.assignedMember?.name || 'Unassigned',
+        email: s.assignedMember?.email,
       }));
     }
 
@@ -412,7 +405,7 @@ export async function executeFunction(
           status: true,
           costQAR: true,
           renewalDate: true,
-          assignedUser: {
+          assignedMember: {
             select: { name: true },
           },
         },
@@ -424,15 +417,15 @@ export async function executeFunction(
         status: s.status,
         cost: Number(s.costQAR),
         renewalDate: s.renewalDate,
-        assignedTo: s.assignedUser?.name || 'Unassigned',
+        assignedTo: s.assignedMember?.name || 'Unassigned',
       }));
     }
 
     case 'getEmployeeAssets': {
       const employeeId = args.employeeId as string;
-      const user = await prisma.user.findFirst({
+      const member = await prisma.teamMember.findFirst({
         where: {
-          organizationMemberships: { some: { organizationId: tenantId } },
+          tenantId,
           OR: [
             { id: employeeId },
             { name: { contains: employeeId, mode: 'insensitive' } },
@@ -451,10 +444,10 @@ export async function executeFunction(
           },
         },
       });
-      if (!user) return { error: 'Employee not found' };
+      if (!member) return { error: 'Employee not found' };
       return {
-        name: user.name,
-        assets: user.assets.map((a) => ({
+        name: member.name,
+        assets: member.assets.map((a) => ({
           model: a.model,
           brand: a.brand,
           type: a.type,
@@ -486,7 +479,7 @@ export async function executeFunction(
           brand: true,
           type: true,
           status: true,
-          assignedUser: {
+          assignedMember: {
             select: { name: true },
           },
         },
@@ -497,7 +490,7 @@ export async function executeFunction(
         brand: a.brand,
         type: a.type,
         status: a.status,
-        assignedTo: a.assignedUser?.name || 'Unassigned',
+        assignedTo: a.assignedMember?.name || 'Unassigned',
       }));
     }
 
@@ -512,7 +505,7 @@ export async function executeFunction(
           startDate: true,
           endDate: true,
           reason: true,
-          user: {
+          member: {
             select: { name: true },
           },
           leaveType: {
@@ -523,7 +516,7 @@ export async function executeFunction(
         orderBy: { createdAt: 'desc' },
       });
       return requests.map((r) => ({
-        employee: r.user.name,
+        employee: r.member.name,
         type: r.leaveType.name,
         startDate: r.startDate,
         endDate: r.endDate,
@@ -533,9 +526,9 @@ export async function executeFunction(
 
     case 'getEmployeeLeaveBalance': {
       const employeeId = args.employeeId as string;
-      const user = await prisma.user.findFirst({
+      const member = await prisma.teamMember.findFirst({
         where: {
-          organizationMemberships: { some: { organizationId: tenantId } },
+          tenantId,
           OR: [
             { id: employeeId },
             { name: { contains: employeeId, mode: 'insensitive' } },
@@ -546,12 +539,12 @@ export async function executeFunction(
           name: true,
         },
       });
-      if (!user) return { error: 'Employee not found' };
+      if (!member) return { error: 'Employee not found' };
 
       const balances = await prisma.leaveBalance.findMany({
         where: {
           tenantId,
-          userId: user.id,
+          memberId: member.id,
         },
         include: {
           leaveType: {
@@ -560,7 +553,7 @@ export async function executeFunction(
         },
       });
       return {
-        name: user.name,
+        name: member.name,
         balances: balances.map((b) => {
           const entitlement = Number(b.entitlement);
           const carriedForward = Number(b.carriedForward);
@@ -584,9 +577,10 @@ export async function executeFunction(
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + daysAhead);
 
-      const profiles = await prisma.hRProfile.findMany({
+      const members = await prisma.teamMember.findMany({
         where: {
           tenantId,
+          isEmployee: true,
           OR: [
             { qidExpiry: { lte: futureDate, gte: new Date() } },
             { passportExpiry: { lte: futureDate, gte: new Date() } },
@@ -594,7 +588,7 @@ export async function executeFunction(
           ],
         },
         select: {
-          user: { select: { name: true } },
+          name: true,
           qidExpiry: true,
           passportExpiry: true,
           healthCardExpiry: true,
@@ -602,15 +596,15 @@ export async function executeFunction(
       });
 
       const expiring: { name: string; document: string; expiryDate: Date }[] = [];
-      for (const p of profiles) {
-        if (p.qidExpiry && p.qidExpiry <= futureDate) {
-          expiring.push({ name: p.user.name!, document: 'QID', expiryDate: p.qidExpiry });
+      for (const m of members) {
+        if (m.qidExpiry && m.qidExpiry <= futureDate) {
+          expiring.push({ name: m.name!, document: 'QID', expiryDate: m.qidExpiry });
         }
-        if (p.passportExpiry && p.passportExpiry <= futureDate) {
-          expiring.push({ name: p.user.name!, document: 'Passport', expiryDate: p.passportExpiry });
+        if (m.passportExpiry && m.passportExpiry <= futureDate) {
+          expiring.push({ name: m.name!, document: 'Passport', expiryDate: m.passportExpiry });
         }
-        if (p.healthCardExpiry && p.healthCardExpiry <= futureDate) {
-          expiring.push({ name: p.user.name!, document: 'Health Card', expiryDate: p.healthCardExpiry });
+        if (m.healthCardExpiry && m.healthCardExpiry <= futureDate) {
+          expiring.push({ name: m.name!, document: 'Health Card', expiryDate: m.healthCardExpiry });
         }
       }
       return expiring.sort((a, b) => a.expiryDate.getTime() - b.expiryDate.getTime());
@@ -629,10 +623,10 @@ export async function executeFunction(
     }
 
     case 'getEmployeeCount': {
-      const count = await prisma.user.count({
+      const count = await prisma.teamMember.count({
         where: {
-          organizationMemberships: { some: { organizationId: tenantId } },
-          isDeleted: false,
+          tenantId,
+          status: 'ACTIVE',
           isEmployee: true,
         },
       });

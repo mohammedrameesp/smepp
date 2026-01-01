@@ -24,10 +24,8 @@ interface Employee {
   id: string;
   name: string | null;
   email: string;
-  hrProfile?: {
-    employeeId: string | null;
-    designation: string | null;
-  };
+  employeeCode?: string | null;
+  designation?: string | null;
   salaryStructure?: {
     id: string;
   } | null;
@@ -63,7 +61,7 @@ export default function NewSalaryStructurePage() {
   const [percentages, setPercentages] = useState<Percentages>(DEFAULT_PERCENTAGES);
   const [showCustomPercentages, setShowCustomPercentages] = useState(false);
 
-  const [userId, setUserId] = useState('');
+  const [memberId, setMemberId] = useState('');
   const [basicSalary, setBasicSalary] = useState('');
   const [housingAllowance, setHousingAllowance] = useState('');
   const [transportAllowance, setTransportAllowance] = useState('');
@@ -89,13 +87,10 @@ export default function NewSalaryStructurePage() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/users?includeAll=true')
+    fetch('/api/team?isEmployee=true&noSalaryStructure=true')
       .then((res) => res.json())
       .then((data) => {
-        const availableEmployees = (data.users || []).filter(
-          (emp: Employee) => !emp.salaryStructure
-        );
-        setEmployees(availableEmployees);
+        setEmployees(data.members || []);
       })
       .catch(() => toast.error('Failed to load employees'))
       .finally(() => setLoadingEmployees(false));
@@ -136,7 +131,7 @@ export default function NewSalaryStructurePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!userId) {
+    if (!memberId) {
       toast.error('Please select an employee');
       return;
     }
@@ -153,7 +148,7 @@ export default function NewSalaryStructurePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
+          memberId,
           basicSalary: basic,
           housingAllowance: housing,
           transportAllowance: transport,
@@ -179,7 +174,7 @@ export default function NewSalaryStructurePage() {
     }
   };
 
-  const selectedEmployee = employees.find((emp) => emp.id === userId);
+  const selectedEmployee = employees.find((emp) => emp.id === memberId);
 
   const updatePercentage = (key: keyof Percentages, value: string) => {
     const numValue = parseFloat(value) || 0;
@@ -213,7 +208,7 @@ export default function NewSalaryStructurePage() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="employee">Select Employee</Label>
-                    <Select value={userId} onValueChange={setUserId} disabled={loadingEmployees}>
+                    <Select value={memberId} onValueChange={setMemberId} disabled={loadingEmployees}>
                       <SelectTrigger id="employee">
                         <SelectValue placeholder={loadingEmployees ? 'Loading...' : 'Select an employee'} />
                       </SelectTrigger>
@@ -226,7 +221,7 @@ export default function NewSalaryStructurePage() {
                           employees.map((emp) => (
                             <SelectItem key={emp.id} value={emp.id}>
                               {emp.name || emp.email}
-                              {emp.hrProfile?.employeeId && ` (${emp.hrProfile.employeeId})`}
+                              {emp.employeeCode && ` (${emp.employeeCode})`}
                             </SelectItem>
                           ))
                         )}
@@ -260,7 +255,7 @@ export default function NewSalaryStructurePage() {
                       <div>
                         <span className="text-muted-foreground">Designation:</span>{' '}
                         <span className="font-medium">
-                          {selectedEmployee.hrProfile?.designation || 'Not set'}
+                          {selectedEmployee.designation || 'Not set'}
                         </span>
                       </div>
                     </div>
@@ -541,7 +536,7 @@ export default function NewSalaryStructurePage() {
                 </div>
 
                 <div className="mt-6">
-                  <Button type="submit" className="w-full" disabled={isLoading || !userId || basic <= 0}>
+                  <Button type="submit" className="w-full" disabled={isLoading || !memberId || basic <= 0}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Create Salary Structure
                   </Button>

@@ -27,7 +27,7 @@ interface Asset {
   serial: string | null;
   supplier: string | null;
   configuration: string | null;
-  assignedUser: {
+  assignedMember: {
     id: string;
     name: string | null;
     email: string;
@@ -69,8 +69,8 @@ export function AssetListTable({ assets }: AssetListTableProps) {
         asset.serial?.toLowerCase().includes(term) ||
         asset.supplier?.toLowerCase().includes(term) ||
         asset.configuration?.toLowerCase().includes(term) ||
-        asset.assignedUser?.name?.toLowerCase().includes(term) ||
-        asset.assignedUser?.email?.toLowerCase().includes(term)
+        asset.assignedMember?.name?.toLowerCase().includes(term) ||
+        asset.assignedMember?.email?.toLowerCase().includes(term)
       );
     }
 
@@ -110,9 +110,9 @@ export function AssetListTable({ assets }: AssetListTableProps) {
           aValue = a.price ? parseFloat(a.price) : 0;
           bValue = b.price ? parseFloat(b.price) : 0;
           break;
-        case 'assignedUser':
-          aValue = a.assignedUser?.name || a.assignedUser?.email || 'zzz';
-          bValue = b.assignedUser?.name || b.assignedUser?.email || 'zzz';
+        case 'assignedMember':
+          aValue = a.assignedMember?.name || a.assignedMember?.email || 'zzz';
+          bValue = b.assignedMember?.name || b.assignedMember?.email || 'zzz';
           break;
         default:
           return 0;
@@ -153,7 +153,7 @@ export function AssetListTable({ assets }: AssetListTableProps) {
   return (
     <div>
       {/* Filters */}
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div>
           <Input
             placeholder="Search assets..."
@@ -202,7 +202,7 @@ export function AssetListTable({ assets }: AssetListTableProps) {
               <SelectItem value="type">Type</SelectItem>
               <SelectItem value="status">Status</SelectItem>
               <SelectItem value="price">Price</SelectItem>
-              <SelectItem value="assignedUser">Assigned To</SelectItem>
+              <SelectItem value="assignedMember">Assigned To</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -215,6 +215,7 @@ export function AssetListTable({ assets }: AssetListTableProps) {
 
       {/* Table */}
       {filteredAndSortedAssets.length > 0 ? (
+        <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -225,7 +226,7 @@ export function AssetListTable({ assets }: AssetListTableProps) {
                 Asset Tag {sortBy === 'assetTag' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead
-                className="cursor-pointer hover:bg-gray-100"
+                className="cursor-pointer hover:bg-gray-100 hidden lg:table-cell"
                 onClick={() => toggleSort('brand')}
               >
                 Brand {sortBy === 'brand' && (sortOrder === 'asc' ? '↑' : '↓')}
@@ -237,7 +238,7 @@ export function AssetListTable({ assets }: AssetListTableProps) {
                 Model {sortBy === 'model' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead
-                className="cursor-pointer hover:bg-gray-100"
+                className="cursor-pointer hover:bg-gray-100 hidden md:table-cell"
                 onClick={() => toggleSort('type')}
               >
                 Type {sortBy === 'type' && (sortOrder === 'asc' ? '↑' : '↓')}
@@ -249,13 +250,13 @@ export function AssetListTable({ assets }: AssetListTableProps) {
                 Status {sortBy === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead
-                className="cursor-pointer hover:bg-gray-100"
-                onClick={() => toggleSort('assignedUser')}
+                className="cursor-pointer hover:bg-gray-100 hidden lg:table-cell"
+                onClick={() => toggleSort('assignedMember')}
               >
-                Assigned To {sortBy === 'assignedUser' && (sortOrder === 'asc' ? '↑' : '↓')}
+                Assigned To {sortBy === 'assignedMember' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead
-                className="text-right cursor-pointer hover:bg-gray-100"
+                className="text-right cursor-pointer hover:bg-gray-100 hidden xl:table-cell"
                 onClick={() => toggleSort('price')}
               >
                 Price {sortBy === 'price' && (sortOrder === 'asc' ? '↑' : '↓')}
@@ -269,27 +270,27 @@ export function AssetListTable({ assets }: AssetListTableProps) {
                 <TableCell className="font-mono text-sm">
                   {asset.assetTag || 'N/A'}
                 </TableCell>
-                <TableCell>{asset.brand || '-'}</TableCell>
+                <TableCell className="hidden lg:table-cell">{asset.brand || '-'}</TableCell>
                 <TableCell className="font-medium">{asset.model}</TableCell>
-                <TableCell>{asset.type}</TableCell>
+                <TableCell className="hidden md:table-cell">{asset.type}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusBadgeVariant(asset.status)}>
                     {asset.status.replace('_', ' ')}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  {asset.assignedUser ? (
+                <TableCell className="hidden lg:table-cell">
+                  {asset.assignedMember ? (
                     <Link
-                      href={`/admin/users/${asset.assignedUser.id}`}
+                      href={`/admin/users/${asset.assignedMember.id}`}
                       className="font-semibold text-gray-700 hover:text-gray-900 hover:underline"
                     >
-                      {asset.assignedUser.name || asset.assignedUser.email || 'Unknown User'}
+                      {asset.assignedMember.name || asset.assignedMember.email || 'Unknown User'}
                     </Link>
                   ) : (
                     <span className="text-gray-400">Unassigned</span>
                   )}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right hidden xl:table-cell">
                   {asset.price ? `${asset.priceCurrency === 'USD' ? '$' : 'QAR'} ${parseFloat(asset.price).toFixed(2)}` : 'N/A'}
                 </TableCell>
                 <TableCell>
@@ -299,6 +300,7 @@ export function AssetListTable({ assets }: AssetListTableProps) {
             ))}
           </TableBody>
         </Table>
+        </div>
       ) : (
         <div className="text-center py-8 text-gray-500">
           No assets found matching your filters

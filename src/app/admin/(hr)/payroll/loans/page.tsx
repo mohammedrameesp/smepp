@@ -66,22 +66,19 @@ export default async function LoansPage({ searchParams }: PageProps) {
     prisma.employeeLoan.findMany({
       where,
       include: {
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
             email: true,
-            hrProfile: {
-              select: {
-                employeeId: true,
-                designation: true,
-              },
-            },
+            employeeCode: true,
+            designation: true,
           },
         },
         approvedBy: {
           select: { name: true },
         },
+        repayments: true,
       },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * pageSize,
@@ -207,9 +204,9 @@ export default async function LoansPage({ searchParams }: PageProps) {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{loan.user.name}</div>
+                        <div className="font-medium">{loan.member?.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {loan.user.hrProfile?.employeeId || loan.user.email}
+                          {loan.member?.employeeCode || loan.member?.email}
                         </div>
                       </div>
                     </TableCell>

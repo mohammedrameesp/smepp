@@ -23,25 +23,19 @@ export async function GET() {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
-    // Fetch all users with related data (tenant-scoped)
+    // Fetch all users (tenant-scoped)
+    // Note: Assets/subscriptions are now linked to TeamMember, not User
     const users = await prisma.user.findMany({
       where: {
         organizationMemberships: {
           some: { organizationId: session.user.organizationId },
         },
       },
-      include: {
-        _count: {
-          select: {
-            assets: true,
-            subscriptions: true,
-          },
-        },
-      },
       orderBy: { createdAt: 'desc' },
     });
 
     // Transform data for CSV
+    // Note: Asset/subscription counts are no longer available on User model
     const csvData = users.map(user => ({
       id: user.id,
       name: user.name || '',
@@ -49,14 +43,13 @@ export async function GET() {
       role: user.role,
       isSystemAccount: user.isSystemAccount ? 'Yes' : 'No',
       emailVerified: user.emailVerified ? 'Yes' : 'No',
-      assignedAssets: user._count.assets,
-      assignedSubscriptions: user._count.subscriptions,
       image: user.image || '',
       createdAt: user.createdAt.toISOString().split('T')[0],
       updatedAt: user.updatedAt.toISOString().split('T')[0],
     }));
 
     // Define CSV headers
+    // Note: Asset/subscription counts removed (now on TeamMember model)
     const headers = [
       { key: 'id', header: 'ID' },
       { key: 'name', header: 'Name' },
@@ -64,8 +57,6 @@ export async function GET() {
       { key: 'role', header: 'Role' },
       { key: 'isSystemAccount', header: 'System Account' },
       { key: 'emailVerified', header: 'Email Verified' },
-      { key: 'assignedAssets', header: 'Assigned Assets' },
-      { key: 'assignedSubscriptions', header: 'Assigned Subscriptions' },
       { key: 'image', header: 'Profile Image URL' },
       { key: 'createdAt', header: 'Created At' },
       { key: 'updatedAt', header: 'Updated At' },

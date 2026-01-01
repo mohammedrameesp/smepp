@@ -18,7 +18,7 @@ export default async function EmployeeSubscriptionsPage() {
     // Fetch all subscriptions with related data
     const subscriptionsRaw = await prisma.subscription.findMany({
       include: {
-        assignedUser: {
+        assignedMember: {
           select: {
             id: true,
             name: true,
@@ -36,7 +36,7 @@ export default async function EmployeeSubscriptionsPage() {
     }));
 
     // Calculate stats
-    const mySubscriptions = subscriptions.filter(s => s.assignedUserId === session.user.id);
+    const mySubscriptions = subscriptions.filter(s => s.assignedMemberId === session.user.id);
     const activeSubscriptions = subscriptions.filter(s => s.status === 'ACTIVE');
     const myActiveSubscriptions = mySubscriptions.filter(s => s.status === 'ACTIVE');
 

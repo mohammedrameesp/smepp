@@ -37,9 +37,9 @@ async function getLoansHandler(request: NextRequest, context: APIContext) {
 
     // Non-admin users can only see their own loans
     if (!isAdmin) {
-      where.userId = tenant!.userId;
+      where.memberId = tenant!.userId;
     } else if (userId) {
-      where.userId = userId;
+      where.memberId = userId;
     }
 
     if (status) {
@@ -54,7 +54,7 @@ async function getLoansHandler(request: NextRequest, context: APIContext) {
       prisma.employeeLoan.findMany({
         where,
         include: {
-          user: { select: { id: true, name: true, email: true } },
+          member: { select: { id: true, name: true, email: true } },
           approvedBy: { select: { id: true, name: true } },
           createdBy: { select: { id: true, name: true } },
           _count: { select: { repayments: true } },
@@ -107,17 +107,17 @@ async function createLoanHandler(request: NextRequest, context: APIContext) {
 
     const data = validation.data;
 
-    // Check if user exists and belongs to same organization
-    const user = await prisma.user.findFirst({
+    // Check if team member exists and belongs to same organization
+    const member = await prisma.teamMember.findFirst({
       where: {
         id: data.userId,
-        organizationMemberships: { some: { organizationId: tenantId } },
+        tenantId,
       },
       select: { id: true, name: true },
     });
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found in this organization' }, { status: 404 });
+    if (!member) {
+      return NextResponse.json({ error: 'Team member not found in this organization' }, { status: 404 });
     }
 
     // Get organization's code prefix
@@ -147,7 +147,7 @@ async function createLoanHandler(request: NextRequest, context: APIContext) {
     const loan = await prisma.employeeLoan.create({
       data: {
         loanNumber,
-        userId: data.userId,
+        memberId: data.userId,
         type: data.type,
         description: data.description,
         principalAmount: data.principalAmount,
@@ -166,7 +166,7 @@ async function createLoanHandler(request: NextRequest, context: APIContext) {
         tenantId,
       },
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        member: { select: { id: true, name: true, email: true } },
       },
     });
 
@@ -178,8 +178,8 @@ async function createLoanHandler(request: NextRequest, context: APIContext) {
       loan.id,
       {
         loanNumber,
-        userId: data.userId,
-        userName: user.name,
+        memberId: data.userId,
+        memberName: member.name,
         type: data.type,
         amount: data.principalAmount,
       }

@@ -17,6 +17,7 @@ import {
 import { ArrowLeft } from 'lucide-react';
 import { calculateGratuity, getServiceDurationText } from '@/lib/payroll/gratuity';
 import { formatCurrency } from '@/lib/payroll/utils';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 export default async function GratuityReportPage() {
   const session = await getServerSession(authOptions);
@@ -28,32 +29,28 @@ export default async function GratuityReportPage() {
   const employees = await prisma.salaryStructure.findMany({
     where: { isActive: true },
     include: {
-      user: {
+      member: {
         select: {
           id: true,
           name: true,
           email: true,
-          hrProfile: {
-            select: {
-              employeeId: true,
-              designation: true,
-              dateOfJoining: true,
-            },
-          },
+          employeeCode: true,
+          designation: true,
+          dateOfJoining: true,
         },
       },
     },
     orderBy: {
-      user: { name: 'asc' },
+      member: { name: 'asc' },
     },
   });
 
   // Calculate gratuity for each employee
   const gratuityData = employees
-    .filter((emp) => emp.user.hrProfile?.dateOfJoining)
+    .filter((emp) => emp.member?.dateOfJoining)
     .map((emp) => {
       const basicSalary = Number(emp.basicSalary);
-      const dateOfJoining = new Date(emp.user.hrProfile!.dateOfJoining!);
+      const dateOfJoining = new Date(emp.member!.dateOfJoining!);
       const calculation = calculateGratuity(basicSalary, dateOfJoining);
 
       return {
@@ -69,21 +66,16 @@ export default async function GratuityReportPage() {
   );
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-        <Button asChild variant="ghost" size="icon">
-          <Link href="/admin/payroll">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Gratuity Report</h1>
-          <p className="text-muted-foreground">
-            End of Service Benefits calculation for all employees
-          </p>
-        </div>
-      </div>
+    <>
+      <PageHeader
+        title="Gratuity Report"
+        subtitle="End of Service Benefits calculation for all employees"
+        breadcrumbs={[
+          { label: 'Payroll', href: '/admin/payroll' },
+          { label: 'Gratuity Report' },
+        ]}
+      />
+      <PageContent className="space-y-6">
 
       {/* Summary Card */}
       <Card>
@@ -136,15 +128,15 @@ export default async function GratuityReportPage() {
                   <TableRow key={emp.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{emp.user.name}</div>
+                        <div className="font-medium">{emp.member?.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {emp.user.hrProfile?.employeeId || emp.user.email}
+                          {emp.member?.employeeCode || emp.member?.email}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{emp.user.hrProfile?.designation || '-'}</TableCell>
+                    <TableCell>{emp.member?.designation || '-'}</TableCell>
                     <TableCell>
-                      {new Date(emp.user.hrProfile!.dateOfJoining!).toLocaleDateString()}
+                      {new Date(emp.member!.dateOfJoining!).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
                       {getServiceDurationText(emp.gratuity.monthsOfService)}
@@ -179,8 +171,8 @@ export default async function GratuityReportPage() {
             <li><strong>Partial Years:</strong> Pro-rated based on months of service</li>
           </ul>
         </CardContent>
-        </Card>
-      </div>
-    </div>
+      </Card>
+      </PageContent>
+    </>
   );
 }

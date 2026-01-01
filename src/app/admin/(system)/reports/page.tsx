@@ -185,7 +185,7 @@ export default async function AdminReportsPage() {
       take: 20,
       orderBy: { at: 'desc' },
       include: {
-        actorUser: {
+        actorMember: {
           select: { name: true, email: true },
         },
       },
@@ -586,7 +586,7 @@ export default async function AdminReportsPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-900 font-medium">{activity.action}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {activity.entityType} • {activity.actorUser ? (activity.actorUser.name || activity.actorUser.email) : 'System'}
+                        {activity.entityType} • {activity.actorMember ? (activity.actorMember.name || activity.actorMember.email) : 'System'}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
                         {new Date(activity.at).toLocaleString()}

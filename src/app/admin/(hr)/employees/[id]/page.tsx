@@ -1,18 +1,17 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { redirect, notFound } from 'next/navigation';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { formatDate, formatDateTime } from '@/lib/date-format';
-import { Edit, User, AlertTriangle, Package, CreditCard, FileText, Calendar, Clock, Mail, Trash2 } from 'lucide-react';
+import { Edit, AlertTriangle, Package, CreditCard, FileText, Calendar, Clock, Trash2 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { EmployeeHRViewSection } from '@/components/domains/hr/employees';
-import { getUserSubscriptionHistory } from '@/lib/subscription-lifecycle';
-import { getUserAssetHistory } from '@/lib/asset-lifecycle';
+import { getMemberSubscriptionHistory } from '@/lib/subscription-lifecycle';
+import { getMemberAssetHistory } from '@/lib/asset-lifecycle';
 import {
   UserSubscriptionHistory,
   UserAssetHistory,
@@ -39,10 +38,9 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
 
   const { id } = await params;
 
-  const employee = await prisma.user.findUnique({
+  const employee = await prisma.teamMember.findUnique({
     where: { id },
     include: {
-      hrProfile: true,
       _count: {
         select: {
           assets: true,
@@ -52,50 +50,34 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
     },
   });
 
-  // Check soft-delete status
-  const isDeleted = employee?.isDeleted || false;
-  const scheduledDeletionAt = employee?.scheduledDeletionAt;
-  const daysUntilDeletion = scheduledDeletionAt
-    ? Math.ceil((new Date(scheduledDeletionAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : 0;
-
   if (!employee) {
     notFound();
   }
 
-  const hr = employee.hrProfile;
+  // Check soft-delete status
+  const isDeleted = employee.isDeleted || false;
+  const scheduledDeletionAt = employee.scheduledDeletionAt;
+  const daysUntilDeletion = scheduledDeletionAt
+    ? Math.ceil((new Date(scheduledDeletionAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : 0;
 
   // Get asset and subscription history
-  const subscriptionHistory = await getUserSubscriptionHistory(id);
-  const assetHistory = await getUserAssetHistory(id);
+  const subscriptionHistory = await getMemberSubscriptionHistory(id);
+  const assetHistory = await getMemberAssetHistory(id);
 
   // Calculate profile completion
   const requiredFields = [
     'dateOfBirth', 'gender', 'nationality', 'qatarMobile',
-    'localEmergencyName', 'localEmergencyPhone',
+    'emergencyContact', 'emergencyPhone',
     'qidNumber', 'qidExpiry', 'passportNumber', 'passportExpiry',
     'designation',
   ];
 
   let filledFields = 0;
-  if (hr) {
-    requiredFields.forEach((field) => {
-      if (hr[field as keyof typeof hr]) filledFields++;
-    });
-  }
+  requiredFields.forEach((field) => {
+    if (employee[field as keyof typeof employee]) filledFields++;
+  });
   const completionPercentage = Math.round((filledFields / requiredFields.length) * 100);
-
-  const getRoleBadgeStyle = (role: string) => {
-    switch (role) {
-      case 'ADMIN':
-        return 'bg-rose-100 text-rose-700';
-      case 'EMPLOYEE':
-      case 'TEMP_STAFF':
-        return 'bg-blue-100 text-blue-700';
-      default:
-        return 'bg-slate-100 text-slate-700';
-    }
-  };
 
   const isSelf = session.user.id === employee.id;
   const roleBadgeVariant = employee.role === 'ADMIN' ? 'error' :
@@ -122,7 +104,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
               <Edit className="h-4 w-4" />
               Edit
             </PageHeaderButton>
-            {!isSelf && !employee.isSystemAccount && !isDeleted && (
+            {!isSelf && !isDeleted && (
               <DeleteUserButton
                 userId={employee.id}
                 userName={employee.name || employee.email}
@@ -131,9 +113,9 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
           </div>
         }
       >
-        {hr?.employeeId && (
+        {employee.employeeCode && (
           <div className="mt-4">
-            <span className="text-sm text-slate-400 font-mono">ID: {hr.employeeId}</span>
+            <span className="text-sm text-slate-400 font-mono">ID: {employee.employeeCode}</span>
           </div>
         )}
       </PageHeader>
@@ -161,7 +143,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
         )}
 
         {/* Profile Completion Alert */}
-        {completionPercentage < 80 && !employee.isSystemAccount && !isDeleted && (
+        {completionPercentage < 80 && !isDeleted && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
           <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
             <AlertTriangle className="h-5 w-5 text-amber-600" />
@@ -226,7 +208,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
           </div>
           <p className="text-sm font-medium text-slate-900">Joined</p>
           <p className="text-xs text-slate-500">
-            {hr?.dateOfJoining ? formatDate(hr.dateOfJoining) : 'Not set'}
+            {employee.dateOfJoining ? formatDate(employee.dateOfJoining) : 'Not set'}
           </p>
         </div>
       </div>
@@ -256,7 +238,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
           </div>
 
           <TabsContent value="hr" className="m-0 p-5">
-            <EmployeeHRViewSection hrProfile={hr} employee={employee} />
+            <EmployeeHRViewSection employee={employee} />
           </TabsContent>
 
           <TabsContent value="assets" className="m-0 p-5">

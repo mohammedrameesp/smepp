@@ -14,6 +14,9 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// LEGACY ROLE ENUM (For approval workflows - will be deprecated)
+// ═══════════════════════════════════════════════════════════════════════════════
 enum Role {
   ADMIN
   EMPLOYEE
@@ -22,6 +25,40 @@ enum Role {
   HR_MANAGER // HR approvals
   FINANCE_MANAGER // Finance/budget approvals
   DIRECTOR // High-value approvals
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEAM MEMBER ENUMS
+// ═══════════════════════════════════════════════════════════════════════════════
+enum TeamMemberRole {
+  ADMIN // Full access to manage organization
+  MEMBER // Self-service only (own profile, leave, payslips)
+}
+
+enum TeamMemberStatus {
+  ACTIVE
+  INACTIVE
+  TERMINATED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  PROBATION
+  INTERN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
 }
 
 enum BillingCycle {
@@ -235,79 +272,15 @@ model User {
   pending2FATokenJti   String? // Current pending 2FA token's unique ID (prevents replay)
   twoFactorVerifiedAt  DateTime? // Last 2FA verification timestamp (for sensitive ops re-verification)
 
-  accounts                     Account[]
-  sessions                     Session[]
-  assets                       Asset[]
-  subscriptions                Subscription[]
-  activityLogs                 ActivityLog[]
-  assetHistoryFrom             AssetHistory[]        @relation("AssetHistoryFromUser")
-  assetHistoryTo               AssetHistory[]        @relation("AssetHistoryToUser")
-  assetHistoryPerformed        AssetHistory[]        @relation("AssetHistoryPerformer")
-  subscriptionHistoryPerformed SubscriptionHistory[] @relation("SubscriptionHistoryPerformer")
-  subscriptionHistoryOldUser   SubscriptionHistory[] @relation("SubscriptionHistoryOldUser")
-  subscriptionHistoryNewUser   SubscriptionHistory[] @relation("SubscriptionHistoryNewUser")
-  approvedSuppliers            Supplier[]            @relation("SupplierApprover")
-  supplierEngagements          SupplierEngagement[]
-  systemSettingsUpdated        SystemSettings[]      @relation("SystemSettingsUpdater")
-  hrProfile                    HRProfile?
+  // NextAuth relations (keep for authentication)
+  accounts Account[]
+  sessions Session[]
 
-  // Purchase Request relations
-  purchaseRequests         PurchaseRequest[]        @relation("PurchaseRequester")
-  reviewedPurchaseRequests PurchaseRequest[]        @relation("PurchaseReviewer")
-  purchaseRequestHistory   PurchaseRequestHistory[] @relation("PurchaseRequestHistoryPerformer")
+  // HR Profile (deprecated - use TeamMember.isEmployee instead)
+  hrProfile HRProfile?
 
-  // Leave Management relations
-  leaveRequests         LeaveRequest[]        @relation("LeaveRequests")
-  leaveApprovals        LeaveRequest[]        @relation("LeaveApprovals")
-  leaveRequestsCreated  LeaveRequest[]        @relation("LeaveRequestCreator")
-  leaveBalances         LeaveBalance[]
-  leaveHistoryPerformed LeaveRequestHistory[] @relation("LeaveHistoryPerformer")
-
-  // Payroll Management relations
-  salaryStructure         SalaryStructure?
-  salaryHistoryPerformed  SalaryStructureHistory[] @relation("SalaryHistoryPerformer")
-  payslips                Payslip[]
-  submittedPayrolls       PayrollRun[]             @relation("PayrollSubmitter")
-  approvedPayrolls        PayrollRun[]             @relation("PayrollApprover")
-  processedPayrolls       PayrollRun[]             @relation("PayrollProcessor")
-  paidPayrolls            PayrollRun[]             @relation("PayrollPayer")
-  createdPayrolls         PayrollRun[]             @relation("PayrollCreator")
-  payrollHistoryPerformed PayrollHistory[]         @relation("PayrollHistoryPerformer")
-  employeeLoans           EmployeeLoan[]
-  approvedLoans           EmployeeLoan[]           @relation("LoanApprover")
-  createdLoans            EmployeeLoan[]           @relation("LoanCreator")
-  recordedRepayments      LoanRepayment[]          @relation("RepaymentRecorder")
-
-  // Asset Request relations
-  assetRequests                AssetRequest[]        @relation("AssetRequestUser")
-  assetRequestsAssigned        AssetRequest[]        @relation("AssetRequestAssigner")
-  assetRequestsProcessed       AssetRequest[]        @relation("AssetRequestProcessor")
-  assetRequestHistoryPerformed AssetRequestHistory[] @relation("AssetRequestHistoryPerformer")
-
-  // Company Document relations
-  companyDocumentsCreated CompanyDocument[] @relation("CompanyDocumentCreator")
-
-  // Notification relations
-  notifications Notification[] @relation("UserNotifications")
-
-  // Multi-level Approval relations
-  approvalSteps     ApprovalStep[]       @relation("ApprovalStepApprover")
-  delegationsAsFrom ApproverDelegation[] @relation("DelegatorUser")
-  delegationsAsTo   ApproverDelegation[] @relation("DelegateeUser")
-
-  // Organization membership (multi-tenant)
+  // Organization membership (deprecated - use TeamMember)
   organizationMemberships OrganizationUser[]
-
-  // Depreciation relations
-  depreciationRecords DepreciationRecord[] @relation("DepreciationRecordCalculator")
-
-  // Chat relations
-  chatConversations ChatConversation[]
-  aiChatUsage       AIChatUsage[]
-  aiChatAuditLogs   AIChatAuditLog[]
-
-  // WhatsApp integration
-  whatsAppPhone WhatsAppUserPhone?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -407,7 +380,8 @@ model Organization {
   customAzureTenantId      String? // For Azure AD directory restriction
 
   // Core Relations
-  members       OrganizationUser[]
+  members       OrganizationUser[] // Legacy - will be removed
+  teamMembers   TeamMember[] // New unified model
   invitations   OrganizationInvitation[]
   setupProgress OrganizationSetupProgress?
 
@@ -544,6 +518,297 @@ model OrganizationSetupProgress {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// TEAM MEMBER - Unified model replacing User + OrganizationUser + HRProfile
+// ═══════════════════════════════════════════════════════════════════════════════
+model TeamMember {
+  id       String       @id @default(cuid())
+  tenantId String
+  tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // AUTHENTICATION
+  // ═══════════════════════════════════════════════════════════════════════════════
+  email         String
+  name          String?
+  passwordHash  String?
+  emailVerified DateTime?
+  image         String?
+  canLogin      Boolean   @default(true)
+
+  // Password reset
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+
+  // Session security
+  passwordChangedAt DateTime?
+
+  // Account lockout (brute-force protection)
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+
+  // Initial password setup
+  setupToken       String?   @unique
+  setupTokenExpiry DateTime?
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // ROLE & OWNERSHIP
+  // ═══════════════════════════════════════════════════════════════════════════════
+  role    TeamMemberRole @default(MEMBER)
+  isOwner Boolean        @default(false) // Org creator, cannot be removed
+
+  // Legacy role for approval workflows (deprecated - use TeamMemberRole)
+  approvalRole Role @default(EMPLOYEE)
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // EMPLOYEE FLAGS
+  // ═══════════════════════════════════════════════════════════════════════════════
+  isEmployee Boolean @default(true) // Has HR features (leave, payroll)?
+  isOnWps    Boolean @default(true) // Included in WPS file?
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // EMPLOYEE CODE & BASIC INFO
+  // ═══════════════════════════════════════════════════════════════════════════════
+  employeeCode   String?
+  dateOfJoining  DateTime?
+  dateOfLeaving  DateTime?
+  designation    String?
+  department     String?
+  employmentType EmploymentType?
+  reportingToId  String? // TeamMember ID of manager
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // PERSONAL INFORMATION
+  // ═══════════════════════════════════════════════════════════════════════════════
+  dateOfBirth   DateTime?
+  gender        Gender?
+  nationality   String?
+  maritalStatus MaritalStatus?
+  religion      String?
+
+  // Contact
+  phone            String?
+  personalEmail    String?
+  emergencyContact String?
+  emergencyPhone   String?
+  address          String?
+
+  // Qatar-specific contact fields
+  qatarMobile        String?
+  otherMobileCode    String? @default("+961")
+  otherMobileNumber  String?
+  qatarZone          String?
+  qatarStreet        String?
+  qatarBuilding      String?
+  qatarUnit          String?
+  homeCountryAddress String?
+
+  // Emergency Contacts - Local (Qatar)
+  localEmergencyName      String?
+  localEmergencyRelation  String?
+  localEmergencyPhoneCode String? @default("+974")
+  localEmergencyPhone     String?
+
+  // Emergency Contacts - Home Country
+  homeEmergencyName      String?
+  homeEmergencyRelation  String?
+  homeEmergencyPhoneCode String? @default("+961")
+  homeEmergencyPhone     String?
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // IDENTITY DOCUMENTS (Qatar specific)
+  // ═══════════════════════════════════════════════════════════════════════════════
+  qidNumber      String?
+  qidExpiry      DateTime?
+  passportNumber String?
+  passportExpiry DateTime?
+
+  // Visa & Work Permit
+  visaType         String?
+  visaExpiry       DateTime?
+  workPermitNumber String?
+  workPermitExpiry DateTime?
+
+  // Health card
+  healthCardExpiry DateTime?
+
+  // Sponsorship
+  sponsorshipType String? // Company/Family/Work Permit
+
+  // Driving
+  hasDrivingLicense Boolean   @default(false)
+  drivingLicense    String?
+  licenseExpiry     DateTime?
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // EDUCATION
+  // ═══════════════════════════════════════════════════════════════════════════════
+  highestQualification String?
+  specialization       String?
+  institutionName      String?
+  graduationYear       Int?
+  languagesKnown       String? // JSON array
+  skillsCertifications String? // JSON array
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // DOCUMENTS (Supabase storage URLs)
+  // ═══════════════════════════════════════════════════════════════════════════════
+  qidUrl          String?
+  passportCopyUrl String?
+  photoUrl        String?
+  contractCopyUrl String?
+  contractExpiry  DateTime?
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // BANKING & PAYROLL
+  // ═══════════════════════════════════════════════════════════════════════════════
+  bankName      String?
+  bankBranch    String?
+  accountNumber String?
+  iban          String?
+  swiftCode     String?
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // SALARY (basic info, detailed in SalaryStructure)
+  // ═══════════════════════════════════════════════════════════════════════════════
+  basicSalary Decimal? @db.Decimal(12, 2)
+  currency    String?  @default("QAR")
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // LEAVE-SPECIFIC FLAGS
+  // ═══════════════════════════════════════════════════════════════════════════════
+  hajjLeaveTaken          Boolean @default(false) // Qatar law: Hajj leave can only be taken once
+  bypassNoticeRequirement Boolean @default(false) // Admin override for advance notice
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // ONBOARDING & STATUS
+  // ═══════════════════════════════════════════════════════════════════════════════
+  onboardingStep     Int              @default(0)
+  onboardingComplete Boolean          @default(false)
+  status             TeamMemberStatus @default(ACTIVE)
+
+  // Soft-delete
+  isDeleted           Boolean   @default(false)
+  deletedAt           DateTime?
+  scheduledDeletionAt DateTime?
+  deletedByMemberId   String?
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // TIMESTAMPS
+  // ═══════════════════════════════════════════════════════════════════════════════
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  joinedAt  DateTime @default(now())
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // RELATIONS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Assets
+  assets                       Asset[]               @relation("MemberAssets")
+  assetHistoryFrom             AssetHistory[]        @relation("AssetHistoryFromMember")
+  assetHistoryTo               AssetHistory[]        @relation("AssetHistoryToMember")
+  assetHistoryPerformed        AssetHistory[]        @relation("AssetHistoryPerformer")
+  assetRequests                AssetRequest[]        @relation("AssetRequestMember")
+  assetRequestsAssigned        AssetRequest[]        @relation("AssetRequestAssigner")
+  assetRequestsProcessed       AssetRequest[]        @relation("AssetRequestProcessor")
+  assetRequestHistoryPerformed AssetRequestHistory[] @relation("AssetRequestHistoryPerformer")
+
+  // Subscriptions
+  subscriptions                Subscription[]
+  subscriptionHistoryPerformed SubscriptionHistory[] @relation("SubscriptionHistoryPerformer")
+  subscriptionHistoryOldMember SubscriptionHistory[] @relation("SubscriptionHistoryOldMember")
+  subscriptionHistoryNewMember SubscriptionHistory[] @relation("SubscriptionHistoryNewMember")
+
+  // Suppliers
+  approvedSuppliers   Supplier[]           @relation("SupplierApprover")
+  supplierEngagements SupplierEngagement[]
+
+  // Activity & Settings
+  activityLogs          ActivityLog[]
+  systemSettingsUpdated SystemSettings[] @relation("SystemSettingsUpdater")
+
+  // Purchase Requests
+  purchaseRequests         PurchaseRequest[]        @relation("PurchaseRequester")
+  reviewedPurchaseRequests PurchaseRequest[]        @relation("PurchaseReviewer")
+  purchaseRequestHistory   PurchaseRequestHistory[] @relation("PurchaseRequestHistoryPerformer")
+
+  // Leave Management
+  leaveRequests         LeaveRequest[]        @relation("LeaveRequests")
+  leaveApprovals        LeaveRequest[]        @relation("LeaveApprovals")
+  leaveRequestsCreated  LeaveRequest[]        @relation("LeaveRequestCreator")
+  leaveBalances         LeaveBalance[]
+  leaveHistoryPerformed LeaveRequestHistory[] @relation("LeaveHistoryPerformer")
+
+  // Payroll
+  salaryStructure         SalaryStructure?
+  salaryHistoryPerformed  SalaryStructureHistory[] @relation("SalaryHistoryPerformer")
+  payslips                Payslip[]
+  submittedPayrolls       PayrollRun[]             @relation("PayrollSubmitter")
+  approvedPayrolls        PayrollRun[]             @relation("PayrollApprover")
+  processedPayrolls       PayrollRun[]             @relation("PayrollProcessor")
+  paidPayrolls            PayrollRun[]             @relation("PayrollPayer")
+  createdPayrolls         PayrollRun[]             @relation("PayrollCreator")
+  payrollHistoryPerformed PayrollHistory[]         @relation("PayrollHistoryPerformer")
+  employeeLoans           EmployeeLoan[]
+  approvedLoans           EmployeeLoan[]           @relation("LoanApprover")
+  createdLoans            EmployeeLoan[]           @relation("LoanCreator")
+  recordedRepayments      LoanRepayment[]          @relation("RepaymentRecorder")
+
+  // Company Documents
+  companyDocumentsCreated CompanyDocument[] @relation("CompanyDocumentCreator")
+
+  // Notifications
+  notifications Notification[] @relation("MemberNotifications")
+
+  // Approvals
+  approvalSteps     ApprovalStep[]       @relation("ApprovalStepApprover")
+  delegationsAsFrom ApproverDelegation[] @relation("DelegatorMember")
+  delegationsAsTo   ApproverDelegation[] @relation("DelegateeMember")
+
+  // Depreciation
+  depreciationRecords DepreciationRecord[] @relation("DepreciationRecordCalculator")
+
+  // Chat
+  chatConversations ChatConversation[]
+  aiChatUsage       AIChatUsage[]
+  aiChatAuditLogs   AIChatAuditLog[]
+
+  // WhatsApp
+  whatsAppPhone WhatsAppUserPhone?
+
+  // Profile change requests
+  changeRequests ProfileChangeRequest[]
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // INDEXES
+  // ═══════════════════════════════════════════════════════════════════════════════
+  @@unique([tenantId, email])
+  @@unique([tenantId, employeeCode])
+  @@index([tenantId])
+  @@index([tenantId, isEmployee])
+  @@index([tenantId, isOnWps])
+  @@index([tenantId, status])
+  @@index([tenantId, role])
+  @@index([email])
+  @@index([resetToken])
+  @@index([setupToken])
+  @@index([scheduledDeletionAt])
+  @@index([qidNumber])
+  @@index([passportNumber])
+  @@index([employeeCode])
+  @@index([qidExpiry])
+  @@index([passportExpiry])
+  @@index([healthCardExpiry])
+  @@index([contractExpiry])
+  @@index([licenseExpiry])
+  @@index([tenantId, qidExpiry])
+  @@index([tenantId, passportExpiry])
+  @@index([tenantId, contractExpiry])
+  @@index([tenantId, dateOfJoining])
+  @@index([tenantId, dateOfLeaving])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // IMPERSONATION TOKEN REVOCATION (Super Admin Security)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -567,29 +832,29 @@ model RevokedImpersonationToken {
 }
 
 model Asset {
-  id              String          @id @default(cuid())
-  tenantId        String
-  tenant          Organization    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  assetTag        String? // #1 Asset ID/Tag
-  type            String // #2 Asset Type (Laptop, Mouse, Monitor, etc.)
-  category        String? // #3 Category/Department (IT, Marketing, Engineering, etc.)
-  brand           String? // #4 Brand/Manufacturer (Apple, Dell, HP, etc.)
-  model           String // #5 Model/Version (MacBook Pro 16", Dell XPS 15, etc.)
-  serial          String? // #6 Serial Number
-  configuration   String? // #7 Configuration/Specs (16GB RAM, 512GB SSD, etc.)
-  purchaseDate    DateTime? // #8 Purchase Date
-  warrantyExpiry  DateTime? // #9 Warranty Expiry
-  supplier        String? // #10 Supplier/Vendor (where purchased from)
-  invoiceNumber   String? // #12 Invoice/PO Number
-  assignedUserId  String? // #13 Assigned To/User
-  assignedUser    User?           @relation(fields: [assignedUserId], references: [id])
-  assignmentDate  DateTime? // When the asset was assigned to current user
-  status          AssetStatus     @default(IN_USE) // #14 Status/Condition
-  acquisitionType AcquisitionType @default(NEW_PURCHASE) // #15 Asset Movement (New/Transferred)
-  transferNotes   String? // Notes for transferred assets
-  price           Decimal? // #16 Cost/Value
-  priceCurrency   String?         @default("QAR")
-  priceQAR        Decimal?
+  id               String          @id @default(cuid())
+  tenantId         String
+  tenant           Organization    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assetTag         String? // #1 Asset ID/Tag
+  type             String // #2 Asset Type (Laptop, Mouse, Monitor, etc.)
+  category         String? // #3 Category/Department (IT, Marketing, Engineering, etc.)
+  brand            String? // #4 Brand/Manufacturer (Apple, Dell, HP, etc.)
+  model            String // #5 Model/Version (MacBook Pro 16", Dell XPS 15, etc.)
+  serial           String? // #6 Serial Number
+  configuration    String? // #7 Configuration/Specs (16GB RAM, 512GB SSD, etc.)
+  purchaseDate     DateTime? // #8 Purchase Date
+  warrantyExpiry   DateTime? // #9 Warranty Expiry
+  supplier         String? // #10 Supplier/Vendor (where purchased from)
+  invoiceNumber    String? // #12 Invoice/PO Number
+  assignedMemberId String? // #13 Assigned To (TeamMember)
+  assignedMember   TeamMember?     @relation("MemberAssets", fields: [assignedMemberId], references: [id])
+  assignmentDate   DateTime? // When the asset was assigned to current member
+  status           AssetStatus     @default(IN_USE) // #14 Status/Condition
+  acquisitionType  AcquisitionType @default(NEW_PURCHASE) // #15 Asset Movement (New/Transferred)
+  transferNotes    String? // Notes for transferred assets
+  price            Decimal? // #16 Cost/Value
+  priceCurrency    String?         @default("QAR")
+  priceQAR         Decimal?
 
   // Additional fields
   notes    String? // General notes/remarks about the asset
@@ -642,24 +907,24 @@ model AssetHistory {
   assetId        String
   asset          Asset              @relation(fields: [assetId], references: [id], onDelete: Cascade)
   action         AssetHistoryAction
-  fromUserId     String?
-  fromUser       User?              @relation("AssetHistoryFromUser", fields: [fromUserId], references: [id])
-  toUserId       String?
-  toUser         User?              @relation("AssetHistoryToUser", fields: [toUserId], references: [id])
+  fromMemberId   String?
+  fromMember     TeamMember?        @relation("AssetHistoryFromMember", fields: [fromMemberId], references: [id])
+  toMemberId     String?
+  toMember       TeamMember?        @relation("AssetHistoryToMember", fields: [toMemberId], references: [id])
   fromStatus     AssetStatus?
   toStatus       AssetStatus?
   fromLocation   String?
   toLocation     String?
   notes          String?
-  performedBy    String?
-  performer      User?              @relation("AssetHistoryPerformer", fields: [performedBy], references: [id])
+  performedById  String?
+  performedBy    TeamMember?        @relation("AssetHistoryPerformer", fields: [performedById], references: [id])
   assignmentDate DateTime? // When asset was assigned (for ASSIGNED action)
   returnDate     DateTime? // When asset was returned (for UNASSIGNED action)
   createdAt      DateTime           @default(now())
 
   @@index([assetId])
   @@index([createdAt])
-  @@index([toUserId])
+  @@index([toMemberId])
   @@index([tenantId])
 }
 
@@ -678,8 +943,8 @@ model Subscription {
   costQAR               Decimal?
   vendor                String?
   status                SubscriptionStatus    @default(ACTIVE)
-  assignedUserId        String?
-  assignedUser          User?                 @relation(fields: [assignedUserId], references: [id])
+  assignedMemberId      String?
+  assignedMember        TeamMember?           @relation(fields: [assignedMemberId], references: [id])
   autoRenew             Boolean               @default(true)
   paymentMethod         String?
   notes                 String?
@@ -717,14 +982,14 @@ model SubscriptionHistory {
   oldRenewalDate   DateTime?
   newRenewalDate   DateTime?
   reactivationDate DateTime? // Date when service was reactivated
-  assignmentDate   DateTime? // Date when user was assigned/reassigned
-  oldUserId        String? // Previous assigned user
-  newUserId        String? // New assigned user
-  oldUser          User?                     @relation("SubscriptionHistoryOldUser", fields: [oldUserId], references: [id])
-  newUser          User?                     @relation("SubscriptionHistoryNewUser", fields: [newUserId], references: [id])
+  assignmentDate   DateTime? // Date when member was assigned/reassigned
+  oldMemberId      String? // Previous assigned member
+  newMemberId      String? // New assigned member
+  oldMember        TeamMember?               @relation("SubscriptionHistoryOldMember", fields: [oldMemberId], references: [id])
+  newMember        TeamMember?               @relation("SubscriptionHistoryNewMember", fields: [newMemberId], references: [id])
   notes            String?
-  performedBy      String?
-  performer        User?                     @relation("SubscriptionHistoryPerformer", fields: [performedBy], references: [id])
+  performedById    String?
+  performedBy      TeamMember?               @relation("SubscriptionHistoryPerformer", fields: [performedById], references: [id])
   createdAt        DateTime                  @default(now())
 
   @@index([subscriptionId])
@@ -732,18 +997,18 @@ model SubscriptionHistory {
 }
 
 model ActivityLog {
-  id          String       @id @default(cuid())
-  tenantId    String
-  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  actorUserId String?
-  actorUser   User?        @relation(fields: [actorUserId], references: [id])
-  action      String
-  entityType  String?
-  entityId    String?
-  payload     Json?
-  at          DateTime     @default(now())
+  id            String       @id @default(cuid())
+  tenantId      String
+  tenant        Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actorMemberId String?
+  actorMember   TeamMember?  @relation(fields: [actorMemberId], references: [id])
+  action        String
+  entityType    String?
+  entityId      String?
+  payload       Json?
+  at            DateTime     @default(now())
 
-  @@index([actorUserId])
+  @@index([actorMemberId])
   @@index([at])
   @@index([tenantId])
 }
@@ -757,7 +1022,7 @@ model Notification {
   tenantId    String
   tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   recipientId String
-  recipient   User         @relation("UserNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipient   TeamMember   @relation("MemberNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
 
   type    NotificationType
   title   String
@@ -825,8 +1090,8 @@ model ApprovalStep {
   levelOrder   Int // Which level in the chain
   requiredRole Role // Role required to approve this step
 
-  approverId String? // User who took action (null if pending)
-  approver   User?   @relation("ApprovalStepApprover", fields: [approverId], references: [id])
+  approverId String? // Member who took action (null if pending)
+  approver   TeamMember? @relation("ApprovalStepApprover", fields: [approverId], references: [id])
 
   status   ApprovalStepStatus @default(PENDING)
   actionAt DateTime? // When action was taken
@@ -846,10 +1111,10 @@ model ApproverDelegation {
   id          String       @id @default(cuid())
   tenantId    String
   tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  delegatorId String // User who is delegating
-  delegator   User         @relation("DelegatorUser", fields: [delegatorId], references: [id])
-  delegateeId String // User receiving delegation
-  delegatee   User         @relation("DelegateeUser", fields: [delegateeId], references: [id])
+  delegatorId String // Member who is delegating
+  delegator   TeamMember   @relation("DelegatorMember", fields: [delegatorId], references: [id])
+  delegateeId String // Member receiving delegation
+  delegatee   TeamMember   @relation("DelegateeMember", fields: [delegateeId], references: [id])
 
   startDate DateTime
   endDate   DateTime
@@ -907,7 +1172,7 @@ model Supplier {
   rejectionReason        String?
   approvedAt             DateTime?
   approvedById           String?
-  approvedBy             User?                @relation("SupplierApprover", fields: [approvedById], references: [id])
+  approvedBy             TeamMember?          @relation("SupplierApprover", fields: [approvedById], references: [id])
   engagements            SupplierEngagement[]
   createdAt              DateTime             @default(now())
   updatedAt              DateTime             @updatedAt
@@ -931,7 +1196,7 @@ model SupplierEngagement {
   notes       String
   rating      Int? // 1-5 star rating (optional)
   createdById String
-  createdBy   User         @relation(fields: [createdById], references: [id])
+  createdBy   TeamMember   @relation(fields: [createdById], references: [id])
   createdAt   DateTime     @default(now())
 
   @@index([supplierId])
@@ -946,15 +1211,15 @@ model AppSetting {
 }
 
 model SystemSettings {
-  id        String       @id @default(cuid())
-  tenantId  String
-  tenant    Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  key       String // Removed @unique - now part of composite unique constraint
-  value     String
-  updatedBy String?
-  updater   User?        @relation("SystemSettingsUpdater", fields: [updatedBy], references: [id])
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  key         String // Removed @unique - now part of composite unique constraint
+  value       String
+  updatedById String?
+  updatedBy   TeamMember?  @relation("SystemSettingsUpdater", fields: [updatedById], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@unique([tenantId, key]) // SECURITY: Each tenant can have their own settings
   @@index([key])
@@ -1117,14 +1382,20 @@ enum PaymentMode {
 }
 
 model ProfileChangeRequest {
-  id          String       @id @default(cuid())
-  tenantId    String
-  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  hrProfileId String
-  hrProfile   HRProfile    @relation(fields: [hrProfileId], references: [id], onDelete: Cascade)
+  id       String       @id @default(cuid())
+  tenantId String
+  tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Link to TeamMember (new model)
+  memberId String?
+  member   TeamMember? @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  // Legacy link to HRProfile (deprecated)
+  hrProfileId String?
+  hrProfile   HRProfile? @relation(fields: [hrProfileId], references: [id], onDelete: Cascade)
 
   // Request details
-  description String // What changes the user is requesting
+  description String // What changes the member is requesting
   status      ProfileChangeRequestStatus @default(PENDING)
 
   // Resolution
@@ -1135,6 +1406,7 @@ model ProfileChangeRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([memberId])
   @@index([hrProfileId])
   @@index([status])
   @@index([createdAt])
@@ -1152,9 +1424,9 @@ model PurchaseRequest {
   status          PurchaseRequestStatus   @default(PENDING)
   priority        PurchaseRequestPriority @default(MEDIUM)
 
-  // Requester info (auto-populated from logged-in user)
+  // Requester info (auto-populated from logged-in member)
   requesterId String
-  requester   User   @relation("PurchaseRequester", fields: [requesterId], references: [id])
+  requester   TeamMember @relation("PurchaseRequester", fields: [requesterId], references: [id])
 
   // Request details
   title         String
@@ -1186,7 +1458,7 @@ model PurchaseRequest {
 
   // Approval workflow
   reviewedById String?
-  reviewedBy   User?     @relation("PurchaseReviewer", fields: [reviewedById], references: [id])
+  reviewedBy   TeamMember? @relation("PurchaseReviewer", fields: [reviewedById], references: [id])
   reviewedAt   DateTime?
   reviewNotes  String?
 
@@ -1254,7 +1526,7 @@ model PurchaseRequestHistory {
   newStatus      PurchaseRequestStatus?
 
   performedById String
-  performedBy   User   @relation("PurchaseRequestHistoryPerformer", fields: [performedById], references: [id])
+  performedBy   TeamMember @relation("PurchaseRequestHistoryPerformer", fields: [performedById], references: [id])
 
   details String? // JSON or text description of changes
 
@@ -1309,8 +1581,8 @@ model LeaveBalance {
   id              String       @id @default(cuid())
   tenantId        String
   tenant          Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId          String
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memberId        String
+  member          TeamMember   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   leaveTypeId     String
   leaveType       LeaveType    @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
   year            Int // Year for balance
@@ -1324,8 +1596,8 @@ model LeaveBalance {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([tenantId, userId, leaveTypeId, year])
-  @@index([userId])
+  @@unique([tenantId, memberId, leaveTypeId, year])
+  @@index([memberId])
   @@index([leaveTypeId])
   @@index([year])
   @@index([tenantId])
@@ -1336,8 +1608,8 @@ model LeaveRequest {
   tenantId      String
   tenant        Organization     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   requestNumber String // {PREFIX}-LR-XXXXX (tenant-scoped unique)
-  userId        String
-  user          User             @relation("LeaveRequests", fields: [userId], references: [id], onDelete: Cascade)
+  memberId      String
+  member        TeamMember       @relation("LeaveRequests", fields: [memberId], references: [id], onDelete: Cascade)
   leaveTypeId   String
   leaveType     LeaveType        @relation(fields: [leaveTypeId], references: [id])
   startDate     DateTime
@@ -1351,7 +1623,7 @@ model LeaveRequest {
 
   // Approval
   approverId    String?
-  approver      User?     @relation("LeaveApprovals", fields: [approverId], references: [id])
+  approver      TeamMember? @relation("LeaveApprovals", fields: [approverId], references: [id])
   approvedAt    DateTime?
   approverNotes String?
 
@@ -1363,9 +1635,9 @@ model LeaveRequest {
   cancelledAt        DateTime?
   cancellationReason String?
 
-  // On behalf of: track who submitted if different from user
+  // On behalf of: track who submitted if different from member
   createdById String?
-  createdBy   User?   @relation("LeaveRequestCreator", fields: [createdById], references: [id])
+  createdBy   TeamMember? @relation("LeaveRequestCreator", fields: [createdById], references: [id])
 
   // Emergency contact during leave
   emergencyContact String?
@@ -1377,14 +1649,14 @@ model LeaveRequest {
   updatedAt DateTime @updatedAt
 
   @@unique([tenantId, requestNumber])
-  @@index([userId])
+  @@index([memberId])
   @@index([leaveTypeId])
   @@index([status])
   @@index([startDate])
   @@index([endDate])
   @@index([tenantId])
   @@index([tenantId, status])
-  @@index([tenantId, userId])
+  @@index([tenantId, memberId])
   @@index([tenantId, startDate, status])
 }
 
@@ -1400,7 +1672,7 @@ model LeaveRequestHistory {
   notes     String?
 
   performedById String
-  performedBy   User   @relation("LeaveHistoryPerformer", fields: [performedById], references: [id])
+  performedBy   TeamMember @relation("LeaveHistoryPerformer", fields: [performedById], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -1439,8 +1711,8 @@ model SalaryStructure {
   id       String       @id @default(cuid())
   tenantId String
   tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId   String       @unique
-  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memberId String       @unique
+  member   TeamMember   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   // Core salary components (all stored in QAR)
   basicSalary            Decimal @db.Decimal(12, 2)
@@ -1468,7 +1740,7 @@ model SalaryStructure {
 
   history SalaryStructureHistory[]
 
-  @@index([userId])
+  @@index([memberId])
   @@index([effectiveFrom])
   @@index([isActive])
   @@index([tenantId])
@@ -1485,7 +1757,7 @@ model SalaryStructureHistory {
   notes          String?
 
   performedById String
-  performedBy   User   @relation("SalaryHistoryPerformer", fields: [performedById], references: [id])
+  performedBy   TeamMember @relation("SalaryHistoryPerformer", fields: [performedById], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -1521,25 +1793,25 @@ model PayrollRun {
 
   // Workflow
   submittedById String?
-  submittedBy   User?     @relation("PayrollSubmitter", fields: [submittedById], references: [id])
+  submittedBy   TeamMember? @relation("PayrollSubmitter", fields: [submittedById], references: [id])
   submittedAt   DateTime?
 
   approvedById  String?
-  approvedBy    User?     @relation("PayrollApprover", fields: [approvedById], references: [id])
+  approvedBy    TeamMember? @relation("PayrollApprover", fields: [approvedById], references: [id])
   approvedAt    DateTime?
   approverNotes String?
 
   processedById String?
-  processedBy   User?     @relation("PayrollProcessor", fields: [processedById], references: [id])
+  processedBy   TeamMember? @relation("PayrollProcessor", fields: [processedById], references: [id])
   processedAt   DateTime?
 
   paidById         String?
-  paidBy           User?     @relation("PayrollPayer", fields: [paidById], references: [id])
+  paidBy           TeamMember? @relation("PayrollPayer", fields: [paidById], references: [id])
   paidAt           DateTime?
   paymentReference String?
 
   createdById String
-  createdBy   User   @relation("PayrollCreator", fields: [createdById], references: [id])
+  createdBy   TeamMember @relation("PayrollCreator", fields: [createdById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1568,7 +1840,7 @@ model PayrollHistory {
   notes          String?
 
   performedById String
-  performedBy   User   @relation("PayrollHistoryPerformer", fields: [performedById], references: [id])
+  performedBy   TeamMember @relation("PayrollHistoryPerformer", fields: [performedById], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -1585,8 +1857,8 @@ model Payslip {
   payrollRunId String
   payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
 
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memberId String
+  member   TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   // Salary Components (snapshot from SalaryStructure)
   basicSalary            Decimal @db.Decimal(12, 2)
@@ -1605,11 +1877,11 @@ model Payslip {
   // Net
   netSalary Decimal @db.Decimal(12, 2)
 
-  // Payment Info (from HR Profile)
+  // Payment Info (from TeamMember)
   bankName String?
   iban     String?
 
-  // WPS Info (from HR Profile)
+  // WPS Info (from TeamMember)
   qidNumber String?
 
   // Status
@@ -1621,10 +1893,10 @@ model Payslip {
 
   deductions PayslipDeduction[]
 
-  @@unique([payrollRunId, userId])
+  @@unique([payrollRunId, memberId])
   @@unique([tenantId, payslipNumber])
   @@index([payrollRunId])
-  @@index([userId])
+  @@index([memberId])
   @@index([payslipNumber])
   @@index([tenantId])
   @@index([tenantId, isPaid])
@@ -1656,8 +1928,8 @@ model EmployeeLoan {
   tenant     Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   loanNumber String // {PREFIX}-LOAN-XXXXX (tenant-scoped unique)
 
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memberId String
+  member   TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   // Loan Details
   type        String // LOAN, ADVANCE
@@ -1682,13 +1954,13 @@ model EmployeeLoan {
 
   // Approval
   approvedById String?
-  approvedBy   User?     @relation("LoanApprover", fields: [approvedById], references: [id])
+  approvedBy   TeamMember? @relation("LoanApprover", fields: [approvedById], references: [id])
   approvedAt   DateTime?
 
   notes String?
 
   createdById String
-  createdBy   User   @relation("LoanCreator", fields: [createdById], references: [id])
+  createdBy   TeamMember @relation("LoanCreator", fields: [createdById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1696,7 +1968,7 @@ model EmployeeLoan {
   repayments LoanRepayment[]
 
   @@unique([tenantId, loanNumber])
-  @@index([userId])
+  @@index([memberId])
   @@index([status])
   @@index([loanNumber])
   @@index([tenantId])
@@ -1718,7 +1990,7 @@ model LoanRepayment {
   notes String?
 
   recordedById String
-  recordedBy   User   @relation("RepaymentRecorder", fields: [recordedById], references: [id])
+  recordedBy   TeamMember @relation("RepaymentRecorder", fields: [recordedById], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -1742,23 +2014,23 @@ model AssetRequest {
   assetId String
   asset   Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
-  // Target user (requester for EMPLOYEE_REQUEST, assignee for ADMIN_ASSIGNMENT)
-  userId String
-  user   User   @relation("AssetRequestUser", fields: [userId], references: [id])
+  // Target member (requester for EMPLOYEE_REQUEST, assignee for ADMIN_ASSIGNMENT)
+  memberId String
+  member   TeamMember @relation("AssetRequestMember", fields: [memberId], references: [id])
 
   // Request details
   reason String? // Reason for request/return
   notes  String? // Additional notes
 
   // For ADMIN_ASSIGNMENT: who initiated the assignment
-  assignedById   String?
-  assignedByUser User?   @relation("AssetRequestAssigner", fields: [assignedById], references: [id])
+  assignedById     String?
+  assignedByMember TeamMember? @relation("AssetRequestAssigner", fields: [assignedById], references: [id])
 
   // Processing info (approve/reject/accept/decline)
-  processedById   String?
-  processedByUser User?     @relation("AssetRequestProcessor", fields: [processedById], references: [id])
-  processedAt     DateTime?
-  processorNotes  String?
+  processedById     String?
+  processedByMember TeamMember? @relation("AssetRequestProcessor", fields: [processedById], references: [id])
+  processedAt       DateTime?
+  processorNotes    String?
 
   // Optional expiry for pending requests
   expiresAt DateTime?
@@ -1770,7 +2042,7 @@ model AssetRequest {
 
   @@unique([tenantId, requestNumber])
   @@index([assetId])
-  @@index([userId])
+  @@index([memberId])
   @@index([status])
   @@index([type])
   @@index([createdAt])
@@ -1788,7 +2060,7 @@ model AssetRequestHistory {
   notes     String?
 
   performedById String
-  performedBy   User   @relation("AssetRequestHistoryPerformer", fields: [performedById], references: [id])
+  performedBy   TeamMember @relation("AssetRequestHistoryPerformer", fields: [performedById], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -1829,9 +2101,9 @@ model DepreciationRecord {
   netBookValue       Decimal  @db.Decimal(12, 2)
 
   calculationType String // "SCHEDULED" | "MANUAL"
-  calculatedAt    DateTime @default(now())
+  calculatedAt    DateTime    @default(now())
   calculatedById  String?
-  calculatedBy    User?    @relation("DepreciationRecordCalculator", fields: [calculatedById], references: [id])
+  calculatedBy    TeamMember? @relation("DepreciationRecordCalculator", fields: [calculatedById], references: [id])
   notes           String?
 
   @@index([tenantId])
@@ -1890,7 +2162,7 @@ model CompanyDocument {
 
   // Audit
   createdById String
-  createdBy   User   @relation("CompanyDocumentCreator", fields: [createdById], references: [id])
+  createdBy   TeamMember @relation("CompanyDocumentCreator", fields: [createdById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1910,17 +2182,17 @@ model CompanyDocument {
 model ChatConversation {
   id        String   @id @default(cuid())
   tenantId  String
-  userId    String
+  memberId  String
   title     String? // Auto-generated from first message
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   tenant   Organization  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  member   TeamMember    @relation(fields: [memberId], references: [id], onDelete: Cascade)
   messages ChatMessage[]
 
   @@index([tenantId])
-  @@index([userId])
+  @@index([memberId])
   @@index([createdAt])
 }
 
@@ -1945,7 +2217,7 @@ model ChatMessage {
 model AIChatUsage {
   id        String  @id @default(cuid())
   tenantId  String
-  userId    String
+  memberId  String
   messageId String? // Optional link to ChatMessage
 
   // Token counts from OpenAI response
@@ -1962,18 +2234,18 @@ model AIChatUsage {
   createdAt DateTime @default(now())
 
   tenant Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  member TeamMember   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
-  @@index([userId])
+  @@index([memberId])
 }
 
 // AI Chat Audit Log - For security monitoring and compliance
 model AIChatAuditLog {
   id             String  @id @default(cuid())
   tenantId       String
-  userId         String
+  memberId       String
   conversationId String?
 
   // Privacy-friendly query tracking
@@ -2000,10 +2272,10 @@ model AIChatAuditLog {
   createdAt DateTime @default(now())
 
   tenant Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  member TeamMember   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, createdAt])
-  @@index([userId, createdAt])
+  @@index([memberId, createdAt])
   @@index([flagged])
 }
 
@@ -2027,13 +2299,13 @@ model WhatsAppConfig {
   @@index([tenantId])
 }
 
-// Map users to their WhatsApp phone numbers
+// Map members to their WhatsApp phone numbers
 model WhatsAppUserPhone {
   id          String       @id @default(cuid())
   tenantId    String
   tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId      String       @unique
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memberId    String       @unique
+  member      TeamMember   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   phoneNumber String // E.164 format: +974XXXXXXXX
   isVerified  Boolean      @default(false)
   createdAt   DateTime     @default(now())

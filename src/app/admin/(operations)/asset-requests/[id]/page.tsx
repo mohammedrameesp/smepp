@@ -55,21 +55,21 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
           status: true,
         },
       },
-      user: {
+      member: {
         select: {
           id: true,
           name: true,
           email: true,
         },
       },
-      assignedByUser: {
+      assignedByMember: {
         select: {
           id: true,
           name: true,
           email: true,
         },
       },
-      processedByUser: {
+      processedByMember: {
         select: {
           id: true,
           name: true,
@@ -137,8 +137,8 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
                   <User className="h-6 w-6 text-slate-500" />
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-900">{request.user.name || 'Unknown'}</p>
-                  <p className="text-sm text-slate-500">{request.user.email}</p>
+                  <p className="font-semibold text-slate-900">{request.member.name || 'Unknown'}</p>
+                  <p className="text-sm text-slate-500">{request.member.email}</p>
                 </div>
               </div>
             </div>
@@ -238,21 +238,21 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
                   <p className="text-sm text-slate-700 leading-relaxed">{request.notes}</p>
                 </div>
               )}
-              {request.assignedByUser && (
+              {request.assignedByMember && (
                 <div className="bg-slate-50 rounded-xl p-4">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Assigned By</p>
                   <p className="text-sm font-semibold text-slate-900">
-                    {request.assignedByUser.name || request.assignedByUser.email}
+                    {request.assignedByMember.name || request.assignedByMember.email}
                   </p>
                 </div>
               )}
-              {request.processedAt && request.processedByUser && (
+              {request.processedAt && request.processedByMember && (
                 <>
                   <div className="border-t border-slate-200 pt-4">
                     <div className="bg-slate-50 rounded-xl p-4">
                       <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Processed By</p>
                       <p className="text-sm font-semibold text-slate-900">
-                        {request.processedByUser.name || request.processedByUser.email}
+                        {request.processedByMember.name || request.processedByMember.email}
                       </p>
                       <p className="text-xs text-slate-500 mt-1">{formatDateTime(request.processedAt)}</p>
                     </div>
@@ -340,7 +340,7 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
                 </Link>
               </Button>
               <Button asChild variant="outline" className="w-full justify-start">
-                <Link href={`/admin/employees/${request.user.id}`}>
+                <Link href={`/admin/employees/${request.member.id}`}>
                   <User className="mr-2 h-4 w-4" />
                   View Requestor Profile
                 </Link>

@@ -41,9 +41,9 @@ export interface SubscriptionImportRow {
   'Notes'?: string;
   'Project Name'?: string;
   'Project Code'?: string;
-  'Assigned User ID'?: string;
-  'Assigned User Name'?: string;
-  'Assigned User Email'?: string;
+  'Assigned Member ID'?: string;
+  'Assigned Member Name'?: string;
+  'Assigned Member Email'?: string;
   'Cancelled At (dd/mm/yyyy)'?: string;
   'Reactivated At (dd/mm/yyyy)'?: string;
   'Last Active Renewal Date (dd/mm/yyyy)'?: string;
@@ -82,8 +82,8 @@ export interface ParsedSubscriptionData {
   autoRenew: boolean;
   paymentMethod: string | null;
   notes: string | null;
-  assignedUserId: string | null;
-  assignedUserEmail: string | null;
+  assignedMemberId: string | null;
+  assignedMemberEmail: string | null;
   cancelledAt: Date | null;
   reactivatedAt: Date | null;
   lastActiveRenewalDate: Date | null;
@@ -228,8 +228,8 @@ export function parseSubscriptionRow(row: SubscriptionImportRow): SubscriptionPa
       autoRenew,
       paymentMethod: row['Payment Method'] || null,
       notes: row['Notes'] || null,
-      assignedUserId: row['Assigned User ID'] || null,
-      assignedUserEmail: row['Assigned User Email'] || null,
+      assignedMemberId: row['Assigned Member ID'] || null,
+      assignedMemberEmail: row['Assigned Member Email'] || null,
       cancelledAt,
       reactivatedAt,
       lastActiveRenewalDate,

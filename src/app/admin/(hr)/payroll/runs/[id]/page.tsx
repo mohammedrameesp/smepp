@@ -20,6 +20,7 @@ import { formatCurrency, getMonthName, getPayrollStatusColor, getPayrollStatusTe
 import { PayrollWorkflowActions } from '@/components/domains/hr/payroll';
 import { calculatePayrollPreview } from '@/lib/payroll/preview';
 import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -43,23 +44,19 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
       paidBy: { select: { id: true, name: true } },
       payslips: {
         include: {
-          user: {
+          member: {
             select: {
               id: true,
               name: true,
               email: true,
-              hrProfile: {
-                select: {
-                  employeeId: true,
-                  designation: true,
-                },
-              },
+              employeeCode: true,
+              designation: true,
             },
           },
           deductions: true,
         },
         orderBy: {
-          user: { name: 'asc' },
+          member: { name: 'asc' },
         },
       },
       history: {
@@ -87,44 +84,31 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
   const employeeCount = isDraft && preview ? preview.totalEmployees : payrollRun.employeeCount;
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" size="icon">
-              <Link href="/admin/payroll/runs">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold">
-                {getMonthName(payrollRun.month)} {payrollRun.year} Payroll
-              </h1>
-              <Badge
-                style={{ backgroundColor: getPayrollStatusColor(payrollRun.status) }}
-                className="text-white"
-              >
-                {getPayrollStatusText(payrollRun.status)}
-              </Badge>
-            </div>
-            <p className="text-muted-foreground">
-              Reference: {payrollRun.referenceNumber}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          {payrollRun.wpsFileGenerated && payrollRun.wpsFileUrl && (
-            <Button asChild variant="outline">
-              <a href={payrollRun.wpsFileUrl} download>
-                <Download className="mr-2 h-4 w-4" />
+    <>
+      <PageHeader
+        title={`${getMonthName(payrollRun.month)} ${payrollRun.year} Payroll`}
+        subtitle={`Reference: ${payrollRun.referenceNumber}`}
+        breadcrumbs={[
+          { label: 'Payroll', href: '/admin/payroll' },
+          { label: 'Runs', href: '/admin/payroll/runs' },
+          { label: `${getMonthName(payrollRun.month)} ${payrollRun.year}` },
+        ]}
+        badge={{
+          text: getPayrollStatusText(payrollRun.status),
+          variant: payrollRun.status === 'PAID' ? 'success' : payrollRun.status === 'DRAFT' ? 'warning' : 'default',
+        }}
+        actions={
+          payrollRun.wpsFileGenerated && payrollRun.wpsFileUrl ? (
+            <a href={payrollRun.wpsFileUrl} download>
+              <PageHeaderButton variant="secondary">
+                <Download className="h-4 w-4" />
                 Download WPS
-              </a>
-            </Button>
-          )}
-        </div>
-      </div>
+              </PageHeaderButton>
+            </a>
+          ) : undefined
+        }
+      />
+      <PageContent className="space-y-6">
 
       {/* Workflow Actions */}
       <PayrollWorkflowActions
@@ -240,12 +224,12 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
                 </TableHeader>
                 <TableBody>
                   {preview.employees.map((emp) => (
-                    <TableRow key={emp.userId}>
+                    <TableRow key={emp.memberId}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{emp.userName}</div>
+                          <div className="font-medium">{emp.memberName}</div>
                           <div className="text-sm text-muted-foreground">
-                            {emp.employeeId || emp.designation || '-'}
+                            {emp.employeeCode || emp.designation || '-'}
                           </div>
                         </div>
                       </TableCell>
@@ -325,9 +309,9 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
                     <TableRow key={payslip.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{payslip.user.name}</div>
+                          <div className="font-medium">{payslip.member?.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {payslip.user.hrProfile?.employeeId || payslip.user.email}
+                            {payslip.member?.employeeCode || payslip.member?.email}
                           </div>
                         </div>
                       </TableCell>
@@ -404,8 +388,8 @@ export default async function PayrollRunDetailPage({ params }: PageProps) {
             </div>
           </div>
         </CardContent>
-        </Card>
-      </div>
-    </div>
+      </Card>
+      </PageContent>
+    </>
   );
 }

@@ -23,13 +23,13 @@ interface Asset {
   type: string;
 }
 
-interface User {
+interface Member {
   id: string;
   name: string | null;
   email: string;
 }
 
-interface AssetRequest {
+export interface AssetRequest {
   id: string;
   requestNumber: string;
   type: string;
@@ -38,8 +38,8 @@ interface AssetRequest {
   notes: string | null;
   createdAt: Date | string;
   asset: Asset;
-  user: User;
-  assignedByUser?: User | null;
+  member: Member;
+  assignedByMember?: Member | null;
 }
 
 interface AssetRequestListTableProps {
@@ -82,8 +82,8 @@ export function AssetRequestListTable({
         request.asset.model.toLowerCase().includes(term) ||
         request.asset.brand?.toLowerCase().includes(term) ||
         request.asset.assetTag?.toLowerCase().includes(term) ||
-        request.user.name?.toLowerCase().includes(term) ||
-        request.user.email.toLowerCase().includes(term)
+        request.member.name?.toLowerCase().includes(term) ||
+        request.member.email.toLowerCase().includes(term)
       );
     }
 
@@ -273,7 +273,7 @@ export function AssetRequestListTable({
                   {showUser && (
                     <TableCell>
                       <span className="text-sm">
-                        {request.user.name || request.user.email}
+                        {request.member.name || request.member.email}
                       </span>
                     </TableCell>
                   )}

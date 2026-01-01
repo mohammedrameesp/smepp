@@ -80,17 +80,13 @@ export default async function LoanDetailPage({ params }: PageProps) {
   const loan = await prisma.employeeLoan.findUnique({
     where: { id },
     include: {
-      user: {
+      member: {
         select: {
           id: true,
           name: true,
           email: true,
-          hrProfile: {
-            select: {
-              employeeId: true,
-              designation: true,
-            },
-          },
+          employeeCode: true,
+          designation: true,
         },
       },
       approvedBy: {
@@ -124,7 +120,7 @@ export default async function LoanDetailPage({ params }: PageProps) {
   return (
     <>
       <PageHeader
-        title={loan.user.name || 'Unknown'}
+        title={loan.member?.name || 'Unknown'}
         subtitle={`${loan.loanNumber} • ${loan.type.replace(/_/g, ' ')}`}
         breadcrumbs={[
           { label: 'Payroll', href: '/admin/payroll' },
@@ -135,7 +131,7 @@ export default async function LoanDetailPage({ params }: PageProps) {
         actions={
           <div className="flex gap-2">
             <Button asChild variant="outline" size="sm">
-              <Link href={`/admin/employees/${loan.userId}`}>
+              <Link href={`/admin/team/${loan.memberId}`}>
                 <User className="mr-2 h-4 w-4" />
                 View Employee
               </Link>
@@ -302,8 +298,8 @@ export default async function LoanDetailPage({ params }: PageProps) {
             <div className="p-6 space-y-4">
               <div className="bg-slate-50 rounded-xl p-4">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Employee</p>
-                <p className="text-sm font-semibold text-slate-900">{loan.user.name}</p>
-                <p className="text-xs text-slate-500">{loan.user.hrProfile?.employeeId || loan.user.email}</p>
+                <p className="text-sm font-semibold text-slate-900">{loan.member?.name}</p>
+                <p className="text-xs text-slate-500">{loan.member?.employeeCode || loan.member?.email}</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-4">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Loan Type</p>

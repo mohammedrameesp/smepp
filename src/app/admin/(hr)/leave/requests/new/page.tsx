@@ -8,6 +8,7 @@ import { ArrowLeft, Loader2, User } from 'lucide-react';
 import Link from 'next/link';
 import { LeaveRequestForm } from '@/components/domains/hr/leave';
 import { getAnnualLeaveDetails } from '@/lib/leave-utils';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 interface LeaveType {
   id: string;
@@ -169,22 +170,19 @@ export default function AdminNewLeavePage() {
   const selectedEmployee = employees.find((e) => e.id === selectedEmployeeId);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-6">
-          <Link href="/admin/leave/requests">
-            <Button variant="ghost" size="sm" className="mb-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Leave Requests
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Create Leave Request</h1>
-          <p className="text-gray-600">
-            Submit a leave request on behalf of an employee
-          </p>
-        </div>
-
-        {/* Employee Selector Card */}
+    <>
+      <PageHeader
+        title="Create Leave Request"
+        subtitle="Submit a leave request on behalf of an employee"
+        breadcrumbs={[
+          { label: 'Leave', href: '/admin/leave' },
+          { label: 'Requests', href: '/admin/leave/requests' },
+          { label: 'New' },
+        ]}
+      />
+      <PageContent>
+        <div className="max-w-2xl">
+          {/* Employee Selector Card */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -255,7 +253,8 @@ export default function AdminNewLeavePage() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </div>
+        </div>
+      </PageContent>
+    </>
   );
 }

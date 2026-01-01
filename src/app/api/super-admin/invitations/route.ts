@@ -38,6 +38,8 @@ export async function GET() {
       id: inv.id,
       email: inv.email,
       role: inv.role,
+      isEmployee: inv.isEmployee,
+      isOnWps: inv.isOnWps,
       organization: inv.organization,
       expiresAt: inv.expiresAt,
       createdAt: inv.createdAt,

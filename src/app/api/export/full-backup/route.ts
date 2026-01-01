@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Role } from '@prisma/client';
+import { TeamMemberRole } from '@prisma/client';
 import { arrayToCSV, formatDateForCSV } from '@/lib/csv-utils';
 
 export const maxDuration = 60; // Set max duration to 60 seconds for large exports
@@ -11,7 +11,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.role !== Role.ADMIN) {
+    if (!session || session.user.teamMemberRole !== TeamMemberRole.ADMIN) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -24,7 +24,7 @@ export async function GET() {
 
     // Fetch all data from database (tenant-scoped)
     const [
-      users,
+      teamMembers,
       assets,
       subscriptions,
       suppliers,
@@ -33,20 +33,19 @@ export async function GET() {
       supplierEngagements,
       activityLogs,
       maintenanceRecords,
-      hrProfiles,
       profileChangeRequests,
       // Purchase Requests
       purchaseRequests,
       purchaseRequestItems,
       purchaseRequestHistory,
     ] = await Promise.all([
-      prisma.user.findMany({
-        where: { organizationMemberships: { some: { organizationId: tenantId } } },
+      prisma.teamMember.findMany({
+        where: { tenantId },
       }),
       prisma.asset.findMany({
         where: { tenantId },
         include: {
-          assignedUser: {
+          assignedMember: {
             select: {
               id: true,
               name: true,
@@ -58,7 +57,7 @@ export async function GET() {
       prisma.subscription.findMany({
         where: { tenantId },
         include: {
-          assignedUser: {
+          assignedMember: {
             select: {
               id: true,
               name: true,
@@ -90,21 +89,21 @@ export async function GET() {
               model: true,
             },
           },
-          fromUser: {
+          fromMember: {
             select: {
               id: true,
               name: true,
               email: true,
             },
           },
-          toUser: {
+          toMember: {
             select: {
               id: true,
               name: true,
               email: true,
             },
           },
-          performer: {
+          performedBy: {
             select: {
               id: true,
               name: true,
@@ -122,21 +121,21 @@ export async function GET() {
               serviceName: true,
             },
           },
-          oldUser: {
+          oldMember: {
             select: {
               id: true,
               name: true,
               email: true,
             },
           },
-          newUser: {
+          newMember: {
             select: {
               id: true,
               name: true,
               email: true,
             },
           },
-          performer: {
+          performedBy: {
             select: {
               id: true,
               name: true,
@@ -167,7 +166,7 @@ export async function GET() {
       prisma.activityLog.findMany({
         where: { tenantId },
         include: {
-          actorUser: {
+          actorMember: {
             select: {
               id: true,
               name: true,
@@ -189,25 +188,14 @@ export async function GET() {
           },
         },
       }),
-      prisma.hRProfile.findMany({
+      prisma.profileChangeRequest.findMany({
         where: { tenantId },
         include: {
-          user: {
+          member: {
             select: {
               id: true,
               name: true,
               email: true,
-            },
-          },
-        },
-      }),
-      prisma.profileChangeRequest.findMany({
-        where: { tenantId },
-        include: {
-          hrProfile: {
-            select: {
-              id: true,
-              userId: true,
             },
           },
         },
@@ -250,15 +238,18 @@ export async function GET() {
     ]);
 
     // Transform data for Excel sheets
-    const usersData = users.map(u => ({
-      id: u.id,
-      name: u.name || '',
-      email: u.email,
-      role: u.role,
-      isSystemAccount: u.isSystemAccount ? 'Yes' : 'No',
-      emailVerified: u.emailVerified ? formatDateForCSV(u.emailVerified) : '',
-      createdAt: formatDateForCSV(u.createdAt),
-      updatedAt: formatDateForCSV(u.updatedAt),
+    const membersData = teamMembers.map(m => ({
+      id: m.id,
+      name: m.name || '',
+      email: m.email,
+      role: m.role,
+      isEmployee: m.isEmployee ? 'Yes' : 'No',
+      isOnWps: m.isOnWps ? 'Yes' : 'No',
+      employeeCode: m.employeeCode || '',
+      designation: m.designation || '',
+      dateOfJoining: m.dateOfJoining ? formatDateForCSV(m.dateOfJoining) : '',
+      createdAt: formatDateForCSV(m.createdAt),
+      updatedAt: formatDateForCSV(m.updatedAt),
     }));
 
     const assetsData = assets.map(a => ({
@@ -274,8 +265,8 @@ export async function GET() {
       warrantyExpiry: formatDateForCSV(a.warrantyExpiry),
       supplier: a.supplier || '',
       invoiceNumber: a.invoiceNumber || '',
-      assignedUserId: a.assignedUserId || '',
-      assignedUser: a.assignedUser ? (a.assignedUser.name || a.assignedUser.email) : '',
+      assignedMemberId: a.assignedMemberId || '',
+      assignedMember: a.assignedMember ? (a.assignedMember.name || a.assignedMember.email) : '',
       status: a.status,
       acquisitionType: a.acquisitionType,
       location: a.location || '',
@@ -300,8 +291,8 @@ export async function GET() {
       costQAR: s.costQAR ? Number(s.costQAR) : '',
       vendor: s.vendor || '',
       status: s.status,
-      assignedUserId: s.assignedUserId || '',
-      assignedUser: s.assignedUser ? (s.assignedUser.name || s.assignedUser.email) : '',
+      assignedMemberId: s.assignedMemberId || '',
+      assignedMember: s.assignedMember ? (s.assignedMember.name || s.assignedMember.email) : '',
       autoRenew: s.autoRenew ? 'Yes' : 'No',
       paymentMethod: s.paymentMethod || '',
       notes: s.notes || '',
@@ -349,12 +340,12 @@ export async function GET() {
       assetType: h.asset?.type || '',
       assetModel: h.asset?.model || '',
       action: h.action,
-      fromUserId: h.fromUserId || '',
-      fromUserName: h.fromUser ? (h.fromUser.name || h.fromUser.email) : '',
-      toUserId: h.toUserId || '',
-      toUserName: h.toUser ? (h.toUser.name || h.toUser.email) : '',
-      performedBy: h.performedBy || '',
-      performerName: h.performer ? (h.performer.name || h.performer.email) : '',
+      fromMemberId: h.fromMemberId || '',
+      fromMemberName: h.fromMember ? (h.fromMember.name || h.fromMember.email) : '',
+      toMemberId: h.toMemberId || '',
+      toMemberName: h.toMember ? (h.toMember.name || h.toMember.email) : '',
+      performedById: h.performedById || '',
+      performerName: h.performedBy ? (h.performedBy.name || h.performedBy.email) : '',
       notes: h.notes || '',
       createdAt: formatDateForCSV(h.createdAt),
     }));
@@ -369,15 +360,15 @@ export async function GET() {
       newStatus: h.newStatus || '',
       oldRenewalDate: formatDateForCSV(h.oldRenewalDate),
       newRenewalDate: formatDateForCSV(h.newRenewalDate),
-      oldUserId: h.oldUserId || '',
-      oldUserName: h.oldUser ? (h.oldUser.name || h.oldUser.email) : '',
-      newUserId: h.newUserId || '',
-      newUserName: h.newUser ? (h.newUser.name || h.newUser.email) : '',
+      oldMemberId: h.oldMemberId || '',
+      oldMemberName: h.oldMember ? (h.oldMember.name || h.oldMember.email) : '',
+      newMemberId: h.newMemberId || '',
+      newMemberName: h.newMember ? (h.newMember.name || h.newMember.email) : '',
       assignmentDate: formatDateForCSV(h.assignmentDate),
       reactivationDate: formatDateForCSV(h.reactivationDate),
       notes: h.notes || '',
-      performedBy: h.performedBy || '',
-      performerName: h.performer ? (h.performer.name || h.performer.email) : '',
+      performedById: h.performedById || '',
+      performerName: h.performedBy ? (h.performedBy.name || h.performedBy.email) : '',
       createdAt: formatDateForCSV(h.createdAt),
     }));
 
@@ -401,8 +392,8 @@ export async function GET() {
       entityType: l.entityType,
       entityId: l.entityId,
       action: l.action,
-      actorUserId: l.actorUserId || '',
-      actorUserName: l.actorUser ? (l.actorUser.name || l.actorUser.email) : 'System',
+      actorMemberId: l.actorMemberId || '',
+      actorName: l.actorMember ? (l.actorMember.name || l.actorMember.email) : 'System',
       payload: JSON.stringify(l.payload || {}),
       timestamp: formatDateForCSV(l.at),
     }));
@@ -421,46 +412,11 @@ export async function GET() {
       updatedAt: formatDateForCSV(m.updatedAt),
     }));
 
-    // HR Profiles
-    const hrProfilesData = hrProfiles.map(h => ({
-      id: h.id,
-      userId: h.userId,
-      userName: h.user ? (h.user.name || h.user.email) : '',
-      dateOfBirth: formatDateForCSV(h.dateOfBirth),
-      gender: h.gender || '',
-      maritalStatus: h.maritalStatus || '',
-      nationality: h.nationality || '',
-      qatarMobile: h.qatarMobile || '',
-      otherMobileCode: h.otherMobileCode || '',
-      otherMobileNumber: h.otherMobileNumber || '',
-      personalEmail: h.personalEmail || '',
-      qidNumber: h.qidNumber || '',
-      qidExpiry: formatDateForCSV(h.qidExpiry),
-      passportNumber: h.passportNumber || '',
-      passportExpiry: formatDateForCSV(h.passportExpiry),
-      healthCardExpiry: formatDateForCSV(h.healthCardExpiry),
-      sponsorshipType: h.sponsorshipType || '',
-      employeeId: h.employeeId || '',
-      designation: h.designation || '',
-      dateOfJoining: formatDateForCSV(h.dateOfJoining),
-      bankName: h.bankName || '',
-      iban: h.iban || '',
-      highestQualification: h.highestQualification || '',
-      specialization: h.specialization || '',
-      institutionName: h.institutionName || '',
-      graduationYear: h.graduationYear || '',
-      hasDrivingLicense: h.hasDrivingLicense ? 'Yes' : 'No',
-      licenseExpiry: formatDateForCSV(h.licenseExpiry),
-      onboardingStep: h.onboardingStep,
-      onboardingComplete: h.onboardingComplete ? 'Yes' : 'No',
-      createdAt: formatDateForCSV(h.createdAt),
-      updatedAt: formatDateForCSV(h.updatedAt),
-    }));
-
     // Profile Change Requests
     const profileChangeRequestsData = profileChangeRequests.map(r => ({
       id: r.id,
-      hrProfileId: r.hrProfileId,
+      memberId: r.memberId,
+      memberName: r.member ? (r.member.name || r.member.email) : '',
       description: r.description,
       status: r.status,
       resolvedById: r.resolvedById || '',
@@ -532,8 +488,8 @@ export async function GET() {
     const metadataData = [{
       exportDate: new Date().toISOString(),
       exportedBy: session.user.email,
-      version: '4.0',
-      totalUsers: users.length,
+      version: '5.0',
+      totalTeamMembers: teamMembers.length,
       totalAssets: assets.length,
       totalSubscriptions: subscriptions.length,
       totalSuppliers: suppliers.length,
@@ -542,7 +498,6 @@ export async function GET() {
       totalSupplierEngagements: supplierEngagements.length,
       totalActivityLogs: activityLogs.length,
       totalMaintenanceRecords: maintenanceRecords.length,
-      totalHRProfiles: hrProfiles.length,
       totalProfileChangeRequests: profileChangeRequests.length,
       // Purchase Requests
       totalPurchaseRequests: purchaseRequests.length,
@@ -553,7 +508,7 @@ export async function GET() {
     // Create Excel file with multiple sheets - ALL data included
     const sheets = [
       { name: 'Metadata', data: metadataData, headers: Object.keys(metadataData[0]).map(key => ({ key, header: key })) },
-      { name: 'Users', data: usersData, headers: Object.keys(usersData[0] || {}).map(key => ({ key, header: key })) },
+      { name: 'Team Members', data: membersData, headers: Object.keys(membersData[0] || {}).map(key => ({ key, header: key })) },
       { name: 'Assets', data: assetsData, headers: Object.keys(assetsData[0] || {}).map(key => ({ key, header: key })) },
       { name: 'Subscriptions', data: subscriptionsData, headers: Object.keys(subscriptionsData[0] || {}).map(key => ({ key, header: key })) },
       { name: 'Suppliers', data: suppliersData, headers: Object.keys(suppliersData[0] || {}).map(key => ({ key, header: key })) },
@@ -562,7 +517,6 @@ export async function GET() {
       { name: 'Supplier Engagements', data: supplierEngagementsData, headers: Object.keys(supplierEngagementsData[0] || {}).map(key => ({ key, header: key })) },
       { name: 'Activity Logs', data: activityLogsData, headers: Object.keys(activityLogsData[0] || {}).map(key => ({ key, header: key })) },
       { name: 'Maintenance', data: maintenanceRecordsData, headers: Object.keys(maintenanceRecordsData[0] || {}).map(key => ({ key, header: key })) },
-      { name: 'HR Profiles', data: hrProfilesData, headers: Object.keys(hrProfilesData[0] || {}).map(key => ({ key, header: key })) },
       { name: 'Profile Changes', data: profileChangeRequestsData, headers: Object.keys(profileChangeRequestsData[0] || {}).map(key => ({ key, header: key })) },
       // Purchase Requests
       { name: 'Purchase Requests', data: purchaseRequestsData, headers: Object.keys(purchaseRequestsData[0] || {}).map(key => ({ key, header: key })) },

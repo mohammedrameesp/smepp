@@ -14,10 +14,10 @@ export const createAssetRequestSchema = z.object({
   notes: z.string().max(1000).optional().nullable(),
 });
 
-// Admin assigning an asset to a user
+// Admin assigning an asset to a member
 export const createAssetAssignmentSchema = z.object({
   assetId: z.string().min(1, 'Asset is required'),
-  userId: z.string().min(1, 'User is required'),
+  memberId: z.string().min(1, 'Member is required'),
   reason: z.string().max(500).optional().nullable(),
   notes: z.string().max(1000).optional().nullable(),
 });
@@ -54,7 +54,7 @@ export const assetRequestQuerySchema = z.object({
   q: z.string().optional(),
   type: z.nativeEnum(AssetRequestType).optional(),
   status: z.nativeEnum(AssetRequestStatus).optional(),
-  userId: z.string().optional(),
+  memberId: z.string().optional(),
   assetId: z.string().optional(),
   p: z.coerce.number().min(1).default(1),
   ps: z.coerce.number().min(1).max(100).default(20),

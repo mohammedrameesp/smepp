@@ -1,6 +1,6 @@
 /**
  * @file route.ts
- * @description Gratuity calculation API for a specific user
+ * @description Gratuity calculation API for a specific member
  * @module hr/payroll
  */
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,56 +12,50 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 async function getGratuityHandler(request: NextRequest, context: APIContext) {
     const { tenant, params } = context;
     const tenantId = tenant!.tenantId;
-    const userId = params?.userId;
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+    const memberId = params?.memberId;
+    if (!memberId) {
+      return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
     }
 
     const isAdmin = tenant!.userRole === 'ADMIN';
 
     // Non-admin users can only view their own gratuity
-    if (!isAdmin && userId !== tenant!.userId) {
+    // tenant.userId is the TeamMember ID of the current user
+    if (!isAdmin && memberId !== tenant!.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Get user's salary structure and HR profile - verify user belongs to same org
-    const user = await prisma.user.findFirst({
+    // Get member's salary structure and HR fields - verify member belongs to same org
+    const member = await prisma.teamMember.findFirst({
       where: {
-        id: userId,
-        organizationMemberships: { some: { organizationId: tenantId } },
+        id: memberId,
+        tenantId: tenantId,
       },
       include: {
         salaryStructure: true,
-        hrProfile: {
-          select: {
-            dateOfJoining: true,
-            designation: true,
-            employeeId: true,
-          },
-        },
       },
     });
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (!member) {
+      return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
-    if (!user.hrProfile?.dateOfJoining) {
+    if (!member.dateOfJoining) {
       return NextResponse.json({
         error: 'Date of joining not set for this employee',
         canCalculate: false,
       }, { status: 200 });
     }
 
-    if (!user.salaryStructure) {
+    if (!member.salaryStructure) {
       return NextResponse.json({
         error: 'Salary structure not set for this employee',
         canCalculate: false,
       }, { status: 200 });
     }
 
-    const basicSalary = parseDecimal(user.salaryStructure.basicSalary);
-    const dateOfJoining = new Date(user.hrProfile.dateOfJoining);
+    const basicSalary = parseDecimal(member.salaryStructure.basicSalary);
+    const dateOfJoining = new Date(member.dateOfJoining);
 
     // Calculate current gratuity
     const gratuityCalculation = calculateGratuity(basicSalary, dateOfJoining);
@@ -71,12 +65,12 @@ async function getGratuityHandler(request: NextRequest, context: APIContext) {
 
     return NextResponse.json({
       canCalculate: true,
-      userId,
-      userName: user.name,
-      email: user.email,
-      employeeId: user.hrProfile.employeeId,
-      designation: user.hrProfile.designation,
-      dateOfJoining: user.hrProfile.dateOfJoining,
+      memberId,
+      memberName: member.name,
+      email: member.email,
+      employeeCode: member.employeeCode,
+      designation: member.designation,
+      dateOfJoining: member.dateOfJoining,
       basicSalary,
       serviceDuration: getServiceDurationText(gratuityCalculation.monthsOfService),
       calculation: gratuityCalculation,

@@ -69,58 +69,46 @@ function calculateProRataEntitlement(
 }
 
 /**
- * Initialize leave balances for a user
+ * Initialize leave balances for a team member
  * Creates balances for STANDARD and MEDICAL leave types based on service requirements
  * Skips PARENTAL and RELIGIOUS (admin assigns)
  *
- * @param userId - The user ID to initialize balances for
+ * @param memberId - The team member ID to initialize balances for
  * @param year - The year to create balances for (defaults to current year)
  */
-export async function initializeUserLeaveBalances(
-  userId: string,
+export async function initializeMemberLeaveBalances(
+  memberId: string,
   year: number = new Date().getFullYear(),
   tenantId?: string
 ): Promise<{ created: number; skipped: number }> {
   const now = new Date();
 
-  // Get user's HR profile for service duration
-  const hrProfile = await prisma.hRProfile.findUnique({
-    where: { userId },
+  // Get team member for service duration
+  const member = await prisma.teamMember.findUnique({
+    where: { id: memberId },
     select: {
       dateOfJoining: true,
       gender: true,
+      tenantId: true,
     },
   });
 
-  const dateOfJoining = hrProfile?.dateOfJoining;
-  const serviceMonths = dateOfJoining ? getServiceMonths(dateOfJoining, now) : 0;
-
-  // Get tenantId from user if not provided (using organizationMemberships relation)
-  // This must be done BEFORE querying leave types to filter by tenant
-  let effectiveTenantId: string;
-  if (tenantId) {
-    effectiveTenantId = tenantId;
-  } else {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        organizationMemberships: {
-          select: { organizationId: true },
-          take: 1,
-        },
-      },
-    });
-    effectiveTenantId = user?.organizationMemberships[0]?.organizationId || 'SYSTEM';
+  if (!member) {
+    return { created: 0, skipped: 0 };
   }
+
+  const dateOfJoining = member.dateOfJoining;
+  const serviceMonths = dateOfJoining ? getServiceMonths(dateOfJoining, now) : 0;
+  const effectiveTenantId = tenantId || member.tenantId;
 
   // Get all active leave types for this tenant
   const leaveTypes = await prisma.leaveType.findMany({
     where: { isActive: true, tenantId: effectiveTenantId },
   });
 
-  // Get existing balances for this user and year
+  // Get existing balances for this member and year
   const existingBalances = await prisma.leaveBalance.findMany({
-    where: { userId, year, tenantId: effectiveTenantId },
+    where: { memberId, year, tenantId: effectiveTenantId },
     select: { leaveTypeId: true },
   });
   const existingLeaveTypeIds = new Set(existingBalances.map(b => b.leaveTypeId));
@@ -129,7 +117,7 @@ export async function initializeUserLeaveBalances(
   let skipped = 0;
 
   const balancesToCreate: {
-    userId: string;
+    memberId: string;
     leaveTypeId: string;
     year: number;
     entitlement: number;
@@ -176,7 +164,7 @@ export async function initializeUserLeaveBalances(
     }
 
     balancesToCreate.push({
-      userId,
+      memberId,
       leaveTypeId: leaveType.id,
       year,
       entitlement,
@@ -196,57 +184,49 @@ export async function initializeUserLeaveBalances(
   return { created, skipped };
 }
 
+// Backwards compatibility alias
+export const initializeUserLeaveBalances = initializeMemberLeaveBalances;
+
 /**
- * Re-initialize leave balances for a user when their HR profile is updated
+ * Re-initialize leave balances for a team member when their profile is updated
  * This should be called when dateOfJoining is set/updated
  *
- * @param userId - The user ID to re-initialize balances for
+ * @param memberId - The team member ID to re-initialize balances for
  * @param year - The year to update balances for (defaults to current year)
  */
-export async function reinitializeUserLeaveBalances(
-  userId: string,
+export async function reinitializeMemberLeaveBalances(
+  memberId: string,
   year: number = new Date().getFullYear(),
   tenantId?: string
 ): Promise<{ created: number; updated: number; deleted: number }> {
   const now = new Date();
 
-  // Get user's HR profile for service duration
-  const hrProfile = await prisma.hRProfile.findUnique({
-    where: { userId },
+  // Get team member for service duration
+  const member = await prisma.teamMember.findUnique({
+    where: { id: memberId },
     select: {
       dateOfJoining: true,
       gender: true,
+      tenantId: true,
     },
   });
 
-  const dateOfJoining = hrProfile?.dateOfJoining;
-  const serviceMonths = dateOfJoining ? getServiceMonths(dateOfJoining, now) : 0;
-
-  // Get tenantId from user if not provided (using organizationMemberships relation)
-  let effectiveTenantId: string;
-  if (tenantId) {
-    effectiveTenantId = tenantId;
-  } else {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        organizationMemberships: {
-          select: { organizationId: true },
-          take: 1,
-        },
-      },
-    });
-    effectiveTenantId = user?.organizationMemberships[0]?.organizationId || 'SYSTEM';
+  if (!member) {
+    return { created: 0, updated: 0, deleted: 0 };
   }
+
+  const dateOfJoining = member.dateOfJoining;
+  const serviceMonths = dateOfJoining ? getServiceMonths(dateOfJoining, now) : 0;
+  const effectiveTenantId = tenantId || member.tenantId;
 
   // Get all active leave types for this tenant
   const leaveTypes = await prisma.leaveType.findMany({
     where: { isActive: true, tenantId: effectiveTenantId },
   });
 
-  // Get existing balances for this user and year
+  // Get existing balances for this member and year
   const existingBalances = await prisma.leaveBalance.findMany({
-    where: { userId, year, tenantId: effectiveTenantId },
+    where: { memberId, year, tenantId: effectiveTenantId },
     include: { leaveType: true },
   });
 
@@ -291,7 +271,7 @@ export async function reinitializeUserLeaveBalances(
         // Create new balance
         await prisma.leaveBalance.create({
           data: {
-            userId,
+            memberId,
             leaveTypeId: leaveType.id,
             year,
             entitlement,
@@ -301,7 +281,7 @@ export async function reinitializeUserLeaveBalances(
         created++;
       }
     } else {
-      // User doesn't meet service requirement
+      // Member doesn't meet service requirement
       // Delete balance if it exists and hasn't been used
       if (existingBalance &&
           Number(existingBalance.used) === 0 &&
@@ -317,33 +297,45 @@ export async function reinitializeUserLeaveBalances(
   return { created, updated, deleted };
 }
 
+// Backwards compatibility alias
+export const reinitializeUserLeaveBalances = reinitializeMemberLeaveBalances;
+
 /**
- * Initialize leave balances for all users who don't have them
+ * Initialize leave balances for all team members who don't have them
  * Useful for bulk initialization or fixing missing balances
  *
+ * @param tenantId - The tenant ID to initialize balances for
  * @param year - The year to create balances for (defaults to current year)
  */
-export async function initializeAllUsersLeaveBalances(
+export async function initializeAllMembersLeaveBalances(
+  tenantId: string,
   year: number = new Date().getFullYear()
-): Promise<{ usersProcessed: number; totalCreated: number; totalSkipped: number }> {
-  // Get all non-system users
-  const users = await prisma.user.findMany({
-    where: { isSystemAccount: false },
+): Promise<{ membersProcessed: number; totalCreated: number; totalSkipped: number }> {
+  // Get all active employees for this tenant
+  const members = await prisma.teamMember.findMany({
+    where: {
+      tenantId,
+      isEmployee: true,
+      isDeleted: false,
+    },
     select: { id: true },
   });
 
   let totalCreated = 0;
   let totalSkipped = 0;
 
-  for (const user of users) {
-    const { created, skipped } = await initializeUserLeaveBalances(user.id, year);
+  for (const member of members) {
+    const { created, skipped } = await initializeMemberLeaveBalances(member.id, year, tenantId);
     totalCreated += created;
     totalSkipped += skipped;
   }
 
   return {
-    usersProcessed: users.length,
+    membersProcessed: members.length,
     totalCreated,
     totalSkipped,
   };
 }
+
+// Backwards compatibility alias
+export const initializeAllUsersLeaveBalances = initializeAllMembersLeaveBalances;

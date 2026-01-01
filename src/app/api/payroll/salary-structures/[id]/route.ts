@@ -22,20 +22,16 @@ async function getSalaryStructureHandler(request: NextRequest, context: APIConte
     const salaryStructure = await prisma.salaryStructure.findFirst({
       where: { id, tenantId },
       include: {
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
             email: true,
-            hrProfile: {
-              select: {
-                employeeId: true,
-                designation: true,
-                dateOfJoining: true,
-                bankName: true,
-                iban: true,
-              },
-            },
+            employeeCode: true,
+            designation: true,
+            dateOfJoining: true,
+            bankName: true,
+            iban: true,
           },
         },
         history: {
@@ -54,7 +50,7 @@ async function getSalaryStructureHandler(request: NextRequest, context: APIConte
     }
 
     // Non-admin users can only view their own salary structure
-    if (tenant!.userRole !== 'ADMIN' && salaryStructure.userId !== tenant!.userId) {
+    if (tenant!.userRole !== 'ADMIN' && salaryStructure.memberId !== tenant!.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
@@ -100,7 +96,7 @@ async function updateSalaryStructureHandler(request: NextRequest, context: APICo
     const existing = await prisma.salaryStructure.findFirst({
       where: { id, tenantId },
       include: {
-        user: { select: { id: true, name: true } },
+        member: { select: { id: true, name: true } },
       },
     });
 
@@ -172,7 +168,7 @@ async function updateSalaryStructureHandler(request: NextRequest, context: APICo
           effectiveFrom: data.effectiveFrom ? new Date(data.effectiveFrom) : existing.effectiveFrom,
         },
         include: {
-          user: { select: { id: true, name: true, email: true } },
+          member: { select: { id: true, name: true, email: true } },
         },
       });
 
@@ -200,8 +196,8 @@ async function updateSalaryStructureHandler(request: NextRequest, context: APICo
       'SalaryStructure',
       salaryStructure.id,
       {
-        userId: existing.userId,
-        userName: existing.user.name,
+        memberId: existing.memberId,
+        memberName: existing.member.name,
         changes,
       }
     );
@@ -236,7 +232,7 @@ async function deleteSalaryStructureHandler(request: NextRequest, context: APICo
     const existing = await prisma.salaryStructure.findFirst({
       where: { id, tenantId },
       include: {
-        user: { select: { id: true, name: true } },
+        member: { select: { id: true, name: true } },
       },
     });
 
@@ -244,9 +240,9 @@ async function deleteSalaryStructureHandler(request: NextRequest, context: APICo
       return NextResponse.json({ error: 'Salary structure not found' }, { status: 404 });
     }
 
-    // Check if there are any payslips associated with this user
+    // Check if there are any payslips associated with this member
     const payslipCount = await prisma.payslip.count({
-      where: { userId: existing.userId },
+      where: { memberId: existing.memberId },
     });
 
     if (payslipCount > 0) {
@@ -267,8 +263,8 @@ async function deleteSalaryStructureHandler(request: NextRequest, context: APICo
       'SalaryStructure',
       id,
       {
-        userId: existing.userId,
-        userName: existing.user.name,
+        memberId: existing.memberId,
+        memberName: existing.member.name,
         action: 'DELETED',
       }
     );

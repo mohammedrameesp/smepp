@@ -50,27 +50,14 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // SECURITY: Filter included relations by tenantId to prevent cross-tenant data leakage
+    // Fetch user with HR profile (relations are now on TeamMember, not User)
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
-        assets: {
-          where: { tenantId },
-        },
-        subscriptions: {
-          where: { tenantId },
-        },
         hrProfile: {
-          where: { tenantId },
           select: {
             dateOfJoining: true,
             gender: true,
-          },
-        },
-        _count: {
-          select: {
-            assets: { where: { tenantId } },
-            subscriptions: { where: { tenantId } },
           },
         },
       },
@@ -141,14 +128,6 @@ export async function PUT(
     const user = await prisma.user.update({
       where: { id },
       data,
-      include: {
-        _count: {
-          select: {
-            assets: true,
-            subscriptions: true,
-          },
-        },
-      },
     });
 
     // Log activity
@@ -242,15 +221,27 @@ export async function DELETE(
       );
     }
 
-    // SECURITY: Count assigned items filtered by tenant to prevent cross-tenant data leakage
-    const [assignedAssets, assignedSubscriptions] = await Promise.all([
-      prisma.asset.count({
-        where: { assignedUserId: id, tenantId },
-      }),
-      prisma.subscription.count({
-        where: { assignedUserId: id, tenantId },
-      }),
-    ]);
+    // Check if user has a TeamMember record with assigned assets/subscriptions
+    // First, find the TeamMember for this user in this tenant
+    const teamMember = await prisma.teamMember.findFirst({
+      where: { email: user.email, tenantId },
+      select: { id: true },
+    });
+
+    let assignedAssets = 0;
+    let assignedSubscriptions = 0;
+
+    if (teamMember) {
+      // SECURITY: Count assigned items filtered by tenant to prevent cross-tenant data leakage
+      [assignedAssets, assignedSubscriptions] = await Promise.all([
+        prisma.asset.count({
+          where: { assignedMemberId: teamMember.id, tenantId },
+        }),
+        prisma.subscription.count({
+          where: { assignedMemberId: teamMember.id, tenantId },
+        }),
+      ]);
+    }
 
     // Check if user has assigned items in this tenant
     if (assignedAssets > 0 || assignedSubscriptions > 0) {

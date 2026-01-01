@@ -12,7 +12,7 @@ import { calculateRemainingBalance } from '@/lib/leave-utils';
 
 interface LeaveBalance {
   id: string;
-  userId: string;
+  memberId: string;
   leaveTypeId: string;
   year: number;
   entitlement: number | string;

@@ -33,7 +33,7 @@ async function getSalaryStructuresHandler(request: NextRequest, context: APICont
     const where: Record<string, unknown> = { tenantId };
 
     if (userId) {
-      where.userId = userId;
+      where.memberId = userId;
     }
 
     if (isActive !== undefined) {
@@ -41,7 +41,7 @@ async function getSalaryStructuresHandler(request: NextRequest, context: APICont
     }
 
     if (search) {
-      where.user = {
+      where.member = {
         OR: [
           { name: { contains: search, mode: 'insensitive' } },
           { email: { contains: search, mode: 'insensitive' } },
@@ -53,18 +53,14 @@ async function getSalaryStructuresHandler(request: NextRequest, context: APICont
       prisma.salaryStructure.findMany({
         where,
         include: {
-          user: {
+          member: {
             select: {
               id: true,
               name: true,
               email: true,
-              hrProfile: {
-                select: {
-                  employeeId: true,
-                  designation: true,
-                  dateOfJoining: true,
-                },
-              },
+              employeeCode: true,
+              designation: true,
+              dateOfJoining: true,
             },
           },
         },
@@ -118,22 +114,22 @@ async function createSalaryStructureHandler(request: NextRequest, context: APICo
 
     const data = validation.data;
 
-    // Check if user exists and belongs to the same organization
-    const user = await prisma.user.findFirst({
+    // Check if team member exists and belongs to the same organization
+    const member = await prisma.teamMember.findFirst({
       where: {
         id: data.userId,
-        organizationMemberships: { some: { organizationId: tenantId } },
+        tenantId,
       },
       select: { id: true, name: true },
     });
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (!member) {
+      return NextResponse.json({ error: 'Team member not found' }, { status: 404 });
     }
 
-    // Check if user already has an active salary structure within the same tenant
+    // Check if team member already has an active salary structure within the same tenant
     const existingSalary = await prisma.salaryStructure.findFirst({
-      where: { userId: data.userId, tenantId },
+      where: { memberId: data.userId, tenantId },
     });
 
     if (existingSalary) {
@@ -156,7 +152,7 @@ async function createSalaryStructureHandler(request: NextRequest, context: APICo
     const salaryStructure = await prisma.$transaction(async (tx) => {
       const salary = await tx.salaryStructure.create({
         data: {
-          userId: data.userId,
+          memberId: data.userId,
           basicSalary: data.basicSalary,
           housingAllowance: data.housingAllowance || 0,
           transportAllowance: data.transportAllowance || 0,
@@ -172,7 +168,7 @@ async function createSalaryStructureHandler(request: NextRequest, context: APICo
           tenantId,
         },
         include: {
-          user: {
+          member: {
             select: { id: true, name: true, email: true },
           },
         },
@@ -198,8 +194,8 @@ async function createSalaryStructureHandler(request: NextRequest, context: APICo
       'SalaryStructure',
       salaryStructure.id,
       {
-        userId: data.userId,
-        userName: user.name,
+        memberId: data.userId,
+        memberName: member.name,
         grossSalary,
       }
     );

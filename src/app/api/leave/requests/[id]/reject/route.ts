@@ -37,7 +37,7 @@ async function rejectLeaveRequestHandler(request: NextRequest, context: APIConte
     const existing = await prisma.leaveRequest.findFirst({
       where: { id, tenantId },
       include: {
-        user: {
+        member: {
           select: { name: true },
         },
         leaveType: {
@@ -71,7 +71,7 @@ async function rejectLeaveRequestHandler(request: NextRequest, context: APIConte
           rejectionReason: reason,
         },
         include: {
-          user: {
+          member: {
             select: {
               id: true,
               name: true,
@@ -97,9 +97,9 @@ async function rejectLeaveRequestHandler(request: NextRequest, context: APIConte
       // Update balance: pending -= totalDays
       await tx.leaveBalance.update({
         where: {
-          tenantId_userId_leaveTypeId_year: {
+          tenantId_memberId_leaveTypeId_year: {
             tenantId,
-            userId: existing.userId,
+            memberId: existing.memberId,
             leaveTypeId: existing.leaveTypeId,
             year,
           },
@@ -134,7 +134,7 @@ async function rejectLeaveRequestHandler(request: NextRequest, context: APIConte
       leaveRequest.id,
       {
         requestNumber: leaveRequest.requestNumber,
-        userName: existing.user?.name,
+        memberName: existing.member?.name,
         leaveType: existing.leaveType?.name,
         reason,
       }
@@ -146,7 +146,7 @@ async function rejectLeaveRequestHandler(request: NextRequest, context: APIConte
     // Send notification to the requester
     await createNotification(
       NotificationTemplates.leaveRejected(
-        existing.userId,
+        existing.memberId,
         leaveRequest.requestNumber,
         existing.leaveType?.name || 'Leave',
         reason,

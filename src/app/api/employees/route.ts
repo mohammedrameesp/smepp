@@ -5,12 +5,11 @@
  */
 
 import { NextResponse } from 'next/server';
-import { Role } from '@prisma/client';
 import { withErrorHandler } from '@/lib/http/handler';
 import {
   getExpiryStatus,
   getOverallExpiryStatus,
-  calculateProfileCompletion,
+  calculateTeamMemberProfileCompletion,
 } from '@/lib/hr-utils';
 
 // GET /api/employees - Get all employees with HR profile data
@@ -26,52 +25,38 @@ export const GET = withErrorHandler(
     const sortBy = searchParams.get('sort') || 'createdAt';
     const sortOrder = searchParams.get('order') || 'desc';
 
-    // Build where clause for employees (exclude system accounts, filter by organization)
-    // Only include users who are marked as employees (isEmployee: true)
-    const userWhere: Record<string, unknown> = {
-      isSystemAccount: false,
-      isEmployee: true, // Only show users marked as employees in HR features
-      role: {
-        in: [Role.EMPLOYEE, Role.TEMP_STAFF, Role.ADMIN],
-      },
-      // Filter by organization membership
-      organizationMemberships: {
-        some: {
-          organizationId: tenant!.tenantId,
-        },
-      },
+    // Build where clause for employees (filter by organization and isEmployee flag)
+    const where: Record<string, unknown> = {
+      tenantId: tenant!.tenantId,
+      isEmployee: true, // Only show team members marked as employees
+      isDeleted: false,
     };
 
-    // Search by name, email, employee ID, or QID
+    // Search by name, email, employee code, or QID
     if (search) {
-      userWhere.OR = [
+      where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
-        { hrProfile: { employeeId: { contains: search, mode: 'insensitive' } } },
-        { hrProfile: { qidNumber: { contains: search, mode: 'insensitive' } } },
+        { employeeCode: { contains: search, mode: 'insensitive' } },
+        { qidNumber: { contains: search, mode: 'insensitive' } },
       ];
     }
 
     // Filter by sponsorship type
     if (sponsorshipType !== 'all') {
-      userWhere.hrProfile = {
-        ...((userWhere.hrProfile as object) || {}),
-        sponsorshipType,
-      };
+      where.sponsorshipType = sponsorshipType;
     }
 
     // Get total count
-    const total = await prisma.user.count({ where: userWhere });
+    const total = await prisma.teamMember.count({ where });
 
-    // Fetch employees with HR profiles
-    const employees = await prisma.user.findMany({
-      where: userWhere,
+    // Fetch employees
+    const employees = await prisma.teamMember.findMany({
+      where,
       include: {
-        hrProfile: true,
         _count: {
           select: {
             assets: true,
-            subscriptions: true,
           },
         },
       },
@@ -84,17 +69,15 @@ export const GET = withErrorHandler(
       take: pageSize,
     });
 
-    // Calculate profile completion and expiry status for each employee using shared utilities
+    // Calculate profile completion and expiry status for each employee
     const processedEmployees = employees.map((emp) => {
-      const hr = emp.hrProfile;
-
       // Calculate profile completion using shared utility
-      const completion = calculateProfileCompletion(hr);
+      const completion = calculateTeamMemberProfileCompletion(emp);
 
       // Check expiry dates using shared utility
-      const qidExpiryStatus = getExpiryStatus(hr?.qidExpiry);
-      const passportExpiryStatus = getExpiryStatus(hr?.passportExpiry);
-      const healthCardExpiryStatus = getExpiryStatus(hr?.healthCardExpiry);
+      const qidExpiryStatus = getExpiryStatus(emp.qidExpiry);
+      const passportExpiryStatus = getExpiryStatus(emp.passportExpiry);
+      const healthCardExpiryStatus = getExpiryStatus(emp.healthCardExpiry);
 
       // Determine overall expiry status using shared utility
       const overallExpiryStatus = getOverallExpiryStatus([
@@ -109,25 +92,26 @@ export const GET = withErrorHandler(
         email: emp.email,
         image: emp.image,
         role: emp.role,
-        canLogin: emp.canLogin, // For UI badges
-        isEmployee: emp.isEmployee, // For UI badges
-        isOnWps: emp.isOnWps, // For UI badges - WPS status
+        canLogin: emp.canLogin,
+        isEmployee: emp.isEmployee,
+        isOnWps: emp.isOnWps,
         createdAt: emp.createdAt,
         updatedAt: emp.updatedAt,
-        _count: emp._count,
-        hrProfile: hr ? {
-          employeeId: hr.employeeId,
-          designation: hr.designation,
-          qidNumber: hr.qidNumber,
-          qidExpiry: hr.qidExpiry,
-          passportExpiry: hr.passportExpiry,
-          healthCardExpiry: hr.healthCardExpiry,
-          sponsorshipType: hr.sponsorshipType,
-          photoUrl: hr.photoUrl,
-          dateOfJoining: hr.dateOfJoining,
-          onboardingComplete: hr.onboardingComplete,
-          onboardingStep: hr.onboardingStep,
-        } : null,
+        _count: { assets: emp._count.assets, subscriptions: 0 },
+        // Flatten hrProfile fields for backwards compatibility
+        hrProfile: {
+          employeeId: emp.employeeCode,
+          designation: emp.designation,
+          qidNumber: emp.qidNumber,
+          qidExpiry: emp.qidExpiry,
+          passportExpiry: emp.passportExpiry,
+          healthCardExpiry: emp.healthCardExpiry,
+          sponsorshipType: emp.sponsorshipType,
+          photoUrl: emp.photoUrl,
+          dateOfJoining: emp.dateOfJoining,
+          onboardingComplete: emp.onboardingComplete,
+          onboardingStep: emp.onboardingStep,
+        },
         profileStatus: {
           isComplete: completion.isComplete,
           completionPercentage: completion.percentage,

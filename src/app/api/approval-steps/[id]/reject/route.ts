@@ -83,7 +83,7 @@ async function handleRejection(
         rejectionReason: reason,
       },
       include: {
-        user: { select: { id: true } },
+        member: { select: { id: true } },
         leaveType: { select: { name: true } },
       },
     });
@@ -92,9 +92,9 @@ async function handleRejection(
     const year = leaveRequest.startDate.getFullYear();
     await prisma.leaveBalance.update({
       where: {
-        tenantId_userId_leaveTypeId_year: {
+        tenantId_memberId_leaveTypeId_year: {
           tenantId: leaveRequest.tenantId,
-          userId: leaveRequest.userId,
+          memberId: leaveRequest.memberId,
           leaveTypeId: leaveRequest.leaveTypeId,
           year,
         },
@@ -107,7 +107,7 @@ async function handleRejection(
     // Notify requester
     await createNotification(
       NotificationTemplates.leaveRejected(
-        leaveRequest.userId,
+        leaveRequest.memberId,
         leaveRequest.requestNumber,
         leaveRequest.leaveType?.name || 'Leave',
         reason,
@@ -148,14 +148,14 @@ async function handleRejection(
         processorNotes: reason,
       },
       include: {
-        user: { select: { id: true } },
+        member: { select: { id: true } },
         asset: { select: { assetTag: true } },
       },
     });
 
     await createNotification(
       NotificationTemplates.assetRequestRejected(
-        assetRequest.userId,
+        assetRequest.memberId,
         assetRequest.asset?.assetTag || '',
         assetRequest.requestNumber,
         reason,

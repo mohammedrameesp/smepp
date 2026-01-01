@@ -65,7 +65,7 @@ export default function NewAssetPage() {
       status: AssetStatus.IN_USE,
       acquisitionType: AcquisitionType.NEW_PURCHASE,
       transferNotes: '',
-      assignedUserId: '',
+      assignedMemberId: '',
       assignmentDate: '',
       notes: '',
       location: '',
@@ -85,7 +85,7 @@ export default function NewAssetPage() {
   const watchedWarrantyExpiry = watch('warrantyExpiry');
   const watchedStatus = watch('status');
   const watchedAcquisitionType = watch('acquisitionType');
-  const watchedAssignedUserId = watch('assignedUserId');
+  const watchedAssignedUserId = watch('assignedMemberId');
   const watchedDepreciationCategoryId = watch('depreciationCategoryId');
   const watchedIsShared = watch('isShared');
 
@@ -220,7 +220,7 @@ export default function NewAssetPage() {
   useEffect(() => {
     if (watchedStatus !== AssetStatus.IN_USE) {
       if (watchedAssignedUserId) {
-        setValue('assignedUserId', '');
+        setValue('assignedMemberId', '');
         setValue('assignmentDate', '');
       }
       if (watchedIsShared) {
@@ -254,8 +254,8 @@ export default function NewAssetPage() {
           priceQAR: priceInQAR,
           assetTag: data.assetTag || null,
           // Clear assignment for shared assets
-          assignedUserId: data.isShared ? null : data.assignedUserId,
-          assignmentDate: data.isShared ? null : (data.assignedUserId ? data.assignmentDate : null),
+          assignedMemberId: data.isShared ? null : data.assignedMemberId,
+          assignmentDate: data.isShared ? null : (data.assignedMemberId ? data.assignmentDate : null),
         }),
       });
 
@@ -274,12 +274,12 @@ export default function NewAssetPage() {
   const handleUserAssignment = (userId: string) => {
     if (userId) {
       // When assigning to a user, set status to IN_USE
-      setValue('assignedUserId', userId);
+      setValue('assignedMemberId', userId);
       // Don't auto-set assignment date - let user provide it
       setValue('status', AssetStatus.IN_USE);
     } else {
       // When unassigning, clear both user and assignment date, set status to SPARE
-      setValue('assignedUserId', '');
+      setValue('assignedMemberId', '');
       setValue('assignmentDate', '');
       setValue('status', AssetStatus.SPARE);
     }
@@ -624,7 +624,7 @@ export default function NewAssetPage() {
                         setValue('isShared', !!checked);
                         // Clear assignment when marking as shared
                         if (checked) {
-                          setValue('assignedUserId', '');
+                          setValue('assignedMemberId', '');
                           setValue('assignmentDate', '');
                         }
                       }}
@@ -649,12 +649,12 @@ export default function NewAssetPage() {
                   <p className="text-xs text-gray-600">Who is using this asset?</p>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="assignedUserId">Assign to User *</Label>
+                      <Label htmlFor="assignedMemberId">Assign to User *</Label>
                       <Select
                         value={watchedAssignedUserId || "__none__"}
                         onValueChange={(value) => handleUserAssignment(value === "__none__" ? '' : value)}
                       >
-                        <SelectTrigger className={errors.assignedUserId ? 'border-red-500' : ''}>
+                        <SelectTrigger className={errors.assignedMemberId ? 'border-red-500' : ''}>
                           <SelectValue placeholder="Select user..." />
                         </SelectTrigger>
                         <SelectContent>
@@ -666,8 +666,8 @@ export default function NewAssetPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      {errors.assignedUserId && (
-                        <p className="text-sm text-red-500">{errors.assignedUserId.message}</p>
+                      {errors.assignedMemberId && (
+                        <p className="text-sm text-red-500">{errors.assignedMemberId.message}</p>
                       )}
                     </div>
                     <div className="space-y-2">

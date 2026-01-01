@@ -36,7 +36,7 @@ export default async function EmployeePayslipsPage({ searchParams }: PageProps) 
   const yearFilter = params.year ? parseInt(params.year, 10) : undefined;
 
   const where: Record<string, unknown> = {
-    userId: session.user.id,
+    memberId: session.user.id,
   };
 
   if (yearFilter) {
@@ -69,7 +69,7 @@ export default async function EmployeePayslipsPage({ searchParams }: PageProps) 
 
   // Get available years for filter
   const years = await prisma.payslip.findMany({
-    where: { userId: session.user.id },
+    where: { memberId: session.user.id },
     select: { payrollRun: { select: { year: true } } },
     distinct: ['payrollRunId'],
   });

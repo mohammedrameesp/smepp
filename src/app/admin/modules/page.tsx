@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Package,
   CreditCard,
@@ -24,6 +24,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -78,6 +79,7 @@ interface ModuleInfo {
 export default function ModulesPage() {
   const { update: updateSession } = useSession();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const installParam = searchParams.get('install');
 
   const [modules, setModules] = useState<ModuleInfo[]>([]);
@@ -154,7 +156,10 @@ export default function ModulesPage() {
       // Refresh modules list
       await fetchModules();
 
-      // Update session to refresh sidebar
+      // Force router refresh to re-run server components (navigation)
+      router.refresh();
+
+      // Update session to sync JWT token
       await updateSession();
     } catch (error) {
       console.error('Install error:', error);
@@ -192,7 +197,10 @@ export default function ModulesPage() {
       // Refresh modules list
       await fetchModules();
 
-      // Update session to refresh sidebar
+      // Force router refresh to re-run server components (navigation)
+      router.refresh();
+
+      // Update session to sync JWT token
       await updateSession();
     } catch (error) {
       console.error('Uninstall error:', error);
@@ -216,17 +224,14 @@ export default function ModulesPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Modules</h1>
-        <p className="text-muted-foreground">
-          Install and manage modules for your organization
-        </p>
-      </div>
-
-      {/* Installed Modules */}
-      <section>
+    <>
+      <PageHeader
+        title="Modules"
+        subtitle="Install and manage modules for your organization"
+      />
+      <PageContent className="space-y-8">
+        {/* Installed Modules */}
+        <section>
         <h2 className="text-lg font-semibold mb-4">
           Installed ({installedModules.length})
         </h2>
@@ -442,6 +447,7 @@ export default function ModulesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </PageContent>
+    </>
   );
 }

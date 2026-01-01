@@ -7,6 +7,7 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 interface BreadcrumbItem {
   label: string;
@@ -20,17 +21,15 @@ interface PageHeaderProps {
   actions?: React.ReactNode;
   badge?: {
     text: string;
-    variant?: 'default' | 'success' | 'warning' | 'error' | 'info';
+    variant?: 'default' | 'success' | 'warning' | 'destructive' | 'info' | 'error';
   };
   children?: React.ReactNode;
 }
 
-const badgeVariants = {
-  default: 'bg-slate-500/20 text-slate-300',
-  success: 'bg-emerald-500/20 text-emerald-400',
-  warning: 'bg-amber-500/20 text-amber-400',
-  error: 'bg-red-500/20 text-red-400',
-  info: 'bg-blue-500/20 text-blue-400',
+// Map error to destructive for badge component compatibility
+const mapBadgeVariant = (variant?: string) => {
+  if (variant === 'error') return 'destructive';
+  return variant as 'default' | 'success' | 'warning' | 'destructive' | 'info' | 'muted' | undefined;
 };
 
 export function PageHeader({
@@ -43,14 +42,14 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div className="bg-slate-800 shadow-lg">
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Breadcrumbs */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Breadcrumbs - scrollable on mobile */}
         {breadcrumbs && breadcrumbs.length > 0 && (
-          <nav className="flex items-center gap-1 text-sm mb-3">
+          <nav className="flex items-center gap-1 text-xs sm:text-sm mb-3 overflow-x-auto scrollbar-hide whitespace-nowrap">
             {breadcrumbs.map((crumb, index) => (
-              <span key={index} className="flex items-center gap-1">
+              <span key={index} className="flex items-center gap-1 shrink-0">
                 {index > 0 && (
-                  <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
+                  <ChevronRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-slate-500" />
                 )}
                 {crumb.href ? (
                   <Link
@@ -68,28 +67,27 @@ export function PageHeader({
         )}
 
         {/* Title Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white">{title}</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-white truncate">{title}</h1>
             {badge && (
-              <span
-                className={cn(
-                  'px-2.5 py-1 text-xs font-medium rounded-full',
-                  badgeVariants[badge.variant || 'default']
-                )}
+              <Badge
+                variant={mapBadgeVariant(badge.variant) || 'muted'}
+                shape="pill"
+                className="shrink-0 bg-opacity-20 dark:bg-opacity-30"
               >
                 {badge.text}
-              </span>
+              </Badge>
             )}
           </div>
           {actions && (
-            <div className="flex items-center gap-2">{actions}</div>
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">{actions}</div>
           )}
         </div>
 
         {/* Subtitle */}
         {subtitle && (
-          <p className="text-slate-400 mt-1">{subtitle}</p>
+          <p className="text-slate-400 mt-1 text-sm sm:text-base">{subtitle}</p>
         )}
 
         {/* Optional children (e.g., summary chips, tabs) */}
@@ -113,12 +111,12 @@ export function PageHeaderButton({
   children: React.ReactNode;
   className?: string;
 }) {
-  const baseStyles = 'inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors';
+  const baseStyles = 'inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800';
 
   const variantStyles = {
-    primary: 'bg-white text-slate-900 hover:bg-slate-100',
-    secondary: 'bg-slate-700 text-white hover:bg-slate-600 border border-slate-600',
-    outline: 'bg-transparent text-slate-300 hover:text-white border border-slate-500 hover:border-slate-400',
+    primary: 'bg-white text-slate-900 hover:bg-slate-100 focus-visible:ring-white',
+    secondary: 'bg-slate-700 text-white hover:bg-slate-600 border border-slate-600 focus-visible:ring-slate-400',
+    outline: 'bg-transparent text-slate-300 hover:text-white border border-slate-500 hover:border-slate-400 focus-visible:ring-slate-400',
   };
 
   const combinedClassName = cn(baseStyles, variantStyles[variant], className);
@@ -147,7 +145,7 @@ export function PageContent({
   className?: string;
 }) {
   return (
-    <main className={cn('max-w-6xl mx-auto px-6 py-8', className)}>
+    <main className={cn('max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8', className)}>
       {children}
     </main>
   );

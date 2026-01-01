@@ -61,7 +61,7 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
       take: ps,
       skip,
       include: {
-        assignedUser: {
+        assignedMember: {
           select: {
             id: true,
             name: true,
@@ -153,10 +153,10 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
         location: data.location || null,
         isShared: data.isShared || false,
         tenantId,
-        assignedUserId: data.assignedUserId || null,
+        assignedMemberId: data.assignedMemberId || null,
       },
       include: {
-        assignedUser: {
+        assignedMember: {
           select: {
             id: true,
             name: true,

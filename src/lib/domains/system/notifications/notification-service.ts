@@ -95,14 +95,14 @@ export async function createBulkNotifications(
 export const NotificationTemplates = {
   // Leave Management
   leaveSubmitted: (
-    adminId: string,
+    adminMemberId: string,
     requesterName: string,
     requestNumber: string,
     leaveType: string,
     totalDays: number,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: adminId,
+    recipientId: adminMemberId,
     type: 'LEAVE_REQUEST_SUBMITTED',
     title: 'New Leave Request',
     message: `${requesterName} submitted a ${leaveType} request (${requestNumber}) for ${totalDays} day${totalDays === 1 ? '' : 's'}.`,
@@ -112,12 +112,12 @@ export const NotificationTemplates = {
   }),
 
   leaveApproved: (
-    userId: string,
+    memberId: string,
     requestNumber: string,
     leaveType: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: userId,
+    recipientId: memberId,
     type: 'LEAVE_REQUEST_APPROVED',
     title: 'Leave Request Approved',
     message: `Your ${leaveType} request (${requestNumber}) has been approved.`,
@@ -127,13 +127,13 @@ export const NotificationTemplates = {
   }),
 
   leaveRejected: (
-    userId: string,
+    memberId: string,
     requestNumber: string,
     leaveType: string,
     reason?: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: userId,
+    recipientId: memberId,
     type: 'LEAVE_REQUEST_REJECTED',
     title: 'Leave Request Rejected',
     message: `Your ${leaveType} request (${requestNumber}) was rejected.${reason ? ` Reason: ${reason}` : ''}`,
@@ -143,14 +143,14 @@ export const NotificationTemplates = {
   }),
 
   leaveCancelled: (
-    userId: string,
+    memberId: string,
     requestNumber: string,
     leaveType: string,
     cancelledByAdmin: boolean,
     reason?: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: userId,
+    recipientId: memberId,
     type: 'LEAVE_REQUEST_CANCELLED',
     title: 'Leave Request Cancelled',
     message: cancelledByAdmin
@@ -163,12 +163,12 @@ export const NotificationTemplates = {
 
   // Asset Management
   assetAssigned: (
-    userId: string,
+    memberId: string,
     assetTag: string,
     assetModel: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: userId,
+    recipientId: memberId,
     type: 'ASSET_ASSIGNED',
     title: 'Asset Assigned',
     message: `${assetModel} (${assetTag}) has been assigned to you.`,
@@ -178,12 +178,12 @@ export const NotificationTemplates = {
   }),
 
   assetUnassigned: (
-    userId: string,
+    memberId: string,
     assetTag: string,
     assetModel: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: userId,
+    recipientId: memberId,
     type: 'ASSET_UNASSIGNED',
     title: 'Asset Returned',
     message: `${assetModel} (${assetTag}) has been unassigned from you.`,
@@ -194,14 +194,14 @@ export const NotificationTemplates = {
 
   // Asset Requests
   assetRequestSubmitted: (
-    adminId: string,
+    adminMemberId: string,
     requesterName: string,
     assetTag: string,
     assetModel: string,
     requestNumber: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: adminId,
+    recipientId: adminMemberId,
     type: 'ASSET_REQUEST_SUBMITTED',
     title: 'New Asset Request',
     message: `${requesterName} requested asset ${assetModel} (${assetTag}) - ${requestNumber}`,
@@ -211,14 +211,14 @@ export const NotificationTemplates = {
   }),
 
   assetReturnSubmitted: (
-    adminId: string,
+    adminMemberId: string,
     requesterName: string,
     assetTag: string,
     assetModel: string,
     requestNumber: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: adminId,
+    recipientId: adminMemberId,
     type: 'ASSET_RETURN_SUBMITTED',
     title: 'Asset Return Request',
     message: `${requesterName} wants to return ${assetModel} (${assetTag}) - ${requestNumber}`,
@@ -228,14 +228,14 @@ export const NotificationTemplates = {
   }),
 
   assetAssignmentPending: (
-    userId: string,
+    memberId: string,
     assetTag: string,
     assetModel: string,
     assignerName: string,
     requestNumber: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: userId,
+    recipientId: memberId,
     type: 'ASSET_ASSIGNMENT_PENDING',
     title: 'Asset Assignment Pending',
     message: `${assignerName} wants to assign ${assetModel} (${assetTag}) to you. Please accept or decline.`,
@@ -245,47 +245,47 @@ export const NotificationTemplates = {
   }),
 
   assetAssignmentAccepted: (
-    adminId: string,
-    userName: string,
+    adminMemberId: string,
+    memberName: string,
     assetTag: string,
     assetModel: string,
     requestNumber: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: adminId,
+    recipientId: adminMemberId,
     type: 'ASSET_ASSIGNMENT_ACCEPTED',
     title: 'Asset Assignment Accepted',
-    message: `${userName} accepted the assignment of ${assetModel} (${assetTag}) - ${requestNumber}`,
+    message: `${memberName} accepted the assignment of ${assetModel} (${assetTag}) - ${requestNumber}`,
     link: `/admin/asset-requests/${entityId}`,
     entityType: 'AssetRequest',
     entityId,
   }),
 
   assetAssignmentDeclined: (
-    adminId: string,
-    userName: string,
+    adminMemberId: string,
+    memberName: string,
     assetTag: string,
     assetModel: string,
     requestNumber: string,
     reason?: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: adminId,
+    recipientId: adminMemberId,
     type: 'ASSET_ASSIGNMENT_DECLINED',
     title: 'Asset Assignment Declined',
-    message: `${userName} declined the assignment of ${assetModel} (${assetTag}) - ${requestNumber}${reason ? `. Reason: ${reason}` : ''}`,
+    message: `${memberName} declined the assignment of ${assetModel} (${assetTag}) - ${requestNumber}${reason ? `. Reason: ${reason}` : ''}`,
     link: `/admin/asset-requests/${entityId}`,
     entityType: 'AssetRequest',
     entityId,
   }),
 
   assetRequestApproved: (
-    userId: string,
+    memberId: string,
     assetTag: string,
     requestNumber: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: userId,
+    recipientId: memberId,
     type: 'ASSET_REQUEST_APPROVED',
     title: 'Asset Request Approved',
     message: `Your request for asset ${assetTag} (${requestNumber}) has been approved.`,
@@ -295,13 +295,13 @@ export const NotificationTemplates = {
   }),
 
   assetRequestRejected: (
-    userId: string,
+    memberId: string,
     assetTag: string,
     requestNumber: string,
     reason?: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: userId,
+    recipientId: memberId,
     type: 'ASSET_REQUEST_REJECTED',
     title: 'Asset Request Rejected',
     message: `Your request for asset ${assetTag} (${requestNumber}) was rejected.${reason ? ` Reason: ${reason}` : ''}`,
@@ -312,13 +312,13 @@ export const NotificationTemplates = {
 
   // Purchase Requests
   purchaseRequestSubmitted: (
-    adminId: string,
+    adminMemberId: string,
     referenceNumber: string,
     requesterName: string,
     title: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: adminId,
+    recipientId: adminMemberId,
     type: 'PURCHASE_REQUEST_SUBMITTED',
     title: 'New Purchase Request',
     message: `${requesterName} submitted a purchase request (${referenceNumber}): ${title}`,
@@ -328,11 +328,11 @@ export const NotificationTemplates = {
   }),
 
   purchaseRequestApproved: (
-    userId: string,
+    memberId: string,
     referenceNumber: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: userId,
+    recipientId: memberId,
     type: 'PURCHASE_REQUEST_APPROVED',
     title: 'Purchase Request Approved',
     message: `Your purchase request (${referenceNumber}) has been approved.`,
@@ -342,12 +342,12 @@ export const NotificationTemplates = {
   }),
 
   purchaseRequestRejected: (
-    userId: string,
+    memberId: string,
     referenceNumber: string,
     reason?: string,
     entityId?: string
   ): CreateNotificationInput => ({
-    recipientId: userId,
+    recipientId: memberId,
     type: 'PURCHASE_REQUEST_REJECTED',
     title: 'Purchase Request Rejected',
     message: `Your purchase request (${referenceNumber}) was rejected.${reason ? ` Reason: ${reason}` : ''}`,
@@ -358,11 +358,11 @@ export const NotificationTemplates = {
 
   // Document Expiry Warnings
   documentExpiryWarning: (
-    userId: string,
+    memberId: string,
     documentType: string,
     daysUntilExpiry: number
   ): CreateNotificationInput => ({
-    recipientId: userId,
+    recipientId: memberId,
     type: 'DOCUMENT_EXPIRY_WARNING',
     title: 'Document Expiring Soon',
     message: `Your ${documentType} will expire in ${daysUntilExpiry} day${daysUntilExpiry === 1 ? '' : 's'}. Please renew it.`,
@@ -372,12 +372,12 @@ export const NotificationTemplates = {
 
   // General notification
   general: (
-    userId: string,
+    memberId: string,
     title: string,
     message: string,
     link?: string
   ): CreateNotificationInput => ({
-    recipientId: userId,
+    recipientId: memberId,
     type: 'GENERAL',
     title,
     message,

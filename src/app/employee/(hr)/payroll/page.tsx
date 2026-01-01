@@ -21,7 +21,7 @@ export default async function EmployeePayrollPage() {
   // Get employee's salary structure, HR profile, and recent payslips
   const [salaryStructure, hrProfile, recentPayslips, loans] = await Promise.all([
     prisma.salaryStructure.findUnique({
-      where: { userId },
+      where: { memberId: userId },
     }),
     prisma.hRProfile.findUnique({
       where: { userId },
@@ -33,7 +33,7 @@ export default async function EmployeePayrollPage() {
       },
     }),
     prisma.payslip.findMany({
-      where: { userId },
+      where: { memberId: userId },
       include: {
         payrollRun: {
           select: {
@@ -50,7 +50,7 @@ export default async function EmployeePayrollPage() {
       take: 6,
     }),
     prisma.employeeLoan.findMany({
-      where: { userId, status: 'ACTIVE' },
+      where: { memberId: userId, status: 'ACTIVE' },
       select: {
         id: true,
         loanNumber: true,

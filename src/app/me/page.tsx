@@ -1,6 +1,5 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { getUserSubscriptionHistory } from '@/lib/subscription-lifecycle';
 import { getUserAssetHistory } from '@/lib/asset-lifecycle';
@@ -13,49 +12,10 @@ export default async function MePage() {
     redirect('/login');
   }
 
-  // Fetch user's assets and subscriptions
-  let user = await prisma.user.findUnique({
-    where: { email: session.user.email || '' },
-    include: {
-      assets: true,
-      subscriptions: true,
-    },
-  });
+  // session.user.id is the TeamMember ID for org users
+  const memberId = session.user.id;
 
-  // If user doesn't exist in database but has a valid session, create them
-  if (!user && session.user.email) {
-    try {
-      user = await prisma.user.create({
-        data: {
-          email: session.user.email,
-          name: session.user.name || session.user.email.split('@')[0],
-          role: session.user.role || 'EMPLOYEE',
-          image: session.user.image,
-        },
-        include: {
-          assets: true,
-          subscriptions: true,
-        },
-      });
-    } catch (error) {
-      console.error('Failed to create user:', error);
-      return (
-        <div className="container mx-auto py-8 px-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Error Creating Account</h1>
-            <p className="text-gray-600 mb-4">
-              Failed to create your account ({session.user.email}) in the system.
-            </p>
-            <p className="text-sm text-gray-500">
-              Please contact your administrator or try signing in again.
-            </p>
-          </div>
-        </div>
-      );
-    }
-  }
-
-  if (!user) {
+  if (!memberId) {
     return (
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-2xl mx-auto text-center">
@@ -72,10 +32,10 @@ export default async function MePage() {
   }
 
   // Get complete subscription history (including inactive ones)
-  const subscriptionHistory = await getUserSubscriptionHistory(user.id);
+  const subscriptionHistory = await getUserSubscriptionHistory(memberId);
 
   // Get complete asset history (including past assignments)
-  const assetHistory = await getUserAssetHistory(user.id);
+  const assetHistory = await getUserAssetHistory(memberId);
 
   // Count active items
   const activeAssetsCount = assetHistory.filter(a => a && a.isCurrentlyAssigned).length;

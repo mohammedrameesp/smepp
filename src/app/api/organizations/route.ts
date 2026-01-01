@@ -159,6 +159,11 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Initialize setup progress tracking for the new organization
+      await tx.organizationSetupProgress.create({
+        data: { organizationId: org.id },
+      });
+
       await tx.organizationUser.create({
         data: {
           organizationId: org.id,

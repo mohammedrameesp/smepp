@@ -79,7 +79,7 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
         approvedAt: new Date(),
       },
       include: {
-        user: { select: { id: true, name: true } },
+        member: { select: { id: true, name: true } },
         leaveType: { select: { name: true } },
       },
     });
@@ -88,9 +88,9 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
     const year = leaveRequest.startDate.getFullYear();
     await prisma.leaveBalance.update({
       where: {
-        tenantId_userId_leaveTypeId_year: {
+        tenantId_memberId_leaveTypeId_year: {
           tenantId: leaveRequest.tenantId,
-          userId: leaveRequest.userId,
+          memberId: leaveRequest.memberId,
           leaveTypeId: leaveRequest.leaveTypeId,
           year,
         },
@@ -104,7 +104,7 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
     // Notify requester
     await createNotification(
       NotificationTemplates.leaveApproved(
-        leaveRequest.userId,
+        leaveRequest.memberId,
         leaveRequest.requestNumber,
         leaveRequest.leaveType?.name || 'Leave',
         entityId
@@ -141,14 +141,14 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
         processedAt: new Date(),
       },
       include: {
-        user: { select: { id: true } },
+        member: { select: { id: true } },
         asset: { select: { assetTag: true } },
       },
     });
 
     await createNotification(
       NotificationTemplates.assetRequestApproved(
-        assetRequest.userId,
+        assetRequest.memberId,
         assetRequest.asset?.assetTag || '',
         assetRequest.requestNumber,
         entityId
@@ -159,11 +159,11 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
 }
 
 async function notifyNextApprover(entityType: string, entityId: string, requiredRole: string, tenantId: string) {
-  // Find users with the required role to notify (tenant-scoped)
-  const approvers = await prisma.user.findMany({
+  // Find team members with the required role to notify (tenant-scoped)
+  const approvers = await prisma.teamMember.findMany({
     where: {
+      tenantId,
       role: requiredRole as never,
-      organizationMemberships: { some: { organizationId: tenantId } },
     },
     select: { id: true },
   });
@@ -179,14 +179,14 @@ async function notifyNextApprover(entityType: string, entityId: string, required
     const request = await prisma.leaveRequest.findUnique({
       where: { id: entityId },
       include: {
-        user: { select: { name: true, email: true } },
+        member: { select: { name: true, email: true } },
         leaveType: { select: { name: true } },
       },
     });
     if (request) {
       entityDetails = {
         title: `${request.leaveType?.name} Request (${request.requestNumber})`,
-        requesterName: request.user?.name || request.user?.email || 'User',
+        requesterName: request.member?.name || request.member?.email || 'User',
         link: `/admin/leave/requests/${entityId}`,
       };
     }
@@ -208,13 +208,13 @@ async function notifyNextApprover(entityType: string, entityId: string, required
     const request = await prisma.assetRequest.findUnique({
       where: { id: entityId },
       include: {
-        user: { select: { name: true, email: true } },
+        member: { select: { name: true, email: true } },
       },
     });
     if (request) {
       entityDetails = {
         title: `Asset Request (${request.requestNumber})`,
-        requesterName: request.user?.name || request.user?.email || 'User',
+        requesterName: request.member?.name || request.member?.email || 'User',
         link: `/admin/asset-requests/${entityId}`,
       };
     }

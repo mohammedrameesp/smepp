@@ -9,7 +9,7 @@ import { prisma } from './prisma';
 
 export async function logAction(
   tenantId: string,
-  actorUserId: string | null,
+  actorMemberId: string | null,
   action: string,
   entityType?: string,
   entityId?: string,
@@ -22,7 +22,7 @@ export async function logAction(
   try {
     const activity = await prisma.activityLog.create({
       data: {
-        actorUserId,
+        actorMemberId,
         action,
         entityType,
         entityId,

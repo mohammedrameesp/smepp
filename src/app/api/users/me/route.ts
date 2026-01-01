@@ -33,18 +33,14 @@ export async function GET(request: NextRequest) {
         email: true,
         image: true,
         role: true,
+        isEmployee: true,
+        isOnWps: true,
         isSystemAccount: true,
         createdAt: true,
         updatedAt: true,
         hrProfile: {
           select: {
             dateOfJoining: true,
-          },
-        },
-        _count: {
-          select: {
-            assets: true,
-            subscriptions: true,
           },
         },
       },

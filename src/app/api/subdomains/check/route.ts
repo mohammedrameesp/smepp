@@ -33,9 +33,19 @@ export async function GET(request: NextRequest) {
   // Check availability
   const available = await isSlugAvailable(slug);
 
-  return NextResponse.json({
-    slug: slug.toLowerCase(),
-    available,
-    valid: true,
-  });
+  return NextResponse.json(
+    {
+      slug: slug.toLowerCase(),
+      available,
+      valid: true,
+    },
+    {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    }
+  );
 }
+
+// Force dynamic rendering - no caching
+export const dynamic = 'force-dynamic';

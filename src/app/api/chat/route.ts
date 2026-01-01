@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
 
     // Log audit entry (fire and forget)
     const auditEntry = createAuditEntry(
-      { tenantId: session.user.organizationId, userId: session.user.id },
+      { tenantId: session.user.organizationId, memberId: session.user.id },
       message, // Original message for hashing
       response.conversationId,
       response.functionCalls,

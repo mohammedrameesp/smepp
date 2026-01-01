@@ -63,7 +63,7 @@ export async function fetchLeaveRequests(filters: LeaveRequestFilters = {}): Pro
   const params = buildSearchParams({
     q: filters.q,
     status: filters.status,
-    userId: filters.userId,
+    memberId: filters.memberId,
     leaveTypeId: filters.leaveTypeId,
     year: filters.year,
     startDate: filters.startDate,
@@ -163,7 +163,7 @@ export async function cancelLeaveRequest(id: string, reason?: string): Promise<L
  */
 export async function fetchLeaveBalances(filters: LeaveBalanceFilters = {}): Promise<LeaveBalancesResponse> {
   const params = buildSearchParams({
-    userId: filters.userId,
+    memberId: filters.memberId,
     leaveTypeId: filters.leaveTypeId,
     year: filters.year,
     p: filters.page,

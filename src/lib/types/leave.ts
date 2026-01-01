@@ -39,7 +39,7 @@ export interface LeaveTypeFormData {
 export interface LeaveBalance {
   id: string;
   leaveTypeId: string;
-  userId?: string;
+  memberId?: string;
   year?: number;
   entitlement: number;
   used: number;
@@ -54,7 +54,7 @@ export interface LeaveBalance {
     isPaid?: boolean;
     accrualBased?: boolean;
   };
-  user?: {
+  member?: {
     id: string;
     name: string | null;
     email: string;
@@ -90,7 +90,7 @@ export interface LeaveRequest {
   cancelledAt?: string | null;
   createdAt: string;
   updatedAt?: string;
-  user: {
+  member: {
     id: string;
     name: string | null;
     email: string;
@@ -178,7 +178,7 @@ export interface PaginationInfo {
 export interface LeaveRequestFilters {
   q?: string;
   status?: LeaveStatus;
-  userId?: string;
+  memberId?: string;
   leaveTypeId?: string;
   year?: number;
   startDate?: string;
@@ -190,7 +190,7 @@ export interface LeaveRequestFilters {
 }
 
 export interface LeaveBalanceFilters {
-  userId?: string;
+  memberId?: string;
   leaveTypeId?: string;
   year?: number;
   page?: number;
@@ -238,7 +238,7 @@ export interface LeaveTypeCardProps {
 
 export interface LeaveRequestsTableProps {
   initialRequests?: LeaveRequest[];
-  showUser?: boolean;
-  userId?: string;
+  showMember?: boolean;
+  memberId?: string;
   status?: LeaveStatus;
 }

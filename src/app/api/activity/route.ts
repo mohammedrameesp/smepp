@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const where: any = { tenantId };
     
     if (actor) {
-      where.actorUserId = actor;
+      where.actorMemberId = actor;
     }
     
     if (entityType) {
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
         take: limit,
         skip: offset,
         include: {
-          actorUser: {
+          actorMember: {
             select: {
               id: true,
               name: true,

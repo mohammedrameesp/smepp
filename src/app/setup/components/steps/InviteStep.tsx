@@ -116,34 +116,39 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
 
         {/* Employee options - only shown for non-system emails */}
         {showEmployeeOptions && (
-          <div className="mt-3 flex flex-wrap gap-4 px-1">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="isEmployee"
-                checked={isEmployee}
-                onCheckedChange={(checked) => {
-                  setIsEmployee(!!checked);
-                  if (!checked) setOnWPS(false);
-                }}
-              />
-              <Label htmlFor="isEmployee" className="text-sm text-slate-600 cursor-pointer flex items-center gap-1.5">
-                <UserCheck className="w-3.5 h-3.5" />
-                Employee
-              </Label>
-            </div>
-            {isEmployee && (
+          <div className="mt-3 px-1 animate-in slide-in-from-top-2 fade-in duration-200">
+            <div className="flex flex-wrap gap-4">
               <div className="flex items-center gap-2">
                 <Checkbox
-                  id="onWPS"
-                  checked={onWPS}
-                  onCheckedChange={(checked) => setOnWPS(!!checked)}
+                  id="isEmployee"
+                  checked={isEmployee}
+                  onCheckedChange={(checked) => {
+                    setIsEmployee(!!checked);
+                    if (!checked) setOnWPS(false);
+                  }}
                 />
-                <Label htmlFor="onWPS" className="text-sm text-slate-600 cursor-pointer flex items-center gap-1.5">
-                  <Banknote className="w-3.5 h-3.5" />
-                  On WPS
+                <Label htmlFor="isEmployee" className="text-sm text-slate-600 cursor-pointer flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5" />
+                  Employee
                 </Label>
               </div>
-            )}
+              {isEmployee && (
+                <div className="flex items-center gap-2 animate-in fade-in duration-150">
+                  <Checkbox
+                    id="onWPS"
+                    checked={onWPS}
+                    onCheckedChange={(checked) => setOnWPS(!!checked)}
+                  />
+                  <Label htmlFor="onWPS" className="text-sm text-slate-600 cursor-pointer flex items-center gap-1.5">
+                    <Banknote className="w-3.5 h-3.5" />
+                    On WPS
+                  </Label>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 mt-1.5">
+              Does this user need an HR profile{onWPS ? ' and WPS payroll (if enabled)?' : '?'}
+            </p>
           </div>
         )}
 

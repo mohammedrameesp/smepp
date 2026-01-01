@@ -81,10 +81,10 @@ export async function PUT(request: NextRequest) {
       data: updateData,
     });
 
-    // Log the activity
+    // Log the activity (session.user.id is TeamMember ID when isTeamMember is true)
     await prisma.activityLog.create({
       data: {
-        actorUserId: session.user.id,
+        actorMemberId: session.user.isTeamMember ? session.user.id : null,
         action: 'BRANDING_UPDATED',
         payload: validation.data,
         tenantId,

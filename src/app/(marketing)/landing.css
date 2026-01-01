@@ -36,14 +36,16 @@ html { scroll-behavior: smooth; }
 .nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; padding: 0; margin: 0; }
 .nav-links a { color: var(--gray-600); text-decoration: none; font-weight: 500; font-size: 0.95rem; }
 .nav-links a:hover { color: var(--primary); }
-.nav-cta { display: flex; align-items: center; gap: 1rem; }
+.nav-cta { display: none; } @media (min-width: 769px) { .nav-cta { display: flex; align-items: center; gap: 1rem; } }
 
 /* Buttons */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; font-size: 0.95rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s; text-decoration: none; border: none; }
 .btn-primary { background: var(--gradient-primary); color: white; box-shadow: 0 4px 14px 0 rgba(30,64,175,0.4); }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px 0 rgba(30,64,175,0.5); }
+.btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px white, 0 0 0 4px var(--primary); }
 .btn-secondary { background: white; color: var(--primary); border: 2px solid var(--primary); }
 .btn-secondary:hover { background: var(--primary-50); }
+.btn-secondary:focus-visible { outline: none; box-shadow: 0 0 0 2px white, 0 0 0 4px var(--primary); }
 .btn-large { padding: 1rem 2rem; font-size: 1.1rem; }
 .mobile-menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 0.5rem; }
 

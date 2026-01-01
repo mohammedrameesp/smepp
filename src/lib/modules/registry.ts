@@ -381,6 +381,13 @@ export function canInstallModule(
     return `"${mod.name}" is already installed`;
   }
 
+  // Validate that all dependencies exist in the registry
+  const invalidDeps = mod.requires.filter(dep => !MODULE_REGISTRY[dep]);
+  if (invalidDeps.length > 0) {
+    console.error(`Module "${moduleId}" has invalid dependencies: ${invalidDeps.join(', ')}`);
+    return `"${mod.name}" has invalid configuration. Please contact support.`;
+  }
+
   // Check dependencies only (tier check removed)
   const missingDeps = mod.requires.filter(dep => !enabledModules.includes(dep));
 

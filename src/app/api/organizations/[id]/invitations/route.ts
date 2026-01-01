@@ -13,6 +13,8 @@ import { sendEmail } from '@/lib/core/email';
 const inviteSchema = z.object({
   email: z.string().email('Invalid email address'),
   role: z.enum(['ADMIN', 'MANAGER', 'MEMBER']).default('MEMBER'),
+  isEmployee: z.boolean(), // Required - admin must specify if user is employee or system account
+  isOnWps: z.boolean().optional(), // Only relevant if isEmployee = true
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -103,7 +105,7 @@ export async function POST(
       );
     }
 
-    const { email, role } = result.data;
+    const { email, role, isEmployee, isOnWps } = result.data;
     const normalizedEmail = email.toLowerCase().trim();
 
     // Check if user is already a member
@@ -170,6 +172,8 @@ export async function POST(
         token,
         expiresAt,
         invitedById: session.user.id,
+        isEmployee, // Admin must specify
+        isOnWps: isEmployee ? (isOnWps ?? false) : false, // Only relevant if isEmployee
       },
     });
 

@@ -2,29 +2,37 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Package,
-  CreditCard,
-  Calendar,
-  ShoppingCart,
-  CheckSquare,
+  Palmtree,
+  Laptop,
+  Clock,
   AlertTriangle,
-  ArrowRight,
-  UserCircle,
-  Building2,
-  Search,
-  CalendarDays,
-  PalmtreeIcon,
+  Bell,
 } from 'lucide-react';
 import { getUserSubscriptionHistory } from '@/lib/subscription-lifecycle';
 import { getUserAssetHistory } from '@/lib/asset-lifecycle';
 import { getNextRenewalDate, getDaysUntilRenewal } from '@/lib/utils/renewal-date';
-import { formatDate } from '@/lib/date-format';
 import { getAnnualLeaveDetails } from '@/lib/leave-utils';
+import { format } from 'date-fns';
+import {
+  StatCard,
+  AlertBanner,
+  CelebrationsCard,
+  RequestsCard,
+  LeaveBalanceWidget,
+  HoldingsCard,
+  UpcomingCard,
+  QuickActions,
+} from '@/components/employee/dashboard';
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 export default async function EmployeeDashboard() {
   const session = await getServerSession(authOptions);
@@ -33,24 +41,27 @@ export default async function EmployeeDashboard() {
     redirect('/login');
   }
 
-  // Redirect if not an employee
   if (session.user.role !== 'EMPLOYEE') {
     redirect('/');
   }
 
   try {
+    // Get organization ID from session (session.user.id is now the TeamMember ID)
+    const organizationId = session.user.organizationId;
+
     // Get all data in parallel
     const [
       subscriptionHistory,
       assetHistory,
       purchaseRequests,
-      hrProfile,
+      memberProfile,
       leaveRequests,
       leaveBalances,
+      assetRequests,
+      celebrations,
     ] = await Promise.all([
       getUserSubscriptionHistory(session.user.id),
       getUserAssetHistory(session.user.id),
-      // Get user's purchase requests
       prisma.purchaseRequest.findMany({
         where: { requesterId: session.user.id },
         orderBy: { createdAt: 'desc' },
@@ -59,9 +70,9 @@ export default async function EmployeeDashboard() {
           _count: { select: { items: true } },
         },
       }),
-      // Get HR profile for document expiry alerts
-      prisma.hRProfile.findUnique({
-        where: { userId: session.user.id },
+      // TeamMember has HR fields directly (no separate HRProfile)
+      prisma.teamMember.findUnique({
+        where: { id: session.user.id },
         select: {
           qidNumber: true,
           qidExpiry: true,
@@ -69,11 +80,11 @@ export default async function EmployeeDashboard() {
           passportExpiry: true,
           healthCardExpiry: true,
           dateOfJoining: true,
+          dateOfBirth: true,
         },
       }),
-      // Get user's leave requests
       prisma.leaveRequest.findMany({
-        where: { userId: session.user.id },
+        where: { memberId: session.user.id },
         orderBy: { createdAt: 'desc' },
         take: 10,
         include: {
@@ -82,10 +93,9 @@ export default async function EmployeeDashboard() {
           },
         },
       }),
-      // Get user's leave balances for current year
       prisma.leaveBalance.findMany({
         where: {
-          userId: session.user.id,
+          memberId: session.user.id,
           year: new Date().getFullYear(),
         },
         include: {
@@ -94,6 +104,32 @@ export default async function EmployeeDashboard() {
           },
         },
       }),
+      prisma.assetRequest.findMany({
+        where: { memberId: session.user.id },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: {
+          asset: { select: { model: true, assetTag: true, brand: true } },
+        },
+      }),
+      // Fetch celebrations (birthdays and anniversaries this week)
+      organizationId
+        ? prisma.teamMember.findMany({
+            where: {
+              tenantId: organizationId,
+              OR: [
+                { dateOfBirth: { not: null } },
+                { dateOfJoining: { not: null } },
+              ],
+            },
+            select: {
+              id: true,
+              name: true,
+              dateOfBirth: true,
+              dateOfJoining: true,
+            },
+          })
+        : Promise.resolve([]),
     ]);
 
     // Calculate stats
@@ -101,50 +137,76 @@ export default async function EmployeeDashboard() {
     const activeSubscriptions = subscriptionHistory.filter((s: any) => s.status === 'ACTIVE');
     const pendingPurchaseRequests = purchaseRequests.filter((pr: any) => pr.status === 'PENDING');
     const pendingLeaveRequests = leaveRequests.filter((lr: any) => lr.status === 'PENDING');
+    const pendingAssetRequests = assetRequests.filter((ar: any) => ar.status === 'PENDING');
     const approvedLeaveRequests = leaveRequests.filter((lr) => lr.status === 'APPROVED');
 
-    // Get date of joining for accrual calculation
-    const dateOfJoining = hrProfile?.dateOfJoining;
+    const totalPendingRequests = pendingPurchaseRequests.length + pendingLeaveRequests.length + pendingAssetRequests.length;
+
+    // Calculate total available leave days
+    const dateOfJoining = memberProfile?.dateOfJoining;
     const currentYear = new Date().getFullYear();
     const now = new Date();
 
-    // Calculate total available leave days (only STANDARD and MEDICAL categories)
-    // For accrual-based leave (Annual), use accrued amount instead of full entitlement
     const totalAvailableLeaveDays = leaveBalances
       .filter((b) => b.leaveType.category === 'STANDARD' || b.leaveType.category === 'MEDICAL')
       .reduce((sum, b) => {
-        const leaveTypeName = b.leaveType.name;
         let effectiveEntitlement = Number(b.entitlement);
-
-        // For Annual Leave, use accrued amount
-        if (leaveTypeName === 'Annual Leave' && dateOfJoining) {
+        if (b.leaveType.name === 'Annual Leave' && dateOfJoining) {
           const annualDetails = getAnnualLeaveDetails(dateOfJoining, currentYear, now);
           effectiveEntitlement = annualDetails.accrued;
         }
-
         return sum + (effectiveEntitlement - Number(b.used) + Number(b.carriedForward) + Number(b.adjustment) - Number(b.pending));
       }, 0);
 
-    // Get upcoming renewals for user's subscriptions
-    const upcomingRenewals = activeSubscriptions
-      .map((sub: any) => {
-        if (!sub.currentPeriod?.renewalDate) return null;
-        const nextRenewal = getNextRenewalDate(sub.currentPeriod.renewalDate, sub.billingCycle);
-        const daysUntil = getDaysUntilRenewal(nextRenewal);
-        if (daysUntil === null || daysUntil > 30) return null;
-        return {
-          ...sub,
-          nextRenewalDate: nextRenewal,
-          daysUntilRenewal: daysUntil,
-        };
-      })
-      .filter(Boolean);
-
-    // Calculate document expiry alerts
+    // Process celebrations
     const today = new Date();
-    const documentAlerts: { type: string; expiry: Date; daysLeft: number }[] = [];
+    const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    if (hrProfile) {
+    const processedCelebrations = celebrations
+      .map((member: any) => {
+        const results: any[] = [];
+
+        // Check birthday
+        if (member.dateOfBirth) {
+          const birthday = new Date(member.dateOfBirth);
+          const thisYearBirthday = new Date(today.getFullYear(), birthday.getMonth(), birthday.getDate());
+          if (thisYearBirthday >= today && thisYearBirthday <= weekFromNow) {
+            results.push({
+              id: `birthday-${member.id}`,
+              name: member.name || 'Team member',
+              type: 'birthday' as const,
+              date: thisYearBirthday,
+            });
+          }
+        }
+
+        // Check work anniversary
+        if (member.dateOfJoining) {
+          const joinDate = new Date(member.dateOfJoining);
+          const years = today.getFullYear() - joinDate.getFullYear();
+          if (years > 0) {
+            const anniversary = new Date(today.getFullYear(), joinDate.getMonth(), joinDate.getDate());
+            if (anniversary >= today && anniversary <= weekFromNow) {
+              results.push({
+                id: `anniversary-${member.id}`,
+                name: member.name || 'Team member',
+                type: 'anniversary' as const,
+                date: anniversary,
+                years,
+              });
+            }
+          }
+        }
+
+        return results;
+      })
+      .flat()
+      .filter((c: any) => c.name !== session.user.name) // Exclude self
+      .sort((a: any, b: any) => a.date.getTime() - b.date.getTime());
+
+    // Document alerts
+    const documentAlerts: { type: string; expiry: Date; daysLeft: number }[] = [];
+    if (memberProfile) {
       const checkExpiry = (date: Date | null, type: string) => {
         if (date) {
           const daysLeft = Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -153,438 +215,209 @@ export default async function EmployeeDashboard() {
           }
         }
       };
-
-      checkExpiry(hrProfile.qidExpiry, 'QID');
-      checkExpiry(hrProfile.passportExpiry, 'Passport');
-      checkExpiry(hrProfile.healthCardExpiry, 'Health Card');
+      checkExpiry(memberProfile.qidExpiry, 'QID');
+      checkExpiry(memberProfile.passportExpiry, 'Passport');
+      checkExpiry(memberProfile.healthCardExpiry, 'Health Card');
     }
-
     documentAlerts.sort((a, b) => a.daysLeft - b.daysLeft);
+
+    // Upcoming renewals
+    const upcomingRenewals = activeSubscriptions
+      .map((sub: any) => {
+        if (!sub.currentPeriod?.renewalDate) return null;
+        const nextRenewal = getNextRenewalDate(sub.currentPeriod.renewalDate, sub.billingCycle);
+        const daysUntil = getDaysUntilRenewal(nextRenewal);
+        if (daysUntil === null || daysUntil > 30) return null;
+        return { ...sub, nextRenewalDate: nextRenewal, daysUntilRenewal: daysUntil };
+      })
+      .filter(Boolean);
+
+    // Transform data for components
+    const unifiedRequests = [
+      ...purchaseRequests.slice(0, 3).map((pr: any) => ({
+        id: pr.id,
+        type: 'purchase' as const,
+        title: pr.title,
+        referenceNumber: pr.referenceNumber,
+        status: pr.status,
+        subtitle: `${pr._count.items} item(s)`,
+        createdAt: pr.createdAt,
+      })),
+      ...leaveRequests.slice(0, 3).map((lr: any) => ({
+        id: lr.id,
+        type: 'leave' as const,
+        title: lr.leaveType.name,
+        referenceNumber: lr.requestNumber || `LR-${lr.id.slice(0, 6)}`,
+        status: lr.status,
+        subtitle: `${Number(lr.totalDays)} day(s)`,
+        createdAt: lr.createdAt,
+        color: lr.leaveType.color,
+      })),
+      ...assetRequests.slice(0, 2).map((ar: any) => ({
+        id: ar.id,
+        type: 'asset' as const,
+        title: ar.asset?.name || 'Asset Request',
+        referenceNumber: ar.requestNumber || `AR-${ar.id.slice(0, 6)}`,
+        status: ar.status,
+        subtitle: ar.asset?.assetCode || '',
+        createdAt: ar.createdAt,
+      })),
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const leaveBalanceData = leaveBalances
+      .filter((b) => b.leaveType.category === 'STANDARD' || b.leaveType.category === 'MEDICAL')
+      .map((b) => {
+        let effectiveEntitlement = Number(b.entitlement);
+        let isAccrual = false;
+        if (b.leaveType.name === 'Annual Leave' && dateOfJoining) {
+          const annualDetails = getAnnualLeaveDetails(dateOfJoining, currentYear, now);
+          effectiveEntitlement = annualDetails.accrued;
+          isAccrual = true;
+        }
+        const available = effectiveEntitlement - Number(b.used) + Number(b.carriedForward) + Number(b.adjustment) - Number(b.pending);
+        return {
+          id: b.id,
+          leaveTypeName: b.leaveType.name,
+          color: b.leaveType.color,
+          available: Math.max(0, available),
+          total: effectiveEntitlement,
+          isAccrual,
+        };
+      });
+
+    const assetsData = activeAssets.slice(0, 3).map((a: any) => ({
+      id: a.id,
+      name: a.name,
+      code: a.assetCode,
+      type: a.assetType?.name,
+    }));
+
+    const upcomingEvents = [
+      ...approvedLeaveRequests
+        .filter((lr) => new Date(lr.startDate) >= today)
+        .slice(0, 2)
+        .map((lr) => ({
+          id: lr.id,
+          type: 'leave' as const,
+          title: lr.leaveType.name,
+          date: lr.startDate,
+          endDate: lr.endDate,
+          subtitle: `${Number(lr.totalDays)} days`,
+          color: lr.leaveType.color,
+        })),
+      ...upcomingRenewals.slice(0, 2).map((sub: any) => ({
+        id: sub.id,
+        type: 'renewal' as const,
+        title: sub.serviceName,
+        date: sub.nextRenewalDate,
+        subtitle: sub.costPerPeriod ? `QAR ${sub.costPerPeriod}/${sub.billingCycle?.toLowerCase()}` : undefined,
+      })),
+    ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     return (
       <>
-        {/* Dark Header */}
-        <div className="bg-slate-800 shadow-lg">
-          <div className="max-w-6xl mx-auto px-6 py-8">
-            <h1 className="text-2xl font-bold text-white">
-              Welcome back, {session.user.name}!
-            </h1>
-            <p className="text-slate-400 mt-1">
-              Here&apos;s your workspace overview
-            </p>
-            {/* Summary Chips */}
-            <div className="flex flex-wrap items-center gap-3 mt-4">
-              {pendingPurchaseRequests.length > 0 && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-500/20 rounded-lg">
-                  <span className="text-violet-400 text-sm font-medium">{pendingPurchaseRequests.length} pending purchases</span>
-                </div>
-              )}
-              {pendingLeaveRequests.length > 0 && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-                  <span className="text-blue-400 text-sm font-medium">{pendingLeaveRequests.length} pending leave</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-                <span className="text-emerald-400 text-sm font-medium">{totalAvailableLeaveDays.toFixed(1)} leave days</span>
+        {/* Header */}
+        <div className="bg-gradient-to-br from-slate-50 to-blue-50 border-b">
+          <div className="max-w-6xl mx-auto px-4 py-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
+                  {getGreeting()}, {session.user.name?.split(' ')[0]}!
+                </h1>
+                <p className="text-sm text-gray-500">
+                  {format(new Date(), 'EEEE, MMMM d, yyyy')}
+                </p>
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-                <span className="text-slate-300 text-sm font-medium">{activeAssets.length} assets</span>
-              </div>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <StatCard
+                icon={Palmtree}
+                value={totalAvailableLeaveDays.toFixed(1)}
+                label="Leave Days"
+                color="blue"
+              />
+              <StatCard
+                icon={Laptop}
+                value={activeAssets.length}
+                label="Assets"
+                color="emerald"
+              />
+              <StatCard
+                icon={Clock}
+                value={totalPendingRequests}
+                label="Pending"
+                color="violet"
+              />
+              <StatCard
+                icon={AlertTriangle}
+                value={documentAlerts.length}
+                label={documentAlerts.length === 1 ? 'Alert' : 'Alerts'}
+                color="amber"
+              />
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <main className="max-w-6xl mx-auto px-6 py-8">
-          {/* Document Alert Banner */}
-          {documentAlerts.length > 0 && (
-            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-full">
-                <AlertTriangle className="h-5 w-5 text-amber-600" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-amber-800">Document Expiry Alert</p>
-                <p className="text-sm text-amber-700">
-                  {documentAlerts.length === 1
-                    ? `Your ${documentAlerts[0].type} ${documentAlerts[0].daysLeft <= 0 ? 'has expired' : `expires in ${documentAlerts[0].daysLeft} days`}`
-                    : `You have ${documentAlerts.length} documents expiring soon`}
-                </p>
-              </div>
-              <Link href="/profile">
-                <Button variant="outline" size="sm" className="border-amber-300 text-amber-700 hover:bg-amber-100">
-                  View Details →
-                </Button>
-              </Link>
-            </div>
-          )}
+        <main className="max-w-6xl mx-auto px-4 py-6">
+          {/* Alert Banner */}
+          <AlertBanner alerts={documentAlerts} className="mb-4" />
 
-          {/* PRIMARY SECTION: Tasks + Purchase Requests */}
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
-            {/* Purchase Requests Card */}
-            <Card className="shadow-sm">
-              <CardHeader className="pb-0 border-b">
-                <div className="flex items-center justify-between pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-violet-100 rounded-lg">
-                      <ShoppingCart className="h-5 w-5 text-violet-600" />
-                    </div>
-                    <div>
-                      <h2 className="font-semibold text-gray-900">Purchase Requests</h2>
-                      <p className="text-sm text-gray-500">Your submitted requests</p>
-                    </div>
-                  </div>
-                  {pendingPurchaseRequests.length > 0 && (
-                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
-                      {pendingPurchaseRequests.length} pending
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="pt-4">
-                {purchaseRequests.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <ShoppingCart className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p className="font-medium">No purchase requests yet</p>
-                    <p className="text-sm">Create your first request</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {purchaseRequests.slice(0, 4).map((pr) => (
-                      <Link
-                        key={pr.id}
-                        href={`/employee/purchase-requests/${pr.id}`}
-                        className="block"
-                      >
-                        <div className="flex items-start justify-between p-3 rounded-lg border hover:bg-gray-50 transition-colors">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-sm text-gray-900 truncate">{pr.title}</p>
-                              <Badge
-                                variant={
-                                  pr.status === 'APPROVED' ? 'default' :
-                                  pr.status === 'REJECTED' ? 'destructive' :
-                                  pr.status === 'PENDING' ? 'secondary' : 'outline'
-                                }
-                                className={`text-xs ${
-                                  pr.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                                  pr.status === 'APPROVED' ? 'bg-green-100 text-green-700' : ''
-                                }`}
-                              >
-                                {pr.status}
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {pr.referenceNumber} • {pr._count.items} item(s)
-                            </p>
-                          </div>
-                          <span className="text-xs text-gray-400 flex-shrink-0">
-                            {formatDate(pr.createdAt)}
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-              <div className="px-6 py-3 border-t bg-gray-50 rounded-b-lg flex items-center justify-between">
-                <Link href="/employee/purchase-requests" className="text-sm text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1">
-                  View All
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link href="/employee/purchase-requests/new">
-                  <Button size="sm" className="bg-violet-600 hover:bg-violet-700">
-                    + New Request
-                  </Button>
-                </Link>
-              </div>
-            </Card>
+          {/* Celebrations */}
+          <CelebrationsCard celebrations={processedCelebrations} className="mb-4" />
+
+          {/* Mobile Layout: Stacked */}
+          <div className="lg:hidden space-y-4">
+            <RequestsCard requests={unifiedRequests} />
+            <LeaveBalanceWidget balances={leaveBalanceData} year={currentYear} />
+            <HoldingsCard assets={assetsData} subscriptionCount={activeSubscriptions.length} />
+            <UpcomingCard events={upcomingEvents} />
           </div>
 
-          {/* LEAVE MANAGEMENT SECTION */}
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
-            {/* Leave Requests Card */}
-            <Card className="shadow-sm">
-              <CardHeader className="pb-0 border-b">
-                <div className="flex items-center justify-between pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <PalmtreeIcon className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h2 className="font-semibold text-gray-900">Leave Requests</h2>
-                      <p className="text-sm text-gray-500">Your submitted requests</p>
-                    </div>
-                  </div>
-                  {pendingLeaveRequests.length > 0 && (
-                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
-                      {pendingLeaveRequests.length} pending
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="pt-4">
-                {leaveRequests.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <PalmtreeIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p className="font-medium">No leave requests yet</p>
-                    <p className="text-sm">Submit your first leave request</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {leaveRequests.slice(0, 4).map((lr) => (
-                      <Link
-                        key={lr.id}
-                        href={`/employee/leave/requests/${lr.id}`}
-                        className="block"
-                      >
-                        <div className="flex items-start justify-between p-3 rounded-lg border hover:bg-gray-50 transition-colors">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-3 h-3 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: lr.leaveType.color }}
-                              />
-                              <p className="font-medium text-sm text-gray-900 truncate">{lr.leaveType.name}</p>
-                              <Badge
-                                variant={
-                                  lr.status === 'APPROVED' ? 'default' :
-                                  lr.status === 'REJECTED' ? 'destructive' :
-                                  lr.status === 'PENDING' ? 'secondary' : 'outline'
-                                }
-                                className={`text-xs ${
-                                  lr.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                                  lr.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
-                                  lr.status === 'CANCELLED' ? 'bg-gray-100 text-gray-600' : ''
-                                }`}
-                              >
-                                {lr.status}
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {lr.requestNumber} • {Number(lr.totalDays)} day(s) • {formatDate(lr.startDate)} - {formatDate(lr.endDate)}
-                            </p>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-              <div className="px-6 py-3 border-t bg-gray-50 rounded-b-lg flex items-center justify-between">
-                <Link href="/employee/leave" className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
-                  View All
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link href="/employee/leave/new">
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                    + New Request
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-
-            {/* Leave Balance Card */}
-            <Card className="shadow-sm">
-              <CardHeader className="pb-0 border-b">
-                <div className="flex items-center justify-between pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-100 rounded-lg">
-                      <CalendarDays className="h-5 w-5 text-emerald-600" />
-                    </div>
-                    <div>
-                      <h2 className="font-semibold text-gray-900">Leave Balance</h2>
-                      <p className="text-sm text-gray-500">{new Date().getFullYear()} entitlement</p>
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
-                    {totalAvailableLeaveDays.toFixed(1)} days available
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-4">
-                {leaveBalances.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <CalendarDays className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p className="font-medium">No leave balances set up</p>
-                    <p className="text-sm">Contact HR to initialize your leave balance</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {leaveBalances
-                      .filter((b) => b.leaveType.category === 'STANDARD' || b.leaveType.category === 'MEDICAL')
-                      .slice(0, 4)
-                      .map((balance) => {
-                        const rawEntitlement = Number(balance.entitlement);
-                        const used = Number(balance.used);
-                        const carriedForward = Number(balance.carriedForward);
-                        const adjustment = Number(balance.adjustment);
-                        const pending = Number(balance.pending);
-
-                        // For Annual Leave, calculate accrued amount
-                        let effectiveEntitlement = rawEntitlement;
-                        let isAccrualBased = false;
-                        let annualEntitlement = 0;
-                        let monthsWorked = 0;
-
-                        if (balance.leaveType.name === 'Annual Leave' && dateOfJoining) {
-                          const annualDetails = getAnnualLeaveDetails(dateOfJoining, currentYear, now);
-                          effectiveEntitlement = annualDetails.accrued;
-                          isAccrualBased = true;
-                          annualEntitlement = annualDetails.annualEntitlement;
-                          monthsWorked = annualDetails.monthsWorked;
-                        }
-
-                        const available = effectiveEntitlement - used + carriedForward + adjustment - pending;
-                        const usedPercentage = effectiveEntitlement > 0 ? (used / effectiveEntitlement) * 100 : 0;
-
-                        return (
-                          <div key={balance.id} className="p-3 rounded-lg border">
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="w-3 h-3 rounded-full"
-                                  style={{ backgroundColor: balance.leaveType.color }}
-                                />
-                                <span className="font-medium text-sm text-gray-900">{balance.leaveType.name}</span>
-                                {isAccrualBased && (
-                                  <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
-                                    Accrual
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-sm font-semibold text-emerald-600">
-                                {available.toFixed(1)} / {effectiveEntitlement.toFixed(1)}
-                              </span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div
-                                className="h-2 rounded-full transition-all"
-                                style={{
-                                  width: `${Math.min(usedPercentage, 100)}%`,
-                                  backgroundColor: balance.leaveType.color,
-                                }}
-                              />
-                            </div>
-                            <div className="flex justify-between mt-1 text-xs text-gray-500">
-                              <span>Used: {used} days</span>
-                              {isAccrualBased ? (
-                                <span>{monthsWorked} mo of {annualEntitlement}/yr</span>
-                              ) : (
-                                pending > 0 && <span>Pending: {pending} days</span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                )}
-              </CardContent>
-              <div className="px-6 py-3 border-t bg-gray-50 rounded-b-lg">
-                <Link href="/employee/leave" className="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1">
-                  View Full Balance
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </Card>
+          {/* Desktop Layout: 3 columns */}
+          <div className="hidden lg:grid lg:grid-cols-3 gap-6 mb-6">
+            <LeaveBalanceWidget balances={leaveBalanceData} year={currentYear} />
+            <RequestsCard requests={unifiedRequests} />
+            <CelebrationsCard celebrations={processedCelebrations} className="hidden lg:block" />
           </div>
 
-          {/* SECONDARY STATS ROW */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            {/* My Holdings - Combined Assets & Subscriptions */}
-            <Link href="/employee/my-assets">
-              <Card className="p-4 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Package className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900">My Holdings</p>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-gray-600">
-                        <span className="font-bold text-blue-600">{activeAssets.length}</span> Assets
-                      </span>
-                      <span className="text-gray-300">|</span>
-                      <span className="text-xs text-gray-600">
-                        <span className="font-bold text-emerald-600">{activeSubscriptions.length}</span> Subscriptions
-                      </span>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-gray-400" />
-                </div>
-              </Card>
-            </Link>
-
-            {/* Renewals - with names */}
-            <Card className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <Calendar className="h-5 w-5 text-amber-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-amber-800">Renewals in 30 days</p>
-                  {upcomingRenewals.length === 0 ? (
-                    <p className="text-xs text-amber-600 mt-1">No upcoming renewals</p>
-                  ) : (
-                    <div className="mt-1 space-y-0.5">
-                      {upcomingRenewals.slice(0, 3).map((sub: any) => (
-                        <p key={sub.id} className="text-xs text-amber-700 truncate">
-                          • {sub.serviceName} ({sub.daysUntilRenewal}d)
-                        </p>
-                      ))}
-                      {upcomingRenewals.length > 3 && (
-                        <p className="text-xs text-amber-600 font-medium">
-                          +{upcomingRenewals.length - 3} more
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Card>
-
-            {/* Suppliers */}
-            <Link href="/employee/suppliers">
-              <Card className="p-4 bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200 hover:shadow-md transition-all cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <Building2 className="h-5 w-5 text-indigo-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-indigo-700">Suppliers</p>
-                    <p className="text-xs text-indigo-600">Browse Directory</p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-indigo-400" />
-                </div>
-              </Card>
-            </Link>
+          <div className="hidden lg:grid lg:grid-cols-3 gap-6">
+            <HoldingsCard assets={assetsData} subscriptionCount={activeSubscriptions.length} />
+            <UpcomingCard events={upcomingEvents} />
+            <QuickActions />
           </div>
-
-          {/* QUICK LINKS */}
-          <Card className="p-4">
-            <div className="flex flex-wrap items-center gap-4 text-sm">
-              <span className="text-gray-500 font-medium">Quick Links:</span>
-              <Link href="/employee/assets" className="text-gray-700 hover:text-blue-600 flex items-center gap-1">
-                <Search className="h-4 w-4" />
-                Browse Assets
-              </Link>
-              <span className="text-gray-300">|</span>
-              <Link href="/employee/subscriptions" className="text-gray-700 hover:text-blue-600 flex items-center gap-1">
-                <CreditCard className="h-4 w-4" />
-                Browse Subscriptions
-              </Link>
-              <span className="text-gray-300">|</span>
-              <Link href="/employee/leave" className="text-gray-700 hover:text-blue-600 flex items-center gap-1">
-                <PalmtreeIcon className="h-4 w-4" />
-                Leave Management
-              </Link>
-              <span className="text-gray-300">|</span>
-              <Link href="/profile" className="text-gray-700 hover:text-blue-600 flex items-center gap-1">
-                <UserCircle className="h-4 w-4" />
-                My Profile
-              </Link>
-            </div>
-          </Card>
         </main>
+
+        {/* Mobile Bottom Navigation */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
+          <div className="grid grid-cols-4 gap-1 p-2">
+            <Link href="/employee/leave/new" className="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-blue-50 text-blue-600">
+              <Palmtree className="h-5 w-5 mb-1" />
+              <span className="text-xs font-medium">Leave</span>
+            </Link>
+            <Link href="/employee/purchase-requests/new" className="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-violet-50 text-gray-500 hover:text-violet-600">
+              <svg className="h-5 w-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span className="text-xs font-medium">Purchase</span>
+            </Link>
+            <Link href="/employee/my-assets" className="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-emerald-50 text-gray-500 hover:text-emerald-600">
+              <Laptop className="h-5 w-5 mb-1" />
+              <span className="text-xs font-medium">Assets</span>
+            </Link>
+            <Link href="/profile" className="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-gray-100 text-gray-500">
+              <svg className="h-5 w-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+              </svg>
+              <span className="text-xs font-medium">More</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Spacer for mobile bottom nav */}
+        <div className="lg:hidden h-20" />
       </>
     );
   } catch (error) {

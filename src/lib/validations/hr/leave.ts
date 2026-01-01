@@ -135,7 +135,7 @@ export const updateLeaveBalanceSchema = z.object({
 });
 
 export const initializeLeaveBalanceSchema = z.object({
-  userId: z.string().min(1, 'User ID is required'),
+  memberId: z.string().min(1, 'Member ID is required'),
   leaveTypeId: z.string().min(1, 'Leave type ID is required'),
   year: z.number().int().min(2000).max(2100),
   entitlement: z.number().min(0, 'Entitlement must be 0 or more').optional(),
@@ -147,7 +147,8 @@ export const initializeLeaveBalanceSchema = z.object({
 export const leaveRequestQuerySchema = z.object({
   q: z.string().optional(),
   status: z.nativeEnum(LeaveStatus).optional(),
-  userId: z.string().optional(),
+  userId: z.string().optional(), // Legacy - use memberId instead
+  memberId: z.string().optional(), // TeamMember ID
   leaveTypeId: z.string().optional(),
   year: z.coerce.number().int().min(2000).max(2100).optional(),
   startDate: z.string().optional(),
@@ -159,7 +160,8 @@ export const leaveRequestQuerySchema = z.object({
 });
 
 export const leaveBalanceQuerySchema = z.object({
-  userId: z.string().optional(),
+  userId: z.string().optional(), // Legacy - use memberId instead
+  memberId: z.string().optional(), // TeamMember ID
   leaveTypeId: z.string().optional(),
   year: z.coerce.number().int().min(2000).max(2100).optional(),
   p: z.coerce.number().min(1).default(1),

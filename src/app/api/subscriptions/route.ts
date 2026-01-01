@@ -71,7 +71,7 @@ async function getSubscriptionsHandler(request: NextRequest, context: APIContext
         take: ps,
         skip,
         include: {
-          assignedUser: {
+          assignedMember: {
             select: {
               id: true,
               name: true,
@@ -150,7 +150,7 @@ async function createSubscriptionHandler(request: NextRequest, context: APIConte
         tenantId,
       },
       include: {
-        assignedUser: {
+        assignedMember: {
           select: {
             id: true,
             name: true,
@@ -176,9 +176,9 @@ async function createSubscriptionHandler(request: NextRequest, context: APIConte
         subscriptionId: subscription.id,
         action: 'CREATED',
         newStatus: subscription.status,
-        performedBy: currentUserId,
-        assignmentDate: subscription.assignedUserId ? assignmentDate : null,
-        newUserId: subscription.assignedUserId,
+        performedById: currentUserId,
+        assignmentDate: subscription.assignedMemberId ? assignmentDate : null,
+        newMemberId: subscription.assignedMemberId,
       },
     });
 

@@ -32,12 +32,6 @@ export async function GET(request: NextRequest) {
         email: true,
         name: true,
         scheduledDeletionAt: true,
-        _count: {
-          select: {
-            assets: true,
-            subscriptions: true,
-          },
-        },
       },
     });
 
@@ -56,17 +50,8 @@ export async function GET(request: NextRequest) {
     // Delete each user
     for (const user of usersToDelete) {
       try {
-        // Skip if user still has assigned assets or subscriptions (shouldn't happen but safety check)
-        if (user._count.assets > 0 || user._count.subscriptions > 0) {
-          results.failed.push({
-            id: user.id,
-            email: user.email,
-            error: `Still has ${user._count.assets} assets and ${user._count.subscriptions} subscriptions assigned`,
-          });
-          continue;
-        }
-
         // Permanently delete the user
+        // Note: Assets/subscriptions are now linked to TeamMember, not User
         await prisma.user.delete({
           where: { id: user.id },
         });

@@ -36,17 +36,13 @@ export default async function AdminPayslipDetailPage({ params }: PageProps) {
   const payslip = await prisma.payslip.findUnique({
     where: { id },
     include: {
-      user: {
+      member: {
         select: {
           id: true,
           name: true,
           email: true,
-          hrProfile: {
-            select: {
-              employeeId: true,
-              designation: true,
-            },
-          },
+          employeeCode: true,
+          designation: true,
         },
       },
       payrollRun: {
@@ -83,7 +79,7 @@ export default async function AdminPayslipDetailPage({ params }: PageProps) {
   return (
     <>
       <PageHeader
-        title={payslip.user.name || 'Unknown'}
+        title={payslip.member?.name || 'Unknown'}
         subtitle={`${payslip.payslipNumber} • ${getMonthName(payslip.payrollRun.month)} ${payslip.payrollRun.year}`}
         breadcrumbs={[
           { label: 'Payroll', href: '/admin/payroll' },
@@ -94,7 +90,7 @@ export default async function AdminPayslipDetailPage({ params }: PageProps) {
         badge={{ text: payslip.isPaid ? 'Paid' : 'Pending', variant: statusBadgeVariant }}
         actions={
           <Button asChild variant="outline" size="sm">
-            <Link href={`/admin/employees/${payslip.userId}`}>
+            <Link href={`/admin/team/${payslip.memberId}`}>
               <User className="mr-2 h-4 w-4" />
               View Employee
             </Link>
@@ -248,18 +244,18 @@ export default async function AdminPayslipDetailPage({ params }: PageProps) {
             <div className="p-6 space-y-4">
               <div className="bg-slate-50 rounded-xl p-4">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Name</p>
-                <p className="text-sm font-semibold text-slate-900">{payslip.user.name}</p>
+                <p className="text-sm font-semibold text-slate-900">{payslip.member?.name}</p>
               </div>
               <div className="bg-slate-50 rounded-xl p-4">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Employee ID</p>
                 <p className="text-sm font-semibold text-slate-900 font-mono">
-                  {payslip.user.hrProfile?.employeeId || 'N/A'}
+                  {payslip.member?.employeeCode || 'N/A'}
                 </p>
               </div>
               <div className="bg-slate-50 rounded-xl p-4">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Designation</p>
                 <p className="text-sm font-semibold text-slate-900">
-                  {payslip.user.hrProfile?.designation || 'N/A'}
+                  {payslip.member?.designation || 'N/A'}
                 </p>
               </div>
             </div>

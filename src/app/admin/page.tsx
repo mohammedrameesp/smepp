@@ -145,53 +145,55 @@ export default async function AdminDashboard() {
         take: 4,
         orderBy: { at: 'desc' },
         include: {
-          actorUser: { select: { name: true } },
+          actorMember: { select: { name: true } },
         },
       }),
       // Upcoming birthdays (next 7 days)
-      prisma.hRProfile.findMany({
+      prisma.teamMember.findMany({
         where: {
           tenantId,
           dateOfBirth: { not: null },
         },
-        include: {
-          user: { select: { name: true } },
+        select: {
+          name: true,
+          dateOfBirth: true,
         },
-      }).then(profiles => {
+      }).then(members => {
         const now = new Date();
         const sevenDaysLater = new Date(now);
         sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
 
-        return profiles.filter(p => {
-          if (!p.dateOfBirth) return false;
-          const dob = new Date(p.dateOfBirth);
+        return members.filter(m => {
+          if (!m.dateOfBirth) return false;
+          const dob = new Date(m.dateOfBirth);
           const thisYearBday = new Date(now.getFullYear(), dob.getMonth(), dob.getDate());
           if (thisYearBday < now) {
             thisYearBday.setFullYear(thisYearBday.getFullYear() + 1);
           }
           return thisYearBday >= now && thisYearBday <= sevenDaysLater;
-        }).slice(0, 3).map(p => ({
-          name: p.user.name,
-          date: p.dateOfBirth!,
+        }).slice(0, 3).map(m => ({
+          name: m.name,
+          date: m.dateOfBirth!,
         }));
       }),
       // Upcoming work anniversaries (next 7 days)
-      prisma.hRProfile.findMany({
+      prisma.teamMember.findMany({
         where: {
           tenantId,
           dateOfJoining: { not: null },
         },
-        include: {
-          user: { select: { name: true } },
+        select: {
+          name: true,
+          dateOfJoining: true,
         },
-      }).then(profiles => {
+      }).then(members => {
         const now = new Date();
         const sevenDaysLater = new Date(now);
         sevenDaysLater.setDate(sevenDaysLater.getDate() + 7);
 
-        return profiles.filter(p => {
-          if (!p.dateOfJoining) return false;
-          const joinDate = new Date(p.dateOfJoining);
+        return members.filter(m => {
+          if (!m.dateOfJoining) return false;
+          const joinDate = new Date(m.dateOfJoining);
           const yearsWorked = now.getFullYear() - joinDate.getFullYear();
           if (yearsWorked < 1) return false;
 
@@ -200,12 +202,12 @@ export default async function AdminDashboard() {
             thisYearAnniv.setFullYear(thisYearAnniv.getFullYear() + 1);
           }
           return thisYearAnniv >= now && thisYearAnniv <= sevenDaysLater;
-        }).slice(0, 3).map(p => {
-          const joinDate = new Date(p.dateOfJoining!);
+        }).slice(0, 3).map(m => {
+          const joinDate = new Date(m.dateOfJoining!);
           const yearsWorked = new Date().getFullYear() - joinDate.getFullYear();
           return {
-            name: p.user.name,
-            date: p.dateOfJoining!,
+            name: m.name,
+            date: m.dateOfJoining!,
             years: yearsWorked,
           };
         });
@@ -220,12 +222,12 @@ export default async function AdminDashboard() {
         },
         take: 5,
         include: {
-          user: { select: { name: true } },
+          member: { select: { name: true } },
           leaveType: { select: { name: true } },
         },
       }),
       // Expiring employee documents (next 30 days)
-      prisma.hRProfile.findMany({
+      prisma.teamMember.findMany({
         where: {
           tenantId,
           OR: [
@@ -236,7 +238,7 @@ export default async function AdminDashboard() {
             { licenseExpiry: { gte: today, lte: thirtyDaysFromNow } },
           ],
         },
-        include: { user: { select: { name: true } } },
+        select: { id: true, name: true, qidExpiry: true, passportExpiry: true, healthCardExpiry: true, contractExpiry: true, licenseExpiry: true },
         take: 10,
       }),
     ]);
@@ -485,11 +487,11 @@ export default async function AdminDashboard() {
               {dashboardData?.onLeaveToday && dashboardData.onLeaveToday.length > 0 ? (
                 dashboardData.onLeaveToday.map((leave) => (
                   <div key={leave.id} className="flex items-center gap-3">
-                    <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-medium ${getAvatarColor(leave.user.name || '')}`}>
-                      {getInitials(leave.user.name || '??')}
+                    <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-medium ${getAvatarColor(leave.member.name || '')}`}>
+                      {getInitials(leave.member.name || '??')}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{leave.user.name}</p>
+                      <p className="text-sm font-medium text-gray-900">{leave.member.name}</p>
                       <p className="text-xs text-gray-500">{leave.leaveType.name}</p>
                     </div>
                     <span className="text-xs text-gray-400">
@@ -606,12 +608,12 @@ export default async function AdminDashboard() {
                   const actionText = activity.action.replace(/_/g, ' ').toLowerCase();
                   return (
                     <div key={activity.id} className="flex items-center gap-3 text-sm">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium ${getAvatarColor(activity.actorUser?.name || 'System')}`}>
-                        {getInitials(activity.actorUser?.name || 'SY')}
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium ${getAvatarColor(activity.actorMember?.name || 'System')}`}>
+                        {getInitials(activity.actorMember?.name || 'SY')}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-gray-900 truncate">
-                          {activity.actorUser?.name || 'System'} {actionText}
+                          {activity.actorMember?.name || 'System'} {actionText}
                         </p>
                         <p className="text-gray-400 text-xs">
                           {formatDistanceToNow(new Date(activity.at), { addSuffix: true })}

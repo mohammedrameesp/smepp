@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
               totalDays: true,
               startDate: true,
               endDate: true,
-              user: {
+              member: {
                 select: { name: true, email: true },
               },
               leaveType: {
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
           if (leaveRequest) {
             entityDetails = {
               requestNumber: leaveRequest.requestNumber,
-              requesterName: leaveRequest.user?.name || leaveRequest.user?.email,
+              requesterName: leaveRequest.member?.name || leaveRequest.member?.email,
               leaveType: leaveRequest.leaveType?.name,
               totalDays: leaveRequest.totalDays,
               startDate: leaveRequest.startDate,
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
             select: {
               requestNumber: true,
               type: true,
-              user: {
+              member: {
                 select: { name: true, email: true },
               },
               asset: {
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
           if (assetRequest) {
             entityDetails = {
               requestNumber: assetRequest.requestNumber,
-              requesterName: assetRequest.user?.name || assetRequest.user?.email,
+              requesterName: assetRequest.member?.name || assetRequest.member?.email,
               requestType: assetRequest.type,
               assetTag: assetRequest.asset?.assetTag,
               assetModel: assetRequest.asset?.model,

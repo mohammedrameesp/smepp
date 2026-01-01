@@ -12,6 +12,8 @@ import { z } from 'zod';
 import { validateSlug, isSlugAvailable } from '@/lib/multi-tenant/subdomain';
 import { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/core/email';
+import { seedDefaultPermissions } from '@/lib/access-control';
+import { seedDefaultDocumentTypes } from '@/lib/domains/system/company-documents/document-utils';
 
 const createOrgSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -115,6 +117,11 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Initialize setup progress tracking for the new organization
+      await tx.organizationSetupProgress.create({
+        data: { organizationId: org.id },
+      });
+
       // Create invitation for first admin
       await tx.organizationInvitation.create({
         data: {
@@ -128,6 +135,16 @@ export async function POST(request: NextRequest) {
       });
 
       return org;
+    });
+
+    // Seed default permissions for the new organization (non-blocking)
+    seedDefaultPermissions(organization.id).catch((err) => {
+      console.error('[SuperAdmin] Failed to seed default permissions:', err);
+    });
+
+    // Seed default document types for the new organization (non-blocking)
+    seedDefaultDocumentTypes(organization.id).catch((err) => {
+      console.error('[SuperAdmin] Failed to seed default document types:', err);
     });
 
     // Build organization-specific invite URL using subdomain

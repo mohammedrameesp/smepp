@@ -17,25 +17,26 @@ export default async function EmployeeLeavePage() {
     redirect('/login');
   }
 
-  const userId = session.user.id;
+  // session.user.id is the TeamMember ID when isTeamMember is true
+  const memberId = session.user.id;
   const currentYear = new Date().getFullYear();
   const now = new Date();
   const sevenDaysFromNow = new Date(now);
   sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
 
-  // Get user's HR profile for gender check and date of joining (for accrual calculation)
-  const hrProfile = await prisma.hRProfile.findUnique({
-    where: { userId },
+  // Get team member's gender and date of joining for accrual calculation
+  const teamMember = await prisma.teamMember.findUnique({
+    where: { id: memberId },
     select: { gender: true, dateOfJoining: true },
   });
-  const userGender = hrProfile?.gender?.toUpperCase();
-  const dateOfJoining = hrProfile?.dateOfJoining;
+  const userGender = teamMember?.gender?.toUpperCase();
+  const dateOfJoining = teamMember?.dateOfJoining;
 
   // Fetch data for the employee
   const [balances, recentRequests, upcomingLeaves] = await Promise.all([
     prisma.leaveBalance.findMany({
       where: {
-        userId,
+        memberId,
         year: currentYear,
         // Only show balances where:
         // 1. Leave type is STANDARD or MEDICAL (auto-assigned)
@@ -73,7 +74,7 @@ export default async function EmployeeLeavePage() {
       },
     }),
     prisma.leaveRequest.findMany({
-      where: { userId },
+      where: { memberId },
       include: {
         leaveType: {
           select: { id: true, name: true, color: true },
@@ -84,7 +85,7 @@ export default async function EmployeeLeavePage() {
     }),
     prisma.leaveRequest.findMany({
       where: {
-        userId,
+        memberId,
         status: 'APPROVED',
         startDate: {
           gte: now,

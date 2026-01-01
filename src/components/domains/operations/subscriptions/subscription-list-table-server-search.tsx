@@ -30,7 +30,7 @@ interface Subscription {
   purchaseDate: Date | null;
   renewalDate: Date | null;
   paymentMethod: string | null;
-  assignedUser: {
+  assignedMember: {
     id: string;
     name: string | null;
     email: string;
@@ -291,12 +291,12 @@ export function SubscriptionListTableServerSearch() {
                     )}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {subscription.assignedUser ? (
+                    {subscription.assignedMember ? (
                       <Link
-                        href={`/admin/users/${subscription.assignedUser.id}`}
+                        href={`/admin/users/${subscription.assignedMember.id}`}
                         className="text-gray-900 hover:text-gray-700 cursor-pointer font-medium"
                       >
-                        {subscription.assignedUser.name || 'Unknown User'}
+                        {subscription.assignedMember.name || 'Unknown User'}
                       </Link>
                     ) : (
                       <span className="text-gray-400 text-xs">Unassigned</span>

@@ -40,7 +40,7 @@ async function getLeaveRequestDetails(requestId: string): Promise<ApprovalDetail
   const request = await prisma.leaveRequest.findUnique({
     where: { id: requestId },
     include: {
-      user: { select: { name: true } },
+      member: { select: { name: true } },
       leaveType: { select: { name: true } },
     },
   });
@@ -48,7 +48,7 @@ async function getLeaveRequestDetails(requestId: string): Promise<ApprovalDetail
   if (!request) return null;
 
   return {
-    requesterName: request.user.name || 'Employee',
+    requesterName: request.member?.name || 'Employee',
     leaveType: request.leaveType.name,
     startDate: request.startDate,
     endDate: request.endDate,
@@ -85,7 +85,7 @@ async function getAssetRequestDetails(requestId: string): Promise<ApprovalDetail
   const request = await prisma.assetRequest.findUnique({
     where: { id: requestId },
     include: {
-      user: { select: { name: true } },
+      member: { select: { name: true } },
       asset: { select: { model: true, type: true } },
     },
   });
@@ -93,9 +93,9 @@ async function getAssetRequestDetails(requestId: string): Promise<ApprovalDetail
   if (!request) return null;
 
   return {
-    requesterName: request.user.name || 'Employee',
-    assetName: request.asset.model,
-    assetType: request.asset.type,
+    requesterName: request.member?.name || 'Employee',
+    assetName: request.asset?.model || 'Asset',
+    assetType: request.asset?.type || 'Equipment',
     justification: request.reason || undefined,
   };
 }

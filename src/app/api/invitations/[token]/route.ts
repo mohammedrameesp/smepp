@@ -76,6 +76,9 @@ export async function GET(
         email: invitation.email,
         name: invitation.name,
         role: invitation.role,
+        // Employee status - null means user needs to confirm during acceptance
+        isEmployee: invitation.isEmployee,
+        isOnWps: invitation.isOnWps,
         organization: {
           id: invitation.organization.id,
           name: invitation.organization.name,
@@ -185,6 +188,10 @@ export async function POST(
       // Accept invitation: create membership and mark as accepted
       const isOwner = invitation.role === 'OWNER';
 
+      // Use employee status from invitation (set by admin)
+      const finalIsEmployee = invitation.isEmployee ?? true; // Default to employee if somehow null
+      const finalIsOnWps = finalIsEmployee ? (invitation.isOnWps ?? false) : false;
+
       await tx.organizationUser.create({
         data: {
           organizationId: invitation.organizationId,
@@ -193,6 +200,50 @@ export async function POST(
           isOwner,
         },
       });
+
+      // Update user with employee status
+      const userUpdateData: Record<string, any> = {
+        isEmployee: finalIsEmployee,
+        isOnWps: finalIsOnWps,
+      };
+
+      // For non-employees, set user image to org logo
+      if (!finalIsEmployee && invitation.organization.logoUrl) {
+        userUpdateData.image = invitation.organization.logoUrl;
+      }
+
+      await tx.user.update({
+        where: { id: session.user.id },
+        data: userUpdateData,
+      });
+
+      // Create HR profile for employees only
+      if (finalIsEmployee) {
+        // Check if HR profile already exists
+        const existingHrProfile = await tx.hRProfile.findUnique({
+          where: { userId: session.user.id },
+        });
+
+        if (!existingHrProfile) {
+          // Generate employee code
+          const year = new Date().getFullYear();
+          const prefix = `EMP-${year}`;
+          const count = await tx.hRProfile.count({
+            where: { employeeId: { startsWith: prefix } },
+          });
+          const employeeId = `${prefix}-${String(count + 1).padStart(3, '0')}`;
+
+          await tx.hRProfile.create({
+            data: {
+              userId: session.user.id,
+              tenantId: invitation.organizationId,
+              employeeId,
+              onboardingComplete: false,
+              onboardingStep: 0,
+            },
+          });
+        }
+      }
 
       await tx.organizationInvitation.update({
         where: { id: invitation.id },
@@ -207,6 +258,7 @@ export async function POST(
           name: invitation.organization.name,
           slug: invitation.organization.slug,
         },
+        isEmployee: finalIsEmployee,
       };
     }, {
       // Use serializable isolation level to prevent race conditions

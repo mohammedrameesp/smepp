@@ -157,13 +157,14 @@ async function sendBudgetAlert(
   status: BudgetStatus
 ): Promise<void> {
   // Get organization admins to notify
-  const admins = await prisma.organizationUser.findMany({
+  const admins = await prisma.teamMember.findMany({
     where: {
-      organizationId: tenantId,
-      role: { in: ['OWNER', 'ADMIN'] },
+      tenantId,
+      role: 'ADMIN',
+      isDeleted: false,
     },
     select: {
-      userId: true,
+      id: true,
     },
   });
 
@@ -193,7 +194,7 @@ async function sendBudgetAlert(
     for (const admin of admins) {
       await prisma.notification.create({
         data: {
-          recipientId: admin.userId,
+          recipientId: admin.id,
           tenantId,
           title,
           message,

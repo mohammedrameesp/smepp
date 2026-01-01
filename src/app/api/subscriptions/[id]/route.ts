@@ -24,7 +24,7 @@ async function getSubscriptionHandler(request: NextRequest, context: APIContext)
     const subscription = await prisma.subscription.findFirst({
       where: { id, tenantId },
       include: {
-        assignedUser: {
+        assignedMember: {
           select: { id: true, name: true, email: true },
         },
         history: {
@@ -38,8 +38,8 @@ async function getSubscriptionHandler(request: NextRequest, context: APIContext)
       return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
     }
 
-    // Authorization check: Only admins or the assigned user can view the subscription
-    if (tenant!.userRole !== 'ADMIN' && subscription.assignedUserId !== tenant!.userId) {
+    // Authorization check: Only admins or the assigned member can view the subscription
+    if (tenant!.userRole !== 'ADMIN' && subscription.assignedMemberId !== tenant!.userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -71,7 +71,7 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
     const currentSubscription = await prisma.subscription.findFirst({
       where: { id, tenantId },
       include: {
-        assignedUser: { select: { id: true, name: true, email: true } },
+        assignedMember: { select: { id: true, name: true, email: true } },
       },
     });
 
@@ -129,14 +129,14 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
       where: { id },
       data: updateData,
       include: {
-        assignedUser: { select: { id: true, name: true, email: true } },
+        assignedMember: { select: { id: true, name: true, email: true } },
       },
     });
 
-    // Track user assignment changes in history with custom date
-    if (data.assignedUserId !== undefined && data.assignedUserId !== currentSubscription.assignedUserId) {
-      const oldUserName = currentSubscription.assignedUser?.name || currentSubscription.assignedUser?.email || 'Unassigned';
-      const newUserName = subscription.assignedUser?.name || subscription.assignedUser?.email || 'Unassigned';
+    // Track member assignment changes in history with custom date
+    if (data.assignedMemberId !== undefined && data.assignedMemberId !== currentSubscription.assignedMemberId) {
+      const oldMemberName = currentSubscription.assignedMember?.name || currentSubscription.assignedMember?.email || 'Unassigned';
+      const newMemberName = subscription.assignedMember?.name || subscription.assignedMember?.email || 'Unassigned';
       const assignmentDate = data.assignmentDate ? new Date(data.assignmentDate) : new Date();
 
       await prisma.subscriptionHistory.create({
@@ -145,20 +145,20 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
           action: 'REASSIGNED',
           oldStatus: subscription.status,
           newStatus: subscription.status,
-          oldUserId: currentSubscription.assignedUserId,
-          newUserId: data.assignedUserId,
+          oldMemberId: currentSubscription.assignedMemberId,
+          newMemberId: data.assignedMemberId,
           assignmentDate: assignmentDate,
-          notes: `Reassigned from ${oldUserName} to ${newUserName}`,
-          performedBy: currentUserId,
+          notes: `Reassigned from ${oldMemberName} to ${newMemberName}`,
+          performedById: currentUserId,
         },
       });
-    } else if (data.assignmentDate !== undefined && currentSubscription.assignedUserId) {
-      // If only assignment date changed (user stayed same), update the most recent assignment history
+    } else if (data.assignmentDate !== undefined && currentSubscription.assignedMemberId) {
+      // If only assignment date changed (member stayed same), update the most recent assignment history
       const latestAssignment = await prisma.subscriptionHistory.findFirst({
         where: {
           subscriptionId: subscription.id,
           action: { in: ['REASSIGNED', 'CREATED'] },
-          newUserId: currentSubscription.assignedUserId,
+          newMemberId: currentSubscription.assignedMemberId,
         },
         orderBy: { createdAt: 'desc' },
       });

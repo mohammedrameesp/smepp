@@ -208,7 +208,7 @@ export async function getCurrentPendingStep(
 }
 
 /**
- * Check if user has an active delegation from another user.
+ * Check if member has an active delegation from another member.
  */
 export async function getActiveDelegation(
   delegateeId: string,
@@ -223,7 +223,7 @@ export async function getActiveDelegation(
       startDate: { lte: now },
       endDate: { gte: now },
       delegator: {
-        role: delegatorRole,
+        approvalRole: delegatorRole,
       },
     },
     include: {
@@ -237,42 +237,42 @@ export async function getActiveDelegation(
 
   return {
     delegatorId: delegation.delegatorId,
-    delegatorName: delegation.delegator.name,
+    delegatorName: delegation.delegator?.name ?? null,
   };
 }
 
 /**
- * Check if a user can approve a specific step.
- * User can approve if:
+ * Check if a member can approve a specific step.
+ * Member can approve if:
  * 1. They have the required role, OR
  * 2. They are an ADMIN (bypass), OR
  * 3. They have an active delegation from someone with the required role
  */
-export async function canUserApprove(
-  userId: string,
+export async function canMemberApprove(
+  memberId: string,
   step: ApprovalStepWithApprover
 ): Promise<{ canApprove: boolean; reason?: string; viaDelegation?: boolean }> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
+  const member = await prisma.teamMember.findUnique({
+    where: { id: memberId },
+    select: { approvalRole: true, role: true },
   });
 
-  if (!user) {
-    return { canApprove: false, reason: 'User not found' };
+  if (!member) {
+    return { canApprove: false, reason: 'Member not found' };
   }
 
-  // ADMIN can approve anything
-  if (user.role === 'ADMIN') {
+  // ADMIN role (TeamMemberRole) can approve anything
+  if (member.role === 'ADMIN') {
     return { canApprove: true };
   }
 
-  // Check if user has the required role
-  if (user.role === step.requiredRole) {
+  // Check if member has the required approval role
+  if (member.approvalRole === step.requiredRole) {
     return { canApprove: true };
   }
 
   // Check for delegation
-  const delegation = await getActiveDelegation(userId, step.requiredRole);
+  const delegation = await getActiveDelegation(memberId, step.requiredRole);
   if (delegation) {
     return { canApprove: true, viaDelegation: true };
   }
@@ -282,6 +282,9 @@ export async function canUserApprove(
     reason: `Requires ${step.requiredRole} role or delegation`,
   };
 }
+
+// Backwards compatibility alias
+export const canUserApprove = canMemberApprove;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // APPROVAL ACTIONS
@@ -469,14 +472,14 @@ export async function getPendingApprovalsForUser(
     },
     include: {
       delegator: {
-        select: { role: true },
+        select: { approvalRole: true },
       },
     },
   });
 
   for (const delegation of delegations) {
-    if (!rolesCanApprove.includes(delegation.delegator.role)) {
-      rolesCanApprove.push(delegation.delegator.role);
+    if (!rolesCanApprove.includes(delegation.delegator.approvalRole)) {
+      rolesCanApprove.push(delegation.delegator.approvalRole);
     }
   }
 

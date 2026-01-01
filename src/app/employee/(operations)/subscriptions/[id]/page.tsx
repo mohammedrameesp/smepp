@@ -31,7 +31,7 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
   const subscription = await prisma.subscription.findUnique({
     where: { id },
     include: {
-      assignedUser: {
+      assignedMember: {
         select: {
           id: true,
           name: true,
@@ -40,7 +40,7 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
       },
       history: {
         include: {
-          performer: {
+          performedBy: {
             select: {
               name: true,
               email: true,
@@ -58,9 +58,9 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
 
   // Find when the current user was assigned
   let currentUserAssignmentDate: Date | null = null;
-  if (subscription.assignedUser) {
+  if (subscription.assignedMember) {
     const assignmentHistory = subscription.history
-      .filter(h => h.action === 'REASSIGNED' && h.newUserId === subscription.assignedUserId)
+      .filter(h => h.action === 'REASSIGNED' && h.newMemberId === subscription.assignedMemberId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     if (assignmentHistory.length > 0) {
@@ -162,7 +162,7 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
             <CostBreakdown subscriptionId={subscription.id} />
 
             {/* Assignment Info */}
-            {subscription.assignedUser && (
+            {subscription.assignedMember && (
               <Card>
                 <CardHeader>
                   <CardTitle>Assignment Information</CardTitle>
@@ -171,8 +171,8 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
                   <div>
                     <p className="text-gray-500">Assigned To</p>
                     <p className="font-medium">
-                      {subscription.assignedUser.name || subscription.assignedUser.email}
-                      {subscription.assignedUserId === session.user.id && (
+                      {subscription.assignedMember.name || subscription.assignedMember.email}
+                      {subscription.assignedMemberId === session.user.id && (
                         <Badge variant="secondary" className="ml-2">You</Badge>
                       )}
                     </p>

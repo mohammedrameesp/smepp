@@ -247,7 +247,7 @@ async function executeLeaveAction(
   const request = await prisma.leaveRequest.findUnique({
     where: { id: entityId },
     include: {
-      user: { select: { name: true } },
+      member: { select: { name: true } },
       leaveType: { select: { name: true } },
     },
   });
@@ -289,7 +289,7 @@ async function executeLeaveAction(
   if (action === 'approve') {
     await prisma.leaveBalance.updateMany({
       where: {
-        userId: request.userId,
+        memberId: request.memberId,
         leaveTypeId: request.leaveTypeId,
         year: request.startDate.getFullYear(),
       },
@@ -302,7 +302,7 @@ async function executeLeaveAction(
     // Rejected - release pending days
     await prisma.leaveBalance.updateMany({
       where: {
-        userId: request.userId,
+        memberId: request.memberId,
         leaveTypeId: request.leaveTypeId,
         year: request.startDate.getFullYear(),
       },
@@ -313,7 +313,7 @@ async function executeLeaveAction(
   }
 
   return {
-    requesterName: request.user.name || 'Employee',
+    requesterName: request.member.name || 'Employee',
     title: `${request.leaveType.name} Leave`,
   };
 }
@@ -383,7 +383,7 @@ async function executeAssetAction(
   const request = await prisma.assetRequest.findUnique({
     where: { id: entityId },
     include: {
-      user: { select: { name: true } },
+      member: { select: { name: true } },
       asset: { select: { model: true, type: true } },
     },
   });
@@ -419,12 +419,12 @@ async function executeAssetAction(
     },
   });
 
-  // If approved, assign the asset to the user
+  // If approved, assign the asset to the member
   if (action === 'approve') {
     await prisma.asset.update({
       where: { id: request.assetId },
       data: {
-        assignedUserId: request.userId,
+        assignedMemberId: request.memberId,
         assignmentDate: new Date().toISOString(),
         status: 'IN_USE',
       },
@@ -432,7 +432,7 @@ async function executeAssetAction(
   }
 
   return {
-    requesterName: request.user.name || 'Employee',
+    requesterName: request.member.name || 'Employee',
     title: `${request.asset.type} - ${request.asset.model}`,
   };
 }

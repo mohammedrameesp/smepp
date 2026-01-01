@@ -4,9 +4,9 @@ import { prisma } from '@/lib/core/prisma';
 import { getLimitsForTier } from '@/lib/ai/rate-limiter';
 import { getAuditSummary, getFlaggedQueries } from '@/lib/ai/audit-logger';
 
-interface UserUsage {
-  userId: string;
-  userName: string;
+interface MemberUsage {
+  memberId: string;
+  memberName: string;
   email: string;
   totalTokens: number;
   requestCount: number;
@@ -66,9 +66,9 @@ export const GET = withErrorHandler(async (request, { tenant }) => {
   const monthlyTokensUsed = monthlyUsage._sum.totalTokens || 0;
   const monthlyRequestCount = monthlyUsage._count || 0;
 
-  // Get usage by user
-  const userUsageData = await prisma.aIChatUsage.groupBy({
-    by: ['userId'],
+  // Get usage by member
+  const memberUsageData = await prisma.aIChatUsage.groupBy({
+    by: ['memberId'],
     where: {
       tenantId: tenant.tenantId,
       createdAt: { gte: startDate },
@@ -78,21 +78,21 @@ export const GET = withErrorHandler(async (request, { tenant }) => {
     _max: { createdAt: true },
   });
 
-  // Get user details
-  const userIds = userUsageData.map(u => u.userId);
-  const users = await prisma.user.findMany({
-    where: { id: { in: userIds } },
+  // Get member details
+  const memberIds = memberUsageData.map(u => u.memberId);
+  const members = await prisma.teamMember.findMany({
+    where: { id: { in: memberIds } },
     select: { id: true, name: true, email: true },
   });
 
-  const userMap = new Map(users.map(u => [u.id, u]));
+  const memberMap = new Map(members.map(m => [m.id, m]));
 
-  const usageByUser: UserUsage[] = userUsageData.map(u => {
-    const user = userMap.get(u.userId);
+  const usageByMember: MemberUsage[] = memberUsageData.map(u => {
+    const member = memberMap.get(u.memberId);
     return {
-      userId: u.userId,
-      userName: user?.name || 'Unknown',
-      email: user?.email || '',
+      memberId: u.memberId,
+      memberName: member?.name || 'Unknown',
+      email: member?.email || '',
       totalTokens: u._sum.totalTokens || 0,
       requestCount: u._count || 0,
       lastUsed: u._max.createdAt,
@@ -138,18 +138,18 @@ export const GET = withErrorHandler(async (request, { tenant }) => {
       estimatedCost: Math.round(estimatedCost * 100) / 100,
       tier: org.subscriptionTier,
     },
-    usageByUser,
+    usageByMember,
     dailyUsage,
     auditSummary: {
       totalQueries: auditSummary.totalQueries,
       flaggedQueries: auditSummary.flaggedQueries,
-      uniqueUsers: auditSummary.uniqueUsers,
+      uniqueMembers: auditSummary.uniqueMembers,
       avgRiskScore: auditSummary.avgRiskScore,
       topFunctions: auditSummary.topFunctions,
     },
     flaggedQueries: flaggedQueries.map(q => ({
       id: q.id,
-      userId: q.userId,
+      memberId: q.memberId,
       riskScore: q.riskScore,
       flagReasons: q.flagReasons,
       createdAt: q.createdAt,

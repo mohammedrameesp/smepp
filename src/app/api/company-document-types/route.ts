@@ -4,8 +4,15 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { companyDocumentTypeSchema } from '@/lib/validations/system/company-documents';
 
 // GET /api/company-document-types - List all document types
-export const GET = withErrorHandler(async (_request: NextRequest) => {
+export const GET = withErrorHandler(async (_request: NextRequest, context: APIContext) => {
+  if (!context.tenant?.tenantId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
+
   const documentTypes = await prisma.companyDocumentType.findMany({
+    where: {
+      tenantId: context.tenant.tenantId,
+    },
     orderBy: [
       { sortOrder: 'asc' },
       { name: 'asc' },

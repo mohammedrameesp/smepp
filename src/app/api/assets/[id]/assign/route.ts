@@ -38,37 +38,37 @@ async function assignAssetHandler(request: NextRequest, context: APIContext) {
       }, { status: 400 });
     }
 
-    const { assignedUserId } = validation.data;
+    const { assignedMemberId } = validation.data;
 
     // Use findFirst with tenantId to prevent cross-tenant access
     const currentAsset = await prisma.asset.findFirst({
       where: { id, tenantId },
-      include: { assignedUser: true },
+      include: { assignedMember: true },
     });
 
     if (!currentAsset) {
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
     }
 
-    // Verify assigned user exists and belongs to same organization
-    if (assignedUserId) {
-      const user = await prisma.user.findFirst({
+    // Verify assigned member exists and belongs to same organization
+    if (assignedMemberId) {
+      const member = await prisma.teamMember.findFirst({
         where: {
-          id: assignedUserId,
-          organizationMemberships: { some: { organizationId: tenantId } },
+          id: assignedMemberId,
+          tenantId,
         },
       });
-      if (!user) {
-        return NextResponse.json({ error: 'User not found in this organization' }, { status: 404 });
+      if (!member) {
+        return NextResponse.json({ error: 'Member not found in this organization' }, { status: 404 });
       }
     }
 
     // Update asset assignment
     const asset = await prisma.asset.update({
       where: { id: id },
-      data: { assignedUserId },
+      data: { assignedMemberId },
       include: {
-        assignedUser: {
+        assignedMember: {
           select: {
             id: true,
             name: true,
@@ -79,8 +79,8 @@ async function assignAssetHandler(request: NextRequest, context: APIContext) {
     });
 
     // Log activity
-    const previousUser = currentAsset.assignedUser;
-    const newUser = asset.assignedUser;
+    const previousMember = currentAsset.assignedMember;
+    const newMember = asset.assignedMember;
     
     await logAction(
       tenantId,
@@ -92,21 +92,21 @@ async function assignAssetHandler(request: NextRequest, context: APIContext) {
         assetModel: asset.model,
         assetType: asset.type,
         assetTag: asset.assetTag,
-        previousUser: previousUser ? { id: previousUser.id, name: previousUser.name } : null,
-        newUser: newUser ? { id: newUser.id, name: newUser.name } : null,
+        previousMember: previousMember ? { id: previousMember.id, name: previousMember.name } : null,
+        newMember: newMember ? { id: newMember.id, name: newMember.name } : null,
       }
     );
 
     // Record asset assignment history
     await recordAssetAssignment(
       asset.id,
-      previousUser?.id || null,
-      newUser?.id || null,
+      previousMember?.id || null,
+      newMember?.id || null,
       session.user.id
     );
 
-    // Send assignment email and in-app notification to the new user (non-blocking)
-    if (newUser) {
+    // Send assignment email and in-app notification to the new member (non-blocking)
+    if (newMember) {
       try {
         // Get org name for email
         const org = await prisma.organization.findUnique({
@@ -115,9 +115,9 @@ async function assignAssetHandler(request: NextRequest, context: APIContext) {
         });
 
         // Email notification
-        if (newUser.email) {
+        if (newMember.email) {
           const emailContent = assetAssignmentEmail({
-            userName: newUser.name || newUser.email,
+            userName: newMember.name || newMember.email,
             assetTag: asset.assetTag || 'N/A',
             assetType: asset.type,
             brand: asset.brand || 'N/A',
@@ -127,7 +127,7 @@ async function assignAssetHandler(request: NextRequest, context: APIContext) {
             orgName: org?.name || 'Organization',
           });
           await sendEmail({
-            to: newUser.email,
+            to: newMember.email,
             subject: emailContent.subject,
             html: emailContent.html,
             text: emailContent.text,
@@ -137,7 +137,7 @@ async function assignAssetHandler(request: NextRequest, context: APIContext) {
         // In-app notification
         await createNotification(
           NotificationTemplates.assetAssigned(
-            newUser.id,
+            newMember.id,
             asset.assetTag || '',
             asset.model,
             asset.id
@@ -149,12 +149,12 @@ async function assignAssetHandler(request: NextRequest, context: APIContext) {
       }
     }
 
-    // Notify previous user if asset was unassigned from them
-    if (previousUser) {
+    // Notify previous member if asset was unassigned from them
+    if (previousMember) {
       try {
         await createNotification(
           NotificationTemplates.assetUnassigned(
-            previousUser.id,
+            previousMember.id,
             asset.assetTag || '',
             asset.model,
             asset.id

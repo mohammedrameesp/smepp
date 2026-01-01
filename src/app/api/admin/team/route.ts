@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -20,18 +20,23 @@ export async function GET() {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const members = await prisma.organizationUser.findMany({
-      where: { organizationId: session.user.organizationId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-            createdAt: true,
-          },
-        },
+    const members = await prisma.teamMember.findMany({
+      where: {
+        tenantId: session.user.organizationId,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        role: true,
+        isOwner: true,
+        joinedAt: true,
+        createdAt: true,
+        isEmployee: true,
+        employeeCode: true,
+        designation: true,
       },
       orderBy: [
         { isOwner: 'desc' },
@@ -52,7 +57,16 @@ export async function GET() {
         role: m.role,
         isOwner: m.isOwner,
         joinedAt: m.joinedAt,
-        user: m.user,
+        isEmployee: m.isEmployee,
+        employeeCode: m.employeeCode,
+        designation: m.designation,
+        user: {
+          id: m.id,
+          name: m.name,
+          email: m.email,
+          image: m.image,
+          createdAt: m.createdAt,
+        },
       })),
       limits: {
         maxUsers: org?.maxUsers || 5,

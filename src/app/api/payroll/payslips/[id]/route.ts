@@ -20,21 +20,17 @@ async function getPayslipHandler(request: NextRequest, context: APIContext) {
     const payslip = await prisma.payslip.findFirst({
       where: { id, tenantId },
       include: {
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
             email: true,
-            hrProfile: {
-              select: {
-                employeeId: true,
-                designation: true,
-                dateOfJoining: true,
-                bankName: true,
-                iban: true,
-                qidNumber: true,
-              },
-            },
+            employeeCode: true,
+            designation: true,
+            dateOfJoining: true,
+            bankName: true,
+            iban: true,
+            qidNumber: true,
           },
         },
         payrollRun: {
@@ -57,7 +53,7 @@ async function getPayslipHandler(request: NextRequest, context: APIContext) {
     }
 
     // Non-admin users can only view their own payslips
-    if (tenant!.userRole !== 'ADMIN' && payslip.userId !== tenant!.userId) {
+    if (tenant!.userRole !== 'ADMIN' && payslip.memberId !== tenant!.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 

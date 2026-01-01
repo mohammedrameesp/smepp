@@ -42,14 +42,14 @@ export interface UnpaidLeaveDeduction {
 /**
  * Calculate unpaid leave deductions for a given month
  *
- * @param userId Employee ID
+ * @param memberId Team member ID
  * @param year Payroll year
  * @param month Payroll month (1-12)
  * @param dailySalary Daily salary rate (gross / 30)
  * @param tenantId Organization ID for tenant isolation
  */
 export async function calculateUnpaidLeaveDeductions(
-  userId: string,
+  memberId: string,
   year: number,
   month: number,
   dailySalary: number,
@@ -62,7 +62,7 @@ export async function calculateUnpaidLeaveDeductions(
   // Find approved unpaid leave requests that overlap with this period
   const unpaidLeaves = await prisma.leaveRequest.findMany({
     where: {
-      userId,
+      memberId,
       tenantId,
       status: LeaveStatus.APPROVED,
       leaveType: {
@@ -141,10 +141,10 @@ export async function calculateUnpaidLeaveDeductions(
 }
 
 /**
- * Get total unpaid leave days for a user in a given period
+ * Get total unpaid leave days for a member in a given period
  */
 export async function getUnpaidLeaveDaysInPeriod(
-  userId: string,
+  memberId: string,
   year: number,
   month: number,
   tenantId: string
@@ -154,7 +154,7 @@ export async function getUnpaidLeaveDaysInPeriod(
 
   const unpaidLeaves = await prisma.leaveRequest.findMany({
     where: {
-      userId,
+      memberId,
       tenantId,
       status: LeaveStatus.APPROVED,
       leaveType: {
@@ -213,14 +213,14 @@ export async function getUnpaidLeaveDaysInPeriod(
 }
 
 /**
- * Check if there are any unpaid leaves for a user in a period
+ * Check if there are any unpaid leaves for a member in a period
  */
 export async function hasUnpaidLeaveInPeriod(
-  userId: string,
+  memberId: string,
   year: number,
   month: number,
   tenantId: string
 ): Promise<boolean> {
-  const days = await getUnpaidLeaveDaysInPeriod(userId, year, month, tenantId);
+  const days = await getUnpaidLeaveDaysInPeriod(memberId, year, month, tenantId);
   return days > 0;
 }

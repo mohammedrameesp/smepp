@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
             status: (row.getCell(16).value?.toString() || 'IN_USE') as AssetStatus,
             acquisitionType: (row.getCell(17).value?.toString() || 'NEW_PURCHASE') as AcquisitionType,
             transferNotes: row.getCell(18).value?.toString() || null,
-            assignedUserId: newUserId,
+            assignedMemberId: newUserId,
             notes: row.getCell(25).value?.toString() || null,
           };
 
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
             costQAR: row.getCell(10).value ? parseFloat(row.getCell(10).value?.toString() || '0') : null,
             vendor: row.getCell(11).value?.toString() || null,
             status: (row.getCell(12).value?.toString() || 'ACTIVE') as SubscriptionStatus,
-            assignedUserId: newUserId,
+            assignedMemberId: newUserId,
             autoRenew: row.getCell(16).value?.toString() === 'Yes',
             paymentMethod: row.getCell(17).value?.toString() || null,
             notes: row.getCell(18).value?.toString() || null,

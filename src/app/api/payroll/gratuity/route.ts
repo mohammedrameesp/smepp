@@ -36,59 +36,52 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const { userId, terminationDate } = validation.data;
+    const { memberId, terminationDate } = validation.data;
     const isAdmin = session.user.role === Role.ADMIN;
 
     // Non-admin users can only view their own gratuity
-    const targetUserId = isAdmin && userId ? userId : session.user.id;
+    // session.user.id is the TeamMember ID when isTeamMember=true
+    const targetMemberId = isAdmin && memberId ? memberId : session.user.id;
 
-    // Get user's salary structure and HR profile - verify user belongs to same org
-    const user = await prisma.user.findFirst({
+    // Get member's salary structure and HR fields - verify member belongs to same org
+    const member = await prisma.teamMember.findFirst({
       where: {
-        id: targetUserId,
-        organizationMemberships: { some: { organizationId: tenantId } },
+        id: targetMemberId,
+        tenantId: tenantId,
       },
       include: {
         salaryStructure: true,
-        hrProfile: {
-          select: {
-            dateOfJoining: true,
-            designation: true,
-            employeeId: true,
-            terminationDate: true, // For soft-deleted employees
-          },
-        },
       },
     });
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (!member) {
+      return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
-    if (!user.hrProfile?.dateOfJoining) {
+    if (!member.dateOfJoining) {
       return NextResponse.json({
         error: 'Date of joining not set for this employee',
       }, { status: 400 });
     }
 
-    if (!user.salaryStructure) {
+    if (!member.salaryStructure) {
       return NextResponse.json({
         error: 'Salary structure not set for this employee',
       }, { status: 400 });
     }
 
-    const basicSalary = parseDecimal(user.salaryStructure.basicSalary);
-    const dateOfJoining = new Date(user.hrProfile.dateOfJoining);
+    const basicSalary = parseDecimal(member.salaryStructure.basicSalary);
+    const dateOfJoining = new Date(member.dateOfJoining);
 
-    // Use termination date priority: query param > HR profile > today
-    // If employee is terminated (soft-deleted), use their termination date to freeze calculations
+    // Use termination date priority: query param > member field > today
+    // If employee has left (dateOfLeaving set), use that date to freeze calculations
     const termDate = terminationDate
       ? new Date(terminationDate)
-      : user.hrProfile.terminationDate
-        ? new Date(user.hrProfile.terminationDate)
+      : member.dateOfLeaving
+        ? new Date(member.dateOfLeaving)
         : new Date();
 
-    const isTerminated = !!user.hrProfile.terminationDate;
+    const isTerminated = !!member.dateOfLeaving;
 
     // Calculate current gratuity
     const gratuityCalculation = calculateGratuity(basicSalary, dateOfJoining, termDate);
@@ -97,11 +90,11 @@ export async function GET(request: NextRequest) {
     const projections = projectGratuity(basicSalary, dateOfJoining, [1, 2, 3, 5, 10]);
 
     return NextResponse.json({
-      userId: targetUserId,
-      userName: user.name,
-      employeeId: user.hrProfile.employeeId,
-      designation: user.hrProfile.designation,
-      dateOfJoining: user.hrProfile.dateOfJoining,
+      memberId: targetMemberId,
+      memberName: member.name,
+      employeeCode: member.employeeCode,
+      designation: member.designation,
+      dateOfJoining: member.dateOfJoining,
       basicSalary,
       terminationDate: termDate.toISOString(),
       isTerminated, // True if employee is soft-deleted/terminated

@@ -461,28 +461,33 @@ export default function GetStartedPage() {
 
                   {/* Employee/WPS options - only shown for non-system emails */}
                   {showEmployeeOptions && (
-                    <div className="gs-inline-checkboxes">
-                      <label className="gs-inline-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={isEmployee}
-                          onChange={(e) => {
-                            setIsEmployee(e.target.checked);
-                            if (!e.target.checked) setIsOnWps(false);
-                          }}
-                        />
-                        <span>Employee</span>
-                      </label>
-                      {isEmployee && (
+                    <div className="gs-employee-options">
+                      <div className="gs-inline-checkboxes">
                         <label className="gs-inline-checkbox">
                           <input
                             type="checkbox"
-                            checked={isOnWps}
-                            onChange={(e) => setIsOnWps(e.target.checked)}
+                            checked={isEmployee}
+                            onChange={(e) => {
+                              setIsEmployee(e.target.checked);
+                              if (!e.target.checked) setIsOnWps(false);
+                            }}
                           />
-                          <span>On WPS</span>
+                          <span>Employee</span>
                         </label>
-                      )}
+                        {isEmployee && (
+                          <label className="gs-inline-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={isOnWps}
+                              onChange={(e) => setIsOnWps(e.target.checked)}
+                            />
+                            <span>On WPS</span>
+                          </label>
+                        )}
+                      </div>
+                      <p className="gs-employee-hint">
+                        Does this admin user need an HR profile{isOnWps ? ' and WPS payroll (if enabled)?' : '?'}
+                      </p>
                     </div>
                   )}
                 </div>

@@ -9,11 +9,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorHandler } from '@/lib/http/handler';
 import { prisma } from '@/lib/core/prisma';
-import { saveUserWhatsAppPhone, verifyUserWhatsAppPhone } from '@/lib/whatsapp';
+import { saveMemberWhatsAppPhone, verifyMemberWhatsAppPhone } from '@/lib/whatsapp';
 
 // Validation schema
 const phoneSchema = z.object({
-  userId: z.string().optional(), // If not provided, use current user
+  memberId: z.string().optional(), // If not provided, use current member
   phoneNumber: z.string().min(8, 'Phone number is required'),
 });
 
@@ -21,7 +21,7 @@ const phoneSchema = z.object({
  * GET /api/whatsapp/phones
  *
  * Get all WhatsApp phone numbers for the tenant (admin only)
- * or the current user's phone number.
+ * or the current member's phone number.
  */
 export const GET = withErrorHandler(async (request: NextRequest, { tenant }) => {
   if (!tenant?.tenantId || !tenant.userId) {
@@ -30,19 +30,19 @@ export const GET = withErrorHandler(async (request: NextRequest, { tenant }) => 
 
   const isAdmin = tenant.orgRole === 'ADMIN' || tenant.orgRole === 'OWNER';
   const searchParams = request.nextUrl.searchParams;
-  const targetUserId = searchParams.get('userId');
+  const targetMemberId = searchParams.get('memberId');
 
   // Non-admins can only get their own phone
-  if (!isAdmin && targetUserId && targetUserId !== tenant.userId) {
+  if (!isAdmin && targetMemberId && targetMemberId !== tenant.userId) {
     return NextResponse.json({ error: 'Access denied' }, { status: 403 });
   }
 
-  if (isAdmin && !targetUserId) {
+  if (isAdmin && !targetMemberId) {
     // Admin getting all phones for the org
     const phones = await prisma.whatsAppUserPhone.findMany({
       where: { tenantId: tenant.tenantId },
       include: {
-        user: {
+        member: {
           select: { id: true, name: true, email: true },
         },
       },
@@ -52,12 +52,12 @@ export const GET = withErrorHandler(async (request: NextRequest, { tenant }) => 
     return NextResponse.json({ phones });
   }
 
-  // Get specific user's phone
-  const userId = targetUserId || tenant.userId;
+  // Get specific member's phone
+  const memberId = targetMemberId || tenant.userId;
   const phone = await prisma.whatsAppUserPhone.findUnique({
-    where: { userId },
+    where: { memberId },
     include: {
-      user: {
+      member: {
         select: { id: true, name: true, email: true },
       },
     },
@@ -69,8 +69,8 @@ export const GET = withErrorHandler(async (request: NextRequest, { tenant }) => 
 /**
  * POST /api/whatsapp/phones
  *
- * Save or update a user's WhatsApp phone number.
- * Admins can set any user's phone, users can set their own.
+ * Save or update a member's WhatsApp phone number.
+ * Admins can set any member's phone, members can set their own.
  */
 export const POST = withErrorHandler(async (request: NextRequest, { tenant }) => {
   if (!tenant?.tenantId || !tenant.userId) {
@@ -78,31 +78,29 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
   }
 
   const body = await request.json();
-  const { userId, phoneNumber } = phoneSchema.parse(body);
+  const { memberId, phoneNumber } = phoneSchema.parse(body);
 
   const isAdmin = tenant.orgRole === 'ADMIN' || tenant.orgRole === 'OWNER';
-  const targetUserId = userId || tenant.userId;
+  const targetMemberId = memberId || tenant.userId;
 
   // Non-admins can only set their own phone
-  if (!isAdmin && targetUserId !== tenant.userId) {
+  if (!isAdmin && targetMemberId !== tenant.userId) {
     return NextResponse.json({ error: 'Access denied' }, { status: 403 });
   }
 
-  // Verify the user belongs to this tenant
-  const userMembership = await prisma.organizationUser.findUnique({
+  // Verify the member belongs to this tenant
+  const teamMember = await prisma.teamMember.findFirst({
     where: {
-      organizationId_userId: {
-        organizationId: tenant.tenantId,
-        userId: targetUserId,
-      },
+      id: targetMemberId,
+      tenantId: tenant.tenantId,
     },
   });
 
-  if (!userMembership) {
-    return NextResponse.json({ error: 'User not found in this organization' }, { status: 404 });
+  if (!teamMember) {
+    return NextResponse.json({ error: 'Member not found in this organization' }, { status: 404 });
   }
 
-  await saveUserWhatsAppPhone(tenant.tenantId, targetUserId, phoneNumber);
+  await saveMemberWhatsAppPhone(tenant.tenantId, targetMemberId, phoneNumber);
 
   return NextResponse.json({
     success: true,
@@ -113,7 +111,7 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
 /**
  * PATCH /api/whatsapp/phones
  *
- * Verify a user's WhatsApp phone number.
+ * Verify a member's WhatsApp phone number.
  * Admin only - marks the phone as verified.
  */
 export const PATCH = withErrorHandler(async (request: NextRequest, { tenant }) => {
@@ -122,18 +120,18 @@ export const PATCH = withErrorHandler(async (request: NextRequest, { tenant }) =
   }
 
   const body = await request.json();
-  const { userId } = z.object({ userId: z.string() }).parse(body);
+  const { memberId } = z.object({ memberId: z.string() }).parse(body);
 
   // Verify the phone belongs to this tenant
   const phone = await prisma.whatsAppUserPhone.findUnique({
-    where: { userId },
+    where: { memberId },
   });
 
   if (!phone || phone.tenantId !== tenant.tenantId) {
     return NextResponse.json({ error: 'Phone not found' }, { status: 404 });
   }
 
-  await verifyUserWhatsAppPhone(userId);
+  await verifyMemberWhatsAppPhone(memberId);
 
   return NextResponse.json({
     success: true,
@@ -144,7 +142,7 @@ export const PATCH = withErrorHandler(async (request: NextRequest, { tenant }) =
 /**
  * DELETE /api/whatsapp/phones
  *
- * Remove a user's WhatsApp phone number.
+ * Remove a member's WhatsApp phone number.
  */
 export const DELETE = withErrorHandler(async (request: NextRequest, { tenant }) => {
   if (!tenant?.tenantId || !tenant.userId) {
@@ -152,18 +150,18 @@ export const DELETE = withErrorHandler(async (request: NextRequest, { tenant }) 
   }
 
   const searchParams = request.nextUrl.searchParams;
-  const targetUserId = searchParams.get('userId') || tenant.userId;
+  const targetMemberId = searchParams.get('memberId') || tenant.userId;
 
   const isAdmin = tenant.orgRole === 'ADMIN' || tenant.orgRole === 'OWNER';
 
   // Non-admins can only delete their own phone
-  if (!isAdmin && targetUserId !== tenant.userId) {
+  if (!isAdmin && targetMemberId !== tenant.userId) {
     return NextResponse.json({ error: 'Access denied' }, { status: 403 });
   }
 
   // Verify the phone belongs to this tenant
   const phone = await prisma.whatsAppUserPhone.findUnique({
-    where: { userId: targetUserId },
+    where: { memberId: targetMemberId },
   });
 
   if (!phone || phone.tenantId !== tenant.tenantId) {
@@ -171,7 +169,7 @@ export const DELETE = withErrorHandler(async (request: NextRequest, { tenant }) 
   }
 
   await prisma.whatsAppUserPhone.delete({
-    where: { userId: targetUserId },
+    where: { memberId: targetMemberId },
   });
 
   return NextResponse.json({

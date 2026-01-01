@@ -45,7 +45,7 @@ export default async function SubscriptionDetailPage({ params }: Props) {
   const subscription = await prisma.subscription.findUnique({
     where: { id },
     include: {
-      assignedUser: {
+      assignedMember: {
         select: {
           id: true,
           name: true,
@@ -54,7 +54,7 @@ export default async function SubscriptionDetailPage({ params }: Props) {
       },
       history: {
         include: {
-          performer: {
+          performedBy: {
             select: {
               name: true,
               email: true,
@@ -70,20 +70,20 @@ export default async function SubscriptionDetailPage({ params }: Props) {
     notFound();
   }
 
-  // Find when the current user was assigned
-  let currentUserAssignmentDate: Date | null = null;
-  if (subscription.assignedUser) {
+  // Find when the current member was assigned
+  let currentMemberAssignmentDate: Date | null = null;
+  if (subscription.assignedMember) {
     const assignmentHistory = subscription.history
       .filter(h =>
         (h.action === 'REASSIGNED' || h.action === 'CREATED') &&
-        h.newUserId === subscription.assignedUserId
+        h.newMemberId === subscription.assignedMemberId
       )
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     if (assignmentHistory.length > 0) {
-      currentUserAssignmentDate = assignmentHistory[0].assignmentDate || assignmentHistory[0].createdAt;
+      currentMemberAssignmentDate = assignmentHistory[0].assignmentDate || assignmentHistory[0].createdAt;
     } else {
-      currentUserAssignmentDate = subscription.purchaseDate || subscription.createdAt;
+      currentMemberAssignmentDate = subscription.purchaseDate || subscription.createdAt;
     }
   }
 
@@ -293,26 +293,26 @@ export default async function SubscriptionDetailPage({ params }: Props) {
               <h2 className="font-semibold text-slate-900">Assignment</h2>
             </div>
             <div className="p-5">
-              {subscription.assignedUser ? (
+              {subscription.assignedMember ? (
                 <>
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
                       <span className="text-indigo-600 font-semibold">
-                        {subscription.assignedUser.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                        {subscription.assignedMember.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
                       </span>
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900">{subscription.assignedUser.name || 'Unknown User'}</p>
-                      <p className="text-sm text-slate-500">{subscription.assignedUser.email}</p>
+                      <p className="font-semibold text-slate-900">{subscription.assignedMember.name || 'Unknown User'}</p>
+                      <p className="text-sm text-slate-500">{subscription.assignedMember.email}</p>
                     </div>
                   </div>
-                  {currentUserAssignmentDate && (
+                  {currentMemberAssignmentDate && (
                     <div className="p-3 bg-slate-50 rounded-xl mb-4">
                       <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Assigned Since</p>
-                      <p className="font-medium text-slate-900">{formatDate(currentUserAssignmentDate)}</p>
+                      <p className="font-medium text-slate-900">{formatDate(currentMemberAssignmentDate)}</p>
                     </div>
                   )}
-                  <Link href={`/admin/users/${subscription.assignedUser.id}`}>
+                  <Link href={`/admin/team/${subscription.assignedMember.id}`}>
                     <Button variant="outline" size="sm" className="w-full">
                       View Profile
                     </Button>

@@ -22,7 +22,7 @@ async function getLeaveBalanceHandler(request: NextRequest, context: APIContext)
     const balance = await prisma.leaveBalance.findFirst({
       where: { id, tenantId },
       include: {
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
@@ -45,8 +45,14 @@ async function getLeaveBalanceHandler(request: NextRequest, context: APIContext)
     }
 
     // Non-admin users can only see their own balance
-    if (tenant!.userRole !== 'ADMIN' && balance.userId !== tenant!.userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (tenant!.userRole !== 'ADMIN') {
+      const currentMember = await prisma.teamMember.findFirst({
+        where: { id: tenant!.userId, tenantId },
+        select: { id: true },
+      });
+      if (balance.memberId !== currentMember?.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
     }
 
     return NextResponse.json(balance);
@@ -79,7 +85,7 @@ async function updateLeaveBalanceHandler(request: NextRequest, context: APIConte
     const existing = await prisma.leaveBalance.findFirst({
       where: { id, tenantId },
       include: {
-        user: {
+        member: {
           select: { name: true },
         },
         leaveType: {
@@ -117,7 +123,7 @@ async function updateLeaveBalanceHandler(request: NextRequest, context: APIConte
           : existing.adjustmentNotes,
       },
       include: {
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
@@ -141,8 +147,8 @@ async function updateLeaveBalanceHandler(request: NextRequest, context: APIConte
       'LeaveBalance',
       balance.id,
       {
-        userId: balance.userId,
-        userName: existing.user?.name,
+        memberId: balance.memberId,
+        memberName: existing.member?.name,
         leaveTypeName: existing.leaveType?.name,
         adjustment,
         notes: adjustmentNotes,

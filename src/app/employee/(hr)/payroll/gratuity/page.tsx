@@ -20,7 +20,7 @@ export default async function EmployeeGratuityPage() {
   // Get employee's salary structure and HR profile
   const [salaryStructure, hrProfile] = await Promise.all([
     prisma.salaryStructure.findUnique({
-      where: { userId },
+      where: { memberId: userId },
     }),
     prisma.hRProfile.findUnique({
       where: { userId },

@@ -34,9 +34,9 @@ async function getPayslipsHandler(request: NextRequest, context: APIContext) {
 
     // Non-admin users can only see their own payslips
     if (!isAdmin) {
-      where.userId = tenant!.userId;
+      where.memberId = tenant!.userId;
     } else if (userId) {
-      where.userId = userId;
+      where.memberId = userId;
     }
 
     if (payrollRunId) {
@@ -57,17 +57,13 @@ async function getPayslipsHandler(request: NextRequest, context: APIContext) {
       prisma.payslip.findMany({
         where,
         include: {
-          user: {
+          member: {
             select: {
               id: true,
               name: true,
               email: true,
-              hrProfile: {
-                select: {
-                  employeeId: true,
-                  designation: true,
-                },
-              },
+              employeeCode: true,
+              designation: true,
             },
           },
           payrollRun: {

@@ -25,7 +25,7 @@ export default async function EmployeeAllAssetsPage() {
   const assetsRaw = await prisma.asset.findMany({
     where: { tenantId },
     include: {
-      assignedUser: {
+      assignedMember: {
         select: {
           id: true,
           name: true,
@@ -44,8 +44,8 @@ export default async function EmployeeAllAssetsPage() {
   }));
 
   // Calculate stats
-  const myAssets = assets.filter(a => a.assignedUserId === session.user.id);
-  const assignedAssets = assets.filter(a => a.assignedUserId);
+  const myAssets = assets.filter(a => a.assignedMemberId === session.user.id);
+  const assignedAssets = assets.filter(a => a.assignedMemberId);
   const availableAssets = assets.filter(a => a.status === 'SPARE');
 
   return (

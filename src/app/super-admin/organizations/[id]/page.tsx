@@ -78,6 +78,7 @@ interface Organization {
   subscriptionTier: string;
   enabledModules: string[];
   aiChatEnabled: boolean;
+  aiTokenBudgetMonthly: number | null;
   createdAt: string;
   industry: string | null;
   companySize: string | null;
@@ -223,6 +224,10 @@ export default function OrganizationDetailPage() {
   // AI Chat toggle state
   const [togglingAiChat, setTogglingAiChat] = useState(false);
 
+  // AI Token Budget state
+  const [aiTokenBudget, setAiTokenBudget] = useState<string>('');
+  const [savingAiBudget, setSavingAiBudget] = useState(false);
+
   // AI Usage stats state
   const [aiUsage, setAiUsage] = useState<AIUsageStats | null>(null);
   const [aiUsageLoading, setAiUsageLoading] = useState(false);
@@ -248,6 +253,10 @@ export default function OrganizationDetailPage() {
         setOrg(orgData.organization);
         setModuleInsights(orgData.moduleInsights || null);
         setRecentActivity(orgData.recentActivity || []);
+        // Initialize AI budget field
+        if (orgData.organization?.aiTokenBudgetMonthly) {
+          setAiTokenBudget(orgData.organization.aiTokenBudgetMonthly.toString());
+        }
 
         if (invRes.ok) {
           const invData = await invRes.json();
@@ -719,6 +728,31 @@ export default function OrganizationDetailPage() {
     }
   };
 
+  const handleSaveAiBudget = async () => {
+    setSavingAiBudget(true);
+    setError(null);
+    try {
+      const budgetValue = aiTokenBudget.trim() ? parseInt(aiTokenBudget, 10) : null;
+
+      const response = await fetch(`/api/super-admin/organizations/${orgId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ aiTokenBudgetMonthly: budgetValue }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update AI budget');
+      }
+
+      setOrg(prev => prev ? { ...prev, aiTokenBudgetMonthly: budgetValue } : null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update');
+    } finally {
+      setSavingAiBudget(false);
+    }
+  };
+
   const handleToggleWhatsAppPlatform = async (enabled: boolean) => {
     setTogglingWhatsAppPlatform(true);
     setError(null);
@@ -966,6 +1000,37 @@ export default function OrganizationDetailPage() {
               />
             </div>
           </div>
+
+          {/* AI Token Budget */}
+          {org.aiChatEnabled && (
+            <div className="mt-4 p-4 border rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Monthly Token Budget</p>
+                  <p className="text-sm text-muted-foreground">
+                    Set a custom monthly token limit (leave empty for tier default: {org.subscriptionTier === 'PLUS' ? '500,000' : '100,000'})
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    placeholder={org.subscriptionTier === 'PLUS' ? '500000' : '100000'}
+                    value={aiTokenBudget}
+                    onChange={(e) => setAiTokenBudget(e.target.value)}
+                    className="w-32"
+                    disabled={savingAiBudget}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleSaveAiBudget}
+                    disabled={savingAiBudget}
+                  >
+                    {savingAiBudget ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* AI Usage Stats */}
           {org.aiChatEnabled && (

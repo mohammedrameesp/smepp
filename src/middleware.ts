@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import * as jose from 'jose';
+import { checkModuleAccess } from '@/lib/modules/routes';
 
 // Impersonation cookie name (must match the one in verify route)
 const IMPERSONATION_COOKIE = 'durj-impersonation';
@@ -105,67 +106,9 @@ async function verifyImpersonationToken(token: string): Promise<{
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MODULE ROUTE MAPPING (for route-level module protection)
+// MODULE ROUTE PROTECTION
+// Route-to-module mapping is imported from @/lib/modules/routes
 // ═══════════════════════════════════════════════════════════════════════════════
-
-const MODULE_ROUTES: Record<string, string[]> = {
-  assets: ['/admin/assets', '/admin/asset-requests', '/employee/assets', '/employee/my-assets', '/employee/asset-requests'],
-  subscriptions: ['/admin/subscriptions', '/employee/subscriptions'],
-  suppliers: ['/admin/suppliers', '/employee/suppliers'],
-  employees: ['/admin/employees'],
-  leave: ['/admin/leave', '/employee/leave'],
-  payroll: ['/admin/payroll', '/employee/payroll'],
-  'purchase-requests': ['/admin/purchase-requests', '/employee/purchase-requests'],
-  documents: ['/admin/company-documents'],
-};
-
-// Tier requirements for each module
-// NOTE: All modules are FREE for now - pricing tiers will be defined later
-const MODULE_TIERS: Record<string, string> = {
-  assets: 'FREE',
-  subscriptions: 'FREE',
-  suppliers: 'FREE',
-  employees: 'FREE',
-  leave: 'FREE',
-  payroll: 'FREE',
-  'purchase-requests': 'FREE',
-  documents: 'FREE',
-};
-
-// Tier hierarchy for comparison
-const TIER_ORDER = ['FREE', 'PLUS'];
-
-/**
- * Check if the subscription tier allows access to a module
- * NOTE: Always returns true - tier restrictions disabled
- */
-function tierAllowsModule(_tier: string, _moduleId: string): boolean {
-  return true;
-}
-
-/**
- * Check if a path requires a specific module and if it's enabled
- * NOTE: Tier restrictions disabled - only checks if module is enabled
- */
-function checkModuleAccess(
-  pathname: string,
-  enabledModules: string[],
-  _subscriptionTier: string
-): { allowed: boolean; moduleId?: string; reason?: 'not_installed' } {
-  for (const [moduleId, routes] of Object.entries(MODULE_ROUTES)) {
-    for (const route of routes) {
-      if (pathname === route || pathname.startsWith(route + '/')) {
-        // This route requires this module - check if enabled
-        if (!enabledModules.includes(moduleId)) {
-          return { allowed: false, moduleId, reason: 'not_installed' };
-        }
-        return { allowed: true };
-      }
-    }
-  }
-  // Route not controlled by any module
-  return { allowed: true };
-}
 
 /**
  * Multi-Tenant Proxy (Next.js 16+)
@@ -383,7 +326,7 @@ export async function middleware(request: NextRequest) {
       // Super admin is impersonating this org - allow access with org context
       const enabledModules = impersonation.enabledModules || ['assets', 'subscriptions', 'suppliers'];
       const subscriptionTier = impersonation.subscriptionTier || 'FREE';
-      const moduleAccess = checkModuleAccess(pathname, enabledModules, subscriptionTier);
+      const moduleAccess = checkModuleAccess(pathname, enabledModules);
 
       if (!moduleAccess.allowed && moduleAccess.moduleId) {
         const modulesUrl = new URL('/admin/modules', request.url);
@@ -440,10 +383,9 @@ export async function middleware(request: NextRequest) {
     // MODULE ACCESS CHECK (tier + enabledModules)
     // ─────────────────────────────────────────────────────────────────────────────
 
-    // Check if the route requires a module that's not installed or not allowed by tier
+    // Check if the route requires a module that's not installed
     const enabledModules = (token.enabledModules as string[]) || ['assets', 'subscriptions', 'suppliers'];
-    const subscriptionTier = (token.subscriptionTier as string) || 'FREE';
-    const moduleAccess = checkModuleAccess(pathname, enabledModules, subscriptionTier);
+    const moduleAccess = checkModuleAccess(pathname, enabledModules);
 
     if (!moduleAccess.allowed && moduleAccess.moduleId) {
       // Module not installed - redirect to modules page

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { sbUpload, sbPublicUrl } from '@/lib/storage/supabase';
+import { updateSetupProgress } from '@/lib/domains/system/setup';
 
 // Maximum file size: 2MB
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
@@ -103,6 +104,9 @@ export async function POST(request: NextRequest) {
       where: { id: organizationId },
       data: { logoUrl },
     });
+
+    // Update setup progress (non-blocking)
+    updateSetupProgress(organizationId, 'logoUploaded', true).catch(() => {});
 
     return NextResponse.json({
       success: true,

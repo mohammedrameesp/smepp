@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { AssetRequestStatus, AssetStatus, AssetHistoryAction, Role } from '@prisma/client';
+import { AssetRequestStatus, AssetStatus, AssetHistoryAction, TeamMemberRole } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { acceptAssetAssignmentSchema } from '@/lib/validations/operations/asset-request';
 import { logAction, ActivityActions } from '@/lib/activity';
@@ -45,8 +45,8 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       where: { id, tenantId },
       include: {
         asset: true,
-        user: { select: { id: true, name: true, email: true } },
-        assignedByUser: { select: { id: true, name: true, email: true } },
+        member: { select: { id: true, name: true, email: true } },
+        assignedByMember: { select: { id: true, name: true, email: true } },
       },
     });
 
@@ -54,8 +54,8 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       return NextResponse.json({ error: 'Asset request not found' }, { status: 404 });
     }
 
-    // Only the target user can accept
-    if (assetRequest.userId !== session.user.id) {
+    // Only the target member can accept
+    if (assetRequest.memberId !== session.user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
@@ -77,16 +77,16 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
           asset: {
             select: { id: true, assetTag: true, model: true, brand: true, type: true },
           },
-          user: { select: { id: true, name: true, email: true } },
+          member: { select: { id: true, name: true, email: true } },
         },
       });
 
-      // Assign the asset to the user
+      // Assign the asset to the member
       const assignmentDate = new Date().toISOString().split('T')[0];
       await tx.asset.update({
         where: { id: assetRequest.assetId },
         data: {
-          assignedUserId: session.user.id,
+          assignedMemberId: session.user.id,
           assignmentDate,
           status: AssetStatus.IN_USE,
         },
@@ -98,12 +98,12 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
           tenantId,
           assetId: assetRequest.assetId,
           action: AssetHistoryAction.ASSIGNED,
-          fromUserId: null,
-          toUserId: session.user.id,
+          fromMemberId: null,
+          toMemberId: session.user.id,
           fromStatus: AssetStatus.SPARE,
           toStatus: AssetStatus.IN_USE,
           notes: `Assigned via request ${assetRequest.requestNumber}`,
-          performedBy: session.user.id,
+          performedById: session.user.id,
           assignmentDate: new Date(),
         },
       });
@@ -146,10 +146,10 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       const orgSlug = org?.slug || 'app';
       const orgName = org?.name || 'Durj';
 
-      const admins = await prisma.user.findMany({
+      const admins = await prisma.teamMember.findMany({
         where: {
-          role: Role.ADMIN,
-          organizationMemberships: { some: { organizationId: tenantId } },
+          tenantId,
+          role: TeamMemberRole.ADMIN,
         },
         select: { id: true, email: true },
       });
@@ -159,8 +159,8 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
         assetModel: assetRequest.asset.model,
         assetBrand: assetRequest.asset.brand,
         assetType: assetRequest.asset.type,
-        userName: assetRequest.user.name || assetRequest.user.email,
-        userEmail: assetRequest.user.email,
+        userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
+        userEmail: assetRequest.member?.email || '',
         orgSlug,
         orgName,
       });
@@ -170,7 +170,7 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       const notifications = admins.map(admin =>
         NotificationTemplates.assetAssignmentAccepted(
           admin.id,
-          assetRequest.user.name || assetRequest.user.email,
+          assetRequest.member?.name || assetRequest.member?.email || 'Employee',
           assetRequest.asset.assetTag || '',
           assetRequest.asset.model,
           assetRequest.requestNumber,

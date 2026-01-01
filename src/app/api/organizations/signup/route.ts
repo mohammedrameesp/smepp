@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/core/email';
 import { newOrganizationSignupEmail } from '@/lib/core/email-templates';
 import { seedDefaultPermissions } from '@/lib/access-control';
+import { seedDefaultDocumentTypes } from '@/lib/domains/system/company-documents/document-utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION
@@ -19,6 +20,8 @@ const signupSchema = z.object({
   industry: z.string().optional(),
   companySize: z.string().optional(),
   enabledModules: z.array(z.string()).optional(),
+  isEmployee: z.boolean().optional(), // true = employee (requires HR profile), false = system/service account
+  isOnWps: z.boolean().optional(), // Only relevant if isEmployee = true
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -37,7 +40,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, slug, adminEmail, adminName, industry, companySize, enabledModules } = result.data;
+    const { name, slug, adminEmail, adminName, industry, companySize, enabledModules, isEmployee, isOnWps } = result.data;
 
     // Validate slug
     const slugValidation = validateSlug(slug);
@@ -89,7 +92,20 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Initialize setup progress tracking for the new organization
+      // profileComplete is true since name is provided during signup
+      await tx.organizationSetupProgress.create({
+        data: {
+          organizationId: org.id,
+          profileComplete: true,
+        },
+      });
+
       // Create invitation for first admin
+      // Default to employee if not specified
+      const finalIsEmployee = isEmployee ?? true;
+      const finalIsOnWps = finalIsEmployee ? (isOnWps ?? false) : false;
+
       await tx.organizationInvitation.create({
         data: {
           organizationId: org.id,
@@ -98,6 +114,8 @@ export async function POST(request: NextRequest) {
           role: 'OWNER',
           token: inviteToken,
           expiresAt,
+          isEmployee: finalIsEmployee,
+          isOnWps: finalIsOnWps,
         },
       });
 
@@ -107,6 +125,11 @@ export async function POST(request: NextRequest) {
     // Seed default permissions for the new organization (non-blocking)
     seedDefaultPermissions(organization.id).catch((err) => {
       console.error('[Signup] Failed to seed default permissions:', err);
+    });
+
+    // Seed default document types for the new organization (non-blocking)
+    seedDefaultDocumentTypes(organization.id).catch((err) => {
+      console.error('[Signup] Failed to seed default document types:', err);
     });
 
     // Build organization-specific invite URL using subdomain

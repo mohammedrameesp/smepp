@@ -37,7 +37,7 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
     const existing = await prisma.leaveRequest.findFirst({
       where: { id, tenantId },
       include: {
-        user: {
+        member: {
           select: { name: true },
         },
         leaveType: {
@@ -71,7 +71,7 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
           approverNotes: notes,
         },
         include: {
-          user: {
+          member: {
             select: {
               id: true,
               name: true,
@@ -97,9 +97,9 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
       // Update balance: pending -= totalDays, used += totalDays
       await tx.leaveBalance.update({
         where: {
-          tenantId_userId_leaveTypeId_year: {
+          tenantId_memberId_leaveTypeId_year: {
             tenantId,
-            userId: existing.userId,
+            memberId: existing.memberId,
             leaveTypeId: existing.leaveTypeId,
             year,
           },
@@ -126,10 +126,10 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
         },
       });
 
-      // Mark hajjLeaveTaken on HR profile if this is once-in-employment leave (e.g., Hajj)
+      // Mark hajjLeaveTaken on TeamMember if this is once-in-employment leave (e.g., Hajj)
       if (existing.leaveType?.isOnceInEmployment) {
-        await tx.hRProfile.update({
-          where: { userId: existing.userId },
+        await tx.teamMember.update({
+          where: { id: existing.memberId },
           data: { hajjLeaveTaken: true },
         });
       }
@@ -145,7 +145,7 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
       leaveRequest.id,
       {
         requestNumber: leaveRequest.requestNumber,
-        userName: existing.user?.name,
+        memberName: existing.member?.name,
         leaveType: existing.leaveType?.name,
         totalDays: Number(existing.totalDays),
       }
@@ -157,7 +157,7 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
     // Send notification to the requester
     await createNotification(
       NotificationTemplates.leaveApproved(
-        existing.userId,
+        existing.memberId,
         leaveRequest.requestNumber,
         existing.leaveType?.name || 'Leave',
         leaveRequest.id

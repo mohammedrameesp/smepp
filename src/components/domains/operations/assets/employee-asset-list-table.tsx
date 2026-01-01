@@ -26,8 +26,8 @@ interface Asset {
   priceQAR: number | null;
   warrantyExpiry: Date | null;
   purchaseDate: Date | null;
-  assignedUserId: string | null;
-  assignedUser: {
+  assignedMemberId: string | null;
+  assignedMember: {
     id: string;
     name: string | null;
     email: string;
@@ -68,8 +68,8 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
         asset.brand?.toLowerCase().includes(term) ||
         asset.type.toLowerCase().includes(term) ||
         asset.assetTag?.toLowerCase().includes(term) ||
-        asset.assignedUser?.name?.toLowerCase().includes(term) ||
-        asset.assignedUser?.email?.toLowerCase().includes(term)
+        asset.assignedMember?.name?.toLowerCase().includes(term) ||
+        asset.assignedMember?.email?.toLowerCase().includes(term)
       );
     }
 
@@ -85,11 +85,11 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
 
     // Apply assignment filter
     if (assignmentFilter === 'mine') {
-      filtered = filtered.filter(asset => asset.assignedUserId === currentUserId);
+      filtered = filtered.filter(asset => asset.assignedMemberId === currentUserId);
     } else if (assignmentFilter === 'unassigned') {
-      filtered = filtered.filter(asset => !asset.assignedUserId);
+      filtered = filtered.filter(asset => !asset.assignedMemberId);
     } else if (assignmentFilter === 'others') {
-      filtered = filtered.filter(asset => asset.assignedUserId && asset.assignedUserId !== currentUserId);
+      filtered = filtered.filter(asset => asset.assignedMemberId && asset.assignedMemberId !== currentUserId);
     }
 
     // Apply sorting
@@ -114,9 +114,9 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
           aValue = a.status;
           bValue = b.status;
           break;
-        case 'assignedUser':
-          aValue = a.assignedUser?.name || a.assignedUser?.email || 'zzz';
-          bValue = b.assignedUser?.name || b.assignedUser?.email || 'zzz';
+        case 'assignedMember':
+          aValue = a.assignedMember?.name || a.assignedMember?.email || 'zzz';
+          bValue = b.assignedMember?.name || b.assignedMember?.email || 'zzz';
           break;
         case 'purchaseDate':
           aValue = a.purchaseDate ? new Date(a.purchaseDate).getTime() : 0;
@@ -230,7 +230,7 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
               <SelectItem value="brand">Brand</SelectItem>
               <SelectItem value="type">Type</SelectItem>
               <SelectItem value="status">Status</SelectItem>
-              <SelectItem value="assignedUser">Assigned To</SelectItem>
+              <SelectItem value="assignedMember">Assigned To</SelectItem>
               <SelectItem value="purchaseDate">Purchase Date</SelectItem>
             </SelectContent>
           </Select>
@@ -275,9 +275,9 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-gray-100"
-                  onClick={() => toggleSort('assignedUser')}
+                  onClick={() => toggleSort('assignedMember')}
                 >
-                  Assigned To {sortBy === 'assignedUser' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  Assigned To {sortBy === 'assignedMember' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-gray-100"
@@ -308,14 +308,14 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {asset.assignedUser ? (
+                      {asset.assignedMember ? (
                         <span className="font-medium text-gray-700">
-                          {asset.assignedUser.name || asset.assignedUser.email}
+                          {asset.assignedMember.name || asset.assignedMember.email}
                         </span>
                       ) : (
                         <span className="text-gray-400">Unassigned</span>
                       )}
-                      {asset.assignedUserId === currentUserId && (
+                      {asset.assignedMemberId === currentUserId && (
                         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                           You
                         </Badge>

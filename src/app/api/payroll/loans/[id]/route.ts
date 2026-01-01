@@ -20,7 +20,7 @@ async function getLoanHandler(request: NextRequest, context: APIContext) {
     const loan = await prisma.employeeLoan.findFirst({
       where: { id, tenantId },
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        member: { select: { id: true, name: true, email: true } },
         approvedBy: { select: { id: true, name: true } },
         createdBy: { select: { id: true, name: true } },
         repayments: {
@@ -37,7 +37,7 @@ async function getLoanHandler(request: NextRequest, context: APIContext) {
     }
 
     // Non-admin users can only view their own loans
-    if (tenant!.userRole !== 'ADMIN' && loan.userId !== tenant!.userId) {
+    if (tenant!.userRole !== 'ADMIN' && loan.memberId !== tenant!.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 

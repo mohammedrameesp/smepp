@@ -20,7 +20,7 @@ async function getPendingApprovals(tenantId: string) {
     where: { tenantId, status: 'PENDING' },
     orderBy: { createdAt: 'desc' },
     include: {
-      user: { select: { id: true, name: true, email: true } },
+      member: { select: { id: true, name: true, email: true } },
       leaveType: { select: { name: true } },
     },
   });
@@ -33,7 +33,7 @@ async function getPendingApprovals(tenantId: string) {
     },
     orderBy: { createdAt: 'desc' },
     include: {
-      user: { select: { id: true, name: true, email: true } },
+      member: { select: { id: true, name: true, email: true } },
       asset: true,
     },
   });
@@ -54,8 +54,8 @@ async function getPendingApprovals(tenantId: string) {
     entityId: req.id,
     createdAt: req.createdAt.toISOString(),
     entityDetails: {
-      requester: req.user.name || req.user.email,
-      requesterId: req.user.id,
+      requester: req.member?.name || req.member?.email || 'Unknown',
+      requesterId: req.member?.id || '',
       type: req.leaveType.name,
       startDate: req.startDate.toISOString(),
       endDate: req.endDate.toISOString(),
@@ -70,8 +70,8 @@ async function getPendingApprovals(tenantId: string) {
     entityId: req.id,
     createdAt: req.createdAt.toISOString(),
     entityDetails: {
-      requester: req.user.name || req.user.email,
-      requesterId: req.user.id,
+      requester: req.member?.name || req.member?.email || 'Unknown',
+      requesterId: req.member?.id || '',
       assetName: req.asset ? `${req.asset.brand || ''} ${req.asset.model}`.trim() : 'Unknown Asset',
       assetTag: req.asset?.assetTag,
       type: req.status === 'PENDING_RETURN_APPROVAL' ? 'Return' : 'Request',

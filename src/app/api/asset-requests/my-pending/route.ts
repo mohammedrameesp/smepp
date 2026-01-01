@@ -22,7 +22,7 @@ async function getMyPendingRequestsHandler(_request: NextRequest, context: APICo
     const pendingAssignments = await prisma.assetRequest.findMany({
       where: {
         tenantId,
-        userId: session.user.id,
+        memberId: session.user.id,
         status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
       },
       include: {
@@ -37,7 +37,7 @@ async function getMyPendingRequestsHandler(_request: NextRequest, context: APICo
             location: true,
           },
         },
-        assignedByUser: {
+        assignedByMember: {
           select: {
             id: true,
             name: true,
@@ -51,7 +51,7 @@ async function getMyPendingRequestsHandler(_request: NextRequest, context: APICo
     const pendingRequests = await prisma.assetRequest.findMany({
       where: {
         tenantId,
-        userId: session.user.id,
+        memberId: session.user.id,
         status: {
           in: [
             AssetRequestStatus.PENDING_ADMIN_APPROVAL,

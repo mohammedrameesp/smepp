@@ -61,14 +61,12 @@ export async function POST(request: NextRequest) {
         leaveTypeId: { in: specialLeaveTypes.map(lt => lt.id) },
       },
       include: {
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
             email: true,
-            hrProfile: {
-              select: { gender: true },
-            },
+            gender: true,
           },
         },
         leaveType: {
@@ -87,19 +85,19 @@ export async function POST(request: NextRequest) {
 
     for (const balance of balancesToCheck) {
       const leaveType = balance.leaveType;
-      const userGender = balance.user.hrProfile?.gender?.toUpperCase();
+      const memberGender = balance.member.gender?.toUpperCase();
 
       let shouldDelete = false;
       let reason = '';
 
       // Check gender restriction
       if (leaveType.genderRestriction) {
-        if (!userGender) {
+        if (!memberGender) {
           shouldDelete = true;
-          reason = 'User has no gender set in HR profile';
-        } else if (userGender !== leaveType.genderRestriction) {
+          reason = 'Member has no gender set in HR profile';
+        } else if (memberGender !== leaveType.genderRestriction) {
           shouldDelete = true;
-          reason = `Gender mismatch: ${leaveType.name} is for ${leaveType.genderRestriction}, user is ${userGender}`;
+          reason = `Gender mismatch: ${leaveType.name} is for ${leaveType.genderRestriction}, member is ${memberGender}`;
         }
       }
 
@@ -115,14 +113,14 @@ export async function POST(request: NextRequest) {
       if (shouldDelete) {
         balancesToDelete.push(balance.id);
         details.push({
-          user: balance.user.name || balance.user.email,
+          user: balance.member.name || balance.member.email,
           leaveType: leaveType.name,
           reason,
           action: 'DELETE',
         });
       } else {
         details.push({
-          user: balance.user.name || balance.user.email,
+          user: balance.member.name || balance.member.email,
           leaveType: leaveType.name,
           reason: `Has ${used} used, ${pending} pending days`,
           action: 'KEEP',

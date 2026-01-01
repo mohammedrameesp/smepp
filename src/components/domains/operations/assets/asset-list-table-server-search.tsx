@@ -32,7 +32,7 @@ interface Asset {
   configuration: string | null;
   isShared: boolean;
   location: string | null;
-  assignedUser: {
+  assignedMember: {
     id: string;
     name: string | null;
     email: string;
@@ -299,12 +299,12 @@ export function AssetListTableServerSearch() {
                           </span>
                         )}
                       </div>
-                    ) : asset.assignedUser ? (
+                    ) : asset.assignedMember ? (
                       <Link
-                        href={`/admin/users/${asset.assignedUser.id}`}
+                        href={`/admin/users/${asset.assignedMember.id}`}
                         className="text-gray-900 hover:text-gray-700 cursor-pointer font-medium"
                       >
-                        {asset.assignedUser.name || asset.assignedUser.email}
+                        {asset.assignedMember.name || asset.assignedMember.email}
                       </Link>
                     ) : (
                       <span className="text-gray-400">Unassigned</span>

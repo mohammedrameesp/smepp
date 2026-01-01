@@ -33,11 +33,11 @@ interface LeaveRequest {
   totalDays: number | string;
   status: LeaveStatus;
   createdAt: string;
-  user: {
+  member: {
     id: string;
     name: string | null;
     email: string;
-  };
+  } | null;
   leaveType: {
     id: string;
     name: string;
@@ -51,11 +51,11 @@ interface LeaveRequest {
 
 interface LeaveRequestsTableProps {
   showUser?: boolean;
-  userId?: string;
+  memberId?: string;
   basePath?: string;
 }
 
-export function LeaveRequestsTable({ showUser = true, userId, basePath = '/admin/leave/requests' }: LeaveRequestsTableProps) {
+export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/admin/leave/requests' }: LeaveRequestsTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -82,7 +82,7 @@ export function LeaveRequestsTable({ showUser = true, userId, basePath = '/admin
       if (search) params.set('q', search);
       if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
       if (yearFilter) params.set('year', yearFilter);
-      if (userId) params.set('userId', userId);
+      if (memberId) params.set('memberId', memberId);
 
       const response = await fetch(`/api/leave/requests?${params}`);
       if (response.ok) {
@@ -99,7 +99,7 @@ export function LeaveRequestsTable({ showUser = true, userId, basePath = '/admin
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.pageSize, search, statusFilter, yearFilter, userId]);
+  }, [pagination.page, pagination.pageSize, search, statusFilter, yearFilter, memberId]);
 
   useEffect(() => {
     fetchRequests();
@@ -127,7 +127,7 @@ export function LeaveRequestsTable({ showUser = true, userId, basePath = '/admin
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 items-center">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-3 sm:gap-4 items-stretch lg:items-center">
         <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-[200px]">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -167,17 +167,17 @@ export function LeaveRequestsTable({ showUser = true, userId, basePath = '/admin
       </div>
 
       {/* Table */}
-      <div className="border rounded-lg">
+      <div className="border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Request #</TableHead>
               {showUser && <TableHead>Employee</TableHead>}
               <TableHead>Leave Type</TableHead>
-              <TableHead>Dates</TableHead>
-              <TableHead>Duration</TableHead>
+              <TableHead className="hidden md:table-cell">Dates</TableHead>
+              <TableHead className="hidden lg:table-cell">Duration</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Submitted</TableHead>
+              <TableHead className="hidden lg:table-cell">Submitted</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -203,8 +203,8 @@ export function LeaveRequestsTable({ showUser = true, userId, basePath = '/admin
                   {showUser && (
                     <TableCell>
                       <div>
-                        <div className="font-medium">{request.user.name || 'N/A'}</div>
-                        <div className="text-xs text-gray-500">{request.user.email}</div>
+                        <div className="font-medium">{request.member?.name || 'N/A'}</div>
+                        <div className="text-xs text-gray-500">{request.member?.email}</div>
                       </div>
                     </TableCell>
                   )}
@@ -217,7 +217,7 @@ export function LeaveRequestsTable({ showUser = true, userId, basePath = '/admin
                       {request.leaveType.name}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden md:table-cell">
                     <div className="text-sm">
                       {getDateRangeText(new Date(request.startDate), new Date(request.endDate))}
                     </div>
@@ -227,7 +227,7 @@ export function LeaveRequestsTable({ showUser = true, userId, basePath = '/admin
                       </div>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     {formatLeaveDays(request.totalDays)}
                   </TableCell>
                   <TableCell>
@@ -235,7 +235,7 @@ export function LeaveRequestsTable({ showUser = true, userId, basePath = '/admin
                       {request.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-gray-500">
+                  <TableCell className="text-sm text-gray-500 hidden lg:table-cell">
                     {new Date(request.createdAt).toLocaleDateString('en-GB', {
                       day: 'numeric',
                       month: 'short',
@@ -258,7 +258,7 @@ export function LeaveRequestsTable({ showUser = true, userId, basePath = '/admin
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-sm text-gray-500">
             Showing {((pagination.page - 1) * pagination.pageSize) + 1} to{' '}
             {Math.min(pagination.page * pagination.pageSize, pagination.total)} of{' '}

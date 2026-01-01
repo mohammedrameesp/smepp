@@ -7,9 +7,9 @@
 import { prisma } from '@/lib/core/prisma';
 
 export interface AssignmentPeriod {
-  userId: string;
-  userName: string | null;
-  userEmail: string;
+  memberId: string;
+  memberName: string | null;
+  memberEmail: string;
   startDate: Date;
   endDate: Date | null; // null if currently assigned
   days: number;
@@ -23,7 +23,7 @@ export async function getAssignmentPeriods(assetId: string): Promise<AssignmentP
   const asset = await prisma.asset.findUnique({
     where: { id: assetId },
     include: {
-      assignedUser: {
+      assignedMember: {
         select: {
           id: true,
           name: true,
@@ -37,14 +37,14 @@ export async function getAssignmentPeriods(assetId: string): Promise<AssignmentP
           },
         },
         include: {
-          toUser: {
+          toMember: {
             select: {
               id: true,
               name: true,
               email: true,
             },
           },
-          fromUser: {
+          fromMember: {
             select: {
               id: true,
               name: true,
@@ -63,20 +63,20 @@ export async function getAssignmentPeriods(assetId: string): Promise<AssignmentP
 
   const periods: AssignmentPeriod[] = [];
   let currentAssignment: {
-    userId: string;
-    userName: string | null;
-    userEmail: string;
+    memberId: string;
+    memberName: string | null;
+    memberEmail: string;
     startDate: Date;
     notes?: string;
   } | null = null;
 
   for (const historyEntry of asset.history) {
-    if (historyEntry.action === 'ASSIGNED' && historyEntry.toUser) {
+    if (historyEntry.action === 'ASSIGNED' && historyEntry.toMember) {
       // Start new assignment period
       currentAssignment = {
-        userId: historyEntry.toUser.id,
-        userName: historyEntry.toUser.name,
-        userEmail: historyEntry.toUser.email,
+        memberId: historyEntry.toMember.id,
+        memberName: historyEntry.toMember.name,
+        memberEmail: historyEntry.toMember.email,
         startDate: historyEntry.assignmentDate || historyEntry.createdAt,
         notes: historyEntry.notes || undefined,
       };
@@ -95,7 +95,7 @@ export async function getAssignmentPeriods(assetId: string): Promise<AssignmentP
   }
 
   // If currently assigned, add ongoing period
-  if (asset.assignedUser && asset.assignedUserId) {
+  if (asset.assignedMember && asset.assignedMemberId) {
     // Only add current period if we have a valid start date from history
     if (currentAssignment) {
       const startDate = currentAssignment.startDate;
@@ -103,9 +103,9 @@ export async function getAssignmentPeriods(assetId: string): Promise<AssignmentP
       const days = calculateDaysBetween(startDate, endDate);
 
       periods.push({
-        userId: asset.assignedUser.id,
-        userName: asset.assignedUser.name,
-        userEmail: asset.assignedUser.email,
+        memberId: asset.assignedMember.id,
+        memberName: asset.assignedMember.name,
+        memberEmail: asset.assignedMember.email,
         startDate,
         endDate: null,
         days,
@@ -117,7 +117,7 @@ export async function getAssignmentPeriods(assetId: string): Promise<AssignmentP
         where: {
           assetId: asset.id,
           action: 'ASSIGNED',
-          toUserId: asset.assignedUserId,
+          toMemberId: asset.assignedMemberId,
         },
         orderBy: { createdAt: 'desc' },
       });
@@ -128,9 +128,9 @@ export async function getAssignmentPeriods(assetId: string): Promise<AssignmentP
         const days = calculateDaysBetween(startDate, endDate);
 
         periods.push({
-          userId: asset.assignedUser.id,
-          userName: asset.assignedUser.name,
-          userEmail: asset.assignedUser.email,
+          memberId: asset.assignedMember.id,
+          memberName: asset.assignedMember.name,
+          memberEmail: asset.assignedMember.email,
           startDate,
           endDate: null,
           days,
@@ -149,7 +149,7 @@ export async function getAssignmentPeriods(assetId: string): Promise<AssignmentP
     // Create a key based on userId and dates (rounded to day)
     const startKey = period.startDate.toISOString().split('T')[0];
     const endKey = period.endDate ? period.endDate.toISOString().split('T')[0] : 'current';
-    const key = `${period.userId}-${startKey}-${endKey}`;
+    const key = `${period.memberId}-${startKey}-${endKey}`;
 
     if (!seen.has(key)) {
       seen.add(key);
@@ -206,27 +206,24 @@ export async function getAssetUtilization(assetId: string): Promise<{
 }
 
 /**
- * Get all assets for a user (including past assignments) with their assignment periods
+ * Get all assets for a member (including past assignments) with their assignment periods
  */
-export async function getUserAssetHistory(userId: string) {
+export async function getMemberAssetHistory(memberId: string) {
   // Get currently assigned assets
   const currentAssets = await prisma.asset.findMany({
-    where: { assignedUserId: userId },
+    where: { assignedMemberId: memberId },
   });
 
-  // Get all assets this user was ever assigned to (from history)
+  // Get all assets this member was ever assigned to (from history)
   const pastAssignments = await prisma.assetHistory.findMany({
     where: {
       OR: [
-        { toUserId: userId },
-        { fromUserId: userId },
+        { toMemberId: memberId },
+        { fromMemberId: memberId },
       ],
       action: {
         in: ['ASSIGNED', 'UNASSIGNED'],
       },
-    },
-    include: {
-      asset: true,
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -234,23 +231,23 @@ export async function getUserAssetHistory(userId: string) {
   // Get unique asset IDs
   const allAssetIds = new Set([
     ...currentAssets.map(a => a.id),
-    ...pastAssignments.map(h => h.asset.id),
+    ...pastAssignments.map(h => h.assetId),
   ]);
 
   // Get assignment periods for all assets
   const assetsWithPeriods = await Promise.all(
     Array.from(allAssetIds).map(async (assetId) => {
       const asset = currentAssets.find(a => a.id === assetId)
-        || pastAssignments.find(h => h.asset.id === assetId)?.asset;
+        || await prisma.asset.findUnique({ where: { id: assetId } });
 
       if (!asset) return null;
 
       const allPeriods = await getAssignmentPeriods(assetId);
-      // Filter periods for this specific user
-      const userPeriods = allPeriods.filter(p => p.userId === userId);
+      // Filter periods for this specific member
+      const memberPeriods = allPeriods.filter(p => p.memberId === memberId);
 
-      const totalDays = userPeriods.reduce((sum, period) => sum + period.days, 0);
-      const currentPeriod = userPeriods.find(p => p.endDate === null);
+      const totalDays = memberPeriods.reduce((sum, period) => sum + period.days, 0);
+      const currentPeriod = memberPeriods.find(p => p.endDate === null);
 
       return {
         id: asset.id,
@@ -268,10 +265,10 @@ export async function getUserAssetHistory(userId: string) {
         status: asset.status,
         acquisitionType: asset.acquisitionType,
         transferNotes: asset.transferNotes,
-        assignedUserId: asset.assignedUserId,
+        assignedMemberId: asset.assignedMemberId,
         createdAt: asset.createdAt,
         updatedAt: asset.updatedAt,
-        userPeriods,
+        memberPeriods,
         totalDays,
         currentPeriod,
         isCurrentlyAssigned: !!currentPeriod,
@@ -286,3 +283,9 @@ export async function getUserAssetHistory(userId: string) {
     return 0;
   });
 }
+
+/**
+ * @deprecated Use getMemberAssetHistory instead
+ * Alias for backward compatibility with employee pages
+ */
+export const getUserAssetHistory = getMemberAssetHistory;

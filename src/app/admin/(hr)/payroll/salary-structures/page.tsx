@@ -46,7 +46,7 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
   const where = search
     ? {
         tenantId,
-        user: {
+        member: {
           OR: [
             { name: { contains: search, mode: 'insensitive' as const } },
             { email: { contains: search, mode: 'insensitive' as const } },
@@ -59,17 +59,13 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
     prisma.salaryStructure.findMany({
       where,
       include: {
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
             email: true,
-            hrProfile: {
-              select: {
-                employeeId: true,
-                designation: true,
-              },
-            },
+            employeeCode: true,
+            designation: true,
           },
         },
       },
@@ -146,13 +142,13 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
                     <TableRow key={salary.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{salary.user.name}</div>
+                          <div className="font-medium">{salary.member?.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {salary.user.hrProfile?.employeeId || salary.user.email}
+                            {salary.member?.employeeCode || salary.member?.email}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{salary.user.hrProfile?.designation || '-'}</TableCell>
+                      <TableCell>{salary.member?.designation || '-'}</TableCell>
                       <TableCell className="text-right">{formatCurrency(basic)}</TableCell>
                       <TableCell className="text-right">{formatCurrency(allowances)}</TableCell>
                       <TableCell className="text-right font-medium">{formatCurrency(gross)}</TableCell>

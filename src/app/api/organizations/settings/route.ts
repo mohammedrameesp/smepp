@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
+import { updateSetupProgressBulk } from '@/lib/domains/system/setup';
 
 // Valid module IDs
 const VALID_MODULES = [
@@ -138,6 +139,14 @@ export async function PUT(request: NextRequest) {
 
     // Revalidate admin layout to reflect module changes in the navigation
     revalidatePath('/admin', 'layout');
+
+    // Update setup progress (non-blocking)
+    const progressUpdates: Record<string, boolean> = {};
+    if (name) progressUpdates.profileComplete = true;
+    if (primaryColor) progressUpdates.brandingConfigured = true;
+    if (Object.keys(progressUpdates).length > 0) {
+      updateSetupProgressBulk(session.user.organizationId, progressUpdates).catch(() => {});
+    }
 
     return NextResponse.json({ success: true, settings: organization });
   } catch (error) {

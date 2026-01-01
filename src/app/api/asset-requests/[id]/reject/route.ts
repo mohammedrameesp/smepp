@@ -46,7 +46,7 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
       where: { id, tenantId },
       include: {
         asset: { select: { assetTag: true, model: true, brand: true, type: true } },
-        user: { select: { id: true, name: true, email: true } },
+        member: { select: { id: true, name: true, email: true } },
       },
     });
 
@@ -72,7 +72,7 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
           asset: {
             select: { id: true, assetTag: true, model: true, brand: true, type: true },
           },
-          user: { select: { id: true, name: true, email: true } },
+          member: { select: { id: true, name: true, email: true } },
         },
       });
 
@@ -124,13 +124,13 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
           assetModel: assetRequest.asset.model,
           assetBrand: assetRequest.asset.brand,
           assetType: assetRequest.asset.type,
-          userName: assetRequest.user.name || assetRequest.user.email,
+          userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
           rejectorName: session.user.name || session.user.email || 'Admin',
           reason: reason || 'No reason provided',
           orgSlug,
           orgName,
         });
-        await sendEmail({ to: assetRequest.user.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
+        await sendEmail({ to: assetRequest.member?.email || '', subject: emailData.subject, html: emailData.html, text: emailData.text });
       } else if (assetRequest.type === AssetRequestType.RETURN_REQUEST) {
         const emailData = assetReturnRejectedEmail({
           requestNumber: assetRequest.requestNumber,
@@ -138,13 +138,13 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
           assetModel: assetRequest.asset.model,
           assetBrand: assetRequest.asset.brand,
           assetType: assetRequest.asset.type,
-          userName: assetRequest.user.name || assetRequest.user.email,
+          userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
           rejectorName: session.user.name || session.user.email || 'Admin',
           reason: reason || 'No reason provided',
           orgSlug,
           orgName,
         });
-        await sendEmail({ to: assetRequest.user.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
+        await sendEmail({ to: assetRequest.member?.email || '', subject: emailData.subject, html: emailData.html, text: emailData.text });
       }
     } catch (emailError) {
       console.error('Failed to send email notification:', emailError);
@@ -153,7 +153,7 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
     // Send in-app notification
     await createNotification(
       NotificationTemplates.assetRequestRejected(
-        assetRequest.userId,
+        assetRequest.memberId,
         assetRequest.asset.assetTag || assetRequest.asset.model,
         assetRequest.requestNumber,
         reason,

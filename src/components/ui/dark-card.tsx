@@ -13,7 +13,7 @@ function DarkCard({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="card"
       className={cn(
         "bg-slate-800/40 text-blue-50 border-slate-700/50 backdrop-blur-sm",
-        "flex flex-col gap-6 rounded-xl border py-6 shadow-lg",
+        "flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
         "hover:bg-slate-800/50 transition-all duration-200",
         className
       )}

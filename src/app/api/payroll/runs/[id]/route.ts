@@ -28,17 +28,13 @@ async function getPayrollRunHandler(request: NextRequest, context: APIContext) {
         paidBy: { select: { id: true, name: true } },
         payslips: {
           include: {
-            user: {
+            member: {
               select: {
                 id: true,
                 name: true,
                 email: true,
-                hrProfile: {
-                  select: {
-                    employeeId: true,
-                    designation: true,
-                  },
-                },
+                employeeCode: true,
+                designation: true,
               },
             },
             deductions: true,

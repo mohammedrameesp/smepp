@@ -44,7 +44,7 @@ export default async function EmployeeLeaveRequestsPage() {
           <CardContent>
             <LeaveRequestsTable
               showUser={false}
-              userId={session.user.id}
+              memberId={session.user.id}
               basePath="/employee/leave"
             />
           </CardContent>

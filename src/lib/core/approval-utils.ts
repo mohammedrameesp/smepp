@@ -29,12 +29,12 @@ import { PrismaClient } from '@prisma/client';
 export interface ApprovalContext {
   /** Tenant/organization ID */
   tenantId: string;
-  /** User performing the approval action */
-  userId: string;
-  /** User's name for logging */
-  userName?: string;
-  /** User's email for logging */
-  userEmail?: string;
+  /** Member performing the approval action */
+  memberId: string;
+  /** Member's name for logging */
+  memberName?: string;
+  /** Member's email for logging */
+  memberEmail?: string;
 }
 
 /**
@@ -211,7 +211,7 @@ export async function logApprovalAction(
 ): Promise<void> {
   await logAction(
     context.tenantId,
-    context.userId,
+    context.memberId,
     action,
     entityType,
     entityId,

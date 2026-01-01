@@ -32,7 +32,7 @@ export default async function AdminAssetsPage() {
       _sum: { priceQAR: true },
     }),
     prisma.asset.count({
-      where: { tenantId, assignedUserId: { not: null } },
+      where: { tenantId, assignedMemberId: { not: null } },
     }),
     prisma.assetRequest.count({
       where: { tenantId, status: AssetRequestStatus.PENDING_ADMIN_APPROVAL },

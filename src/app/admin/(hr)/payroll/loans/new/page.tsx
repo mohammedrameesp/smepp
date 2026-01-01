@@ -24,9 +24,7 @@ interface Employee {
   id: string;
   name: string | null;
   email: string;
-  hrProfile?: {
-    employeeId: string | null;
-  };
+  employeeCode?: string | null;
 }
 
 const LOAN_TYPES = [
@@ -41,7 +39,7 @@ export default function NewLoanPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
 
-  const [userId, setUserId] = useState('');
+  const [memberId, setMemberId] = useState('');
   const [type, setType] = useState('LOAN');
   const [principalAmount, setPrincipalAmount] = useState('');
   const [monthlyDeduction, setMonthlyDeduction] = useState('');
@@ -50,9 +48,9 @@ export default function NewLoanPage() {
   const [notes, setNotes] = useState('');
 
   useEffect(() => {
-    fetch('/api/users?includeHrProfile=true')
+    fetch('/api/team?isEmployee=true')
       .then((res) => res.json())
-      .then((data) => setEmployees(data.users || []))
+      .then((data) => setEmployees(data.members || []))
       .catch(() => toast.error('Failed to load employees'));
   }, []);
 
@@ -69,7 +67,7 @@ export default function NewLoanPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId,
+          memberId,
           type,
           principalAmount: amountNum,
           monthlyDeduction: monthlyNum,
@@ -120,16 +118,16 @@ export default function NewLoanPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="userId">Employee *</Label>
-                <Select value={userId} onValueChange={setUserId} required>
-                  <SelectTrigger id="userId">
+                <Label htmlFor="memberId">Employee *</Label>
+                <Select value={memberId} onValueChange={setMemberId} required>
+                  <SelectTrigger id="memberId">
                     <SelectValue placeholder="Select employee" />
                   </SelectTrigger>
                   <SelectContent>
                     {employees.map((emp) => (
                       <SelectItem key={emp.id} value={emp.id}>
                         {emp.name || emp.email}
-                        {emp.hrProfile?.employeeId && ` (${emp.hrProfile.employeeId})`}
+                        {emp.employeeCode && ` (${emp.employeeCode})`}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -261,7 +259,7 @@ export default function NewLoanPage() {
               <Button asChild variant="outline">
                 <Link href="/admin/payroll/loans">Cancel</Link>
               </Button>
-              <Button type="submit" disabled={isLoading || !userId || !principalAmount || !monthlyDeduction || !description}>
+              <Button type="submit" disabled={isLoading || !memberId || !principalAmount || !monthlyDeduction || !description}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Create Loan
               </Button>

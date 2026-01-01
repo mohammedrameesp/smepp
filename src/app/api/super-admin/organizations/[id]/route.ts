@@ -84,7 +84,7 @@ export async function GET(
       take: 10,
       orderBy: { at: 'desc' },
       include: {
-        actorUser: {
+        actorMember: {
           select: { name: true, email: true },
         },
       },
@@ -159,6 +159,7 @@ const updateOrgSchema = z.object({
   maxUsers: z.number().min(1).optional(),
   maxAssets: z.number().min(1).optional(),
   aiChatEnabled: z.boolean().optional(),
+  aiTokenBudgetMonthly: z.number().min(1000).nullable().optional(),
 });
 
 export async function PATCH(
@@ -194,7 +195,7 @@ export async function PATCH(
       );
     }
 
-    const { name, maxUsers, maxAssets, aiChatEnabled } = result.data;
+    const { name, maxUsers, maxAssets, aiChatEnabled, aiTokenBudgetMonthly } = result.data;
 
     const organization = await prisma.organization.update({
       where: { id },
@@ -203,6 +204,7 @@ export async function PATCH(
         ...(maxUsers && { maxUsers }),
         ...(maxAssets && { maxAssets }),
         ...(aiChatEnabled !== undefined && { aiChatEnabled }),
+        ...(aiTokenBudgetMonthly !== undefined && { aiTokenBudgetMonthly }),
       },
     });
 

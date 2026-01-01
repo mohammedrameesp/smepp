@@ -207,8 +207,9 @@ export default function AdminEmployeeEditPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-5xl mx-auto">
+      <>
+        <PageHeader title="Edit Profile" subtitle="Loading..." />
+        <PageContent>
           <Card>
             <CardContent className="py-12">
               <div className="flex flex-col items-center justify-center">
@@ -217,15 +218,16 @@ export default function AdminEmployeeEditPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </PageContent>
+      </>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-5xl mx-auto">
+      <>
+        <PageHeader title="Edit Profile" subtitle="Error" />
+        <PageContent>
           <Alert variant="error" className="mb-6">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
@@ -233,8 +235,8 @@ export default function AdminEmployeeEditPage() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             Go Back
           </Button>
-        </div>
-      </div>
+        </PageContent>
+      </>
     );
   }
 

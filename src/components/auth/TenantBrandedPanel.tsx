@@ -6,6 +6,8 @@ interface TenantBrandedPanelProps {
   branding: TenantBranding | null;
   isLoading: boolean;
   variant: 'super-admin' | 'tenant';
+  welcomeTitleOverride?: string;
+  welcomeSubtitleOverride?: string;
 }
 
 // Inspiring quotes for the login page
@@ -26,7 +28,7 @@ function getDailyQuote() {
 /**
  * Branded left panel for login pages
  */
-export function TenantBrandedPanel({ branding, isLoading, variant }: TenantBrandedPanelProps) {
+export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleOverride, welcomeSubtitleOverride }: TenantBrandedPanelProps) {
   const quote = getDailyQuote();
 
   // Super admin panel - fixed Durj branding (main domain)
@@ -81,8 +83,8 @@ export function TenantBrandedPanel({ branding, isLoading, variant }: TenantBrand
   const primaryColor = branding?.primaryColor || '#1E40AF';
   const secondaryColor = branding?.secondaryColor;
   const backgroundImage = branding?.loginBackgroundUrl;
-  const welcomeTitle = branding?.welcomeTitle || 'Welcome back';
-  const welcomeSubtitle = branding?.welcomeSubtitle || 'Sign in to access your workspace';
+  const welcomeTitle = welcomeTitleOverride || branding?.welcomeTitle || 'Welcome back';
+  const welcomeSubtitle = welcomeSubtitleOverride || branding?.welcomeSubtitle || 'Sign in to access your workspace';
   const orgName = branding?.organizationName || 'Durj';
   const logoUrl = branding?.logoUrl;
 

@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Dashboard Redesign - Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .stat-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px -5px rgba(0,0,0,0.1); }
+    .progress-bar { transition: width 0.5s ease-out; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- MOBILE VIEW (default) -->
+  <div class="max-w-md mx-auto bg-white min-h-screen shadow-xl">
+
+    <!-- Header -->
+    <div class="bg-gradient-to-br from-slate-50 to-blue-50 px-4 py-6 border-b">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h1 class="text-xl font-bold text-gray-900">Good morning, Ahmed!</h1>
+          <p class="text-sm text-gray-500">Thursday, January 2, 2025</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-white rounded-full">
+            <i class="fas fa-bell text-lg"></i>
+            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </button>
+          <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+            A
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="stat-card bg-white rounded-xl p-4 border border-blue-100 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-umbrella-beach text-blue-600"></i>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-gray-900">18.5</p>
+              <p class="text-xs text-gray-500">Leave Days</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-laptop text-emerald-600"></i>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-gray-900">3</p>
+              <p class="text-xs text-gray-500">Assets</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card bg-white rounded-xl p-4 border border-violet-100 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-clock text-violet-600"></i>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-gray-900">2</p>
+              <p class="text-xs text-gray-500">Pending</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card bg-white rounded-xl p-4 border border-amber-100 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-exclamation-triangle text-amber-600"></i>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-gray-900">1</p>
+              <p class="text-xs text-gray-500">Alert</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Banner -->
+    <div class="mx-4 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
+      <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+        <i class="fas fa-id-card text-amber-600 text-sm"></i>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium text-amber-800">QID expires in 30 days</p>
+        <p class="text-xs text-amber-600">Update your documents</p>
+      </div>
+      <button class="text-amber-600 hover:text-amber-700 text-sm font-medium whitespace-nowrap">
+        Update <i class="fas fa-arrow-right ml-1"></i>
+      </button>
+    </div>
+
+    <!-- Celebrations -->
+    <div class="mx-4 mt-4 p-4 bg-gradient-to-r from-pink-50 to-purple-50 border border-pink-100 rounded-xl">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-lg">🎂</span>
+        <h3 class="font-semibold text-gray-900">Celebrations</h3>
+      </div>
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-xs font-semibold text-pink-700">S</div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Sarah Ahmed</p>
+              <p class="text-xs text-gray-500">Birthday today!</p>
+            </div>
+          </div>
+          <button class="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-medium hover:bg-pink-200">
+            Send Wishes
+          </button>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-purple-200 rounded-full flex items-center justify-center text-xs font-semibold text-purple-700">A</div>
+            <div>
+              <p class="text-sm font-medium text-gray-900">Ali Khan</p>
+              <p class="text-xs text-gray-500">5 year anniversary tomorrow</p>
+            </div>
+          </div>
+          <span class="text-purple-600 text-xs">🎉</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Requests -->
+    <div class="mx-4 mt-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+          <i class="fas fa-list-check text-gray-400"></i>
+          My Requests
+        </h3>
+        <a href="#" class="text-sm text-blue-600 font-medium">View All</a>
+      </div>
+
+      <div class="space-y-2">
+        <!-- Purchase Request -->
+        <div class="bg-white border rounded-xl p-3 hover:border-violet-200 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-shopping-cart text-violet-600 text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-medium text-gray-900 truncate">Office Supplies</p>
+                <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">Pending</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5">PR-2024-001 • 5 items • QAR 1,250</p>
+            </div>
+            <span class="text-xs text-gray-400 flex-shrink-0">2d ago</span>
+          </div>
+        </div>
+
+        <!-- Leave Request -->
+        <div class="bg-white border rounded-xl p-3 hover:border-blue-200 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-umbrella-beach text-blue-600 text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-medium text-gray-900 truncate">Annual Leave</p>
+                <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">Approved</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5">LR-2024-045 • 3 days • Jan 15-17</p>
+            </div>
+            <span class="text-xs text-gray-400 flex-shrink-0">5d ago</span>
+          </div>
+        </div>
+
+        <!-- Asset Request -->
+        <div class="bg-white border rounded-xl p-3 hover:border-emerald-200 transition-colors">
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-laptop text-emerald-600 text-sm"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-medium text-gray-900 truncate">External Monitor</p>
+                <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">Pending</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5">AR-2024-012 • Dell 27" 4K</p>
+            </div>
+            <span class="text-xs text-gray-400 flex-shrink-0">1w ago</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave Balance -->
+    <div class="mx-4 mt-4 bg-white border rounded-xl p-4">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+          <i class="fas fa-calendar-days text-blue-500"></i>
+          Leave Balance
+        </h3>
+        <span class="text-xs text-gray-500">2025</span>
+      </div>
+
+      <div class="space-y-3">
+        <!-- Annual Leave -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-2">
+              <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+              <span class="text-sm text-gray-700">Annual Leave</span>
+            </div>
+            <span class="text-sm font-semibold text-blue-600">18.5 / 22</span>
+          </div>
+          <div class="w-full bg-gray-100 rounded-full h-2">
+            <div class="progress-bar bg-blue-500 h-2 rounded-full" style="width: 84%"></div>
+          </div>
+        </div>
+
+        <!-- Sick Leave -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-2">
+              <div class="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+              <span class="text-sm text-gray-700">Sick Leave</span>
+            </div>
+            <span class="text-sm font-semibold text-emerald-600">7 / 7</span>
+          </div>
+          <div class="w-full bg-gray-100 rounded-full h-2">
+            <div class="progress-bar bg-emerald-500 h-2 rounded-full" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <!-- Personal Leave -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-2">
+              <div class="w-2.5 h-2.5 rounded-full bg-purple-500"></div>
+              <span class="text-sm text-gray-700">Personal Leave</span>
+            </div>
+            <span class="text-sm font-semibold text-purple-600">2 / 5</span>
+          </div>
+          <div class="w-full bg-gray-100 rounded-full h-2">
+            <div class="progress-bar bg-purple-500 h-2 rounded-full" style="width: 40%"></div>
+          </div>
+        </div>
+      </div>
+
+      <button class="w-full mt-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
+        <i class="fas fa-plus mr-2"></i>Request Leave
+      </button>
+    </div>
+
+    <!-- My Holdings -->
+    <div class="mx-4 mt-4 bg-white border rounded-xl p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+          <i class="fas fa-box text-emerald-500"></i>
+          My Holdings
+        </h3>
+        <a href="#" class="text-sm text-blue-600 font-medium">View All</a>
+      </div>
+
+      <div class="flex items-center gap-4 mb-3">
+        <div class="flex items-center gap-2 text-sm">
+          <span class="font-bold text-emerald-600">3</span>
+          <span class="text-gray-500">Assets</span>
+        </div>
+        <div class="w-px h-4 bg-gray-200"></div>
+        <div class="flex items-center gap-2 text-sm">
+          <span class="font-bold text-blue-600">2</span>
+          <span class="text-gray-500">Subscriptions</span>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+          <div class="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+            <i class="fas fa-laptop text-gray-500 text-sm"></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-900">MacBook Pro 14"</p>
+            <p class="text-xs text-gray-500">AST-2024-001</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+          <div class="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+            <i class="fas fa-mobile-alt text-gray-500 text-sm"></i>
+          </div>
+          <div class="flex-1">
+            <p class="text-sm font-medium text-gray-900">iPhone 14 Pro</p>
+            <p class="text-xs text-gray-500">AST-2024-015</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming -->
+    <div class="mx-4 mt-4 bg-white border rounded-xl p-4 mb-24">
+      <h3 class="font-semibold text-gray-900 flex items-center gap-2 mb-3">
+        <i class="fas fa-calendar text-violet-500"></i>
+        Upcoming
+      </h3>
+
+      <div class="space-y-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-blue-100 rounded-lg flex flex-col items-center justify-center">
+            <span class="text-xs font-bold text-blue-600">15</span>
+            <span class="text-[10px] text-blue-500">JAN</span>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-900">Annual Leave</p>
+            <p class="text-xs text-gray-500">Jan 15-17 • 3 days</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-amber-100 rounded-lg flex flex-col items-center justify-center">
+            <span class="text-xs font-bold text-amber-600">20</span>
+            <span class="text-[10px] text-amber-500">JAN</span>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-900">Adobe CC Renewal</p>
+            <p class="text-xs text-gray-500">QAR 450/month</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation (Fixed) -->
+    <div class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t shadow-lg">
+      <div class="grid grid-cols-4 gap-1 p-2">
+        <button class="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-blue-50 text-blue-600">
+          <i class="fas fa-umbrella-beach text-lg mb-1"></i>
+          <span class="text-xs font-medium">Leave</span>
+        </button>
+        <button class="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-violet-50 text-gray-500 hover:text-violet-600">
+          <i class="fas fa-shopping-cart text-lg mb-1"></i>
+          <span class="text-xs font-medium">Purchase</span>
+        </button>
+        <button class="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-emerald-50 text-gray-500 hover:text-emerald-600">
+          <i class="fas fa-laptop text-lg mb-1"></i>
+          <span class="text-xs font-medium">Assets</span>
+        </button>
+        <button class="flex flex-col items-center py-2 px-1 rounded-lg hover:bg-gray-100 text-gray-500">
+          <i class="fas fa-ellipsis-h text-lg mb-1"></i>
+          <span class="text-xs font-medium">More</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DESKTOP VIEW TOGGLE -->
+  <div class="fixed top-4 right-4 z-50">
+    <button onclick="toggleView()" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium shadow-lg hover:bg-gray-800">
+      <i class="fas fa-desktop mr-2"></i>Toggle Desktop View
+    </button>
+  </div>
+
+  <!-- DESKTOP VERSION (Hidden by default) -->
+  <div id="desktop-view" class="hidden">
+    <div class="max-w-6xl mx-auto p-6">
+
+      <!-- Desktop Header -->
+      <div class="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6 mb-6 border">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">Good morning, Ahmed!</h1>
+            <p class="text-gray-500">Thursday, January 2, 2025</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-white rounded-full">
+              <i class="fas fa-bell text-xl"></i>
+              <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+            </button>
+            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+              A
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="grid grid-cols-4 gap-4">
+          <div class="stat-card bg-white rounded-xl p-4 border border-blue-100 shadow-sm">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-umbrella-beach text-blue-600 text-xl"></i>
+              </div>
+              <div>
+                <p class="text-3xl font-bold text-gray-900">18.5</p>
+                <p class="text-sm text-gray-500">Leave Days Available</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card bg-white rounded-xl p-4 border border-emerald-100 shadow-sm">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-laptop text-emerald-600 text-xl"></i>
+              </div>
+              <div>
+                <p class="text-3xl font-bold text-gray-900">3</p>
+                <p class="text-sm text-gray-500">Assets Assigned</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card bg-white rounded-xl p-4 border border-violet-100 shadow-sm">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-clock text-violet-600 text-xl"></i>
+              </div>
+              <div>
+                <p class="text-3xl font-bold text-gray-900">2</p>
+                <p class="text-sm text-gray-500">Pending Requests</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card bg-white rounded-xl p-4 border border-amber-100 shadow-sm">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-amber-600 text-xl"></i>
+              </div>
+              <div>
+                <p class="text-3xl font-bold text-gray-900">1</p>
+                <p class="text-sm text-gray-500">Alert</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alert Banner Desktop -->
+      <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-4">
+        <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <i class="fas fa-id-card text-amber-600"></i>
+        </div>
+        <div class="flex-1">
+          <p class="font-medium text-amber-800">Document Expiry Alert</p>
+          <p class="text-sm text-amber-600">Your QID expires in 30 days. Please update your documents.</p>
+        </div>
+        <button class="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg text-sm font-medium transition-colors">
+          Update Documents <i class="fas fa-arrow-right ml-2"></i>
+        </button>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="grid grid-cols-3 gap-6 mb-6">
+
+        <!-- Leave Balance -->
+        <div class="bg-white border rounded-xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+              <i class="fas fa-calendar-days text-blue-500"></i>
+              Leave Balance
+            </h3>
+            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">2025</span>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <span class="text-sm text-gray-700">Annual Leave</span>
+                </div>
+                <span class="text-sm font-semibold text-blue-600">18.5 / 22 days</span>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2.5">
+                <div class="progress-bar bg-blue-500 h-2.5 rounded-full" style="width: 84%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+                  <span class="text-sm text-gray-700">Sick Leave</span>
+                </div>
+                <span class="text-sm font-semibold text-emerald-600">7 / 7 days</span>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2.5">
+                <div class="progress-bar bg-emerald-500 h-2.5 rounded-full" style="width: 100%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+                  <span class="text-sm text-gray-700">Personal Leave</span>
+                </div>
+                <span class="text-sm font-semibold text-purple-600">2 / 5 days</span>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2.5">
+                <div class="progress-bar bg-purple-500 h-2.5 rounded-full" style="width: 40%"></div>
+              </div>
+            </div>
+          </div>
+
+          <button class="w-full mt-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-plus mr-2"></i>Request Leave
+          </button>
+        </div>
+
+        <!-- My Requests -->
+        <div class="bg-white border rounded-xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+              <i class="fas fa-list-check text-gray-400"></i>
+              My Requests
+            </h3>
+            <a href="#" class="text-sm text-blue-600 font-medium hover:underline">View All</a>
+          </div>
+
+          <div class="space-y-3">
+            <div class="p-3 border rounded-lg hover:border-violet-200 transition-colors cursor-pointer">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-shopping-cart text-violet-600 text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <p class="text-sm font-medium text-gray-900">Office Supplies</p>
+                    <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">Pending</span>
+                  </div>
+                  <p class="text-xs text-gray-500">PR-2024-001 • QAR 1,250</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-3 border rounded-lg hover:border-blue-200 transition-colors cursor-pointer">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-umbrella-beach text-blue-600 text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <p class="text-sm font-medium text-gray-900">Annual Leave</p>
+                    <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">Approved</span>
+                  </div>
+                  <p class="text-xs text-gray-500">LR-2024-045 • Jan 15-17</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-3 border rounded-lg hover:border-emerald-200 transition-colors cursor-pointer">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-laptop text-emerald-600 text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <p class="text-sm font-medium text-gray-900">External Monitor</p>
+                    <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">Pending</span>
+                  </div>
+                  <p class="text-xs text-gray-500">AR-2024-012</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="w-full mt-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-plus mr-2"></i>New Purchase Request
+          </button>
+        </div>
+
+        <!-- Celebrations -->
+        <div class="bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-100 rounded-xl p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="text-xl">🎂</span>
+            <h3 class="font-semibold text-gray-900">Celebrations</h3>
+          </div>
+
+          <div class="space-y-3">
+            <div class="bg-white/70 rounded-lg p-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-pink-200 rounded-full flex items-center justify-center font-semibold text-pink-700">S</div>
+                <div class="flex-1">
+                  <p class="font-medium text-gray-900">Sarah Ahmed</p>
+                  <p class="text-sm text-gray-500">Birthday today! 🎉</p>
+                </div>
+                <button class="px-3 py-1.5 bg-pink-100 hover:bg-pink-200 text-pink-700 rounded-lg text-xs font-medium transition-colors">
+                  Send Wishes
+                </button>
+              </div>
+            </div>
+
+            <div class="bg-white/70 rounded-lg p-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center font-semibold text-purple-700">A</div>
+                <div class="flex-1">
+                  <p class="font-medium text-gray-900">Ali Khan</p>
+                  <p class="text-sm text-gray-500">5 year anniversary tomorrow 🏆</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white/70 rounded-lg p-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center font-semibold text-blue-700">M</div>
+                <div class="flex-1">
+                  <p class="font-medium text-gray-900">Mohammed Raza</p>
+                  <p class="text-sm text-gray-500">Birthday on Jan 5 🎂</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Second Row -->
+      <div class="grid grid-cols-3 gap-6">
+
+        <!-- My Holdings -->
+        <div class="bg-white border rounded-xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+              <i class="fas fa-box text-emerald-500"></i>
+              My Holdings
+            </h3>
+            <a href="#" class="text-sm text-blue-600 font-medium hover:underline">View All</a>
+          </div>
+
+          <div class="flex items-center gap-6 mb-4 pb-4 border-b">
+            <div class="text-center">
+              <p class="text-2xl font-bold text-emerald-600">3</p>
+              <p class="text-xs text-gray-500">Assets</p>
+            </div>
+            <div class="text-center">
+              <p class="text-2xl font-bold text-blue-600">2</p>
+              <p class="text-xs text-gray-500">Subscriptions</p>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+              <div class="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+                <i class="fas fa-laptop text-gray-500 text-sm"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-900">MacBook Pro 14"</p>
+                <p class="text-xs text-gray-500">AST-2024-001</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+              <div class="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+                <i class="fas fa-mobile-alt text-gray-500 text-sm"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-900">iPhone 14 Pro</p>
+                <p class="text-xs text-gray-500">AST-2024-015</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upcoming -->
+        <div class="bg-white border rounded-xl p-5">
+          <h3 class="font-semibold text-gray-900 flex items-center gap-2 mb-4">
+            <i class="fas fa-calendar text-violet-500"></i>
+            Upcoming
+          </h3>
+
+          <div class="space-y-3">
+            <div class="flex items-center gap-4 p-3 bg-blue-50 rounded-lg">
+              <div class="w-12 h-12 bg-white rounded-lg flex flex-col items-center justify-center shadow-sm">
+                <span class="text-sm font-bold text-blue-600">15</span>
+                <span class="text-xs text-blue-500">JAN</span>
+              </div>
+              <div>
+                <p class="font-medium text-gray-900">Annual Leave</p>
+                <p class="text-sm text-gray-500">Jan 15-17 • 3 days</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-4 p-3 bg-amber-50 rounded-lg">
+              <div class="w-12 h-12 bg-white rounded-lg flex flex-col items-center justify-center shadow-sm">
+                <span class="text-sm font-bold text-amber-600">20</span>
+                <span class="text-xs text-amber-500">JAN</span>
+              </div>
+              <div>
+                <p class="font-medium text-gray-900">Adobe CC Renewal</p>
+                <p class="text-sm text-gray-500">QAR 450/month</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-4 p-3 bg-violet-50 rounded-lg">
+              <div class="w-12 h-12 bg-white rounded-lg flex flex-col items-center justify-center shadow-sm">
+                <span class="text-sm font-bold text-violet-600">28</span>
+                <span class="text-xs text-violet-500">JAN</span>
+              </div>
+              <div>
+                <p class="font-medium text-gray-900">Slack Renewal</p>
+                <p class="text-sm text-gray-500">QAR 280/month</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white border rounded-xl p-5">
+          <h3 class="font-semibold text-gray-900 flex items-center gap-2 mb-4">
+            <i class="fas fa-bolt text-amber-500"></i>
+            Quick Actions
+          </h3>
+
+          <div class="grid grid-cols-2 gap-3">
+            <button class="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors text-left">
+              <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
+                <i class="fas fa-umbrella-beach text-blue-600"></i>
+              </div>
+              <p class="text-sm font-medium text-gray-900">Request Leave</p>
+            </button>
+
+            <button class="p-4 bg-violet-50 hover:bg-violet-100 rounded-xl transition-colors text-left">
+              <div class="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center mb-2">
+                <i class="fas fa-shopping-cart text-violet-600"></i>
+              </div>
+              <p class="text-sm font-medium text-gray-900">New Purchase</p>
+            </button>
+
+            <button class="p-4 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors text-left">
+              <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mb-2">
+                <i class="fas fa-search text-emerald-600"></i>
+              </div>
+              <p class="text-sm font-medium text-gray-900">Browse Assets</p>
+            </button>
+
+            <button class="p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors text-left">
+              <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
+                <i class="fas fa-user text-gray-600"></i>
+              </div>
+              <p class="text-sm font-medium text-gray-900">My Profile</p>
+            </button>
+          </div>
+
+          <a href="#" class="block mt-4 text-center text-sm text-gray-500 hover:text-gray-700">
+            <i class="fas fa-question-circle mr-1"></i> Help & Support
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function toggleView() {
+      const mobile = document.querySelector('.max-w-md');
+      const desktop = document.getElementById('desktop-view');
+
+      if (mobile.classList.contains('hidden')) {
+        mobile.classList.remove('hidden');
+        desktop.classList.add('hidden');
+      } else {
+        mobile.classList.add('hidden');
+        desktop.classList.remove('hidden');
+      }
+    }
+  </script>
+
+</body>
+</html>

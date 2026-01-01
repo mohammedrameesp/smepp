@@ -23,29 +23,51 @@ async function getHRProfileHandler(request: NextRequest) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
-  // Find or create HR profile for current user
-  let hrProfile = await prisma.hRProfile.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  // Create empty profile if none exists
-  if (!hrProfile) {
-    hrProfile = await prisma.hRProfile.create({
-      data: {
-        userId: session.user.id,
-        tenantId: session.user.organizationId!,
-      },
-    });
+  // Ensure user has an organization
+  if (!session.user.organizationId) {
+    return NextResponse.json(
+      { error: 'Organization context required. Please ensure you are logged in with an organization.' },
+      { status: 400 }
+    );
   }
 
-  // Get user info for workEmail
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      email: true,
-      role: true,
-    },
-  });
+  // Find or create HR profile for current user
+  let hrProfile;
+  let user;
+
+  try {
+    hrProfile = await prisma.hRProfile.findUnique({
+      where: { userId: session.user.id },
+    });
+
+    // Create empty profile if none exists
+    if (!hrProfile) {
+      hrProfile = await prisma.hRProfile.create({
+        data: {
+          userId: session.user.id,
+          tenantId: session.user.organizationId,
+        },
+      });
+    }
+
+    // Get user info for workEmail
+    user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        email: true,
+        role: true,
+      },
+    });
+  } catch (dbError) {
+    console.error('[HR Profile GET] Database error:', dbError);
+    return NextResponse.json(
+      {
+        error: 'Failed to load HR profile',
+        message: dbError instanceof Error ? dbError.message : 'Database operation failed',
+      },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({
     ...hrProfile,
@@ -64,7 +86,20 @@ async function updateHRProfileHandler(request: NextRequest) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
-  const body = await request.json();
+  // Ensure user has an organization
+  if (!session.user.organizationId) {
+    return NextResponse.json(
+      { error: 'Organization context required. Please ensure you are logged in with an organization.' },
+      { status: 400 }
+    );
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
+  }
 
   // Get user role to determine if admin
   const user = await prisma.user.findUnique({
@@ -90,14 +125,29 @@ async function updateHRProfileHandler(request: NextRequest) {
 
   const data = validation.data;
 
-  // Convert date strings to Date objects for Prisma
-  const processedData: Record<string, unknown> = { ...data };
+  // Whitelist of allowed HR profile fields (must match Prisma schema)
+  const allowedFields = new Set([
+    'dateOfBirth', 'gender', 'maritalStatus', 'nationality',
+    'qatarMobile', 'otherMobileCode', 'otherMobileNumber', 'personalEmail',
+    'qatarZone', 'qatarStreet', 'qatarBuilding', 'qatarUnit', 'homeCountryAddress',
+    'localEmergencyName', 'localEmergencyRelation', 'localEmergencyPhoneCode', 'localEmergencyPhone',
+    'homeEmergencyName', 'homeEmergencyRelation', 'homeEmergencyPhoneCode', 'homeEmergencyPhone',
+    'qidNumber', 'qidExpiry', 'passportNumber', 'passportExpiry', 'healthCardExpiry', 'sponsorshipType',
+    'employeeId', 'designation', 'dateOfJoining',
+    'bankName', 'iban',
+    'highestQualification', 'specialization', 'institutionName', 'graduationYear',
+    'qidUrl', 'passportCopyUrl', 'photoUrl', 'contractCopyUrl', 'contractExpiry',
+    'hasDrivingLicense', 'licenseExpiry', 'languagesKnown', 'skillsCertifications',
+    'onboardingStep', 'onboardingComplete', 'bypassNoticeRequirement',
+  ]);
 
-  // Remove fields that shouldn't be persisted (passed through from frontend)
-  const fieldsToRemove = ['id', 'userId', 'workEmail', 'isAdmin', 'createdAt', 'updatedAt', 'user'];
-  fieldsToRemove.forEach((field) => {
-    delete processedData[field];
-  });
+  // Filter to only allowed fields to prevent unknown field errors
+  const processedData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (allowedFields.has(key)) {
+      processedData[key] = value;
+    }
+  }
 
   const dateFields = [
     'dateOfBirth',
@@ -106,6 +156,7 @@ async function updateHRProfileHandler(request: NextRequest) {
     'healthCardExpiry',
     'dateOfJoining',
     'licenseExpiry',
+    'contractExpiry',
   ];
 
   dateFields.forEach((field) => {
@@ -131,15 +182,28 @@ async function updateHRProfileHandler(request: NextRequest) {
   const justCompletedOnboarding = !wasOnboardingComplete && isNowOnboardingComplete;
 
   // Upsert HR profile
-  const hrProfile = await prisma.hRProfile.upsert({
-    where: { userId: session.user.id },
-    update: processedData,
-    create: {
-      userId: session.user.id,
-      tenantId: session.user.organizationId!,
-      ...processedData,
-    },
-  });
+  let hrProfile;
+  try {
+    hrProfile = await prisma.hRProfile.upsert({
+      where: { userId: session.user.id },
+      update: processedData,
+      create: {
+        userId: session.user.id,
+        tenantId: session.user.organizationId,
+        ...processedData,
+      },
+    });
+  } catch (dbError) {
+    console.error('[HR Profile] Database error during upsert:', dbError);
+    console.error('[HR Profile] Processed data:', JSON.stringify(processedData, null, 2));
+    return NextResponse.json(
+      {
+        error: 'Failed to save HR profile',
+        message: dbError instanceof Error ? dbError.message : 'Database operation failed',
+      },
+      { status: 500 }
+    );
+  }
 
   // Log activity
   await logAction(

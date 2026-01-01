@@ -12,7 +12,7 @@ import { getRiskScore } from './input-sanitizer';
 
 export interface AuditLogEntry {
   tenantId: string;
-  userId: string;
+  memberId: string;
   conversationId?: string;
   query: string;
   functionsCalled: string[];
@@ -121,7 +121,7 @@ export async function logAuditEntry(entry: AuditLogEntry): Promise<void> {
     await prisma.aIChatAuditLog.create({
       data: {
         tenantId: entry.tenantId,
-        userId: entry.userId,
+        memberId: entry.memberId,
         conversationId: entry.conversationId,
         queryHash,
         queryLength: entry.query.length,
@@ -140,7 +140,7 @@ export async function logAuditEntry(entry: AuditLogEntry): Promise<void> {
     // Log high-risk entries to console for immediate attention
     if (flagged) {
       console.warn(
-        `[AI Audit] Flagged query from user ${entry.userId} in org ${entry.tenantId}:`,
+        `[AI Audit] Flagged query from member ${entry.memberId} in org ${entry.tenantId}:`,
         {
           riskScore,
           flags: flagReasons,
@@ -159,7 +159,7 @@ export async function logAuditEntry(entry: AuditLogEntry): Promise<void> {
  * Create audit entry from chat response
  */
 export function createAuditEntry(
-  context: { tenantId: string; userId: string },
+  context: { tenantId: string; memberId: string },
   query: string,
   conversationId: string | undefined,
   functionCalls: Array<{ name: string; result: unknown }> | undefined,
@@ -173,7 +173,7 @@ export function createAuditEntry(
 
   return {
     tenantId: context.tenantId,
-    userId: context.userId,
+    memberId: context.memberId,
     conversationId,
     query,
     functionsCalled,
@@ -196,7 +196,7 @@ export async function getAuditSummary(
 ): Promise<{
   totalQueries: number;
   flaggedQueries: number;
-  uniqueUsers: number;
+  uniqueMembers: number;
   topFunctions: Array<{ name: string; count: number }>;
   avgRiskScore: number;
 }> {
@@ -206,7 +206,7 @@ export async function getAuditSummary(
       createdAt: { gte: startDate, lte: endDate },
     },
     select: {
-      userId: true,
+      memberId: true,
       flagged: true,
       riskScore: true,
       functionsCalled: true,
@@ -215,7 +215,7 @@ export async function getAuditSummary(
 
   const totalQueries = logs.length;
   const flaggedQueries = logs.filter(l => l.flagged).length;
-  const uniqueUsers = new Set(logs.map(l => l.userId)).size;
+  const uniqueMembers = new Set(logs.map(l => l.memberId)).size;
   const avgRiskScore = totalQueries > 0
     ? Math.round(logs.reduce((sum, l) => sum + l.riskScore, 0) / totalQueries)
     : 0;
@@ -239,7 +239,7 @@ export async function getAuditSummary(
   return {
     totalQueries,
     flaggedQueries,
-    uniqueUsers,
+    uniqueMembers,
     topFunctions,
     avgRiskScore,
   };
@@ -253,7 +253,7 @@ export async function getFlaggedQueries(
   limit = 50
 ): Promise<Array<{
   id: string;
-  userId: string;
+  memberId: string;
   queryHash: string;
   flagReasons: string[];
   riskScore: number;
@@ -267,7 +267,7 @@ export async function getFlaggedQueries(
     },
     select: {
       id: true,
-      userId: true,
+      memberId: true,
       queryHash: true,
       flagReasons: true,
       riskScore: true,

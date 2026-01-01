@@ -32,7 +32,7 @@ export default async function ActivityLogPage() {
     take: 50,
     orderBy: { at: 'desc' },
     include: {
-      actorUser: {
+      actorMember: {
         select: {
           id: true,
           name: true,
@@ -94,10 +94,10 @@ export default async function ActivityLogPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {activity.actorUser ? (
+                      {activity.actorMember ? (
                         <div>
-                          <div className="font-medium">{activity.actorUser.name || 'Unknown'}</div>
-                          <div className="text-xs text-gray-500 font-mono">{activity.actorUser.email}</div>
+                          <div className="font-medium">{activity.actorMember.name || 'Unknown'}</div>
+                          <div className="text-xs text-gray-500 font-mono">{activity.actorMember.email}</div>
                         </div>
                       ) : (
                         <Badge variant="outline">System</Badge>

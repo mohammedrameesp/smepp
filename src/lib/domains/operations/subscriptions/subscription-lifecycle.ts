@@ -75,7 +75,7 @@ export async function reactivateSubscription(
         newRenewalDate: newRenewalDate,
         reactivationDate: actualReactivationDate,
         notes,
-        performedBy,
+        performedById: performedBy,
       }
     });
 
@@ -132,7 +132,7 @@ export async function cancelSubscription(
         newStatus: 'CANCELLED',
         oldRenewalDate: subscription.renewalDate,
         notes,
-        performedBy,
+        performedById: performedBy,
       }
     });
 
@@ -240,7 +240,7 @@ export async function getActivePeriods(subscriptionId: string): Promise<ActivePe
  * Get active periods for a specific user's assignment to a subscription
  * Only counts time when the subscription was assigned to this user
  */
-export async function getUserActivePeriods(subscriptionId: string, userId: string): Promise<ActivePeriod[]> {
+export async function getMemberActivePeriods(subscriptionId: string, memberId: string): Promise<ActivePeriod[]> {
   const subscription = await prisma.subscription.findUnique({
     where: { id: subscriptionId },
     include: {
@@ -262,20 +262,20 @@ export async function getUserActivePeriods(subscriptionId: string, userId: strin
   let currentRenewalDate = subscription.purchaseDate || subscription.createdAt;
   let lastChargedRenewalDate: Date | null = null;
 
-  // Check if subscription was initially assigned to this user
-  const initialAssignment = subscription.history.find(h => h.action === 'REASSIGNED' && h.newUserId === userId);
+  // Check if subscription was initially assigned to this member
+  const initialAssignment = subscription.history.find(h => h.action === 'REASSIGNED' && h.newMemberId === memberId);
 
-  if (!initialAssignment && subscription.assignedUserId === userId) {
+  if (!initialAssignment && subscription.assignedMemberId === memberId) {
     // User is currently assigned and there's no reassignment history - they've had it from the start
     userAssignedAt = subscription.purchaseDate || subscription.createdAt;
     lastChargedRenewalDate = new Date(userAssignedAt);
   }
 
-  // Process history to find when user had the subscription
+  // Process history to find when member had the subscription
   for (const historyEntry of subscription.history) {
     if (historyEntry.action === 'REASSIGNED') {
-      // User is being assigned
-      if (historyEntry.newUserId === userId) {
+      // Member is being assigned
+      if (historyEntry.newMemberId === memberId) {
         userAssignedAt = historyEntry.assignmentDate || historyEntry.createdAt;
         lastChargedRenewalDate = new Date(userAssignedAt);
 
@@ -283,8 +283,8 @@ export async function getUserActivePeriods(subscriptionId: string, userId: strin
           currentRenewalDate = historyEntry.newRenewalDate;
         }
       }
-      // User is being unassigned
-      else if (historyEntry.oldUserId === userId && userAssignedAt) {
+      // Member is being unassigned
+      else if (historyEntry.oldMemberId === memberId && userAssignedAt) {
         const endDate = historyEntry.createdAt;
         const renewalDate = historyEntry.oldRenewalDate || currentRenewalDate;
 
@@ -313,8 +313,8 @@ export async function getUserActivePeriods(subscriptionId: string, userId: strin
         lastChargedRenewalDate = null;
       }
     }
-    // Subscription was cancelled while user had it
-    else if (historyEntry.action === 'CANCELLED' && userAssignedAt && subscription.assignedUserId === userId) {
+    // Subscription was cancelled while member had it
+    else if (historyEntry.action === 'CANCELLED' && userAssignedAt && subscription.assignedMemberId === memberId) {
       // Use the actual cancellation date from the subscription, not when the history was created
       const endDate = subscription.cancelledAt || historyEntry.createdAt;
       const renewalDate = historyEntry.oldRenewalDate || currentRenewalDate;
@@ -342,8 +342,8 @@ export async function getUserActivePeriods(subscriptionId: string, userId: strin
       userAssignedAt = null;
       lastChargedRenewalDate = null;
     }
-    // Subscription was reactivated while user had it
-    else if (historyEntry.action === 'REACTIVATED' && userAssignedAt && subscription.assignedUserId === userId) {
+    // Subscription was reactivated while member had it
+    else if (historyEntry.action === 'REACTIVATED' && userAssignedAt && subscription.assignedMemberId === memberId) {
       // Continue the period but update renewal date
       if (historyEntry.newRenewalDate) {
         currentRenewalDate = historyEntry.newRenewalDate;
@@ -351,8 +351,8 @@ export async function getUserActivePeriods(subscriptionId: string, userId: strin
     }
   }
 
-  // If user currently has the subscription assigned and it's active
-  if (userAssignedAt && subscription.assignedUserId === userId && subscription.status === 'ACTIVE') {
+  // If member currently has the subscription assigned and it's active
+  if (userAssignedAt && subscription.assignedMemberId === memberId && subscription.status === 'ACTIVE') {
     const endDate = new Date();
     const renewalDate = subscription.renewalDate || currentRenewalDate;
 
@@ -484,11 +484,11 @@ export function calculateNextRenewalDate(
 }
 
 /**
- * Get all subscriptions for a user (including inactive ones) with their current status and active periods
+ * Get all subscriptions for a member (including inactive ones) with their current status and active periods
  */
-export async function getUserSubscriptionHistory(userId: string) {
+export async function getMemberSubscriptionHistory(memberId: string) {
   const subscriptions = await prisma.subscription.findMany({
-    where: { assignedUserId: userId },
+    where: { assignedMemberId: memberId },
     include: {
       history: {
         orderBy: { createdAt: 'desc' },
@@ -499,8 +499,8 @@ export async function getUserSubscriptionHistory(userId: string) {
 
   const subscriptionsWithPeriods = await Promise.all(
     subscriptions.map(async (subscription) => {
-      // Get user-specific periods (only when THIS user had the subscription)
-      const activePeriods = await getUserActivePeriods(subscription.id, userId);
+      // Get member-specific periods (only when THIS member had the subscription)
+      const activePeriods = await getMemberActivePeriods(subscription.id, memberId);
       const totalCost = activePeriods.reduce((sum, period) => sum + period.cost, 0);
       const totalMonths = activePeriods.reduce((sum, period) => sum + period.months, 0);
 
@@ -517,7 +517,7 @@ export async function getUserSubscriptionHistory(userId: string) {
         costQAR: subscription.costQAR ? Number(subscription.costQAR) : null,
         vendor: subscription.vendor,
         status: subscription.status,
-        assignedUserId: subscription.assignedUserId,
+        assignedMemberId: subscription.assignedMemberId,
         autoRenew: subscription.autoRenew,
         paymentMethod: subscription.paymentMethod,
         notes: subscription.notes,
@@ -537,3 +537,9 @@ export async function getUserSubscriptionHistory(userId: string) {
 
   return subscriptionsWithPeriods;
 }
+
+/**
+ * @deprecated Use getMemberSubscriptionHistory instead
+ * Alias for backward compatibility with employee pages
+ */
+export const getUserSubscriptionHistory = getMemberSubscriptionHistory;

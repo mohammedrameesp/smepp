@@ -18,6 +18,8 @@ interface InvitationData {
   email: string;
   name: string | null;
   role: string;
+  isEmployee: boolean | null;
+  isOnWps: boolean | null;
   organization: {
     id: string;
     name: string;
@@ -76,6 +78,7 @@ export default function InvitePage() {
     setError(null);
 
     try {
+      // Employee status is set by admin in invitation - no user confirmation needed
       const response = await fetch(`/api/invitations/${token}`, {
         method: 'POST',
       });

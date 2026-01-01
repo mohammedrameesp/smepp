@@ -12,7 +12,7 @@ import { formatDate, formatDateTime } from '@/lib/date-format';
 
 interface HistoryTimelineProps {
   history: (SubscriptionHistory & {
-    performer?: { name?: string | null; email: string } | null;
+    performedBy?: { name?: string | null; email: string } | null;
   })[];
   purchaseDate?: Date | null;
   cancelledAt?: Date | null;
@@ -131,9 +131,9 @@ export function HistoryTimeline({ history, purchaseDate, cancelledAt, reactivate
                 )}
 
                 {/* Performer */}
-                {entry.performer && (
+                {entry.performedBy && (
                   <div className="text-xs text-gray-500 mt-1">
-                    By: <span className={entry.performer.name ? '' : 'font-mono'}>{entry.performer.name || entry.performer.email}</span>
+                    By: <span className={entry.performedBy.name ? '' : 'font-mono'}>{entry.performedBy.name || entry.performedBy.email}</span>
                   </div>
                 )}
               </div>

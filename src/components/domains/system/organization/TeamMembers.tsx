@@ -44,8 +44,13 @@ import {
   Crown,
   Loader2,
   Trash2,
+  Building2,
+  User,
+  AlertCircle,
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { OrgRole } from '@prisma/client';
+import { detectServiceEmail, getDetectionMessage } from '@/lib/utils/email-pattern-detection';
 
 interface TeamMember {
   id: string;
@@ -100,10 +105,30 @@ export function TeamMembers({
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<OrgRole>('MEMBER');
+  const [isSystemAccount, setIsSystemAccount] = useState(false);
+  const [isOnWps, setIsOnWps] = useState(false);
+  const [emailDetection, setEmailDetection] = useState<{ message: string } | null>(null);
   const [isInviting, setIsInviting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canManageMembers = isOwner || currentUserOrgRole === 'ADMIN';
+
+  // Smart email detection - auto-suggest system account for service emails
+  const handleEmailChange = (email: string) => {
+    setInviteEmail(email);
+    if (email.includes('@')) {
+      const detection = detectServiceEmail(email);
+      const message = getDetectionMessage(email, detection);
+      setEmailDetection(message ? { message } : null);
+      // Auto-set isSystemAccount based on detection
+      setIsSystemAccount(detection.isLikelyServiceEmail);
+      if (detection.isLikelyServiceEmail) {
+        setIsOnWps(false); // System accounts are never on WPS
+      }
+    } else {
+      setEmailDetection(null);
+    }
+  };
 
   const handleInvite = async () => {
     if (!inviteEmail.trim()) {
@@ -121,6 +146,8 @@ export function TeamMembers({
         body: JSON.stringify({
           email: inviteEmail.trim().toLowerCase(),
           role: inviteRole,
+          isEmployee: !isSystemAccount, // Invert: system account = not employee
+          isOnWps: !isSystemAccount ? isOnWps : false,
         }),
       });
 
@@ -131,6 +158,9 @@ export function TeamMembers({
 
       setInviteEmail('');
       setInviteRole('MEMBER');
+      setIsSystemAccount(false);
+      setIsOnWps(false);
+      setEmailDetection(null);
       setIsInviteOpen(false);
       // Trigger page refresh to show new invitation
       window.location.reload();
@@ -230,9 +260,18 @@ export function TeamMembers({
                       type="email"
                       placeholder="colleague@company.com"
                       value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
+                      onChange={(e) => handleEmailChange(e.target.value)}
                     />
                   </div>
+
+                  {/* Smart detection message */}
+                  {emailDetection?.message && (
+                    <div className="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                      <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                      <span>{emailDetection.message}</span>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
                     <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as OrgRole)}>
@@ -253,6 +292,56 @@ export function TeamMembers({
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {/* System/Service account checkbox */}
+                  <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+                    <Checkbox
+                      id="isSystemAccount"
+                      checked={isSystemAccount}
+                      onCheckedChange={(checked) => {
+                        setIsSystemAccount(checked === true);
+                        if (checked) setIsOnWps(false);
+                      }}
+                      className="mt-0.5"
+                    />
+                    <div className="flex-1">
+                      <Label
+                        htmlFor="isSystemAccount"
+                        className="flex items-center gap-2 text-sm font-medium cursor-pointer"
+                      >
+                        <Building2 className="h-4 w-4 text-slate-500" />
+                        System/Shared Account
+                      </Label>
+                      <p className="text-xs text-slate-500 mt-1">
+                        No HR profile required. Uses organization logo as avatar.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* WPS checkbox - only shown for employees */}
+                  {!isSystemAccount && (
+                    <div className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors">
+                      <Checkbox
+                        id="isOnWps"
+                        checked={isOnWps}
+                        onCheckedChange={(checked) => setIsOnWps(checked === true)}
+                        className="mt-0.5"
+                      />
+                      <div className="flex-1">
+                        <Label
+                          htmlFor="isOnWps"
+                          className="flex items-center gap-2 text-sm font-medium cursor-pointer"
+                        >
+                          <User className="h-4 w-4 text-slate-500" />
+                          On WPS (Wage Protection System)
+                        </Label>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Employee&apos;s salary is paid through WPS.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {error && <p className="text-sm text-red-600">{error}</p>}
                 </div>
                 <DialogFooter>

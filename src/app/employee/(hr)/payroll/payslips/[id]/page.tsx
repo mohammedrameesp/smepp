@@ -24,16 +24,12 @@ export default async function EmployeePayslipDetailPage({ params }: PageProps) {
   const payslip = await prisma.payslip.findUnique({
     where: { id },
     include: {
-      user: {
+      member: {
         select: {
           id: true,
           name: true,
-          hrProfile: {
-            select: {
-              employeeId: true,
-              designation: true,
-            },
-          },
+          employeeCode: true,
+          designation: true,
         },
       },
       payrollRun: {
@@ -54,7 +50,7 @@ export default async function EmployeePayslipDetailPage({ params }: PageProps) {
   }
 
   // Verify the user owns this payslip
-  if (payslip.userId !== session.user.id) {
+  if (payslip.memberId !== session.user.id) {
     redirect('/employee/payroll');
   }
 
@@ -100,9 +96,9 @@ export default async function EmployeePayslipDetailPage({ params }: PageProps) {
               <Building className="h-5 w-5 text-muted-foreground" />
               <div>
                 <div className="text-sm text-muted-foreground">Employee</div>
-                <div className="font-medium">{payslip.user.name}</div>
+                <div className="font-medium">{payslip.member.name}</div>
                 <div className="text-sm text-muted-foreground">
-                  {payslip.user.hrProfile?.employeeId}
+                  {payslip.member.employeeCode}
                 </div>
               </div>
             </div>

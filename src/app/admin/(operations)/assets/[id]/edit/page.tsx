@@ -91,7 +91,7 @@ export default function EditAssetPage() {
       status: AssetStatus.IN_USE,
       acquisitionType: AcquisitionType.NEW_PURCHASE,
       transferNotes: '',
-      assignedUserId: '',
+      assignedMemberId: '',
       assignmentDate: '',
       notes: '',
       location: '',
@@ -109,7 +109,7 @@ export default function EditAssetPage() {
   const watchedCurrency = watch('priceCurrency');
   const watchedStatus = watch('status');
   const watchedAcquisitionType = watch('acquisitionType');
-  const watchedAssignedUserId = watch('assignedUserId');
+  const watchedAssignedUserId = watch('assignedMemberId');
   const watchedPurchaseDate = watch('purchaseDate');
   const watchedDepreciationCategoryId = watch('depreciationCategoryId');
   const watchedIsShared = watch('isShared');
@@ -170,7 +170,7 @@ export default function EditAssetPage() {
   useEffect(() => {
     if (watchedStatus !== AssetStatus.IN_USE) {
       if (watchedAssignedUserId) {
-        setValue('assignedUserId', '');
+        setValue('assignedMemberId', '');
         setValue('assignmentDate', '');
       }
       if (watchedIsShared) {
@@ -263,7 +263,7 @@ export default function EditAssetPage() {
           status: (assetData.status || AssetStatus.IN_USE) as AssetStatus,
           acquisitionType: (assetData.acquisitionType || AcquisitionType.NEW_PURCHASE) as AcquisitionType,
           transferNotes: assetData.transferNotes || '',
-          assignedUserId: assetData.assignedUserId || '',
+          assignedMemberId: assetData.assignedMemberId || '',
           assignmentDate: toInputDateString(assetData.assignmentDate),
           notes: assetData.notes || '',
           location: assetData.location || '',
@@ -347,7 +347,7 @@ export default function EditAssetPage() {
           priceQAR: priceInQAR,
           assetTag: data.assetTag || null,
           // Clear assignment for shared assets
-          assignedUserId: data.isShared ? null : data.assignedUserId,
+          assignedMemberId: data.isShared ? null : data.assignedMemberId,
           assignmentDate: data.isShared ? null : (data.assignmentDate || null),
         }),
       });
@@ -372,11 +372,11 @@ export default function EditAssetPage() {
     const newUserId = value === "__none__" ? '' : value;
 
     if (newUserId) {
-      setValue('assignedUserId', newUserId);
+      setValue('assignedMemberId', newUserId);
       // Don't auto-set assignment date - let user provide it
       setValue('status', AssetStatus.IN_USE);
     } else {
-      setValue('assignedUserId', '');
+      setValue('assignedMemberId', '');
       setValue('assignmentDate', '');
       setValue('status', AssetStatus.SPARE);
     }
@@ -384,11 +384,12 @@ export default function EditAssetPage() {
 
   if (!asset) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-2xl mx-auto">
+      <>
+        <PageHeader title="Edit Asset" subtitle="Loading..." />
+        <PageContent>
           <div className="text-center">Loading...</div>
-        </div>
-      </div>
+        </PageContent>
+      </>
     );
   }
 
@@ -728,7 +729,7 @@ export default function EditAssetPage() {
                         setValue('isShared', !!checked);
                         // Clear assignment when marking as shared
                         if (checked) {
-                          setValue('assignedUserId', '');
+                          setValue('assignedMemberId', '');
                           setValue('assignmentDate', '');
                         }
                       }}
@@ -754,12 +755,12 @@ export default function EditAssetPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="assignedUserId">Assign to User *</Label>
+                    <Label htmlFor="assignedMemberId">Assign to User *</Label>
                     <Select
                       value={watchedAssignedUserId || "__none__"}
                       onValueChange={handleAssignedUserChange}
                     >
-                      <SelectTrigger className={errors.assignedUserId ? 'border-red-500' : ''}>
+                      <SelectTrigger className={errors.assignedMemberId ? 'border-red-500' : ''}>
                         <SelectValue placeholder="Select user..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -771,8 +772,8 @@ export default function EditAssetPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {errors.assignedUserId && (
-                      <p className="text-sm text-red-500">{errors.assignedUserId.message}</p>
+                    {errors.assignedMemberId && (
+                      <p className="text-sm text-red-500">{errors.assignedMemberId.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">

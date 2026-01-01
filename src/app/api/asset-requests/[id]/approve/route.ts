@@ -46,7 +46,7 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
       where: { id, tenantId },
       include: {
         asset: true,
-        user: { select: { id: true, name: true, email: true } },
+        member: { select: { id: true, name: true, email: true } },
       },
     });
 
@@ -91,7 +91,7 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
           asset: {
             select: { id: true, assetTag: true, model: true, brand: true, type: true },
           },
-          user: { select: { id: true, name: true, email: true } },
+          member: { select: { id: true, name: true, email: true } },
         },
       });
 
@@ -112,7 +112,7 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
         await tx.asset.update({
           where: { id: assetRequest.assetId },
           data: {
-            assignedUserId: null,
+            assignedMemberId: null,
             assignmentDate: null,
             status: AssetStatus.SPARE,
           },
@@ -124,12 +124,12 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
             tenantId,
             assetId: assetRequest.assetId,
             action: AssetHistoryAction.UNASSIGNED,
-            fromUserId: assetRequest.userId,
-            toUserId: null,
+            fromMemberId: assetRequest.memberId,
+            toMemberId: null,
             fromStatus: AssetStatus.IN_USE,
             toStatus: AssetStatus.SPARE,
             notes: `Returned via request ${assetRequest.requestNumber}`,
-            performedBy: session.user.id,
+            performedById: session.user.id,
             returnDate: new Date(),
           },
         });
@@ -169,31 +169,31 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
         // Notify user that their request was approved (pending their acceptance)
         const emailData = assetAssignmentPendingEmail({
           requestNumber: assetRequest.requestNumber,
-          assetTag: assetRequest.asset.assetTag,
-          assetModel: assetRequest.asset.model,
-          assetBrand: assetRequest.asset.brand,
-          assetType: assetRequest.asset.type,
-          userName: assetRequest.user.name || assetRequest.user.email,
+          assetTag: assetRequest.asset?.assetTag || '',
+          assetModel: assetRequest.asset?.model || '',
+          assetBrand: assetRequest.asset?.brand || '',
+          assetType: assetRequest.asset?.type || '',
+          userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
           assignerName: session.user.name || session.user.email || 'Admin',
           reason: notes || undefined,
           orgSlug,
           orgName,
         });
-        await sendEmail({ to: assetRequest.user.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
+        await sendEmail({ to: assetRequest.member?.email || '', subject: emailData.subject, html: emailData.html, text: emailData.text });
       } else if (assetRequest.type === AssetRequestType.RETURN_REQUEST) {
         // Notify user that their return was approved
         const emailData = assetReturnApprovedEmail({
           requestNumber: assetRequest.requestNumber,
-          assetTag: assetRequest.asset.assetTag,
-          assetModel: assetRequest.asset.model,
-          assetBrand: assetRequest.asset.brand,
-          assetType: assetRequest.asset.type,
-          userName: assetRequest.user.name || assetRequest.user.email,
+          assetTag: assetRequest.asset?.assetTag || '',
+          assetModel: assetRequest.asset?.model || '',
+          assetBrand: assetRequest.asset?.brand || '',
+          assetType: assetRequest.asset?.type || '',
+          userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
           approverName: session.user.name || session.user.email || 'Admin',
           orgSlug,
           orgName,
         });
-        await sendEmail({ to: assetRequest.user.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
+        await sendEmail({ to: assetRequest.member?.email || '', subject: emailData.subject, html: emailData.html, text: emailData.text });
       }
     } catch (emailError) {
       console.error('Failed to send email notification:', emailError);
@@ -202,8 +202,8 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
     // Send in-app notification
     await createNotification(
       NotificationTemplates.assetRequestApproved(
-        assetRequest.userId,
-        assetRequest.asset.assetTag || assetRequest.asset.model,
+        assetRequest.memberId,
+        assetRequest.asset?.assetTag || assetRequest.asset?.model || 'Asset',
         assetRequest.requestNumber,
         id
       ),

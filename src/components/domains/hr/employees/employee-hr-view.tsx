@@ -22,9 +22,15 @@ import {
   FileText,
 } from 'lucide-react';
 
-interface HRProfile {
+/**
+ * TeamMember with HR profile fields (all consolidated into one model)
+ */
+interface TeamMemberWithHR {
   id: string;
-  userId: string;
+  name: string | null;
+  email: string;
+  role: string;
+  // HR Profile fields (now directly on TeamMember)
   dateOfBirth: Date | null;
   gender: string | null;
   maritalStatus: string | null;
@@ -52,7 +58,7 @@ interface HRProfile {
   passportExpiry: Date | null;
   healthCardExpiry: Date | null;
   sponsorshipType: string | null;
-  employeeId: string | null;
+  employeeCode: string | null;
   designation: string | null;
   dateOfJoining: Date | null;
   bankName: string | null;
@@ -69,20 +75,10 @@ interface HRProfile {
   licenseExpiry: Date | null;
   languagesKnown: string | null;
   skillsCertifications: string | null;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-interface Employee {
-  id: string;
-  name: string | null;
-  email: string;
-  role: string;
-}
-
-interface EmployeeHRViewSectionProps {
-  hrProfile: HRProfile | null;
-  employee: Employee;
+export interface EmployeeHRViewSectionProps {
+  employee: TeamMemberWithHR;
 }
 
 function InfoRow({ label, value, highlight = false }: { label: string; value: React.ReactNode; highlight?: boolean }) {
@@ -94,20 +90,9 @@ function InfoRow({ label, value, highlight = false }: { label: string; value: Re
   );
 }
 
-export function EmployeeHRViewSection({ hrProfile: hr, employee }: EmployeeHRViewSectionProps) {
-  if (!hr) {
-    return (
-      <Card>
-        <CardContent className="py-12">
-          <div className="text-center text-gray-500">
-            <User className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p className="text-lg font-medium">No Profile</p>
-            <p className="text-sm">Profile has not been created for this employee yet.</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) {
+  // All HR fields are now directly on the employee (TeamMember)
+  const hr = employee;
 
   const qatarAddress = [
     hr.qatarZone && `Zone ${hr.qatarZone}`,
@@ -292,7 +277,7 @@ export function EmployeeHRViewSection({ hrProfile: hr, employee }: EmployeeHRVie
         </CardHeader>
         <CardContent>
           <dl className="grid md:grid-cols-3 gap-4">
-            <InfoRow label="Employee ID" value={hr.employeeId} />
+            <InfoRow label="Employee ID" value={hr.employeeCode} />
             <InfoRow label="Designation" value={hr.designation} />
             <InfoRow label="Date of Joining" value={hr.dateOfJoining ? formatDate(hr.dateOfJoining) : null} />
           </dl>

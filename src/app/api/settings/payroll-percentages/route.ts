@@ -87,6 +87,8 @@ export async function POST(request: NextRequest) {
     }
 
     const tenantId = session.user.organizationId!;
+    // Note: session.user.id is TeamMember ID when isTeamMember is true
+    const memberId = session.user.isTeamMember ? session.user.id : null;
 
     // Upsert the setting (tenant-scoped)
     await prisma.systemSettings.upsert({
@@ -95,12 +97,12 @@ export async function POST(request: NextRequest) {
       },
       update: {
         value: JSON.stringify(percentages),
-        updatedBy: session.user.id,
+        updatedById: memberId,
       },
       create: {
         key: SETTINGS_KEY,
         value: JSON.stringify(percentages),
-        updatedBy: session.user.id,
+        updatedById: memberId,
         tenantId,
       },
     });

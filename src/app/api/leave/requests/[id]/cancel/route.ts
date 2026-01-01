@@ -37,7 +37,7 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
     const existing = await prisma.leaveRequest.findFirst({
       where: { id, tenantId },
       include: {
-        user: {
+        member: {
           select: { name: true },
         },
         leaveType: {
@@ -51,7 +51,7 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
     }
 
     // Only owner or admin can cancel
-    const isOwner = existing.userId === currentUserId;
+    const isOwner = existing.memberId === currentUserId;
     const isAdmin = tenant!.userRole === 'ADMIN';
 
     if (!isOwner && !isAdmin) {
@@ -80,7 +80,7 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
           cancellationReason: reason,
         },
         include: {
-          user: {
+          member: {
             select: {
               id: true,
               name: true,
@@ -102,9 +102,9 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
         // If was approved, decrement used
         await tx.leaveBalance.update({
           where: {
-            tenantId_userId_leaveTypeId_year: {
+            tenantId_memberId_leaveTypeId_year: {
               tenantId,
-              userId: existing.userId,
+              memberId: existing.memberId,
               leaveTypeId: existing.leaveTypeId,
               year,
             },
@@ -119,9 +119,9 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
         // If was pending, decrement pending
         await tx.leaveBalance.update({
           where: {
-            tenantId_userId_leaveTypeId_year: {
+            tenantId_memberId_leaveTypeId_year: {
               tenantId,
-              userId: existing.userId,
+              memberId: existing.memberId,
               leaveTypeId: existing.leaveTypeId,
               year,
             },
@@ -157,7 +157,7 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
       leaveRequest.id,
       {
         requestNumber: leaveRequest.requestNumber,
-        userName: existing.user?.name,
+        userName: existing.member?.name,
         leaveType: existing.leaveType?.name,
         reason,
         cancelledBy: isOwner ? 'owner' : 'admin',
@@ -168,7 +168,7 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
     if (isAdmin && !isOwner) {
       await createNotification(
         NotificationTemplates.leaveCancelled(
-          existing.userId,
+          existing.memberId,
           leaveRequest.requestNumber,
           existing.leaveType?.name || 'Leave',
           true, // cancelled by admin

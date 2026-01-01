@@ -37,14 +37,14 @@ export default async function AdminAssetRequestsPage() {
           type: true,
         },
       },
-      user: {
+      member: {
         select: {
           id: true,
           name: true,
           email: true,
         },
       },
-      assignedByUser: {
+      assignedByMember: {
         select: {
           id: true,
           name: true,

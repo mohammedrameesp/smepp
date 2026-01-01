@@ -28,7 +28,7 @@ async function getLeaveRequestHandler(request: NextRequest, context: APIContext)
     const leaveRequest = await prisma.leaveRequest.findFirst({
       where: { id, tenantId },
       include: {
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
@@ -76,8 +76,8 @@ async function getLeaveRequestHandler(request: NextRequest, context: APIContext)
       return NextResponse.json({ error: 'Leave request not found' }, { status: 404 });
     }
 
-    // Non-admin users can only see their own requests
-    if (tenant!.userRole !== 'ADMIN' && leaveRequest.userId !== tenant!.userId) {
+    // Non-admin members can only see their own requests
+    if (tenant!.userRole !== 'ADMIN' && leaveRequest.memberId !== tenant!.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -120,7 +120,7 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
     }
 
     // Only owner can edit their request
-    if (existing.userId !== currentUserId && tenant!.userRole !== 'ADMIN') {
+    if (existing.memberId !== currentUserId && tenant!.userRole !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -156,7 +156,7 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
     const overlappingRequests = await prisma.leaveRequest.findMany({
       where: {
         id: { not: id },
-        userId: existing.userId,
+        memberId: existing.memberId,
         tenantId,
         status: { in: ['PENDING', 'APPROVED'] },
       },
@@ -196,7 +196,7 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
           emergencyPhone: data.emergencyPhone !== undefined ? data.emergencyPhone : existing.emergencyPhone,
         },
         include: {
-          user: {
+          member: {
             select: {
               id: true,
               name: true,
@@ -218,9 +218,9 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
         const year = startDate.getFullYear();
         await tx.leaveBalance.update({
           where: {
-            tenantId_userId_leaveTypeId_year: {
+            tenantId_memberId_leaveTypeId_year: {
               tenantId,
-              userId: existing.userId,
+              memberId: existing.memberId,
               leaveTypeId: existing.leaveTypeId,
               year,
             },
@@ -281,7 +281,7 @@ async function deleteLeaveRequestHandler(request: NextRequest, context: APIConte
     }
 
     // Only admin can delete requests (or owner if draft/pending)
-    const isOwner = existing.userId === currentUserId;
+    const isOwner = existing.memberId === currentUserId;
     const isAdmin = tenant!.userRole === 'ADMIN';
 
     if (!isAdmin && (!isOwner || existing.status !== 'PENDING')) {
@@ -295,9 +295,9 @@ async function deleteLeaveRequestHandler(request: NextRequest, context: APIConte
         const year = existing.startDate.getFullYear();
         await tx.leaveBalance.update({
           where: {
-            tenantId_userId_leaveTypeId_year: {
+            tenantId_memberId_leaveTypeId_year: {
               tenantId,
-              userId: existing.userId,
+              memberId: existing.memberId,
               leaveTypeId: existing.leaveTypeId,
               year,
             },

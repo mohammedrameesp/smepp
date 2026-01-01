@@ -143,13 +143,13 @@ export async function disableWhatsApp(tenantId: string): Promise<void> {
 }
 
 /**
- * Get a user's WhatsApp phone number
+ * Get a member's WhatsApp phone number
  */
-export async function getUserWhatsAppPhone(
-  userId: string
+export async function getMemberWhatsAppPhone(
+  memberId: string
 ): Promise<string | null> {
   const phone = await prisma.whatsAppUserPhone.findUnique({
-    where: { userId },
+    where: { memberId },
     select: { phoneNumber: true, isVerified: true },
   });
 
@@ -161,18 +161,18 @@ export async function getUserWhatsAppPhone(
 }
 
 /**
- * Save or update a user's WhatsApp phone number
+ * Save or update a member's WhatsApp phone number
  */
-export async function saveUserWhatsAppPhone(
+export async function saveMemberWhatsAppPhone(
   tenantId: string,
-  userId: string,
+  memberId: string,
   phoneNumber: string
 ): Promise<void> {
   // Normalize phone number to E.164 format
   const normalizedPhone = normalizePhoneNumber(phoneNumber);
 
   await prisma.whatsAppUserPhone.upsert({
-    where: { userId },
+    where: { memberId },
     update: {
       phoneNumber: normalizedPhone,
       isVerified: false, // Reset verification on number change
@@ -180,7 +180,7 @@ export async function saveUserWhatsAppPhone(
     },
     create: {
       tenantId,
-      userId,
+      memberId,
       phoneNumber: normalizedPhone,
       isVerified: false,
     },
@@ -188,11 +188,11 @@ export async function saveUserWhatsAppPhone(
 }
 
 /**
- * Mark a user's WhatsApp phone as verified
+ * Mark a member's WhatsApp phone as verified
  */
-export async function verifyUserWhatsAppPhone(userId: string): Promise<void> {
+export async function verifyMemberWhatsAppPhone(memberId: string): Promise<void> {
   await prisma.whatsAppUserPhone.update({
-    where: { userId },
+    where: { memberId },
     data: { isVerified: true },
   });
 }

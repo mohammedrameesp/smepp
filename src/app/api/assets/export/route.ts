@@ -28,7 +28,7 @@ async function exportAssetsHandler(_request: NextRequest) {
   const assets = await prisma.asset.findMany({
     where: { tenantId },
     include: {
-      assignedUser: {
+      assignedMember: {
         select: { name: true, email: true },
       },
     },
@@ -58,9 +58,9 @@ async function exportAssetsHandler(_request: NextRequest) {
     transferNotes: asset.transferNotes || '',
     assignmentDate: asset.assignmentDate || '',
     notes: asset.notes || '',
-    assignedUserId: asset.assignedUserId || '',
-    assignedUserName: asset.assignedUser?.name || '',
-    assignedUserEmail: asset.assignedUser?.email || '',
+    assignedMemberId: asset.assignedMemberId || '',
+    assignedMemberName: asset.assignedMember?.name || '',
+    assignedMemberEmail: asset.assignedMember?.email || '',
     createdAt: formatDateForCSV(asset.createdAt),
     updatedAt: formatDateForCSV(asset.updatedAt),
   }));
@@ -88,9 +88,9 @@ async function exportAssetsHandler(_request: NextRequest) {
     { key: 'transferNotes' as const, header: 'Transfer Notes' },
     { key: 'assignmentDate' as const, header: 'Assignment Date' },
     { key: 'notes' as const, header: 'Notes' },
-    { key: 'assignedUserId' as const, header: 'Assigned User ID' },
-    { key: 'assignedUserName' as const, header: 'Assigned User Name' },
-    { key: 'assignedUserEmail' as const, header: 'Assigned User Email' },
+    { key: 'assignedMemberId' as const, header: 'Assigned Member ID' },
+    { key: 'assignedMemberName' as const, header: 'Assigned Member Name' },
+    { key: 'assignedMemberEmail' as const, header: 'Assigned Member Email' },
     { key: 'createdAt' as const, header: 'Created At' },
     { key: 'updatedAt' as const, header: 'Updated At' },
   ];

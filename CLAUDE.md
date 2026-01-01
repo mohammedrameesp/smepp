@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Social authentication (Google, Microsoft) + email/password
 - Organization-scoped data access
 
-Built with Next.js 15 App Router, React 19, TypeScript, Prisma ORM, and PostgreSQL.
+Built with Next.js 16 App Router, React 19, TypeScript, Prisma ORM, and PostgreSQL (Supabase).
 
 ## Common Commands
 
@@ -190,12 +190,13 @@ Modules are the feature units that can be enabled/disabled per organization.
 
 Central definition in `src/lib/modules/registry.ts`:
 - Each module defines: routes (admin/employee/API), tier requirements, dependencies
-- Categories: `operations`, `hr`, `projects`, `system`
+- Categories: `operations`, `hr`, `system`
 - Default enabled for new orgs: `['assets', 'subscriptions', 'suppliers']`
 
 ### Access Control
 
 1. **Middleware level** (`src/middleware.ts`): Blocks routes for disabled modules
+   - Uses `src/lib/modules/routes.ts` for Edge Runtime compatible route checking
 2. **API level** (`src/lib/http/handler.ts`): `requireModule` option for per-endpoint checks
 
 ```typescript
@@ -431,3 +432,34 @@ function PayrollModule() {
    - Select enabled modules
    - Optional data import
 4. Redirect to dashboard
+
+## UI Layout Pattern
+
+All admin pages use the `PageHeader`/`PageContent` pattern with `max-w-6xl` container:
+
+```tsx
+import { PageHeader, PageContent } from '@/components/ui/page-header';
+
+export default function SomePage() {
+  return (
+    <>
+      <PageHeader title="Page Title" subtitle="Optional subtitle" />
+      <PageContent>
+        {/* Page content here */}
+      </PageContent>
+    </>
+  );
+}
+```
+
+For loading states, use corresponding skeletons from `@/components/ui/table-skeleton`:
+- `PageWithTableSkeleton` - For pages with data tables
+- `PageDetailSkeleton` - For detail/form pages
+
+## Deployment
+
+```bash
+npx vercel --prod    # Deploy to production
+```
+
+Database schema changes are auto-applied via `prisma db push` during Vercel build.

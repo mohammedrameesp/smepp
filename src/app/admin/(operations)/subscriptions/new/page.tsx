@@ -49,7 +49,7 @@ export default function NewSubscriptionPage() {
       autoRenew: true,
       paymentMethod: undefined,
       notes: undefined,
-      assignedUserId: '',
+      assignedMemberId: '',
       assignmentDate: undefined,
     },
     mode: 'onChange',
@@ -61,7 +61,7 @@ export default function NewSubscriptionPage() {
   const watchedBillingCycle = watch('billingCycle');
   const watchedCostPerCycle = watch('costPerCycle');
   const watchedCostCurrency = watch('costCurrency');
-  const watchedAssignedUserId = watch('assignedUserId');
+  const watchedAssignedMemberId = watch('assignedMemberId');
   const watchedAssignmentDate = watch('assignmentDate');
   const watchedRenewalDate = watch('renewalDate');
   const watchedAutoRenew = watch('autoRenew');
@@ -191,8 +191,8 @@ export default function NewSubscriptionPage() {
           autoRenew: data.autoRenew,
           paymentMethod: data.paymentMethod || null,
           notes: data.notes || null,
-          assignedUserId: data.assignedUserId || null,
-          assignmentDate: data.assignedUserId ? data.assignmentDate : null,
+          assignedMemberId: data.assignedMemberId || null,
+          assignmentDate: data.assignedMemberId ? data.assignmentDate : null,
         }),
       });
 
@@ -212,11 +212,11 @@ export default function NewSubscriptionPage() {
   const handleUserAssignment = (userId: string) => {
     if (userId) {
       // When assigning to a user, don't auto-set date - user must select manually
-      setValue('assignedUserId', userId);
+      setValue('assignedMemberId', userId);
       // Keep existing assignment date if present, otherwise leave empty
     } else {
       // When unassigning, clear both user and assignment date
-      setValue('assignedUserId', '');
+      setValue('assignedMemberId', '');
       setValue('assignmentDate', '');
     }
   };
@@ -483,12 +483,12 @@ export default function NewSubscriptionPage() {
                 <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Assignment</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="assignedUserId">Assign to User *</Label>
+                    <Label htmlFor="assignedMemberId">Assign to User *</Label>
                     <Select
-                      value={watchedAssignedUserId || "__none__"}
+                      value={watchedAssignedMemberId || "__none__"}
                       onValueChange={(value) => handleUserAssignment(value === "__none__" ? '' : value)}
                     >
-                      <SelectTrigger className={errors.assignedUserId ? 'border-red-500' : ''}>
+                      <SelectTrigger className={errors.assignedMemberId ? 'border-red-500' : ''}>
                         <SelectValue placeholder="Select user..." />
                       </SelectTrigger>
                       <SelectContent>
@@ -500,14 +500,14 @@ export default function NewSubscriptionPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {errors.assignedUserId && (
-                      <p className="text-sm text-red-500">{errors.assignedUserId.message}</p>
+                    {errors.assignedMemberId && (
+                      <p className="text-sm text-red-500">{errors.assignedMemberId.message}</p>
                     )}
                     <p className="text-xs text-gray-500">
                       Required - Select the user for this subscription
                     </p>
                   </div>
-                  {watchedAssignedUserId && (
+                  {watchedAssignedMemberId && (
                     <div className="space-y-2">
                       <Label htmlFor="assignmentDate">Assignment Date *</Label>
                       <DatePicker

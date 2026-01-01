@@ -26,6 +26,8 @@ interface UserProfile {
   email: string;
   image: string | null;
   role: string;
+  isEmployee: boolean;
+  isOnWps: boolean;
   createdAt: string;
   updatedAt: string;
   _count: {
@@ -127,8 +129,9 @@ export default function ProfilePage() {
   // Separate effect to trigger onboarding when both profile and hrProfile are loaded
   useEffect(() => {
     if (profile && hrProfile !== null && !isLoadingHR) {
-      // Check if onboarding is needed (not completed) - same for all users including admins
-      if (!hrProfile.onboardingComplete) {
+      // Only show onboarding for EMPLOYEES who haven't completed it
+      // Non-employees (system/service accounts) skip onboarding entirely
+      if (profile.isEmployee && !hrProfile.onboardingComplete) {
         setShowOnboarding(true);
       }
     }
@@ -351,8 +354,8 @@ export default function ProfilePage() {
             <p className="text-gray-600">View and manage your personal and HR information</p>
           </div>
 
-          {/* Incomplete Profile Alert - Top of page */}
-          {!isLoadingHR && !hrProfile?.onboardingComplete && (
+          {/* Incomplete Profile Alert - Top of page (employees only) */}
+          {profile.isEmployee && !isLoadingHR && !hrProfile?.onboardingComplete && (
             <Alert className="mb-6 bg-orange-50 border-orange-300">
               <AlertTriangle className="h-4 w-4 text-orange-600" />
               <AlertDescription className="text-orange-800 flex items-center justify-between">
@@ -431,7 +434,7 @@ export default function ProfilePage() {
                           <User className="h-10 w-10 text-gray-400" />
                         )}
                       </div>
-                      {isEditing && (
+                      {isEditing && profile.isEmployee ? (
                         <div className="flex-1">
                           <Label htmlFor="imageFile" className="text-sm font-medium">Upload Profile Picture</Label>
                           <Input
@@ -446,7 +449,16 @@ export default function ProfilePage() {
                             JPG or PNG, max 5MB
                           </p>
                         </div>
-                      )}
+                      ) : isEditing && !profile.isEmployee ? (
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-600">
+                            System/service accounts use the organization logo as their profile picture.
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            This cannot be changed for non-employee accounts.
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 
@@ -520,8 +532,8 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
 
-              {/* Profile Completion Card */}
-              {hrProfile && (
+              {/* Profile Completion Card (employees only) */}
+              {profile.isEmployee && hrProfile && (
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">Profile Completion</CardTitle>
@@ -576,8 +588,8 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
 
-              {/* Document Expiry Alerts */}
-              {hrProfile?.onboardingComplete && (
+              {/* Document Expiry Alerts (employees only) */}
+              {profile.isEmployee && hrProfile?.onboardingComplete && (
                 <ExpiryAlertsWidget isAdmin={false} />
               )}
             </TabsContent>
@@ -590,6 +602,29 @@ export default function ProfilePage() {
                     <div className="flex flex-col items-center justify-center">
                       <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-4" />
                       <p className="text-gray-600">Loading HR profile...</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : !profile.isEmployee ? (
+                // Non-employees (system/service accounts) don't have HR profiles
+                <Card>
+                  <CardContent className="py-12">
+                    <div className="text-center">
+                      <Shield className="h-12 w-12 mx-auto mb-4 text-blue-400" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        System/Service Account
+                      </h3>
+                      <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                        This account is registered as a system or service account and does not require an HR profile.
+                      </p>
+                      <div className="bg-gray-50 rounded-lg p-4 max-w-sm mx-auto text-left">
+                        <p className="text-sm text-gray-500 mb-2">Account details:</p>
+                        <ul className="text-sm text-gray-700 space-y-1">
+                          <li><strong>Type:</strong> System/Service Account</li>
+                          <li><strong>Email:</strong> {profile.email}</li>
+                          <li><strong>Profile Picture:</strong> Organization logo</li>
+                        </ul>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -631,8 +666,8 @@ export default function ProfilePage() {
             </TabsContent>
           </Tabs>
 
-          {/* Incomplete Profile Warning Banner - Always visible when profile incomplete */}
-          {!isLoadingHR && !hrProfile?.onboardingComplete && !showOnboarding && (
+          {/* Incomplete Profile Warning Banner - Only for employees with incomplete profile */}
+          {profile.isEmployee && !isLoadingHR && !hrProfile?.onboardingComplete && !showOnboarding && (
             <div className="fixed bottom-4 right-4 left-4 md:left-auto md:w-96 bg-orange-50 border border-orange-200 rounded-lg p-4 shadow-lg z-50">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />

@@ -28,7 +28,7 @@ export async function GET() {
     return NextResponse.json({
       rate: parseFloat(rate),
       lastUpdated: setting?.updatedAt || null,
-      updatedBy: setting?.updatedBy || null,
+      updatedById: setting?.updatedById || null,
     });
   } catch (error) {
     console.error('Get exchange rate error:', error);
@@ -60,6 +60,8 @@ export async function PUT(request: NextRequest) {
     const tenantId = session.user.organizationId!;
 
     // Update or create setting (tenant-scoped)
+    // Note: session.user.id is TeamMember ID when isTeamMember is true
+    const memberId = session.user.isTeamMember ? session.user.id : null;
     const setting = await prisma.systemSettings.upsert({
       where: {
         tenantId_key: { tenantId, key: EXCHANGE_RATE_KEY },
@@ -67,19 +69,24 @@ export async function PUT(request: NextRequest) {
       create: {
         key: EXCHANGE_RATE_KEY,
         value: rateNum.toString(),
-        updatedBy: session.user.id,
+        updatedById: memberId,
         tenantId,
       },
       update: {
         value: rateNum.toString(),
-        updatedBy: session.user.id,
+        updatedById: memberId,
+      },
+      include: {
+        updatedBy: {
+          select: { name: true, email: true },
+        },
       },
     });
 
     // Log activity
     await prisma.activityLog.create({
       data: {
-        actorUserId: session.user.id,
+        actorMemberId: memberId,
         action: 'UPDATE_EXCHANGE_RATE',
         entityType: 'SystemSettings',
         entityId: setting.id,
@@ -91,17 +98,11 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    // Fetch updater info separately
-    const updater = setting.updatedBy ? await prisma.user.findUnique({
-      where: { id: setting.updatedBy },
-      select: { name: true, email: true },
-    }) : null;
-
     return NextResponse.json({
       success: true,
       rate: parseFloat(setting.value),
       lastUpdated: setting.updatedAt,
-      updatedBy: updater?.name || updater?.email,
+      updatedBy: setting.updatedBy?.name || setting.updatedBy?.email,
     });
   } catch (error) {
     console.error('Update exchange rate error:', error);

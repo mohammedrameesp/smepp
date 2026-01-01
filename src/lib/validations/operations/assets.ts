@@ -25,7 +25,7 @@ export const createAssetSchema = z.object({
   status: z.nativeEnum(AssetStatus).default(AssetStatus.IN_USE),
   acquisitionType: z.nativeEnum(AcquisitionType).default(AcquisitionType.NEW_PURCHASE),
   transferNotes: z.string().optional().nullable().or(z.literal('')),
-  assignedUserId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  assignedMemberId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
   assignmentDate: z.string().optional().nullable().or(z.literal('')),
   notes: z.string().optional().nullable().or(z.literal('')),
   location: z.string().optional().nullable().or(z.literal('')),
@@ -34,7 +34,7 @@ export const createAssetSchema = z.object({
 }).refine((data) => {
   // If status is IN_USE and NOT a shared asset, assignment must be provided
   if (data.status === AssetStatus.IN_USE && !data.isShared) {
-    if (!data.assignedUserId) {
+    if (!data.assignedMemberId) {
       return false;
     }
     if (!data.assignmentDate || data.assignmentDate === '') {
@@ -44,7 +44,7 @@ export const createAssetSchema = z.object({
   return true;
 }, {
   message: 'Assignment and assignment date are required when status is "In Use" (unless shared)',
-  path: ['assignedUserId'],
+  path: ['assignedMemberId'],
 }).refine((data) => {
   // Assignment date must not be before purchase date
   if (data.assignmentDate && data.purchaseDate) {
@@ -79,7 +79,7 @@ const baseAssetSchema = z.object({
   status: z.nativeEnum(AssetStatus).optional(),
   acquisitionType: z.nativeEnum(AcquisitionType).optional(),
   transferNotes: z.string().optional().nullable().or(z.literal('')),
-  assignedUserId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  assignedMemberId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
   assignmentDate: z.string().optional().nullable().or(z.literal('')),
   notes: z.string().optional().nullable().or(z.literal('')),
   location: z.string().optional().nullable().or(z.literal('')),
@@ -92,7 +92,7 @@ export const updateAssetSchema = baseAssetSchema
   .refine((data) => {
     // Only validate assignment if status is being set to IN_USE and NOT shared
     if (data.status === AssetStatus.IN_USE && !data.isShared) {
-      if (!data.assignedUserId) {
+      if (!data.assignedMemberId) {
         return false;
       }
       if (!data.assignmentDate || data.assignmentDate === '') {
@@ -102,7 +102,7 @@ export const updateAssetSchema = baseAssetSchema
     return true;
   }, {
     message: 'Assignment and assignment date are required when status is "In Use" (unless shared)',
-    path: ['assignedUserId'],
+    path: ['assignedMemberId'],
   })
   .refine((data) => {
     // Assignment date must not be before purchase date
@@ -120,7 +120,7 @@ export const updateAssetSchema = baseAssetSchema
   });
 
 export const assignAssetSchema = z.object({
-  assignedUserId: z.string().nullable(),
+  assignedMemberId: z.string().nullable(),
 });
 
 export const assetQuerySchema = z.object({

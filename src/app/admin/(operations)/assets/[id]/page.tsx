@@ -59,7 +59,7 @@ export default async function AssetDetailPage({ params }: Props) {
   const asset = await prisma.asset.findUnique({
     where: { id },
     include: {
-      assignedUser: {
+      assignedMember: {
         select: {
           id: true,
           name: true,
@@ -92,12 +92,12 @@ export default async function AssetDetailPage({ params }: Props) {
 
   // Fetch the most recent assignment date from history if asset is assigned
   let assignmentDate = null;
-  if (asset.assignedUserId) {
+  if (asset.assignedMemberId) {
     const mostRecentAssignment = await prisma.assetHistory.findFirst({
       where: {
         assetId: id,
         action: 'ASSIGNED',
-        toUserId: asset.assignedUserId,
+        toMemberId: asset.assignedMemberId,
       },
       orderBy: { createdAt: 'desc' },
       select: { assignmentDate: true },
@@ -342,17 +342,17 @@ export default async function AssetDetailPage({ params }: Props) {
                     </div>
                   )}
                 </div>
-              ) : asset.assignedUser ? (
+              ) : asset.assignedMember ? (
                 <>
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
                       <span className="text-indigo-600 font-semibold">
-                        {asset.assignedUser.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                        {asset.assignedMember.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
                       </span>
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900">{asset.assignedUser.name || 'Unknown User'}</p>
-                      <p className="text-sm text-slate-500">{asset.assignedUser.email}</p>
+                      <p className="font-semibold text-slate-900">{asset.assignedMember.name || 'Unknown User'}</p>
+                      <p className="text-sm text-slate-500">{asset.assignedMember.email}</p>
                     </div>
                   </div>
                   {assignmentDate && (
@@ -361,7 +361,7 @@ export default async function AssetDetailPage({ params }: Props) {
                       <p className="font-medium text-slate-900">{formatDate(assignmentDate)}</p>
                     </div>
                   )}
-                  <Link href={`/admin/users/${asset.assignedUser.id}`} className="mt-4 block">
+                  <Link href={`/admin/team/${asset.assignedMember.id}`} className="mt-4 block">
                     <Button variant="outline" size="sm" className="w-full">
                       View Profile
                     </Button>

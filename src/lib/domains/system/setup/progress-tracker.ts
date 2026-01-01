@@ -34,11 +34,49 @@ const CHECKLIST_FIELDS: SetupProgressField[] = [
 
 /**
  * Get setup progress for an organization
+ * If no progress record exists, check actual organization data to infer progress
  */
 export async function getSetupProgress(tenantId: string): Promise<SetupProgressStatus> {
-  const progress = await prisma.organizationSetupProgress.findUnique({
+  let progress = await prisma.organizationSetupProgress.findUnique({
     where: { organizationId: tenantId },
   });
+
+  // If no progress record exists, create one based on actual org data
+  if (!progress) {
+    const [org, assetCount, memberCount, employeeCount] = await Promise.all([
+      prisma.organization.findUnique({
+        where: { id: tenantId },
+        select: { name: true, logoUrl: true, primaryColor: true },
+      }),
+      prisma.asset.count({ where: { tenantId } }),
+      prisma.organizationUser.count({ where: { organizationId: tenantId } }),
+      prisma.hRProfile.count({
+        where: { user: { organizationMemberships: { some: { organizationId: tenantId } } } },
+      }),
+    ]);
+
+    if (org) {
+      // Infer progress from actual data
+      const inferredProgress = {
+        profileComplete: Boolean(org.name && org.name.length > 2),
+        logoUploaded: Boolean(org.logoUrl),
+        brandingConfigured: Boolean(org.primaryColor),
+        firstAssetAdded: assetCount > 0,
+        firstTeamMemberInvited: memberCount > 1, // More than just the owner
+        firstEmployeeAdded: employeeCount > 0,
+      };
+
+      // Create the progress record with inferred values
+      progress = await prisma.organizationSetupProgress.upsert({
+        where: { organizationId: tenantId },
+        create: {
+          organizationId: tenantId,
+          ...inferredProgress,
+        },
+        update: inferredProgress,
+      });
+    }
+  }
 
   if (!progress) {
     return {
@@ -145,21 +183,21 @@ export const CHECKLIST_ITEMS = [
     field: 'profileComplete' as const,
     title: 'Complete organization profile',
     description: 'Set up your organization name and basic information',
-    link: '/admin/settings',
+    link: '/admin/organization',
     icon: 'Building2',
   },
   {
     field: 'logoUploaded' as const,
     title: 'Upload company logo',
     description: 'Add your company logo to personalize your workspace',
-    link: '/admin/settings',
+    link: '/admin/organization',
     icon: 'Image',
   },
   {
     field: 'brandingConfigured' as const,
     title: 'Configure brand colors',
     description: 'Customize colors to match your brand identity',
-    link: '/admin/settings',
+    link: '/admin/organization',
     icon: 'Palette',
   },
   {

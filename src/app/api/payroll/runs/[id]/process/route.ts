@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role, PayrollStatus, DeductionType, LoanStatus } from '@prisma/client';
+import { TeamMemberRole, PayrollStatus, DeductionType, LoanStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/activity';
 import {
@@ -25,7 +25,7 @@ interface RouteParams {
 export async function POST(_request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
+    if (!session || session.user.role !== TeamMemberRole.ADMIN) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -76,22 +76,18 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       where: {
         tenantId, // CRITICAL: Tenant isolation
         isActive: true,
-        user: {
-          isEmployee: true, // Only process payroll for users marked as employees
+        member: {
+          isEmployee: true, // Only process payroll for members marked as employees
         },
       },
       include: {
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
-            hrProfile: {
-              select: {
-                bankName: true,
-                iban: true,
-                qidNumber: true,
-              },
-            },
+            bankName: true,
+            iban: true,
+            qidNumber: true,
           },
         },
       },
@@ -119,12 +115,12 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       // Continue without loans if there's an error
     }
 
-    // Create a map of loans by userId
-    const loansByUser = new Map<string, typeof activeLoans>();
+    // Create a map of loans by memberId
+    const loansByMember = new Map<string, typeof activeLoans>();
     for (const loan of activeLoans) {
-      const userLoans = loansByUser.get(loan.userId) || [];
-      userLoans.push(loan);
-      loansByUser.set(loan.userId, userLoans);
+      const memberLoans = loansByMember.get(loan.memberId) || [];
+      memberLoans.push(loan);
+      loansByMember.set(loan.memberId, memberLoans);
     }
 
     // Get the last payslip number sequence for this period
@@ -180,7 +176,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
         let leaveDeductions: Awaited<ReturnType<typeof calculateUnpaidLeaveDeductions>> = [];
         try {
           leaveDeductions = await calculateUnpaidLeaveDeductions(
-            salary.userId,
+            salary.memberId,
             payrollRun.year,
             payrollRun.month,
             dailyRate,
@@ -200,8 +196,8 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
         }
 
         // 2. Calculate loan deductions
-        const userLoans = loansByUser.get(salary.userId) || [];
-        for (const loan of userLoans) {
+        const memberLoans = loansByMember.get(salary.memberId) || [];
+        for (const loan of memberLoans) {
           const monthlyDeduction = parseDecimal(loan.monthlyDeduction);
           const remaining = parseDecimal(loan.remainingAmount);
           const deductionAmount = Math.min(monthlyDeduction, remaining);
@@ -237,7 +233,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
           data: {
             payslipNumber,
             payrollRunId: id,
-            userId: salary.userId,
+            memberId: salary.memberId,
             basicSalary: basicSalary,
             housingAllowance: parseDecimal(salary.housingAllowance),
             transportAllowance: parseDecimal(salary.transportAllowance),
@@ -248,9 +244,9 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
             grossSalary,
             totalDeductions: cappedDeductions, // FIN-004: Use capped deductions
             netSalary,
-            bankName: salary.user.hrProfile?.bankName,
-            iban: salary.user.hrProfile?.iban,
-            qidNumber: salary.user.hrProfile?.qidNumber,
+            bankName: salary.member?.bankName,
+            iban: salary.member?.iban,
+            qidNumber: salary.member?.qidNumber,
             tenantId: session.user.organizationId!,
           },
         });
@@ -270,7 +266,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
 
           // Update loan if it's a loan deduction
           if (deduction.type === DeductionType.LOAN_REPAYMENT && deduction.loanId) {
-            const loan = userLoans.find(l => l.id === deduction.loanId);
+            const loan = memberLoans.find(l => l.id === deduction.loanId);
             if (loan) {
               // FIN-003: Use precise math for loan calculations
               const newTotalPaid = addMoney(parseDecimal(loan.totalPaid), deduction.amount);
@@ -307,7 +303,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
         const deductionSum = addMoney(...deductionItems.map(d => d.amount));
         if (Math.abs(deductionSum - cappedDeductions) > 0.01) {
           console.error(
-            `[Payroll] Deduction reconciliation failed for user ${salary.userId}: ` +
+            `[Payroll] Deduction reconciliation failed for member ${salary.memberId}: ` +
             `sum=${deductionSum}, total=${cappedDeductions}`
           );
           throw new Error(`Deduction reconciliation failed for payslip ${payslipNumber}`);

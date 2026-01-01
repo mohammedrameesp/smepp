@@ -125,17 +125,13 @@ export const POST = withErrorHandler(
         isActive: true,
       },
       include: {
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
-            hrProfile: {
-              select: {
-                bankName: true,
-                iban: true,
-                qidNumber: true,
-              },
-            },
+            bankName: true,
+            iban: true,
+            qidNumber: true,
           },
         },
       },

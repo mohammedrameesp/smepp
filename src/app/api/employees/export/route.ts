@@ -8,7 +8,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Role } from '@prisma/client';
 import ExcelJS from 'exceljs';
 import {
   getExpiryStatus,
@@ -24,19 +23,14 @@ async function exportEmployeesHandler(request: NextRequest, _context: APIContext
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
-    // Fetch all employees with HR profiles (tenant-scoped)
-    const employees = await prisma.user.findMany({
+    // Fetch all team members with employee data (tenant-scoped)
+    const employees = await prisma.teamMember.findMany({
       where: {
-        isSystemAccount: false,
-        role: {
-          in: [Role.EMPLOYEE, Role.TEMP_STAFF, Role.ADMIN],
-        },
-        organizationMemberships: {
-          some: { organizationId: session.user.organizationId },
-        },
+        tenantId: session.user.organizationId,
+        isEmployee: true,
+        isDeleted: false,
       },
       include: {
-        hrProfile: true,
         _count: {
           select: {
             assets: true,
@@ -101,35 +95,48 @@ async function exportEmployeesHandler(request: NextRequest, _context: APIContext
 
     // Add data rows
     employees.forEach((emp) => {
-      const hr = emp.hrProfile;
-
-      // Calculate profile completion using shared utility
-      const completion = calculateProfileCompletion(hr);
+      // Calculate profile completion using shared utility (pass TeamMember data as HR-like object)
+      const hrData = {
+        dateOfBirth: emp.dateOfBirth,
+        gender: emp.gender,
+        nationality: emp.nationality,
+        qatarMobile: emp.qatarMobile,
+        qidNumber: emp.qidNumber,
+        qidExpiry: emp.qidExpiry,
+        passportNumber: emp.passportNumber,
+        passportExpiry: emp.passportExpiry,
+        healthCardExpiry: emp.healthCardExpiry,
+        sponsorshipType: emp.sponsorshipType,
+        dateOfJoining: emp.dateOfJoining,
+        bankName: emp.bankName,
+        iban: emp.iban,
+      };
+      const completion = calculateProfileCompletion(hrData);
       const profileStatusText = completion.isComplete
         ? 'Complete'
         : `${completion.percentage}% Incomplete`;
 
       const row = worksheet.addRow({
-        employeeId: hr?.employeeId || '',
+        employeeId: emp.employeeCode || '',
         name: emp.name || '',
         email: emp.email,
         role: emp.role,
-        designation: hr?.designation || '',
-        dateOfBirth: formatDate(hr?.dateOfBirth || null),
-        gender: hr?.gender || '',
-        nationality: hr?.nationality || '',
-        qatarMobile: hr?.qatarMobile ? `+974 ${hr.qatarMobile}` : '',
-        personalEmail: hr?.personalEmail || '',
+        designation: emp.designation || '',
+        dateOfBirth: formatDate(emp.dateOfBirth || null),
+        gender: emp.gender || '',
+        nationality: emp.nationality || '',
+        qatarMobile: emp.qatarMobile ? `+974 ${emp.qatarMobile}` : '',
+        personalEmail: emp.personalEmail || '',
         // Mask sensitive data for security
-        qidNumber: maskSensitiveData(hr?.qidNumber, 4),
-        qidExpiry: formatDate(hr?.qidExpiry || null),
-        passportNumber: maskSensitiveData(hr?.passportNumber, 4),
-        passportExpiry: formatDate(hr?.passportExpiry || null),
-        healthCardExpiry: formatDate(hr?.healthCardExpiry || null),
-        sponsorshipType: hr?.sponsorshipType || '',
-        dateOfJoining: formatDate(hr?.dateOfJoining || null),
-        bankName: hr?.bankName || '',
-        iban: maskSensitiveData(hr?.iban, 4),
+        qidNumber: maskSensitiveData(emp.qidNumber, 4),
+        qidExpiry: formatDate(emp.qidExpiry || null),
+        passportNumber: maskSensitiveData(emp.passportNumber, 4),
+        passportExpiry: formatDate(emp.passportExpiry || null),
+        healthCardExpiry: formatDate(emp.healthCardExpiry || null),
+        sponsorshipType: emp.sponsorshipType || '',
+        dateOfJoining: formatDate(emp.dateOfJoining || null),
+        bankName: emp.bankName || '',
+        iban: maskSensitiveData(emp.iban, 4),
         assetsCount: emp._count.assets,
         subscriptionsCount: emp._count.subscriptions,
         profileStatus: profileStatusText,
@@ -158,11 +165,9 @@ async function exportEmployeesHandler(request: NextRequest, _context: APIContext
       };
 
       // Apply highlighting to expiry columns (L=QID, N=Passport, O=HealthCard)
-      if (hr) {
-        highlightExpiryCell('L', hr.qidExpiry);
-        highlightExpiryCell('N', hr.passportExpiry);
-        highlightExpiryCell('O', hr.healthCardExpiry);
-      }
+      highlightExpiryCell('L', emp.qidExpiry);
+      highlightExpiryCell('N', emp.passportExpiry);
+      highlightExpiryCell('O', emp.healthCardExpiry);
 
       // Highlight incomplete profiles (V=Profile Status column)
       if (!completion.isComplete) {

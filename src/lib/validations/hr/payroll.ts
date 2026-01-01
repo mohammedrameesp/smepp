@@ -122,7 +122,7 @@ export const salaryStructureQuerySchema = z.object({
 });
 
 export const gratuityQuerySchema = z.object({
-  userId: z.string().optional(),
+  memberId: z.string().optional(),
   terminationDate: z.string().optional(),
 });
 

@@ -27,7 +27,7 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
   const asset = await prisma.asset.findUnique({
     where: { id },
     include: {
-      assignedUser: {
+      assignedMember: {
         select: {
           id: true,
           name: true,
@@ -49,7 +49,7 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
           id: true,
           type: true,
           status: true,
-          userId: true,
+          memberId: true,
         },
       },
     },
@@ -74,16 +74,16 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
     }
   };
 
-  const isAssignedToMe = asset.assignedUserId === session?.user?.id;
+  const isAssignedToMe = asset.assignedMemberId === session?.user?.id;
 
   // Check if user can request this asset (SPARE and no pending requests)
   const hasPendingRequest = asset.assetRequests.length > 0;
-  const myPendingRequest = asset.assetRequests.find(r => r.userId === session.user.id);
+  const myPendingRequest = asset.assetRequests.find(r => r.memberId === session.user.id);
   const canRequest = asset.status === 'SPARE' && !hasPendingRequest;
 
   // Check if user can return this asset (assigned to them, IN_USE, no pending return)
   const hasPendingReturn = asset.assetRequests.some(
-    r => r.type === 'RETURN_REQUEST' && r.status === 'PENDING_RETURN_APPROVAL' && r.userId === session.user.id
+    r => r.type === 'RETURN_REQUEST' && r.status === 'PENDING_RETURN_APPROVAL' && r.memberId === session.user.id
   );
   const canReturn = isAssignedToMe && asset.status === 'IN_USE' && !hasPendingReturn;
 
@@ -298,10 +298,10 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
                 <div>
                   <Label>Assigned To (User)</Label>
                   <div>
-                    {asset.assignedUser ? (
+                    {asset.assignedMember ? (
                       <div>
                         <div className="font-medium">
-                          {asset.assignedUser.name || 'Unknown User'}
+                          {asset.assignedMember.name || 'Unknown User'}
                           {isAssignedToMe && (
                             <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700 border-blue-200">
                               You
@@ -309,7 +309,7 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
                           )}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {asset.assignedUser.email}
+                          {asset.assignedMember.email}
                         </div>
                       </div>
                     ) : (

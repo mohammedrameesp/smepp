@@ -43,7 +43,7 @@ export interface RateLimitResult {
 }
 
 export interface UsageStats {
-  userId: string;
+  memberId: string;
   tenantId: string;
   dailyTokensUsed: number;
   dailyTokenLimit: number;
@@ -101,10 +101,10 @@ function getStartOfHour(): Date {
  * Check hourly request rate limit (in-memory)
  */
 function checkHourlyRequestLimit(
-  userId: string,
+  memberId: string,
   limit: number
 ): { allowed: boolean; count: number; resetAt: Date } {
-  const cacheKey = `requests:${userId}`;
+  const cacheKey = `requests:${memberId}`;
   const now = Date.now();
   const hourStart = getStartOfHour().getTime();
 
@@ -135,10 +135,10 @@ function checkHourlyRequestLimit(
 }
 
 /**
- * Check if a user can make an AI request
+ * Check if a member can make an AI request
  */
 export async function checkRateLimit(
-  userId: string,
+  memberId: string,
   tenantId: string,
   tier: SubscriptionTier
 ): Promise<RateLimitResult> {
@@ -147,7 +147,7 @@ export async function checkRateLimit(
   const monthStart = getStartOfMonth();
 
   // Check hourly request limit first (fast, in-memory)
-  const hourlyCheck = checkHourlyRequestLimit(userId, limits.requestsPerHour);
+  const hourlyCheck = checkHourlyRequestLimit(memberId, limits.requestsPerHour);
   if (!hourlyCheck.allowed) {
     const retryAfterSeconds = Math.ceil((hourlyCheck.resetAt.getTime() - Date.now()) / 1000);
     return {
@@ -163,7 +163,7 @@ export async function checkRateLimit(
   // Check daily token usage (using AIChatUsage model)
   const dailyUsage = await prisma.aIChatUsage.aggregate({
     where: {
-      userId,
+      memberId,
       tenantId,
       createdAt: { gte: dayStart },
     },
@@ -222,10 +222,10 @@ export async function checkRateLimit(
 }
 
 /**
- * Get usage statistics for a user
+ * Get usage statistics for a member
  */
 export async function getUsageStats(
-  userId: string,
+  memberId: string,
   tenantId: string,
   tier: SubscriptionTier
 ): Promise<UsageStats> {
@@ -233,10 +233,10 @@ export async function getUsageStats(
   const dayStart = getStartOfDay();
   const monthStart = getStartOfMonth();
 
-  // Get daily user usage
+  // Get daily member usage
   const dailyUsage = await prisma.aIChatUsage.aggregate({
     where: {
-      userId,
+      memberId,
       tenantId,
       createdAt: { gte: dayStart },
     },
@@ -261,7 +261,7 @@ export async function getUsageStats(
   const monthlyLimit = org?.aiTokenBudgetMonthly || limits.monthlyTokens;
 
   // Get hourly request count
-  const cacheKey = `requests:${userId}`;
+  const cacheKey = `requests:${memberId}`;
   const cached = requestCache.get(cacheKey);
   const hourlyRequestsUsed = cached && cached.resetAt > Date.now() ? cached.count : 0;
 
@@ -269,7 +269,7 @@ export async function getUsageStats(
   const monthlyTokensUsed = monthlyUsage._sum.totalTokens || 0;
 
   return {
-    userId,
+    memberId,
     tenantId,
     dailyTokensUsed,
     dailyTokenLimit: limits.dailyTokens,

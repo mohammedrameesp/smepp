@@ -63,11 +63,11 @@ export async function generateRequestNumber(
 }
 
 /**
- * Check if a user can request an asset
+ * Check if a member can request an asset
  * - Asset must be SPARE status
  * - Asset must not have any pending requests
  */
-export async function canRequestAsset(assetId: string, userId: string): Promise<{
+export async function canRequestAsset(assetId: string, memberId: string): Promise<{
   canRequest: boolean;
   reason?: string;
 }> {
@@ -99,16 +99,16 @@ export async function canRequestAsset(assetId: string, userId: string): Promise<
     return { canRequest: false, reason: 'Asset has a pending request' };
   }
 
-  // Check if user already has a pending request for this asset
-  const userPendingRequest = await prisma.assetRequest.findFirst({
+  // Check if member already has a pending request for this asset
+  const memberPendingRequest = await prisma.assetRequest.findFirst({
     where: {
       assetId,
-      userId,
+      memberId,
       status: AssetRequestStatus.PENDING_ADMIN_APPROVAL,
     },
   });
 
-  if (userPendingRequest) {
+  if (memberPendingRequest) {
     return { canRequest: false, reason: 'You already have a pending request for this asset' };
   }
 
@@ -116,12 +116,12 @@ export async function canRequestAsset(assetId: string, userId: string): Promise<
 }
 
 /**
- * Check if admin can assign an asset to a user
+ * Check if admin can assign an asset to a member
  * - Asset must be SPARE status
  * - Asset must not have pending requests
- * - User must not already have the asset
+ * - Member must not already have the asset
  */
-export async function canAssignAsset(assetId: string, userId: string): Promise<{
+export async function canAssignAsset(assetId: string, memberId: string): Promise<{
   canAssign: boolean;
   reason?: string;
 }> {
@@ -153,20 +153,20 @@ export async function canAssignAsset(assetId: string, userId: string): Promise<{
     return { canAssign: false, reason: 'Asset has a pending request' };
   }
 
-  if (asset.assignedUserId === userId) {
-    return { canAssign: false, reason: 'Asset is already assigned to this user' };
+  if (asset.assignedMemberId === memberId) {
+    return { canAssign: false, reason: 'Asset is already assigned to this member' };
   }
 
   return { canAssign: true };
 }
 
 /**
- * Check if user can return an asset
- * - Asset must be assigned to the user
+ * Check if member can return an asset
+ * - Asset must be assigned to the member
  * - Asset must be IN_USE status
  * - No pending return request for this asset
  */
-export async function canReturnAsset(assetId: string, userId: string): Promise<{
+export async function canReturnAsset(assetId: string, memberId: string): Promise<{
   canReturn: boolean;
   reason?: string;
 }> {
@@ -176,7 +176,7 @@ export async function canReturnAsset(assetId: string, userId: string): Promise<{
       assetRequests: {
         where: {
           type: AssetRequestType.RETURN_REQUEST,
-          userId,
+          memberId,
           status: AssetRequestStatus.PENDING_RETURN_APPROVAL,
         },
       },
@@ -187,7 +187,7 @@ export async function canReturnAsset(assetId: string, userId: string): Promise<{
     return { canReturn: false, reason: 'Asset not found' };
   }
 
-  if (asset.assignedUserId !== userId) {
+  if (asset.assignedMemberId !== memberId) {
     return { canReturn: false, reason: 'Asset is not assigned to you' };
   }
 
@@ -301,13 +301,13 @@ export function canUserRespond(status: AssetRequestStatus, type: AssetRequestTyp
 /**
  * Get counts for pending requests (for badges/notifications)
  */
-export async function getAssetRequestCounts(userId?: string): Promise<{
+export async function getAssetRequestCounts(memberId?: string): Promise<{
   pendingAdminApproval: number;
   pendingUserAcceptance: number;
   pendingReturnApproval: number;
   total: number;
 }> {
-  const where = userId ? { userId } : {};
+  const where = memberId ? { memberId } : {};
 
   const [pendingAdminApproval, pendingUserAcceptance, pendingReturnApproval] = await Promise.all([
     prisma.assetRequest.count({

@@ -9,9 +9,8 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
-import { APIContext } from '@/lib/http/handler';
 
-async function getNextCodeHandler(request: NextRequest, _context: APIContext) {
+async function getNextCodeHandler(request: NextRequest) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
@@ -38,3 +37,5 @@ async function getNextCodeHandler(request: NextRequest, _context: APIContext) {
 
     return NextResponse.json({ nextCode });
 }
+
+export const GET = getNextCodeHandler;

@@ -35,6 +35,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useNotifications } from '@/components/domains/system/notifications';
 import { formatDate } from '@/lib/date-format';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
 interface Notification {
   id: string;
@@ -135,32 +136,27 @@ export function NotificationsPageClient({
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8 flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Notifications
-            </h1>
-            <p className="text-gray-600">
-              View and manage your notifications
-            </p>
-          </div>
-          {unreadCount > 0 && (
-            <Button
-              variant="outline"
+    <>
+      <PageHeader
+        title="Notifications"
+        subtitle="View and manage your notifications"
+        actions={
+          unreadCount > 0 ? (
+            <PageHeaderButton
               onClick={handleMarkAllRead}
-              disabled={markingAllRead}
+              variant="secondary"
             >
               {markingAllRead ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <CheckCheck className="h-4 w-4 mr-2" />
+                <CheckCheck className="h-4 w-4" />
               )}
               Mark all as read
-            </Button>
-          )}
-        </div>
+            </PageHeaderButton>
+          ) : undefined
+        }
+      />
+      <PageContent>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -326,7 +322,7 @@ export function NotificationsPageClient({
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

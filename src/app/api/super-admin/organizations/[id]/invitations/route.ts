@@ -37,6 +37,8 @@ export async function GET(
       id: inv.id,
       email: inv.email,
       role: inv.role,
+      isEmployee: inv.isEmployee,
+      isOnWps: inv.isOnWps,
       expiresAt: inv.expiresAt,
       createdAt: inv.createdAt,
       isExpired: inv.expiresAt < now,
@@ -59,6 +61,8 @@ export async function GET(
 const createInviteSchema = z.object({
   email: z.string().email(),
   role: z.enum(['OWNER', 'ADMIN', 'MANAGER', 'MEMBER']).default('MEMBER'),
+  isEmployee: z.boolean(), // Required - admin must specify if user is employee or system account
+  isOnWps: z.boolean().optional(), // Only relevant if isEmployee = true
 });
 
 export async function POST(
@@ -82,7 +86,7 @@ export async function POST(
       );
     }
 
-    const { email, role } = result.data;
+    const { email, role, isEmployee, isOnWps } = result.data;
 
     // Check if org exists
     const org = await prisma.organization.findUnique({
@@ -139,6 +143,8 @@ export async function POST(
         token,
         expiresAt,
         invitedById: session.user.id,
+        isEmployee, // Admin must specify
+        isOnWps: isEmployee ? (isOnWps ?? false) : false, // Only relevant if isEmployee
       },
     });
 
@@ -169,6 +175,8 @@ export async function POST(
           id: invitation.id,
           email: invitation.email,
           role: invitation.role,
+          isEmployee: invitation.isEmployee,
+          isOnWps: invitation.isOnWps,
           inviteUrl,
           expiresAt: expiresAt.toISOString(),
         },

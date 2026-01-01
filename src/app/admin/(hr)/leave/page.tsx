@@ -71,7 +71,7 @@ export default async function AdminLeavePage() {
     prisma.leaveRequest.findMany({
       where: { tenantId, status: 'PENDING' },
       include: {
-        user: {
+        member: {
           select: { id: true, name: true, email: true },
         },
         leaveType: {
@@ -91,7 +91,7 @@ export default async function AdminLeavePage() {
         },
       },
       include: {
-        user: {
+        member: {
           select: { id: true, name: true, email: true },
         },
         leaveType: {
@@ -185,7 +185,7 @@ export default async function AdminLeavePage() {
                     >
                       <div className="flex justify-between items-start mb-1">
                         <div>
-                          <span className="font-medium">{request.user.name}</span>
+                          <span className="font-medium">{request.member?.name}</span>
                           <span className="text-gray-500 text-sm ml-2">{request.requestNumber}</span>
                         </div>
                         <Badge variant={getLeaveStatusVariant(request.status)}>
@@ -234,7 +234,7 @@ export default async function AdminLeavePage() {
                       className="p-3 rounded-lg border"
                     >
                       <div className="flex justify-between items-start mb-1">
-                        <span className="font-medium">{request.user.name}</span>
+                        <span className="font-medium">{request.member?.name}</span>
                         <span className="text-sm text-gray-500">
                           {formatLeaveDays(request.totalDays)}
                         </span>

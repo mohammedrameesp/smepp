@@ -14,7 +14,7 @@ import { formatCurrency } from '@/lib/payroll/utils';
 
 interface SalaryStructure {
   id: string;
-  userId: string;
+  memberId: string;
   basicSalary: number;
   housingAllowance: number;
   transportAllowance: number;
@@ -23,14 +23,12 @@ interface SalaryStructure {
   otherAllowances: number;
   grossSalary: number;
   effectiveFrom: string;
-  user: {
+  member: {
     id: string;
     name: string | null;
     email: string;
-    hrProfile?: {
-      employeeId: string | null;
-      designation: string | null;
-    };
+    employeeCode?: string | null;
+    designation?: string | null;
   };
 }
 
@@ -126,11 +124,14 @@ export default function EditSalaryStructurePage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      </div>
+      <>
+        <PageHeader title="Edit Salary Structure" subtitle="Loading..." />
+        <PageContent>
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        </PageContent>
+      </>
     );
   }
 
@@ -142,7 +143,7 @@ export default function EditSalaryStructurePage() {
     <>
       <PageHeader
         title="Edit Salary Structure"
-        subtitle={`Update salary components for ${salary.user.name || salary.user.email}`}
+        subtitle={`Update salary components for ${salary.member?.name || salary.member?.email}`}
         breadcrumbs={[
           { label: 'Payroll', href: '/admin/payroll' },
           { label: 'Salary Structures', href: '/admin/payroll/salary-structures' },
@@ -163,22 +164,22 @@ export default function EditSalaryStructurePage() {
                   <div className="grid gap-2 md:grid-cols-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Name:</span>{' '}
-                      <span className="font-medium">{salary.user.name}</span>
+                      <span className="font-medium">{salary.member?.name}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Email:</span>{' '}
-                      <span className="font-medium">{salary.user.email}</span>
+                      <span className="font-medium">{salary.member?.email}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Employee ID:</span>{' '}
                       <span className="font-medium">
-                        {salary.user.hrProfile?.employeeId || 'Not set'}
+                        {salary.member?.employeeCode || 'Not set'}
                       </span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Designation:</span>{' '}
                       <span className="font-medium">
-                        {salary.user.hrProfile?.designation || 'Not set'}
+                        {salary.member?.designation || 'Not set'}
                       </span>
                     </div>
                   </div>

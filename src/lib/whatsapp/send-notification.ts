@@ -6,7 +6,7 @@
  */
 
 import { WhatsAppClient, logWhatsAppMessage } from './client';
-import { getEffectiveWhatsAppConfig, getUserWhatsAppPhone } from './config';
+import { getEffectiveWhatsAppConfig, getMemberWhatsAppPhone } from './config';
 import { generateActionTokenPair } from './action-tokens';
 import { buildApprovalTemplate, buildActionConfirmationText } from './templates';
 import type {
@@ -42,7 +42,7 @@ export async function sendApprovalNotification(
     const { config, source } = configResult;
 
     // 2. Get approver's WhatsApp phone number
-    const approverPhone = await getUserWhatsAppPhone(data.approverId);
+    const approverPhone = await getMemberWhatsAppPhone(data.approverId);
     if (!approverPhone) {
       return {
         success: false,
@@ -93,7 +93,7 @@ export async function sendApprovalNotification(
 
     // Log the failure
     try {
-      const approverPhone = await getUserWhatsAppPhone(data.approverId);
+      const approverPhone = await getMemberWhatsAppPhone(data.approverId);
       if (approverPhone) {
         await logWhatsAppMessage({
           tenantId: data.tenantId,
@@ -152,20 +152,20 @@ export async function sendActionConfirmation(params: {
 }
 
 /**
- * Check if WhatsApp notifications can be sent for a tenant/user
+ * Check if WhatsApp notifications can be sent for a tenant/member
  */
 export async function canSendWhatsAppNotification(
   tenantId: string,
-  userId: string
+  memberId: string
 ): Promise<{ canSend: boolean; reason?: string }> {
   const configResult = await getEffectiveWhatsAppConfig(tenantId);
   if (!configResult) {
     return { canSend: false, reason: 'WhatsApp not configured' };
   }
 
-  const phone = await getUserWhatsAppPhone(userId);
+  const phone = await getMemberWhatsAppPhone(memberId);
   if (!phone) {
-    return { canSend: false, reason: 'User has no verified WhatsApp number' };
+    return { canSend: false, reason: 'Member has no verified WhatsApp number' };
   }
 
   return { canSend: true };

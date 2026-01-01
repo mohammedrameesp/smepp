@@ -3,13 +3,14 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
+import { TeamMemberRole, TeamMemberStatus } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PATCH /api/admin/team/[memberId] - Update member role
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const updateMemberSchema = z.object({
-  role: z.enum(['OWNER', 'ADMIN', 'MEMBER']),
+  role: z.enum(['ADMIN', 'MEMBER']),
 });
 
 export async function PATCH(
@@ -40,16 +41,16 @@ export async function PATCH(
     }
 
     // Check member exists and belongs to org
-    const member = await prisma.organizationUser.findUnique({
+    const member = await prisma.teamMember.findUnique({
       where: { id: memberId },
     });
 
-    if (!member || member.organizationId !== session.user.organizationId) {
+    if (!member || member.tenantId !== session.user.organizationId) {
       return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
     // Can't change own role
-    if (member.userId === session.user.id) {
+    if (member.id === session.user.id) {
       return NextResponse.json(
         { error: 'Cannot change your own role' },
         { status: 400 }
@@ -57,13 +58,15 @@ export async function PATCH(
     }
 
     // Update role
-    const updated = await prisma.organizationUser.update({
+    const updated = await prisma.teamMember.update({
       where: { id: memberId },
-      data: { role: result.data.role },
-      include: {
-        user: {
-          select: { id: true, name: true, email: true },
-        },
+      data: { role: result.data.role as TeamMemberRole },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isOwner: true,
       },
     });
 
@@ -100,19 +103,24 @@ export async function DELETE(
     const { memberId } = await params;
 
     // Check member exists and belongs to org
-    const member = await prisma.organizationUser.findUnique({
+    const member = await prisma.teamMember.findUnique({
       where: { id: memberId },
-      include: {
-        user: { select: { id: true, name: true, email: true } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        tenantId: true,
+        role: true,
+        isOwner: true,
       },
     });
 
-    if (!member || member.organizationId !== session.user.organizationId) {
+    if (!member || member.tenantId !== session.user.organizationId) {
       return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
     // Can't remove yourself
-    if (member.userId === session.user.id) {
+    if (member.id === session.user.id) {
       return NextResponse.json(
         { error: 'Cannot remove yourself from the organization' },
         { status: 400 }
@@ -135,9 +143,14 @@ export async function DELETE(
       );
     }
 
-    // Remove member
-    await prisma.organizationUser.delete({
+    // Soft delete member (mark as terminated)
+    await prisma.teamMember.update({
       where: { id: memberId },
+      data: {
+        status: TeamMemberStatus.TERMINATED,
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
     });
 
     return NextResponse.json({ success: true });

@@ -26,17 +26,26 @@ async function getLeaveBalancesHandler(request: NextRequest, context: APIContext
       }, { status: 400 });
     }
 
-    const { userId, leaveTypeId, year, p, ps } = validation.data;
+    const { memberId, leaveTypeId, year, p, ps } = validation.data;
 
     // Non-admin users can only see their own balances
     const isAdmin = tenant!.userRole === 'ADMIN';
-    const effectiveUserId = isAdmin ? userId : tenant!.userId;
+
+    // For non-admin users, we need to look up their TeamMember ID
+    let effectiveMemberId = memberId;
+    if (!isAdmin) {
+      const currentMember = await prisma.teamMember.findFirst({
+        where: { id: tenant!.userId, tenantId },
+        select: { id: true },
+      });
+      effectiveMemberId = currentMember?.id;
+    }
 
     // Build where clause with tenant filter
     const where: Record<string, unknown> = { tenantId };
 
-    if (effectiveUserId) {
-      where.userId = effectiveUserId;
+    if (effectiveMemberId) {
+      where.memberId = effectiveMemberId;
     }
     if (leaveTypeId) {
       where.leaveTypeId = leaveTypeId;
@@ -54,7 +63,7 @@ async function getLeaveBalancesHandler(request: NextRequest, context: APIContext
       prisma.leaveBalance.findMany({
         where,
         include: {
-          user: {
+          member: {
             select: {
               id: true,
               name: true,
@@ -72,7 +81,7 @@ async function getLeaveBalancesHandler(request: NextRequest, context: APIContext
           },
         },
         orderBy: [
-          { user: { name: 'asc' } },
+          { member: { name: 'asc' } },
           { leaveType: { name: 'asc' } },
         ],
         take: ps,
@@ -110,20 +119,18 @@ async function createLeaveBalanceHandler(request: NextRequest, context: APIConte
       }, { status: 400 });
     }
 
-    const { userId, leaveTypeId, year, entitlement, carriedForward } = validation.data;
+    const { memberId, leaveTypeId, year, entitlement, carriedForward } = validation.data;
 
-    // Check if user exists and belongs to this tenant
-    const userMembership = await prisma.organizationUser.findUnique({
+    // Check if team member exists and belongs to this tenant
+    const teamMember = await prisma.teamMember.findFirst({
       where: {
-        organizationId_userId: {
-          organizationId: tenantId,
-          userId,
-        },
+        id: memberId,
+        tenantId,
       },
     });
 
-    if (!userMembership) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (!teamMember) {
+      return NextResponse.json({ error: 'Team member not found' }, { status: 404 });
     }
 
     // Check if leave type exists and belongs to this tenant
@@ -135,12 +142,12 @@ async function createLeaveBalanceHandler(request: NextRequest, context: APIConte
       return NextResponse.json({ error: 'Leave type not found' }, { status: 404 });
     }
 
-    // Check if balance already exists for this user/type/year
+    // Check if balance already exists for this member/type/year
     const existing = await prisma.leaveBalance.findUnique({
       where: {
-        tenantId_userId_leaveTypeId_year: {
+        tenantId_memberId_leaveTypeId_year: {
           tenantId,
-          userId,
+          memberId,
           leaveTypeId,
           year,
         },
@@ -149,13 +156,13 @@ async function createLeaveBalanceHandler(request: NextRequest, context: APIConte
 
     if (existing) {
       return NextResponse.json({
-        error: 'Balance already exists for this user, leave type, and year',
+        error: 'Balance already exists for this member, leave type, and year',
       }, { status: 400 });
     }
 
     const balance = await prisma.leaveBalance.create({
       data: {
-        userId,
+        memberId,
         leaveTypeId,
         year,
         entitlement: entitlement ?? leaveType.defaultDays,
@@ -163,7 +170,7 @@ async function createLeaveBalanceHandler(request: NextRequest, context: APIConte
         tenantId,
       },
       include: {
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
@@ -186,7 +193,7 @@ async function createLeaveBalanceHandler(request: NextRequest, context: APIConte
       ActivityActions.LEAVE_BALANCE_CREATED,
       'LeaveBalance',
       balance.id,
-      { userId, leaveTypeId, year, entitlement: balance.entitlement }
+      { memberId, leaveTypeId, year, entitlement: balance.entitlement }
     );
 
     return NextResponse.json(balance, { status: 201 });

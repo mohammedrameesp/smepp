@@ -28,7 +28,7 @@ interface Subscription {
   purchaseDate: Date | null;
   renewalDate: Date | null;
   paymentMethod: string | null;
-  assignedUser: {
+  assignedMember: {
     id: string;
     name: string | null;
     email: string;
@@ -71,8 +71,8 @@ export function SubscriptionListTable({ subscriptions }: SubscriptionListTablePr
         sub.serviceName.toLowerCase().includes(term) ||
         sub.category?.toLowerCase().includes(term) ||
         sub.accountId?.toLowerCase().includes(term) ||
-        sub.assignedUser?.name?.toLowerCase().includes(term) ||
-        sub.assignedUser?.email?.toLowerCase().includes(term)
+        sub.assignedMember?.name?.toLowerCase().includes(term) ||
+        sub.assignedMember?.email?.toLowerCase().includes(term)
       );
     }
 
@@ -147,9 +147,9 @@ export function SubscriptionListTable({ subscriptions }: SubscriptionListTablePr
             bValue = Infinity;
           }
           break;
-        case 'assignedUser':
-          aValue = a.assignedUser?.name || a.assignedUser?.email || 'zzz';
-          bValue = b.assignedUser?.name || b.assignedUser?.email || 'zzz';
+        case 'assignedMember':
+          aValue = a.assignedMember?.name || a.assignedMember?.email || 'zzz';
+          bValue = b.assignedMember?.name || b.assignedMember?.email || 'zzz';
           break;
         default:
           return 0;
@@ -266,7 +266,7 @@ export function SubscriptionListTable({ subscriptions }: SubscriptionListTablePr
               <SelectItem value="billingCycle">Billing Cycle</SelectItem>
               <SelectItem value="cost">Cost</SelectItem>
               <SelectItem value="renewalDate">Renewal Date</SelectItem>
-              <SelectItem value="assignedUser">Assigned To</SelectItem>
+              <SelectItem value="assignedMember">Assigned To</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -311,9 +311,9 @@ export function SubscriptionListTable({ subscriptions }: SubscriptionListTablePr
                 <TableHead className="w-[110px]">Payment</TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-gray-100 w-[120px]"
-                  onClick={() => toggleSort('assignedUser')}
+                  onClick={() => toggleSort('assignedMember')}
                 >
-                  Assigned {sortBy === 'assignedUser' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  Assigned {sortBy === 'assignedMember' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </TableHead>
                 <TableHead className="w-[80px]">Actions</TableHead>
               </TableRow>
@@ -391,12 +391,12 @@ export function SubscriptionListTable({ subscriptions }: SubscriptionListTablePr
                     )}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {subscription.assignedUser ? (
+                    {subscription.assignedMember ? (
                       <Link
-                        href={`/admin/users/${subscription.assignedUser.id}`}
+                        href={`/admin/users/${subscription.assignedMember.id}`}
                         className="text-gray-900 hover:text-gray-700 cursor-pointer font-medium"
                       >
-                        {subscription.assignedUser.name || 'Unknown User'}
+                        {subscription.assignedMember.name || 'Unknown User'}
                       </Link>
                     ) : (
                       <span className="text-gray-400 text-xs">Unassigned</span>

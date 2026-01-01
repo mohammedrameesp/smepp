@@ -57,6 +57,7 @@ export function TableSkeleton({
 
 /**
  * Skeleton for page with header and table.
+ * Matches PageHeader/PageContent layout pattern.
  */
 export function PageWithTableSkeleton({
   title = true,
@@ -72,50 +73,58 @@ export function PageWithTableSkeleton({
   rows?: number;
 }) {
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          {title && <Skeleton className="h-8 w-48 mb-2" />}
-          <Skeleton className="h-4 w-64" />
+    <div className="animate-in fade-in duration-300">
+      {/* Page Header Skeleton - matches PageHeader component */}
+      <div className="bg-slate-800 shadow-lg">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div>
+              {title && <Skeleton className="h-7 w-48 mb-2 bg-slate-700" />}
+              <Skeleton className="h-4 w-64 bg-slate-700" />
+            </div>
+            {actions && (
+              <div className="flex gap-2">
+                <Skeleton className="h-9 w-24 bg-slate-700 rounded-lg" />
+                <Skeleton className="h-9 w-32 bg-slate-700 rounded-lg" />
+              </div>
+            )}
+          </div>
         </div>
-        {actions && (
-          <div className="flex gap-2">
-            <Skeleton className="h-10 w-24" />
+      </div>
+
+      {/* Page Content - matches PageContent component */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* Filters/search bar */}
+        {filters && (
+          <div className="flex gap-4">
+            <Skeleton className="h-10 w-64" />
+            <Skeleton className="h-10 w-32" />
             <Skeleton className="h-10 w-32" />
           </div>
         )}
-      </div>
 
-      {/* Filters/search bar */}
-      {filters && (
-        <div className="flex gap-4">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-10 w-32" />
-          <Skeleton className="h-10 w-32" />
+        {/* Table card */}
+        <div className="border rounded-lg bg-card">
+          <TableSkeleton columns={columns} rows={rows} />
         </div>
-      )}
 
-      {/* Table card */}
-      <div className="border rounded-lg bg-card">
-        <TableSkeleton columns={columns} rows={rows} />
-      </div>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-4 w-32" />
-        <div className="flex gap-2">
-          <Skeleton className="h-8 w-8" />
-          <Skeleton className="h-8 w-8" />
-          <Skeleton className="h-8 w-8" />
+        {/* Pagination */}
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-4 w-32" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-8" />
+            <Skeleton className="h-8 w-8" />
+            <Skeleton className="h-8 w-8" />
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
 
 /**
  * Skeleton for detail/form pages.
+ * Matches PageHeader/PageContent layout pattern.
  */
 export function PageDetailSkeleton({
   sections = 3,
@@ -125,36 +134,40 @@ export function PageDetailSkeleton({
   fieldsPerSection?: number;
 }) {
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-10 rounded" />
-          <div>
-            <Skeleton className="h-7 w-48 mb-2" />
-            <Skeleton className="h-4 w-32" />
+    <div className="animate-in fade-in duration-300">
+      {/* Page Header Skeleton - matches PageHeader component */}
+      <div className="bg-slate-800 shadow-lg">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div>
+              <Skeleton className="h-7 w-48 mb-2 bg-slate-700" />
+              <Skeleton className="h-4 w-32 bg-slate-700" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-9 w-24 bg-slate-700 rounded-lg" />
+              <Skeleton className="h-9 w-24 bg-slate-700 rounded-lg" />
+            </div>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-10 w-24" />
-          <Skeleton className="h-10 w-24" />
         </div>
       </div>
 
-      {/* Content sections */}
-      {Array.from({ length: sections }).map((_, sectionIndex) => (
-        <div key={sectionIndex} className="border rounded-lg bg-card p-6">
-          <Skeleton className="h-5 w-32 mb-4" />
-          <div className="grid grid-cols-2 gap-4">
-            {Array.from({ length: fieldsPerSection }).map((_, fieldIndex) => (
-              <div key={fieldIndex}>
-                <Skeleton className="h-4 w-24 mb-2" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            ))}
+      {/* Page Content - matches PageContent component */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* Content sections */}
+        {Array.from({ length: sections }).map((_, sectionIndex) => (
+          <div key={sectionIndex} className="border rounded-lg bg-card p-6">
+            <Skeleton className="h-5 w-32 mb-4" />
+            <div className="grid grid-cols-2 gap-4">
+              {Array.from({ length: fieldsPerSection }).map((_, fieldIndex) => (
+                <div key={fieldIndex}>
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </main>
     </div>
   );
 }

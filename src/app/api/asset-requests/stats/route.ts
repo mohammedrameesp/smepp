@@ -46,21 +46,21 @@ async function getAssetRequestStatsHandler(_request: NextRequest, context: APICo
         prisma.assetRequest.count({
           where: {
             tenantId,
-            userId: session.user.id,
+            memberId: session.user.id,
             status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
           },
         }),
         prisma.assetRequest.count({
           where: {
             tenantId,
-            userId: session.user.id,
+            memberId: session.user.id,
             status: AssetRequestStatus.PENDING_ADMIN_APPROVAL,
           },
         }),
         prisma.assetRequest.count({
           where: {
             tenantId,
-            userId: session.user.id,
+            memberId: session.user.id,
             status: AssetRequestStatus.PENDING_RETURN_APPROVAL,
           },
         }),

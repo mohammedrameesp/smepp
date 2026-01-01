@@ -245,7 +245,7 @@ export async function POST(request: NextRequest) {
           // Check if balance already exists
           const existing = await prisma.leaveBalance.findFirst({
             where: {
-              userId: user.id,
+              memberId: user.id,
               leaveTypeId: leaveType.id,
               year: currentYear,
               tenantId: org.id,
@@ -265,7 +265,7 @@ export async function POST(request: NextRequest) {
 
           await prisma.leaveBalance.create({
             data: {
-              userId: user.id,
+              memberId: user.id,
               leaveTypeId: leaveType.id,
               year: currentYear,
               entitlement,

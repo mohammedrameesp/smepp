@@ -21,7 +21,7 @@ async function exportSingleSubscriptionHandler(_request: NextRequest, context: A
     const subscription = await prisma.subscription.findFirst({
       where: { id, tenantId },
       include: {
-        assignedUser: {
+        assignedMember: {
           select: { name: true, email: true },
         },
       },
@@ -47,8 +47,8 @@ async function exportSingleSubscriptionHandler(_request: NextRequest, context: A
       autoRenew: subscription.autoRenew ? 'Yes' : 'No',
       paymentMethod: subscription.paymentMethod || '',
       notes: subscription.notes || '',
-      assignedUserName: subscription.assignedUser?.name || '',
-      assignedUserEmail: subscription.assignedUser?.email || '',
+      assignedUserName: subscription.assignedMember?.name || '',
+      assignedUserEmail: subscription.assignedMember?.email || '',
       createdAt: formatDateForCSV(subscription.createdAt),
       updatedAt: formatDateForCSV(subscription.updatedAt),
     }];

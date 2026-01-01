@@ -19,13 +19,13 @@ export default async function BrowsePage() {
   const [assets, subscriptions] = await Promise.all([
     prisma.asset.findMany({
       include: {
-        assignedUser: true,
+        assignedMember: true,
       },
       orderBy: { createdAt: 'desc' },
     }),
     prisma.subscription.findMany({
       include: {
-        assignedUser: true,
+        assignedMember: true,
       },
       orderBy: { createdAt: 'desc' },
     }),
@@ -93,7 +93,7 @@ export default async function BrowsePage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {asset.assignedUser ? asset.assignedUser.name || 'Unknown User' : 'Unassigned'}
+                        {asset.assignedMember ? asset.assignedMember.name || 'Unknown Member' : 'Unassigned'}
                       </TableCell>
                       <TableCell>
                         {formatDate(asset.warrantyExpiry)}
@@ -142,8 +142,8 @@ export default async function BrowsePage() {
                         {subscription.costPerCycle ? `$${subscription.costPerCycle}` : 'N/A'}
                       </TableCell>
                       <TableCell>
-                        {subscription.assignedUser ?
-                          subscription.assignedUser.name || 'Unknown User' :
+                        {subscription.assignedMember ?
+                          subscription.assignedMember.name || 'Unknown Member' :
                           'Unassigned'
                         }
                       </TableCell>

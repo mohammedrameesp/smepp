@@ -11,28 +11,28 @@ interface RecordAssetHistoryParams {
   assetId: string;
   tenantId: string;
   action: AssetHistoryAction;
-  fromUserId?: string | null;
-  toUserId?: string | null;
+  fromMemberId?: string | null;
+  toMemberId?: string | null;
   fromStatus?: AssetStatus;
   toStatus?: AssetStatus;
   fromLocation?: string | null;
   toLocation?: string | null;
   notes?: string;
-  performedBy: string;
+  performedById: string;
 }
 
 export async function recordAssetHistory({
   assetId,
   tenantId,
   action,
-  fromUserId,
-  toUserId,
+  fromMemberId,
+  toMemberId,
   fromStatus,
   toStatus,
   fromLocation,
   toLocation,
   notes,
-  performedBy,
+  performedById,
 }: RecordAssetHistoryParams) {
   try {
     await prisma.assetHistory.create({
@@ -40,14 +40,14 @@ export async function recordAssetHistory({
         tenantId,
         assetId,
         action,
-        fromUserId,
-        toUserId,
+        fromMemberId,
+        toMemberId,
         fromStatus,
         toStatus,
         fromLocation,
         toLocation,
         notes,
-        performedBy,
+        performedById,
       },
     });
   } catch (error) {
@@ -58,9 +58,9 @@ export async function recordAssetHistory({
 
 export async function recordAssetAssignment(
   assetId: string,
-  fromUserId: string | null,
-  toUserId: string | null,
-  performedBy: string,
+  fromMemberId: string | null,
+  toMemberId: string | null,
+  performedById: string,
   notes?: string,
   assignmentDate?: Date,
   returnDate?: Date
@@ -75,8 +75,8 @@ export async function recordAssetAssignment(
     return;
   }
 
-  const action = toUserId
-    ? (fromUserId ? AssetHistoryAction.ASSIGNED : AssetHistoryAction.ASSIGNED)
+  const action = toMemberId
+    ? (fromMemberId ? AssetHistoryAction.ASSIGNED : AssetHistoryAction.ASSIGNED)
     : AssetHistoryAction.UNASSIGNED;
 
   const actualAssignmentDate = assignmentDate || new Date();
@@ -86,12 +86,12 @@ export async function recordAssetAssignment(
     assetId,
     tenantId: asset.tenantId,
     action,
-    fromUserId,
-    toUserId,
-    performedBy,
+    fromMemberId,
+    toMemberId,
+    performedById,
     notes: notes || (action === AssetHistoryAction.ASSIGNED
-      ? `Asset assigned to user`
-      : `Asset unassigned from user`),
+      ? `Asset assigned to member`
+      : `Asset unassigned from member`),
   });
 
   // Get the latest history record to update dates
@@ -122,7 +122,7 @@ export async function recordAssetStatusChange(
   assetId: string,
   fromStatus: AssetStatus,
   toStatus: AssetStatus,
-  performedBy: string,
+  performedById: string,
   notes?: string
 ) {
   // Fetch tenantId from asset
@@ -141,7 +141,7 @@ export async function recordAssetStatusChange(
     action: AssetHistoryAction.STATUS_CHANGED,
     fromStatus,
     toStatus,
-    performedBy,
+    performedById,
     notes: notes || `Status changed from ${fromStatus} to ${toStatus}`,
   });
 }
@@ -166,7 +166,7 @@ export async function recordAssetLocationChange(
   assetId: string,
   fromLocation: string | null,
   toLocation: string | null,
-  performedBy: string,
+  performedById: string,
   notes?: string
 ) {
   // Fetch tenantId from asset
@@ -185,16 +185,16 @@ export async function recordAssetLocationChange(
     action: AssetHistoryAction.LOCATION_CHANGED,
     fromLocation,
     toLocation,
-    performedBy,
+    performedById,
     notes: notes || `Location changed from ${fromLocation || 'unspecified'} to ${toLocation || 'unspecified'}`,
   });
 }
 
 export async function recordAssetCreation(
   assetId: string,
-  performedBy: string,
-  initialUserId?: string | null,
-  initialProjectId?: string | null
+  performedById: string,
+  initialMemberId?: string | null,
+  _initialProjectId?: string | null
 ) {
   // Fetch tenantId from asset
   const asset = await prisma.asset.findUnique({
@@ -210,15 +210,15 @@ export async function recordAssetCreation(
     assetId,
     tenantId: asset.tenantId,
     action: AssetHistoryAction.CREATED,
-    toUserId: initialUserId,
-    performedBy,
+    toMemberId: initialMemberId,
+    performedById,
     notes: 'Asset created',
   });
 }
 
 export async function recordAssetUpdate(
   assetId: string,
-  performedBy: string,
+  performedById: string,
   notes?: string
 ) {
   // Fetch tenantId from asset
@@ -235,7 +235,7 @@ export async function recordAssetUpdate(
     assetId,
     tenantId: asset.tenantId,
     action: AssetHistoryAction.UPDATED,
-    performedBy,
+    performedById,
     notes: notes || 'Asset updated',
   });
 }
@@ -244,13 +244,13 @@ export async function getAssetHistory(assetId: string) {
   return await prisma.assetHistory.findMany({
     where: { assetId },
     include: {
-      fromUser: {
+      fromMember: {
         select: { id: true, name: true, email: true },
       },
-      toUser: {
+      toMember: {
         select: { id: true, name: true, email: true },
       },
-      performer: {
+      performedBy: {
         select: { id: true, name: true, email: true },
       },
     },
@@ -258,25 +258,25 @@ export async function getAssetHistory(assetId: string) {
   });
 }
 
-export async function getUserAssetHistory(userId: string) {
+export async function getMemberAssetHistory(memberId: string) {
   return await prisma.assetHistory.findMany({
     where: {
       OR: [
-        { fromUserId: userId },
-        { toUserId: userId },
+        { fromMemberId: memberId },
+        { toMemberId: memberId },
       ],
     },
     include: {
       asset: {
         select: { id: true, model: true, assetTag: true, type: true },
       },
-      fromUser: {
+      fromMember: {
         select: { id: true, name: true, email: true },
       },
-      toUser: {
+      toMember: {
         select: { id: true, name: true, email: true },
       },
-      performer: {
+      performedBy: {
         select: { id: true, name: true, email: true },
       },
     },

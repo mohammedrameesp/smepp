@@ -177,7 +177,7 @@ export function EmployeeListTable() {
       {error && (
         <Alert variant="error">
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
+          <AlertDescription className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <span>{error}</span>
             <Button variant="outline" size="sm" onClick={fetchEmployees} className="ml-4">
               <RefreshCw className="h-4 w-4 mr-1" />
@@ -188,10 +188,10 @@ export function EmployeeListTable() {
       )}
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div className="sm:col-span-2">
           <Input
-            placeholder="Search by name, email, employee ID, or QID..."
+            placeholder="Search name, email, ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full"
@@ -231,7 +231,7 @@ export function EmployeeListTable() {
       </div>
 
       {/* Results and Export */}
-      <div className="flex justify-between items-center text-sm text-gray-600">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 text-sm text-gray-600">
         <div>
           Showing {employees.length > 0 ? ((pagination.page - 1) * pagination.pageSize) + 1 : 0} - {Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total} employees
         </div>
@@ -245,23 +245,23 @@ export function EmployeeListTable() {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Employee</TableHead>
               <TableHead
-                className="cursor-pointer hover:bg-gray-100"
+                className="cursor-pointer hover:bg-gray-100 hidden lg:table-cell"
                 onClick={() => toggleSort('employeeId')}
               >
                 Employee ID {sortBy === 'employeeId' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
-              <TableHead>Designation</TableHead>
-              <TableHead className="text-center w-24">Assets</TableHead>
-              <TableHead className="text-center w-24">Subs</TableHead>
-              <TableHead className="text-center w-32">Tenure</TableHead>
-              <TableHead className="text-center w-28">Onboarding</TableHead>
-              <TableHead className="text-center w-24">Actions</TableHead>
+              <TableHead className="hidden xl:table-cell">Designation</TableHead>
+              <TableHead className="text-center">Assets</TableHead>
+              <TableHead className="text-center hidden lg:table-cell">Subs</TableHead>
+              <TableHead className="text-center hidden xl:table-cell">Tenure</TableHead>
+              <TableHead className="text-center hidden lg:table-cell">Onboarding</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -313,40 +313,40 @@ export function EmployeeListTable() {
                       </div>
                     </Link>
                   </TableCell>
-                  <TableCell className="font-mono text-sm">
+                  <TableCell className="font-mono text-sm hidden lg:table-cell">
                     {employee.hrProfile?.employeeId || <span className="text-gray-400">-</span>}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden xl:table-cell">
                     {employee.hrProfile?.designation || <span className="text-gray-400">-</span>}
                   </TableCell>
                   <TableCell className="text-center">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-50 text-blue-700">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 text-blue-700">
                       <Package className="h-3.5 w-3.5" />
                       <span className="font-semibold">{employee._count.assets}</span>
                     </span>
                   </TableCell>
-                  <TableCell className="text-center">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-purple-50 text-purple-700">
+                  <TableCell className="text-center hidden lg:table-cell">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-purple-50 text-purple-700">
                       <CreditCard className="h-3.5 w-3.5" />
                       <span className="font-semibold">{employee._count.subscriptions}</span>
                     </span>
                   </TableCell>
-                  <TableCell className="text-center">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-100 text-gray-700">
+                  <TableCell className="text-center hidden xl:table-cell">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 text-gray-700">
                       <Clock className="h-3.5 w-3.5" />
                       <span className="font-medium text-sm">
                         {calculateTenure(employee.hrProfile?.dateOfJoining || null)}
                       </span>
                     </span>
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center hidden lg:table-cell">
                     {employee.hrProfile?.onboardingComplete ? (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-green-50 text-green-700">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-green-50 text-green-700">
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         <span className="font-medium text-sm">Complete</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-orange-50 text-orange-700">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-orange-50 text-orange-700">
                         <Circle className="h-3.5 w-3.5" />
                         <span className="font-medium text-sm">
                           {employee.hrProfile?.onboardingStep
@@ -368,7 +368,7 @@ export function EmployeeListTable() {
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-sm text-gray-600">
             Page {pagination.page} of {pagination.totalPages}
           </div>

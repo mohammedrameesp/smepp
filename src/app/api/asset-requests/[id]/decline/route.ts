@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { AssetRequestStatus, Role } from '@prisma/client';
+import { AssetRequestStatus, TeamMemberRole } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { declineAssetAssignmentSchema } from '@/lib/validations/operations/asset-request';
 import { logAction, ActivityActions } from '@/lib/activity';
@@ -45,8 +45,8 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
       where: { id, tenantId },
       include: {
         asset: { select: { assetTag: true, model: true, brand: true, type: true } },
-        user: { select: { id: true, name: true, email: true } },
-        assignedByUser: { select: { id: true, name: true, email: true } },
+        member: { select: { id: true, name: true, email: true } },
+        assignedByMember: { select: { id: true, name: true, email: true } },
       },
     });
 
@@ -54,8 +54,8 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
       return NextResponse.json({ error: 'Asset request not found' }, { status: 404 });
     }
 
-    // Only the target user can decline
-    if (assetRequest.userId !== session.user.id) {
+    // Only the target member can decline
+    if (assetRequest.memberId !== session.user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
@@ -77,7 +77,7 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
           asset: {
             select: { id: true, assetTag: true, model: true, brand: true, type: true },
           },
-          user: { select: { id: true, name: true, email: true } },
+          member: { select: { id: true, name: true, email: true } },
         },
       });
 
@@ -119,10 +119,10 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
       const orgSlug = org?.slug || 'app';
       const orgName = org?.name || 'Durj';
 
-      const admins = await prisma.user.findMany({
+      const admins = await prisma.teamMember.findMany({
         where: {
-          role: Role.ADMIN,
-          organizationMemberships: { some: { organizationId: tenantId } },
+          tenantId,
+          role: TeamMemberRole.ADMIN,
         },
         select: { id: true, email: true },
       });
@@ -132,8 +132,8 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
         assetModel: assetRequest.asset.model,
         assetBrand: assetRequest.asset.brand,
         assetType: assetRequest.asset.type,
-        userName: assetRequest.user.name || assetRequest.user.email,
-        userEmail: assetRequest.user.email,
+        userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
+        userEmail: assetRequest.member?.email || '',
         reason: reason || 'No reason provided',
         orgSlug,
         orgName,
@@ -144,7 +144,7 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
       const notifications = admins.map(admin =>
         NotificationTemplates.assetAssignmentDeclined(
           admin.id,
-          assetRequest.user.name || assetRequest.user.email,
+          assetRequest.member?.name || assetRequest.member?.email || 'Employee',
           assetRequest.asset.assetTag || '',
           assetRequest.asset.model,
           assetRequest.requestNumber,

@@ -39,14 +39,8 @@ async function getUsersHandler(request: NextRequest, context: APIContext) {
   }
 
   // Build include clause
-  const include: any = {
-    _count: {
-      select: {
-        assets: true,
-        subscriptions: true,
-      },
-    },
-  };
+  // Note: Assets/subscriptions are now on TeamMember, not User
+  const include: any = {};
 
   // Include HR profile if requested (for date of joining, etc.)
   if (includeHrProfile || includeAll) {
@@ -61,14 +55,8 @@ async function getUsersHandler(request: NextRequest, context: APIContext) {
     };
   }
 
-  // Include salary structure if includeAll (for payroll module)
-  if (includeAll) {
-    include.salaryStructure = {
-      select: {
-        id: true,
-      },
-    };
-  }
+  // Note: salaryStructure is now on TeamMember, not User
+  // If salary data is needed, query TeamMember model instead
 
   // Fetch users (soft-delete fields isDeleted, deletedAt, scheduledDeletionAt are included by default)
   const users = await prisma.user.findMany({
@@ -151,6 +139,16 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     finalEmployeeId = `${prefix}-${String(count + 1).padStart(3, '0')}`;
   }
 
+  // For non-employees, set their profile image to the org logo
+  let userImage: string | null = null;
+  if (!isEmployee) {
+    const org = await prisma.organization.findUnique({
+      where: { id: tenantId },
+      select: { logoUrl: true },
+    });
+    userImage = org?.logoUrl || null;
+  }
+
   // Build user data
   const userData: any = {
     name,
@@ -159,6 +157,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     isEmployee,
     canLogin,
     isOnWps: isEmployee ? isOnWps : false, // Only set WPS for employees
+    image: userImage, // Set to org logo for non-employees, null for employees
     emailVerified: null,
     // Create organization membership so user appears in tenant-filtered queries
     organizationMemberships: {
@@ -188,12 +187,6 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
   const user = await prisma.user.create({
     data: userData,
     include: {
-      _count: {
-        select: {
-          assets: true,
-          subscriptions: true,
-        },
-      },
       hrProfile: {
         select: {
           employeeId: true,

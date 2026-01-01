@@ -464,6 +464,32 @@
   color: #0f172a;
 }
 
+/* Employee Options Container with Animation */
+.gs-employee-options {
+  overflow: hidden;
+  animation: slideDown 0.25s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    max-height: 100px;
+    transform: translateY(0);
+  }
+}
+
+.gs-employee-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0.25rem 0 0;
+  padding-left: 0.125rem;
+}
+
 /* Modules Grid */
 .gs-modules-grid {
   display: grid;

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Lock, AlertCircle, Check, XCircle } from 'lucide-react';
+import { getPasswordStrength } from '@/lib/security/password-validation';
 import { useSubdomain } from '@/hooks/use-subdomain';
 import { useTenantBranding } from '@/hooks/use-tenant-branding';
 import { TenantBrandedPanel } from '@/components/auth/TenantBrandedPanel';
@@ -30,7 +31,7 @@ export default function ResetPasswordPage() {
   const { branding, isLoading: brandingLoading } = useTenantBranding(subdomain);
 
   // Dynamic colors based on branding
-  const primaryColor = branding?.primaryColor || '#2563eb';
+  const primaryColor = branding?.primaryColor || '#1E40AF';
   const orgName = branding?.organizationName || 'Durj';
 
   // Validate token on mount
@@ -226,6 +227,35 @@ export default function ResetPasswordPage() {
                         disabled={isLoading}
                       />
                     </div>
+                    {/* Password Strength Indicator */}
+                    {password.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1 flex-1">
+                          {[0, 1, 2, 3].map((i) => {
+                            const strength = getPasswordStrength(password);
+                            return (
+                              <div
+                                key={i}
+                                className={`h-1 flex-1 rounded-full transition-colors ${
+                                  i < strength.score
+                                    ? strength.strength === 'weak' ? 'bg-red-500' :
+                                      strength.strength === 'fair' ? 'bg-amber-500' :
+                                      strength.strength === 'good' ? 'bg-yellow-500' : 'bg-green-500'
+                                    : 'bg-slate-200 dark:bg-slate-600'
+                                }`}
+                              />
+                            );
+                          })}
+                        </div>
+                        <span className={`text-xs font-medium capitalize ${
+                          getPasswordStrength(password).strength === 'weak' ? 'text-red-500' :
+                          getPasswordStrength(password).strength === 'fair' ? 'text-amber-500' :
+                          getPasswordStrength(password).strength === 'good' ? 'text-yellow-600' : 'text-green-500'
+                        }`}>
+                          {getPasswordStrength(password).strength}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">

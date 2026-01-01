@@ -124,12 +124,12 @@ export default function SuperAdminsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Super Admins</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Super Admins</h1>
           <p className="text-slate-500 text-sm">Manage platform administrators with elevated privileges</p>
         </div>
-        <Button onClick={() => setShowInvite(true)} className="bg-slate-900 hover:bg-slate-800">
+        <Button onClick={() => setShowInvite(true)} className="bg-slate-900 hover:bg-slate-800 w-full sm:w-auto">
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Admin
         </Button>
@@ -157,7 +157,7 @@ export default function SuperAdminsPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
@@ -222,79 +222,81 @@ export default function SuperAdminsPage() {
           </div>
         ) : (
           <>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50">
-                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Admin</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">2FA Status</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Email Status</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Added</th>
-                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredAdmins.map((admin) => (
-                  <tr key={admin.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-medium text-sm">
-                          {(admin.name || admin.email)?.[0]?.toUpperCase() || '?'}
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900">{admin.name || 'No name'}</p>
-                          <p className="text-xs text-slate-400">{admin.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      {admin.twoFactorEnabled ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-                          <ShieldCheck className="h-3.5 w-3.5" />
-                          Enabled
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">
-                          <ShieldAlert className="h-3.5 w-3.5" />
-                          Not Enabled
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-5 py-4">
-                      {admin.emailVerified ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
-                          <CheckCircle className="h-3.5 w-3.5" />
-                          Verified
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                          <AlertCircle className="h-3.5 w-3.5" />
-                          Pending
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-5 py-4 text-slate-400 text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5" />
-                        {formatDistanceToNow(new Date(admin.createdAt), { addSuffix: true })}
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleRemoveAdmin(admin.id)}
-                          className="p-1.5 hover:bg-rose-100 rounded-lg transition-colors text-rose-600"
-                          title="Remove super admin privileges"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[600px]">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50">
+                    <th className="text-left px-4 lg:px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Admin</th>
+                    <th className="text-left px-4 lg:px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">2FA Status</th>
+                    <th className="text-left px-4 lg:px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider hidden sm:table-cell">Email Status</th>
+                    <th className="text-left px-4 lg:px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider hidden md:table-cell">Added</th>
+                    <th className="text-left px-4 lg:px-5 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredAdmins.map((admin) => (
+                    <tr key={admin.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 lg:px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-medium text-sm flex-shrink-0">
+                            {(admin.name || admin.email)?.[0]?.toUpperCase() || '?'}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-900 truncate">{admin.name || 'No name'}</p>
+                            <p className="text-xs text-slate-400 truncate">{admin.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 lg:px-5 py-4">
+                        {admin.twoFactorEnabled ? (
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Enabled</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full">
+                            <ShieldAlert className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Not Enabled</span>
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 lg:px-5 py-4 hidden sm:table-cell">
+                        {admin.emailVerified ? (
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            Verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            Pending
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 lg:px-5 py-4 text-slate-400 text-xs hidden md:table-cell">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {formatDistanceToNow(new Date(admin.createdAt), { addSuffix: true })}
+                        </div>
+                      </td>
+                      <td className="px-4 lg:px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleRemoveAdmin(admin.id)}
+                            className="p-1.5 hover:bg-rose-100 rounded-lg transition-colors text-rose-600"
+                            title="Remove super admin privileges"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-            <div className="px-5 py-4 border-t border-slate-100">
+            <div className="px-4 lg:px-5 py-4 border-t border-slate-100">
               <p className="text-sm text-slate-500">
                 Showing <span className="font-medium text-slate-700">{filteredAdmins.length}</span> of{' '}
                 <span className="font-medium text-slate-700">{admins.length}</span> super admins

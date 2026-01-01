@@ -39,18 +39,18 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
       }, { status: 400 });
     }
 
-    const { q, type, status, userId: filterUserId, assetId, p, ps, sort, order } = validation.data;
+    const { q, type, status, memberId: filterMemberId, assetId, p, ps, sort, order } = validation.data;
 
     // Non-admin users can only see their own requests
     const isAdmin = userRole === Role.ADMIN;
-    const effectiveUserId = isAdmin ? filterUserId : currentUserId;
+    const effectiveMemberId = isAdmin ? filterMemberId : currentUserId;
 
     // Build where clause with tenant filtering
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: Record<string, any> = { tenantId };
 
-    if (effectiveUserId) {
-      where.userId = effectiveUserId;
+    if (effectiveMemberId) {
+      where.memberId = effectiveMemberId;
     }
     if (type) {
       where.type = type;
@@ -66,8 +66,8 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
         { requestNumber: { contains: q, mode: 'insensitive' } },
         { asset: { model: { contains: q, mode: 'insensitive' } } },
         { asset: { assetTag: { contains: q, mode: 'insensitive' } } },
-        { user: { name: { contains: q, mode: 'insensitive' } } },
-        { user: { email: { contains: q, mode: 'insensitive' } } },
+        { member: { name: { contains: q, mode: 'insensitive' } } },
+        { member: { email: { contains: q, mode: 'insensitive' } } },
         { reason: { contains: q, mode: 'insensitive' } },
       ];
     }
@@ -88,20 +88,20 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
               status: true,
             },
           },
-          user: {
+          member: {
             select: {
               id: true,
               name: true,
               email: true,
             },
           },
-          assignedByUser: {
+          assignedByMember: {
             select: {
               id: true,
               name: true,
             },
           },
-          processedByUser: {
+          processedByMember: {
             select: {
               id: true,
               name: true,
@@ -142,7 +142,7 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
     // Determine request type and validate accordingly
     let validatedData;
     let assetId: string;
-    let userId: string;
+    let memberId: string;
     let reason: string | null = null;
     let notes: string | null = null;
     let type: AssetRequestType;
@@ -165,7 +165,7 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
 
       validatedData = validation.data;
       assetId = validatedData.assetId;
-      userId = validatedData.userId;
+      memberId = validatedData.memberId;
       reason = validatedData.reason || null;
       notes = validatedData.notes || null;
       type = AssetRequestType.ADMIN_ASSIGNMENT;
@@ -173,7 +173,7 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
       activityAction = ActivityActions.ASSET_ASSIGNMENT_CREATED;
 
       // Check if can assign
-      const canAssign = await canAssignAsset(assetId, userId);
+      const canAssign = await canAssignAsset(assetId, memberId);
       if (!canAssign.canAssign) {
         return NextResponse.json({ error: canAssign.reason }, { status: 400 });
       }
@@ -190,7 +190,7 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
 
       validatedData = validation.data;
       assetId = validatedData.assetId;
-      userId = currentUserId;
+      memberId = currentUserId;
       reason = validatedData.reason;
       notes = validatedData.notes || null;
       type = AssetRequestType.RETURN_REQUEST;
@@ -198,7 +198,7 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
       activityAction = ActivityActions.ASSET_RETURN_REQUESTED;
 
       // Check if can return
-      const canReturn = await canReturnAsset(assetId, userId);
+      const canReturn = await canReturnAsset(assetId, memberId);
       if (!canReturn.canReturn) {
         return NextResponse.json({ error: canReturn.reason }, { status: 400 });
       }
@@ -215,7 +215,7 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
 
       validatedData = validation.data;
       assetId = validatedData.assetId;
-      userId = currentUserId;
+      memberId = currentUserId;
       reason = validatedData.reason;
       notes = validatedData.notes || null;
       type = AssetRequestType.EMPLOYEE_REQUEST;
@@ -223,7 +223,7 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
       activityAction = ActivityActions.ASSET_REQUEST_CREATED;
 
       // Check if can request
-      const canRequest = await canRequestAsset(assetId, userId);
+      const canRequest = await canRequestAsset(assetId, memberId);
       if (!canRequest.canRequest) {
         return NextResponse.json({ error: canRequest.reason }, { status: 400 });
       }
@@ -250,7 +250,7 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
           type,
           status,
           assetId,
-          userId,
+          memberId,
           reason,
           notes,
           assignedById: type === AssetRequestType.ADMIN_ASSIGNMENT ? currentUserId : null,
@@ -265,7 +265,7 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
               type: true,
             },
           },
-          user: {
+          member: {
             select: {
               id: true,
               name: true,
@@ -308,12 +308,15 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
       await sendAssetRequestNotifications({
         tenantId,
         currentUserId,
-        assetRequest,
+        assetRequest: {
+          ...assetRequest,
+          user: assetRequest.member,
+        },
         asset,
         type,
         reason,
         notes,
-        targetUserId: userId,
+        targetUserId: memberId,
       });
     } catch (notificationError) {
       console.error('Failed to send notification:', notificationError);

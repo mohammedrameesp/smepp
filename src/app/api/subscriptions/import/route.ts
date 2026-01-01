@@ -76,33 +76,33 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
       }
 
       const { data: parsedData } = parseResult;
-      const { id, assignedUserEmail } = parsedData;
+      const { id, assignedMemberEmail } = parsedData;
 
-      // Resolve assigned user - by ID first, then by email
-      let assignedUserId = parsedData.assignedUserId;
-      if (assignedUserId) {
-        // Verify the user belongs to this organization
-        const user = await prisma.user.findFirst({
+      // Resolve assigned member - by ID first, then by email
+      let assignedMemberId = parsedData.assignedMemberId;
+      if (assignedMemberId) {
+        // Verify the member belongs to this organization
+        const member = await prisma.teamMember.findFirst({
           where: {
-            id: assignedUserId,
-            organizationMemberships: { some: { organizationId: tenantId } },
+            id: assignedMemberId,
+            tenantId: tenantId,
           },
         });
-        assignedUserId = user?.id || null;
-      } else if (assignedUserEmail) {
-        const user = await prisma.user.findFirst({
+        assignedMemberId = member?.id || null;
+      } else if (assignedMemberEmail) {
+        const member = await prisma.teamMember.findFirst({
           where: {
-            email: assignedUserEmail,
-            organizationMemberships: { some: { organizationId: tenantId } },
+            email: assignedMemberEmail,
+            tenantId: tenantId,
           },
         });
-        assignedUserId = user?.id || null;
+        assignedMemberId = member?.id || null;
       }
 
       // Build database-ready subscription data
       const subscriptionData = {
         ...buildSubscriptionDbData(parsedData),
-        assignedUserId,
+        assignedMemberId,
         projectId: null as string | null,
       };
 
@@ -123,7 +123,7 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
 
           await tx.activityLog.create({
             data: {
-              actorUserId: currentUserId,
+              actorMemberId: currentUserId,
               action: existingById ? ActivityActions.SUBSCRIPTION_UPDATED : ActivityActions.SUBSCRIPTION_CREATED,
               entityType: 'Subscription',
               entityId: sub.id,
@@ -178,7 +178,7 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
 
           await tx.activityLog.create({
             data: {
-              actorUserId: currentUserId,
+              actorMemberId: currentUserId,
               action: ActivityActions.SUBSCRIPTION_UPDATED,
               entityType: 'Subscription',
               entityId: sub.id,
@@ -208,7 +208,7 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
 
         await tx.activityLog.create({
           data: {
-            actorUserId: currentUserId,
+            actorMemberId: currentUserId,
             action: ActivityActions.SUBSCRIPTION_CREATED,
             entityType: 'Subscription',
             entityId: sub.id,
@@ -260,13 +260,13 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
         // Find performer by name or email
         let performerId = currentUserId;
         if (parsedHistory.performedByName && parsedHistory.performedByName !== 'System') {
-          const performer = await prisma.user.findFirst({
+          const performer = await prisma.teamMember.findFirst({
             where: {
               OR: [
                 { name: parsedHistory.performedByName },
                 { email: parsedHistory.performedByName },
               ],
-              organizationMemberships: { some: { organizationId: tenantId } },
+              tenantId: tenantId,
             },
           });
           if (performer) {
@@ -286,7 +286,7 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
             assignmentDate: parsedHistory.assignmentDate,
             reactivationDate: parsedHistory.reactivationDate,
             notes: parsedHistory.notes,
-            performedBy: performerId,
+            performedById: performerId,
             createdAt: parsedHistory.createdAt,
           },
         });

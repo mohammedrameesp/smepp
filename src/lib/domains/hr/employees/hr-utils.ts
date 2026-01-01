@@ -160,7 +160,21 @@ export function calculateProfileCompletion<T extends Record<string, unknown>>(
   hrProfile: T | null | undefined,
   requiredFields: readonly string[] = HR_REQUIRED_FIELDS
 ): ProfileCompletionResult {
-  if (!hrProfile) {
+  return calculateTeamMemberProfileCompletion(hrProfile, requiredFields);
+}
+
+/**
+ * Calculate TeamMember profile completion percentage
+ * Works with the unified TeamMember model where HR fields are directly on the model
+ * @param teamMember - The TeamMember object to check
+ * @param requiredFields - Optional custom list of required fields
+ * @returns ProfileCompletionResult with percentage, isComplete flag, and details
+ */
+export function calculateTeamMemberProfileCompletion<T extends Record<string, unknown>>(
+  teamMember: T | null | undefined,
+  requiredFields: readonly string[] = HR_REQUIRED_FIELDS
+): ProfileCompletionResult {
+  if (!teamMember) {
     return {
       percentage: 0,
       isComplete: false,
@@ -174,7 +188,7 @@ export function calculateProfileCompletion<T extends Record<string, unknown>>(
   let filledFields = 0;
 
   requiredFields.forEach((field) => {
-    const value = hrProfile[field];
+    const value = teamMember[field];
     if (value !== null && value !== undefined && value !== '') {
       filledFields++;
     } else {

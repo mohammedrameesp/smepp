@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, FileText, User, Calendar, Clock, Phone, Mail, ExternalLink, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { FileText, User, Calendar, Clock, Phone, Mail, ExternalLink, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import {
   getLeaveStatusVariant,
@@ -147,70 +148,86 @@ export default function AdminLeaveRequestDetailPage() {
     fetchRequest();
   }, [params.id]);
 
+  // Map status to badge variant
+  const getStatusBadgeVariant = (status: LeaveStatus): 'success' | 'warning' | 'error' | 'default' => {
+    switch (status) {
+      case 'APPROVED': return 'success';
+      case 'PENDING': return 'warning';
+      case 'REJECTED': return 'error';
+      case 'CANCELLED': return 'default';
+      default: return 'default';
+    }
+  };
+
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-slate-200 rounded w-48"></div>
-          <div className="h-64 bg-slate-200 rounded-2xl"></div>
-        </div>
-      </div>
+      <>
+        <PageHeader
+          title="Loading..."
+          breadcrumbs={[
+            { label: 'Leave', href: '/admin/leave' },
+            { label: 'Requests', href: '/admin/leave/requests' },
+            { label: '...' },
+          ]}
+        />
+        <PageContent>
+          <div className="animate-pulse space-y-6">
+            <div className="h-64 bg-slate-200 rounded-2xl"></div>
+          </div>
+        </PageContent>
+      </>
     );
   }
 
   if (error || !request) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-          <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="h-8 w-8 text-rose-500" />
+      <>
+        <PageHeader
+          title="Not Found"
+          breadcrumbs={[
+            { label: 'Leave', href: '/admin/leave' },
+            { label: 'Requests', href: '/admin/leave/requests' },
+            { label: 'Error' },
+          ]}
+        />
+        <PageContent>
+          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+            <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="h-8 w-8 text-rose-500" />
+            </div>
+            <h3 className="font-semibold text-slate-900 text-lg mb-1">{error || 'Leave request not found'}</h3>
+            <p className="text-slate-500 mb-4">We couldn&apos;t find the leave request you&apos;re looking for.</p>
+            <Link href="/admin/leave/requests">
+              <Button variant="outline">Back to Requests</Button>
+            </Link>
           </div>
-          <h3 className="font-semibold text-slate-900 text-lg mb-1">{error || 'Leave request not found'}</h3>
-          <p className="text-slate-500 mb-4">We couldn&apos;t find the leave request you&apos;re looking for.</p>
-          <Link href="/admin/leave/requests">
-            <Button variant="outline">Back to Requests</Button>
-          </Link>
-        </div>
-      </div>
+        </PageContent>
+      </>
     );
   }
 
   const canCancel = canCancelLeaveRequest(request.status, new Date(request.startDate));
-  const StatusIcon = statusStyles[request.status]?.icon || Clock;
+  // Note: statusStyles is kept for potential future use in inline status displays within cards
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="mb-6">
-        <Link
-          href="/admin/leave/requests"
-          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-4"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Requests
-        </Link>
-
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-bold text-slate-900">
-                {request.requestNumber}
-              </h1>
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${statusStyles[request.status]?.bg} ${statusStyles[request.status]?.text}`}>
-                <StatusIcon className="h-3.5 w-3.5" />
-                {request.status}
-              </span>
-            </div>
-            <p className="text-slate-500">
-              Leave request from <span className="font-medium text-slate-700">{request.user.name}</span>
-            </p>
-            {request.createdBy && (
-              <p className="text-sm text-slate-400 mt-1">
-                Submitted by <span className="font-medium text-slate-600">{request.createdBy.name || request.createdBy.email}</span> on behalf of employee
-              </p>
-            )}
-          </div>
-
+    <>
+      <PageHeader
+        title={request.requestNumber}
+        subtitle={
+          request.createdBy
+            ? `Leave request from ${request.user.name} (submitted by ${request.createdBy.name || request.createdBy.email})`
+            : `Leave request from ${request.user.name}`
+        }
+        breadcrumbs={[
+          { label: 'Leave', href: '/admin/leave' },
+          { label: 'Requests', href: '/admin/leave/requests' },
+          { label: request.requestNumber },
+        ]}
+        badge={{
+          text: request.status,
+          variant: getStatusBadgeVariant(request.status),
+        }}
+        actions={
           <div className="flex gap-2">
             {request.status === 'PENDING' && (
               <LeaveApprovalActions
@@ -227,10 +244,11 @@ export default function AdminLeaveRequestDetailPage() {
               />
             )}
           </div>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <PageContent>
+        <div className="grid lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Leave Details Card */}
@@ -482,6 +500,7 @@ export default function AdminLeaveRequestDetailPage() {
           )}
         </div>
       </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

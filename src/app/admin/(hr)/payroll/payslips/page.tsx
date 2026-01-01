@@ -58,7 +58,7 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
   }
 
   if (search) {
-    where.user = {
+    where.member = {
       OR: [
         { name: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
@@ -70,16 +70,12 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
     prisma.payslip.findMany({
       where,
       include: {
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
             email: true,
-            hrProfile: {
-              select: {
-                employeeId: true,
-              },
-            },
+            employeeCode: true,
           },
         },
         payrollRun: {
@@ -93,7 +89,7 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
       orderBy: [
         { payrollRun: { year: 'desc' } },
         { payrollRun: { month: 'desc' } },
-        { user: { name: 'asc' } },
+        { member: { name: 'asc' } },
       ],
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -220,9 +216,9 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
                     <TableRow key={payslip.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{payslip.user.name}</div>
+                          <div className="font-medium">{payslip.member?.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {payslip.user.hrProfile?.employeeId || payslip.user.email}
+                            {payslip.member?.employeeCode || payslip.member?.email}
                           </div>
                         </div>
                       </TableCell>

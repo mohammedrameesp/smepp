@@ -83,13 +83,13 @@ async function cloneAssetHandler(request: NextRequest, context: APIContext) {
         status: 'SPARE', // New cloned assets default to SPARE
         acquisitionType: originalAsset.acquisitionType,
         transferNotes: originalAsset.transferNotes,
-        assignedUserId: null, // Clear assignment
+        assignedMemberId: null, // Clear assignment
         notes: originalAsset.notes,
         location: originalAsset.location,
         tenantId: session.user.organizationId,
       },
       include: {
-        assignedUser: {
+        assignedMember: {
           select: {
             id: true,
             name: true,

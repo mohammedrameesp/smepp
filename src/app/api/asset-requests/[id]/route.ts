@@ -41,21 +41,21 @@ async function getAssetRequestHandler(request: NextRequest, context: APIContext)
             serial: true,
           },
         },
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
             email: true,
           },
         },
-        assignedByUser: {
+        assignedByMember: {
           select: {
             id: true,
             name: true,
             email: true,
           },
         },
-        processedByUser: {
+        processedByMember: {
           select: {
             id: true,
             name: true,
@@ -82,7 +82,7 @@ async function getAssetRequestHandler(request: NextRequest, context: APIContext)
 
     // Non-admin can only view their own requests
     const isAdmin = session.user.role === Role.ADMIN;
-    if (!isAdmin && assetRequest.userId !== session.user.id) {
+    if (!isAdmin && assetRequest.memberId !== session.user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
@@ -118,7 +118,7 @@ async function deleteAssetRequestHandler(request: NextRequest, context: APIConte
     }
 
     // Check if user can cancel
-    const isRequester = assetRequest.userId === session.user.id;
+    const isRequester = assetRequest.memberId === session.user.id;
     const isAdmin = session.user.role === Role.ADMIN;
 
     if (!isAdmin && !canCancelRequest(assetRequest.status, assetRequest.type, isRequester)) {

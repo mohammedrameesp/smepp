@@ -68,7 +68,7 @@ async function getCalendarHandler(request: NextRequest, context: APIContext) {
     const leaveRequests = await prisma.leaveRequest.findMany({
       where,
       include: {
-        user: {
+        member: {
           select: {
             id: true,
             name: true,
@@ -89,7 +89,7 @@ async function getCalendarHandler(request: NextRequest, context: APIContext) {
     // Transform to calendar events format
     const events = leaveRequests.map((request) => ({
       id: request.id,
-      title: `${request.user.name} - ${request.leaveType.name}`,
+      title: `${request.member.name} - ${request.leaveType.name}`,
       start: request.startDate.toISOString(),
       end: request.endDate.toISOString(),
       allDay: true,
@@ -97,9 +97,9 @@ async function getCalendarHandler(request: NextRequest, context: APIContext) {
       borderColor: request.leaveType.color,
       extendedProps: {
         requestNumber: request.requestNumber,
-        userId: request.userId,
-        userName: request.user.name,
-        userEmail: request.user.email,
+        memberId: request.memberId,
+        memberName: request.member.name,
+        memberEmail: request.member.email,
         leaveTypeId: request.leaveTypeId,
         leaveTypeName: request.leaveType.name,
         status: request.status,

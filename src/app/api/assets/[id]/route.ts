@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
+import { TeamMemberRole } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updateAssetSchema } from '@/lib/validations/assets';
 import { logAction, ActivityActions } from '@/lib/activity';
@@ -37,7 +37,7 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
     const asset = await prisma.asset.findFirst({
       where: { id, tenantId },
       include: {
-        assignedUser: {
+        assignedMember: {
           select: {
             id: true,
             name: true,
@@ -51,19 +51,19 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
     }
 
-    // Authorization check: Only admins or the assigned user can view the asset
-    if (session.user.role !== Role.ADMIN && asset.assignedUserId !== session.user.id) {
+    // Authorization check: Only admins or the assigned member can view the asset
+    if (session.user.role !== TeamMemberRole.ADMIN && asset.assignedMemberId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Fetch the most recent assignment date from history if asset is assigned
     let assignmentDate = null;
-    if (asset.assignedUserId) {
+    if (asset.assignedMemberId) {
       const mostRecentAssignment = await prisma.assetHistory.findFirst({
         where: {
           assetId: id,
           action: 'ASSIGNED',
-          toUserId: asset.assignedUserId,
+          toMemberId: asset.assignedMemberId,
         },
         orderBy: { createdAt: 'desc' },
         select: { assignmentDate: true },
@@ -111,7 +111,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     const currentAsset = await prisma.asset.findFirst({
       where: { id, tenantId },
       include: {
-        assignedUser: {
+        assignedMember: {
           select: { id: true, name: true, email: true },
         },
       },
@@ -150,30 +150,30 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       updateData.priceQAR = calculatedPriceQAR;
     }
 
-    // Validate that the assigned user belongs to the same organization
-    if (updateData.assignedUserId) {
-      const assignedUser = await prisma.user.findFirst({
+    // Validate that the assigned member belongs to the same organization
+    if (updateData.assignedMemberId) {
+      const assignedMember = await prisma.teamMember.findFirst({
         where: {
-          id: updateData.assignedUserId as string,
-          organizationMemberships: { some: { organizationId: tenantId } },
+          id: updateData.assignedMemberId as string,
+          tenantId,
         },
         select: { id: true },
       });
 
-      if (!assignedUser) {
-        return NextResponse.json({ error: 'Assigned user not found in this organization' }, { status: 400 });
+      if (!assignedMember) {
+        return NextResponse.json({ error: 'Assigned member not found in this organization' }, { status: 400 });
       }
     }
 
     // Auto-unassign if status is changing to anything other than IN_USE
-    if (data.status && data.status !== 'IN_USE' && currentAsset.assignedUserId) {
-      updateData.assignedUserId = null;
+    if (data.status && data.status !== 'IN_USE' && currentAsset.assignedMemberId) {
+      updateData.assignedMemberId = null;
 
       // Record unassignment in history
       const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
       await recordAssetAssignment(
         id,
-        currentAsset.assignedUserId,
+        currentAsset.assignedMemberId,
         null,
         session.user.id,
         `Asset automatically unassigned due to status change to ${data.status}`
@@ -196,7 +196,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       where: { id },
       data: updateData,
       include: {
-        assignedUser: {
+        assignedMember: {
           select: {
             id: true,
             name: true,
@@ -207,24 +207,24 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     });
 
     // Track assignment changes with custom date
-    const userChanged = data.assignedUserId !== undefined && data.assignedUserId !== currentAsset.assignedUserId;
+    const memberChanged = data.assignedMemberId !== undefined && data.assignedMemberId !== currentAsset.assignedMemberId;
 
-    if (userChanged) {
-      // User assignment changed - create new history record
+    if (memberChanged) {
+      // Member assignment changed - create new history record
       const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
       const assignmentDate = data.assignmentDate ? new Date(data.assignmentDate) : new Date();
 
       await recordAssetAssignment(
         id,
-        currentAsset.assignedUserId,
-        data.assignedUserId ?? null,
+        currentAsset.assignedMemberId,
+        data.assignedMemberId ?? null,
         session.user.id,
         undefined,
         assignmentDate
       );
 
-      // Send assignment email to the new user (if assigned, not unassigned)
-      if (asset.assignedUser?.email) {
+      // Send assignment email to the new member (if assigned, not unassigned)
+      if (asset.assignedMember?.email) {
         try {
           // Get org name for email
           const org = await prisma.organization.findUnique({
@@ -233,7 +233,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
           });
 
           const emailContent = assetAssignmentEmail({
-            userName: asset.assignedUser.name || asset.assignedUser.email,
+            userName: asset.assignedMember.name || asset.assignedMember.email,
             assetTag: asset.assetTag || 'N/A',
             assetType: asset.type,
             brand: asset.brand || 'N/A',
@@ -243,7 +243,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
             orgName: org?.name || 'Organization',
           });
           await sendEmail({
-            to: asset.assignedUser.email,
+            to: asset.assignedMember.email,
             subject: emailContent.subject,
             html: emailContent.html,
             text: emailContent.text,
@@ -252,14 +252,14 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
           // Don't fail the request if email fails
         }
       }
-    } else if (data.assignmentDate && currentAsset.assignedUserId && !userChanged) {
-      // User didn't change but assignment date might have changed
-      // Find the most recent assignment history for the current user
+    } else if (data.assignmentDate && currentAsset.assignedMemberId && !memberChanged) {
+      // Member didn't change but assignment date might have changed
+      // Find the most recent assignment history for the current member
       const mostRecentAssignment = await prisma.assetHistory.findFirst({
         where: {
           assetId: id,
           action: 'ASSIGNED',
-          toUserId: currentAsset.assignedUserId,
+          toMemberId: currentAsset.assignedMemberId,
         },
         orderBy: { createdAt: 'desc' }
       });
@@ -284,8 +284,8 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
         await recordAssetAssignment(
           id,
-          null,  // No previous user
-          currentAsset.assignedUserId,
+          null,  // No previous member
+          currentAsset.assignedMemberId,
           session.user.id,
           'Historical assignment record created during date update',
           newDate
@@ -293,25 +293,25 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       }
     }
 
-    // Pre-fetch user data for change detection display (fixes N+1 query)
-    const userIdsToFetch = new Set<string>();
-    if (currentAsset.assignedUserId) userIdsToFetch.add(currentAsset.assignedUserId);
-    if (data.assignedUserId && typeof data.assignedUserId === 'string') userIdsToFetch.add(data.assignedUserId);
+    // Pre-fetch member data for change detection display (fixes N+1 query)
+    const memberIdsToFetch = new Set<string>();
+    if (currentAsset.assignedMemberId) memberIdsToFetch.add(currentAsset.assignedMemberId);
+    if (data.assignedMemberId && typeof data.assignedMemberId === 'string') memberIdsToFetch.add(data.assignedMemberId);
 
-    const userMap = new Map<string, { name: string | null; email: string }>();
-    if (userIdsToFetch.size > 0) {
-      const users = await prisma.user.findMany({
-        where: { id: { in: Array.from(userIdsToFetch) } },
+    const memberMap = new Map<string, { name: string | null; email: string }>();
+    if (memberIdsToFetch.size > 0) {
+      const members = await prisma.teamMember.findMany({
+        where: { id: { in: Array.from(memberIdsToFetch) } },
         select: { id: true, name: true, email: true },
       });
-      users.forEach(u => userMap.set(u.id, { name: u.name, email: u.email }));
+      members.forEach(m => memberMap.set(m.id, { name: m.name, email: m.email }));
     }
 
     // Detect changes using helper (handles date/decimal normalization, human-readable labels)
     const changes = detectAssetChanges(
       data as Record<string, unknown>,
       currentAsset as unknown as Record<string, unknown>,
-      userMap
+      memberMap
     );
     const changeDetails = getFormattedChanges(changes);
 

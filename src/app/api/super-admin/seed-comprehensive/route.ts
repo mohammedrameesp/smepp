@@ -13,6 +13,9 @@ import { requireRecent2FA } from '@/lib/two-factor';
 import {
   Role,
   OrgRole,
+  TeamMemberRole,
+  Gender,
+  MaritalStatus,
   AssetStatus,
   BillingCycle,
   SubscriptionStatus,
@@ -161,7 +164,7 @@ export async function POST(request: NextRequest) {
     // ============================================
     // 1. CREATE EMPLOYEES WITH HR PROFILES
     // ============================================
-    const createdUsers: Array<{ user: { id: string; name: string | null }; data: typeof EMPLOYEES[0] }> = [];
+    const createdMembers: Array<{ user: { id: string; name: string | null }; member: { id: string; name: string | null }; data: typeof EMPLOYEES[0] }> = [];
 
     for (let i = 0; i < EMPLOYEES.length; i++) {
       const emp = EMPLOYEES[i];
@@ -210,17 +213,23 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Create HR Profile if not exists
-      const existingProfile = await prisma.hRProfile.findUnique({ where: { userId: user.id } });
+      // Create TeamMember if not exists (combines membership + HR profile data)
+      let member = await prisma.teamMember.findFirst({
+        where: { tenantId, email: emp.email }
+      });
 
-      if (!existingProfile) {
-        await prisma.hRProfile.create({
+      if (!member) {
+        member = await prisma.teamMember.create({
           data: {
             tenantId,
-            userId: user.id,
+            email: emp.email,
+            name: emp.name,
+            canLogin: true,
+            role: (emp.role === Role.ADMIN || emp.role === Role.MANAGER || emp.role === Role.HR_MANAGER || emp.role === Role.FINANCE_MANAGER) ? TeamMemberRole.ADMIN : TeamMemberRole.MEMBER,
+            isOwner: i === 0,
             dateOfBirth,
-            gender: emp.gender,
-            maritalStatus: randomElement(['Single', 'Married', 'Married', 'Married']),
+            gender: emp.gender === 'Male' ? Gender.MALE : Gender.FEMALE,
+            maritalStatus: randomElement([MaritalStatus.SINGLE, MaritalStatus.MARRIED, MaritalStatus.MARRIED, MaritalStatus.MARRIED]),
             nationality: emp.nationality,
             qatarMobile: randomPhone(),
             otherMobileCode: '+' + randomInt(1, 999),
@@ -245,7 +254,7 @@ export async function POST(request: NextRequest) {
             passportExpiry,
             healthCardExpiry,
             sponsorshipType: i < 3 ? 'Self' : 'Company',
-            employeeId: `DEMO-${currentYear}-${String(i + 1).padStart(3, '0')}`,
+            employeeCode: `DEMO-${currentYear}-${String(i + 1).padStart(3, '0')}`,
             designation: emp.designation,
             dateOfJoining,
             hajjLeaveTaken: i === 2,
@@ -266,7 +275,7 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      createdUsers.push({ user: { id: user.id, name: user.name }, data: emp });
+      createdMembers.push({ user: { id: user.id, name: user.name }, member: { id: member.id, name: member.name }, data: emp });
     }
 
     // ============================================
@@ -307,15 +316,15 @@ export async function POST(request: NextRequest) {
     const sickLeaveType = leaveTypes.find(lt => lt.name === 'Sick Leave');
 
     if (annualLeaveType) {
-      for (const { user } of createdUsers) {
+      for (const { member } of createdMembers) {
         const existing = await prisma.leaveBalance.findFirst({
-          where: { userId: user.id, leaveTypeId: annualLeaveType.id, year: currentYear, tenantId },
+          where: { memberId: member.id, leaveTypeId: annualLeaveType.id, year: currentYear, tenantId },
         });
         if (!existing) {
           await prisma.leaveBalance.create({
             data: {
               tenantId,
-              userId: user.id,
+              memberId: member.id,
               leaveTypeId: annualLeaveType.id,
               year: currentYear,
               entitlement: 21,
@@ -360,7 +369,7 @@ export async function POST(request: NextRequest) {
           data: {
             tenantId,
             requestNumber: `DEMO-LR-${String(lrNum++).padStart(5, '0')}`,
-            userId: createdUsers[req.userIdx].user.id,
+            memberId: createdMembers[req.userIdx].member.id,
             leaveTypeId: req.type,
             startDate,
             endDate,
@@ -368,7 +377,7 @@ export async function POST(request: NextRequest) {
             totalDays,
             reason: req.reason,
             status: req.status,
-            approverId: req.status === LeaveStatus.APPROVED ? createdUsers[1].user.id : null,
+            approverId: req.status === LeaveStatus.APPROVED ? createdMembers[1].member.id : null,
             approvedAt: req.status === LeaveStatus.APPROVED ? addDays(startDate, -3) : null,
           },
         });
@@ -381,7 +390,7 @@ export async function POST(request: NextRequest) {
     // ============================================
     const existingAssets = await prisma.asset.count({ where: { tenantId } });
 
-    const createdAssets: { id: string; status: AssetStatus; assignedUserId: string | null }[] = [];
+    const createdAssets: { id: string; status: AssetStatus; assignedMemberId: string | null }[] = [];
     if (existingAssets < 10) {
       const assetData = [
         { tag: 'DEMO-LAP-001', type: 'Laptop', brand: 'Apple', model: 'MacBook Pro 16" M3 Max', price: 22000, userIdx: 0 },
@@ -419,11 +428,11 @@ export async function POST(request: NextRequest) {
             priceCurrency: 'QAR',
             priceQAR: asset.price,
             status: asset.status || AssetStatus.IN_USE,
-            assignedUserId: asset.userIdx !== null && asset.userIdx !== undefined ? createdUsers[asset.userIdx].user.id : null,
+            assignedMemberId: asset.userIdx !== null && asset.userIdx !== undefined ? createdMembers[asset.userIdx].member.id : null,
             location: asset.userIdx !== null ? 'Office' : asset.status === AssetStatus.SPARE ? 'IT Storage' : 'Studio',
           },
         });
-        createdAssets.push({ id: created.id, status: created.status, assignedUserId: created.assignedUserId });
+        createdAssets.push({ id: created.id, status: created.status, assignedMemberId: created.assignedMemberId });
         results.assets.created++;
       }
     }
@@ -506,7 +515,7 @@ export async function POST(request: NextRequest) {
             primaryContactEmail: `contact${suppNum}@${sup.name.toLowerCase().replace(/ /g, '')}.qa`,
             primaryContactMobile: `+974 ${randomPhone()}`,
             approvedAt: sup.status === SupplierStatus.APPROVED ? addMonths(today, -randomInt(6, 24)) : null,
-            approvedById: sup.status === SupplierStatus.APPROVED ? createdUsers[0].user.id : null,
+            approvedById: sup.status === SupplierStatus.APPROVED ? createdMembers[0].user.id : null,
             rejectionReason: sup.status === SupplierStatus.REJECTED ? 'Quality not meeting standards' : null,
           },
         });
@@ -550,11 +559,11 @@ export async function POST(request: NextRequest) {
             purchaseType: pr.type,
             costType: CostType.OPERATING_COST,
             paymentMode: PaymentMode.BANK_TRANSFER,
-            requesterId: randomElement(createdUsers.slice(2, 12)).user.id,
+            requesterId: randomElement(createdMembers.slice(2, 12)).user.id,
             totalAmount: pr.amount,
             currency: 'QAR',
             totalAmountQAR: pr.amount,
-            reviewedById: pr.status === PurchaseRequestStatus.APPROVED || pr.status === PurchaseRequestStatus.REJECTED ? createdUsers[2].user.id : null,
+            reviewedById: pr.status === PurchaseRequestStatus.APPROVED || pr.status === PurchaseRequestStatus.REJECTED ? createdMembers[2].user.id : null,
             reviewedAt: pr.status === PurchaseRequestStatus.APPROVED || pr.status === PurchaseRequestStatus.REJECTED ? addDays(today, -randomInt(1, 10)) : null,
             completedAt: pr.status === PurchaseRequestStatus.COMPLETED ? addDays(today, -randomInt(5, 20)) : null,
           },
@@ -582,8 +591,8 @@ export async function POST(request: NextRequest) {
     // ============================================
     // 10. CREATE SALARY STRUCTURES
     // ============================================
-    for (const { user, data } of createdUsers) {
-      const existing = await prisma.salaryStructure.findUnique({ where: { userId: user.id } });
+    for (const { member, data } of createdMembers) {
+      const existing = await prisma.salaryStructure.findUnique({ where: { memberId: member.id } });
       if (!existing) {
         const basic = data.salary * 0.6;
         const housing = data.salary * 0.25;
@@ -593,7 +602,7 @@ export async function POST(request: NextRequest) {
         await prisma.salaryStructure.create({
           data: {
             tenantId,
-            userId: user.id,
+            memberId: member.id,
             basicSalary: basic,
             housingAllowance: housing,
             transportAllowance: transport,
@@ -652,7 +661,7 @@ export async function POST(request: NextRequest) {
             issuedBy: 'Ministry of Commerce',
             expiryDate: addMonths(today, randomInt(-2, 24)),
             renewalCost: randomInt(200, 5000),
-            createdById: createdUsers[2].user.id,
+            createdById: createdMembers[2].user.id,
           },
         });
         results.companyDocs.created++;
@@ -682,7 +691,7 @@ export async function POST(request: NextRequest) {
         await prisma.notification.create({
           data: {
             tenantId,
-            recipientId: createdUsers[notif.recipientIdx].user.id,
+            recipientId: createdMembers[notif.recipientIdx].user.id,
             type: notif.type,
             title: notif.title,
             message: notif.message,
@@ -717,7 +726,7 @@ export async function POST(request: NextRequest) {
         await prisma.activityLog.create({
           data: {
             tenantId,
-            actorUserId: createdUsers[log.userIdx].user.id,
+            actorMemberId: createdMembers[log.userIdx].member.id,
             action: log.action,
             entityType: log.entityType,
             entityId: `entity-${i}`,

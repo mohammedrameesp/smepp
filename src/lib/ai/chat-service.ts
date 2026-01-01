@@ -69,7 +69,7 @@ async function recordUsage(
     await prisma.aIChatUsage.create({
       data: {
         tenantId,
-        userId,
+        memberId: userId,
         promptTokens: usage.prompt_tokens,
         completionTokens: usage.completion_tokens,
         totalTokens: usage.total_tokens,
@@ -122,7 +122,7 @@ export async function processChat(
     const created = await prisma.chatConversation.create({
       data: {
         tenantId: context.tenantId,
-        userId: context.userId,
+        memberId: context.userId,
         title: message.slice(0, 100), // Use first message as title
       },
     });
@@ -257,9 +257,9 @@ export async function processChat(
 /**
  * Get conversation history for a user
  */
-export async function getConversations(userId: string, tenantId: string) {
+export async function getConversations(memberId: string, tenantId: string) {
   return prisma.chatConversation.findMany({
-    where: { userId, tenantId },
+    where: { memberId, tenantId },
     orderBy: { updatedAt: 'desc' },
     take: 20,
     select: {
@@ -274,7 +274,7 @@ export async function getConversations(userId: string, tenantId: string) {
 /**
  * Get messages for a conversation
  */
-export async function getConversationMessages(conversationId: string, userId: string) {
+export async function getConversationMessages(conversationId: string, memberId: string) {
   const conversation = await prisma.chatConversation.findUnique({
     where: { id: conversationId },
     include: {
@@ -284,7 +284,7 @@ export async function getConversationMessages(conversationId: string, userId: st
     },
   });
 
-  if (!conversation || conversation.userId !== userId) {
+  if (!conversation || conversation.memberId !== memberId) {
     return null;
   }
 
@@ -294,12 +294,12 @@ export async function getConversationMessages(conversationId: string, userId: st
 /**
  * Delete a conversation
  */
-export async function deleteConversation(conversationId: string, userId: string) {
+export async function deleteConversation(conversationId: string, memberId: string) {
   const conversation = await prisma.chatConversation.findUnique({
     where: { id: conversationId },
   });
 
-  if (!conversation || conversation.userId !== userId) {
+  if (!conversation || conversation.memberId !== memberId) {
     return false;
   }
 

@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { Prisma } from '@prisma/client';
 import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
 import {
   MODULE_REGISTRY,
   getSerializableModules,
@@ -129,6 +131,9 @@ export async function POST(request: NextRequest) {
 
     const mod = MODULE_REGISTRY[moduleId];
 
+    // Revalidate admin layout to refresh navigation
+    revalidatePath('/admin', 'layout');
+
     return NextResponse.json({
       success: true,
       message: `"${mod.name}" has been installed successfully`,
@@ -210,23 +215,29 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: uninstallError }, { status: 400 });
     }
 
-    // Uninstall module
-    const updatedOrg = await prisma.organization.update({
-      where: { id: org.id },
-      data: {
-        enabledModules: org.enabledModules.filter(m => m !== moduleId),
-      },
-      select: {
-        enabledModules: true,
-      },
+    const mod = MODULE_REGISTRY[moduleId];
+
+    // Use transaction to ensure atomicity - delete data first, then update org
+    const updatedOrg = await prisma.$transaction(async (tx) => {
+      // If deleteData is true, delete associated data FIRST (inside transaction)
+      if (deleteData) {
+        await deleteModuleDataWithTx(tx, org.id, moduleId);
+      }
+
+      // Then uninstall module
+      return tx.organization.update({
+        where: { id: org.id },
+        data: {
+          enabledModules: org.enabledModules.filter(m => m !== moduleId),
+        },
+        select: {
+          enabledModules: true,
+        },
+      });
     });
 
-    // If deleteData is true, delete associated data
-    if (deleteData) {
-      await deleteModuleData(org.id, moduleId);
-    }
-
-    const mod = MODULE_REGISTRY[moduleId];
+    // Revalidate admin layout to refresh navigation
+    revalidatePath('/admin', 'layout');
 
     return NextResponse.json({
       success: true,
@@ -237,92 +248,106 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (error) {
     console.error('Uninstall module error:', error);
-    return NextResponse.json({ error: 'Failed to uninstall module' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Failed to uninstall module';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// HELPER: Delete module-specific data
+// HELPER: Delete module-specific data (transaction-aware)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-async function deleteModuleData(tenantId: string, moduleId: string): Promise<void> {
+async function deleteModuleDataWithTx(
+  tx: Prisma.TransactionClient,
+  tenantId: string,
+  moduleId: string
+): Promise<void> {
   // Delete data based on module
   // Note: Order matters due to foreign key constraints
   switch (moduleId) {
     case 'assets':
       // Delete related records first
-      await prisma.assetHistory.deleteMany({
+      await tx.assetHistory.deleteMany({
         where: { asset: { tenantId } },
       });
-      await prisma.maintenanceRecord.deleteMany({
+      await tx.maintenanceRecord.deleteMany({
         where: { asset: { tenantId } },
       });
-      await prisma.assetRequest.deleteMany({ where: { tenantId } });
-      await prisma.asset.deleteMany({ where: { tenantId } });
+      await tx.assetRequest.deleteMany({ where: { tenantId } });
+      await tx.asset.deleteMany({ where: { tenantId } });
       break;
 
     case 'subscriptions':
-      await prisma.subscriptionHistory.deleteMany({
+      await tx.subscriptionHistory.deleteMany({
         where: { subscription: { tenantId } },
       });
-      await prisma.subscription.deleteMany({ where: { tenantId } });
+      await tx.subscription.deleteMany({ where: { tenantId } });
       break;
 
     case 'suppliers':
-      await prisma.supplierEngagement.deleteMany({
+      await tx.supplierEngagement.deleteMany({
         where: { supplier: { tenantId } },
       });
-      await prisma.supplier.deleteMany({ where: { tenantId } });
+      await tx.supplier.deleteMany({ where: { tenantId } });
       break;
 
     case 'employees':
-      // Note: This will fail if leave/payroll still has data
-      // Should cascade delete or require those modules to be uninstalled first
-      await prisma.profileChangeRequest.deleteMany({ where: { tenantId } });
-      await prisma.hRProfile.deleteMany({ where: { tenantId } });
+      // Check for dependent data that would cause FK errors
+      const [leaveCount, payslipCount] = await Promise.all([
+        tx.leaveRequest.count({ where: { tenantId } }),
+        tx.payslip.count({ where: { tenantId } }),
+      ]);
+      if (leaveCount > 0 || payslipCount > 0) {
+        throw new Error(
+          'Cannot delete employee data: Leave or payroll records exist. ' +
+          'Please uninstall and delete data from those modules first.'
+        );
+      }
+      await tx.profileChangeRequest.deleteMany({ where: { tenantId } });
+      await tx.hRProfile.deleteMany({ where: { tenantId } });
       break;
 
     case 'leave':
-      await prisma.leaveRequestHistory.deleteMany({
+      await tx.leaveRequestHistory.deleteMany({
         where: { leaveRequest: { tenantId } },
       });
-      await prisma.leaveRequest.deleteMany({ where: { tenantId } });
-      await prisma.leaveBalance.deleteMany({ where: { tenantId } });
-      await prisma.leaveType.deleteMany({ where: { tenantId } });
+      await tx.leaveRequest.deleteMany({ where: { tenantId } });
+      await tx.leaveBalance.deleteMany({ where: { tenantId } });
+      await tx.leaveType.deleteMany({ where: { tenantId } });
       break;
 
     case 'payroll':
-      await prisma.loanRepayment.deleteMany({
+      await tx.loanRepayment.deleteMany({
         where: { loan: { tenantId } },
       });
-      await prisma.employeeLoan.deleteMany({ where: { tenantId } });
-      await prisma.payslipDeduction.deleteMany({
+      await tx.employeeLoan.deleteMany({ where: { tenantId } });
+      await tx.payslipDeduction.deleteMany({
         where: { payslip: { tenantId } },
       });
-      await prisma.payslip.deleteMany({ where: { tenantId } });
-      await prisma.payrollHistory.deleteMany({
+      await tx.payslip.deleteMany({ where: { tenantId } });
+      await tx.payrollHistory.deleteMany({
         where: { payrollRun: { tenantId } },
       });
-      await prisma.payrollRun.deleteMany({ where: { tenantId } });
-      await prisma.salaryStructureHistory.deleteMany({
+      await tx.payrollRun.deleteMany({ where: { tenantId } });
+      await tx.salaryStructureHistory.deleteMany({
         where: { salaryStructure: { tenantId } },
       });
-      await prisma.salaryStructure.deleteMany({ where: { tenantId } });
+      await tx.salaryStructure.deleteMany({ where: { tenantId } });
       break;
 
     case 'purchase-requests':
-      await prisma.purchaseRequestHistory.deleteMany({
+      await tx.purchaseRequestHistory.deleteMany({
         where: { purchaseRequest: { tenantId } },
       });
-      await prisma.purchaseRequestItem.deleteMany({
+      await tx.purchaseRequestItem.deleteMany({
         where: { purchaseRequest: { tenantId } },
       });
-      await prisma.purchaseRequest.deleteMany({ where: { tenantId } });
+      await tx.purchaseRequest.deleteMany({ where: { tenantId } });
       break;
 
     case 'documents':
-      await prisma.companyDocument.deleteMany({ where: { tenantId } });
-      await prisma.companyDocumentType.deleteMany({ where: { tenantId } });
+      await tx.companyDocument.deleteMany({ where: { tenantId } });
+      await tx.companyDocumentType.deleteMany({ where: { tenantId } });
       break;
 
     default:

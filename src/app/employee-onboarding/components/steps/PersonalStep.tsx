@@ -47,7 +47,7 @@ export function PersonalStep({ formData, updateField, errors }: PersonalStepProp
               id="dateOfBirth"
               value={formatDateForPicker(formData.dateOfBirth as string)}
               onChange={(val) => updateField('dateOfBirth', val)}
-              placeholder="Select date"
+              placeholder="DD/MM/YYYY"
               maxDate={new Date()}
             />
             {errors.dateOfBirth && (
@@ -63,7 +63,7 @@ export function PersonalStep({ formData, updateField, errors }: PersonalStepProp
               id="dateOfJoining"
               value={formatDateForPicker(formData.dateOfJoining as string)}
               onChange={(val) => updateField('dateOfJoining', val)}
-              placeholder="Select date"
+              placeholder="DD/MM/YYYY"
             />
             {errors.dateOfJoining && (
               <p className="text-sm text-red-600">{errors.dateOfJoining}</p>

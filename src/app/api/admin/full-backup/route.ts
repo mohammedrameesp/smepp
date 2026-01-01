@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
+import { TeamMemberRole } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import ExcelJS from 'exceljs';
 
 export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
+    if (!session || session.user.teamMemberRole !== TeamMemberRole.ADMIN) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -30,7 +30,7 @@ export async function GET(_request: NextRequest) {
 
     // Fetch all data from all tables (tenant-scoped)
     const [
-      users,
+      teamMembers,
       assets,
       assetHistory,
       maintenanceRecords,
@@ -39,23 +39,22 @@ export async function GET(_request: NextRequest) {
       activityLogs,
       suppliers,
       supplierEngagements,
-      hrProfiles,
       profileChangeRequests,
       purchaseRequests,
       purchaseRequestItems,
     ] = await Promise.all([
-      prisma.user.findMany({
-        where: {
-          organizationMemberships: { some: { organizationId: tenantId } },
-        },
+      prisma.teamMember.findMany({
+        where: { tenantId },
         select: {
           id: true,
           name: true,
           email: true,
-          emailVerified: true,
-          image: true,
           role: true,
-          isSystemAccount: true,
+          isEmployee: true,
+          isOnWps: true,
+          employeeCode: true,
+          designation: true,
+          dateOfJoining: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -63,16 +62,16 @@ export async function GET(_request: NextRequest) {
       prisma.asset.findMany({
         where: { tenantId },
         include: {
-          assignedUser: { select: { email: true, name: true } },
+          assignedMember: { select: { email: true, name: true } },
         },
       }),
       prisma.assetHistory.findMany({
         where: { asset: { tenantId } },
         include: {
           asset: { select: { assetTag: true, model: true } },
-          fromUser: { select: { email: true, name: true } },
-          toUser: { select: { email: true, name: true } },
-          performer: { select: { email: true, name: true } },
+          fromMember: { select: { email: true, name: true } },
+          toMember: { select: { email: true, name: true } },
+          performedBy: { select: { email: true, name: true } },
         },
       }),
       prisma.maintenanceRecord.findMany({
@@ -84,22 +83,22 @@ export async function GET(_request: NextRequest) {
       prisma.subscription.findMany({
         where: { tenantId },
         include: {
-          assignedUser: { select: { email: true, name: true } },
+          assignedMember: { select: { email: true, name: true } },
         },
       }),
       prisma.subscriptionHistory.findMany({
         where: { subscription: { tenantId } },
         include: {
           subscription: { select: { serviceName: true } },
-          oldUser: { select: { email: true, name: true } },
-          newUser: { select: { email: true, name: true } },
-          performer: { select: { email: true, name: true } },
+          oldMember: { select: { email: true, name: true } },
+          newMember: { select: { email: true, name: true } },
+          performedBy: { select: { email: true, name: true } },
         },
       }),
       prisma.activityLog.findMany({
         where: { tenantId },
         include: {
-          actorUser: { select: { email: true, name: true } },
+          actorMember: { select: { email: true, name: true } },
         },
       }),
       prisma.supplier.findMany({ where: { tenantId } }),
@@ -109,18 +108,10 @@ export async function GET(_request: NextRequest) {
           supplier: { select: { name: true } },
         },
       }),
-      safeQuery(prisma.hRProfile.findMany({
-        where: { tenantId },
-        include: {
-          user: { select: { email: true, name: true } },
-        },
-      }), []),
       safeQuery(prisma.profileChangeRequest.findMany({
         where: { tenantId },
         include: {
-          hrProfile: {
-            include: { user: { select: { email: true, name: true } } },
-          },
+          member: { select: { email: true, name: true } },
         },
       }), []),
       safeQuery(prisma.purchaseRequest.findMany({
@@ -152,30 +143,34 @@ export async function GET(_request: NextRequest) {
       return `${day}/${month}/${year}`;
     };
 
-    // 1. Users Sheet
-    const usersSheet = workbook.addWorksheet('Users');
-    usersSheet.columns = [
+    // 1. Team Members Sheet
+    const membersSheet = workbook.addWorksheet('Team Members');
+    membersSheet.columns = [
       { header: 'ID', key: 'id', width: 30 },
       { header: 'Name', key: 'name', width: 25 },
       { header: 'Email', key: 'email', width: 30 },
-      { header: 'Email Verified', key: 'emailVerified', width: 20 },
-      { header: 'Image', key: 'image', width: 50 },
       { header: 'Role', key: 'role', width: 15 },
-      { header: 'Is System Account', key: 'isSystemAccount', width: 20 },
+      { header: 'Is Employee', key: 'isEmployee', width: 15 },
+      { header: 'Is On WPS', key: 'isOnWps', width: 15 },
+      { header: 'Employee Code', key: 'employeeCode', width: 20 },
+      { header: 'Designation', key: 'designation', width: 25 },
+      { header: 'Date of Joining', key: 'dateOfJoining', width: 20 },
       { header: 'Created At', key: 'createdAt', width: 20 },
       { header: 'Updated At', key: 'updatedAt', width: 20 },
     ];
-    users.forEach(user => {
-      usersSheet.addRow({
-        id: user.id,
-        name: user.name || '',
-        email: user.email,
-        emailVerified: formatDate(user.emailVerified),
-        image: user.image || '',
-        role: user.role,
-        isSystemAccount: user.isSystemAccount ? 'Yes' : 'No',
-        createdAt: formatDate(user.createdAt),
-        updatedAt: formatDate(user.updatedAt),
+    teamMembers.forEach(member => {
+      membersSheet.addRow({
+        id: member.id,
+        name: member.name || '',
+        email: member.email,
+        role: member.role,
+        isEmployee: member.isEmployee ? 'Yes' : 'No',
+        isOnWps: member.isOnWps ? 'Yes' : 'No',
+        employeeCode: member.employeeCode || '',
+        designation: member.designation || '',
+        dateOfJoining: formatDate(member.dateOfJoining),
+        createdAt: formatDate(member.createdAt),
+        updatedAt: formatDate(member.updatedAt),
       });
     });
 
@@ -200,8 +195,8 @@ export async function GET(_request: NextRequest) {
       { header: 'Status', key: 'status', width: 15 },
       { header: 'Acquisition Type', key: 'acquisitionType', width: 20 },
       { header: 'Transfer Notes', key: 'transferNotes', width: 30 },
-      { header: 'Assigned User ID', key: 'assignedUserId', width: 30 },
-      { header: 'Assigned User Email', key: 'assignedUserEmail', width: 30 },
+      { header: 'Assigned Member ID', key: 'assignedMemberId', width: 30 },
+      { header: 'Assigned Member Email', key: 'assignedMemberEmail', width: 30 },
       { header: 'Notes', key: 'notes', width: 40 },
       { header: 'Created At', key: 'createdAt', width: 20 },
       { header: 'Updated At', key: 'updatedAt', width: 20 },
@@ -226,8 +221,8 @@ export async function GET(_request: NextRequest) {
         status: asset.status,
         acquisitionType: asset.acquisitionType,
         transferNotes: asset.transferNotes || '',
-        assignedUserId: asset.assignedUserId || '',
-        assignedUserEmail: asset.assignedUser?.email || '',
+        assignedMemberId: asset.assignedMemberId || '',
+        assignedMemberEmail: asset.assignedMember?.email || '',
         notes: asset.notes || '',
         createdAt: formatDate(asset.createdAt),
         updatedAt: formatDate(asset.updatedAt),
@@ -241,14 +236,14 @@ export async function GET(_request: NextRequest) {
       { header: 'Asset ID', key: 'assetId', width: 30 },
       { header: 'Asset Tag', key: 'assetTag', width: 20 },
       { header: 'Action', key: 'action', width: 20 },
-      { header: 'From User ID', key: 'fromUserId', width: 30 },
-      { header: 'From User Email', key: 'fromUserEmail', width: 30 },
-      { header: 'To User ID', key: 'toUserId', width: 30 },
-      { header: 'To User Email', key: 'toUserEmail', width: 30 },
+      { header: 'From Member ID', key: 'fromMemberId', width: 30 },
+      { header: 'From Member Email', key: 'fromMemberEmail', width: 30 },
+      { header: 'To Member ID', key: 'toMemberId', width: 30 },
+      { header: 'To Member Email', key: 'toMemberEmail', width: 30 },
       { header: 'From Status', key: 'fromStatus', width: 15 },
       { header: 'To Status', key: 'toStatus', width: 15 },
       { header: 'Notes', key: 'notes', width: 40 },
-      { header: 'Performed By ID', key: 'performedBy', width: 30 },
+      { header: 'Performed By ID', key: 'performedById', width: 30 },
       { header: 'Performer Email', key: 'performerEmail', width: 30 },
       { header: 'Assignment Date', key: 'assignmentDate', width: 20 },
       { header: 'Return Date', key: 'returnDate', width: 20 },
@@ -260,15 +255,15 @@ export async function GET(_request: NextRequest) {
         assetId: history.assetId,
         assetTag: history.asset.assetTag || '',
         action: history.action,
-        fromUserId: history.fromUserId || '',
-        fromUserEmail: history.fromUser?.email || '',
-        toUserId: history.toUserId || '',
-        toUserEmail: history.toUser?.email || '',
+        fromMemberId: history.fromMemberId || '',
+        fromMemberEmail: history.fromMember?.email || '',
+        toMemberId: history.toMemberId || '',
+        toMemberEmail: history.toMember?.email || '',
         fromStatus: history.fromStatus || '',
         toStatus: history.toStatus || '',
         notes: history.notes || '',
-        performedBy: history.performedBy || '',
-        performerEmail: history.performer?.email || '',
+        performedById: history.performedById || '',
+        performerEmail: history.performedBy?.email || '',
         assignmentDate: formatDate(history.assignmentDate),
         returnDate: formatDate(history.returnDate),
         createdAt: formatDate(history.createdAt),
@@ -315,8 +310,8 @@ export async function GET(_request: NextRequest) {
       { header: 'Cost USD', key: 'costQAR', width: 15 },
       { header: 'Vendor', key: 'vendor', width: 25 },
       { header: 'Status', key: 'status', width: 15 },
-      { header: 'Assigned User ID', key: 'assignedUserId', width: 30 },
-      { header: 'Assigned User Email', key: 'assignedUserEmail', width: 30 },
+      { header: 'Assigned Member ID', key: 'assignedMemberId', width: 30 },
+      { header: 'Assigned Member Email', key: 'assignedMemberEmail', width: 30 },
       { header: 'Auto Renew', key: 'autoRenew', width: 15 },
       { header: 'Payment Method', key: 'paymentMethod', width: 25 },
       { header: 'Notes', key: 'notes', width: 40 },
@@ -340,8 +335,8 @@ export async function GET(_request: NextRequest) {
         costQAR: subscription.costQAR ? Number(subscription.costQAR) : '',
         vendor: subscription.vendor || '',
         status: subscription.status,
-        assignedUserId: subscription.assignedUserId || '',
-        assignedUserEmail: subscription.assignedUser?.email || '',
+        assignedMemberId: subscription.assignedMemberId || '',
+        assignedMemberEmail: subscription.assignedMember?.email || '',
         autoRenew: subscription.autoRenew ? 'Yes' : 'No',
         paymentMethod: subscription.paymentMethod || '',
         notes: subscription.notes || '',
@@ -366,12 +361,12 @@ export async function GET(_request: NextRequest) {
       { header: 'New Renewal Date', key: 'newRenewalDate', width: 20 },
       { header: 'Assignment Date', key: 'assignmentDate', width: 20 },
       { header: 'Reactivation Date', key: 'reactivationDate', width: 20 },
-      { header: 'Old User ID', key: 'oldUserId', width: 30 },
-      { header: 'Old User Email', key: 'oldUserEmail', width: 30 },
-      { header: 'New User ID', key: 'newUserId', width: 30 },
-      { header: 'New User Email', key: 'newUserEmail', width: 30 },
+      { header: 'Old Member ID', key: 'oldMemberId', width: 30 },
+      { header: 'Old Member Email', key: 'oldMemberEmail', width: 30 },
+      { header: 'New Member ID', key: 'newMemberId', width: 30 },
+      { header: 'New Member Email', key: 'newMemberEmail', width: 30 },
       { header: 'Notes', key: 'notes', width: 40 },
-      { header: 'Performed By ID', key: 'performedBy', width: 30 },
+      { header: 'Performed By ID', key: 'performedById', width: 30 },
       { header: 'Performer Email', key: 'performerEmail', width: 30 },
       { header: 'Created At', key: 'createdAt', width: 20 },
     ];
@@ -387,13 +382,13 @@ export async function GET(_request: NextRequest) {
         newRenewalDate: formatDate(history.newRenewalDate),
         assignmentDate: formatDate(history.assignmentDate),
         reactivationDate: formatDate(history.reactivationDate),
-        oldUserId: history.oldUserId || '',
-        oldUserEmail: history.oldUser?.email || '',
-        newUserId: history.newUserId || '',
-        newUserEmail: history.newUser?.email || '',
+        oldMemberId: history.oldMemberId || '',
+        oldMemberEmail: history.oldMember?.email || '',
+        newMemberId: history.newMemberId || '',
+        newMemberEmail: history.newMember?.email || '',
         notes: history.notes || '',
-        performedBy: history.performedBy || '',
-        performerEmail: history.performer?.email || '',
+        performedById: history.performedById || '',
+        performerEmail: history.performedBy?.email || '',
         createdAt: formatDate(history.createdAt),
       });
     });
@@ -402,7 +397,7 @@ export async function GET(_request: NextRequest) {
     const activityLogsSheet = workbook.addWorksheet('Activity Logs');
     activityLogsSheet.columns = [
       { header: 'ID', key: 'id', width: 30 },
-      { header: 'Actor User ID', key: 'actorUserId', width: 30 },
+      { header: 'Actor ID', key: 'actorId', width: 30 },
       { header: 'Actor Email', key: 'actorEmail', width: 30 },
       { header: 'Action', key: 'action', width: 30 },
       { header: 'Entity Type', key: 'entityType', width: 20 },
@@ -413,8 +408,8 @@ export async function GET(_request: NextRequest) {
     activityLogs.forEach(log => {
       activityLogsSheet.addRow({
         id: log.id,
-        actorUserId: log.actorUserId || '',
-        actorEmail: log.actorUser?.email || '',
+        actorId: log.actorMemberId || '',
+        actorEmail: log.actorMember?.email || '',
         action: log.action,
         entityType: log.entityType || '',
         entityId: log.entityId || '',
@@ -487,74 +482,13 @@ export async function GET(_request: NextRequest) {
       });
     });
 
-    // 10. HR Profiles Sheet
-    const hrProfilesSheet = workbook.addWorksheet('HR Profiles');
-    hrProfilesSheet.columns = [
-      { header: 'ID', key: 'id', width: 30 },
-      { header: 'User ID', key: 'userId', width: 30 },
-      { header: 'User Email', key: 'userEmail', width: 30 },
-      { header: 'User Name', key: 'userName', width: 25 },
-      { header: 'Employee ID', key: 'employeeId', width: 20 },
-      { header: 'Designation', key: 'designation', width: 25 },
-      { header: 'Date of Birth', key: 'dateOfBirth', width: 20 },
-      { header: 'Date of Joining', key: 'dateOfJoining', width: 20 },
-      { header: 'Nationality', key: 'nationality', width: 20 },
-      { header: 'Gender', key: 'gender', width: 15 },
-      { header: 'Marital Status', key: 'maritalStatus', width: 15 },
-      { header: 'Qatar Mobile', key: 'qatarMobile', width: 20 },
-      { header: 'Personal Email', key: 'personalEmail', width: 30 },
-      { header: 'QID Number', key: 'qidNumber', width: 20 },
-      { header: 'QID Expiry', key: 'qidExpiry', width: 20 },
-      { header: 'Passport Number', key: 'passportNumber', width: 20 },
-      { header: 'Passport Expiry', key: 'passportExpiry', width: 20 },
-      { header: 'Health Card Expiry', key: 'healthCardExpiry', width: 20 },
-      { header: 'Sponsorship Type', key: 'sponsorshipType', width: 20 },
-      { header: 'Local Emergency Name', key: 'localEmergencyName', width: 25 },
-      { header: 'Local Emergency Phone', key: 'localEmergencyPhone', width: 20 },
-      { header: 'Home Emergency Name', key: 'homeEmergencyName', width: 25 },
-      { header: 'Home Emergency Phone', key: 'homeEmergencyPhone', width: 20 },
-      { header: 'Onboarding Complete', key: 'onboardingComplete', width: 20 },
-      { header: 'Created At', key: 'createdAt', width: 20 },
-      { header: 'Updated At', key: 'updatedAt', width: 20 },
-    ];
-    hrProfiles.forEach(profile => {
-      hrProfilesSheet.addRow({
-        id: profile.id,
-        userId: profile.userId,
-        userEmail: profile.user?.email || '',
-        userName: profile.user?.name || '',
-        employeeId: profile.employeeId || '',
-        designation: profile.designation || '',
-        dateOfBirth: formatDate(profile.dateOfBirth),
-        dateOfJoining: formatDate(profile.dateOfJoining),
-        nationality: profile.nationality || '',
-        gender: profile.gender || '',
-        maritalStatus: profile.maritalStatus || '',
-        qatarMobile: profile.qatarMobile || '',
-        personalEmail: profile.personalEmail || '',
-        qidNumber: profile.qidNumber || '',
-        qidExpiry: formatDate(profile.qidExpiry),
-        passportNumber: profile.passportNumber || '',
-        passportExpiry: formatDate(profile.passportExpiry),
-        healthCardExpiry: formatDate(profile.healthCardExpiry),
-        sponsorshipType: profile.sponsorshipType || '',
-        localEmergencyName: profile.localEmergencyName || '',
-        localEmergencyPhone: profile.localEmergencyPhone || '',
-        homeEmergencyName: profile.homeEmergencyName || '',
-        homeEmergencyPhone: profile.homeEmergencyPhone || '',
-        onboardingComplete: profile.onboardingComplete ? 'Yes' : 'No',
-        createdAt: formatDate(profile.createdAt),
-        updatedAt: formatDate(profile.updatedAt),
-      });
-    });
-
-    // 11. Profile Change Requests Sheet
+    // 10. Profile Change Requests Sheet
     const changeRequestsSheet = workbook.addWorksheet('Profile Change Requests');
     changeRequestsSheet.columns = [
       { header: 'ID', key: 'id', width: 30 },
-      { header: 'HR Profile ID', key: 'hrProfileId', width: 30 },
-      { header: 'User Email', key: 'userEmail', width: 30 },
-      { header: 'User Name', key: 'userName', width: 25 },
+      { header: 'Member ID', key: 'memberId', width: 30 },
+      { header: 'Member Email', key: 'memberEmail', width: 30 },
+      { header: 'Member Name', key: 'memberName', width: 25 },
       { header: 'Description', key: 'description', width: 50 },
       { header: 'Status', key: 'status', width: 15 },
       { header: 'Resolved By ID', key: 'resolvedById', width: 30 },
@@ -566,9 +500,9 @@ export async function GET(_request: NextRequest) {
     profileChangeRequests.forEach(request => {
       changeRequestsSheet.addRow({
         id: request.id,
-        hrProfileId: request.hrProfileId,
-        userEmail: request.hrProfile?.user?.email || '',
-        userName: request.hrProfile?.user?.name || '',
+        memberId: request.memberId,
+        memberEmail: request.member?.email || '',
+        memberName: request.member?.name || '',
         description: request.description || '',
         status: request.status,
         resolvedById: request.resolvedById || '',
@@ -677,7 +611,7 @@ export async function GET(_request: NextRequest) {
 
     // Style header rows
     [
-      usersSheet,
+      membersSheet,
       assetsSheet,
       assetHistorySheet,
       maintenanceSheet,
@@ -686,7 +620,6 @@ export async function GET(_request: NextRequest) {
       activityLogsSheet,
       suppliersSheet,
       supplierEngagementsSheet,
-      hrProfilesSheet,
       changeRequestsSheet,
       purchaseRequestsSheet,
       purchaseRequestItemsSheet,

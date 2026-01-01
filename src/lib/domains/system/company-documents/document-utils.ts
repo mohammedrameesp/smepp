@@ -5,6 +5,8 @@
  * @module domains/system/company-documents
  */
 
+import { prisma } from '@/lib/core/prisma';
+
 /** Number of days before expiry to show warning */
 export const DOCUMENT_EXPIRY_WARNING_DAYS = 30;
 
@@ -113,4 +115,35 @@ export function getExpiryDescription(daysRemaining: number): string {
   if (daysRemaining > 1) return `Expires in ${daysRemaining} days`;
   if (daysRemaining === -1) return 'Expired yesterday';
   return `Expired ${Math.abs(daysRemaining)} days ago`;
+}
+
+/**
+ * Default document types to seed for new organizations
+ */
+const DEFAULT_DOCUMENT_TYPES = [
+  { name: 'Commercial Registration', code: 'CR', category: 'COMPANY', description: 'Company commercial registration certificate', sortOrder: 1 },
+  { name: 'Trade License', code: 'TRADE_LICENSE', category: 'COMPANY', description: 'Business trade license', sortOrder: 2 },
+  { name: 'Computer Card Municipality License', code: 'MUNICIPALITY_LICENSE', category: 'COMPANY', description: 'Municipality computer card license', sortOrder: 3 },
+  { name: 'Vehicle Insurance', code: 'VEHICLE_INSURANCE', category: 'VEHICLE', description: 'Vehicle insurance policy', sortOrder: 4 },
+  { name: 'Vehicle Istimara', code: 'VEHICLE_ISTIMARA', category: 'VEHICLE', description: 'Vehicle registration (Istimara)', sortOrder: 5 },
+];
+
+/**
+ * Seed default document types for an organization
+ * @param tenantId - The organization ID to seed document types for
+ */
+export async function seedDefaultDocumentTypes(tenantId: string): Promise<void> {
+  const existingTypes = await prisma.companyDocumentType.findMany({
+    where: { tenantId },
+    select: { code: true },
+  });
+
+  const existingCodes = new Set(existingTypes.map(t => t.code));
+  const typesToCreate = DEFAULT_DOCUMENT_TYPES.filter(t => !existingCodes.has(t.code));
+
+  if (typesToCreate.length > 0) {
+    await prisma.companyDocumentType.createMany({
+      data: typesToCreate.map(t => ({ ...t, tenantId })),
+    });
+  }
 }

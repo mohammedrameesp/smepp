@@ -21,7 +21,7 @@ async function writeOffLoanHandler(request: NextRequest, context: APIContext) {
     const loan = await prisma.employeeLoan.findFirst({
       where: { id, tenantId },
       include: {
-        user: { select: { name: true } },
+        member: { select: { name: true } },
       },
     });
 
@@ -53,7 +53,7 @@ async function writeOffLoanHandler(request: NextRequest, context: APIContext) {
       id,
       {
         loanNumber: loan.loanNumber,
-        userName: loan.user.name,
+        memberName: loan.member.name,
         remainingAmount,
       }
     );

@@ -32,9 +32,9 @@ export {
   getWhatsAppConfig,
   saveWhatsAppConfig,
   disableWhatsApp,
-  getUserWhatsAppPhone,
-  saveUserWhatsAppPhone,
-  verifyUserWhatsAppPhone,
+  getMemberWhatsAppPhone,
+  saveMemberWhatsAppPhone,
+  verifyMemberWhatsAppPhone,
   encrypt,
   decrypt,
   // Platform config

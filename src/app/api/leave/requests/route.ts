@@ -44,19 +44,21 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
       }, { status: 400 });
     }
 
-    const { q, status, userId, leaveTypeId, year, startDate, endDate, p, ps, sort, order } = validation.data;
+    const { q, status, userId, memberId, leaveTypeId, year, startDate, endDate, p, ps, sort, order } = validation.data;
 
     // Non-admin users can only see their own requests
     const isAdmin = tenant!.userRole === 'ADMIN';
-    const effectiveUserId = isAdmin ? userId : tenant!.userId;
+    // Support both memberId and legacy userId parameter
+    const filterMemberId = memberId || userId;
+    const effectiveMemberId = isAdmin ? filterMemberId : tenant!.userId;
 
     // Build where clause with tenant filtering
     const where: Record<string, unknown> = {
       tenantId,
     };
 
-    if (effectiveUserId) {
-      where.userId = effectiveUserId;
+    if (effectiveMemberId) {
+      where.memberId = effectiveMemberId;
     }
     if (status) {
       where.status = status;
@@ -84,8 +86,8 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
     if (q) {
       where.OR = [
         { requestNumber: { contains: q, mode: 'insensitive' } },
-        { user: { name: { contains: q, mode: 'insensitive' } } },
-        { user: { email: { contains: q, mode: 'insensitive' } } },
+        { member: { name: { contains: q, mode: 'insensitive' } } },
+        { member: { email: { contains: q, mode: 'insensitive' } } },
         { reason: { contains: q, mode: 'insensitive' } },
       ];
     }
@@ -96,7 +98,7 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
       prisma.leaveRequest.findMany({
         where,
         include: {
-          user: {
+          member: {
             select: {
               id: true,
               name: true,
@@ -142,7 +144,7 @@ export const GET = withErrorHandler(getLeaveRequestsHandler, { requireAuth: true
 async function createLeaveRequestHandler(request: NextRequest, context: APIContext) {
     const { tenant } = context;
     const tenantId = tenant!.tenantId;
-    const sessionUserId = tenant!.userId;
+    const sessionMemberId = tenant!.userId; // Now refers to TeamMember.id
     const isAdmin = tenant!.userRole === 'ADMIN';
 
     const body = await request.json();
@@ -158,10 +160,10 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
     const data = validation.data;
 
     // Handle on-behalf-of requests (admin creating request for another employee)
-    let targetUserId = sessionUserId;
+    let targetMemberId = sessionMemberId;
     let createdById: string | null = null;
 
-    if (data.employeeId && data.employeeId !== sessionUserId) {
+    if (data.employeeId && data.employeeId !== sessionMemberId) {
       // Only admins can create requests on behalf of others
       if (!isAdmin) {
         return NextResponse.json(
@@ -171,12 +173,11 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       }
 
       // Verify the target employee exists and belongs to this tenant
-      const targetEmployee = await prisma.user.findFirst({
+      const targetEmployee = await prisma.teamMember.findFirst({
         where: {
           id: data.employeeId,
-          organizationMemberships: {
-            some: { organizationId: tenantId },
-          },
+          tenantId,
+          isEmployee: true,
         },
       });
 
@@ -187,12 +188,12 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
         );
       }
 
-      targetUserId = data.employeeId;
-      createdById = sessionUserId; // Track who submitted on behalf
+      targetMemberId = data.employeeId;
+      createdById = sessionMemberId; // Track who submitted on behalf
     }
 
-    // Use targetUserId for all subsequent operations
-    const userId = targetUserId;
+    // Use targetMemberId for all subsequent operations
+    const memberId = targetMemberId;
 
     // Parse dates
     const startDate = new Date(data.startDate);
@@ -211,9 +212,10 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       return NextResponse.json({ error: 'This leave type is not active' }, { status: 400 });
     }
 
-    // Get target user's HR profile for service duration and gender checks
-    const hrProfile = await prisma.hRProfile.findUnique({
-      where: { userId },
+    // Get target member's data for service duration and gender checks
+    // TeamMember now contains all HR profile data
+    const memberData = await prisma.teamMember.findUnique({
+      where: { id: memberId },
       select: {
         dateOfJoining: true,
         hajjLeaveTaken: true,
@@ -222,12 +224,15 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       },
     });
 
-    // Check if user has existing balance for admin-assigned leave types
+    // Use memberData as hrProfile for compatibility with existing validation functions
+    const hrProfile = memberData;
+
+    // Check if member has existing balance for admin-assigned leave types
     const existingBalance = await prisma.leaveBalance.findUnique({
       where: {
-        tenantId_userId_leaveTypeId_year: {
+        tenantId_memberId_leaveTypeId_year: {
           tenantId,
-          userId,
+          memberId,
           leaveTypeId: data.leaveTypeId,
           year: startDate.getFullYear(),
         },
@@ -249,7 +254,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
     if (leaveType.isOnceInEmployment) {
       const existingOnceLeave = await prisma.leaveRequest.findFirst({
         where: {
-          userId,
+          memberId,
           leaveTypeId: leaveType.id,
           status: { in: ['PENDING', 'APPROVED'] },
         },
@@ -287,7 +292,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
     // Check for overlapping requests within tenant (pre-check before transaction)
     const overlappingRequests = await prisma.leaveRequest.findMany({
       where: {
-        userId,
+        memberId,
         tenantId,
         status: { in: ['PENDING', 'APPROVED'] },
         OR: [
@@ -313,9 +318,9 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       // Get or create leave balance inside transaction to prevent race conditions
       let balance = await tx.leaveBalance.findUnique({
         where: {
-          tenantId_userId_leaveTypeId_year: {
+          tenantId_memberId_leaveTypeId_year: {
             tenantId,
-            userId,
+            memberId,
             leaveTypeId: data.leaveTypeId,
             year,
           },
@@ -344,7 +349,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
 
         balance = await tx.leaveBalance.create({
           data: {
-            userId,
+            memberId,
             leaveTypeId: data.leaveTypeId,
             year,
             entitlement,
@@ -380,7 +385,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       const request = await tx.leaveRequest.create({
         data: {
           requestNumber,
-          userId,
+          memberId,
           leaveTypeId: data.leaveTypeId,
           startDate,
           endDate,
@@ -396,7 +401,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
           createdById,
         },
         include: {
-          user: {
+          member: {
             select: {
               id: true,
               name: true,
@@ -416,9 +421,9 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       // Update balance pending days
       await tx.leaveBalance.update({
         where: {
-          tenantId_userId_leaveTypeId_year: {
+          tenantId_memberId_leaveTypeId_year: {
             tenantId,
-            userId,
+            memberId,
             leaveTypeId: data.leaveTypeId,
             year,
           },
@@ -436,7 +441,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
           leaveRequestId: request.id,
           action: 'CREATED',
           newStatus: 'PENDING',
-          performedById: sessionUserId,
+          performedById: sessionMemberId,
           notes: createdById ? 'Submitted on behalf of employee' : undefined,
         },
       });
@@ -446,7 +451,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
 
     await logAction(
       tenantId,
-      sessionUserId,
+      sessionMemberId,
       ActivityActions.LEAVE_REQUEST_CREATED,
       'LeaveRequest',
       leaveRequest.id,
@@ -456,7 +461,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
         totalDays,
         startDate: data.startDate,
         endDate: data.endDate,
-        onBehalfOf: createdById ? userId : undefined,
+        onBehalfOf: createdById ? memberId : undefined,
       }
     );
 
@@ -481,10 +486,11 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
         // Notify users with the first level's required role
         const firstStep = steps[0];
         if (firstStep) {
-          const approvers = await prisma.user.findMany({
+          const approvers = await prisma.teamMember.findMany({
             where: {
-              role: firstStep.requiredRole,
-              organizationMemberships: { some: { organizationId: tenantId! } },
+              tenantId: tenantId!,
+              approvalRole: firstStep.requiredRole,
+              isDeleted: false,
             },
             select: { id: true },
           });
@@ -494,7 +500,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
               recipientId: approver.id,
               type: 'APPROVAL_PENDING',
               title: 'Leave Request Approval Required',
-              message: `${leaveRequest.user.name || leaveRequest.user.email || 'Employee'} submitted a ${leaveType.name} request (${leaveRequest.requestNumber}) for ${totalDays} day${totalDays === 1 ? '' : 's'}. Your approval is required.`,
+              message: `${leaveRequest.member?.name || leaveRequest.member?.email || 'Employee'} submitted a ${leaveType.name} request (${leaveRequest.requestNumber}) for ${totalDays} day${totalDays === 1 ? '' : 's'}. Your approval is required.`,
               link: `/admin/leave/requests/${leaveRequest.id}`,
               entityType: 'LeaveRequest',
               entityId: leaveRequest.id,
@@ -503,10 +509,11 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
         }
       } else {
         // No policy - fall back to notifying all admins in the same organization
-        const admins = await prisma.user.findMany({
+        const admins = await prisma.teamMember.findMany({
           where: {
-            role: Role.ADMIN,
-            organizationMemberships: { some: { organizationId: tenantId! } },
+            tenantId: tenantId!,
+            role: 'ADMIN',
+            isDeleted: false,
           },
           select: { id: true },
         });
@@ -515,7 +522,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
           const notifications = admins.map(admin =>
             NotificationTemplates.leaveSubmitted(
               admin.id,
-              leaveRequest.user.name || leaveRequest.user.email || 'Employee',
+              leaveRequest.member?.name || leaveRequest.member?.email || 'Employee',
               leaveRequest.requestNumber,
               leaveType.name,
               totalDays,

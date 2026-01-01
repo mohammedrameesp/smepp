@@ -4,12 +4,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function DashboardSkeleton() {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 animate-in fade-in duration-500">
-      {/* Welcome Section Skeleton */}
-      <div className="mb-6">
-        <Skeleton className="h-8 w-48 mb-2" />
-        <Skeleton className="h-4 w-32" />
+    <div className="animate-in fade-in duration-500">
+      {/* Page Header Skeleton - matches PageHeader component */}
+      <div className="bg-slate-800 shadow-lg">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div>
+            <Skeleton className="h-7 w-48 mb-2 bg-slate-700" />
+            <Skeleton className="h-4 w-32 bg-slate-700" />
+          </div>
+        </div>
       </div>
+
+      {/* Page Content - matches PageContent component */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
       {/* Action Cards Row Skeleton */}
       <div className="grid md:grid-cols-3 gap-4 mb-6">
@@ -93,6 +100,7 @@ export function DashboardSkeleton() {
           ))}
         </div>
       </div>
+      </main>
     </div>
   );
 }

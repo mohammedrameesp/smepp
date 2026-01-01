@@ -54,96 +54,98 @@ export default async function OrganizationsPage() {
           </div>
         ) : (
           <>
-            <table className="w-full">
-              <thead>
-                <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-100">
-                  <th className="px-6 py-3">Organization</th>
-                  <th className="px-6 py-3">Owner</th>
-                  <th className="px-6 py-3">Users</th>
-                  <th className="px-6 py-3">Assets</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3">Created</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {organizations.map((org) => {
-                  const owner = org.members[0]?.user;
-                  return (
-                    <tr key={org.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          {org.logoUrl ? (
-                            <img
-                              src={org.logoUrl}
-                              alt={org.name}
-                              className="w-9 h-9 rounded-lg object-contain bg-gray-100"
-                            />
-                          ) : (
-                            <div className="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 font-semibold text-sm">
-                              {org.name.substring(0, 2).toUpperCase()}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px]">
+                <thead>
+                  <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                    <th className="px-4 lg:px-6 py-3">Organization</th>
+                    <th className="px-4 lg:px-6 py-3 hidden sm:table-cell">Owner</th>
+                    <th className="px-4 lg:px-6 py-3">Users</th>
+                    <th className="px-4 lg:px-6 py-3 hidden md:table-cell">Assets</th>
+                    <th className="px-4 lg:px-6 py-3 hidden md:table-cell">Status</th>
+                    <th className="px-4 lg:px-6 py-3 hidden lg:table-cell">Created</th>
+                    <th className="px-4 lg:px-6 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {organizations.map((org) => {
+                    const owner = org.members[0]?.user;
+                    return (
+                      <tr key={org.id} className="hover:bg-gray-50">
+                        <td className="px-4 lg:px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            {org.logoUrl ? (
+                              <img
+                                src={org.logoUrl}
+                                alt={org.name}
+                                className="w-9 h-9 rounded-lg object-contain bg-gray-100"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 font-semibold text-sm">
+                                {org.name.substring(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                            <div>
+                              <div className="font-medium text-gray-900 text-sm lg:text-base">{org.name}</div>
+                              <div className="text-xs lg:text-sm text-gray-500">{org.slug}.{APP_DOMAIN.split(':')[0]}</div>
                             </div>
-                          )}
-                          <div>
-                            <div className="font-medium text-gray-900">{org.name}</div>
-                            <div className="text-sm text-gray-500">{org.slug}.{APP_DOMAIN.split(':')[0]}</div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{owner?.name || 'No owner'}</div>
-                        <div className="text-xs text-gray-500">{owner?.email || '-'}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5 text-sm text-gray-900">
-                          <Users className="h-4 w-4 text-gray-400" />
-                          {org._count.members}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {org._count.assets}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
-                          <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                          Active
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">
-                        {format(new Date(org.createdAt), 'MMM d, yyyy')}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link
-                            href={`/api/super-admin/impersonate?organizationId=${org.id}`}
-                            className="text-gray-400 hover:text-indigo-600 p-1.5 hover:bg-indigo-50 rounded"
-                            title="Impersonate"
-                          >
-                            <UserCog className="h-4 w-4" />
-                          </Link>
-                          <Link
-                            href={`/super-admin/organizations/${org.id}`}
-                            className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded"
-                            title="View"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                          <Link
-                            href={`/super-admin/organizations/${org.id}?edit=true`}
-                            className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded"
-                            title="Edit"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 hidden sm:table-cell">
+                          <div className="text-sm text-gray-900">{owner?.name || 'No owner'}</div>
+                          <div className="text-xs text-gray-500">{owner?.email || '-'}</div>
+                        </td>
+                        <td className="px-4 lg:px-6 py-4">
+                          <div className="flex items-center gap-1.5 text-sm text-gray-900">
+                            <Users className="h-4 w-4 text-gray-400" />
+                            {org._count.members}
+                          </div>
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 hidden md:table-cell">
+                          {org._count.assets}
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 hidden md:table-cell">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                            Active
+                          </span>
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 text-sm text-gray-500 hidden lg:table-cell">
+                          {format(new Date(org.createdAt), 'MMM d, yyyy')}
+                        </td>
+                        <td className="px-4 lg:px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1 lg:gap-2">
+                            <Link
+                              href={`/api/super-admin/impersonate?organizationId=${org.id}`}
+                              className="text-gray-400 hover:text-indigo-600 p-1.5 hover:bg-indigo-50 rounded"
+                              title="Impersonate"
+                            >
+                              <UserCog className="h-4 w-4" />
+                            </Link>
+                            <Link
+                              href={`/super-admin/organizations/${org.id}`}
+                              className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded"
+                              title="View"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                            <Link
+                              href={`/super-admin/organizations/${org.id}?edit=true`}
+                              className="text-gray-400 hover:text-gray-600 p-1.5 hover:bg-gray-100 rounded"
+                              title="Edit"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-            <div className="px-6 py-4 border-t border-gray-100">
+            <div className="px-4 lg:px-6 py-4 border-t border-gray-100">
               <div className="text-sm text-gray-500">
                 Showing {organizations.length} organization{organizations.length !== 1 ? 's' : ''}
               </div>

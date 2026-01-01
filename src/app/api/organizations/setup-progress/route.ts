@@ -39,17 +39,14 @@ const updateProgressSchema = z.object({
 });
 
 const bulkUpdateSchema = z.object({
-  updates: z.record(
-    z.enum([
-      'profileComplete',
-      'logoUploaded',
-      'brandingConfigured',
-      'firstAssetAdded',
-      'firstTeamMemberInvited',
-      'firstEmployeeAdded',
-    ]),
-    z.boolean()
-  ),
+  updates: z.object({
+    profileComplete: z.boolean().optional(),
+    logoUploaded: z.boolean().optional(),
+    brandingConfigured: z.boolean().optional(),
+    firstAssetAdded: z.boolean().optional(),
+    firstTeamMemberInvited: z.boolean().optional(),
+    firstEmployeeAdded: z.boolean().optional(),
+  }).passthrough(), // Allow extra fields without failing
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -104,6 +101,7 @@ export async function PUT(request: NextRequest) {
       // Single field update
       const result = updateProgressSchema.safeParse(body);
       if (!result.success) {
+        console.error('[Setup Progress] Single field validation failed:', result.error.flatten());
         return NextResponse.json(
           { error: 'Validation failed', details: result.error.flatten().fieldErrors },
           { status: 400 }
@@ -119,8 +117,10 @@ export async function PUT(request: NextRequest) {
       // Bulk update
       const result = bulkUpdateSchema.safeParse(body);
       if (!result.success) {
+        console.error('[Setup Progress] Bulk validation failed:', result.error.flatten());
+        console.error('[Setup Progress] Received body:', JSON.stringify(body));
         return NextResponse.json(
-          { error: 'Validation failed', details: result.error.flatten().fieldErrors },
+          { error: 'Validation failed', details: result.error.flatten(), received: body },
           { status: 400 }
         );
       }

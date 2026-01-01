@@ -135,10 +135,10 @@ export async function POST(request: NextRequest) {
       });
 
       if (!existingAsset) {
-        // Only set assignedUserId if the user exists
-        const assignedUserId = asset.assignedUserId && validUserIds.has(asset.assignedUserId)
+        // Only set assignedMemberId if the user exists (legacy import uses assignedUserId)
+        const assignedMemberId = asset.assignedMemberId || (asset.assignedUserId && validUserIds.has(asset.assignedUserId)
           ? asset.assignedUserId
-          : null;
+          : null);
 
         await prisma.asset.create({
           data: {
@@ -155,8 +155,8 @@ export async function POST(request: NextRequest) {
             warrantyExpiry: asset.warrantyExpiry ? new Date(asset.warrantyExpiry) : null,
             supplier: asset.supplier,
             invoiceNumber: asset.invoiceNumber,
-            assignedUserId,
-            assignmentDate: assignedUserId && asset.assignmentDate ? asset.assignmentDate.split('T')[0] : null, // String in YYYY-MM-DD format
+            assignedMemberId,
+            assignmentDate: assignedMemberId && asset.assignmentDate ? new Date(asset.assignmentDate) : null,
             status: asset.status,
             acquisitionType: asset.acquisitionType || 'NEW_PURCHASE',
             transferNotes: asset.transferNotes,
@@ -189,10 +189,10 @@ export async function POST(request: NextRequest) {
               tenantId: org.id,
               assetId: history.assetId,
               action: history.action,
-              fromUserId: history.fromUserId || history.userId || null,
-              toUserId: history.toUserId || null,
+              fromMemberId: history.fromMemberId || history.fromUserId || history.userId || null,
+              toMemberId: history.toMemberId || history.toUserId || null,
               notes: history.notes,
-              performedBy: history.performedById || history.performedBy,
+              performedById: history.performedById || history.performedBy || null,
               createdAt: new Date(history.createdAt),
             },
           });
@@ -212,10 +212,10 @@ export async function POST(request: NextRequest) {
       });
 
       if (!existingSub) {
-        // Only set assignedUserId if the user exists
-        const subAssignedUserId = sub.assignedUserId && validUserIds.has(sub.assignedUserId)
+        // Only set assignedMemberId if the user exists (legacy import uses assignedUserId)
+        const subAssignedMemberId = sub.assignedMemberId || (sub.assignedUserId && validUserIds.has(sub.assignedUserId)
           ? sub.assignedUserId
-          : null;
+          : null);
 
         await prisma.subscription.create({
           data: {
@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
             billingCycle: sub.billingCycle,
             renewalDate: sub.renewalDate ? new Date(sub.renewalDate) : null,
             status: sub.status,
-            assignedUserId: subAssignedUserId,
+            assignedMemberId: subAssignedMemberId,
             notes: sub.notes,
             createdAt: new Date(sub.createdAt),
             updatedAt: new Date(sub.updatedAt),

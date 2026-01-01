@@ -37,9 +37,9 @@ export interface LoanDeductionPreview {
 }
 
 export interface EmployeePayrollPreview {
-  userId: string;
-  userName: string;
-  employeeId: string | null;
+  memberId: string;
+  memberName: string;
+  employeeCode: string | null;
   designation: string | null;
   basicSalary: number;
   housingAllowance: number;
@@ -99,16 +99,12 @@ export async function calculatePayrollPreview(
   const salaryStructures = await prisma.salaryStructure.findMany({
     where: { isActive: true, tenantId },
     include: {
-      user: {
+      member: {
         select: {
           id: true,
           name: true,
-          hrProfile: {
-            select: {
-              employeeId: true,
-              designation: true,
-            },
-          },
+          employeeCode: true,
+          designation: true,
         },
       },
     },
@@ -128,12 +124,12 @@ export async function calculatePayrollPreview(
     },
   });
 
-  // Index loans by userId for O(1) lookup during employee iteration
-  const loansByUser = new Map<string, typeof activeLoans>();
+  // Index loans by memberId for O(1) lookup during employee iteration
+  const loansByMember = new Map<string, typeof activeLoans>();
   for (const loan of activeLoans) {
-    const userLoans = loansByUser.get(loan.userId) || [];
-    userLoans.push(loan);
-    loansByUser.set(loan.userId, userLoans);
+    const memberLoans = loansByMember.get(loan.memberId) || [];
+    memberLoans.push(loan);
+    loansByMember.set(loan.memberId, memberLoans);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -155,10 +151,10 @@ export async function calculatePayrollPreview(
     // For each active loan, deduct min(monthlyDeduction, remainingAmount)
     // This ensures final payment doesn't exceed remaining balance
     // ─────────────────────────────────────────────────────────────────────
-    const userLoans = loansByUser.get(salary.userId) || [];
+    const memberLoans = loansByMember.get(salary.memberId) || [];
     const loanDeductions: LoanDeductionPreview[] = [];
 
-    for (const loan of userLoans) {
+    for (const loan of memberLoans) {
       const monthlyDeduction = parseDecimal(loan.monthlyDeduction);
       const remaining = parseDecimal(loan.remainingAmount);
       const deductionAmount = Math.min(monthlyDeduction, remaining);
@@ -184,7 +180,7 @@ export async function calculatePayrollPreview(
     let leaveDeductions: UnpaidLeaveDeduction[] = [];
     try {
       leaveDeductions = await calculateUnpaidLeaveDeductions(
-        salary.userId,
+        salary.memberId,
         year,
         month,
         dailyRate,
@@ -200,10 +196,10 @@ export async function calculatePayrollPreview(
     const totalDeductionsForEmployee = totalLoanDeductionForEmployee + totalLeaveDeductionForEmployee;
 
     employees.push({
-      userId: salary.userId,
-      userName: salary.user.name || 'Unknown',
-      employeeId: salary.user.hrProfile?.employeeId || null,
-      designation: salary.user.hrProfile?.designation || null,
+      memberId: salary.memberId,
+      memberName: salary.member.name || 'Unknown',
+      employeeCode: salary.member.employeeCode || null,
+      designation: salary.member.designation || null,
       basicSalary: parseDecimal(salary.basicSalary),
       housingAllowance: parseDecimal(salary.housingAllowance),
       transportAllowance: parseDecimal(salary.transportAllowance),
@@ -223,7 +219,7 @@ export async function calculatePayrollPreview(
   }
 
   // Sort employees by name
-  employees.sort((a, b) => a.userName.localeCompare(b.userName));
+  employees.sort((a, b) => a.memberName.localeCompare(b.memberName));
 
   const totalDeductions = totalLoanDeductions + totalLeaveDeductions;
 

@@ -46,29 +46,34 @@ async function getLeaveTypesHandler(request: NextRequest, context: APIContext) {
     // For non-admin users, filter out PARENTAL and RELIGIOUS leave types
     // unless they have an assigned balance for them
     if (!isAdmin) {
-      const userId = tenant!.userId;
       const currentYear = new Date().getFullYear();
 
-      // Get user's assigned balances for special leave types
-      const assignedSpecialBalances = await prisma.leaveBalance.findMany({
+      // Look up the current user's TeamMember ID
+      const currentMember = await prisma.teamMember.findFirst({
+        where: { id: tenant!.userId, tenantId },
+        select: { id: true },
+      });
+
+      // Get member's assigned balances for special leave types
+      const assignedSpecialBalances = currentMember ? await prisma.leaveBalance.findMany({
         where: {
-          userId,
+          memberId: currentMember.id,
           year: currentYear,
           leaveType: {
             category: { in: ['PARENTAL', 'RELIGIOUS'] },
           },
         },
         select: { leaveTypeId: true },
-      });
+      }) : [];
 
       const assignedSpecialLeaveTypeIds = new Set(assignedSpecialBalances.map(b => b.leaveTypeId));
 
-      // Get user's gender from HR profile for additional filtering
-      const hrProfile = await prisma.hRProfile.findUnique({
-        where: { userId },
+      // Get member's gender from TeamMember for additional filtering
+      const memberWithGender = currentMember ? await prisma.teamMember.findUnique({
+        where: { id: currentMember.id },
         select: { gender: true },
-      });
-      const userGender = hrProfile?.gender?.toUpperCase();
+      }) : null;
+      const userGender = memberWithGender?.gender?.toUpperCase();
 
       // Filter leave types for employees
       leaveTypes = leaveTypes.filter(lt => {

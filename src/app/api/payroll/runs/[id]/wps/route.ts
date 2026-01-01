@@ -38,7 +38,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       include: {
         payslips: {
           include: {
-            user: {
+            member: {
               select: {
                 name: true,
                 isOnWps: true,
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Filter payslips to only include WPS employees
-    const wpsPayslips = payrollRun.payslips.filter(p => p.user.isOnWps !== false);
+    const wpsPayslips = payrollRun.payslips.filter(p => p.member.isOnWps !== false);
 
     if (wpsPayslips.length === 0) {
       return NextResponse.json({
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     for (const payslip of wpsPayslips) {
       const record: WPSEmployeeRecord = {
         qidNumber: payslip.qidNumber || '',
-        employeeName: payslip.user.name || 'UNKNOWN',
+        employeeName: payslip.member.name || 'UNKNOWN',
         bankCode: getBankCode(payslip.bankName || ''),
         iban: payslip.iban || '',
         basicSalary: parseDecimal(payslip.basicSalary),
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const errors = validateWPSRecord(record);
       if (errors.length > 0) {
         validationErrors.push({
-          employee: payslip.user.name || 'Unknown',
+          employee: payslip.member.name || 'Unknown',
           errors,
         });
       } else {

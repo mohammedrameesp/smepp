@@ -27,8 +27,8 @@ interface Subscription {
   status: string;
   purchaseDate: Date | null;
   renewalDate: Date | null;
-  assignedUserId: string | null;
-  assignedUser: {
+  assignedMemberId: string | null;
+  assignedMember: {
     id: string;
     name: string | null;
     email: string;
@@ -68,8 +68,8 @@ export function EmployeeSubscriptionListTable({ subscriptions, currentUserId }: 
         sub.serviceName.toLowerCase().includes(term) ||
         sub.category?.toLowerCase().includes(term) ||
         sub.vendor?.toLowerCase().includes(term) ||
-        sub.assignedUser?.name?.toLowerCase().includes(term) ||
-        sub.assignedUser?.email?.toLowerCase().includes(term)
+        sub.assignedMember?.name?.toLowerCase().includes(term) ||
+        sub.assignedMember?.email?.toLowerCase().includes(term)
       );
     }
 
@@ -85,11 +85,11 @@ export function EmployeeSubscriptionListTable({ subscriptions, currentUserId }: 
 
     // Apply assignment filter
     if (assignmentFilter === 'mine') {
-      filtered = filtered.filter(sub => sub.assignedUserId === currentUserId);
+      filtered = filtered.filter(sub => sub.assignedMemberId === currentUserId);
     } else if (assignmentFilter === 'unassigned') {
-      filtered = filtered.filter(sub => !sub.assignedUserId);
+      filtered = filtered.filter(sub => !sub.assignedMemberId);
     } else if (assignmentFilter === 'others') {
-      filtered = filtered.filter(sub => sub.assignedUserId && sub.assignedUserId !== currentUserId);
+      filtered = filtered.filter(sub => sub.assignedMemberId && sub.assignedMemberId !== currentUserId);
     }
 
     // Apply sorting
@@ -118,9 +118,9 @@ export function EmployeeSubscriptionListTable({ subscriptions, currentUserId }: 
           aValue = a.billingCycle;
           bValue = b.billingCycle;
           break;
-        case 'assignedUser':
-          aValue = a.assignedUser?.name || a.assignedUser?.email || 'zzz';
-          bValue = b.assignedUser?.name || b.assignedUser?.email || 'zzz';
+        case 'assignedMember':
+          aValue = a.assignedMember?.name || a.assignedMember?.email || 'zzz';
+          bValue = b.assignedMember?.name || b.assignedMember?.email || 'zzz';
           break;
         case 'purchaseDate':
           aValue = a.purchaseDate ? new Date(a.purchaseDate).getTime() : 0;
@@ -261,7 +261,7 @@ export function EmployeeSubscriptionListTable({ subscriptions, currentUserId }: 
               <SelectItem value="category">Category</SelectItem>
               <SelectItem value="status">Status</SelectItem>
               <SelectItem value="billingCycle">Billing Cycle</SelectItem>
-              <SelectItem value="assignedUser">Assigned To</SelectItem>
+              <SelectItem value="assignedMember">Assigned To</SelectItem>
               <SelectItem value="renewalDate">Renewal Date</SelectItem>
             </SelectContent>
           </Select>
@@ -306,9 +306,9 @@ export function EmployeeSubscriptionListTable({ subscriptions, currentUserId }: 
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-gray-100"
-                  onClick={() => toggleSort('assignedUser')}
+                  onClick={() => toggleSort('assignedMember')}
                 >
-                  Assigned To {sortBy === 'assignedUser' && (sortOrder === 'asc' ? '↑' : '↓')}
+                  Assigned To {sortBy === 'assignedMember' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-gray-100"
@@ -340,14 +340,14 @@ export function EmployeeSubscriptionListTable({ subscriptions, currentUserId }: 
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {subscription.assignedUser ? (
+                      {subscription.assignedMember ? (
                         <span className="font-medium text-gray-700">
-                          {subscription.assignedUser.name || subscription.assignedUser.email}
+                          {subscription.assignedMember.name || subscription.assignedMember.email}
                         </span>
                       ) : (
                         <span className="text-gray-400">Unassigned</span>
                       )}
-                      {subscription.assignedUserId === currentUserId && (
+                      {subscription.assignedMemberId === currentUserId && (
                         <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                           You
                         </Badge>

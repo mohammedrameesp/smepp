@@ -17,12 +17,12 @@ async function exportSubscriptionsHandler(_request: NextRequest, context: APICon
   const subscriptions = await prisma.subscription.findMany({
     where: { tenantId },
     include: {
-      assignedUser: {
+      assignedMember: {
         select: { name: true, email: true },
       },
       history: {
         include: {
-          performer: {
+          performedBy: {
             select: { name: true, email: true },
           },
         },
@@ -49,9 +49,9 @@ async function exportSubscriptionsHandler(_request: NextRequest, context: APICon
       autoRenew: sub.autoRenew ? 'Yes' : 'No',
       paymentMethod: sub.paymentMethod || '',
       notes: sub.notes || '',
-      assignedUserId: sub.assignedUserId || '',
-      assignedUserName: sub.assignedUser?.name || '',
-      assignedUserEmail: sub.assignedUser?.email || '',
+      assignedMemberId: sub.assignedMemberId || '',
+      assignedMemberName: sub.assignedMember?.name || '',
+      assignedMemberEmail: sub.assignedMember?.email || '',
       cancelledAt: formatDateForCSV(sub.cancelledAt),
       reactivatedAt: formatDateForCSV(sub.reactivatedAt),
       lastActiveRenewalDate: formatDateForCSV(sub.lastActiveRenewalDate),
@@ -76,7 +76,7 @@ async function exportSubscriptionsHandler(_request: NextRequest, context: APICon
               assignmentDate: formatDateForCSV(h.assignmentDate),
               reactivationDate: formatDateForCSV(h.reactivationDate),
               notes: h.notes || '',
-              performedBy: h.performer?.name || h.performer?.email || 'System',
+              performedBy: h.performedBy?.name || h.performedBy?.email || 'System',
               createdAt: formatDateForCSV(h.createdAt),
             });
           });
@@ -103,9 +103,9 @@ async function exportSubscriptionsHandler(_request: NextRequest, context: APICon
       { key: 'autoRenew', header: 'Auto Renew' },
       { key: 'paymentMethod', header: 'Payment Method' },
       { key: 'notes', header: 'Notes' },
-      { key: 'assignedUserId', header: 'Assigned User ID' },
-      { key: 'assignedUserName', header: 'Assigned User Name' },
-      { key: 'assignedUserEmail', header: 'Assigned User Email' },
+      { key: 'assignedMemberId', header: 'Assigned Member ID' },
+      { key: 'assignedMemberName', header: 'Assigned Member Name' },
+      { key: 'assignedMemberEmail', header: 'Assigned Member Email' },
       { key: 'cancelledAt', header: 'Cancelled At (dd/mm/yyyy)' },
       { key: 'reactivatedAt', header: 'Reactivated At (dd/mm/yyyy)' },
       { key: 'lastActiveRenewalDate', header: 'Last Active Renewal Date (dd/mm/yyyy)' },
