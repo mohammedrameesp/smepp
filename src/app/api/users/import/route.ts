@@ -146,12 +146,6 @@ export async function POST(request: NextRequest) {
               name,
               role,
               emailVerified: null,
-              organizationMemberships: {
-                create: {
-                  organizationId: tenantId,
-                  role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
-                },
-              },
             },
             update: {
               name: name || undefined,
@@ -160,13 +154,33 @@ export async function POST(request: NextRequest) {
             },
           });
 
-          // Ensure organization membership exists for updated users
-          if (existingUserById) {
-            await prisma.organizationUser.upsert({
-              where: { organizationId_userId: { organizationId: tenantId, userId: user.id } },
-              create: { organizationId: tenantId, userId: user.id, role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER' },
-              update: {},
+          // Ensure TeamMember exists for organization membership
+          if (!existingUserById) {
+            // Newly created user - create TeamMember
+            await prisma.teamMember.create({
+              data: {
+                tenantId,
+                email: user.email,
+                name: user.name,
+                canLogin: true,
+                role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+              },
             });
+          } else if (existingUserById) {
+            const existingMember = await prisma.teamMember.findFirst({
+              where: { tenantId, email: user.email },
+            });
+            if (!existingMember) {
+              await prisma.teamMember.create({
+                data: {
+                  tenantId,
+                  email: user.email,
+                  name: user.name,
+                  canLogin: true,
+                  role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+                },
+              });
+            }
           }
 
           // Log activity
@@ -211,12 +225,21 @@ export async function POST(request: NextRequest) {
               },
             });
 
-            // Ensure organization membership exists
-            await prisma.organizationUser.upsert({
-              where: { organizationId_userId: { organizationId: tenantId, userId: existingUser.id } },
-              create: { organizationId: tenantId, userId: existingUser.id, role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER' },
-              update: {},
+            // Ensure TeamMember exists for organization membership
+            const existingMember = await prisma.teamMember.findFirst({
+              where: { tenantId, email },
             });
+            if (!existingMember) {
+              await prisma.teamMember.create({
+                data: {
+                  tenantId,
+                  email,
+                  name: name || existingUser.name,
+                  canLogin: true,
+                  role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+                },
+              });
+            }
 
             // Log activity
             await logAction(
@@ -233,19 +256,24 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Create new user (no ID provided, doesn't exist) with organization membership
+        // Create new user (no ID provided, doesn't exist)
         const user = await prisma.user.create({
           data: {
             email,
             name,
             role,
             emailVerified: null,
-            organizationMemberships: {
-              create: {
-                organizationId: tenantId,
-                role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
-              },
-            },
+          },
+        });
+
+        // Create TeamMember for organization membership
+        await prisma.teamMember.create({
+          data: {
+            tenantId,
+            email: user.email,
+            name: user.name,
+            canLogin: true,
+            role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
           },
         });
 

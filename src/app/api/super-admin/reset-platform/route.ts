@@ -56,7 +56,6 @@ export async function POST() {
 
     // HR
     results.profileChangeRequests = (await prisma.profileChangeRequest.deleteMany()).count;
-    results.hrProfiles = (await prisma.hRProfile.deleteMany()).count;
 
     // Purchase Requests
     results.purchaseRequestHistory = (await prisma.purchaseRequestHistory.deleteMany()).count;
@@ -100,7 +99,7 @@ export async function POST() {
     results.rolePermissions = (await prisma.rolePermission.deleteMany()).count;
     results.setupProgress = (await prisma.organizationSetupProgress.deleteMany()).count;
     results.invitations = (await prisma.organizationInvitation.deleteMany()).count;
-    results.orgUsers = (await prisma.organizationUser.deleteMany()).count;
+    results.teamMembers = (await prisma.teamMember.deleteMany()).count;
 
     // 3. Delete organizations
     results.organizations = (await prisma.organization.deleteMany()).count;

@@ -1,7 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
-import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { EmployeeListTable } from '@/components/domains/hr/employees';
 import { prisma } from '@/lib/core/prisma';
@@ -15,7 +14,7 @@ export default async function AdminEmployeesPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.role !== Role.ADMIN) {
+  if (process.env.NODE_ENV !== 'development' && session.user.role !== 'ADMIN') {
     redirect('/forbidden');
   }
 
@@ -34,18 +33,23 @@ export default async function AdminEmployeesPage() {
     expiringDocumentsCount,
     onLeaveToday,
   ] = await Promise.all([
-    prisma.user.count({
+    // Count employees using TeamMember model
+    prisma.teamMember.count({
       where: {
-        role: { in: ['ADMIN', 'EMPLOYEE'] },
-        organizationMemberships: { some: { organizationId: tenantId } },
+        tenantId,
+        isEmployee: true,
+        isDeleted: false,
       },
     }),
     prisma.profileChangeRequest.count({
       where: { tenantId, status: 'PENDING' },
     }),
-    prisma.hRProfile.count({
+    // Count expiring documents directly from TeamMember
+    prisma.teamMember.count({
       where: {
         tenantId,
+        isEmployee: true,
+        isDeleted: false,
         OR: [
           { qidExpiry: { gte: today, lte: thirtyDaysFromNow } },
           { passportExpiry: { gte: today, lte: thirtyDaysFromNow } },

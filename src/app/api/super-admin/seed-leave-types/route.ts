@@ -200,17 +200,18 @@ export async function POST(request: NextRequest) {
 
     // Initialize balances if requested
     if (withBalances) {
-      const users = await prisma.user.findMany({
+      // Use TeamMember instead of User
+      const members = await prisma.teamMember.findMany({
         where: {
-          organizationMemberships: {
-            some: { organizationId: org.id },
-          },
-          isSystemAccount: false,
+          tenantId: org.id,
+          isDeleted: false,
+          isEmployee: true,
         },
-        include: {
-          hrProfile: {
-            select: { dateOfJoining: true },
-          },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          dateOfJoining: true,
         },
       });
 
@@ -225,10 +226,10 @@ export async function POST(request: NextRequest) {
       const currentYear = new Date().getFullYear();
       const now = new Date();
 
-      for (const user of users) {
-        const dateOfJoining = user.hrProfile?.dateOfJoining;
+      for (const member of members) {
+        const dateOfJoining = member.dateOfJoining;
         const serviceMonths = dateOfJoining ? getServiceMonths(dateOfJoining, now) : 0;
-        const userName = user.name || user.email;
+        const userName = member.name || member.email;
         const joinDateStr = dateOfJoining ? dateOfJoining.toISOString().split('T')[0] : 'NOT SET';
 
         let userCreated = 0;
@@ -245,7 +246,7 @@ export async function POST(request: NextRequest) {
           // Check if balance already exists
           const existing = await prisma.leaveBalance.findFirst({
             where: {
-              memberId: user.id,
+              memberId: member.id,
               leaveTypeId: leaveType.id,
               year: currentYear,
               tenantId: org.id,
@@ -265,7 +266,7 @@ export async function POST(request: NextRequest) {
 
           await prisma.leaveBalance.create({
             data: {
-              memberId: user.id,
+              memberId: member.id,
               leaveTypeId: leaveType.id,
               year: currentYear,
               entitlement,

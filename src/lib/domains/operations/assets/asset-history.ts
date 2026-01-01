@@ -146,22 +146,6 @@ export async function recordAssetStatusChange(
   });
 }
 
-/**
- * Record asset project change
- * @deprecated PROJECT_CHANGED action is no longer supported as Asset model doesn't have project fields.
- * This function is kept as a stub for backward compatibility.
- */
-export async function recordAssetProjectChange(
-  _assetId: string,
-  _fromProject: string | null,
-  _toProject: string | null,
-  _performedBy: string,
-  _notes?: string
-) {
-  // This function is deprecated - PROJECT_CHANGED action is no longer supported
-  // Asset model no longer has project fields
-}
-
 export async function recordAssetLocationChange(
   assetId: string,
   fromLocation: string | null,

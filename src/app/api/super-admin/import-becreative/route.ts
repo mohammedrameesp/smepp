@@ -98,21 +98,18 @@ export async function POST(request: NextRequest) {
         results.users.skipped++;
       }
 
-      // Create OrganizationUser entry
-      const existingOrgUser = await prisma.organizationUser.findUnique({
-        where: {
-          organizationId_userId: {
-            organizationId: tenantId,
-            userId: existingUser.id,
-          },
-        },
+      // Create TeamMember entry for organization membership
+      const existingMember = await prisma.teamMember.findFirst({
+        where: { tenantId, email: existingUser.email },
       });
 
-      if (!existingOrgUser) {
-        await prisma.organizationUser.create({
+      if (!existingMember) {
+        await prisma.teamMember.create({
           data: {
-            organizationId: tenantId,
-            userId: existingUser.id,
+            tenantId,
+            email: existingUser.email,
+            name: existingUser.name,
+            canLogin: true,
             role: user.role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
             isOwner: user.role === 'ADMIN' && user.email === 'ramees@becreative.qa',
           },
@@ -274,49 +271,46 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 6. Import HR Profiles
+    // 6. Import HR Profiles (now embedded in TeamMember - update existing members)
     for (const profile of backupData.hrProfiles || []) {
-      const existingProfile = await prisma.hRProfile.findUnique({
-        where: { userId: profile.userId },
-      });
+      try {
+        // Find the TeamMember by email (HR profile userId was the User id)
+        const member = await prisma.teamMember.findFirst({
+          where: { tenantId, email: profile.userId ? undefined : profile.email },
+        });
 
-      if (!existingProfile) {
-        try {
-          await prisma.hRProfile.create({
+        if (member) {
+          await prisma.teamMember.update({
+            where: { id: member.id },
             data: {
-              id: profile.id,
-              tenantId,
-              userId: profile.userId,
-              employeeId: profile.employeeId,
-              dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth) : null,
-              gender: profile.gender,
-              nationality: profile.nationality,
-              maritalStatus: profile.maritalStatus,
-              qatarMobile: profile.personalPhone || profile.qatarMobile,
-              personalEmail: profile.personalEmail,
-              localEmergencyName: profile.emergencyContactName || profile.localEmergencyName,
-              localEmergencyPhone: profile.emergencyContactPhone || profile.localEmergencyPhone,
-              localEmergencyRelation: profile.emergencyContactRelation || profile.localEmergencyRelation,
-              qidNumber: profile.qidNumber,
-              qidExpiry: profile.qidExpiry ? new Date(profile.qidExpiry) : null,
-              passportNumber: profile.passportNumber,
-              passportExpiry: profile.passportExpiry ? new Date(profile.passportExpiry) : null,
-              healthCardExpiry: profile.healthCardExpiry ? new Date(profile.healthCardExpiry) : null,
-              dateOfJoining: profile.dateOfJoining ? new Date(profile.dateOfJoining) : null,
-              designation: profile.designation,
-              sponsorshipType: profile.visaSponsor || profile.sponsorshipType,
-              contractExpiry: profile.contractEndDate ? new Date(profile.contractEndDate) : (profile.visaExpiry ? new Date(profile.visaExpiry) : null),
-              bankName: profile.bankName,
-              iban: profile.bankIban || profile.iban,
-              createdAt: new Date(profile.createdAt),
-              updatedAt: new Date(profile.updatedAt),
+              employeeCode: profile.employeeId,
+              dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth) : undefined,
+              gender: profile.gender || undefined,
+              nationality: profile.nationality || undefined,
+              maritalStatus: profile.maritalStatus || undefined,
+              qatarMobile: profile.personalPhone || profile.qatarMobile || undefined,
+              personalEmail: profile.personalEmail || undefined,
+              localEmergencyName: profile.emergencyContactName || profile.localEmergencyName || undefined,
+              localEmergencyPhone: profile.emergencyContactPhone || profile.localEmergencyPhone || undefined,
+              localEmergencyRelation: profile.emergencyContactRelation || profile.localEmergencyRelation || undefined,
+              qidNumber: profile.qidNumber || undefined,
+              qidExpiry: profile.qidExpiry ? new Date(profile.qidExpiry) : undefined,
+              passportNumber: profile.passportNumber || undefined,
+              passportExpiry: profile.passportExpiry ? new Date(profile.passportExpiry) : undefined,
+              healthCardExpiry: profile.healthCardExpiry ? new Date(profile.healthCardExpiry) : undefined,
+              dateOfJoining: profile.dateOfJoining ? new Date(profile.dateOfJoining) : undefined,
+              designation: profile.designation || undefined,
+              sponsorshipType: profile.visaSponsor || profile.sponsorshipType || undefined,
+              contractExpiry: profile.contractEndDate ? new Date(profile.contractEndDate) : (profile.visaExpiry ? new Date(profile.visaExpiry) : undefined),
+              bankName: profile.bankName || undefined,
+              iban: profile.bankIban || profile.iban || undefined,
             },
           });
           results.hrProfiles.created++;
-        } catch (e) {
+        } else {
           results.hrProfiles.skipped++;
         }
-      } else {
+      } catch (e) {
         results.hrProfiles.skipped++;
       }
     }

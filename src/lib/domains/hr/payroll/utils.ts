@@ -13,17 +13,6 @@ import Decimal from 'decimal.js';
 Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP });
 
 /**
- * Generate payroll run reference number (legacy - without org prefix)
- * Format: PAY-YYYY-MM-XXX
- * @deprecated Use generatePayrollReferenceWithPrefix instead
- */
-export function generatePayrollReference(year: number, month: number, sequence: number): string {
-  const monthStr = month.toString().padStart(2, '0');
-  const seqStr = sequence.toString().padStart(3, '0');
-  return `PAY-${year}-${monthStr}-${seqStr}`;
-}
-
-/**
  * Generate payroll run reference number with organization prefix
  * Format: {PREFIX}-PAY-YYYY-MM-XXX
  * Example: BCE-PAY-2024-12-001, JAS-PAY-2024-12-001
@@ -41,17 +30,6 @@ export async function generatePayrollReferenceWithPrefix(
 }
 
 /**
- * Generate payslip number (legacy - without org prefix)
- * Format: PS-YYYY-MM-XXXXX
- * @deprecated Use generatePayslipNumberWithPrefix instead
- */
-export function generatePayslipNumber(year: number, month: number, sequence: number): string {
-  const monthStr = month.toString().padStart(2, '0');
-  const seqStr = sequence.toString().padStart(5, '0');
-  return `PS-${year}-${monthStr}-${seqStr}`;
-}
-
-/**
  * Generate payslip number with organization prefix
  * Format: {PREFIX}-PS-YYYY-MM-XXXXX
  * Example: BCE-PS-2024-12-00001, JAS-PS-2024-12-00001
@@ -66,15 +44,6 @@ export async function generatePayslipNumberWithPrefix(
   const monthStr = month.toString().padStart(2, '0');
   const seqStr = sequence.toString().padStart(5, '0');
   return `${codePrefix}-PS-${year}-${monthStr}-${seqStr}`;
-}
-
-/**
- * Generate loan number (legacy - without org prefix)
- * Format: LOAN-XXXXX
- * @deprecated Use generateLoanNumberWithPrefix instead
- */
-export function generateLoanNumber(sequence: number): string {
-  return `LOAN-${sequence.toString().padStart(5, '0')}`;
 }
 
 /**

@@ -93,11 +93,8 @@ export default async function AdminDashboard() {
       expiringEmployeeDocs,
     ] = await Promise.all([
       // Stats counts
-      prisma.user.count({
-        where: {
-          role: { in: ['ADMIN', 'EMPLOYEE'] },
-          organizationMemberships: { some: { organizationId: tenantId } },
-        },
+      prisma.teamMember.count({
+        where: { tenantId, isDeleted: false },
       }),
       prisma.asset.count({ where: { tenantId } }),
       prisma.subscription.count({ where: { tenantId, status: 'ACTIVE' } }),

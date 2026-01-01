@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
-import { getUserSubscriptionHistory } from '@/lib/subscription-lifecycle';
+import { getMemberSubscriptionHistory } from '@/lib/subscription-lifecycle';
 import { getUserAssetHistory } from '@/lib/asset-lifecycle';
 import { UserSubscriptionHistory, UserAssetHistory } from '@/components/domains/system/users';
 
@@ -32,7 +32,7 @@ export default async function MePage() {
   }
 
   // Get complete subscription history (including inactive ones)
-  const subscriptionHistory = await getUserSubscriptionHistory(memberId);
+  const subscriptionHistory = await getMemberSubscriptionHistory(memberId);
 
   // Get complete asset history (including past assignments)
   const assetHistory = await getUserAssetHistory(memberId);

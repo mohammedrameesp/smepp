@@ -18,17 +18,17 @@ export default async function EmployeePayrollPage() {
 
   const userId = session.user.id;
 
-  // Get employee's salary structure, HR profile, and recent payslips
-  const [salaryStructure, hrProfile, recentPayslips, loans] = await Promise.all([
+  // Get employee's salary structure, member profile, and recent payslips
+  const [salaryStructure, member, recentPayslips, loans] = await Promise.all([
     prisma.salaryStructure.findUnique({
       where: { memberId: userId },
     }),
-    prisma.hRProfile.findUnique({
-      where: { userId },
+    prisma.teamMember.findUnique({
+      where: { id: userId },
       select: {
         dateOfJoining: true,
         designation: true,
-        employeeId: true,
+        employeeCode: true,
         bankName: true,
       },
     }),
@@ -63,9 +63,9 @@ export default async function EmployeePayrollPage() {
 
   // Calculate gratuity if data is available
   let gratuityCalculation = null;
-  if (salaryStructure && hrProfile?.dateOfJoining) {
+  if (salaryStructure && member?.dateOfJoining) {
     const basicSalary = Number(salaryStructure.basicSalary);
-    const dateOfJoining = new Date(hrProfile.dateOfJoining);
+    const dateOfJoining = new Date(member.dateOfJoining);
     gratuityCalculation = calculateGratuity(basicSalary, dateOfJoining);
   }
 

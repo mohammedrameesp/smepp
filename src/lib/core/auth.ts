@@ -197,7 +197,6 @@ providers.push(
           name: true,
           role: true,
           passwordHash: true,
-          canLogin: true,
           isDeleted: true,
           lockedUntil: true,
           isSuperAdmin: true,
@@ -227,10 +226,7 @@ providers.push(
         throw new Error('This account has been deactivated');
       }
 
-      // Block users who cannot login
-      if (!user.canLogin) {
-        throw new Error('This account is not enabled for login');
-      }
+      // Super admins can always login (canLogin is only on TeamMember)
 
       // Verify password
       const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
@@ -389,14 +385,22 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
 
 /**
  * Get the user's primary organization membership (legacy - for super admin OAuth)
- * @deprecated Use getTeamMemberOrganization for org users
+ * Now uses TeamMember table instead of deprecated OrganizationUser
  */
 async function getUserOrganization(userId: string): Promise<OrganizationInfo | null> {
-  const membership = await prisma.organizationUser.findFirst({
-    where: { userId },
+  // Find TeamMember by matching User email
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+
+  if (!user?.email) return null;
+
+  const membership = await prisma.teamMember.findFirst({
+    where: { email: user.email, isDeleted: false },
     orderBy: { joinedAt: 'asc' }, // Get the oldest (first) organization
     include: {
-      organization: {
+      tenant: {
         select: {
           id: true,
           name: true,
@@ -414,13 +418,13 @@ async function getUserOrganization(userId: string): Promise<OrganizationInfo | n
   }
 
   return {
-    id: membership.organization.id,
-    name: membership.organization.name,
-    slug: membership.organization.slug,
-    logoUrl: membership.organization.logoUrl,
-    role: membership.role,
-    tier: membership.organization.subscriptionTier,
-    enabledModules: membership.organization.enabledModules,
+    id: membership.tenant.id,
+    name: membership.tenant.name,
+    slug: membership.tenant.slug,
+    logoUrl: membership.tenant.logoUrl,
+    role: membership.isOwner ? OrgRole.OWNER : membership.role === 'ADMIN' ? OrgRole.ADMIN : OrgRole.MEMBER,
+    tier: membership.tenant.subscriptionTier,
+    enabledModules: membership.tenant.enabledModules,
   };
 }
 
@@ -508,10 +512,8 @@ export const authOptions: NextAuthOptions = {
               return '/login?error=AccountDeactivated';
             }
 
-            // Block users who cannot login
-            if (!existingUser.canLogin) {
-              return false;
-            }
+            // Note: canLogin is now on TeamMember, not User
+            // User table is only for super admins who can always login if not deleted
 
             // Check if this OAuth account is already linked
             const accountExists = existingUser.accounts.some(
@@ -593,11 +595,12 @@ export const authOptions: NextAuthOptions = {
             // Super admin - check User table
             const securityCheck = await prisma.user.findUnique({
               where: { id: token.id as string },
-              select: { passwordChangedAt: true, canLogin: true },
+              select: { passwordChangedAt: true, isDeleted: true },
             });
 
             if (securityCheck) {
-              if (!securityCheck.canLogin) {
+              // Super admins can always login if not deleted (canLogin is only on TeamMember)
+              if (securityCheck.isDeleted) {
                 return { ...token, id: undefined };
               }
 
@@ -644,13 +647,15 @@ export const authOptions: NextAuthOptions = {
             // Get role and super admin status from database
             const dbUser = await prisma.user.findUnique({
               where: { email: user.email! },
-              select: { id: true, role: true, isSuperAdmin: true, isEmployee: true },
+              select: { id: true, role: true, isSuperAdmin: true },
             });
             if (dbUser) {
               token.id = dbUser.id;
               token.role = dbUser.role;
               token.isSuperAdmin = dbUser.isSuperAdmin;
-              token.isEmployee = dbUser.isEmployee;
+              // isEmployee is now on TeamMember, not User
+              // Super admins are not employees (they're platform admins)
+              token.isEmployee = false;
             } else if ('role' in user && user.role) {
               token.role = user.role;
               token.isSuperAdmin = false;

@@ -2,6 +2,8 @@
  * @file route.ts
  * @description Profile change requests for employees (self-service)
  * @module system/users
+ *
+ * NOTE: This endpoint now uses TeamMember (memberId) instead of the deprecated HRProfile.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,9 +12,9 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
 import { z } from 'zod';
-import { sendBatchEmails } from '@/lib/email';
+import { sendBatchEmails } from '@/lib/core/email';
 import { changeRequestEmail } from '@/lib/core/email-templates';
-import { Role } from '@prisma/client';
+import { TeamMemberRole } from '@prisma/client';
 
 const createRequestSchema = z.object({
   description: z.string().min(10, 'Please provide at least 10 characters describing your change request'),
@@ -33,17 +35,9 @@ async function getChangeRequestsHandler(request: NextRequest) {
 
   const tenantId = session.user.organizationId;
 
-  // Find user's HR profile within tenant
-  const hrProfile = await prisma.hRProfile.findFirst({
-    where: { userId: session.user.id, tenantId },
-  });
-
-  if (!hrProfile) {
-    return NextResponse.json({ requests: [] });
-  }
-
+  // Get change requests for this TeamMember
   const requests = await prisma.profileChangeRequest.findMany({
-    where: { hrProfileId: hrProfile.id, tenantId },
+    where: { memberId: session.user.id, tenantId },
     orderBy: { createdAt: 'desc' },
   });
 
@@ -77,24 +71,20 @@ async function createChangeRequestHandler(request: NextRequest) {
 
   const tenantId = session.user.organizationId;
 
-  // Find or create user's HR profile within tenant
-  let hrProfile = await prisma.hRProfile.findFirst({
-    where: { userId: session.user.id, tenantId },
+  // Verify TeamMember exists
+  const member = await prisma.teamMember.findUnique({
+    where: { id: session.user.id },
+    select: { id: true, name: true, email: true },
   });
 
-  if (!hrProfile) {
-    hrProfile = await prisma.hRProfile.create({
-      data: {
-        userId: session.user.id,
-        tenantId,
-      },
-    });
+  if (!member) {
+    return NextResponse.json({ error: 'Team member not found' }, { status: 404 });
   }
 
   // Check for existing pending request
   const existingPending = await prisma.profileChangeRequest.findFirst({
     where: {
-      hrProfileId: hrProfile.id,
+      memberId: session.user.id,
       status: 'PENDING',
     },
   });
@@ -106,10 +96,10 @@ async function createChangeRequestHandler(request: NextRequest) {
     );
   }
 
-  // Create the change request
+  // Create the change request (using memberId, not hrProfileId)
   const changeRequest = await prisma.profileChangeRequest.create({
     data: {
-      hrProfileId: hrProfile.id,
+      memberId: session.user.id,
       description: validation.data.description,
       tenantId,
     },
@@ -123,18 +113,21 @@ async function createChangeRequestHandler(request: NextRequest) {
       select: { slug: true, name: true },
     });
 
-    const admins = await prisma.user.findMany({
+    // Get admin TeamMembers in this organization
+    const admins = await prisma.teamMember.findMany({
       where: {
-        role: Role.ADMIN,
-        organizationMemberships: { some: { organizationId: session.user.organizationId! } },
+        tenantId: session.user.organizationId!,
+        role: TeamMemberRole.ADMIN,
+        isDeleted: false,
+        id: { not: session.user.id }, // Don't notify the user themselves
       },
       select: { email: true },
     });
 
     if (admins.length > 0) {
       const emailContent = changeRequestEmail({
-        employeeName: session.user.name || 'Employee',
-        employeeEmail: session.user.email || '',
+        employeeName: member.name || 'Employee',
+        employeeEmail: member.email,
         fieldName: 'Profile Information',
         currentValue: '',
         requestedValue: 'See description',

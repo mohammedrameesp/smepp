@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { getUserSubscriptionHistory } from '@/lib/subscription-lifecycle';
+import { getMemberSubscriptionHistory } from '@/lib/subscription-lifecycle';
 import { getUserAssetHistory } from '@/lib/asset-lifecycle';
 import { UserSubscriptionHistory, UserAssetHistory } from '@/components/domains/system/users';
 
@@ -17,7 +17,7 @@ export default async function MyHoldingsPage() {
 
   try {
     // Get complete subscription history (including inactive ones)
-    const subscriptionHistory = await getUserSubscriptionHistory(session.user.id);
+    const subscriptionHistory = await getMemberSubscriptionHistory(session.user.id);
 
     // Get complete asset history (including past assignments)
     const assetHistory = await getUserAssetHistory(session.user.id);

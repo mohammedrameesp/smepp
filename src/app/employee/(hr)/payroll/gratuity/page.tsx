@@ -17,23 +17,23 @@ export default async function EmployeeGratuityPage() {
 
   const userId = session.user.id;
 
-  // Get employee's salary structure and HR profile
-  const [salaryStructure, hrProfile] = await Promise.all([
+  // Get employee's salary structure and member profile
+  const [salaryStructure, member] = await Promise.all([
     prisma.salaryStructure.findUnique({
       where: { memberId: userId },
     }),
-    prisma.hRProfile.findUnique({
-      where: { userId },
+    prisma.teamMember.findUnique({
+      where: { id: userId },
       select: {
         dateOfJoining: true,
         designation: true,
-        employeeId: true,
+        employeeCode: true,
       },
     }),
   ]);
 
   // Check if we can calculate gratuity
-  if (!salaryStructure || !hrProfile?.dateOfJoining) {
+  if (!salaryStructure || !member?.dateOfJoining) {
     return (
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-6xl mx-auto space-y-6">
@@ -67,7 +67,7 @@ export default async function EmployeeGratuityPage() {
   }
 
   const basicSalary = Number(salaryStructure.basicSalary);
-  const dateOfJoining = new Date(hrProfile.dateOfJoining);
+  const dateOfJoining = new Date(member.dateOfJoining);
   const gratuityCalculation = calculateGratuity(basicSalary, dateOfJoining);
   const projections = projectGratuity(basicSalary, dateOfJoining, [1, 2, 3, 5, 10]);
 

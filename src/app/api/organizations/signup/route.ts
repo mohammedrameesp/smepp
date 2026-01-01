@@ -58,10 +58,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email is already used as an owner
-    const existingOwner = await prisma.organizationUser.findFirst({
+    const existingOwner = await prisma.teamMember.findFirst({
       where: {
-        user: { email: adminEmail.toLowerCase() },
+        email: adminEmail.toLowerCase(),
         isOwner: true,
+        isDeleted: false,
       },
     });
 

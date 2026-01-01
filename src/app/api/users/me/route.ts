@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
+    // First try to get TeamMember (for org users)
+    const member = await prisma.teamMember.findUnique({
       where: { id: session.user.id },
       select: {
         id: true,
@@ -35,14 +36,32 @@ export async function GET(request: NextRequest) {
         role: true,
         isEmployee: true,
         isOnWps: true,
+        dateOfJoining: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (member) {
+      return NextResponse.json({
+        ...member,
+        isSystemAccount: false,
+        hrProfile: member.dateOfJoining ? { dateOfJoining: member.dateOfJoining } : null,
+      });
+    }
+
+    // Fall back to User model for super admins
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        role: true,
         isSystemAccount: true,
         createdAt: true,
         updatedAt: true,
-        hrProfile: {
-          select: {
-            dateOfJoining: true,
-          },
-        },
       },
     });
 
@@ -50,7 +69,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    return NextResponse.json(user);
+    return NextResponse.json({
+      ...user,
+      isEmployee: false,
+      isOnWps: false,
+      hrProfile: null,
+    });
   } catch (error) {
     console.error('Get current user error:', error);
     return NextResponse.json(

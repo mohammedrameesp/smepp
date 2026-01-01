@@ -42,27 +42,23 @@ export async function GET(request: NextRequest) {
     // For cron jobs (system backup), export all data
     // For user requests, export only their organization's data
     const tenantFilter = tenantId ? { tenantId } : {};
-    const userFilter = tenantId ? {
-      organizationMemberships: { some: { organizationId: tenantId } }
-    } : {};
 
     // Export data (tenant-scoped for user requests)
     const [
-      users,
+      teamMembers,
       assets,
       assetHistories,
       subscriptions,
       subscriptionHistories,
       suppliers,
       supplierEngagements,
-      hrProfiles,
       profileChangeRequests,
       activityLogs,
       systemSettings,
       maintenanceRecords,
       purchaseRequests,
     ] = await Promise.all([
-      prisma.user.findMany({ where: userFilter }),
+      prisma.teamMember.findMany({ where: { ...tenantFilter, isDeleted: false } }),
       prisma.asset.findMany({ where: tenantFilter }),
       tenantId
         ? prisma.assetHistory.findMany({ where: { asset: { tenantId } } })
@@ -73,7 +69,6 @@ export async function GET(request: NextRequest) {
         : safeQuery(prisma.subscriptionHistory.findMany(), []),
       prisma.supplier.findMany({ where: tenantFilter }),
       prisma.supplierEngagement.findMany({ where: tenantFilter }),
-      safeQuery(prisma.hRProfile.findMany({ where: tenantFilter }), []),
       safeQuery(prisma.profileChangeRequest.findMany({ where: tenantFilter }), []),
       prisma.activityLog.findMany({ where: tenantFilter }),
       safeQuery(prisma.systemSettings.findMany({ where: tenantFilter }), []),
@@ -84,35 +79,33 @@ export async function GET(request: NextRequest) {
     const timestamp = new Date().toISOString();
     const backupData = {
       _metadata: {
-        version: '2.1',
+        version: '2.2',
         application: 'Durj',
         createdAt: timestamp,
         organizationId: tenantId || 'ALL',
         description: tenantId ? 'Organization backup' : 'Full platform backup (cron)',
       },
       _counts: {
-        users: users.length,
+        teamMembers: teamMembers.length,
         assets: assets.length,
         assetHistories: assetHistories.length,
         subscriptions: subscriptions.length,
         subscriptionHistories: subscriptionHistories.length,
         suppliers: suppliers.length,
         supplierEngagements: supplierEngagements.length,
-        hrProfiles: hrProfiles.length,
         profileChangeRequests: profileChangeRequests.length,
         activityLogs: activityLogs.length,
         systemSettings: systemSettings.length,
         maintenanceRecords: maintenanceRecords.length,
         purchaseRequests: purchaseRequests.length,
       },
-      users,
+      teamMembers,
       assets,
       assetHistories,
       subscriptions,
       subscriptionHistories,
       suppliers,
       supplierEngagements,
-      hrProfiles,
       profileChangeRequests,
       activityLogs,
       systemSettings,

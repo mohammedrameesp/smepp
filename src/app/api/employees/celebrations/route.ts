@@ -8,7 +8,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Role } from '@prisma/client';
 import { APIContext } from '@/lib/http/handler';
 
 interface CelebrationEvent {
@@ -32,28 +31,20 @@ async function getCelebrationsHandler(request: NextRequest, _context: APIContext
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Get all employees with HR profiles (tenant-scoped)
-    const employees = await prisma.user.findMany({
+    // Get all employees with HR data (tenant-scoped) from TeamMember
+    const employees = await prisma.teamMember.findMany({
       where: {
-        isSystemAccount: false,
-        role: {
-          in: [Role.EMPLOYEE, Role.TEMP_STAFF, Role.ADMIN],
-        },
-        hrProfile: {
-          isNot: null,
-        },
-        organizationMemberships: {
-          some: { organizationId: session.user.organizationId },
-        },
+        tenantId: session.user.organizationId,
+        isEmployee: true,
+        isDeleted: false,
       },
-      include: {
-        hrProfile: {
-          select: {
-            dateOfBirth: true,
-            dateOfJoining: true,
-            photoUrl: true,
-          },
-        },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        dateOfBirth: true,
+        dateOfJoining: true,
+        photoUrl: true,
       },
     });
 
@@ -61,12 +52,10 @@ async function getCelebrationsHandler(request: NextRequest, _context: APIContext
     const lookAheadDays = 30; // Look 30 days ahead
 
     for (const emp of employees) {
-      const hr = emp.hrProfile;
-      if (!hr) continue;
 
       // Check birthday
-      if (hr.dateOfBirth) {
-        const dob = new Date(hr.dateOfBirth);
+      if (emp.dateOfBirth) {
+        const dob = new Date(emp.dateOfBirth);
         // Create this year's birthday
         const thisYearBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
 
@@ -84,7 +73,7 @@ async function getCelebrationsHandler(request: NextRequest, _context: APIContext
             employeeId: emp.id,
             employeeName: emp.name || emp.email,
             employeeEmail: emp.email,
-            photoUrl: hr.photoUrl,
+            photoUrl: emp.photoUrl,
             type: 'birthday',
             date: thisYearBirthday.toISOString(),
             daysUntil: daysUntilBirthday,
@@ -93,8 +82,8 @@ async function getCelebrationsHandler(request: NextRequest, _context: APIContext
       }
 
       // Check work anniversary
-      if (hr.dateOfJoining) {
-        const doj = new Date(hr.dateOfJoining);
+      if (emp.dateOfJoining) {
+        const doj = new Date(emp.dateOfJoining);
         // Create this year's anniversary
         const thisYearAnniversary = new Date(today.getFullYear(), doj.getMonth(), doj.getDate());
 
@@ -115,7 +104,7 @@ async function getCelebrationsHandler(request: NextRequest, _context: APIContext
             employeeId: emp.id,
             employeeName: emp.name || emp.email,
             employeeEmail: emp.email,
-            photoUrl: hr.photoUrl,
+            photoUrl: emp.photoUrl,
             type: 'work_anniversary',
             date: thisYearAnniversary.toISOString(),
             daysUntil: daysUntilAnniversary,

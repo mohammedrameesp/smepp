@@ -31,12 +31,11 @@ export async function POST(
     const { id } = await params;
 
     // Verify target user belongs to the same organization
-    const membership = await prisma.organizationUser.findUnique({
+    const membership = await prisma.teamMember.findFirst({
       where: {
-        organizationId_userId: {
-          organizationId: tenantId,
-          userId: id,
-        },
+        tenantId,
+        id,
+        isDeleted: false,
       },
     });
 
@@ -77,16 +76,20 @@ export async function POST(
         deletedAt: null,
         scheduledDeletionAt: null,
         deletedByUserId: null,
-        canLogin: true, // Re-enable login
+        // Note: canLogin is now on TeamMember, not User
       },
     });
 
-    // Clear termination date on HR profile (resumes calculations from original dateOfJoining - NO gap)
-    await prisma.hRProfile.updateMany({
-      where: { userId: id },
+    // Clear termination date on TeamMember and re-enable login
+    // (resumes calculations from original dateOfJoining - NO gap)
+    await prisma.teamMember.updateMany({
+      where: { email: user.email.toLowerCase(), tenantId },
       data: {
-        terminationDate: null,
-        terminationReason: null,
+        isDeleted: false,
+        deletedAt: null,
+        status: 'ACTIVE',
+        canLogin: true, // Re-enable login
+        // Note: terminationDate/terminationReason are now handled via status field
       },
     });
 

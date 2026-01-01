@@ -219,7 +219,7 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
     // Export all platform data
     const [
       organizations,
-      organizationUsers,
+      teamMembers,
       organizationInvitations,
       users,
       assets,
@@ -229,7 +229,6 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
       subscriptionHistories,
       suppliers,
       supplierEngagements,
-      hrProfiles,
       profileChangeRequests,
       activityLogs,
       systemSettings,
@@ -249,7 +248,7 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
       notifications,
     ] = await Promise.all([
       prisma.organization.findMany(),
-      prisma.organizationUser.findMany(),
+      prisma.teamMember.findMany(),
       safeQuery(prisma.organizationInvitation.findMany(), []),
       prisma.user.findMany(),
       prisma.asset.findMany(),
@@ -259,7 +258,7 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
       safeQuery(prisma.subscriptionHistory.findMany(), []),
       prisma.supplier.findMany(),
       prisma.supplierEngagement.findMany(),
-      safeQuery(prisma.hRProfile.findMany(), []),
+      // HRProfile removed - data now in TeamMember
       safeQuery(prisma.profileChangeRequest.findMany(), []),
       prisma.activityLog.findMany(),
       safeQuery(prisma.systemSettings.findMany(), []),
@@ -281,7 +280,7 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
 
     const backupData = {
       _metadata: {
-        version: '3.0',
+        version: '4.0', // Updated version for TeamMember-based backup
         application: 'Durj',
         type: 'full',
         createdAt: new Date().toISOString(),
@@ -289,13 +288,14 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
       },
       _counts: {
         organizations: organizations.length,
+        teamMembers: teamMembers.length,
         users: users.length,
         assets: assets.length,
         subscriptions: subscriptions.length,
         suppliers: suppliers.length,
       },
       organizations,
-      organizationUsers,
+      teamMembers,
       organizationInvitations,
       users,
       assets,
@@ -305,7 +305,6 @@ async function createFullBackup(): Promise<{ filename: string; success: boolean;
       subscriptionHistories,
       suppliers,
       supplierEngagements,
-      hrProfiles,
       profileChangeRequests,
       activityLogs,
       systemSettings,
@@ -354,7 +353,6 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
     };
 
     const tenantFilter = { tenantId };
-    const userFilter = { organizationMemberships: { some: { organizationId: tenantId } } };
 
     // Get organization details
     const organization = await prisma.organization.findUnique({
@@ -362,8 +360,7 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
     });
 
     const [
-      organizationUsers,
-      users,
+      teamMembers,
       assets,
       assetHistories,
       assetRequests,
@@ -371,7 +368,6 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
       subscriptionHistories,
       suppliers,
       supplierEngagements,
-      hrProfiles,
       profileChangeRequests,
       activityLogs,
       systemSettings,
@@ -390,8 +386,7 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
       companyDocuments,
       notifications,
     ] = await Promise.all([
-      prisma.organizationUser.findMany({ where: { organizationId: tenantId } }),
-      prisma.user.findMany({ where: userFilter }),
+      prisma.teamMember.findMany({ where: tenantFilter }),
       prisma.asset.findMany({ where: tenantFilter }),
       prisma.assetHistory.findMany({ where: { asset: { tenantId } } }),
       safeQuery(prisma.assetRequest.findMany({ where: tenantFilter }), []),
@@ -399,7 +394,7 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
       safeQuery(prisma.subscriptionHistory.findMany({ where: { subscription: { tenantId } } }), []),
       prisma.supplier.findMany({ where: tenantFilter }),
       prisma.supplierEngagement.findMany({ where: tenantFilter }),
-      safeQuery(prisma.hRProfile.findMany({ where: tenantFilter }), []),
+      // HRProfile removed - data now in TeamMember
       safeQuery(prisma.profileChangeRequest.findMany({ where: tenantFilter }), []),
       prisma.activityLog.findMany({ where: tenantFilter }),
       safeQuery(prisma.systemSettings.findMany({ where: tenantFilter }), []),
@@ -421,7 +416,7 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
 
     const backupData = {
       _metadata: {
-        version: '3.0',
+        version: '4.0', // Updated version for TeamMember-based backup
         application: 'Durj',
         type: 'organization',
         organizationId: tenantId,
@@ -431,14 +426,13 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
         description: `Organization backup - ${organization?.name || orgSlug}`,
       },
       _counts: {
-        users: users.length,
+        teamMembers: teamMembers.length,
         assets: assets.length,
         subscriptions: subscriptions.length,
         suppliers: suppliers.length,
       },
       organization,
-      organizationUsers,
-      users,
+      teamMembers,
       assets,
       assetHistories,
       assetRequests,
@@ -446,7 +440,6 @@ async function createOrganizationBackup(tenantId: string, orgSlug: string): Prom
       subscriptionHistories,
       suppliers,
       supplierEngagements,
-      hrProfiles,
       profileChangeRequests,
       activityLogs,
       systemSettings,

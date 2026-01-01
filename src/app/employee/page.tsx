@@ -11,7 +11,7 @@ import {
   AlertTriangle,
   Bell,
 } from 'lucide-react';
-import { getUserSubscriptionHistory } from '@/lib/subscription-lifecycle';
+import { getMemberSubscriptionHistory } from '@/lib/subscription-lifecycle';
 import { getUserAssetHistory } from '@/lib/asset-lifecycle';
 import { getNextRenewalDate, getDaysUntilRenewal } from '@/lib/utils/renewal-date';
 import { getAnnualLeaveDetails } from '@/lib/leave-utils';
@@ -60,7 +60,7 @@ export default async function EmployeeDashboard() {
       assetRequests,
       celebrations,
     ] = await Promise.all([
-      getUserSubscriptionHistory(session.user.id),
+      getMemberSubscriptionHistory(session.user.id),
       getUserAssetHistory(session.user.id),
       prisma.purchaseRequest.findMany({
         where: { requesterId: session.user.id },

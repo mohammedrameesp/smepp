@@ -17,7 +17,7 @@
  * - Date overlap prevention
  */
 
-import { LeaveType, HRProfile, LeaveRequest, LeaveBalance, LeaveRequestType } from '@prisma/client';
+import { LeaveType, TeamMember, LeaveRequest, LeaveBalance, LeaveRequestType } from '@prisma/client';
 import {
   calculateWorkingDays,
   meetsNoticeDaysRequirement,
@@ -38,7 +38,7 @@ export interface ValidationResult {
 
 export interface LeaveTypeEligibilityParams {
   leaveType: LeaveType;
-  hrProfile: Pick<HRProfile, 'dateOfJoining' | 'hajjLeaveTaken' | 'gender' | 'bypassNoticeRequirement'> | null;
+  hrProfile: Pick<TeamMember, 'dateOfJoining' | 'hajjLeaveTaken' | 'gender' | 'bypassNoticeRequirement'> | null;
   startDate: Date;
   hasExistingBalance: boolean;
 }
@@ -131,7 +131,7 @@ export function validateLeaveTypeEligibility(params: LeaveTypeEligibilityParams)
  */
 export function validateOnceInEmploymentLeave(
   leaveType: LeaveType,
-  hrProfile: Pick<HRProfile, 'hajjLeaveTaken'> | null,
+  hrProfile: Pick<TeamMember, 'hajjLeaveTaken'> | null,
   existingOnceLeave: LeaveRequest | null
 ): ValidationResult {
   if (!leaveType.isOnceInEmployment) {

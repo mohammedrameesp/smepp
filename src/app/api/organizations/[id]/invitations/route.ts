@@ -34,16 +34,15 @@ export async function GET(
     const { id: organizationId } = await params;
 
     // Check if user is admin/owner of the organization
-    const membership = await prisma.organizationUser.findUnique({
+    const membership = await prisma.teamMember.findFirst({
       where: {
-        organizationId_userId: {
-          organizationId,
-          userId: session.user.id,
-        },
+        tenantId: organizationId,
+        id: session.user.id,
+        isDeleted: false,
       },
     });
 
-    if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
+    if (!membership || (!membership.isOwner && membership.role !== 'ADMIN')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -79,19 +78,18 @@ export async function POST(
     const { id: organizationId } = await params;
 
     // Check if user is admin/owner of the organization
-    const membership = await prisma.organizationUser.findUnique({
+    const membership = await prisma.teamMember.findFirst({
       where: {
-        organizationId_userId: {
-          organizationId,
-          userId: session.user.id,
-        },
+        tenantId: organizationId,
+        id: session.user.id,
+        isDeleted: false,
       },
       include: {
-        organization: true,
+        tenant: true,
       },
     });
 
-    if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
+    if (!membership || (!membership.isOwner && membership.role !== 'ADMIN')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -114,12 +112,11 @@ export async function POST(
     });
 
     if (existingUser) {
-      const existingMembership = await prisma.organizationUser.findUnique({
+      const existingMembership = await prisma.teamMember.findFirst({
         where: {
-          organizationId_userId: {
-            organizationId,
-            userId: existingUser.id,
-          },
+          tenantId: organizationId,
+          id: existingUser.id,
+          isDeleted: false,
         },
       });
 
@@ -148,11 +145,11 @@ export async function POST(
     }
 
     // Check organization user limit
-    const currentMemberCount = await prisma.organizationUser.count({
-      where: { organizationId },
+    const currentMemberCount = await prisma.teamMember.count({
+      where: { tenantId: organizationId, isDeleted: false },
     });
 
-    if (currentMemberCount >= membership.organization.maxUsers) {
+    if (currentMemberCount >= membership.tenant.maxUsers) {
       return NextResponse.json(
         { error: 'Organization has reached maximum user limit. Upgrade to add more users.' },
         { status: 403 }
@@ -180,20 +177,20 @@ export async function POST(
     // Build organization-specific invite URL using subdomain
     const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
     const protocol = appDomain.includes('localhost') ? 'http' : 'https';
-    const inviteUrl = `${protocol}://${membership.organization.slug}.${appDomain}/invite/${token}`;
+    const inviteUrl = `${protocol}://${membership.tenant.slug}.${appDomain}/invite/${token}`;
 
     // Send invitation email
     const emailResult = await sendEmail({
       to: normalizedEmail,
-      subject: `You're invited to join ${membership.organization.name} on Durj`,
+      subject: `You're invited to join ${membership.tenant.name} on Durj`,
       html: `
         <h2>You've been invited!</h2>
-        <p>You've been invited to join <strong>${membership.organization.name}</strong> on Durj.</p>
+        <p>You've been invited to join <strong>${membership.tenant.name}</strong> on Durj.</p>
         <p><a href="${inviteUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 6px;">Accept Invitation</a></p>
         <p>Or copy this link: ${inviteUrl}</p>
         <p>This invitation expires in 7 days.</p>
       `,
-      text: `You've been invited to join ${membership.organization.name} on Durj. Accept here: ${inviteUrl}`,
+      text: `You've been invited to join ${membership.tenant.name} on Durj. Accept here: ${inviteUrl}`,
     });
 
     return NextResponse.json(
@@ -236,16 +233,15 @@ export async function DELETE(
     const { id: organizationId } = await params;
 
     // Check if user is admin/owner of the organization
-    const membership = await prisma.organizationUser.findUnique({
+    const membership = await prisma.teamMember.findFirst({
       where: {
-        organizationId_userId: {
-          organizationId,
-          userId: session.user.id,
-        },
+        tenantId: organizationId,
+        id: session.user.id,
+        isDeleted: false,
       },
     });
 
-    if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
+    if (!membership || (!membership.isOwner && membership.role !== 'ADMIN')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

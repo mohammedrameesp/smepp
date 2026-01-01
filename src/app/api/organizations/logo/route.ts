@@ -32,11 +32,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check user is owner/admin of org
-    const membership = await prisma.organizationUser.findFirst({
+    const membership = await prisma.teamMember.findFirst({
       where: {
-        userId: session.user.id,
-        organizationId,
-        role: { in: ['OWNER', 'ADMIN'] },
+        id: session.user.id,
+        tenantId: organizationId,
+        isDeleted: false,
+        OR: [{ isOwner: true }, { role: 'ADMIN' }],
       },
     });
 

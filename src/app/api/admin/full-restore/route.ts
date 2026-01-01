@@ -121,17 +121,18 @@ export async function POST(request: NextRequest) {
 
           if (!model) continue;
 
-          // Map user ID by email - verify user belongs to same organization
+          // Map member ID by email - verify member belongs to same organization
           const userEmail = row.getCell(25).value?.toString() || '';
           let newUserId = null;
           if (userEmail) {
-            const user = await prisma.user.findFirst({
+            const member = await prisma.teamMember.findFirst({
               where: {
                 email: userEmail,
-                organizationMemberships: { some: { organizationId: tenantId } },
+                tenantId,
+                isDeleted: false,
               },
             });
-            newUserId = user?.id || null;
+            newUserId = member?.id || null;
           }
 
           const assetData: any = {
@@ -204,17 +205,18 @@ export async function POST(request: NextRequest) {
 
           if (!serviceName) continue;
 
-          // Map user ID by email - verify user belongs to same organization
+          // Map member ID by email - verify member belongs to same organization
           const userEmail = row.getCell(17).value?.toString() || '';
           let newUserId = null;
           if (userEmail) {
-            const user = await prisma.user.findFirst({
+            const member = await prisma.teamMember.findFirst({
               where: {
                 email: userEmail,
-                organizationMemberships: { some: { organizationId: tenantId } },
+                tenantId,
+                isDeleted: false,
               },
             });
-            newUserId = user?.id || null;
+            newUserId = member?.id || null;
           }
 
           const subscriptionData: any = {

@@ -127,21 +127,20 @@ async function findApproversForRole(
   tenantId: string,
   requiredRole: Role
 ): Promise<string[]> {
-  // Get users with the required role or ADMIN (who can approve anything)
-  const users = await prisma.user.findMany({
+  // Get team members with the required role or ADMIN (who can approve anything)
+  const members = await prisma.teamMember.findMany({
     where: {
-      organizationMemberships: {
-        some: { organizationId: tenantId },
-      },
+      tenantId,
+      isDeleted: false,
       OR: [
-        { role: requiredRole },
+        { role: requiredRole as 'ADMIN' | 'MEMBER' },
         { role: 'ADMIN' },
       ],
     },
     select: { id: true },
   });
 
-  return users.map((u) => u.id);
+  return members.map((m) => m.id);
 }
 
 /**

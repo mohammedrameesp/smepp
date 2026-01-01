@@ -25,12 +25,8 @@ async function getUsersHandler(request: NextRequest, context: APIContext) {
   const includeAll = searchParams.get('includeAll') === 'true';
   const includeDeleted = searchParams.get('includeDeleted') === 'true';
 
-  // Build where clause with tenant filtering
-  const where: any = {
-    organizationMemberships: {
-      some: { organizationId: tenantId },
-    },
-  };
+  // Query TeamMember instead of User (all HR data is now on TeamMember)
+  const where: any = { tenantId };
   if (role) where.role = role;
 
   // By default, exclude soft-deleted users unless explicitly requested
@@ -38,46 +34,36 @@ async function getUsersHandler(request: NextRequest, context: APIContext) {
     where.isDeleted = false;
   }
 
-  // Build include clause
-  // Note: Assets/subscriptions are now on TeamMember, not User
-  const include: any = {};
-
-  // Include HR profile if requested (for date of joining, etc.)
-  if (includeHrProfile || includeAll) {
-    include.hrProfile = {
-      select: {
-        id: true,
-        tenantId: true,
-        dateOfJoining: true,
-        employeeId: true,
-        designation: true,
-      },
-    };
-  }
-
-  // Note: salaryStructure is now on TeamMember, not User
-  // If salary data is needed, query TeamMember model instead
-
-  // Fetch users (soft-delete fields isDeleted, deletedAt, scheduledDeletionAt are included by default)
-  const users = await prisma.user.findMany({
+  // Fetch team members
+  const members = await prisma.teamMember.findMany({
     where,
-    include,
     orderBy: { createdAt: 'desc' },
   });
 
-  // Filter hrProfile by tenantId - only include hrProfile if it belongs to current organization
-  // This is needed because hrProfile is a one-to-one relation and can't be filtered in Prisma include
-  if (includeHrProfile || includeAll) {
-    const filteredUsers = users.map((user: any) => {
-      if (user.hrProfile && user.hrProfile.tenantId !== tenantId) {
-        // hrProfile belongs to different organization, exclude it
-        return { ...user, hrProfile: null };
-      }
-      return user;
-    });
-    return NextResponse.json({ users: filteredUsers });
-  }
-  return NextResponse.json(users);
+  // Transform to maintain backwards compatibility with frontend
+  const users = members.map((member) => ({
+    id: member.id,
+    name: member.name,
+    email: member.email,
+    image: member.image,
+    role: member.role,
+    isEmployee: member.isEmployee,
+    isOnWps: member.isOnWps,
+    isDeleted: member.isDeleted,
+    deletedAt: member.deletedAt,
+    createdAt: member.createdAt,
+    updatedAt: member.updatedAt,
+    // Include HR-like data if requested
+    hrProfile: (includeHrProfile || includeAll) ? {
+      id: member.id,
+      tenantId: member.tenantId,
+      dateOfJoining: member.dateOfJoining,
+      employeeId: member.employeeCode,
+      designation: member.designation,
+    } : undefined,
+  }));
+
+  return NextResponse.json(includeHrProfile || includeAll ? { users } : users);
 }
 
 export const GET = withErrorHandler(getUsersHandler, { requireAdmin: true });
@@ -102,7 +88,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
 
   // Generate email for non-login users (use placeholder to satisfy unique constraint)
   // Format: nologin-{uuid}@{tenantSlug}.internal
-  let finalEmail = email;
+  let finalEmail: string = email || '';
   if (!canLogin && !email) {
     const crypto = await import('crypto');
     const uniqueId = crypto.randomUUID().split('-')[0]; // Use first segment of UUID for shorter ID
@@ -128,12 +114,13 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
   // Generate employee code if not provided (only for employees)
   let finalEmployeeId = employeeId;
   if (isEmployee && !finalEmployeeId) {
-    // Generate employee code: BCE-YYYY-XXX (e.g., BCE-2024-001)
+    // Generate employee code: EMP-YYYY-XXX (e.g., EMP-2026-001)
     const year = new Date().getFullYear();
-    const prefix = `BCE-${year}`;
-    const count = await prisma.hRProfile.count({
+    const prefix = `EMP-${year}`;
+    const count = await prisma.teamMember.count({
       where: {
-        employeeId: { startsWith: prefix }
+        tenantId,
+        employeeCode: { startsWith: prefix }
       }
     });
     finalEmployeeId = `${prefix}-${String(count + 1).padStart(3, '0')}`;
@@ -149,52 +136,38 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     userImage = org?.logoUrl || null;
   }
 
-  // Build user data
-  const userData: any = {
-    name,
-    email: finalEmail,
-    role,
-    isEmployee,
-    canLogin,
-    isOnWps: isEmployee ? isOnWps : false, // Only set WPS for employees
-    image: userImage, // Set to org logo for non-employees, null for employees
-    emailVerified: null,
-    // Create organization membership so user appears in tenant-filtered queries
-    organizationMemberships: {
-      create: {
-        organizationId: tenantId,
-        role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
-      }
-    }
-  };
-
-  // Only create HR profile for employees
-  if (isEmployee) {
-    userData.hrProfile = {
-      create: {
-        employeeId: finalEmployeeId,
-        designation: designation || null,
-        onboardingComplete: false,
-        onboardingStep: 0,
-        tenantId,
-      }
-    };
-  }
-
-  // Create user with optional HR profile and organization membership
-  // Note: Password is not stored as users authenticate via Azure AD or OAuth
-  // emailVerified is set to null - they'll verify on first login
-  const user = await prisma.user.create({
-    data: userData,
-    include: {
-      hrProfile: {
-        select: {
-          employeeId: true,
-          designation: true,
-        }
-      }
+  // Create TeamMember directly (replaces User + OrganizationUser + HRProfile)
+  const member = await prisma.teamMember.create({
+    data: {
+      name,
+      email: finalEmail,
+      role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+      isEmployee,
+      canLogin,
+      isOnWps: isEmployee ? isOnWps : false, // Only set WPS for employees
+      image: userImage, // Set to org logo for non-employees, null for employees
+      emailVerified: null,
+      tenantId,
+      isOwner: false,
+      // HR profile fields (embedded in TeamMember)
+      employeeCode: isEmployee ? finalEmployeeId : null,
+      designation: isEmployee ? (designation || null) : null,
+      onboardingComplete: false,
+      onboardingStep: 0,
     },
   });
+
+  // For backwards compatibility, alias to 'user'
+  const user = {
+    id: member.id,
+    name: member.name,
+    email: member.email,
+    role: member.role,
+    hrProfile: isEmployee ? {
+      employeeId: member.employeeCode,
+      designation: member.designation,
+    } : null,
+  };
 
   // Log activity
   await logAction(

@@ -12,7 +12,6 @@ import bcrypt from 'bcryptjs';
 import { requireRecent2FA } from '@/lib/two-factor';
 import {
   Role,
-  OrgRole,
   TeamMemberRole,
   Gender,
   MaritalStatus,
@@ -188,29 +187,11 @@ export async function POST(request: NextRequest) {
             email: emp.email,
             role: emp.role,
             passwordHash,
-            isEmployee: true,
-            canLogin: true,
           },
         });
         results.employees.created++;
       } else {
         results.employees.skipped++;
-      }
-
-      // Create organization membership if not exists
-      const existingMembership = await prisma.organizationUser.findUnique({
-        where: { organizationId_userId: { organizationId: tenantId, userId: user.id } }
-      });
-
-      if (!existingMembership) {
-        await prisma.organizationUser.create({
-          data: {
-            organizationId: tenantId,
-            userId: user.id,
-            role: i === 0 ? OrgRole.OWNER : (emp.role === Role.ADMIN || emp.role === Role.MANAGER || emp.role === Role.HR_MANAGER || emp.role === Role.FINANCE_MANAGER ? OrgRole.ADMIN : OrgRole.MEMBER),
-            isOwner: i === 0,
-          },
-        });
       }
 
       // Create TeamMember if not exists (combines membership + HR profile data)

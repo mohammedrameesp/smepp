@@ -20,12 +20,11 @@ export async function DELETE(
     const { id: organizationId, memberId } = await params;
 
     // Verify current user is an admin or owner
-    const currentMembership = await prisma.organizationUser.findUnique({
+    const currentMembership = await prisma.teamMember.findFirst({
       where: {
-        organizationId_userId: {
-          organizationId,
-          userId: session.user.id,
-        },
+        tenantId: organizationId,
+        id: session.user.id,
+        isDeleted: false,
       },
     });
 
@@ -38,26 +37,25 @@ export async function DELETE(
     }
 
     // Get the member to be removed
-    const targetMembership = await prisma.organizationUser.findUnique({
-      where: { id: memberId },
-      include: {
-        user: {
-          select: { email: true },
-        },
+    const targetMember = await prisma.teamMember.findFirst({
+      where: {
+        id: memberId,
+        tenantId: organizationId,
+        isDeleted: false,
       },
     });
 
-    if (!targetMembership || targetMembership.organizationId !== organizationId) {
+    if (!targetMember) {
       return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
     // Cannot remove the owner
-    if (targetMembership.isOwner) {
+    if (targetMember.isOwner) {
       return NextResponse.json({ error: 'Cannot remove the organization owner' }, { status: 400 });
     }
 
     // Cannot remove yourself (use leave organization instead)
-    if (targetMembership.userId === session.user.id) {
+    if (targetMember.id === session.user.id) {
       return NextResponse.json({ error: 'Cannot remove yourself. Use leave organization instead.' }, { status: 400 });
     }
 
@@ -65,7 +63,7 @@ export async function DELETE(
     if (!currentMembership.isOwner) {
       const roleHierarchy = ['MEMBER', 'MANAGER', 'ADMIN', 'OWNER'];
       const currentRoleIndex = roleHierarchy.indexOf(currentMembership.role);
-      const targetRoleIndex = roleHierarchy.indexOf(targetMembership.role);
+      const targetRoleIndex = roleHierarchy.indexOf(targetMember.role);
 
       if (targetRoleIndex >= currentRoleIndex) {
         return NextResponse.json(
@@ -75,14 +73,21 @@ export async function DELETE(
       }
     }
 
-    // Remove the member
-    await prisma.organizationUser.delete({
+    // Soft-delete the member (7-day recovery period)
+    const now = new Date();
+    await prisma.teamMember.update({
       where: { id: memberId },
+      data: {
+        isDeleted: true,
+        deletedAt: now,
+        scheduledDeletionAt: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+        canLogin: false,
+      },
     });
 
     return NextResponse.json({
       success: true,
-      message: `Removed ${targetMembership.user.email} from organization`,
+      message: `Removed ${targetMember.email} from organization`,
     });
   } catch (error) {
     console.error('Remove member error:', error);

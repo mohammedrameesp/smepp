@@ -1,13 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -38,6 +42,8 @@ import {
   Crown,
   Shield,
   User,
+  Briefcase,
+  ExternalLink,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 
@@ -46,6 +52,9 @@ interface Member {
   role: string;
   isOwner: boolean;
   joinedAt: string;
+  isEmployee: boolean;
+  employeeCode: string | null;
+  designation: string | null;
   user: {
     id: string;
     name: string | null;
@@ -68,6 +77,8 @@ interface Limits {
   currentUsers: number;
 }
 
+type FilterType = 'all' | 'employees' | 'non-employees';
+
 const roleIcons: Record<string, React.ReactNode> = {
   OWNER: <Crown className="h-4 w-4 text-amber-500" />,
   ADMIN: <Shield className="h-4 w-4 text-blue-500" />,
@@ -75,25 +86,25 @@ const roleIcons: Record<string, React.ReactNode> = {
   MEMBER: <User className="h-4 w-4 text-gray-500" />,
 };
 
-const roleDescriptions: Record<string, string> = {
-  OWNER: 'Full control, billing access',
-  ADMIN: 'Manage users and settings',
-  MANAGER: 'Approve requests, view reports',
-  MEMBER: 'Basic access',
-};
-
 export default function TeamPage() {
   const { data: session } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [members, setMembers] = useState<Member[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [limits, setLimits] = useState<Limits | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Filter state from URL
+  const currentFilter = (searchParams.get('filter') as FilterType) || 'all';
+
   // Invite dialog state
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'MEMBER' | 'MANAGER' | 'ADMIN'>('MEMBER');
+  const [inviteIsEmployee, setInviteIsEmployee] = useState(false);
+  const [inviteOnWPS, setInviteOnWPS] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [inviteResult, setInviteResult] = useState<{ url: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -102,15 +113,43 @@ export default function TeamPage() {
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
-  const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
   const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
 
   const isOwner = session?.user?.orgRole === 'OWNER';
   const isAdmin = session?.user?.orgRole === 'ADMIN' || isOwner;
 
+  // Filter members based on current filter
+  const filteredMembers = useMemo(() => {
+    switch (currentFilter) {
+      case 'employees':
+        return members.filter((m) => m.isEmployee);
+      case 'non-employees':
+        return members.filter((m) => !m.isEmployee);
+      default:
+        return members;
+    }
+  }, [members, currentFilter]);
+
+  // Stats for filter tabs
+  const stats = useMemo(() => ({
+    all: members.length,
+    employees: members.filter((m) => m.isEmployee).length,
+    nonEmployees: members.filter((m) => !m.isEmployee).length,
+  }), [members]);
+
   useEffect(() => {
     fetchData();
   }, []);
+
+  function setFilter(filter: FilterType) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (filter === 'all') {
+      params.delete('filter');
+    } else {
+      params.set('filter', filter);
+    }
+    router.push(`?${params.toString()}`, { scroll: false });
+  }
 
   async function fetchData() {
     try {
@@ -145,7 +184,12 @@ export default function TeamPage() {
       const response = await fetch('/api/admin/team/invitations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+        body: JSON.stringify({
+          email: inviteEmail,
+          role: inviteRole,
+          isEmployee: inviteIsEmployee,
+          onWPS: inviteOnWPS,
+        }),
       });
 
       const data = await response.json();
@@ -188,8 +232,8 @@ export default function TeamPage() {
       setTimeout(() => setCopiedInviteId(null), 3000);
 
       // Update invitation in state
-      setInvitations(prev =>
-        prev.map(inv =>
+      setInvitations((prev) =>
+        prev.map((inv) =>
           inv.id === id
             ? { ...inv, expiresAt: data.invitation.expiresAt, isExpired: false }
             : inv
@@ -215,7 +259,7 @@ export default function TeamPage() {
         throw new Error(data.error);
       }
 
-      setInvitations(prev => prev.filter(inv => inv.id !== id));
+      setInvitations((prev) => prev.filter((inv) => inv.id !== id));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to cancel');
     }
@@ -235,7 +279,7 @@ export default function TeamPage() {
         throw new Error(data.error);
       }
 
-      setMembers(prev => prev.filter(m => m.id !== id));
+      setMembers((prev) => prev.filter((m) => m.id !== id));
       if (limits) {
         setLimits({ ...limits, currentUsers: limits.currentUsers - 1 });
       }
@@ -248,7 +292,6 @@ export default function TeamPage() {
 
   async function handleUpdateRole(memberId: string, newRole: string) {
     if (!confirm(`Change this member's role to ${newRole}?`)) {
-      setEditingRoleId(null);
       return;
     }
 
@@ -266,16 +309,13 @@ export default function TeamPage() {
       }
 
       // Update member in state
-      setMembers(prev =>
-        prev.map(m =>
-          m.id === memberId ? { ...m, role: newRole } : m
-        )
+      setMembers((prev) =>
+        prev.map((m) => (m.id === memberId ? { ...m, role: newRole } : m))
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update role');
     } finally {
       setUpdatingRoleId(null);
-      setEditingRoleId(null);
     }
   }
 
@@ -290,6 +330,8 @@ export default function TeamPage() {
   function resetInviteDialog() {
     setInviteEmail('');
     setInviteRole('MEMBER');
+    setInviteIsEmployee(false);
+    setInviteOnWPS(false);
     setInviteResult(null);
     setError(null);
   }
@@ -321,10 +363,13 @@ export default function TeamPage() {
         </div>
 
         {isAdmin && (
-          <Dialog open={inviteOpen} onOpenChange={(open) => {
-            setInviteOpen(open);
-            if (!open) resetInviteDialog();
-          }}>
+          <Dialog
+            open={inviteOpen}
+            onOpenChange={(open) => {
+              setInviteOpen(open);
+              if (!open) resetInviteDialog();
+            }}
+          >
             <DialogTrigger asChild>
               <Button disabled={!canInvite}>
                 <UserPlus className="h-4 w-4 mr-2" />
@@ -336,9 +381,7 @@ export default function TeamPage() {
                 <>
                   <DialogHeader>
                     <DialogTitle>Invitation Created</DialogTitle>
-                    <DialogDescription>
-                      Share this link with {inviteEmail}
-                    </DialogDescription>
+                    <DialogDescription>Share this link with {inviteEmail}</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
@@ -353,9 +396,7 @@ export default function TeamPage() {
                           )}
                         </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        This link expires in 7 days
-                      </p>
+                      <p className="text-xs text-muted-foreground">This link expires in 7 days</p>
                     </div>
                   </div>
                   <DialogFooter>
@@ -409,17 +450,59 @@ export default function TeamPage() {
                           <SelectItem value="MANAGER">
                             <div className="flex flex-col">
                               <span>Manager</span>
-                              <span className="text-xs text-muted-foreground">Approve requests, view reports</span>
+                              <span className="text-xs text-muted-foreground">
+                                Approve requests, view reports
+                              </span>
                             </div>
                           </SelectItem>
                           <SelectItem value="ADMIN">
                             <div className="flex flex-col">
                               <span>Admin</span>
-                              <span className="text-xs text-muted-foreground">Manage users and settings</span>
+                              <span className="text-xs text-muted-foreground">
+                                Manage users and settings
+                              </span>
                             </div>
                           </SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    {/* Employee options */}
+                    <div className="space-y-3 pt-2 border-t">
+                      <Label className="text-sm font-medium">Employee Settings</Label>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="isEmployee"
+                          checked={inviteIsEmployee}
+                          onCheckedChange={(checked) => {
+                            setInviteIsEmployee(checked === true);
+                            if (!checked) setInviteOnWPS(false);
+                          }}
+                          disabled={inviting}
+                        />
+                        <label
+                          htmlFor="isEmployee"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          This person will be an employee
+                        </label>
+                      </div>
+                      {inviteIsEmployee && (
+                        <div className="flex items-center space-x-2 ml-6">
+                          <Checkbox
+                            id="onWPS"
+                            checked={inviteOnWPS}
+                            onCheckedChange={(checked) => setInviteOnWPS(checked === true)}
+                            disabled={inviting}
+                          />
+                          <label
+                            htmlFor="onWPS"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            Include in WPS (payroll)
+                          </label>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <DialogFooter>
@@ -451,103 +534,169 @@ export default function TeamPage() {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            You&apos;ve reached the user limit ({limits.maxUsers}). Upgrade your plan to add more team members.
+            You&apos;ve reached the user limit ({limits.maxUsers}). Upgrade your plan to add more
+            team members.
           </AlertDescription>
         </Alert>
       )}
+
+      {/* Filter Tabs */}
+      <Tabs value={currentFilter} onValueChange={(v) => setFilter(v as FilterType)}>
+        <TabsList>
+          <TabsTrigger value="all" className="gap-2">
+            <Users className="h-4 w-4" />
+            All Members
+            <Badge variant="secondary" className="ml-1">
+              {stats.all}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="employees" className="gap-2">
+            <Briefcase className="h-4 w-4" />
+            Employees
+            <Badge variant="secondary" className="ml-1">
+              {stats.employees}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="non-employees" className="gap-2">
+            <User className="h-4 w-4" />
+            Non-Employees
+            <Badge variant="secondary" className="ml-1">
+              {stats.nonEmployees}
+            </Badge>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Members */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Members
+            {currentFilter === 'all'
+              ? 'Members'
+              : currentFilter === 'employees'
+                ? 'Employees'
+                : 'Non-Employees'}
           </CardTitle>
           <CardDescription>
-            {members.length} member{members.length !== 1 ? 's' : ''} in your organization
+            {filteredMembers.length} member{filteredMembers.length !== 1 ? 's' : ''}
+            {currentFilter !== 'all' && ` (filtered from ${members.length} total)`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="divide-y">
-            {members.map((member) => (
-              <div key={member.id} className="py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
-                    {member.user.image ? (
-                      <img
-                        src={member.user.image}
-                        alt={member.user.name || ''}
-                        className="h-10 w-10 rounded-full"
-                      />
-                    ) : (
-                      <span className="text-lg font-semibold text-slate-600">
-                        {(member.user.name || member.user.email)?.[0]?.toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">
-                        {member.user.name || 'No name'}
-                        {member.user.id === session?.user?.id && (
-                          <span className="text-muted-foreground ml-1">(you)</span>
-                        )}
-                      </p>
-                      {roleIcons[member.role]}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{member.user.email}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    {isOwner && !member.isOwner && member.user.id !== session?.user?.id ? (
-                      <Select
-                        value={member.role}
-                        onValueChange={(value) => handleUpdateRole(member.id, value)}
-                        disabled={updatingRoleId === member.id}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          {updatingRoleId === member.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <SelectValue />
-                          )}
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ADMIN">Admin</SelectItem>
-                          <SelectItem value="MANAGER">Manager</SelectItem>
-                          <SelectItem value="MEMBER">Member</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Badge variant={member.isOwner ? 'default' : 'secondary'}>
-                        {member.role}
-                      </Badge>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Joined {formatDistanceToNow(new Date(member.joinedAt), { addSuffix: true })}
-                    </p>
-                  </div>
-
-                  {isOwner && !member.isOwner && member.user.id !== session?.user?.id && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveMember(member.id, member.user.name || member.user.email)}
-                      disabled={removingId === member.id}
-                    >
-                      {removingId === member.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+          {filteredMembers.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>
+                No {currentFilter === 'employees' ? 'employees' : currentFilter === 'non-employees' ? 'non-employees' : 'members'} found
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {filteredMembers.map((member) => (
+                <div key={member.id} className="py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+                      {member.user.image ? (
+                        <img
+                          src={member.user.image}
+                          alt={member.user.name || ''}
+                          className="h-10 w-10 rounded-full"
+                        />
                       ) : (
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <span className="text-lg font-semibold text-slate-600">
+                          {(member.user.name || member.user.email)?.[0]?.toUpperCase()}
+                        </span>
                       )}
-                    </Button>
-                  )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">
+                          {member.user.name || 'No name'}
+                          {member.user.id === session?.user?.id && (
+                            <span className="text-muted-foreground ml-1">(you)</span>
+                          )}
+                        </p>
+                        {roleIcons[member.role]}
+                        {member.isEmployee && (
+                          <Badge variant="outline" className="text-xs">
+                            <Briefcase className="h-3 w-3 mr-1" />
+                            Employee
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                      {member.isEmployee && (member.employeeCode || member.designation) && (
+                        <p className="text-xs text-muted-foreground">
+                          {member.employeeCode && <span>{member.employeeCode}</span>}
+                          {member.employeeCode && member.designation && <span> • </span>}
+                          {member.designation && <span>{member.designation}</span>}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      {isOwner && !member.isOwner && member.user.id !== session?.user?.id ? (
+                        <Select
+                          value={member.role}
+                          onValueChange={(value) => handleUpdateRole(member.id, value)}
+                          disabled={updatingRoleId === member.id}
+                        >
+                          <SelectTrigger className="w-[120px]">
+                            {updatingRoleId === member.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <SelectValue />
+                            )}
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ADMIN">Admin</SelectItem>
+                            <SelectItem value="MANAGER">Manager</SelectItem>
+                            <SelectItem value="MEMBER">Member</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge variant={member.isOwner ? 'default' : 'secondary'}>
+                          {member.role}
+                        </Badge>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Joined {formatDistanceToNow(new Date(member.joinedAt), { addSuffix: true })}
+                      </p>
+                    </div>
+
+                    {/* Employee link */}
+                    {member.isEmployee && (
+                      <Link href={`/admin/employees/${member.id}`}>
+                        <Button variant="ghost" size="icon" title="View employee details">
+                          <ExternalLink className="h-4 w-4 text-blue-500" />
+                        </Button>
+                      </Link>
+                    )}
+
+                    {isOwner && !member.isOwner && member.user.id !== session?.user?.id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() =>
+                          handleRemoveMember(member.id, member.user.name || member.user.email)
+                        }
+                        disabled={removingId === member.id}
+                      >
+                        {removingId === member.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        )}
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -560,7 +709,8 @@ export default function TeamPage() {
               Pending Invitations
             </CardTitle>
             <CardDescription>
-              {invitations.length} invitation{invitations.length !== 1 ? 's' : ''} waiting to be accepted
+              {invitations.length} invitation{invitations.length !== 1 ? 's' : ''} waiting to be
+              accepted
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -606,11 +756,7 @@ export default function TeamPage() {
                         </>
                       )}
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleCancelInvite(inv.id)}
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => handleCancelInvite(inv.id)}>
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>

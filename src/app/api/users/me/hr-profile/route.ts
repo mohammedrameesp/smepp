@@ -2,20 +2,23 @@
  * @file route.ts
  * @description Current user's HR profile management (self-service onboarding)
  * @module system/users
+ *
+ * NOTE: This endpoint now reads/writes to TeamMember instead of the deprecated HRProfile.
+ * The response format is maintained for backwards compatibility with the frontend.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { logAction, ActivityActions } from '@/lib/activity';
-import { hrProfileSchema, hrProfileEmployeeSchema } from '@/lib/validations/hr-profile';
+import { logAction, ActivityActions } from '@/lib/core/activity';
+import { hrProfileSchema, hrProfileEmployeeSchema } from '@/lib/validations/hr/hr-profile';
 import { withErrorHandler } from '@/lib/http/handler';
-import { Role } from '@prisma/client';
+import { TeamMemberRole } from '@prisma/client';
 import { sendEmail } from '@/lib/email';
-import { initializeUserLeaveBalances } from '@/lib/leave-balance-init';
+import { initializeMemberLeaveBalances } from '@/lib/domains/hr/leave/leave-balance-init';
 
-// GET /api/users/me/hr-profile - Get current user's HR profile
+// GET /api/users/me/hr-profile - Get current user's HR profile (now from TeamMember)
 async function getHRProfileHandler(request: NextRequest) {
   const session = await getServerSession(authOptions);
 
@@ -31,32 +34,91 @@ async function getHRProfileHandler(request: NextRequest) {
     );
   }
 
-  // Find or create HR profile for current user
-  let hrProfile;
-  let user;
-
   try {
-    hrProfile = await prisma.hRProfile.findUnique({
-      where: { userId: session.user.id },
+    // Get TeamMember (which now contains all HR data)
+    const member = await prisma.teamMember.findUnique({
+      where: { id: session.user.id },
     });
 
-    // Create empty profile if none exists
-    if (!hrProfile) {
-      hrProfile = await prisma.hRProfile.create({
-        data: {
-          userId: session.user.id,
-          tenantId: session.user.organizationId,
-        },
-      });
+    if (!member) {
+      return NextResponse.json({ error: 'Team member not found' }, { status: 404 });
     }
 
-    // Get user info for workEmail
-    user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        email: true,
-        role: true,
-      },
+    // Return data in format compatible with old HRProfile responses
+    return NextResponse.json({
+      id: member.id,
+      userId: member.id, // For backwards compatibility
+      tenantId: member.tenantId,
+      // Personal info
+      dateOfBirth: member.dateOfBirth,
+      gender: member.gender,
+      maritalStatus: member.maritalStatus,
+      nationality: member.nationality,
+      religion: member.religion,
+      // Contact
+      qatarMobile: member.qatarMobile,
+      otherMobileCode: member.otherMobileCode,
+      otherMobileNumber: member.otherMobileNumber,
+      personalEmail: member.personalEmail,
+      // Address
+      qatarZone: member.qatarZone,
+      qatarStreet: member.qatarStreet,
+      qatarBuilding: member.qatarBuilding,
+      qatarUnit: member.qatarUnit,
+      homeCountryAddress: member.homeCountryAddress,
+      // Emergency contacts - Local
+      localEmergencyName: member.localEmergencyName,
+      localEmergencyRelation: member.localEmergencyRelation,
+      localEmergencyPhoneCode: member.localEmergencyPhoneCode,
+      localEmergencyPhone: member.localEmergencyPhone,
+      // Emergency contacts - Home
+      homeEmergencyName: member.homeEmergencyName,
+      homeEmergencyRelation: member.homeEmergencyRelation,
+      homeEmergencyPhoneCode: member.homeEmergencyPhoneCode,
+      homeEmergencyPhone: member.homeEmergencyPhone,
+      // Identity documents
+      qidNumber: member.qidNumber,
+      qidExpiry: member.qidExpiry,
+      passportNumber: member.passportNumber,
+      passportExpiry: member.passportExpiry,
+      healthCardExpiry: member.healthCardExpiry,
+      sponsorshipType: member.sponsorshipType,
+      // Employment
+      employeeId: member.employeeCode, // Map to old field name
+      designation: member.designation,
+      dateOfJoining: member.dateOfJoining,
+      status: member.status, // TeamMemberStatus: ACTIVE, INACTIVE, TERMINATED
+      hajjLeaveTaken: member.hajjLeaveTaken,
+      bypassNoticeRequirement: member.bypassNoticeRequirement,
+      // Banking
+      bankName: member.bankName,
+      iban: member.iban,
+      // Education
+      highestQualification: member.highestQualification,
+      specialization: member.specialization,
+      institutionName: member.institutionName,
+      graduationYear: member.graduationYear,
+      // Documents
+      qidUrl: member.qidUrl,
+      passportCopyUrl: member.passportCopyUrl,
+      photoUrl: member.photoUrl,
+      contractCopyUrl: member.contractCopyUrl,
+      contractExpiry: member.contractExpiry,
+      // Driving
+      hasDrivingLicense: member.hasDrivingLicense,
+      licenseExpiry: member.licenseExpiry,
+      // Skills
+      languagesKnown: member.languagesKnown,
+      skillsCertifications: member.skillsCertifications,
+      // Onboarding
+      onboardingStep: member.onboardingStep,
+      onboardingComplete: member.onboardingComplete,
+      // Metadata
+      createdAt: member.createdAt,
+      updatedAt: member.updatedAt,
+      // Computed fields
+      workEmail: member.email,
+      isAdmin: member.role === TeamMemberRole.ADMIN,
     });
   } catch (dbError) {
     console.error('[HR Profile GET] Database error:', dbError);
@@ -68,17 +130,11 @@ async function getHRProfileHandler(request: NextRequest) {
       { status: 500 }
     );
   }
-
-  return NextResponse.json({
-    ...hrProfile,
-    workEmail: user?.email,
-    isAdmin: user?.role === Role.ADMIN,
-  });
 }
 
 export const GET = withErrorHandler(getHRProfileHandler, { requireAuth: true, rateLimit: true });
 
-// PATCH /api/users/me/hr-profile - Update current user's HR profile
+// PATCH /api/users/me/hr-profile - Update current user's HR profile (now updates TeamMember)
 async function updateHRProfileHandler(request: NextRequest) {
   const session = await getServerSession(authOptions);
 
@@ -101,13 +157,17 @@ async function updateHRProfileHandler(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
   }
 
-  // Get user role to determine if admin
-  const user = await prisma.user.findUnique({
+  // Get member to check role
+  const member = await prisma.teamMember.findUnique({
     where: { id: session.user.id },
-    select: { role: true },
+    select: { role: true, onboardingComplete: true, dateOfJoining: true },
   });
 
-  const isAdmin = user?.role === Role.ADMIN;
+  if (!member) {
+    return NextResponse.json({ error: 'Team member not found' }, { status: 404 });
+  }
+
+  const isAdmin = member.role === TeamMemberRole.ADMIN;
 
   // Use appropriate schema based on role
   const schema = isAdmin ? hrProfileSchema : hrProfileEmployeeSchema;
@@ -125,15 +185,15 @@ async function updateHRProfileHandler(request: NextRequest) {
 
   const data = validation.data;
 
-  // Whitelist of allowed HR profile fields (must match Prisma schema)
+  // Whitelist of allowed TeamMember fields for HR profile updates
   const allowedFields = new Set([
-    'dateOfBirth', 'gender', 'maritalStatus', 'nationality',
+    'dateOfBirth', 'gender', 'maritalStatus', 'nationality', 'religion',
     'qatarMobile', 'otherMobileCode', 'otherMobileNumber', 'personalEmail',
     'qatarZone', 'qatarStreet', 'qatarBuilding', 'qatarUnit', 'homeCountryAddress',
     'localEmergencyName', 'localEmergencyRelation', 'localEmergencyPhoneCode', 'localEmergencyPhone',
     'homeEmergencyName', 'homeEmergencyRelation', 'homeEmergencyPhoneCode', 'homeEmergencyPhone',
     'qidNumber', 'qidExpiry', 'passportNumber', 'passportExpiry', 'healthCardExpiry', 'sponsorshipType',
-    'employeeId', 'designation', 'dateOfJoining',
+    'designation', 'dateOfJoining',
     'bankName', 'iban',
     'highestQualification', 'specialization', 'institutionName', 'graduationYear',
     'qidUrl', 'passportCopyUrl', 'photoUrl', 'contractCopyUrl', 'contractExpiry',
@@ -141,14 +201,21 @@ async function updateHRProfileHandler(request: NextRequest) {
     'onboardingStep', 'onboardingComplete', 'bypassNoticeRequirement',
   ]);
 
-  // Filter to only allowed fields to prevent unknown field errors
+  // Map old field names to new TeamMember field names
+  const fieldMapping: Record<string, string> = {
+    'employeeId': 'employeeCode',
+  };
+
+  // Filter to only allowed fields and apply mapping
   const processedData: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
-    if (allowedFields.has(key)) {
-      processedData[key] = value;
+    const mappedKey = fieldMapping[key] || key;
+    if (allowedFields.has(mappedKey) || allowedFields.has(key)) {
+      processedData[mappedKey] = value;
     }
   }
 
+  // Process date fields
   const dateFields = [
     'dateOfBirth',
     'qidExpiry',
@@ -168,33 +235,25 @@ async function updateHRProfileHandler(request: NextRequest) {
     }
   });
 
-  // Remove employeeId if not admin (extra safety check)
-  if (!isAdmin && 'employeeId' in processedData) {
-    delete processedData.employeeId;
+  // Remove employeeCode if not admin (extra safety check)
+  if (!isAdmin && 'employeeCode' in processedData) {
+    delete processedData.employeeCode;
   }
 
   // Check if onboarding is being completed for the first time
-  const existingProfile = await prisma.hRProfile.findUnique({
-    where: { userId: session.user.id },
-  });
-  const wasOnboardingComplete = existingProfile?.onboardingComplete ?? false;
+  const wasOnboardingComplete = member.onboardingComplete ?? false;
   const isNowOnboardingComplete = processedData.onboardingComplete === true;
   const justCompletedOnboarding = !wasOnboardingComplete && isNowOnboardingComplete;
 
-  // Upsert HR profile
-  let hrProfile;
+  // Update TeamMember
+  let updatedMember;
   try {
-    hrProfile = await prisma.hRProfile.upsert({
-      where: { userId: session.user.id },
-      update: processedData,
-      create: {
-        userId: session.user.id,
-        tenantId: session.user.organizationId,
-        ...processedData,
-      },
+    updatedMember = await prisma.teamMember.update({
+      where: { id: session.user.id },
+      data: processedData,
     });
   } catch (dbError) {
-    console.error('[HR Profile] Database error during upsert:', dbError);
+    console.error('[HR Profile] Database error during update:', dbError);
     console.error('[HR Profile] Processed data:', JSON.stringify(processedData, null, 2));
     return NextResponse.json(
       {
@@ -210,40 +269,35 @@ async function updateHRProfileHandler(request: NextRequest) {
     session.user.organizationId!,
     session.user.id,
     ActivityActions.USER_UPDATED,
-    'HRProfile',
-    hrProfile.id,
+    'TeamMember',
+    updatedMember.id,
     { changes: Object.keys(data) }
   );
 
   // Send email notification to admins when onboarding is completed
   if (justCompletedOnboarding) {
     try {
-      // Get current user info and organization
-      const [currentUser, org] = await Promise.all([
-        prisma.user.findUnique({
-          where: { id: session.user.id },
-          select: { name: true, email: true },
-        }),
-        prisma.organization.findUnique({
-          where: { id: session.user.organizationId! },
-          select: { name: true },
-        }),
-      ]);
+      // Get organization name
+      const org = await prisma.organization.findUnique({
+        where: { id: session.user.organizationId! },
+        select: { name: true },
+      });
       const orgName = org?.name || 'Durj';
 
-      // Get all admin users (tenant-scoped)
-      const admins = await prisma.user.findMany({
+      // Get all admin members (tenant-scoped)
+      const admins = await prisma.teamMember.findMany({
         where: {
-          role: Role.ADMIN,
-          isSystemAccount: false,
-          organizationMemberships: { some: { organizationId: session.user.organizationId! } },
+          tenantId: session.user.organizationId!,
+          role: TeamMemberRole.ADMIN,
+          isDeleted: false,
+          id: { not: session.user.id }, // Don't notify the user themselves
         },
         select: { email: true, name: true },
       });
 
       // Send email to each admin
-      const employeeName = currentUser?.name || currentUser?.email || 'An employee';
-      const employeeEmail = currentUser?.email || 'unknown';
+      const employeeName = updatedMember.name || updatedMember.email || 'An employee';
+      const employeeEmail = updatedMember.email;
 
       for (const admin of admins) {
         await sendEmail({
@@ -278,9 +332,9 @@ async function updateHRProfileHandler(request: NextRequest) {
     }
 
     // Initialize leave balances when onboarding is completed with dateOfJoining
-    if (hrProfile.dateOfJoining) {
+    if (updatedMember.dateOfJoining) {
       try {
-        await initializeUserLeaveBalances(session.user.id, new Date().getFullYear(), session.user.organizationId!);
+        await initializeMemberLeaveBalances(session.user.id, new Date().getFullYear(), session.user.organizationId!);
       } catch (leaveError) {
         console.error('[Leave] Failed to initialize leave balances on onboarding completion:', leaveError);
         // Don't fail the request if leave balance initialization fails
@@ -289,7 +343,8 @@ async function updateHRProfileHandler(request: NextRequest) {
   }
 
   return NextResponse.json({
-    ...hrProfile,
+    id: updatedMember.id,
+    userId: updatedMember.id, // For backwards compatibility
     message: 'HR Profile updated successfully',
   });
 }

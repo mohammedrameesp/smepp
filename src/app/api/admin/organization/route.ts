@@ -37,7 +37,7 @@ export async function GET() {
         enabledModules: true,
         _count: {
           select: {
-            members: true,
+            teamMembers: true,
             assets: true,
           },
         },

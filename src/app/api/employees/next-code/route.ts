@@ -26,10 +26,11 @@ async function getNextCodeHandler(request: NextRequest) {
     const prefix = `${codePrefix}-${year}`;
 
     // Count only within the current tenant
-    const count = await prisma.hRProfile.count({
+    const count = await prisma.teamMember.count({
       where: {
         tenantId,
-        employeeId: { startsWith: prefix }
+        isEmployee: true,
+        employeeCode: { startsWith: prefix }
       }
     });
 

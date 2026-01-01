@@ -20,7 +20,6 @@ datasource db {
 enum Role {
   ADMIN
   EMPLOYEE
-  TEMP_STAFF
   MANAGER // First-level approver
   HR_MANAGER // HR approvals
   FINANCE_MANAGER // Finance/budget approvals
@@ -240,9 +239,7 @@ model User {
   role            Role      @default(EMPLOYEE)
   isSystemAccount Boolean   @default(false) // For shared assets and system users
   isSuperAdmin    Boolean   @default(false) // Platform-level admin (can manage all orgs)
-  isEmployee      Boolean   @default(true) // Is this user an employee (appears in HR/payroll)?
-  canLogin        Boolean   @default(true) // Can this user authenticate to the system?
-  isOnWps         Boolean   @default(true) // Is this employee on WPS (Wage Protection System)?
+  // NOTE: isEmployee, canLogin, isOnWps moved to TeamMember model
 
   // Password reset
   resetToken       String?   @unique
@@ -276,11 +273,8 @@ model User {
   accounts Account[]
   sessions Session[]
 
-  // HR Profile (deprecated - use TeamMember.isEmployee instead)
-  hrProfile HRProfile?
-
-  // Organization membership (deprecated - use TeamMember)
-  organizationMemberships OrganizationUser[]
+  // NOTE: hrProfile and organizationMemberships removed
+  // Use TeamMember model for all organization and HR data
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -380,8 +374,7 @@ model Organization {
   customAzureTenantId      String? // For Azure AD directory restriction
 
   // Core Relations
-  members       OrganizationUser[] // Legacy - will be removed
-  teamMembers   TeamMember[] // New unified model
+  teamMembers   TeamMember[] // Unified model for all organization members
   invitations   OrganizationInvitation[]
   setupProgress OrganizationSetupProgress?
 
@@ -398,7 +391,6 @@ model Organization {
   suppliers             Supplier[]
   supplierEngagements   SupplierEngagement[]
   systemSettings        SystemSettings[]
-  hrProfiles            HRProfile[]
   profileChangeRequests ProfileChangeRequest[]
   purchaseRequests      PurchaseRequest[]
   leaveTypes            LeaveType[]
@@ -434,22 +426,8 @@ model Organization {
   @@index([stripeCustomerId])
 }
 
-model OrganizationUser {
-  id             String       @id @default(cuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  userId         String
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  role    OrgRole @default(MEMBER)
-  isOwner Boolean @default(false) // Original creator
-
-  joinedAt DateTime @default(now())
-
-  @@unique([organizationId, userId])
-  @@index([userId])
-  @@index([organizationId])
-}
+// OrganizationUser model REMOVED - Use TeamMember instead
+// Removed in schema optimization for production
 
 model OrganizationInvitation {
   id             String       @id @default(cuid())
@@ -668,12 +646,6 @@ model TeamMember {
   swiftCode     String?
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // SALARY (basic info, detailed in SalaryStructure)
-  // ═══════════════════════════════════════════════════════════════════════════════
-  basicSalary Decimal? @db.Decimal(12, 2)
-  currency    String?  @default("QAR")
-
-  // ═══════════════════════════════════════════════════════════════════════════════
   // LEAVE-SPECIFIC FLAGS
   // ═══════════════════════════════════════════════════════════════════════════════
   hajjLeaveTaken          Boolean @default(false) // Qatar law: Hajj leave can only be taken once
@@ -806,6 +778,7 @@ model TeamMember {
   @@index([tenantId, contractExpiry])
   @@index([tenantId, dateOfJoining])
   @@index([tenantId, dateOfLeaving])
+  @@index([tenantId, isDeleted]) // For soft-delete queries
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1226,113 +1199,9 @@ model SystemSettings {
   @@index([tenantId])
 }
 
-model HRProfile {
-  id       String       @id @default(cuid())
-  tenantId String
-  tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId   String       @unique
-  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Personal Information
-  dateOfBirth   DateTime?
-  gender        String? // Male/Female/Other
-  maritalStatus String? // Single/Married/Divorced/Widowed
-  nationality   String?
-
-  // Contact Information
-  qatarMobile        String? // 8-digit number (prefix +974 hardcoded in UI)
-  otherMobileCode    String? @default("+961") // Country code (Lebanon default)
-  otherMobileNumber  String?
-  personalEmail      String?
-  // workEmail from User.email (read-only)
-  qatarZone          String?
-  qatarStreet        String?
-  qatarBuilding      String?
-  qatarUnit          String?
-  homeCountryAddress String? // textarea
-
-  // Emergency Contacts - Local (Qatar)
-  localEmergencyName      String?
-  localEmergencyRelation  String?
-  localEmergencyPhoneCode String? @default("+974")
-  localEmergencyPhone     String?
-
-  // Emergency Contacts - Home Country
-  homeEmergencyName      String?
-  homeEmergencyRelation  String?
-  homeEmergencyPhoneCode String? @default("+961")
-  homeEmergencyPhone     String?
-
-  // Identification & Legal
-  qidNumber        String?
-  qidExpiry        DateTime?
-  passportNumber   String?
-  passportExpiry   DateTime?
-  // passportCountry removed - QID serves as unique identifier
-  // healthCardNumber removed - QID serves as unique identifier
-  healthCardExpiry DateTime?
-  sponsorshipType  String? // Company/Family/Work Permit
-
-  // Employment Information
-  employeeId              String? // Admin-only editable
-  designation             String?
-  dateOfJoining           DateTime?
-  terminationDate         DateTime? // Date employee's service ended (for gratuity/service calculations)
-  terminationReason       String? // Optional reason for termination
-  hajjLeaveTaken          Boolean   @default(false) // Qatar law: Hajj leave can only be taken once during employment
-  bypassNoticeRequirement Boolean   @default(false) // Admin override: bypass advance notice requirements for leave requests
-
-  // Bank & Payroll
-  bankName String?
-  iban     String?
-
-  // Education
-  highestQualification String?
-  specialization       String?
-  institutionName      String?
-  graduationYear       Int?
-
-  // Documents (Supabase storage URLs)
-  qidUrl          String?
-  passportCopyUrl String?
-  photoUrl        String?
-  contractCopyUrl String?
-  contractExpiry  DateTime? // Employment contract / work permit expiry
-
-  // Additional Info
-  hasDrivingLicense    Boolean   @default(false)
-  // licenseNumber removed - QID serves as unique identifier
-  licenseExpiry        DateTime?
-  languagesKnown       String? // JSON array stored as string
-  skillsCertifications String? // JSON array stored as string
-
-  // Onboarding tracking
-  onboardingStep     Int     @default(0) // Current step in wizard (0-7)
-  onboardingComplete Boolean @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  changeRequests ProfileChangeRequest[]
-
-  @@index([qidNumber])
-  @@index([passportNumber])
-  @@index([employeeId])
-  @@index([tenantId])
-  // SECURITY: Indexes for document expiry cron jobs (prevents full table scans)
-  @@index([qidExpiry])
-  @@index([passportExpiry])
-  @@index([healthCardExpiry])
-  @@index([contractExpiry])
-  @@index([licenseExpiry])
-  // Compound index for tenant-scoped expiry queries
-  @@index([tenantId, qidExpiry])
-  @@index([tenantId, passportExpiry])
-  @@index([tenantId, contractExpiry])
-  // Service date indexes for gratuity/anniversary queries
-  @@index([tenantId, dateOfJoining])
-  @@index([tenantId, terminationDate])
-}
+// HRProfile model REMOVED - Use TeamMember instead
+// All HR data fields are now in TeamMember model
+// Removed in schema optimization for production
 
 enum ProfileChangeRequestStatus {
   PENDING
@@ -1386,13 +1255,9 @@ model ProfileChangeRequest {
   tenantId String
   tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  // Link to TeamMember (new model)
-  memberId String?
-  member   TeamMember? @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  // Legacy link to HRProfile (deprecated)
-  hrProfileId String?
-  hrProfile   HRProfile? @relation(fields: [hrProfileId], references: [id], onDelete: Cascade)
+  // Link to TeamMember
+  memberId String
+  member   TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   // Request details
   description String // What changes the member is requesting
@@ -1407,7 +1272,6 @@ model ProfileChangeRequest {
   updatedAt DateTime @updatedAt
 
   @@index([memberId])
-  @@index([hrProfileId])
   @@index([status])
   @@index([createdAt])
   @@index([tenantId])

@@ -537,9 +537,3 @@ export async function getMemberSubscriptionHistory(memberId: string) {
 
   return subscriptionsWithPeriods;
 }
-
-/**
- * @deprecated Use getMemberSubscriptionHistory instead
- * Alias for backward compatibility with employee pages
- */
-export const getUserSubscriptionHistory = getMemberSubscriptionHistory;

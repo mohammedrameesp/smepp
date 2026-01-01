@@ -43,12 +43,8 @@ async function resolveChangeRequestHandler(
   const changeRequest = await prisma.profileChangeRequest.findFirst({
     where: { id, tenantId },
     include: {
-      hrProfile: {
-        include: {
-          user: {
-            select: { name: true, email: true },
-          },
-        },
+      member: {
+        select: { id: true, name: true, email: true },
       },
     },
   });
@@ -105,16 +101,12 @@ async function getChangeRequestHandler(
   const changeRequest = await prisma.profileChangeRequest.findFirst({
     where: { id, tenantId },
     include: {
-      hrProfile: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
-          },
+      member: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
         },
       },
     },

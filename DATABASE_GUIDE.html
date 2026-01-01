@@ -385,13 +385,43 @@
                 </table>
             </div>
 
-            <div class="table-card">
-                <div class="table-header">
-                    <span class="table-name">OrganizationUser</span>
-                    <span class="table-badge">Memberships</span>
+            <div class="table-card" style="border: 2px solid #10B981;">
+                <div class="table-header" style="background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);">
+                    <span class="table-name">TeamMember</span>
+                    <span class="table-badge" style="background: #10B981;">Primary Model</span>
                 </div>
                 <div class="table-purpose">
-                    <strong>What is this?</strong> Links users to companies. A user could technically belong to multiple companies, each with a different role.
+                    <strong>What is this?</strong> The unified model for all organization members. Combines membership, role, and HR data in one place. This is the <strong>primary model</strong> used by all application code for organization membership.
+                </div>
+                <table>
+                    <tr><th>Field</th><th>Type</th><th>What it stores</th></tr>
+                    <tr><td class="field-name">tenantId</td><td><span class="field-type">String</span></td><td>Which organization this member belongs to</td></tr>
+                    <tr><td class="field-name">email</td><td><span class="field-type">String</span></td><td>Member's email address (unique per org)</td></tr>
+                    <tr><td class="field-name">name</td><td><span class="field-type">String?</span></td><td>Member's display name</td></tr>
+                    <tr><td class="field-name">role</td><td><span class="field-type">TeamMemberRole</span></td><td>ADMIN or MEMBER</td></tr>
+                    <tr><td class="field-name">isOwner</td><td><span class="field-type">Boolean</span></td><td>Is this the original company creator? (cannot be removed)</td></tr>
+                    <tr><td class="field-name">canLogin</td><td><span class="field-type">Boolean</span></td><td>Can this member log in?</td></tr>
+                    <tr><td class="field-name">isEmployee</td><td><span class="field-type">Boolean</span></td><td>Has HR features (leave, payroll)?</td></tr>
+                    <tr><td class="field-name">isOnWps</td><td><span class="field-type">Boolean</span></td><td>Included in WPS payroll file?</td></tr>
+                    <tr><td class="field-name">employeeCode</td><td><span class="field-type">String?</span></td><td>Unique employee ID (e.g., EMP-2026-001)</td></tr>
+                    <tr><td class="field-name">designation</td><td><span class="field-type">String?</span></td><td>Job title</td></tr>
+                    <tr><td class="field-name">dateOfJoining</td><td><span class="field-type">DateTime?</span></td><td>When they started working</td></tr>
+                    <tr><td class="field-name">dateOfLeaving</td><td><span class="field-type">DateTime?</span></td><td>When they left (if terminated)</td></tr>
+                    <tr><td class="field-name">isDeleted</td><td><span class="field-type">Boolean</span></td><td>Soft-delete flag (7-day recovery period)</td></tr>
+                    <tr><td class="field-name">joinedAt</td><td><span class="field-type">DateTime</span></td><td>When they joined the organization</td></tr>
+                </table>
+                <div class="table-purpose" style="margin-top: 10px; padding: 10px; background: #F0FDF4; border-radius: 6px;">
+                    <strong>Note:</strong> TeamMember also contains all HR fields (QID, passport, bank details, etc.) when isEmployee=true. See HRProfile fields for the complete list.
+                </div>
+            </div>
+
+            <div class="table-card" style="opacity: 0.7; border: 1px dashed #9CA3AF;">
+                <div class="table-header" style="background: #F3F4F6;">
+                    <span class="table-name">OrganizationUser</span>
+                    <span class="table-badge" style="background: #9CA3AF;">⚠️ Deprecated</span>
+                </div>
+                <div class="table-purpose">
+                    <strong>⚠️ DEPRECATED:</strong> This table is no longer used by application code. All membership operations now use <strong>TeamMember</strong> instead. Kept in schema for data safety during migration.
                 </div>
                 <table>
                     <tr><th>Field</th><th>Type</th><th>What it stores</th></tr>
@@ -463,17 +493,17 @@
                 <span class="section-icon">👥</span>
                 <div>
                     <h2>Users</h2>
-                    <p class="section-desc">Everyone who can log into the system</p>
+                    <p class="section-desc">Authentication records (for super admins and OAuth). Organization members use TeamMember.</p>
                 </div>
             </div>
 
             <div class="table-card">
                 <div class="table-header">
                     <span class="table-name">User</span>
-                    <span class="table-badge">Core Table</span>
+                    <span class="table-badge">Super Admins Only</span>
                 </div>
                 <div class="table-purpose">
-                    <strong>What is this?</strong> Every person who can access Durj. Contains login credentials, security settings, and what type of user they are.
+                    <strong>What is this?</strong> Authentication records for super admins and OAuth sessions. <strong>Note:</strong> Organization members now use <strong>TeamMember</strong> as the primary model. The User table is mainly for super admins who manage multiple organizations.
                 </div>
                 <table>
                     <tr><th>Field</th><th>Type</th><th>What it stores</th></tr>
@@ -548,7 +578,7 @@
                     <tr><td class="field-name">purchaseDate</td><td><span class="field-type">DateTime?</span></td><td>When it was bought</td></tr>
                     <tr><td class="field-name">warrantyExpiry</td><td><span class="field-type">DateTime?</span></td><td>When warranty ends</td></tr>
                     <tr><td class="field-name">price</td><td><span class="field-type">Decimal?</span></td><td>Purchase price</td></tr>
-                    <tr><td class="field-name">assignedUserId</td><td><span class="field-type">String?</span></td><td>Who currently has this asset</td></tr>
+                    <tr><td class="field-name">assignedMemberId</td><td><span class="field-type">String?</span></td><td>Which TeamMember currently has this asset</td></tr>
                     <tr><td class="field-name">status</td><td><span class="field-type">AssetStatus</span></td><td>Current state: IN_USE, SPARE, REPAIR, or DISPOSED</td></tr>
                     <tr><td class="field-name">location</td><td><span class="field-type">String?</span></td><td>Where it is: "Head Office", "Building A", etc.</td></tr>
                     <tr><td class="field-name">isShared</td><td><span class="field-type">Boolean</span></td><td>Is this a shared resource like a printer or meeting room TV?</td></tr>
@@ -567,8 +597,8 @@
                 <table>
                     <tr><th>Field</th><th>Type</th><th>What it stores</th></tr>
                     <tr><td class="field-name">action</td><td><span class="field-type">Enum</span></td><td>What happened: ASSIGNED, UNASSIGNED, STATUS_CHANGED, LOCATION_CHANGED, CREATED, UPDATED</td></tr>
-                    <tr><td class="field-name">fromUserId</td><td><span class="field-type">String?</span></td><td>Previous owner (for assignments)</td></tr>
-                    <tr><td class="field-name">toUserId</td><td><span class="field-type">String?</span></td><td>New owner (for assignments)</td></tr>
+                    <tr><td class="field-name">fromMemberId</td><td><span class="field-type">String?</span></td><td>Previous assignee (for assignments)</td></tr>
+                    <tr><td class="field-name">toMemberId</td><td><span class="field-type">String?</span></td><td>New assignee (for assignments)</td></tr>
                     <tr><td class="field-name">fromStatus</td><td><span class="field-type">Enum?</span></td><td>Previous status (for status changes)</td></tr>
                     <tr><td class="field-name">toStatus</td><td><span class="field-type">Enum?</span></td><td>New status (for status changes)</td></tr>
                     <tr><td class="field-name">performedBy</td><td><span class="field-type">String?</span></td><td>Who made this change</td></tr>
@@ -631,7 +661,7 @@
                     <tr><td class="field-name">renewalDate</td><td><span class="field-type">DateTime?</span></td><td>Next renewal/payment date</td></tr>
                     <tr><td class="field-name">status</td><td><span class="field-type">Enum</span></td><td>ACTIVE, PAUSED, or CANCELLED</td></tr>
                     <tr><td class="field-name">autoRenew</td><td><span class="field-type">Boolean</span></td><td>Will it auto-renew?</td></tr>
-                    <tr><td class="field-name">assignedUserId</td><td><span class="field-type">String?</span></td><td>Primary user (for individual licenses)</td></tr>
+                    <tr><td class="field-name">assignedMemberId</td><td><span class="field-type">String?</span></td><td>Primary TeamMember (for individual licenses)</td></tr>
                     <tr><td class="field-name">vendor</td><td><span class="field-type">String?</span></td><td>Company providing the service</td></tr>
                 </table>
             </div>
@@ -648,7 +678,7 @@
                     <tr><th>Field</th><th>Type</th><th>What it stores</th></tr>
                     <tr><td class="field-name">action</td><td><span class="field-type">Enum</span></td><td>CREATED, RENEWED, CANCELLED, REACTIVATED, REASSIGNED</td></tr>
                     <tr><td class="field-name">oldStatus / newStatus</td><td><span class="field-type">Enum?</span></td><td>Status before and after the change</td></tr>
-                    <tr><td class="field-name">oldUserId / newUserId</td><td><span class="field-type">String?</span></td><td>For reassignments - who had it, who has it now</td></tr>
+                    <tr><td class="field-name">oldMemberId / newMemberId</td><td><span class="field-type">String?</span></td><td>For reassignments - which member had it, who has it now</td></tr>
                     <tr><td class="field-name">performedBy</td><td><span class="field-type">String?</span></td><td>Who made the change</td></tr>
                 </table>
             </div>
@@ -710,17 +740,17 @@
                 <span class="section-icon">👔</span>
                 <div>
                     <h2>HR Profiles</h2>
-                    <p class="section-desc">Employee personal and employment information</p>
+                    <p class="section-desc">Employee personal and employment information (now stored in TeamMember)</p>
                 </div>
             </div>
 
-            <div class="table-card">
-                <div class="table-header">
+            <div class="table-card" style="opacity: 0.7; border: 1px dashed #9CA3AF;">
+                <div class="table-header" style="background: #F3F4F6;">
                     <span class="table-name">HRProfile</span>
-                    <span class="table-badge">Core Table</span>
+                    <span class="table-badge" style="background: #9CA3AF;">⚠️ Legacy</span>
                 </div>
                 <div class="table-purpose">
-                    <strong>What is this?</strong> Detailed employee information - personal details, documents, emergency contacts, bank details for payroll. One profile per user.
+                    <strong>⚠️ Note:</strong> These HR fields are now stored directly in the <strong>TeamMember</strong> model when isEmployee=true. This table is kept for reference but TeamMember is the source of truth.
                 </div>
                 <table>
                     <tr><th>Field</th><th>Type</th><th>What it stores</th></tr>
@@ -1030,7 +1060,7 @@
                     <tr><td class="field-name">type</td><td><span class="field-type">Enum</span></td><td>EMPLOYEE_REQUEST, ADMIN_ASSIGNMENT, or RETURN_REQUEST</td></tr>
                     <tr><td class="field-name">status</td><td><span class="field-type">Enum</span></td><td>PENDING_ADMIN_APPROVAL, PENDING_USER_ACCEPTANCE, APPROVED, REJECTED, etc.</td></tr>
                     <tr><td class="field-name">assetId</td><td><span class="field-type">String</span></td><td>Which asset this request is for</td></tr>
-                    <tr><td class="field-name">userId</td><td><span class="field-type">String</span></td><td>Target user (requester or assignee)</td></tr>
+                    <tr><td class="field-name">memberId</td><td><span class="field-type">String</span></td><td>Target TeamMember (requester or assignee)</td></tr>
                     <tr><td class="field-name">reason</td><td><span class="field-type">String?</span></td><td>Why they need it or why returning</td></tr>
                     <tr><td class="field-name">expiresAt</td><td><span class="field-type">DateTime?</span></td><td>When pending request expires</td></tr>
                 </table>
@@ -1275,7 +1305,7 @@
                 </div>
                 <table>
                     <tr><th>Field</th><th>Type</th><th>What it stores</th></tr>
-                    <tr><td class="field-name">actorUserId</td><td><span class="field-type">String?</span></td><td>Who performed the action</td></tr>
+                    <tr><td class="field-name">actorMemberId</td><td><span class="field-type">String?</span></td><td>Which TeamMember performed the action</td></tr>
                     <tr><td class="field-name">action</td><td><span class="field-type">String</span></td><td>What was done: "created", "updated", "deleted", "approved"</td></tr>
                     <tr><td class="field-name">entityType</td><td><span class="field-type">String?</span></td><td>What type of record: "Asset", "LeaveRequest"</td></tr>
                     <tr><td class="field-name">entityId</td><td><span class="field-type">String?</span></td><td>Which specific record</td></tr>

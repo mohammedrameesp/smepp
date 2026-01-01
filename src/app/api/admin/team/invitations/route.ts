@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     const org = await prisma.organization.findUnique({
       where: { id: session.user.organizationId },
       include: {
-        _count: { select: { members: true } },
+        _count: { select: { teamMembers: true } },
       },
     });
 
@@ -108,22 +108,23 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (org._count.members + pendingCount >= org.maxUsers) {
+    if (org._count.teamMembers + pendingCount >= org.maxUsers) {
       return NextResponse.json(
         { error: `User limit reached (${org.maxUsers}). Upgrade your plan to add more users.` },
         { status: 403 }
       );
     }
 
-    // Check if user is already a member
-    const existingMember = await prisma.organizationUser.findFirst({
+    // Check if user is already a TeamMember (primary check)
+    const existingTeamMember = await prisma.teamMember.findFirst({
       where: {
-        organizationId: session.user.organizationId,
-        user: { email: email.toLowerCase() },
+        tenantId: session.user.organizationId,
+        email: email.toLowerCase(),
+        isDeleted: false,
       },
     });
 
-    if (existingMember) {
+    if (existingTeamMember) {
       return NextResponse.json(
         { error: 'This user is already a member of your organization' },
         { status: 409 }

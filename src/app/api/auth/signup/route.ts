@@ -3,6 +3,7 @@ import { prisma } from '@/lib/core/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { validatePassword, DEFAULT_PASSWORD_REQUIREMENTS } from '@/lib/security/password-validation';
+import { TeamMemberRole, OrgRole } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION SCHEMA
@@ -120,16 +121,50 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // If invitation exists, accept it (create membership and mark as accepted)
+      // If invitation exists, accept it (create TeamMember and mark as accepted)
       if (invitation) {
         const isOwner = invitation.role === 'OWNER';
 
-        await tx.organizationUser.create({
+        // Use employee status from invitation (set by admin during invite)
+        const finalIsEmployee = invitation.isEmployee ?? true;
+        const finalIsOnWps = finalIsEmployee ? (invitation.isOnWps ?? false) : false;
+
+        // Map OrgRole to TeamMemberRole
+        const teamMemberRole: TeamMemberRole =
+          invitation.role === OrgRole.OWNER || invitation.role === OrgRole.ADMIN
+            ? TeamMemberRole.ADMIN
+            : TeamMemberRole.MEMBER;
+
+        // Generate employee code for employees
+        let employeeCode: string | null = null;
+        if (finalIsEmployee) {
+          const year = new Date().getFullYear();
+          const prefix = `EMP-${year}`;
+          const count = await tx.teamMember.count({
+            where: {
+              tenantId: invitation.organizationId,
+              employeeCode: { startsWith: prefix },
+            },
+          });
+          employeeCode = `${prefix}-${String(count + 1).padStart(3, '0')}`;
+        }
+
+        // Create TeamMember (the unified model for org users)
+        await tx.teamMember.create({
           data: {
-            organizationId: invitation.organizationId,
-            userId: user.id,
-            role: invitation.role,
+            tenantId: invitation.organizationId,
+            email: normalizedEmail,
+            name: name,
+            passwordHash: passwordHash,
+            role: teamMemberRole,
             isOwner,
+            isEmployee: finalIsEmployee,
+            isOnWps: finalIsOnWps,
+            employeeCode,
+            canLogin: true,
+            image: !finalIsEmployee && invitation.organization.logoUrl
+              ? invitation.organization.logoUrl
+              : null,
           },
         });
 

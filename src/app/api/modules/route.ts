@@ -304,7 +304,7 @@ async function deleteModuleDataWithTx(
         );
       }
       await tx.profileChangeRequest.deleteMany({ where: { tenantId } });
-      await tx.hRProfile.deleteMany({ where: { tenantId } });
+      await tx.teamMember.updateMany({ where: { tenantId, isEmployee: true }, data: { isEmployee: false } });
       break;
 
     case 'leave':

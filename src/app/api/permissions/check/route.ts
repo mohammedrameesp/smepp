@@ -46,15 +46,14 @@ export async function GET(request: NextRequest) {
 
     // SECURITY: Validate user membership in the organization (defense-in-depth)
     // This prevents potential session manipulation attacks
-    const membership = await prisma.organizationUser.findUnique({
+    const membership = await prisma.teamMember.findFirst({
       where: {
-        organizationId_userId: {
-          organizationId: orgId,
-          userId: session.user.id,
-        },
+        tenantId: orgId,
+        id: session.user.id,
+        isDeleted: false,
       },
       include: {
-        organization: {
+        tenant: {
           select: { enabledModules: true },
         },
       },
@@ -65,7 +64,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
     }
 
-    const enabledModules = membership.organization.enabledModules || [];
+    const enabledModules = membership.tenant.enabledModules || [];
 
     // Single permission check
     if (singlePermission) {

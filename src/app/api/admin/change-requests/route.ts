@@ -24,16 +24,12 @@ async function getChangeRequestsHandler(request: NextRequest) {
   const requests = await prisma.profileChangeRequest.findMany({
     where,
     include: {
-      hrProfile: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
-          },
+      member: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
         },
       },
     },

@@ -20,11 +20,11 @@ import { Button } from '@/components/ui/button';
 export const dynamic = 'force-dynamic';
 
 async function getSystemStats() {
-  const [orgCount, userCount, assetCount, hrProfileCount, leaveRequestCount] = await Promise.all([
+  const [orgCount, userCount, assetCount, employeeCount, leaveRequestCount] = await Promise.all([
     prisma.organization.count(),
     prisma.user.count(),
     prisma.asset.count(),
-    prisma.hRProfile.count(),
+    prisma.teamMember.count({ where: { isEmployee: true } }),
     prisma.leaveRequest.count(),
   ]);
 
@@ -32,7 +32,7 @@ async function getSystemStats() {
     organizations: orgCount,
     users: userCount,
     assets: assetCount,
-    employees: hrProfileCount,
+    employees: employeeCount,
     leaveRequests: leaveRequestCount,
     dbSize: '45.2 MB', // Placeholder
   };

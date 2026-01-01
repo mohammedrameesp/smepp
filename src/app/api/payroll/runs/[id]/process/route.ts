@@ -10,7 +10,7 @@ import { TeamMemberRole, PayrollStatus, DeductionType, LoanStatus } from '@prism
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/activity';
 import {
-  generatePayslipNumber,
+  generatePayslipNumberWithPrefix,
   parseDecimal,
   calculateDailySalary,
   subtractMoney,
@@ -223,7 +223,8 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
         const netSalary = subtractMoney(grossSalary, cappedDeductions);
 
         // Create payslip
-        const payslipNumber = generatePayslipNumber(
+        const payslipNumber = await generatePayslipNumberWithPrefix(
+          tenantId,
           payrollRun.year,
           payrollRun.month,
           payslipSequence++

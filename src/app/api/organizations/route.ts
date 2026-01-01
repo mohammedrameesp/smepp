@@ -30,10 +30,10 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const memberships = await prisma.organizationUser.findMany({
-      where: { userId: session.user.id },
+    const memberships = await prisma.teamMember.findMany({
+      where: { id: session.user.id, isDeleted: false },
       include: {
-        organization: {
+        tenant: {
           select: {
             id: true,
             name: true,
@@ -48,7 +48,7 @@ export async function GET() {
     });
 
     const organizations = memberships.map((m) => ({
-      ...m.organization,
+      ...m.tenant,
       role: m.role,
       isOwner: m.isOwner,
     }));
@@ -164,12 +164,17 @@ export async function POST(request: NextRequest) {
         data: { organizationId: org.id },
       });
 
-      await tx.organizationUser.create({
+      // Create owner as TeamMember
+      await tx.teamMember.create({
         data: {
-          organizationId: org.id,
-          userId: session.user.id,
-          role: 'OWNER',
+          tenantId: org.id,
+          email: session.user.email!.toLowerCase(),
+          name: session.user.name,
+          role: 'ADMIN', // ADMIN is highest TeamMemberRole
           isOwner: true,
+          canLogin: true,
+          isEmployee: false, // Owner is not automatically an employee
+          joinedAt: new Date(),
         },
       });
 

@@ -35,27 +35,34 @@ export async function POST(request: NextRequest) {
 
     const { email } = result.data;
 
-    // Find user with password (credential users only)
-    const user = await prisma.user.findFirst({
+    // First check TeamMember (org users with credentials)
+    const teamMember = await prisma.teamMember.findFirst({
       where: {
         email: email.toLowerCase(),
         passwordHash: { not: null }, // Only credential users can reset password
+        isDeleted: false,
       },
       include: {
-        organizationMemberships: {
-          include: {
-            organization: {
-              select: { slug: true },
-            },
-          },
-          take: 1,
+        tenant: {
+          select: { slug: true },
         },
       },
     });
 
+    // Fall back to User model (for super admins)
+    const user = !teamMember ? await prisma.user.findFirst({
+      where: {
+        email: email.toLowerCase(),
+        passwordHash: { not: null }, // Only credential users can reset password
+        isSuperAdmin: true,
+      },
+    }) : null;
+
+    const targetUser = teamMember || user;
+
     // Always return success to prevent email enumeration
     // But only send reset link if user exists
-    if (user) {
+    if (targetUser) {
       // Generate secure token
       const resetToken = randomBytes(32).toString('hex');
       const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
@@ -63,25 +70,36 @@ export async function POST(request: NextRequest) {
       // SECURITY: Store hashed token in database
       // This prevents token theft if database is compromised
       const hashedToken = hashToken(resetToken);
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          resetToken: hashedToken, // Store hash, not plaintext
-          resetTokenExpiry,
-        },
-      });
+
+      if (teamMember) {
+        await prisma.teamMember.update({
+          where: { id: teamMember.id },
+          data: {
+            resetToken: hashedToken,
+            resetTokenExpiry,
+          },
+        });
+      } else if (user) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            resetToken: hashedToken,
+            resetTokenExpiry,
+          },
+        });
+      }
 
       // Build reset URL - use org subdomain if user has one, otherwise main domain
       const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
       const protocol = appDomain.includes('localhost') ? 'http' : 'https';
-      const orgSlug = user.organizationMemberships[0]?.organization?.slug;
+      const orgSlug = teamMember?.tenant?.slug;
       const resetUrl = orgSlug
         ? `${protocol}://${orgSlug}.${appDomain}/reset-password/${resetToken}`
         : `${protocol}://${appDomain}/reset-password/${resetToken}`;
 
       // Send password reset email
       await sendEmail({
-        to: user.email,
+        to: targetUser.email,
         subject: 'Reset your Durj password',
         html: `
 <!DOCTYPE html>
@@ -109,7 +127,7 @@ export async function POST(request: NextRequest) {
               <h2 style="color: #1e293b; margin: 0 0 20px; font-size: 22px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Reset Your Password</h2>
 
               <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
-                Hello${user.name ? ` ${user.name}` : ''},
+                Hello${targetUser.name ? ` ${targetUser.name}` : ''},
               </p>
 
               <p style="color: #475569; font-size: 16px; line-height: 24px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
@@ -174,7 +192,7 @@ export async function POST(request: NextRequest) {
 </body>
 </html>
         `,
-        text: `Hello${user.name ? ` ${user.name}` : ''},
+        text: `Hello${targetUser.name ? ` ${targetUser.name}` : ''},
 
 We received a request to reset your password for Durj.
 
@@ -187,7 +205,7 @@ If you didn't request a password reset, you can safely ignore this email.
 - The Durj Team`,
       });
 
-      console.log(`[Password Reset] Email sent to ${user.email}`);
+      console.log(`[Password Reset] Email sent to ${targetUser.email}`);
     }
 
     // Always return success (security: don't reveal if email exists)

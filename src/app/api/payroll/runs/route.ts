@@ -12,7 +12,7 @@ import { createPayrollRunSchema, payrollRunQuerySchema } from '@/lib/validations
 import { logAction, ActivityActions } from '@/lib/activity';
 import { withErrorHandler } from '@/lib/http/handler';
 import {
-  generatePayrollReference,
+  generatePayrollReferenceWithPrefix,
   getPeriodStartDate,
   getPeriodEndDate,
   parseDecimal
@@ -168,7 +168,7 @@ export const POST = withErrorHandler(
       }
     }
 
-    const referenceNumber = generatePayrollReference(year, month, sequence);
+    const referenceNumber = await generatePayrollReferenceWithPrefix(tenant!.tenantId, year, month, sequence);
     const periodStart = getPeriodStartDate(year, month);
     const periodEnd = getPeriodEndDate(year, month);
 

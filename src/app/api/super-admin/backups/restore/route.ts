@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
         await tx.systemSettings.deleteMany({ where: { tenantId } });
         await tx.activityLog.deleteMany({ where: { tenantId } });
         await tx.profileChangeRequest.deleteMany({ where: { tenantId } });
-        await tx.hRProfile.deleteMany({ where: { tenantId } });
+        // HRProfile model removed - data now in TeamMember
         await tx.supplierEngagement.deleteMany({ where: { tenantId } });
         await tx.supplier.deleteMany({ where: { tenantId } });
         await tx.subscriptionHistory.deleteMany({ where: { subscription: { tenantId } } });
@@ -158,10 +158,8 @@ export async function POST(request: NextRequest) {
           results.push({ table: 'supplierEngagements', count: backupData.supplierEngagements.length, success: true });
         }
 
-        if (backupData.hrProfiles?.length) {
-          await tx.hRProfile.createMany({ data: backupData.hrProfiles, skipDuplicates: true });
-          results.push({ table: 'hrProfiles', count: backupData.hrProfiles.length, success: true });
-        }
+        // HRProfile model removed - data now in TeamMember
+        // Old hrProfiles data in backup files will be skipped
 
         if (backupData.profileChangeRequests?.length) {
           await tx.profileChangeRequest.createMany({ data: backupData.profileChangeRequests, skipDuplicates: true });

@@ -2,6 +2,8 @@
  * @file route.ts
  * @description Current user's document expiry alerts
  * @module system/users
+ *
+ * NOTE: This endpoint now reads from TeamMember instead of the deprecated HRProfile.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,18 +25,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
-    const tenantId = session.user.organizationId;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const thirtyDaysFromNow = new Date(today);
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-    // Find user's HR profile within tenant
-    const hrProfile = await prisma.hRProfile.findFirst({
-      where: { userId: session.user.id, tenantId },
+    // Get TeamMember (which now contains all HR/document data)
+    const member = await prisma.teamMember.findUnique({
+      where: { id: session.user.id },
+      select: {
+        qidExpiry: true,
+        passportExpiry: true,
+        healthCardExpiry: true,
+        licenseExpiry: true,
+        hasDrivingLicense: true,
+      },
     });
 
-    if (!hrProfile) {
+    if (!member) {
       return NextResponse.json({ alerts: [] });
     }
 
@@ -72,11 +78,11 @@ export async function GET(request: NextRequest) {
       });
     };
 
-    addAlert('QID', hrProfile.qidExpiry);
-    addAlert('Passport', hrProfile.passportExpiry);
-    addAlert('Health Card', hrProfile.healthCardExpiry);
-    if (hrProfile.hasDrivingLicense) {
-      addAlert('Driving License', hrProfile.licenseExpiry);
+    addAlert('QID', member.qidExpiry);
+    addAlert('Passport', member.passportExpiry);
+    addAlert('Health Card', member.healthCardExpiry);
+    if (member.hasDrivingLicense) {
+      addAlert('Driving License', member.licenseExpiry);
     }
 
     // Sort alerts: expired first (most negative), then by days remaining

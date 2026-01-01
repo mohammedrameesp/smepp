@@ -100,11 +100,12 @@ export async function POST(
       );
     }
 
-    // Check if user is already a member
-    const existingMember = await prisma.organizationUser.findFirst({
+    // Check if user is already a member (via TeamMember)
+    const existingMember = await prisma.teamMember.findFirst({
       where: {
-        organizationId: id,
-        user: { email: email.toLowerCase() },
+        tenantId: id,
+        email: email.toLowerCase(),
+        isDeleted: false,
       },
     });
 

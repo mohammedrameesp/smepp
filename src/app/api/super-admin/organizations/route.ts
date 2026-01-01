@@ -42,7 +42,7 @@ export async function GET() {
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
-          select: { members: true, assets: true },
+          select: { teamMembers: true, assets: true },
         },
       },
     });

@@ -24,10 +24,12 @@ async function getExpiryAlertsHandler(request: NextRequest, _context: APIContext
     const thirtyDaysFromNow = new Date(today);
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-    // Find all HR profiles with expiring or expired documents (tenant-scoped)
-    const hrProfiles = await prisma.hRProfile.findMany({
+    // Find all team members with expiring or expired documents (tenant-scoped)
+    const hrProfiles = await prisma.teamMember.findMany({
       where: {
         tenantId,
+        isEmployee: true,
+        isDeleted: false,
         OR: [
           { qidExpiry: { lte: thirtyDaysFromNow } },
           { passportExpiry: { lte: thirtyDaysFromNow } },
@@ -41,20 +43,10 @@ async function getExpiryAlertsHandler(request: NextRequest, _context: APIContext
           { contractExpiry: { lte: thirtyDaysFromNow } },
         ],
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            isSystemAccount: true,
-          },
-        },
-      },
     });
 
-    // Filter out system accounts
-    const filteredProfiles = hrProfiles.filter((p) => !p.user.isSystemAccount);
+    // TeamMember has name and email directly - no need to filter by isSystemAccount
+    const filteredProfiles = hrProfiles;
 
     // Build alerts array
     const alerts: Array<{
@@ -84,9 +76,9 @@ async function getExpiryAlertsHandler(request: NextRequest, _context: APIContext
       if (daysRemaining === null || daysRemaining > 30) return;
 
       alerts.push({
-        employeeId: profile.user.id,
-        employeeName: profile.user.name || '',
-        employeeEmail: profile.user.email,
+        employeeId: profile.id,
+        employeeName: profile.name || '',
+        employeeEmail: profile.email,
         documentType,
         expiryDate: expiryDate.toISOString(),
         status: daysRemaining < 0 ? 'expired' : 'expiring',

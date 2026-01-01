@@ -6,6 +6,7 @@ import {
   decryptState,
   upsertOAuthUser,
   createSessionToken,
+  createTeamMemberSessionToken,
   getTenantUrl,
   validateOAuthSecurity,
 } from '@/lib/oauth/utils';
@@ -128,7 +129,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Create or update user
-    const user = await upsertOAuthUser(
+    const result = await upsertOAuthUser(
       {
         email,
         name: azureUser.displayName,
@@ -139,7 +140,9 @@ export async function GET(request: NextRequest) {
     );
 
     // Create session token
-    const sessionToken = await createSessionToken(user.id, org.id);
+    const sessionToken = result.type === 'teamMember'
+      ? await createTeamMemberSessionToken(result.id)
+      : await createSessionToken(result.id, org.id);
 
     // Set the session cookie
     const cookieStore = await cookies();

@@ -33,12 +33,11 @@ export async function GET(
     const { id } = await params;
 
     // Verify user is a member of this organization
-    const membership = await prisma.organizationUser.findUnique({
+    const membership = await prisma.teamMember.findFirst({
       where: {
-        organizationId_userId: {
-          organizationId: id,
-          userId: session.user.id,
-        },
+        tenantId: id,
+        id: session.user.id,
+        isDeleted: false,
       },
     });
 
@@ -62,7 +61,7 @@ export async function GET(
         createdAt: true,
         _count: {
           select: {
-            members: true,
+            teamMembers: true,
           },
         },
       },
@@ -102,12 +101,11 @@ export async function PATCH(
     const { id } = await params;
 
     // Verify user is an admin or owner
-    const membership = await prisma.organizationUser.findUnique({
+    const membership = await prisma.teamMember.findFirst({
       where: {
-        organizationId_userId: {
-          organizationId: id,
-          userId: session.user.id,
-        },
+        tenantId: id,
+        id: session.user.id,
+        isDeleted: false,
       },
     });
 

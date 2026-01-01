@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { TeamMemberRole, OrgRole } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/invitations/[token] - Get invitation details
@@ -156,13 +157,12 @@ export async function POST(
         return { error: 'Your session is invalid. Please sign out and sign in again.', status: 401 };
       }
 
-      // Check if user is already a member
-      const existingMembership = await tx.organizationUser.findUnique({
+      // Check if user is already a member (check TeamMember by email)
+      const existingMembership = await tx.teamMember.findFirst({
         where: {
-          organizationId_userId: {
-            organizationId: invitation.organizationId,
-            userId: session.user.id,
-          },
+          tenantId: invitation.organizationId,
+          email: session.user.email?.toLowerCase(),
+          isDeleted: false,
         },
       });
 
@@ -185,65 +185,94 @@ export async function POST(
         };
       }
 
-      // Accept invitation: create membership and mark as accepted
+      // Accept invitation: create TeamMember and mark as accepted
       const isOwner = invitation.role === 'OWNER';
 
       // Use employee status from invitation (set by admin)
       const finalIsEmployee = invitation.isEmployee ?? true; // Default to employee if somehow null
       const finalIsOnWps = finalIsEmployee ? (invitation.isOnWps ?? false) : false;
 
-      await tx.organizationUser.create({
-        data: {
-          organizationId: invitation.organizationId,
-          userId: session.user.id,
-          role: invitation.role,
-          isOwner,
+      // Map OrgRole to TeamMemberRole
+      const teamMemberRole: TeamMemberRole =
+        invitation.role === OrgRole.OWNER || invitation.role === OrgRole.ADMIN
+          ? TeamMemberRole.ADMIN
+          : TeamMemberRole.MEMBER;
+
+      // Check if TeamMember already exists for this email in this org
+      const existingTeamMember = await tx.teamMember.findUnique({
+        where: {
+          tenantId_email: {
+            tenantId: invitation.organizationId,
+            email: session.user.email!.toLowerCase(),
+          },
         },
       });
 
-      // Update user with employee status
-      const userUpdateData: Record<string, any> = {
-        isEmployee: finalIsEmployee,
-        isOnWps: finalIsOnWps,
-      };
-
-      // For non-employees, set user image to org logo
-      if (!finalIsEmployee && invitation.organization.logoUrl) {
-        userUpdateData.image = invitation.organization.logoUrl;
-      }
-
-      await tx.user.update({
-        where: { id: session.user.id },
-        data: userUpdateData,
-      });
-
-      // Create HR profile for employees only
-      if (finalIsEmployee) {
-        // Check if HR profile already exists
-        const existingHrProfile = await tx.hRProfile.findUnique({
-          where: { userId: session.user.id },
+      if (existingTeamMember) {
+        // Mark invitation as accepted since member already exists
+        await tx.organizationInvitation.update({
+          where: { id: invitation.id },
+          data: { acceptedAt: new Date() },
         });
 
-        if (!existingHrProfile) {
-          // Generate employee code
-          const year = new Date().getFullYear();
-          const prefix = `EMP-${year}`;
-          const count = await tx.hRProfile.count({
-            where: { employeeId: { startsWith: prefix } },
-          });
-          const employeeId = `${prefix}-${String(count + 1).padStart(3, '0')}`;
-
-          await tx.hRProfile.create({
-            data: {
-              userId: session.user.id,
-              tenantId: invitation.organizationId,
-              employeeId,
-              onboardingComplete: false,
-              onboardingStep: 0,
-            },
-          });
-        }
+        return {
+          success: true,
+          alreadyMember: true,
+          message: 'You are already a member of this organization',
+          organization: {
+            id: invitation.organization.id,
+            name: invitation.organization.name,
+            slug: invitation.organization.slug,
+          },
+        };
       }
+
+      // Get user data to copy password hash (for credentials login)
+      const user = await tx.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          name: true,
+          email: true,
+          image: true,
+          passwordHash: true,
+          emailVerified: true,
+        },
+      });
+
+      // Generate employee code for employees
+      let employeeCode: string | null = null;
+      if (finalIsEmployee) {
+        const year = new Date().getFullYear();
+        const prefix = `EMP-${year}`;
+        const count = await tx.teamMember.count({
+          where: {
+            tenantId: invitation.organizationId,
+            employeeCode: { startsWith: prefix },
+          },
+        });
+        employeeCode = `${prefix}-${String(count + 1).padStart(3, '0')}`;
+      }
+
+      // Create TeamMember (the unified model)
+      await tx.teamMember.create({
+        data: {
+          tenantId: invitation.organizationId,
+          email: session.user.email!.toLowerCase(),
+          name: invitation.name || user?.name || null,
+          image: !finalIsEmployee && invitation.organization.logoUrl
+            ? invitation.organization.logoUrl
+            : user?.image || null,
+          passwordHash: user?.passwordHash || null,
+          emailVerified: user?.emailVerified || null,
+          role: teamMemberRole,
+          isOwner,
+          isEmployee: finalIsEmployee,
+          isOnWps: finalIsOnWps,
+          employeeCode,
+          canLogin: true,
+          joinedAt: new Date(),
+        },
+      });
 
       await tx.organizationInvitation.update({
         where: { id: invitation.id },

@@ -14,17 +14,13 @@ async function getOrganizations() {
     include: {
       _count: {
         select: {
-          members: true,
+          teamMembers: true,
           assets: true,
         },
       },
-      members: {
-        where: { isOwner: true },
-        include: {
-          user: {
-            select: { name: true, email: true },
-          },
-        },
+      teamMembers: {
+        where: { isOwner: true, isDeleted: false },
+        select: { name: true, email: true },
         take: 1,
       },
     },
@@ -49,8 +45,8 @@ async function getStats() {
     prisma.organization.count({
       where: { createdAt: { gte: oneWeekAgo } },
     }),
-    prisma.organizationUser.count({
-      where: { joinedAt: { gte: oneWeekAgo } },
+    prisma.teamMember.count({
+      where: { joinedAt: { gte: oneWeekAgo }, isDeleted: false },
     }),
   ]);
 
@@ -70,12 +66,14 @@ async function getRecentActivity() {
     select: { name: true, createdAt: true },
   });
 
-  const recentUsers = await prisma.organizationUser.findMany({
+  const recentUsers = await prisma.teamMember.findMany({
+    where: { isDeleted: false },
     orderBy: { joinedAt: 'desc' },
     take: 2,
-    include: {
-      user: { select: { name: true } },
-      organization: { select: { name: true } },
+    select: {
+      name: true,
+      joinedAt: true,
+      tenant: { select: { name: true } },
     },
   });
 
@@ -183,7 +181,7 @@ export default async function SuperAdminDashboard() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {organizations.map((org) => {
-                const owner = org.members[0]?.user;
+                const owner = org.teamMembers[0];
                 return (
                   <tr key={org.id} className="hover:bg-gray-50">
                     <td className="px-4 lg:px-6 py-4">
@@ -210,7 +208,7 @@ export default async function SuperAdminDashboard() {
                       <div className="text-xs text-gray-500">{owner?.email || '-'}</div>
                     </td>
                     <td className="px-4 lg:px-6 py-4">
-                      <span className="text-sm text-gray-900">{org._count.members}</span>
+                      <span className="text-sm text-gray-900">{org._count.teamMembers}</span>
                     </td>
                     <td className="px-4 lg:px-6 py-4 hidden md:table-cell">
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
@@ -282,10 +280,10 @@ export default async function SuperAdminDashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-900">
-                    <span className="font-medium">{item.user.name || 'New user'}</span> joined {item.organization.name}
+                    <span className="font-medium">{item.name || 'New user'}</span> joined {item.tenant.name}
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {formatDistanceToNow(new Date(item.joinedAt), { addSuffix: true })}
+                    {item.joinedAt && formatDistanceToNow(new Date(item.joinedAt), { addSuffix: true })}
                   </p>
                 </div>
               </div>

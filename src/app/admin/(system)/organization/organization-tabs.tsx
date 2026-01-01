@@ -50,7 +50,7 @@ interface Organization {
   secondaryColor: string | null;
   additionalCurrencies: string[];
   enabledModules: string[];
-  _count: { members: number };
+  _count: { teamMembers: number };
 }
 
 interface TeamMember {
@@ -58,6 +58,7 @@ interface TeamMember {
   role: OrgRole;
   isOwner: boolean;
   joinedAt: string;
+  // TeamMember has name/email directly now
   user: { id: string; name: string | null; email: string; image: string | null };
 }
 
@@ -391,7 +392,7 @@ export function OrganizationTabs({
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <p className="text-muted-foreground">Team Members</p>
-                    <p className="text-lg font-semibold">{org._count.members}</p>
+                    <p className="text-lg font-semibold">{org._count.teamMembers}</p>
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <p className="text-muted-foreground">Created</p>

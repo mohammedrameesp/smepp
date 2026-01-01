@@ -14,17 +14,13 @@ async function getOrganizations() {
     include: {
       _count: {
         select: {
-          members: true,
+          teamMembers: true,
           assets: true,
         },
       },
-      members: {
-        where: { isOwner: true },
-        include: {
-          user: {
-            select: { name: true, email: true },
-          },
-        },
+      teamMembers: {
+        where: { isOwner: true, isDeleted: false },
+        select: { name: true, email: true },
         take: 1,
       },
     },
@@ -69,7 +65,7 @@ export default async function OrganizationsPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {organizations.map((org) => {
-                    const owner = org.members[0]?.user;
+                    const owner = org.teamMembers[0];
                     return (
                       <tr key={org.id} className="hover:bg-gray-50">
                         <td className="px-4 lg:px-6 py-4">
@@ -98,7 +94,7 @@ export default async function OrganizationsPage() {
                         <td className="px-4 lg:px-6 py-4">
                           <div className="flex items-center gap-1.5 text-sm text-gray-900">
                             <Users className="h-4 w-4 text-gray-400" />
-                            {org._count.members}
+                            {org._count.teamMembers}
                           </div>
                         </td>
                         <td className="px-4 lg:px-6 py-4 text-sm text-gray-900 hidden md:table-cell">

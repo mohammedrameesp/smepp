@@ -13,7 +13,7 @@
  * - RETURN_REQUEST: Notify admins about return request
  */
 
-import { Role, AssetRequestType } from '@prisma/client';
+import { AssetRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { sendEmail, sendBatchEmails } from '@/lib/email';
 import { createNotification, createBulkNotifications, NotificationTemplates } from '@/lib/domains/system/notifications';
@@ -75,12 +75,12 @@ async function getNotificationContext(
   tenantId: string,
   currentUserId: string
 ): Promise<{ org: OrgInfo; currentUserName: string }> {
-  const [org, currentUser] = await Promise.all([
+  const [org, currentMember] = await Promise.all([
     prisma.organization.findUnique({
       where: { id: tenantId },
       select: { slug: true, name: true },
     }),
-    prisma.user.findUnique({
+    prisma.teamMember.findUnique({
       where: { id: currentUserId },
       select: { name: true, email: true },
     }),
@@ -91,7 +91,7 @@ async function getNotificationContext(
       slug: org?.slug || 'app',
       name: org?.name || 'Durj',
     },
-    currentUserName: currentUser?.name || currentUser?.email || 'Admin',
+    currentUserName: currentMember?.name || currentMember?.email || 'Admin',
   };
 }
 
@@ -99,10 +99,11 @@ async function getNotificationContext(
  * Get tenant-scoped admins for notifications
  */
 async function getTenantAdmins(tenantId: string): Promise<Array<{ id: string; email: string }>> {
-  return prisma.user.findMany({
+  return prisma.teamMember.findMany({
     where: {
-      role: Role.ADMIN,
-      organizationMemberships: { some: { organizationId: tenantId } },
+      tenantId,
+      role: 'ADMIN',
+      isDeleted: false,
     },
     select: { id: true, email: true },
   });
@@ -149,10 +150,12 @@ async function sendEmployeeRequestNotifications(
     // Notify users with the first level's required role
     const firstStep = steps[0];
     if (firstStep) {
-      const approvers = await prisma.user.findMany({
+      // Note: Role mapping - only ADMIN TeamMemberRole exists, other roles need custom handling
+      const approvers = await prisma.teamMember.findMany({
         where: {
-          role: firstStep.requiredRole,
-          organizationMemberships: { some: { organizationId: tenantId } },
+          tenantId,
+          role: 'ADMIN', // For now, use ADMIN for all approver roles
+          isDeleted: false,
         },
         select: { id: true, email: true },
       });

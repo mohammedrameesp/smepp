@@ -123,16 +123,16 @@ export default async function AdminReportsPage() {
       take: 10,
     }),
     prisma.supplierEngagement.count({ where: { tenantId } }),
-    prisma.user.count({
-      where: { organizationMemberships: { some: { organizationId: tenantId } } },
+    prisma.teamMember.count({
+      where: { tenantId, isDeleted: false },
     }),
-    prisma.user.groupBy({
+    prisma.teamMember.groupBy({
       by: ['role'],
-      where: { organizationMemberships: { some: { organizationId: tenantId } } },
+      where: { tenantId, isDeleted: false },
       _count: { role: true },
     }),
-    prisma.user.count({
-      where: { organizationMemberships: { some: { organizationId: tenantId } } },
+    prisma.teamMember.count({
+      where: { tenantId, isDeleted: false },
     }),
     prisma.purchaseRequest.count({ where: { tenantId } }),
     prisma.purchaseRequest.groupBy({
@@ -157,19 +157,18 @@ export default async function AdminReportsPage() {
     prisma.purchaseRequest.count({
       where: { tenantId, status: 'PENDING' },
     }),
-    prisma.user.count({
-      where: {
-        role: { in: ['ADMIN', 'EMPLOYEE'] },
-        organizationMemberships: { some: { organizationId: tenantId } },
-      },
+    prisma.teamMember.count({
+      where: { tenantId, isDeleted: false },
     }),
-    prisma.hRProfile.count({ where: { tenantId } }),
+    prisma.teamMember.count({ where: { tenantId, isEmployee: true, isDeleted: false } }),
     prisma.profileChangeRequest.count({
       where: { tenantId, status: 'PENDING' },
     }),
-    prisma.hRProfile.count({
+    prisma.teamMember.count({
       where: {
         tenantId,
+        isEmployee: true,
+        isDeleted: false,
         OR: [
           { qidExpiry: { lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), gte: new Date() } },
           { passportExpiry: { lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), gte: new Date() } },
@@ -177,8 +176,8 @@ export default async function AdminReportsPage() {
         ],
       },
     }),
-    prisma.hRProfile.count({
-      where: { tenantId, onboardingStep: { lt: 10 } },
+    prisma.teamMember.count({
+      where: { tenantId, isEmployee: true, isDeleted: false, onboardingComplete: false },
     }),
     prisma.activityLog.findMany({
       where: { tenantId },

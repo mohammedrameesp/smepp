@@ -14,8 +14,17 @@ import { z } from 'zod';
 
 const updateUserSchema = z.object({
   name: z.string().optional(),
+  // Note: role updates use approvalRole for legacy approval workflows
   role: z.nativeEnum(Role).optional(),
 });
+
+// Transform the data for TeamMember updates
+function transformUpdateData(data: { name?: string; role?: Role }) {
+  return {
+    ...(data.name && { name: data.name }),
+    ...(data.role && { approvalRole: data.role }), // Map to approvalRole on TeamMember
+  };
+}
 
 export async function GET(
   request: NextRequest,
@@ -36,38 +45,30 @@ export async function GET(
     const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Verify target user belongs to the same organization
-    const membership = await prisma.organizationUser.findUnique({
+    // Verify target user is a team member of the organization
+    const teamMember = await prisma.teamMember.findFirst({
       where: {
-        organizationId_userId: {
-          organizationId: tenantId,
-          userId: id,
-        },
+        tenantId,
+        id,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        role: true,
+        isEmployee: true,
+        dateOfJoining: true,
+        gender: true,
       },
     });
 
-    if (!membership) {
+    if (!teamMember) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Fetch user with HR profile (relations are now on TeamMember, not User)
-    const user = await prisma.user.findUnique({
-      where: { id },
-      include: {
-        hrProfile: {
-          select: {
-            dateOfJoining: true,
-            gender: true,
-          },
-        },
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    return NextResponse.json(user);
+    return NextResponse.json(teamMember);
 
   } catch (error) {
     console.error('User GET error:', error);
@@ -97,17 +98,16 @@ export async function PUT(
     const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Verify target user belongs to the same organization
-    const membership = await prisma.organizationUser.findUnique({
+    // Verify target user is a team member of the organization
+    const existingMember = await prisma.teamMember.findFirst({
       where: {
-        organizationId_userId: {
-          organizationId: tenantId,
-          userId: id,
-        },
+        tenantId,
+        id,
+        isDeleted: false,
       },
     });
 
-    if (!membership) {
+    if (!existingMember) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -122,12 +122,12 @@ export async function PUT(
       }, { status: 400 });
     }
 
-    const data = validation.data;
+    const updateData = transformUpdateData(validation.data);
 
-    // Update user
-    const user = await prisma.user.update({
+    // Update team member
+    const member = await prisma.teamMember.update({
       where: { id },
-      data,
+      data: updateData,
     });
 
     // Log activity
@@ -135,12 +135,12 @@ export async function PUT(
       tenantId,
       session.user.id,
       ActivityActions.USER_UPDATED,
-      'User',
-      user.id,
-      { userName: user.name, userEmail: user.email, changes: data }
+      'TeamMember',
+      member.id,
+      { userName: member.name, userEmail: member.email, changes: updateData }
     );
 
-    return NextResponse.json(user);
+    return NextResponse.json(member);
 
   } catch (error) {
     console.error('User PUT error:', error);
@@ -181,76 +181,50 @@ export async function DELETE(
       );
     }
 
-    // Verify target user belongs to the same organization
-    const membership = await prisma.organizationUser.findUnique({
+    // Verify target is a team member of the organization
+    const teamMember = await prisma.teamMember.findFirst({
       where: {
-        organizationId_userId: {
-          organizationId: tenantId,
-          userId: id,
-        },
+        tenantId,
+        id,
+        isDeleted: false,
       },
-    });
-
-    if (!membership) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    // Get user details before deletion for logging
-    const user = await prisma.user.findUnique({
-      where: { id },
       select: {
         id: true,
         name: true,
         email: true,
-        isSystemAccount: true,
+        isOwner: true,
+        _count: {
+          select: {
+            assets: true,
+            subscriptions: true,
+          },
+        },
       },
     });
 
-    if (!user) {
+    if (!teamMember) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Prevent deletion of system accounts
-    if (user.isSystemAccount) {
+    // Prevent deletion of owners
+    if (teamMember.isOwner) {
       return NextResponse.json(
         {
-          error: 'Cannot delete system account',
-          details: 'System accounts like "Shared Resources" are protected and cannot be deleted'
+          error: 'Cannot delete organization owner',
+          details: 'Transfer ownership before deleting this account'
         },
         { status: 403 }
       );
     }
 
-    // Check if user has a TeamMember record with assigned assets/subscriptions
-    // First, find the TeamMember for this user in this tenant
-    const teamMember = await prisma.teamMember.findFirst({
-      where: { email: user.email, tenantId },
-      select: { id: true },
-    });
-
-    let assignedAssets = 0;
-    let assignedSubscriptions = 0;
-
-    if (teamMember) {
-      // SECURITY: Count assigned items filtered by tenant to prevent cross-tenant data leakage
-      [assignedAssets, assignedSubscriptions] = await Promise.all([
-        prisma.asset.count({
-          where: { assignedMemberId: teamMember.id, tenantId },
-        }),
-        prisma.subscription.count({
-          where: { assignedMemberId: teamMember.id, tenantId },
-        }),
-      ]);
-    }
-
     // Check if user has assigned items in this tenant
-    if (assignedAssets > 0 || assignedSubscriptions > 0) {
+    if (teamMember._count.assets > 0 || teamMember._count.subscriptions > 0) {
       return NextResponse.json(
         {
           error: 'Cannot delete user with assigned assets or subscriptions',
           details: {
-            assignedAssets,
-            assignedSubscriptions
+            assignedAssets: teamMember._count.assets,
+            assignedSubscriptions: teamMember._count.subscriptions
           }
         },
         { status: 409 }
@@ -260,23 +234,15 @@ export async function DELETE(
     const now = new Date();
     const scheduledDeletionAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
 
-    // Soft-delete user (7-day recovery period before permanent deletion)
-    await prisma.user.update({
+    // Soft-delete team member (7-day recovery period before permanent deletion)
+    await prisma.teamMember.update({
       where: { id },
       data: {
         isDeleted: true,
         deletedAt: now,
         scheduledDeletionAt,
-        deletedByUserId: session.user.id,
+        dateOfLeaving: now, // Set leaving date (stops gratuity/service calculations)
         canLogin: false, // Block login immediately
-      },
-    });
-
-    // Set termination date on HR profile if exists (stops gratuity/service calculations)
-    await prisma.hRProfile.updateMany({
-      where: { userId: id },
-      data: {
-        terminationDate: now,
       },
     });
 
@@ -285,11 +251,11 @@ export async function DELETE(
       tenantId,
       session.user.id,
       ActivityActions.USER_DELETED,
-      'User',
-      user.id,
+      'TeamMember',
+      teamMember.id,
       {
-        userName: user.name,
-        userEmail: user.email,
+        userName: teamMember.name,
+        userEmail: teamMember.email,
         softDelete: true,
         scheduledDeletionAt: scheduledDeletionAt.toISOString(),
       }
@@ -299,9 +265,9 @@ export async function DELETE(
       message: 'Employee scheduled for deletion',
       details: 'The employee has been deactivated and will be permanently deleted in 7 days. You can restore them during this period.',
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
+        id: teamMember.id,
+        name: teamMember.name,
+        email: teamMember.email,
       },
       scheduledDeletionAt: scheduledDeletionAt.toISOString(),
     });

@@ -94,11 +94,12 @@ export async function POST(request: NextRequest) {
     const { delegateeId, startDate, endDate, reason } = validation.data;
     const tenantId = session.user.organizationId;
 
-    // Verify delegatee exists, belongs to same organization, and has appropriate role
-    const delegatee = await prisma.user.findFirst({
+    // Verify delegatee exists and belongs to same organization
+    const delegatee = await prisma.teamMember.findFirst({
       where: {
         id: delegateeId,
-        organizationMemberships: { some: { organizationId: tenantId } },
+        tenantId,
+        isDeleted: false,
       },
       select: { id: true, name: true, role: true },
     });
@@ -107,9 +108,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Delegatee not found in this organization' }, { status: 404 });
     }
 
-    if (!APPROVER_ROLES.includes(delegatee.role)) {
+    // TeamMember role is ADMIN or MEMBER - only ADMIN can be delegated to
+    if (delegatee.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'Delegatee must have an approver role' },
+        { error: 'Delegatee must have an admin role' },
         { status: 400 }
       );
     }

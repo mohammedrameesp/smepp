@@ -45,8 +45,8 @@ export async function getOrganizationUsage(organizationId: string): Promise<{
   suppliers: number;
 }> {
   const [usersCount, assetsCount, subscriptionsCount, suppliersCount] = await Promise.all([
-    prisma.organizationUser.count({
-      where: { organizationId },
+    prisma.teamMember.count({
+      where: { tenantId: organizationId, isDeleted: false },
     }),
     prisma.asset.count({ where: { tenantId: organizationId } }),
     prisma.subscription.count({ where: { tenantId: organizationId } }),

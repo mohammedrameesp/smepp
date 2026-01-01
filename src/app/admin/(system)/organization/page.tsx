@@ -50,15 +50,19 @@ export default async function OrganizationPage() {
         secondaryColor: true,
         additionalCurrencies: true,
         enabledModules: true,
-        _count: { select: { members: true } },
+        _count: { select: { teamMembers: true } },
       },
     }),
-    prisma.organizationUser.findMany({
-      where: { organizationId: session.user.organizationId },
-      include: {
-        user: {
-          select: { id: true, name: true, email: true, image: true },
-        },
+    prisma.teamMember.findMany({
+      where: { tenantId: session.user.organizationId, isDeleted: false },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        role: true,
+        isOwner: true,
+        joinedAt: true,
       },
       orderBy: [{ isOwner: 'desc' }, { role: 'asc' }, { joinedAt: 'asc' }],
     }),
@@ -70,12 +74,11 @@ export default async function OrganizationPage() {
       },
       orderBy: { createdAt: 'desc' },
     }),
-    prisma.organizationUser.findUnique({
+    prisma.teamMember.findFirst({
       where: {
-        organizationId_userId: {
-          organizationId: session.user.organizationId,
-          userId: session.user.id,
-        },
+        tenantId: session.user.organizationId,
+        id: session.user.id,
+        isDeleted: false,
       },
     }),
   ]);
@@ -98,8 +101,13 @@ export default async function OrganizationPage() {
     id: m.id,
     role: m.role,
     isOwner: m.isOwner,
-    joinedAt: m.joinedAt.toISOString(),
-    user: m.user,
+    joinedAt: m.joinedAt?.toISOString() || new Date().toISOString(),
+    user: {
+      id: m.id,
+      name: m.name,
+      email: m.email,
+      image: m.image,
+    },
   }));
 
   const invitations = invitationData.map((i) => ({

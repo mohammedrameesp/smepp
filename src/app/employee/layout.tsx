@@ -16,13 +16,13 @@ async function getOrgSettings(tenantId: string): Promise<{ enabledModules: strin
   };
 }
 
-// Check if user has completed HR profile onboarding
-async function checkOnboardingComplete(userId: string): Promise<boolean> {
-  const profile = await prisma.hRProfile.findUnique({
-    where: { userId },
+// Check if user has completed onboarding (now on TeamMember)
+async function checkOnboardingComplete(memberId: string): Promise<boolean> {
+  const member = await prisma.teamMember.findUnique({
+    where: { id: memberId },
     select: { onboardingComplete: true },
   });
-  return profile?.onboardingComplete ?? false;
+  return member?.onboardingComplete ?? false;
 }
 
 export default async function EmployeeLayout({

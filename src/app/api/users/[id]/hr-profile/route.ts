@@ -1,19 +1,22 @@
 /**
  * @file route.ts
- * @description HR profile management for a specific user (admin only)
+ * @description HR profile management for a specific team member (admin only)
  * @module system/users
+ *
+ * NOTE: This endpoint now operates directly on TeamMember (the unified model).
+ * The [id] parameter is the TeamMember ID, not User ID.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { logAction, ActivityActions } from '@/lib/activity';
-import { hrProfileSchema } from '@/lib/validations/hr-profile';
-import { Role } from '@prisma/client';
-import { reinitializeUserLeaveBalances } from '@/lib/leave-balance-init';
+import { logAction, ActivityActions } from '@/lib/core/activity';
+import { hrProfileSchema } from '@/lib/validations/hr/hr-profile';
+import { TeamMemberRole } from '@prisma/client';
+import { reinitializeMemberLeaveBalances } from '@/lib/domains/hr/leave/leave-balance-init';
 
-// GET /api/users/[id]/hr-profile - Get a user's HR profile (admin only)
+// GET /api/users/[id]/hr-profile - Get a team member's HR profile (admin only)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -25,11 +28,6 @@ export async function GET(
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    // Only admins can view other users' HR profiles
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
     // Require organization context for tenant isolation
     if (!session.user.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
@@ -38,48 +36,108 @@ export async function GET(
     const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Find the user - verify they belong to same organization
-    const user = await prisma.user.findFirst({
+    // Get the requesting member to check if admin
+    const requestingMember = await prisma.teamMember.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    });
+
+    // Only admins can view other users' HR profiles
+    if (requestingMember?.role !== TeamMemberRole.ADMIN) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    }
+
+    // Find the TeamMember by ID within same tenant
+    const member = await prisma.teamMember.findFirst({
       where: {
         id,
-        organizationMemberships: { some: { organizationId: tenantId } },
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
+        tenantId,
+        isDeleted: false,
       },
     });
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (!member) {
+      return NextResponse.json({ error: 'Team member not found' }, { status: 404 });
     }
 
-    // Find or create HR profile - use tenantId filter
-    let hrProfile = await prisma.hRProfile.findFirst({
-      where: { userId: id, tenantId },
-    });
-
-    // Create empty profile if none exists
-    if (!hrProfile) {
-      hrProfile = await prisma.hRProfile.create({
-        data: {
-          userId: id,
-          tenantId: session.user.organizationId!,
-        },
-      });
-    }
-
+    // Return TeamMember data in format compatible with HR profile UI
     return NextResponse.json({
-      ...hrProfile,
+      id: member.id,
+      odIdd: member.id, // For backwards compatibility
+      tenantId: member.tenantId,
+      // Personal info
+      dateOfBirth: member.dateOfBirth,
+      gender: member.gender,
+      maritalStatus: member.maritalStatus,
+      nationality: member.nationality,
+      religion: member.religion,
+      // Contact
+      qatarMobile: member.qatarMobile,
+      otherMobileCode: member.otherMobileCode,
+      otherMobileNumber: member.otherMobileNumber,
+      personalEmail: member.personalEmail,
+      // Address
+      qatarZone: member.qatarZone,
+      qatarStreet: member.qatarStreet,
+      qatarBuilding: member.qatarBuilding,
+      qatarUnit: member.qatarUnit,
+      homeCountryAddress: member.homeCountryAddress,
+      // Emergency contacts
+      localEmergencyName: member.localEmergencyName,
+      localEmergencyRelation: member.localEmergencyRelation,
+      localEmergencyPhoneCode: member.localEmergencyPhoneCode,
+      localEmergencyPhone: member.localEmergencyPhone,
+      homeEmergencyName: member.homeEmergencyName,
+      homeEmergencyRelation: member.homeEmergencyRelation,
+      homeEmergencyPhoneCode: member.homeEmergencyPhoneCode,
+      homeEmergencyPhone: member.homeEmergencyPhone,
+      // Identity documents
+      qidNumber: member.qidNumber,
+      qidExpiry: member.qidExpiry,
+      passportNumber: member.passportNumber,
+      passportExpiry: member.passportExpiry,
+      healthCardExpiry: member.healthCardExpiry,
+      sponsorshipType: member.sponsorshipType,
+      // Employment
+      employeeId: member.employeeCode,
+      designation: member.designation,
+      dateOfJoining: member.dateOfJoining,
+      status: member.status, // TeamMemberStatus: ACTIVE, INACTIVE, TERMINATED
+      // Banking
+      bankName: member.bankName,
+      iban: member.iban,
+      // Education
+      highestQualification: member.highestQualification,
+      specialization: member.specialization,
+      institutionName: member.institutionName,
+      graduationYear: member.graduationYear,
+      // Documents
+      qidUrl: member.qidUrl,
+      passportCopyUrl: member.passportCopyUrl,
+      photoUrl: member.photoUrl,
+      contractCopyUrl: member.contractCopyUrl,
+      contractExpiry: member.contractExpiry,
+      // Driving
+      hasDrivingLicense: member.hasDrivingLicense,
+      licenseExpiry: member.licenseExpiry,
+      // Skills
+      languagesKnown: member.languagesKnown,
+      skillsCertifications: member.skillsCertifications,
+      // Onboarding
+      onboardingStep: member.onboardingStep,
+      onboardingComplete: member.onboardingComplete,
+      bypassNoticeRequirement: member.bypassNoticeRequirement,
+      // Metadata
+      createdAt: member.createdAt,
+      updatedAt: member.updatedAt,
+      // User info for display
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        id: member.id,
+        name: member.name,
+        email: member.email,
+        role: member.role,
       },
-      workEmail: user.email,
+      workEmail: member.email,
       isAdmin: true, // Admin is viewing
     });
   } catch (error) {
@@ -91,7 +149,7 @@ export async function GET(
   }
 }
 
-// PATCH /api/users/[id]/hr-profile - Update a user's HR profile (admin only)
+// PATCH /api/users/[id]/hr-profile - Update a team member's HR profile (admin only)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -103,11 +161,6 @@ export async function PATCH(
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    // Only admins can edit other users' HR profiles
-    if (session.user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
     // Require organization context for tenant isolation
     if (!session.user.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
@@ -116,17 +169,29 @@ export async function PATCH(
     const tenantId = session.user.organizationId;
     const { id } = await params;
 
-    // Check if user exists and belongs to same organization
-    const user = await prisma.user.findFirst({
-      where: {
-        id,
-        organizationMemberships: { some: { organizationId: tenantId } },
-      },
-      select: { id: true, name: true, email: true },
+    // Get the requesting member to check if admin
+    const requestingMember = await prisma.teamMember.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
     });
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    // Only admins can edit other users' HR profiles
+    if (requestingMember?.role !== TeamMemberRole.ADMIN) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    }
+
+    // Check if TeamMember exists and belongs to same organization
+    const member = await prisma.teamMember.findFirst({
+      where: {
+        id,
+        tenantId,
+        isDeleted: false,
+      },
+      select: { id: true, email: true, dateOfJoining: true },
+    });
+
+    if (!member) {
+      return NextResponse.json({ error: 'Team member not found' }, { status: 404 });
     }
 
     const body = await request.json();
@@ -147,11 +212,17 @@ export async function PATCH(
     // Convert date strings to Date objects for Prisma
     const processedData: Record<string, unknown> = { ...data };
 
-    // Remove fields that shouldn't be persisted (passed through from frontend)
+    // Remove fields that shouldn't be persisted
     const fieldsToRemove = ['id', 'userId', 'workEmail', 'isAdmin', 'createdAt', 'updatedAt', 'user'];
     fieldsToRemove.forEach((field) => {
       delete processedData[field];
     });
+
+    // Map old field names to new
+    if ('employeeId' in processedData) {
+      processedData.employeeCode = processedData.employeeId;
+      delete processedData.employeeId;
+    }
 
     const dateFields = [
       'dateOfBirth',
@@ -160,6 +231,7 @@ export async function PATCH(
       'healthCardExpiry',
       'dateOfJoining',
       'licenseExpiry',
+      'contractExpiry',
     ];
 
     dateFields.forEach((field) => {
@@ -171,15 +243,10 @@ export async function PATCH(
       }
     });
 
-    // Upsert HR profile
-    const hrProfile = await prisma.hRProfile.upsert({
-      where: { userId: id },
-      update: processedData,
-      create: {
-        userId: id,
-        ...processedData,
-        tenantId: session.user.organizationId!,
-      },
+    // Update TeamMember
+    const updatedMember = await prisma.teamMember.update({
+      where: { id },
+      data: processedData,
     });
 
     // Log activity
@@ -187,19 +254,21 @@ export async function PATCH(
       tenantId,
       session.user.id,
       ActivityActions.USER_UPDATED,
-      'HRProfile',
-      hrProfile.id,
+      'TeamMember',
+      updatedMember.id,
       {
-        targetUserId: id,
-        targetUserEmail: user.email,
+        targetMemberId: id,
+        targetMemberEmail: member.email,
         changes: Object.keys(data),
       }
     );
 
     // If dateOfJoining was updated, reinitialize leave balances
-    if ('dateOfJoining' in data) {
+    const oldDateOfJoining = member.dateOfJoining?.toISOString();
+    const newDateOfJoining = updatedMember.dateOfJoining?.toISOString();
+    if (oldDateOfJoining !== newDateOfJoining && updatedMember.dateOfJoining) {
       try {
-        await reinitializeUserLeaveBalances(id);
+        await reinitializeMemberLeaveBalances(id);
       } catch (leaveError) {
         console.error('[Leave] Failed to reinitialize leave balances:', leaveError);
         // Don't fail the request if leave balance reinitialization fails
@@ -207,7 +276,8 @@ export async function PATCH(
     }
 
     return NextResponse.json({
-      ...hrProfile,
+      id: updatedMember.id,
+      userId: updatedMember.id, // For backwards compatibility
       message: 'HR Profile updated successfully',
     });
   } catch (error) {

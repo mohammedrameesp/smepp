@@ -28,19 +28,19 @@ export async function GET(
       include: {
         _count: {
           select: {
-            members: true,
+            teamMembers: true,
             assets: true,
           },
         },
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
+        teamMembers: {
+          where: { isDeleted: false },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            isOwner: true,
+            joinedAt: true,
           },
           orderBy: [
             { isOwner: 'desc' },
@@ -70,7 +70,7 @@ export async function GET(
     ] = await Promise.all([
       prisma.subscription.count({ where: { tenantId: id } }),
       prisma.supplier.count({ where: { tenantId: id } }),
-      prisma.hRProfile.count({ where: { tenantId: id } }),
+      prisma.teamMember.count({ where: { tenantId: id, isEmployee: true, isDeleted: false } }),
       prisma.leaveRequest.count({ where: { tenantId: id } }),
       prisma.payrollRun.count({ where: { tenantId: id } }),
       prisma.purchaseRequest.count({ where: { tenantId: id } }),
@@ -234,15 +234,12 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Check if organization exists and get all member user IDs
+    // Check if organization exists
     const organization = await prisma.organization.findUnique({
       where: { id },
       include: {
-        members: {
-          select: { userId: true },
-        },
         _count: {
-          select: { members: true, assets: true },
+          select: { teamMembers: true, assets: true },
         },
       },
     });
@@ -254,35 +251,40 @@ export async function DELETE(
       );
     }
 
-    // Get all user IDs belonging to this organization
-    const userIds = organization.members.map((m) => m.userId);
-
-    // Find users who ONLY belong to this organization (no other memberships)
-    // These are the users we should delete when org is deleted
-    const usersWithOtherOrgs = await prisma.organizationUser.findMany({
-      where: {
-        userId: { in: userIds },
-        organizationId: { not: id }, // Memberships in OTHER orgs
-      },
-      select: { userId: true },
+    // Get all member emails from TeamMember for this org
+    const teamMembers = await prisma.teamMember.findMany({
+      where: { tenantId: id },
+      select: { email: true },
     });
-    const usersWithOtherOrgsSet = new Set(usersWithOtherOrgs.map(u => u.userId));
+    const memberEmails = teamMembers.map((m) => m.email);
 
-    // Only delete users who don't belong to any other organization
-    const userIdsToDelete = userIds.filter(uid => !usersWithOtherOrgsSet.has(uid));
+    // Find members who belong to OTHER organizations (multi-org users)
+    const membersInOtherOrgs = await prisma.teamMember.findMany({
+      where: {
+        email: { in: memberEmails },
+        tenantId: { not: id },
+        isDeleted: false,
+      },
+      select: { email: true },
+    });
+    const emailsInOtherOrgs = new Set(membersInOtherOrgs.map(m => m.email));
 
-    // Delete in transaction: organization first (cascades related data), then orphaned users
+    // Emails of users who ONLY belong to this org (will be cleaned up)
+    const uniqueEmails = memberEmails.filter(email => !emailsInOtherOrgs.has(email));
+
+    // Delete in transaction
     await prisma.$transaction(async (tx) => {
-      // 1. Delete organization (cascades: members, invitations, assets, subscriptions, etc.)
+      // 1. Delete organization (cascades: TeamMember, invitations, assets, subscriptions, etc.)
       await tx.organization.delete({
         where: { id },
       });
 
-      // 2. Delete only users that don't belong to any other organization
-      if (userIdsToDelete.length > 0) {
+      // 2. Delete User records for emails that don't belong to any other organization
+      if (uniqueEmails.length > 0) {
         await tx.user.deleteMany({
           where: {
-            id: { in: userIdsToDelete },
+            email: { in: uniqueEmails },
+            isSuperAdmin: false, // Never delete super admins
           },
         });
       }
@@ -292,8 +294,9 @@ export async function DELETE(
       success: true,
       deleted: {
         organization: organization.name,
-        users: userIdsToDelete.length,
-        usersRetained: userIds.length - userIdsToDelete.length, // Users kept because they belong to other orgs
+        members: organization._count.teamMembers,
+        usersDeleted: uniqueEmails.length,
+        usersRetained: memberEmails.length - uniqueEmails.length,
         assets: organization._count.assets,
       }
     });
