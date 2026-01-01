@@ -89,7 +89,7 @@ const EMPLOYEES = [
   { name: 'Lisa White', email: 'lisa.white@example.com', role: Role.EMPLOYEE, designation: 'Account Manager', gender: 'Female', nationality: 'Netherlands', salary: 13000 },
   { name: 'Nicole Harris', email: 'nicole.harris@example.com', role: Role.EMPLOYEE, designation: 'Office Administrator', gender: 'Female', nationality: 'Sweden', salary: 8000 },
   { name: 'Kevin Clark', email: 'kevin.clark@example.com', role: Role.EMPLOYEE, designation: 'IT Support Specialist', gender: 'Male', nationality: 'Denmark', salary: 10000 },
-  { name: 'Emma Lewis', email: 'emma.lewis@example.com', role: Role.TEMP_STAFF, designation: 'Design Intern', gender: 'Female', nationality: 'Norway', salary: 4500 },
+  { name: 'Emma Lewis', email: 'emma.lewis@example.com', role: Role.EMPLOYEE, designation: 'Design Intern', gender: 'Female', nationality: 'Norway', salary: 4500 },
 ];
 
 export async function POST(request: NextRequest) {

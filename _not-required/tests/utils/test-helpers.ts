@@ -201,7 +201,7 @@ export const wait = (ms: number): Promise<void> => {
 };
 
 // Mock data arrays
-export const mockRoles = [Role.ADMIN, Role.EMPLOYEE, Role.TEMP_STAFF];
+export const mockRoles = [Role.ADMIN, Role.EMPLOYEE, Role.EMPLOYEE];
 
 export const mockAssetStatuses = ['AVAILABLE', 'ASSIGNED', 'MAINTENANCE', 'RETIRED'];
 

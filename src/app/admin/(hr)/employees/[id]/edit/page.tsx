@@ -81,7 +81,7 @@ interface HRProfileData {
 const ROLES = [
   { value: 'EMPLOYEE', label: 'Employee', description: 'Can view and manage their own assigned assets/subscriptions' },
   { value: 'ADMIN', label: 'Admin', description: 'Full access to all features and user management' },
-  { value: 'TEMP_STAFF', label: 'Temporary Staff', description: 'No login access, only appears in assignment dropdowns' },
+  { value: 'EMPLOYEE', label: 'Temporary Staff', description: 'No login access, only appears in assignment dropdowns' },
 ];
 
 export default function AdminEmployeeEditPage() {

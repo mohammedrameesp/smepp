@@ -282,7 +282,7 @@ export function getRoleBadgeVariant(role: string): 'default' | 'secondary' | 'de
     case 'ADMIN':
       return 'destructive';
     case 'EMPLOYEE':
-    case 'TEMP_STAFF':
+    case 'EMPLOYEE':
       return 'default';
     default:
       return 'secondary';

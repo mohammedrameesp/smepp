@@ -35,7 +35,7 @@ export function UserListClient({ users, currentUserId }: UserListClientProps) {
       case 'ADMIN':
         return 'default';
       case 'EMPLOYEE':
-      case 'TEMP_STAFF':
+      case 'EMPLOYEE':
         return 'secondary';
       default:
         return 'outline';
@@ -92,7 +92,7 @@ export function UserListClient({ users, currentUserId }: UserListClientProps) {
                 <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
                   🏢 System Account
                 </Badge>
-              ) : user.role === 'TEMP_STAFF' ? (
+              ) : user.role === 'EMPLOYEE' ? (
                 <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">
                   Temporary Staff
                 </Badge>

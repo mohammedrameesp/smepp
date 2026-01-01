@@ -70,9 +70,9 @@ describe('Authentication Security Tests', () => {
       expect(userRole).not.toBe(requiredRole);
     });
 
-    it('should allow TEMP_STAFF to access their resources', () => {
-      const userRole = Role.TEMP_STAFF;
-      const allowedRoles = [Role.ADMIN, Role.EMPLOYEE, Role.TEMP_STAFF];
+    it('should allow EMPLOYEE to access their resources', () => {
+      const userRole = Role.EMPLOYEE;
+      const allowedRoles = [Role.ADMIN, Role.EMPLOYEE, Role.EMPLOYEE];
 
       expect(allowedRoles).toContain(userRole);
     });

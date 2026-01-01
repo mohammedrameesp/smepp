@@ -217,7 +217,7 @@ export default function NewEmployeePage() {
                     <SelectContent>
                       <SelectItem value="EMPLOYEE">Employee</SelectItem>
                       <SelectItem value="ADMIN">Admin</SelectItem>
-                      <SelectItem value="TEMP_STAFF">Temporary Staff</SelectItem>
+                      <SelectItem value="EMPLOYEE">Temporary Staff</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.role && (

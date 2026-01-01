@@ -40,7 +40,7 @@ export const mockUsers: Record<string, MockUser> = {
     id: 'temp-staff-user-101',
     email: 'temp@example.com',
     name: 'Temp Staff User',
-    role: Role.TEMP_STAFF,
+    role: Role.EMPLOYEE,
     image: null,
   },
 };

@@ -81,7 +81,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
 
   const isSelf = session.user.id === employee.id;
   const roleBadgeVariant = employee.role === 'ADMIN' ? 'error' :
-    ['EMPLOYEE', 'TEMP_STAFF'].includes(employee.role) ? 'info' : 'default';
+    ['EMPLOYEE', 'EMPLOYEE'].includes(employee.role) ? 'info' : 'default';
 
   return (
     <>

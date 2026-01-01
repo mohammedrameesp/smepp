@@ -411,8 +411,8 @@ describe('HR Utilities', () => {
       expect(getRoleBadgeVariant('EMPLOYEE')).toBe('default');
     });
 
-    it('should return "default" for TEMP_STAFF', () => {
-      expect(getRoleBadgeVariant('TEMP_STAFF')).toBe('default');
+    it('should return "default" for EMPLOYEE', () => {
+      expect(getRoleBadgeVariant('EMPLOYEE')).toBe('default');
     });
 
     it('should return "secondary" for unknown roles', () => {

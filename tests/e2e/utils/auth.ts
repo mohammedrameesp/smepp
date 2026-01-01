@@ -11,7 +11,7 @@ export interface TestUser {
   id: string;
   email: string;
   name: string;
-  role: 'ADMIN' | 'EMPLOYEE' | 'TEMP_STAFF';
+  role: 'ADMIN' | 'EMPLOYEE' | 'EMPLOYEE';
 }
 
 export const TEST_USERS = {
@@ -31,7 +31,7 @@ export const TEST_USERS = {
     id: 'test-temp-staff-001',
     email: 'tempstaff@damp.test',
     name: 'Test Temp Staff',
-    role: 'TEMP_STAFF' as const,
+    role: 'EMPLOYEE' as const,
   },
 };
 

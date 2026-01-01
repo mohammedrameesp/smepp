@@ -325,7 +325,7 @@ export default function ProfilePage() {
         return 'destructive';
       case 'EMPLOYEE':
         return 'default';
-      case 'TEMP_STAFF':
+      case 'EMPLOYEE':
         return 'secondary';
       default:
         return 'secondary';
@@ -338,7 +338,7 @@ export default function ProfilePage() {
         return 'Administrator';
       case 'EMPLOYEE':
         return 'Employee';
-      case 'TEMP_STAFF':
+      case 'EMPLOYEE':
         return 'Temporary Staff';
       default:
         return role;
