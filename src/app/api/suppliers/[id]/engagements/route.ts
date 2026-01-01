@@ -9,7 +9,6 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { createEngagementSchema } from '@/lib/validations/suppliers';
 import { logAction } from '@/lib/activity';
-import { Role } from '@prisma/client';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getEngagementsHandler(request: NextRequest, context: APIContext) {
@@ -34,8 +33,8 @@ async function getEngagementsHandler(request: NextRequest, context: APIContext) 
       return NextResponse.json({ error: 'Supplier not found' }, { status: 404 });
     }
 
-    // EMPLOYEE can only view engagements for APPROVED suppliers
-    if (session.user.role === Role.EMPLOYEE && supplier.status !== 'APPROVED') {
+    // Non-admin users can only view engagements for APPROVED suppliers
+    if (session.user.teamMemberRole !== 'ADMIN' && supplier.status !== 'APPROVED') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -79,8 +78,8 @@ async function createEngagementHandler(request: NextRequest, context: APIContext
       return NextResponse.json({ error: 'Supplier not found' }, { status: 404 });
     }
 
-    // EMPLOYEE can only add engagements for APPROVED suppliers
-    if (session.user.role === Role.EMPLOYEE && supplier.status !== 'APPROVED') {
+    // Non-admin users can only add engagements for APPROVED suppliers
+    if (session.user.teamMemberRole !== 'ADMIN' && supplier.status !== 'APPROVED') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

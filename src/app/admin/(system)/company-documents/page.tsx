@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
-import { Role } from '@prisma/client';
+
 import { prisma } from '@/lib/core/prisma';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -200,7 +200,7 @@ export default async function CompanyDocumentsPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.role !== Role.ADMIN) {
+  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
     redirect('/forbidden');
   }
 

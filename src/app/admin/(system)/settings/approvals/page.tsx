@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
+
 import { prisma } from '@/lib/core/prisma';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +30,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default async function ApprovalPoliciesPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== Role.ADMIN) {
+  if (!session || session.user.teamMemberRole !== 'ADMIN') {
     redirect('/');
   }
 

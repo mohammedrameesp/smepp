@@ -73,7 +73,8 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
   // Calculate depreciation state
   const [isCalculating, setIsCalculating] = useState(false);
 
-  const isAdmin = session?.user?.role === 'ADMIN';
+  const isAdmin = session?.user?.teamMemberRole === 'ADMIN' ||
+                  session?.user?.role === 'ADMIN';
 
   const fetchData = useCallback(async () => {
     try {

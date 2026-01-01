@@ -15,7 +15,7 @@ export default async function AdminAssetsPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.role !== Role.ADMIN) {
+  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
     redirect('/forbidden');
   }
 

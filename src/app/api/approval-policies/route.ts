@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createApprovalPolicySchema, listPoliciesQuerySchema } from '@/lib/validations/system/approvals';
 import { logAction, ActivityActions } from '@/lib/activity';
@@ -10,7 +9,7 @@ import { logAction, ActivityActions } from '@/lib/activity';
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
+    if (!session || session.user.teamMemberRole !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -65,7 +64,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
+    if (!session || session.user.teamMemberRole !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

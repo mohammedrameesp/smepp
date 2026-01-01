@@ -14,7 +14,7 @@ export default async function AdminEmployeesPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.role !== 'ADMIN') {
+  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
     redirect('/forbidden');
   }
 

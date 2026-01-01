@@ -42,7 +42,9 @@ export default async function EmployeeLayout({
 
   // Check onboarding status - no longer force redirect, allow employees to skip
   let onboardingComplete = true;
-  if (session?.user?.id && session?.user?.role !== 'ADMIN') {
+  const isAdmin = session?.user?.teamMemberRole === 'ADMIN' ||
+                  session?.user?.role === 'ADMIN';
+  if (session?.user?.id && !isAdmin) {
     onboardingComplete = await checkOnboardingComplete(session.user.id);
   }
 

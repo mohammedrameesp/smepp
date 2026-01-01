@@ -8,9 +8,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { Role } from '@prisma/client';
 import { csvToArray } from '@/lib/csv-utils';
 import { logAction, ActivityActions } from '@/lib/activity';
-import { Role } from '@prisma/client';
 
 interface ImportRow {
   [key: string]: string | undefined;
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
+    if (!session || session.user.teamMemberRole !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

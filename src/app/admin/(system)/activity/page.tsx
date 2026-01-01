@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { redirect } from 'next/navigation';
-import { Role } from '@prisma/client';
+
 import { formatDate } from '@/lib/date-format';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
@@ -16,7 +16,7 @@ export default async function ActivityLogPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.role !== Role.ADMIN) {
+  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
     redirect('/forbidden');
   }
 

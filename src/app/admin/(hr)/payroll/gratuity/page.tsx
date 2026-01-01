@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
-import { Role } from '@prisma/client';
+
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +21,7 @@ import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 export default async function GratuityReportPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== Role.ADMIN) {
+  if (!session || session.user.teamMemberRole !== 'ADMIN') {
     redirect('/');
   }
 

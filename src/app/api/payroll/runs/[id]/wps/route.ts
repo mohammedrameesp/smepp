@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role, PayrollStatus } from '@prisma/client';
+import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { generateWPSSIFFile, getBankCode, generateWPSFileName, validateWPSRecord } from '@/lib/payroll/wps';
@@ -20,7 +20,7 @@ interface RouteParams {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== Role.ADMIN) {
+    if (!session || session.user.teamMemberRole !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

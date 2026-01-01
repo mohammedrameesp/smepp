@@ -25,7 +25,7 @@ interface RouteParams {
 export async function POST(_request: NextRequest, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== TeamMemberRole.ADMIN) {
+    if (!session || session.user.teamMemberRole !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { redirect } from 'next/navigation';
-import { Role } from '@prisma/client';
+
 import { formatBillingCycle } from '@/lib/utils/format-billing-cycle';
 import Link from 'next/link';
 import {
@@ -24,7 +24,7 @@ export default async function AdminReportsPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.role !== Role.ADMIN) {
+  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
     redirect('/forbidden');
   }
 

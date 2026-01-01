@@ -4,7 +4,6 @@ import { prisma } from '@/lib/core/prisma';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { redirect, notFound } from 'next/navigation';
-import { Role } from '@prisma/client';
 import Link from 'next/link';
 import { formatDate, formatDateTime } from '@/lib/date-format';
 import { Edit, AlertTriangle, Package, CreditCard, FileText, Calendar, Clock, Trash2 } from 'lucide-react';
@@ -32,7 +31,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.role !== Role.ADMIN) {
+  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
     redirect('/forbidden');
   }
 

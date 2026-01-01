@@ -21,8 +21,6 @@ const MODULE_ROUTE_MAP: Array<{ prefix: string; moduleId: string }> = [
   // Suppliers
   { prefix: '/admin/suppliers', moduleId: 'suppliers' },
   { prefix: '/employee/suppliers', moduleId: 'suppliers' },
-  // Employees
-  { prefix: '/admin/employees', moduleId: 'employees' },
   // Leave
   { prefix: '/admin/leave', moduleId: 'leave' },
   { prefix: '/employee/leave', moduleId: 'leave' },

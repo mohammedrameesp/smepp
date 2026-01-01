@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role, AssetRequestStatus } from '@prisma/client';
+import { AssetRequestStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
@@ -17,7 +17,7 @@ async function getAssetRequestStatsHandler(_request: NextRequest, context: APICo
     }
 
     const tenantId = session.user.organizationId;
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isAdmin = session.user.teamMemberRole === 'ADMIN';
 
     if (isAdmin) {
       // Admin stats - all pending items needing admin action (tenant-scoped)

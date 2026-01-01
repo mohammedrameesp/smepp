@@ -9,6 +9,9 @@ import { MyApprovalsClient } from './client';
 import Link from 'next/link';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
+// Roles that can access approval workflows (uses approvalRole field exposed as session.user.role)
+const APPROVER_ROLES: Role[] = [Role.ADMIN, Role.MANAGER, Role.HR_MANAGER, Role.FINANCE_MANAGER, Role.DIRECTOR];
+
 export const metadata: Metadata = {
   title: 'My Approvals | Durj',
   description: 'Pending approval requests',
@@ -127,9 +130,8 @@ export default async function MyApprovalsPage() {
     redirect('/');
   }
 
-  // Only approver roles and admin can access
-  const approverRoles: Role[] = ['ADMIN', 'MANAGER', 'HR_MANAGER', 'FINANCE_MANAGER', 'DIRECTOR'];
-  if (!approverRoles.includes(session.user.role)) {
+  // Only users with approver roles can access (ADMIN, MANAGER, HR_MANAGER, etc.)
+  if (!session.user.role || !APPROVER_ROLES.includes(session.user.role as Role)) {
     redirect('/');
   }
 

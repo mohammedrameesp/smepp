@@ -7,7 +7,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updatePurchaseRequestSchema } from '@/lib/validations/purchase-request';
 import { logAction, ActivityActions } from '@/lib/activity';
@@ -67,7 +66,7 @@ async function getPurchaseRequestHandler(request: NextRequest, context: APIConte
     }
 
     // Non-admin users can only view their own requests
-    if (session.user.role !== Role.ADMIN && purchaseRequest.requesterId !== session.user.id) {
+    if (session.user.teamMemberRole !== 'ADMIN' && purchaseRequest.requesterId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -98,7 +97,7 @@ async function updatePurchaseRequestHandler(request: NextRequest, context: APICo
     }
 
     // Only requester can update (or admin)
-    if (session.user.role !== Role.ADMIN && currentRequest.requesterId !== session.user.id) {
+    if (session.user.teamMemberRole !== 'ADMIN' && currentRequest.requesterId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -264,7 +263,7 @@ async function deletePurchaseRequestHandler(request: NextRequest, context: APICo
     }
 
     // Only requester or admin can delete
-    if (session.user.role !== Role.ADMIN && currentRequest.requesterId !== session.user.id) {
+    if (session.user.teamMemberRole !== 'ADMIN' && currentRequest.requesterId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

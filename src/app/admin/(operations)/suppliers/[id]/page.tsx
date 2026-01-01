@@ -4,7 +4,7 @@ import { prisma } from '@/lib/core/prisma';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { redirect, notFound } from 'next/navigation';
-import { Role } from '@prisma/client';
+
 import Link from 'next/link';
 import {
   Building2,
@@ -36,7 +36,7 @@ export default async function SupplierDetailPage({ params }: Props) {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.role !== Role.ADMIN) {
+  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
     redirect('/forbidden');
   }
 

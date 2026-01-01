@@ -62,7 +62,8 @@ export default async function HelpLayout({
 
   // Determine user role for content filtering
   const userRole: UserRole = isAdminRole(session?.user?.orgRole) ? 'ADMIN' : 'USER';
-  const isAdmin = session?.user?.role === 'ADMIN';
+  const isAdmin = session?.user?.teamMemberRole === 'ADMIN' ||
+                  session?.user?.role === 'ADMIN';
 
   // Get tenant-scoped data
   const tenantId = session?.user?.organizationId;

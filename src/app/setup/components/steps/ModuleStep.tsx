@@ -2,7 +2,7 @@
 
 /**
  * @file ModuleStep.tsx
- * @description Step 5 - Module selection (required)
+ * @description Step 6 - Module selection (required)
  * @module setup/steps
  */
 
@@ -10,7 +10,6 @@ import {
   Package,
   RefreshCw,
   Building,
-  Users,
   Calendar,
   DollarSign,
   ShoppingCart,
@@ -30,49 +29,46 @@ interface Module {
   name: string;
   description: string;
   icon: LucideIcon;
-  defaultOn: boolean;
 }
 
-interface Category {
-  name: string;
+interface Section {
+  title: string;
+  subtitle: string;
   color: string;
   modules: Module[];
 }
 
-const MODULE_CATEGORIES: Category[] = [
+// Default modules: pre-selected for new organizations
+const DEFAULT_MODULES: Module[] = [
+  { id: 'assets', name: 'Assets', description: 'Track company assets & assignments', icon: Package },
+  { id: 'subscriptions', name: 'Subscriptions', description: 'Manage software subscriptions', icon: RefreshCw },
+  { id: 'suppliers', name: 'Suppliers', description: 'Vendor management', icon: Building },
+];
+
+// Add-on modules: optional features
+const ADDON_MODULES: Module[] = [
+  { id: 'leave', name: 'Leave Management', description: 'Leave requests & balances', icon: Calendar },
+  { id: 'payroll', name: 'Payroll', description: 'Salary & payslips', icon: DollarSign },
+  { id: 'purchase-requests', name: 'Purchase Requests', description: 'Procurement workflow', icon: ShoppingCart },
+  { id: 'documents', name: 'Company Documents', description: 'Document management', icon: FileText },
+];
+
+const SECTIONS: Section[] = [
   {
-    name: 'Operations',
+    title: 'Default Modules',
+    subtitle: 'Pre-selected for your organization',
     color: '#3b82f6',
-    modules: [
-      { id: 'assets', name: 'Assets', description: 'Track company assets & assignments', icon: Package, defaultOn: true },
-      { id: 'subscriptions', name: 'Subscriptions', description: 'Manage software subscriptions', icon: RefreshCw, defaultOn: true },
-      { id: 'suppliers', name: 'Suppliers', description: 'Vendor management', icon: Building, defaultOn: true },
-    ],
+    modules: DEFAULT_MODULES,
   },
   {
-    name: 'Human Resources',
+    title: 'Add-on Modules',
+    subtitle: 'Optional features you can enable',
     color: '#22c55e',
-    modules: [
-      { id: 'employees', name: 'Employees', description: 'Employee profiles & HR data', icon: Users, defaultOn: false },
-      { id: 'leave', name: 'Leave Management', description: 'Leave requests & balances', icon: Calendar, defaultOn: false },
-      { id: 'payroll', name: 'Payroll', description: 'Salary & payslips', icon: DollarSign, defaultOn: false },
-    ],
-  },
-  {
-    name: 'Procurement',
-    color: '#a855f7',
-    modules: [
-      { id: 'purchase-requests', name: 'Purchase Requests', description: 'Procurement workflow', icon: ShoppingCart, defaultOn: false },
-    ],
-  },
-  {
-    name: 'Documents',
-    color: '#f97316',
-    modules: [
-      { id: 'documents', name: 'Company Documents', description: 'Document management', icon: FileText, defaultOn: false },
-    ],
+    modules: ADDON_MODULES,
   },
 ];
+
+const ALL_MODULES = [...DEFAULT_MODULES, ...ADDON_MODULES];
 
 export function ModuleStep({ selected, onChange }: ModuleStepProps) {
   const toggleModule = (id: string) => {
@@ -84,10 +80,7 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
   };
 
   const selectAll = () => {
-    const allModuleIds = MODULE_CATEGORIES.flatMap((c) =>
-      c.modules.map((m) => m.id)
-    );
-    onChange(allModuleIds);
+    onChange(ALL_MODULES.map((m) => m.id));
   };
 
   return (
@@ -104,18 +97,21 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
         </p>
       </div>
 
-      <div className="space-y-6">
-        {MODULE_CATEGORIES.map((category) => (
-          <div key={category.name}>
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-              <span
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: category.color }}
-              />
-              {category.name}
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {category.modules.map((module) => {
+      <div className="space-y-8">
+        {SECTIONS.map((section) => (
+          <div key={section.title}>
+            <div className="mb-3">
+              <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-2">
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: section.color }}
+                />
+                {section.title}
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">{section.subtitle}</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {section.modules.map((module) => {
                 const isSelected = selected.includes(module.id);
                 const Icon = module.icon;
 
@@ -129,12 +125,12 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors`}
+                        className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
                         style={{
                           backgroundColor: isSelected
-                            ? `${category.color}20`
+                            ? `${section.color}20`
                             : '#f1f5f9',
-                          color: isSelected ? category.color : '#94a3b8',
+                          color: isSelected ? section.color : '#94a3b8',
                         }}
                       >
                         <Icon className="w-5 h-5" />
@@ -169,12 +165,7 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
             {selected.length > 0 && (
               <span className="text-sm text-slate-600 ml-2">
                 {selected
-                  .map((id) => {
-                    const mod = MODULE_CATEGORIES.flatMap((c) => c.modules).find(
-                      (m) => m.id === id
-                    );
-                    return mod?.name;
-                  })
+                  .map((id) => ALL_MODULES.find((m) => m.id === id)?.name)
                   .filter(Boolean)
                   .slice(0, 3)
                   .join(', ')}

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Role } from '@prisma/client';
 import logger from '@/lib/core/log';
 import { formatErrorResponse, validationErrorResponse } from '@/lib/http/errors';
 import { z } from 'zod';
@@ -54,7 +53,7 @@ export async function PUT(request: NextRequest) {
     if (!session?.user?.organizationId) {
       return formatErrorResponse('Organization context required', 403);
     }
-    if (session.user.role !== Role.ADMIN) {
+    if (session.user.teamMemberRole !== 'ADMIN') {
       return formatErrorResponse('Admin access required', 403);
     }
 

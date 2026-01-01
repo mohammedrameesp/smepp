@@ -42,7 +42,7 @@ function getLoanStatusVariant(status: LoanStatus): 'default' | 'secondary' | 'de
 
 export default async function LoansPage({ searchParams }: PageProps) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== Role.ADMIN) {
+  if (!session || session.user.teamMemberRole !== 'ADMIN') {
     redirect('/');
   }
 

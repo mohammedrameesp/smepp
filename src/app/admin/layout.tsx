@@ -67,7 +67,10 @@ export default async function AdminLayout({
   }
 
   // Redirect non-admin users
-  if (session?.user?.role !== 'ADMIN' && !devAuthEnabled) {
+  // Check TeamMember role (organization users) OR legacy role (super-admins)
+  const isAdmin = session?.user?.teamMemberRole === 'ADMIN' ||
+                  session?.user?.role === 'ADMIN';
+  if (!isAdmin && !devAuthEnabled) {
     redirect('/employee');
   }
 

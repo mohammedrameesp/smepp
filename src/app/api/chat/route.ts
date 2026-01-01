@@ -7,7 +7,7 @@ import { sanitizeInput, shouldBlockInput, formatSanitizationLog } from '@/lib/ai
 import { checkRateLimit, formatRateLimitError } from '@/lib/ai/rate-limiter';
 import { createAuditEntry, logAuditEntry } from '@/lib/ai/audit-logger';
 import { trackTokenUsage } from '@/lib/ai/budget-tracker';
-import { SubscriptionTier } from '@prisma/client';
+import { SubscriptionTier, Role } from '@prisma/client';
 import { z } from 'zod';
 
 const sendMessageSchema = z.object({
@@ -114,9 +114,14 @@ export async function POST(request: NextRequest) {
     // Track response time
     const startTime = Date.now();
 
+    // Map TeamMemberRole to Role for chat context
+    const userRole: Role = session.user.teamMemberRole === 'ADMIN'
+      ? Role.ADMIN
+      : session.user.role || Role.EMPLOYEE;
+
     const response = await processChat(sanitizationResult.sanitized, {
       userId: session.user.id,
-      userRole: session.user.role,
+      userRole,
       tenantId: session.user.organizationId,
       tenantSlug: session.user.organizationSlug || '',
     }, conversationId || undefined);

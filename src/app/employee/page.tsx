@@ -41,8 +41,9 @@ export default async function EmployeeDashboard() {
     redirect('/login');
   }
 
-  if (session.user.role !== 'EMPLOYEE') {
-    redirect('/');
+  // Redirect admins to the admin dashboard
+  if (session.user.teamMemberRole === 'ADMIN') {
+    redirect('/admin');
   }
 
   try {

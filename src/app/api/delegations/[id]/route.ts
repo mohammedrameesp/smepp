@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updateDelegationSchema } from '@/lib/validations/system/approvals';
 import { logAction } from '@/lib/activity';
@@ -44,7 +43,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Only admin or involved parties can view
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isAdmin = session.user.teamMemberRole === 'ADMIN';
     const isInvolved =
       delegation.delegatorId === session.user.id ||
       delegation.delegateeId === session.user.id;
@@ -98,7 +97,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     // Only delegator or admin can update
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isAdmin = session.user.teamMemberRole === 'ADMIN';
     if (!isAdmin && existing.delegatorId !== session.user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -185,7 +184,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     // Only delegator or admin can delete
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isAdmin = session.user.teamMemberRole === 'ADMIN';
     if (!isAdmin && existing.delegatorId !== session.user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

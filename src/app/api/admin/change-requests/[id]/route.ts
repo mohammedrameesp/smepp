@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
-import { Role } from '@prisma/client';
 import { z } from 'zod';
 
 const resolveSchema = z.object({
@@ -18,7 +17,7 @@ async function resolveChangeRequestHandler(
 ) {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user || session.user.role !== Role.ADMIN) {
+  if (!session?.user || session.user.teamMemberRole !== 'ADMIN') {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
@@ -86,7 +85,7 @@ async function getChangeRequestHandler(
 ) {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user || session.user.role !== Role.ADMIN) {
+  if (!session?.user || session.user.teamMemberRole !== 'ADMIN') {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 

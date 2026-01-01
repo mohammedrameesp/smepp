@@ -29,15 +29,14 @@ export interface TierConfig {
 }
 
 // All modules available (use hyphens for consistency)
+// Note: 'employees' removed - employee features are now implicit via TeamMember.isEmployee flag
 const ALL_MODULES = [
   'assets',
   'subscriptions',
   'suppliers',
-  'employees',
   'leave',
   'payroll',
   'purchase-requests',
-  'approvals',
   'documents',
 ];
 
@@ -128,10 +127,8 @@ export const MODULE_METADATA: Record<string, { name: string; description: string
   assets: { name: 'Asset Management', description: 'Track hardware, equipment, warranties, and assignments', icon: 'Package' },
   subscriptions: { name: 'Subscription Tracking', description: 'Monitor SaaS services, renewals, and costs', icon: 'CreditCard' },
   suppliers: { name: 'Supplier Management', description: 'Manage vendors and supplier relationships', icon: 'Truck' },
-  employees: { name: 'Employee Directory', description: 'Employee profiles and HR information', icon: 'Users' },
   leave: { name: 'Leave Management', description: 'Leave requests, balances, and approvals', icon: 'Calendar' },
   payroll: { name: 'Payroll Processing', description: 'Salary structures, payslips, and loans', icon: 'DollarSign' },
   'purchase-requests': { name: 'Purchase Requests', description: 'Internal procurement workflow', icon: 'ShoppingCart' },
-  approvals: { name: 'Approval Workflows', description: 'Multi-level approval chains', icon: 'CheckSquare' },
   documents: { name: 'Company Documents', description: 'Track licenses, certifications, and compliance', icon: 'FileCheck' },
 };

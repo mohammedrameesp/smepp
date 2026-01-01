@@ -6,7 +6,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { calculateGratuity, projectGratuity } from '@/lib/payroll/gratuity';
 import { parseDecimal } from '@/lib/payroll/utils';
@@ -37,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { memberId, terminationDate } = validation.data;
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isAdmin = session.user.teamMemberRole === 'ADMIN';
 
     // Non-admin users can only view their own gratuity
     // session.user.id is the TeamMember ID when isTeamMember=true

@@ -4,7 +4,7 @@ import { prisma } from '@/lib/core/prisma';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
-import { Role } from '@prisma/client';
+
 import Link from 'next/link';
 import { SubscriptionRenewalDisplay } from '@/components/domains/operations/subscriptions/subscription-renewal-display';
 import { formatDate, formatDateTime } from '@/lib/date-format';
@@ -36,7 +36,7 @@ export default async function SubscriptionDetailPage({ params }: Props) {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.role !== Role.ADMIN) {
+  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
     redirect('/forbidden');
   }
 

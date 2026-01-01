@@ -30,8 +30,8 @@ const STEPS = [
   { title: 'Currencies', description: 'Additional currencies' },
   { title: 'Logo', description: 'Upload your logo' },
   { title: 'Colors', description: 'Brand colors' },
-  { title: 'Modules', description: 'Choose features' },
   { title: 'Team', description: 'Invite members' },
+  { title: 'Modules', description: 'Choose features' },
   { title: 'Complete', description: 'All done!' },
 ];
 
@@ -67,16 +67,16 @@ export function SetupWizardClient() {
   // Step 4: Colors
   const [primaryColor, setPrimaryColor] = useState('#0f172a');
 
-  // Step 5: Modules
+  // Step 5: Team invites
+  const [teamInvites, setTeamInvites] = useState<TeamInvite[]>([]);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+
+  // Step 6: Modules
   const [selectedModules, setSelectedModules] = useState<string[]>([
     'assets',
     'subscriptions',
     'suppliers',
   ]);
-
-  // Step 6: Team invites
-  const [teamInvites, setTeamInvites] = useState<TeamInvite[]>([]);
-  const [inviteError, setInviteError] = useState<string | null>(null);
 
   // Initialize from session
   useEffect(() => {
@@ -129,7 +129,7 @@ export function SetupWizardClient() {
     switch (currentStep) {
       case 1:
         return orgName.trim().length >= 2;
-      case 5:
+      case 6:
         return selectedModules.length > 0;
       default:
         return true;
@@ -137,8 +137,9 @@ export function SetupWizardClient() {
   }, [currentStep, orgName, selectedModules]);
 
   // Check if current step is skippable
+  // Team (step 5) is skippable, Modules (step 6) is NOT skippable
   const isSkippable = useCallback(() => {
-    return [2, 3, 4, 6].includes(currentStep);
+    return [2, 3, 4, 5].includes(currentStep);
   }, [currentStep]);
 
   // Complete setup
@@ -340,16 +341,16 @@ export function SetupWizardClient() {
         );
       case 5:
         return (
-          <ModuleStep selected={selectedModules} onChange={setSelectedModules} />
-        );
-      case 6:
-        return (
           <InviteStep
             invites={teamInvites}
             onChange={setTeamInvites}
             error={inviteError}
             onError={setInviteError}
           />
+        );
+      case 6:
+        return (
+          <ModuleStep selected={selectedModules} onChange={setSelectedModules} />
         );
       case 7:
         return (

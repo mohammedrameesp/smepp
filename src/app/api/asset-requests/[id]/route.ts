@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role, AssetRequestStatus } from '@prisma/client';
+import { AssetRequestStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { canCancelRequest } from '@/lib/domains/operations/asset-requests/asset-request-utils';
@@ -81,7 +81,7 @@ async function getAssetRequestHandler(request: NextRequest, context: APIContext)
     }
 
     // Non-admin can only view their own requests
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isAdmin = session.user.teamMemberRole === 'ADMIN';
     if (!isAdmin && assetRequest.memberId !== session.user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
@@ -119,7 +119,7 @@ async function deleteAssetRequestHandler(request: NextRequest, context: APIConte
 
     // Check if user can cancel
     const isRequester = assetRequest.memberId === session.user.id;
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isAdmin = session.user.teamMemberRole === 'ADMIN';
 
     if (!isAdmin && !canCancelRequest(assetRequest.status, assetRequest.type, isRequester)) {
       return NextResponse.json({ error: 'Cannot cancel this request' }, { status: 400 });

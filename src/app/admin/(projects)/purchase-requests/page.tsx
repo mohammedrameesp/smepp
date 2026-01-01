@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
-import { Role } from '@prisma/client';
+
 import { PurchaseRequestListTable } from '@/components/domains/projects/purchase-requests';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
@@ -13,7 +13,7 @@ export default async function AdminPurchaseRequestsPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.role !== Role.ADMIN) {
+  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
     redirect('/forbidden');
   }
 

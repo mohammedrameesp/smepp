@@ -52,7 +52,7 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
     }
 
     // Authorization check: Only admins or the assigned member can view the asset
-    if (session.user.role !== TeamMemberRole.ADMIN && asset.assignedMemberId !== session.user.id) {
+    if (session.user.teamMemberRole !== TeamMemberRole.ADMIN && asset.assignedMemberId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

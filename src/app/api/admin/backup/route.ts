@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   if (!isCronJob) {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || session.user.teamMemberRole !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     tenantId = session.user.organizationId;

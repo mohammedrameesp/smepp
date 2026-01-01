@@ -163,7 +163,6 @@ export const GET = withErrorHandler(
   {
     requireAuth: true,
     requireAdmin: true,
-    requireModule: 'employees',
     rateLimit: true,
   }
 );

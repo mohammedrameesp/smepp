@@ -14,7 +14,6 @@ import {
   Check,
   Briefcase,
   Users,
-  Boxes,
   ArrowLeft,
   Sparkles,
 } from 'lucide-react';
@@ -47,16 +46,6 @@ const COMPANY_SIZES = [
   { value: '500+', label: '500+ employees' },
 ];
 
-// Available modules
-const MODULES = [
-  { id: 'assets', label: 'Assets', description: 'Track and manage company assets', defaultEnabled: true },
-  { id: 'subscriptions', label: 'Subscriptions', description: 'Manage software subscriptions', defaultEnabled: true },
-  { id: 'suppliers', label: 'Suppliers', description: 'Vendor management', defaultEnabled: true },
-  { id: 'employees', label: 'Employees', description: 'HR and employee profiles', defaultEnabled: false },
-  { id: 'leave', label: 'Leave Management', description: 'Leave requests and approvals', defaultEnabled: false },
-  { id: 'payroll', label: 'Payroll', description: 'Salary and payroll processing', defaultEnabled: false },
-];
-
 function generateSlug(name: string): string {
   return name
     .toLowerCase()
@@ -80,9 +69,6 @@ export default function GetStartedPage() {
   const [companySize, setCompanySize] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminName, setAdminName] = useState('');
-  const [enabledModules, setEnabledModules] = useState<string[]>(
-    MODULES.filter(m => m.defaultEnabled).map(m => m.id)
-  );
 
   // Employee status (for the admin creating the org)
   const [isEmployee, setIsEmployee] = useState(true);
@@ -92,6 +78,14 @@ export default function GetStartedPage() {
   // Subdomain validation
   const [checkingSubdomain, setCheckingSubdomain] = useState(false);
   const [subdomainStatus, setSubdomainStatus] = useState<{
+    available: boolean;
+    valid: boolean;
+    error?: string;
+  } | null>(null);
+
+  // Email validation
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<{
     available: boolean;
     valid: boolean;
     error?: string;
@@ -127,6 +121,29 @@ export default function GetStartedPage() {
     }
   }, []);
 
+  // Check email availability
+  const checkEmail = useCallback(async (email: string) => {
+    if (!email || !email.includes('@')) {
+      setEmailStatus(null);
+      return;
+    }
+
+    setCheckingEmail(true);
+    try {
+      const response = await fetch(`/api/emails/check?email=${encodeURIComponent(email)}`);
+      const data = await response.json();
+      setEmailStatus({
+        available: data.available,
+        valid: data.valid,
+        error: data.error,
+      });
+    } catch {
+      setEmailStatus(null);
+    } finally {
+      setCheckingEmail(false);
+    }
+  }, []);
+
   // Debounced subdomain check
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -136,6 +153,16 @@ export default function GetStartedPage() {
     }, 500);
     return () => clearTimeout(timer);
   }, [subdomain, checkSubdomain]);
+
+  // Debounced email check
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (adminEmail && adminEmail.includes('@')) {
+        checkEmail(adminEmail);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [adminEmail, checkEmail]);
 
   const handleSubdomainChange = (value: string) => {
     const cleaned = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -148,6 +175,7 @@ export default function GetStartedPage() {
   const handleEmailChange = (email: string) => {
     setAdminEmail(email);
     setError(null);
+    setEmailStatus(null); // Reset email status when user starts typing
     if (email.includes('@')) {
       const detection = detectServiceEmail(email);
       // Only show employee options for non-system emails
@@ -166,21 +194,18 @@ export default function GetStartedPage() {
     }
   };
 
-  const handleModuleToggle = (moduleId: string) => {
-    setEnabledModules(prev =>
-      prev.includes(moduleId)
-        ? prev.filter(id => id !== moduleId)
-        : [...prev, moduleId]
-    );
-  };
-
   const canProceedStep1 =
     organizationName.trim().length >= 2 &&
     subdomain.length >= 3 &&
     !checkingSubdomain &&
     (subdomainStatus === null || subdomainStatus.available);
 
-  const canProceedStep2 = industry && companySize;
+  const canProceedStep2 =
+    industry &&
+    companySize &&
+    adminEmail &&
+    !checkingEmail &&
+    (emailStatus === null || emailStatus.available);
 
   const handleSubmit = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -203,7 +228,7 @@ export default function GetStartedPage() {
           adminName: adminName.trim() || undefined,
           industry: industry || undefined,
           companySize: companySize || undefined,
-          enabledModules,
+          // Uses default modules: assets, subscriptions, suppliers
           isEmployee: isEmployee,
           isOnWps: isEmployee ? isOnWps : false,
         }),
@@ -287,14 +312,9 @@ export default function GetStartedPage() {
             <span className="gs-step-label">Company</span>
           </div>
           <div className="gs-step-line" data-active={step > 1} />
-          <div className={`gs-step ${step >= 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
-            <div className="gs-step-number">{step > 2 ? <Check /> : '2'}</div>
+          <div className={`gs-step ${step >= 2 ? 'active' : ''}`}>
+            <div className="gs-step-number">2</div>
             <span className="gs-step-label">Details</span>
-          </div>
-          <div className="gs-step-line" data-active={step > 2} />
-          <div className={`gs-step ${step >= 3 ? 'active' : ''}`}>
-            <div className="gs-step-number">3</div>
-            <span className="gs-step-label">Features</span>
           </div>
         </div>
 
@@ -457,7 +477,19 @@ export default function GetStartedPage() {
                       value={adminEmail}
                       onChange={(e) => handleEmailChange(e.target.value)}
                     />
+                    <div className="gs-subdomain-status">
+                      {checkingEmail ? (
+                        <Loader2 className="spinning" />
+                      ) : emailStatus && !emailStatus.available ? (
+                        <AlertCircle className="error" />
+                      ) : null}
+                    </div>
                   </div>
+                  {emailStatus && !emailStatus.available && (
+                    <span className="gs-field-hint error">
+                      {emailStatus.error || 'This email is already registered'}
+                    </span>
+                  )}
 
                   {/* Employee/WPS options - only shown for non-system emails */}
                   {showEmployeeOptions && (
@@ -520,75 +552,8 @@ export default function GetStartedPage() {
                 </button>
                 <button
                   type="button"
-                  className="gs-btn gs-btn-primary"
-                  disabled={!canProceedStep2 || !adminEmail}
-                  onClick={() => setStep(3)}
-                >
-                  Continue
-                  <ArrowRight className="gs-btn-icon-right" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Features Selection */}
-          {step === 3 && (
-            <div className="gs-form-step">
-              <div className="gs-form-header">
-                <div className="gs-form-icon">
-                  <Boxes />
-                </div>
-                <h1>Choose your features</h1>
-                <p>Select the modules you want to use. You can change these later.</p>
-              </div>
-
-              <div className="gs-modules-grid">
-                {MODULES.map((module) => (
-                  <button
-                    key={module.id}
-                    type="button"
-                    className={`gs-module-card ${enabledModules.includes(module.id) ? 'selected' : ''}`}
-                    onClick={() => handleModuleToggle(module.id)}
-                  >
-                    <div className="gs-module-check">
-                      {enabledModules.includes(module.id) && <Check />}
-                    </div>
-                    <div className="gs-module-content">
-                      <span className="gs-module-label">{module.label}</span>
-                      <span className="gs-module-desc">{module.description}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              <div className="gs-summary">
-                <div className="gs-summary-row">
-                  <span>Company</span>
-                  <strong>{organizationName}</strong>
-                </div>
-                <div className="gs-summary-row">
-                  <span>Portal</span>
-                  <strong>{subdomain}.{APP_DOMAIN.split(':')[0]}</strong>
-                </div>
-                <div className="gs-summary-row">
-                  <span>Email</span>
-                  <strong>{adminEmail}</strong>
-                </div>
-              </div>
-
-              <div className="gs-form-actions gs-form-actions-split">
-                <button
-                  type="button"
-                  className="gs-btn gs-btn-outline"
-                  onClick={() => setStep(2)}
-                >
-                  <ArrowLeft className="gs-btn-icon" />
-                  Back
-                </button>
-                <button
-                  type="button"
                   className="gs-btn gs-btn-primary gs-btn-submit"
-                  disabled={isLoading}
+                  disabled={!canProceedStep2 || !adminEmail || isLoading}
                   onClick={handleSubmit}
                 >
                   {isLoading ? (

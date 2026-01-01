@@ -13,7 +13,7 @@ import { withErrorHandler } from '@/lib/http/handler';
 async function exportAssetsHandler(_request: NextRequest) {
   // Check authentication
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== 'ADMIN') {
+  if (!session || session.user.teamMemberRole !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

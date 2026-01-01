@@ -6,8 +6,8 @@ import { prisma } from '@/lib/core/prisma';
 import { createDelegationSchema } from '@/lib/validations/system/approvals';
 import { logAction } from '@/lib/activity';
 
-// Roles that can have delegations
-const APPROVER_ROLES: Role[] = ['MANAGER', 'HR_MANAGER', 'FINANCE_MANAGER', 'DIRECTOR', 'ADMIN'];
+// Roles that can have delegations (uses approvalRole field exposed as session.user.role)
+const APPROVER_ROLES: Role[] = [Role.ADMIN, Role.MANAGER, Role.HR_MANAGER, Role.FINANCE_MANAGER, Role.DIRECTOR];
 
 // GET /api/delegations - List delegations
 export async function GET(request: NextRequest) {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     }
 
     const tenantId = session.user.organizationId;
-    const isAdmin = session.user.role === Role.ADMIN;
+    const isAdmin = session.user.teamMemberRole === 'ADMIN';
     const { searchParams } = new URL(request.url);
     const viewAll = searchParams.get('all') === 'true';
 
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only users with approver roles can create delegations
-    if (!APPROVER_ROLES.includes(session.user.role as Role)) {
+    if (!session.user.role || !APPROVER_ROLES.includes(session.user.role as Role)) {
       return NextResponse.json(
         { error: 'Only users with approver roles can create delegations' },
         { status: 403 }

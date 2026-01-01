@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect, notFound } from 'next/navigation';
-import { Role } from '@prisma/client';
+
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +27,7 @@ interface PageProps {
 
 export default async function AdminPayslipDetailPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== Role.ADMIN) {
+  if (!session || session.user.teamMemberRole !== 'ADMIN') {
     redirect('/');
   }
 

@@ -29,7 +29,7 @@ interface PageProps {
 
 export default async function PayrollRunsPage({ searchParams }: PageProps) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== Role.ADMIN) {
+  if (!session || session.user.teamMemberRole !== 'ADMIN') {
     redirect('/');
   }
 

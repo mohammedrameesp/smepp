@@ -10,7 +10,6 @@ import {
   Package,
   CreditCard,
   Truck,
-  Users,
   Calendar,
   DollarSign,
   ShoppingCart,
@@ -57,29 +56,7 @@ export interface ModuleDefinition {
 
 export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
   // ─────────────────────────────────────────────────────────────────────────────
-  // CORE MODULE (Can't be uninstalled)
-  // ─────────────────────────────────────────────────────────────────────────────
-  users: {
-    id: 'users',
-    name: 'Users & Team',
-    description: 'User management, team members, and access control',
-    icon: Users,
-    iconName: 'Users',
-    category: 'system',
-    tier: 'FREE',
-    isFree: true,
-    requires: [],
-    requiredBy: ['employees'],
-    adminRoutes: ['/admin/users', '/admin/team'],
-    employeeRoutes: [],
-    apiRoutes: ['/api/users', '/api/team', '/api/invitations'],
-    isCore: true,
-    isBeta: false,
-    isDeprecated: false,
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // FREE MODULES (Always available)
+  // DEFAULT MODULES (Enabled by default for new organizations)
   // ─────────────────────────────────────────────────────────────────────────────
   assets: {
     id: 'assets',
@@ -139,27 +116,8 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // HR MODULES (All FREE for now - pricing tiers to be defined later)
+  // HR MODULES (Add-on modules for HR features)
   // ─────────────────────────────────────────────────────────────────────────────
-  employees: {
-    id: 'employees',
-    name: 'Employee Directory',
-    description: 'Employee profiles, documents, and HR information',
-    icon: Users,
-    iconName: 'Users',
-    category: 'hr',
-    tier: 'FREE',
-    isFree: true,
-    requires: [],
-    requiredBy: ['leave', 'payroll'],
-    adminRoutes: ['/admin/employees'],
-    employeeRoutes: [],
-    apiRoutes: ['/api/employees'],
-    isCore: false,
-    isBeta: false,
-    isDeprecated: false,
-  },
-
   leave: {
     id: 'leave',
     name: 'Leave Management',
@@ -169,7 +127,7 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     category: 'hr',
     tier: 'FREE',
     isFree: true,
-    requires: ['employees'],
+    requires: [],
     requiredBy: [],
     adminRoutes: ['/admin/leave'],
     employeeRoutes: ['/employee/leave'],
@@ -188,7 +146,7 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     category: 'hr',
     tier: 'FREE',
     isFree: true,
-    requires: ['employees'],
+    requires: [],
     requiredBy: [],
     adminRoutes: ['/admin/payroll'],
     employeeRoutes: ['/employee/payroll'],

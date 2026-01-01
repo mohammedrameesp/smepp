@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
-import { Role } from '@prisma/client';
+
 import { SubscriptionListTableServerSearch } from '@/components/domains/operations/subscriptions/subscription-list-table-server-search';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
 import { Plus } from 'lucide-react';
@@ -15,7 +15,7 @@ export default async function AdminSubscriptionsPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.role !== Role.ADMIN) {
+  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
     redirect('/forbidden');
   }
 
