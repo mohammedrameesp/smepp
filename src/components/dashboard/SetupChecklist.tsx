@@ -2,11 +2,12 @@
 
 /**
  * @file SetupChecklist.tsx
- * @description Dashboard widget showing setup progress checklist
+ * @description Dashboard widget showing setup progress - one task at a time
  * @module dashboard
  */
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   Building2,
   Image,
@@ -15,10 +16,13 @@ import {
   UserPlus,
   Users,
   Loader2,
-  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  ArrowRight,
+  X,
+  CheckCircle2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChecklistItem } from './ChecklistItem';
 import type { LucideIcon } from 'lucide-react';
 
 interface SetupProgressData {
@@ -49,21 +53,21 @@ const CHECKLIST_ITEMS: ChecklistItemConfig[] = [
     field: 'profileComplete',
     title: 'Complete organization profile',
     description: 'Set up your organization name and basic information',
-    link: '/admin/settings',
+    link: '/admin/organization',
     icon: Building2,
   },
   {
     field: 'logoUploaded',
     title: 'Upload company logo',
     description: 'Add your company logo to personalize your workspace',
-    link: '/admin/settings',
+    link: '/admin/organization',
     icon: Image,
   },
   {
     field: 'brandingConfigured',
     title: 'Configure brand colors',
     description: 'Customize colors to match your brand identity',
-    link: '/admin/settings',
+    link: '/admin/organization',
     icon: Palette,
   },
   {
@@ -92,7 +96,8 @@ const CHECKLIST_ITEMS: ChecklistItemConfig[] = [
 export function SetupChecklist() {
   const [data, setData] = useState<SetupProgressData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
     async function fetchProgress() {
@@ -112,98 +117,150 @@ export function SetupChecklist() {
     fetchProgress();
   }, []);
 
-  // Don't render if loading or complete
+  // Don't render if loading, complete, or dismissed
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+        <div className="flex items-center justify-center py-2">
+          <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
         </div>
       </div>
     );
   }
 
-  // Hide if complete
-  if (data?.isComplete) {
+  if (data?.isComplete || isDismissed) {
     return null;
   }
 
   const progress = data?.progress;
   const completedCount = data?.completedCount ?? 0;
   const totalCount = data?.totalCount ?? CHECKLIST_ITEMS.length;
-  const percentComplete = data?.percentComplete ?? 0;
+
+  // Get only pending items
+  const pendingItems = CHECKLIST_ITEMS.filter(
+    (item) => !progress?.[item.field]
+  );
+
+  if (pendingItems.length === 0) {
+    return null;
+  }
+
+  // Ensure currentIndex is within bounds
+  const safeIndex = Math.min(currentIndex, pendingItems.length - 1);
+  const currentItem = pendingItems[safeIndex];
+  const Icon = currentItem.icon;
+
+  const goNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % pendingItems.length);
+  };
+
+  const goPrev = () => {
+    setCurrentIndex((prev) => (prev - 1 + pendingItems.length) % pendingItems.length);
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl border border-slate-700 p-6 mb-6 text-white"
+      className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-4 mb-6 text-white shadow-lg"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-amber-400" />
-          </div>
-          <div>
-            <h3 className="font-semibold">Complete your setup</h3>
-            <p className="text-sm text-slate-400">
-              {completedCount} of {totalCount} tasks completed
-            </p>
-          </div>
+      <div className="flex items-center gap-4">
+        {/* Icon */}
+        <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentItem.field}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <Icon className="w-6 h-6" />
+            </motion.div>
+          </AnimatePresence>
         </div>
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-sm text-slate-400 hover:text-white transition-colors"
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-xs font-medium text-white/70 uppercase tracking-wide">
+              Setup {safeIndex + 1} of {pendingItems.length} remaining
+            </span>
+            <span className="text-white/40">•</span>
+            <span className="text-xs text-white/70">
+              {completedCount}/{totalCount} done
+            </span>
+          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentItem.field}
+              initial={{ x: 10, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -10, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <p className="font-semibold text-white truncate">{currentItem.title}</p>
+              <p className="text-sm text-white/70 truncate">{currentItem.description}</p>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Navigation */}
+        {pendingItems.length > 1 && (
+          <div className="flex-shrink-0 flex items-center gap-1">
+            <button
+              onClick={goPrev}
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              aria-label="Previous task"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={goNext}
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+              aria-label="Next task"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
+        {/* Action Button */}
+        <Link
+          href={currentItem.link}
+          className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-colors"
         >
-          {isExpanded ? 'Collapse' : 'Expand'}
+          <span>Start</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+
+        {/* Dismiss */}
+        <button
+          onClick={() => setIsDismissed(true)}
+          className="flex-shrink-0 p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+          aria-label="Dismiss"
+        >
+          <X className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Progress bar */}
-      <div className="mb-4">
-        <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-amber-400 to-amber-500 rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${percentComplete}%` }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-          />
+      {/* Progress dots */}
+      {pendingItems.length > 1 && (
+        <div className="flex items-center justify-center gap-1.5 mt-3">
+          {pendingItems.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentIndex(idx)}
+              className={`w-1.5 h-1.5 rounded-full transition-all ${
+                idx === safeIndex
+                  ? 'w-4 bg-white'
+                  : 'bg-white/40 hover:bg-white/60'
+              }`}
+              aria-label={`Go to task ${idx + 1}`}
+            />
+          ))}
         </div>
-        <p className="text-right text-xs text-slate-400 mt-1">
-          {percentComplete}% complete
-        </p>
-      </div>
-
-      {/* Checklist items */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-2 overflow-hidden"
-          >
-            {CHECKLIST_ITEMS.map((item, index) => (
-              <motion.div
-                key={item.field}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <ChecklistItem
-                  title={item.title}
-                  description={item.description}
-                  link={item.link}
-                  isCompleted={progress?.[item.field] ?? false}
-                  icon={item.icon}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      )}
     </motion.div>
   );
 }
