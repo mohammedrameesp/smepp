@@ -113,12 +113,14 @@ export function EmployeeTopNav({ enabledModules = [] }: EmployeeTopNavProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/employee/my-assets" className="flex items-center gap-2 cursor-pointer">
-                    <Package className="h-4 w-4 text-slate-400" />
-                    My Assets
-                  </Link>
-                </DropdownMenuItem>
+                {isModuleEnabled('assets') && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/employee/my-assets" className="flex items-center gap-2 cursor-pointer">
+                      <Package className="h-4 w-4 text-slate-400" />
+                      My Assets
+                    </Link>
+                  </DropdownMenuItem>
+                )}
                 {isModuleEnabled('leave') && (
                   <DropdownMenuItem asChild>
                     <Link href="/employee/leave" className="flex items-center gap-2 cursor-pointer">

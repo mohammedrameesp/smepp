@@ -278,7 +278,7 @@ export function TeamMembers({
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[200]">
                         {(['MEMBER', 'MANAGER', 'ADMIN'] as OrgRole[]).map((role) => (
                           <SelectItem key={role} value={role}>
                             <div>

@@ -5,14 +5,21 @@ import { prisma } from '@/lib/core/prisma';
 import { AdminLayoutClient } from './layout-client';
 
 // Get organization settings from database (fresh, not from session)
-async function getOrgSettings(tenantId: string): Promise<{ enabledModules: string[]; aiChatEnabled: boolean }> {
+// Returns null if organization doesn't exist (was deleted)
+async function getOrgSettings(tenantId: string): Promise<{ enabledModules: string[]; aiChatEnabled: boolean } | null> {
   const org = await prisma.organization.findUnique({
     where: { id: tenantId },
     select: { enabledModules: true, aiChatEnabled: true },
   });
+
+  // Return null if org doesn't exist (deleted)
+  if (!org) {
+    return null;
+  }
+
   return {
-    enabledModules: org?.enabledModules?.length ? org.enabledModules : ['assets', 'subscriptions', 'suppliers'],
-    aiChatEnabled: org?.aiChatEnabled ?? false,
+    enabledModules: org.enabledModules?.length ? org.enabledModules : ['assets', 'subscriptions', 'suppliers'],
+    aiChatEnabled: org.aiChatEnabled ?? false,
   };
 }
 
@@ -76,28 +83,39 @@ export default async function AdminLayout({
 
   // Get tenant-scoped data
   const tenantId = session?.user?.organizationId;
-  const [badgeCounts, orgSettings] = tenantId
-    ? await Promise.all([
-        getBadgeCounts(tenantId),
-        getOrgSettings(tenantId),
-      ])
-    : [
-        {
-          pendingChangeRequests: 0,
-          pendingLeaveRequests: 0,
-          pendingSuppliers: 0,
-          pendingPurchaseRequests: 0,
-          pendingAssetRequests: 0,
-          pendingApprovals: 0,
-        },
-        { enabledModules: ['assets', 'subscriptions', 'suppliers'], aiChatEnabled: false },
-      ];
+
+  let badgeCounts = {
+    pendingChangeRequests: 0,
+    pendingLeaveRequests: 0,
+    pendingSuppliers: 0,
+    pendingPurchaseRequests: 0,
+    pendingAssetRequests: 0,
+    pendingApprovals: 0,
+  };
+  let orgSettings = { enabledModules: ['assets', 'subscriptions', 'suppliers'], aiChatEnabled: false };
+
+  if (tenantId) {
+    const [fetchedBadgeCounts, fetchedOrgSettings] = await Promise.all([
+      getBadgeCounts(tenantId),
+      getOrgSettings(tenantId),
+    ]);
+
+    // Check if organization still exists
+    if (!fetchedOrgSettings) {
+      // Organization was deleted - redirect to logout with message
+      redirect('/api/auth/signout?callbackUrl=/login?error=OrgDeleted');
+    }
+
+    badgeCounts = fetchedBadgeCounts;
+    orgSettings = fetchedOrgSettings;
+  }
 
   return (
     <AdminLayoutClient
       badgeCounts={badgeCounts}
       enabledModules={orgSettings.enabledModules}
       aiChatEnabled={orgSettings.aiChatEnabled}
+      userRole={session?.user?.role as string | undefined}
     >
       {children}
     </AdminLayoutClient>

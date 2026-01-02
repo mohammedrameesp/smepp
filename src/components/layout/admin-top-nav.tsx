@@ -42,19 +42,23 @@ interface AdminTopNavProps {
   onOpenCommandPalette?: () => void;
 }
 
+// Roles that can access approval workflows
+const APPROVER_ROLES = ['ADMIN', 'MANAGER', 'HR_MANAGER', 'FINANCE_MANAGER', 'DIRECTOR'];
+
 export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenCommandPalette }: AdminTopNavProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
 
   const isModuleEnabled = (moduleId: string) => enabledModules.includes(moduleId);
+  const isApprover = session?.user?.role && APPROVER_ROLES.includes(session.user.role as string);
 
   // Navigation items for the main nav
   // Note: Employees, Assets, Subscriptions are accessible via stats row on dashboard
   const mainNavItems = [
-    { label: 'Company Documents', href: '/admin/company-documents', moduleId: null }, // Always available, first item
+    { label: 'Company Documents', href: '/admin/company-documents', moduleId: 'documents' },
     { label: 'Leave', href: '/admin/leave', moduleId: 'leave' },
     { label: 'Payroll', href: '/admin/payroll', moduleId: 'payroll' },
-  ].filter(item => item.moduleId === null || isModuleEnabled(item.moduleId));
+  ].filter(item => isModuleEnabled(item.moduleId));
 
   // More dropdown items (grouped)
   const moreItems = {
@@ -105,23 +109,25 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
                   </Link>
                 ))}
 
-                {/* My Approvals with badge */}
-                <Link
-                  href="/admin/my-approvals"
-                  className={cn(
-                    'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5',
-                    pathname === '/admin/my-approvals'
-                      ? 'text-white bg-slate-700'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-700'
-                  )}
-                >
-                  Approvals
-                  {(badgeCounts.pendingApprovals || 0) > 0 && (
-                    <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
-                      {badgeCounts.pendingApprovals}
-                    </span>
-                  )}
-                </Link>
+                {/* My Approvals with badge - show if user is approver AND any approval-related module is enabled */}
+                {isApprover && (isModuleEnabled('leave') || isModuleEnabled('assets') || isModuleEnabled('purchase-requests')) && (
+                  <Link
+                    href="/admin/my-approvals"
+                    className={cn(
+                      'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5',
+                      pathname === '/admin/my-approvals'
+                        ? 'text-white bg-slate-700'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                    )}
+                  >
+                    Approvals
+                    {(badgeCounts.pendingApprovals || 0) > 0 && (
+                      <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
+                        {badgeCounts.pendingApprovals}
+                      </span>
+                    )}
+                  </Link>
+                )}
 
                 {/* More Dropdown */}
                 {hasMoreItems && (

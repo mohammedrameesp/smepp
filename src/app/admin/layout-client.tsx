@@ -14,9 +14,10 @@ interface AdminLayoutClientProps {
   badgeCounts: BadgeCounts;
   enabledModules: string[];
   aiChatEnabled: boolean;
+  userRole?: string;
 }
 
-export function AdminLayoutClient({ children, badgeCounts, enabledModules, aiChatEnabled }: AdminLayoutClientProps) {
+export function AdminLayoutClient({ children, badgeCounts, enabledModules, aiChatEnabled, userRole }: AdminLayoutClientProps) {
   const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
 
   // Keyboard shortcut for command palette (Cmd/Ctrl + K)
@@ -62,7 +63,7 @@ export function AdminLayoutClient({ children, badgeCounts, enabledModules, aiCha
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <MobileBottomNav badgeCounts={badgeCounts} enabledModules={enabledModules} />
+      <MobileBottomNav badgeCounts={badgeCounts} enabledModules={enabledModules} userRole={userRole} />
 
       {/* AI Chat Widget - only shown if enabled for organization */}
       {aiChatEnabled && <ChatWidget />}

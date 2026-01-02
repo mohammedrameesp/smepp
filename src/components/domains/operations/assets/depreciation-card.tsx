@@ -258,12 +258,18 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
-                        <SelectContent>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>
-                              {cat.name} ({cat.annualRate}% / {cat.usefulLifeYears} years)
-                            </SelectItem>
-                          ))}
+                        <SelectContent className="z-[200]">
+                          {categories.length === 0 ? (
+                            <div className="p-2 text-sm text-muted-foreground text-center">
+                              No categories available. Contact admin to add depreciation categories.
+                            </div>
+                          ) : (
+                            categories.map((cat) => (
+                              <SelectItem key={cat.id} value={cat.id}>
+                                {cat.name} ({cat.annualRate}% / {cat.usefulLifeYears} years)
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                     </div>

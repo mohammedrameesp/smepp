@@ -28,6 +28,8 @@ import {
   ShoppingCart,
   Building2,
   Activity,
+  FileCheck,
+  Package,
 } from 'lucide-react';
 
 interface CommandItem {
@@ -51,8 +53,9 @@ interface CommandPaletteProps {
 // Static command items - defined outside component to avoid recreation
 const COMMAND_ITEMS: CommandItem[] = [
   // Quick Actions
-  { id: 'add-employee', label: 'Add Employee', description: 'Create a new team member', icon: UserPlus, href: '/admin/employees/new', shortcut: 'N E', moduleId: 'employees', category: 'action' },
+  { id: 'add-team-member', label: 'Add Team Member', description: 'Invite a new team member', icon: UserPlus, href: '/admin/team/invite', category: 'action' },
   { id: 'add-asset', label: 'Add Asset', description: 'Register new asset', icon: Plus, href: '/admin/assets/new', shortcut: 'N A', moduleId: 'assets', category: 'action' },
+  { id: 'add-document', label: 'Add Document', description: 'Track company document', icon: FileCheck, href: '/admin/company-documents/new', moduleId: 'documents', category: 'action' },
   { id: 'run-payroll', label: 'Run Payroll', description: 'Process monthly payroll', icon: DollarSign, href: '/admin/payroll/runs/new', shortcut: 'P', moduleId: 'payroll', category: 'action' },
   { id: 'add-leave-type', label: 'Add Leave Type', description: 'Create new leave type', icon: Calendar, href: '/admin/leave/types/new', moduleId: 'leave', category: 'action' },
   { id: 'add-subscription', label: 'Add Subscription', description: 'Track new SaaS subscription', icon: CreditCard, href: '/admin/subscriptions/new', moduleId: 'subscriptions', category: 'action' },
@@ -60,8 +63,9 @@ const COMMAND_ITEMS: CommandItem[] = [
 
   // Navigation
   { id: 'nav-dashboard', label: 'Dashboard', icon: Building2, href: '/admin', category: 'navigation' },
-  { id: 'nav-employees', label: 'Employees', icon: Users, href: '/admin/employees', moduleId: 'employees', category: 'navigation' },
+  { id: 'nav-team', label: 'Team', icon: Users, href: '/admin/team', category: 'navigation' },
   { id: 'nav-assets', label: 'Assets', icon: Box, href: '/admin/assets', moduleId: 'assets', category: 'navigation' },
+  { id: 'nav-documents', label: 'Company Documents', icon: FileCheck, href: '/admin/company-documents', moduleId: 'documents', category: 'navigation' },
   { id: 'nav-leave', label: 'Leave Requests', icon: Calendar, href: '/admin/leave/requests', moduleId: 'leave', category: 'navigation' },
   { id: 'nav-payroll', label: 'Payroll', icon: DollarSign, href: '/admin/payroll/runs', moduleId: 'payroll', category: 'navigation' },
   { id: 'nav-subscriptions', label: 'Subscriptions', icon: CreditCard, href: '/admin/subscriptions', moduleId: 'subscriptions', category: 'navigation' },
@@ -70,6 +74,7 @@ const COMMAND_ITEMS: CommandItem[] = [
   { id: 'nav-reports', label: 'Reports', icon: BarChart3, href: '/admin/reports', category: 'navigation' },
   { id: 'nav-activity', label: 'Activity Log', icon: Activity, href: '/admin/activity', category: 'navigation' },
   { id: 'nav-settings', label: 'Settings', icon: Settings, href: '/admin/settings', category: 'navigation' },
+  { id: 'nav-modules', label: 'Modules', description: 'Install and manage modules', icon: Package, href: '/admin/modules', category: 'navigation' },
 ];
 
 export function CommandPalette({ open, onOpenChange, enabledModules = [] }: CommandPaletteProps) {

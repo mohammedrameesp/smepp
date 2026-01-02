@@ -365,7 +365,7 @@ export function DocumentTypeSettings() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[200]">
                   <SelectItem value="COMPANY">Company Document</SelectItem>
                   <SelectItem value="VEHICLE">Vehicle Document</SelectItem>
                 </SelectContent>

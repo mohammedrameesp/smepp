@@ -162,7 +162,7 @@ export function SetupChecklist() {
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-4 mb-6 text-white shadow-lg"
+      className="bg-gradient-to-r from-slate-700 to-slate-800 rounded-xl p-4 mb-6 text-white shadow-lg"
     >
       <div className="flex items-center gap-4">
         {/* Icon */}
@@ -228,7 +228,7 @@ export function SetupChecklist() {
         {/* Action Button */}
         <Link
           href={currentItem.link}
-          className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition-colors"
+          className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
         >
           <span>Start</span>
           <ArrowRight className="w-4 h-4" />

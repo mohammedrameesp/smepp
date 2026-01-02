@@ -64,6 +64,7 @@ export async function GET() {
 
 const updateOrgSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
+  codePrefix: z.string().length(3, 'Code prefix must be exactly 3 characters').regex(/^[A-Z0-9]+$/, 'Only uppercase letters and numbers allowed').optional(),
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional(),
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional().nullable(),
   additionalCurrencies: z.array(z.string()).optional(),
@@ -93,12 +94,13 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const { name, primaryColor, secondaryColor, additionalCurrencies, enabledModules } = result.data;
+    const { name, codePrefix, primaryColor, secondaryColor, additionalCurrencies, enabledModules } = result.data;
 
     const updated = await prisma.organization.update({
       where: { id: session.user.organizationId },
       data: {
         ...(name && { name }),
+        ...(codePrefix && { codePrefix }),
         ...(primaryColor !== undefined && { primaryColor }),
         ...(secondaryColor !== undefined && { secondaryColor }),
         ...(additionalCurrencies !== undefined && { additionalCurrencies }),
@@ -109,6 +111,7 @@ export async function PATCH(request: NextRequest) {
         name: true,
         slug: true,
         logoUrl: true,
+        codePrefix: true,
         primaryColor: true,
         secondaryColor: true,
         additionalCurrencies: true,

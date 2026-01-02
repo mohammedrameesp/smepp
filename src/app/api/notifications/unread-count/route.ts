@@ -1,28 +1,29 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 /**
  * GET /api/notifications/unread-count
  * Returns the count of unread notifications for the current user
  */
 export const GET = withErrorHandler(
-  async () => {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  async (request: NextRequest, context: APIContext) => {
+    const { tenant } = context;
+
+    // If no tenant context (e.g., super admin), return 0
+    if (!tenant?.tenantId || !tenant?.userId) {
+      return NextResponse.json({ count: 0 });
     }
 
     const count = await prisma.notification.count({
       where: {
-        recipientId: session.user.id,
+        tenantId: tenant.tenantId,
+        recipientId: tenant.userId,
         isRead: false,
       },
     });
 
     return NextResponse.json({ count });
   },
-  { requireAuth: true, requireTenant: false, skipLogging: true } // Skip logging for frequent polling, allow users without org
+  { requireAuth: true, skipLogging: true }
 );

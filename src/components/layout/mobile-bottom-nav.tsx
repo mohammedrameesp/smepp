@@ -16,12 +16,18 @@ import { type BadgeCounts } from '@/components/layout/badge-types';
 interface MobileBottomNavProps {
   badgeCounts?: BadgeCounts;
   enabledModules?: string[];
+  userRole?: string;
 }
 
-export function MobileBottomNav({ badgeCounts = {}, enabledModules = [] }: MobileBottomNavProps) {
+// Roles that can access approval workflows
+const APPROVER_ROLES = ['ADMIN', 'MANAGER', 'HR_MANAGER', 'FINANCE_MANAGER', 'DIRECTOR'];
+
+export function MobileBottomNav({ badgeCounts = {}, enabledModules = [], userRole }: MobileBottomNavProps) {
   const pathname = usePathname();
 
   const isModuleEnabled = (moduleId: string) => enabledModules.includes(moduleId);
+  const isApprover = userRole && APPROVER_ROLES.includes(userRole);
+  const hasApprovalModules = isModuleEnabled('leave') || isModuleEnabled('assets') || isModuleEnabled('purchase-requests');
 
   const navItems = [
     {
@@ -30,22 +36,23 @@ export function MobileBottomNav({ badgeCounts = {}, enabledModules = [] }: Mobil
       href: '/admin',
       icon: Home,
       isActive: pathname === '/admin' || pathname === '/',
+      show: true,
     },
     {
       id: 'team',
       label: 'Team',
-      href: '/admin/employees',
+      href: '/admin/team',
       icon: Users,
-      moduleId: 'employees',
-      isActive: pathname?.startsWith('/admin/employees'),
+      isActive: pathname?.startsWith('/admin/team'),
+      show: true, // Team management is always available
     },
     {
       id: 'assets',
       label: 'Assets',
       href: '/admin/assets',
       icon: Box,
-      moduleId: 'assets',
       isActive: pathname?.startsWith('/admin/assets'),
+      show: isModuleEnabled('assets'),
     },
     {
       id: 'approvals',
@@ -54,6 +61,7 @@ export function MobileBottomNav({ badgeCounts = {}, enabledModules = [] }: Mobil
       icon: Inbox,
       badge: badgeCounts.pendingApprovals,
       isActive: pathname === '/admin/my-approvals',
+      show: isApprover && hasApprovalModules,
     },
     {
       id: 'profile',
@@ -61,8 +69,9 @@ export function MobileBottomNav({ badgeCounts = {}, enabledModules = [] }: Mobil
       href: '/profile',
       icon: User,
       isActive: pathname === '/profile',
+      show: true,
     },
-  ].filter(item => !item.moduleId || isModuleEnabled(item.moduleId));
+  ].filter(item => item.show);
 
   // If we filtered out items due to modules, we might have fewer than 5
   // Always keep home, approvals, and profile; add what's available

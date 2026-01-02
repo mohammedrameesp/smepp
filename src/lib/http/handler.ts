@@ -304,6 +304,28 @@ export function withErrorHandler(
         return response;
       }
 
+      // Verify organization still exists (handles deleted org case)
+      if (requireTenant && tenantContext?.tenantId) {
+        const orgExists = await prisma.organization.findUnique({
+          where: { id: tenantContext.tenantId },
+          select: { id: true },
+        });
+
+        if (!orgExists) {
+          const response = errorResponse('Forbidden', 403, {
+            message: 'Organization no longer exists',
+            code: ErrorCodes.TENANT_REQUIRED,
+          });
+          response.headers.set('x-request-id', requestId);
+
+          if (!options.skipLogging) {
+            logRequest(request.method, request.url, 403, Date.now() - startTime, requestId);
+          }
+
+          return response;
+        }
+      }
+
       // Create tenant-scoped Prisma client or use global client
       const tenantPrisma = tenantContext
         ? createTenantPrismaClient(tenantContext)

@@ -153,7 +153,7 @@ export function AssetAssignDialog({ asset, trigger }: AssetAssignDialogProps) {
               <SelectTrigger id="user">
                 <SelectValue placeholder={isLoading ? 'Loading users...' : 'Select a user'} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[200]">
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.name || user.email} {user.name && `(${user.email})`}

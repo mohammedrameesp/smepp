@@ -36,7 +36,7 @@
 }
 
 .gs-logo span {
-  color: #2563eb;
+  color: #475569;
 }
 
 .gs-nav-right {
@@ -53,13 +53,13 @@
 .gs-nav-link {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #2563eb;
+  color: #475569;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .gs-nav-link:hover {
-  color: #1d4ed8;
+  color: #334155;
 }
 
 /* Main Content */
@@ -110,7 +110,7 @@
 }
 
 .gs-step.completed .gs-step-number {
-  background: #2563eb;
+  background: #334155;
   color: white;
 }
 
@@ -127,7 +127,7 @@
 }
 
 .gs-step.completed .gs-step-label {
-  color: #2563eb;
+  color: #334155;
 }
 
 .gs-step-line {
@@ -140,7 +140,7 @@
 }
 
 .gs-step-line[data-active="true"] {
-  background: #2563eb;
+  background: #334155;
 }
 
 /* Form Container */
@@ -197,7 +197,7 @@
   width: 4rem;
   height: 4rem;
   border-radius: 1rem;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -281,9 +281,9 @@
 
 .gs-input-wrapper input:focus,
 .gs-select-wrapper select:focus {
-  border-color: #2563eb;
+  border-color: #334155;
   background: white;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 4px rgba(51, 65, 85, 0.1);
 }
 
 .gs-input-wrapper input::placeholder {
@@ -516,8 +516,8 @@
 }
 
 .gs-module-card.selected {
-  border-color: #2563eb;
-  background: #eff6ff;
+  border-color: #334155;
+  background: #f1f5f9;
 }
 
 .gs-module-check {
@@ -533,8 +533,8 @@
 }
 
 .gs-module-card.selected .gs-module-check {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: #334155;
+  border-color: #334155;
 }
 
 .gs-module-check svg {
@@ -616,7 +616,7 @@
 
 .gs-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px white, 0 0 0 4px #2563eb;
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #334155;
 }
 
 .gs-btn-primary {
@@ -649,15 +649,15 @@
 }
 
 .gs-btn-submit {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
 }
 
 .gs-btn-submit:hover:not(:disabled) {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
 }
 
 .gs-btn-submit:focus-visible {
-  box-shadow: 0 0 0 2px white, 0 0 0 4px #2563eb;
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #334155;
 }
 
 .gs-btn-icon {
@@ -708,7 +708,7 @@
   width: 5rem;
   height: 5rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
   display: flex;
   align-items: center;
   justify-content: center;

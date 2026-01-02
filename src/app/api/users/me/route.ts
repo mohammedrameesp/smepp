@@ -39,6 +39,12 @@ export async function GET(request: NextRequest) {
         dateOfJoining: true,
         createdAt: true,
         updatedAt: true,
+        _count: {
+          select: {
+            assets: true,
+            subscriptions: true,
+          },
+        },
       },
     });
 
@@ -74,6 +80,7 @@ export async function GET(request: NextRequest) {
       isEmployee: false,
       isOnWps: false,
       hrProfile: null,
+      _count: { assets: 0, subscriptions: 0 }, // Super admins don't have assigned assets
     });
   } catch (error) {
     console.error('Get current user error:', error);

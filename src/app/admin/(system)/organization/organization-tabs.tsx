@@ -117,6 +117,7 @@ export function OrganizationTabs({
 
   // Form state for auto-save
   const [name, setName] = useState(org.name);
+  const [codePrefix, setCodePrefix] = useState(org.codePrefix || 'ORG');
   const [primaryColor, setPrimaryColor] = useState(org.primaryColor || '#3B82F6');
   const [secondaryColor, setSecondaryColor] = useState(org.secondaryColor || '');
   const [additionalCurrencies, setAdditionalCurrencies] = useState<string[]>(org.additionalCurrencies || []);
@@ -141,6 +142,20 @@ export function OrganizationTabs({
       if (!res.ok) throw new Error('Failed to save');
       setOrg(prev => ({ ...prev, name: value }));
       await updateSession();
+    },
+  });
+
+  const codePrefixAutoSave = useAutoSave({
+    value: codePrefix,
+    enabled: isAdmin && codePrefix !== org.codePrefix && codePrefix.length === 3,
+    onSave: async (value) => {
+      const res = await fetch('/api/admin/organization', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codePrefix: value }),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      setOrg(prev => ({ ...prev, codePrefix: value }));
     },
   });
 
@@ -486,10 +501,44 @@ export function OrganizationTabs({
 
         {/* Configuration Tab */}
         <TabsContent value="config" className="space-y-6">
+          {/* Code Prefix */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings2 className="h-5 w-5" />
+                    Reference Code Prefix
+                  </CardTitle>
+                  <CardDescription>3-letter prefix used for employee IDs, asset tags, and other codes</CardDescription>
+                </div>
+                <AutoSaveIndicator status={codePrefixAutoSave.status} error={codePrefixAutoSave.error} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <Input
+                  value={codePrefix}
+                  onChange={(e) => setCodePrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3))}
+                  placeholder="ORG"
+                  className="w-24 font-mono text-center text-lg uppercase"
+                  maxLength={3}
+                  disabled={!isAdmin}
+                />
+                <div className="text-sm text-muted-foreground">
+                  <p>Example: <code className="px-2 py-1 bg-muted rounded">{codePrefix}-2024-001</code></p>
+                  {codePrefix.length !== 3 && (
+                    <p className="text-amber-600 mt-1">Must be exactly 3 characters</p>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Code Formats */}
           <CodeFormatSettings
             organizationId={org.id}
-            codePrefix={org.codePrefix || 'ORG'}
+            codePrefix={codePrefix}
             initialFormats={org.codeFormats || {}}
           />
 

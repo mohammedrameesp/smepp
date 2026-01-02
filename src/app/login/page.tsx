@@ -87,6 +87,8 @@ function LoginForm() {
       setError('OAuth is not configured for this organization.');
     } else if (errorParam === 'MissingParams') {
       setError('Missing authentication parameters. Please try again.');
+    } else if (errorParam === 'OrgDeleted') {
+      setError('Your organization has been deleted. Please contact support if you believe this is an error.');
     }
 
     // Check if user is already logged in

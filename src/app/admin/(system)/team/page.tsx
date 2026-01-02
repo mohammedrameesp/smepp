@@ -440,7 +440,7 @@ export default function TeamPage() {
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[200]">
                           <SelectItem value="MEMBER">
                             <div className="flex flex-col">
                               <span>Member</span>
@@ -651,7 +651,7 @@ export default function TeamPage() {
                               <SelectValue />
                             )}
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="z-[200]">
                             <SelectItem value="ADMIN">Admin</SelectItem>
                             <SelectItem value="MANAGER">Manager</SelectItem>
                             <SelectItem value="MEMBER">Member</SelectItem>

@@ -7,7 +7,7 @@
 
 export const theme = {
   // Login page gradient (only for login page)
-  loginGradient: 'from-slate-900 via-blue-950 to-slate-950',
+  loginGradient: 'from-slate-900 via-slate-950 to-slate-950',
 
   // Clean white background for main pages
   background: 'bg-gray-50',
@@ -23,7 +23,7 @@ export const theme = {
   // Button styles - using branding colors
   button: {
     primary: 'bg-slate-700 hover:bg-slate-800 text-white shadow-sm',
-    secondary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm',
+    secondary: 'bg-slate-600 hover:bg-slate-700 text-white shadow-sm',
     outline: 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400',
   },
 

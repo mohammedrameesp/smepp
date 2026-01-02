@@ -12,13 +12,16 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
-import { RefreshCw, AlertTriangle } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RefreshCw, AlertTriangle, User, Briefcase, Shield, Mail, Building2 } from 'lucide-react';
 import { createUserSchema, type CreateUserInput } from '@/lib/validations/users';
 
 export default function NewEmployeePage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [nextEmployeeCode, setNextEmployeeCode] = useState<string>('');
+  const [enabledModules, setEnabledModules] = useState<string[]>([]);
+  const [loadingModules, setLoadingModules] = useState(true);
 
   const {
     register,
@@ -46,10 +49,33 @@ export default function NewEmployeePage() {
   const canLogin = watch('canLogin');
   const isOnWps = watch('isOnWps');
 
-  // Generate next employee code on mount
+  // Check if payroll module is enabled
+  const isPayrollEnabled = enabledModules.includes('payroll');
+
+  // Fetch enabled modules on mount
   useEffect(() => {
-    generateNextEmployeeCode();
+    async function fetchModules() {
+      try {
+        const response = await fetch('/api/admin/organization');
+        if (response.ok) {
+          const data = await response.json();
+          setEnabledModules(data.enabledModules || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch organization settings:', err);
+      } finally {
+        setLoadingModules(false);
+      }
+    }
+    fetchModules();
   }, []);
+
+  // Generate next employee code when isEmployee is enabled
+  useEffect(() => {
+    if (isEmployee && !nextEmployeeCode) {
+      generateNextEmployeeCode();
+    }
+  }, [isEmployee]);
 
   const generateNextEmployeeCode = async () => {
     try {
@@ -90,14 +116,24 @@ export default function NewEmployeePage() {
     }
   };
 
+  // Role descriptions - simplified
+  const roleDescriptions: Record<string, string> = {
+    EMPLOYEE: 'Can submit requests but cannot approve',
+    MANAGER: 'Can approve team requests',
+    HR_MANAGER: 'Can approve leave and HR requests',
+    FINANCE_MANAGER: 'Can approve purchases and budgets',
+    DIRECTOR: 'Can approve high-value requests',
+    ADMIN: 'Full approval authority',
+  };
+
   return (
     <>
       <PageHeader
-        title="Add New Employee"
-        subtitle="Add a new employee to the system. They will authenticate using Azure AD or the configured provider."
+        title="Add New Team Member"
+        subtitle="Add a new person to your organization"
         breadcrumbs={[
           { label: 'Employees', href: '/admin/employees' },
-          { label: 'New Employee' },
+          { label: 'New' },
         ]}
       />
 
@@ -109,184 +145,176 @@ export default function NewEmployeePage() {
           </Alert>
         )}
 
-        <Card>
-            <CardHeader>
-              <CardTitle>Employee Information</CardTitle>
-              <CardDescription>
-                Enter the employee&apos;s details below. All fields are required.
-              </CardDescription>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Section 1: Basic Information */}
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <User className="h-5 w-5 text-slate-600" />
+                <CardTitle className="text-lg">Basic Information</CardTitle>
+              </div>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Name */}
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name *</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    {...register('name')}
-                    placeholder="John Doe"
-                    maxLength={100}
-                    className={errors.name ? 'border-red-500' : ''}
-                  />
-                  {errors.name && (
-                    <p className="text-sm text-red-500">{errors.name.message}</p>
-                  )}
-                  <p className="text-sm text-gray-500">
-                    The employee&apos;s full name as it should appear in the system
+            <CardContent className="space-y-4">
+              {/* Name */}
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name <span className="text-red-500">*</span></Label>
+                <Input
+                  id="name"
+                  type="text"
+                  {...register('name')}
+                  placeholder="Enter full name"
+                  maxLength={100}
+                  className={errors.name ? 'border-red-500' : ''}
+                />
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name.message}</p>
+                )}
+              </div>
+
+              {/* Can Login Toggle */}
+              <div className="flex items-center justify-between py-2">
+                <div className="space-y-0.5">
+                  <Label htmlFor="canLogin" className="text-base font-medium">System Access</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Can this person log in to the system?
                   </p>
                 </div>
+                <Switch
+                  id="canLogin"
+                  checked={canLogin}
+                  onCheckedChange={(checked) => {
+                    setValue('canLogin', checked);
+                    if (!checked) {
+                      setValue('email', '');
+                    }
+                  }}
+                />
+              </div>
 
-                {/* Email - only shown when canLogin is true */}
-                {canLogin && (
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      {...register('email')}
-                      placeholder="john.doe@company.com"
-                      className={errors.email ? 'border-red-500' : ''}
-                    />
-                    {errors.email && (
-                      <p className="text-sm text-red-500">{errors.email.message}</p>
+              {/* Email - only shown when canLogin is true */}
+              {canLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="email">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      Email Address <span className="text-red-500">*</span>
+                    </div>
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    {...register('email')}
+                    placeholder="name@company.com"
+                    className={errors.email ? 'border-red-500' : ''}
+                  />
+                  {errors.email && (
+                    <p className="text-sm text-red-500">{errors.email.message}</p>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    Must match their OAuth provider email (Google/Microsoft)
+                  </p>
+                </div>
+              )}
+
+              {!canLogin && (
+                <Alert className="bg-slate-50 border-slate-200">
+                  <AlertDescription className="text-slate-700">
+                    This person won&apos;t have system access. Useful for staff who don&apos;t need to log in (drivers, laborers, etc.)
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Section 2: Employee Settings */}
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-slate-600" />
+                <CardTitle className="text-lg">Employee Settings</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Is Employee Checkbox */}
+              <div className="flex items-start gap-3 py-2">
+                <Checkbox
+                  id="isEmployee"
+                  checked={isEmployee}
+                  onCheckedChange={(checked) => {
+                    setValue('isEmployee', checked as boolean);
+                    // Reset WPS when unchecking employee
+                    if (!checked) {
+                      setValue('isOnWps', false);
+                    } else {
+                      setValue('isOnWps', true);
+                    }
+                  }}
+                  className="mt-0.5"
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="isEmployee" className="text-base font-medium cursor-pointer">
+                    Add as Employee
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Include in HR features: employee list, leave management, payroll
+                  </p>
+                </div>
+              </div>
+
+              {/* Employee-specific fields - only shown when isEmployee is true */}
+              {isEmployee && (
+                <div className="space-y-4 pt-2 border-t">
+                  {/* Employee Code */}
+                  <div className="space-y-2 pt-4">
+                    <Label htmlFor="employeeId">Employee Code</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="employeeId"
+                        type="text"
+                        {...register('employeeId')}
+                        placeholder="Auto-generated"
+                        className={`flex-1 ${errors.employeeId ? 'border-red-500' : ''}`}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={generateNextEmployeeCode}
+                        title="Regenerate code"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    {errors.employeeId && (
+                      <p className="text-sm text-red-500">{errors.employeeId.message}</p>
                     )}
-                    <p className="text-sm text-gray-500">
-                      This email must match their Azure AD or OAuth provider email
+                    <p className="text-sm text-muted-foreground">
+                      Auto-generated. Edit if needed.
                     </p>
                   </div>
-                )}
 
-                {/* Employee Code */}
-                <div className="space-y-2">
-                  <Label htmlFor="employeeId">Employee Code</Label>
-                  <div className="flex gap-2">
+                  {/* Designation */}
+                  <div className="space-y-2">
+                    <Label htmlFor="designation">Designation</Label>
                     <Input
-                      id="employeeId"
+                      id="designation"
                       type="text"
-                      {...register('employeeId')}
-                      placeholder="BCE-2024-001"
-                      className={`flex-1 ${errors.employeeId ? 'border-red-500' : ''}`}
+                      {...register('designation')}
+                      placeholder="e.g. Software Engineer, Project Manager"
+                      className={errors.designation ? 'border-red-500' : ''}
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={generateNextEmployeeCode}
-                      title="Generate next code"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {errors.employeeId && (
-                    <p className="text-sm text-red-500">{errors.employeeId.message}</p>
-                  )}
-                  <p className="text-sm text-gray-500">
-                    Auto-generated employee code. You can edit if needed.
-                  </p>
-                </div>
-
-                {/* Designation */}
-                <div className="space-y-2">
-                  <Label htmlFor="designation">Designation</Label>
-                  <Input
-                    id="designation"
-                    type="text"
-                    {...register('designation')}
-                    placeholder="e.g. Software Engineer, Project Manager"
-                    className={errors.designation ? 'border-red-500' : ''}
-                  />
-                  {errors.designation && (
-                    <p className="text-sm text-red-500">{errors.designation.message}</p>
-                  )}
-                  <p className="text-sm text-gray-500">
-                    The employee&apos;s job title or position
-                  </p>
-                </div>
-
-                {/* Approval Role */}
-                <div className="space-y-2">
-                  <Label htmlFor="role">Approval Role *</Label>
-                  <Select
-                    value={watch('role') || ''}
-                    onValueChange={(value) => setValue('role', value as any)}
-                  >
-                    <SelectTrigger id="role" className={errors.role ? 'border-red-500' : ''}>
-                      <SelectValue placeholder="Select approval role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="EMPLOYEE">Employee</SelectItem>
-                      <SelectItem value="MANAGER">Manager</SelectItem>
-                      <SelectItem value="HR_MANAGER">HR Manager</SelectItem>
-                      <SelectItem value="FINANCE_MANAGER">Finance Manager</SelectItem>
-                      <SelectItem value="DIRECTOR">Director</SelectItem>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.role && (
-                    <p className="text-sm text-red-500">{errors.role.message}</p>
-                  )}
-                  <div className="text-sm text-gray-500 space-y-1">
-                    <div><strong>Employee:</strong> No approval authority - can only submit requests</div>
-                    <div><strong>Manager:</strong> Can approve leave and general requests for their team</div>
-                    <div><strong>HR Manager:</strong> Can approve leave and HR-related requests</div>
-                    <div><strong>Finance Manager:</strong> Can approve purchase requests and budget items</div>
-                    <div><strong>Director:</strong> Can approve high-value and executive-level requests</div>
-                    <div><strong>Admin:</strong> Full approval authority for all request types</div>
-                  </div>
-                </div>
-
-                {/* User Type Toggles */}
-                <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
-                  <h4 className="font-medium text-gray-900">User Type Settings</h4>
-
-                  {/* Is Employee Toggle */}
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="isEmployee" className="text-base">Is an Employee</Label>
-                      <p className="text-sm text-gray-500">
-                        Appears in HR features (payroll, leave, employee lists)
-                      </p>
-                    </div>
-                    <Switch
-                      id="isEmployee"
-                      checked={isEmployee}
-                      onCheckedChange={(checked) => setValue('isEmployee', checked)}
-                    />
+                    {errors.designation && (
+                      <p className="text-sm text-red-500">{errors.designation.message}</p>
+                    )}
                   </div>
 
-                  {/* Can Login Toggle */}
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="canLogin" className="text-base">Can Log In</Label>
-                      <p className="text-sm text-gray-500">
-                        {canLogin
-                          ? 'Will authenticate via Azure AD or OAuth'
-                          : 'No login access - a system ID will be auto-generated'}
-                      </p>
-                    </div>
-                    <Switch
-                      id="canLogin"
-                      checked={canLogin}
-                      onCheckedChange={(checked) => {
-                        setValue('canLogin', checked);
-                        // Clear email when disabling login
-                        if (!checked) {
-                          setValue('email', '');
-                        }
-                      }}
-                    />
-                  </div>
-
-                  {/* WPS Toggle - only show for employees */}
-                  {isEmployee && (
-                    <div className="flex items-center justify-between">
+                  {/* WPS Toggle - only show if payroll module is enabled */}
+                  {isPayrollEnabled && (
+                    <div className="flex items-center justify-between py-2">
                       <div className="space-y-0.5">
-                        <Label htmlFor="isOnWps" className="text-base">On WPS</Label>
-                        <p className="text-sm text-gray-500">
-                          {isOnWps
-                            ? 'Included in WPS (Wage Protection System) payroll files'
-                            : 'Not included in WPS files - paid outside WPS'}
+                        <Label htmlFor="isOnWps" className="text-base font-medium">On WPS</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Include in Wage Protection System payroll
                         </p>
                       </div>
                       <Switch
@@ -297,52 +325,111 @@ export default function NewEmployeePage() {
                     </div>
                   )}
                 </div>
+              )}
 
-                {/* Warning Alerts */}
-                {!isEmployee && (
-                  <Alert className="border-amber-200 bg-amber-50">
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
-                    <AlertDescription className="text-amber-800">
-                      <strong>Non-Employee User:</strong> This user will NOT appear in HR features like payroll, leave balances, or employee lists.
-                      They will only appear in team management.
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {!canLogin && (
-                  <Alert>
-                    <AlertDescription>
-                      <strong>Non-Login Employee:</strong> This person will appear in dropdowns and HR features but cannot log in to the system.
-                      Useful for drivers, laborers, or other staff who don&apos;t need system access.
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {canLogin && isEmployee && (
-                  <Alert>
-                    <AlertDescription>
-                      <strong>Note:</strong> This employee will authenticate using Azure AD or the configured OAuth provider.
-                      On first login, their account will be activated and they will be prompted to complete their HR profile.
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Buttons */}
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.push('/admin/employees')}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? 'Creating...' : 'Create Employee'}
-                  </Button>
-                </div>
-              </form>
+              {!isEmployee && (
+                <Alert className="border-amber-200 bg-amber-50">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-amber-800">
+                    Non-employee users only appear in team management, not in HR features like payroll or leave.
+                  </AlertDescription>
+                </Alert>
+              )}
             </CardContent>
-        </Card>
+          </Card>
+
+          {/* Section 3: Role & Permissions */}
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-slate-600" />
+                <CardTitle className="text-lg">Role & Permissions</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Approval Role */}
+              <div className="space-y-2">
+                <Label htmlFor="role">Approval Role</Label>
+                <Select
+                  value={watch('role') || ''}
+                  onValueChange={(value) => setValue('role', value as any)}
+                >
+                  <SelectTrigger id="role" className={errors.role ? 'border-red-500' : ''}>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EMPLOYEE">
+                      <div className="flex flex-col">
+                        <span>Employee</span>
+                        <span className="text-xs text-muted-foreground">{roleDescriptions.EMPLOYEE}</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="MANAGER">
+                      <div className="flex flex-col">
+                        <span>Manager</span>
+                        <span className="text-xs text-muted-foreground">{roleDescriptions.MANAGER}</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="HR_MANAGER">
+                      <div className="flex flex-col">
+                        <span>HR Manager</span>
+                        <span className="text-xs text-muted-foreground">{roleDescriptions.HR_MANAGER}</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="FINANCE_MANAGER">
+                      <div className="flex flex-col">
+                        <span>Finance Manager</span>
+                        <span className="text-xs text-muted-foreground">{roleDescriptions.FINANCE_MANAGER}</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="DIRECTOR">
+                      <div className="flex flex-col">
+                        <span>Director</span>
+                        <span className="text-xs text-muted-foreground">{roleDescriptions.DIRECTOR}</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="ADMIN">
+                      <div className="flex flex-col">
+                        <span>Admin</span>
+                        <span className="text-xs text-muted-foreground">{roleDescriptions.ADMIN}</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.role && (
+                  <p className="text-sm text-red-500">{errors.role.message}</p>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Determines what requests this person can approve
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Info Alert */}
+          {canLogin && isEmployee && (
+            <Alert className="bg-slate-50 border-slate-200">
+              <Building2 className="h-4 w-4 text-slate-600" />
+              <AlertDescription className="text-slate-700">
+                This employee will authenticate using their organization email. On first login, they&apos;ll be prompted to complete their profile.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push('/admin/employees')}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create'}
+            </Button>
+          </div>
+        </form>
       </PageContent>
     </>
   );

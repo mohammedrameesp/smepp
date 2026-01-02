@@ -5,14 +5,21 @@ import { prisma } from '@/lib/core/prisma';
 import { EmployeeLayoutClient } from './layout-client';
 
 // Get organization settings from database (fresh, not from session)
-async function getOrgSettings(tenantId: string): Promise<{ enabledModules: string[]; aiChatEnabled: boolean }> {
+// Returns null if organization doesn't exist (was deleted)
+async function getOrgSettings(tenantId: string): Promise<{ enabledModules: string[]; aiChatEnabled: boolean } | null> {
   const org = await prisma.organization.findUnique({
     where: { id: tenantId },
     select: { enabledModules: true, aiChatEnabled: true },
   });
+
+  // Return null if org doesn't exist (deleted)
+  if (!org) {
+    return null;
+  }
+
   return {
-    enabledModules: org?.enabledModules?.length ? org.enabledModules : ['assets', 'subscriptions', 'suppliers'],
-    aiChatEnabled: org?.aiChatEnabled ?? false,
+    enabledModules: org.enabledModules?.length ? org.enabledModules : ['assets', 'subscriptions', 'suppliers'],
+    aiChatEnabled: org.aiChatEnabled ?? false,
   };
 }
 
@@ -49,9 +56,19 @@ export default async function EmployeeLayout({
   }
 
   // Get organization settings from database
-  const orgSettings = session?.user?.organizationId
-    ? await getOrgSettings(session.user.organizationId)
-    : { enabledModules: ['assets', 'subscriptions', 'suppliers'], aiChatEnabled: false };
+  let orgSettings = { enabledModules: ['assets', 'subscriptions', 'suppliers'], aiChatEnabled: false };
+
+  if (session?.user?.organizationId) {
+    const fetchedOrgSettings = await getOrgSettings(session.user.organizationId);
+
+    // Check if organization still exists
+    if (!fetchedOrgSettings) {
+      // Organization was deleted - redirect to logout with message
+      redirect('/api/auth/signout?callbackUrl=/login?error=OrgDeleted');
+    }
+
+    orgSettings = fetchedOrgSettings;
+  }
 
   return (
     <EmployeeLayoutClient
