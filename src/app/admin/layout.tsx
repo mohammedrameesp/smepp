@@ -102,8 +102,8 @@ export default async function AdminLayout({
 
     // Check if organization still exists
     if (!fetchedOrgSettings) {
-      // Organization was deleted - redirect to logout with message
-      redirect('/api/auth/signout?callbackUrl=/login?error=OrgDeleted');
+      // Organization was deleted - redirect to auto-signout page
+      redirect('/org-deleted');
     }
 
     badgeCounts = fetchedBadgeCounts;

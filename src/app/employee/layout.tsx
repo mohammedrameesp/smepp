@@ -63,8 +63,8 @@ export default async function EmployeeLayout({
 
     // Check if organization still exists
     if (!fetchedOrgSettings) {
-      // Organization was deleted - redirect to logout with message
-      redirect('/api/auth/signout?callbackUrl=/login?error=OrgDeleted');
+      // Organization was deleted - redirect to auto-signout page
+      redirect('/org-deleted');
     }
 
     orgSettings = fetchedOrgSettings;
