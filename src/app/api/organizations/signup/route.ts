@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/core/email';
 import { newOrganizationSignupEmail } from '@/lib/core/email-templates';
 import { seedDefaultPermissions } from '@/lib/access-control';
+import { seedDefaultLeaveTypes } from '@/lib/domains/hr/leave/seed-leave-types';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION
@@ -125,6 +126,11 @@ export async function POST(request: NextRequest) {
     // Seed default permissions for the new organization (non-blocking)
     seedDefaultPermissions(organization.id).catch((err: Error) => {
       console.error('[Signup] Failed to seed default permissions:', err);
+    });
+
+    // Seed default leave types for the new organization (non-blocking)
+    seedDefaultLeaveTypes(organization.id).catch((err: Error) => {
+      console.error('[Signup] Failed to seed default leave types:', err);
     });
 
     // Build organization-specific invite URL using subdomain

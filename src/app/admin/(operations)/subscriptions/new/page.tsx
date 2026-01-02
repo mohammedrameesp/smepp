@@ -25,6 +25,7 @@ export default function NewSubscriptionPage() {
   const [users, setUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
   const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
   const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
+  const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
 
   const {
     register,
@@ -71,6 +72,30 @@ export default function NewSubscriptionPage() {
     fetchUsers();
     fetchCategorySuggestions(); // Fetch all categories initially
   }, []);
+
+  // Fetch org settings to get available currencies
+  useEffect(() => {
+    async function fetchOrgSettings() {
+      try {
+        const response = await fetch('/api/organizations/settings');
+        if (response.ok) {
+          const data = await response.json();
+          const primary = data.settings?.currency || 'QAR';
+          const additional: string[] = data.settings?.additionalCurrencies || [];
+
+          // Build unique currency list: primary first, then additional
+          const currencies = [primary, ...additional.filter((c: string) => c !== primary)];
+          setAvailableCurrencies(currencies.length > 0 ? currencies : ['QAR', 'USD']);
+
+          // Set primary as default
+          setValue('costCurrency', primary);
+        }
+      } catch (error) {
+        console.error('Error fetching org settings:', error);
+      }
+    }
+    fetchOrgSettings();
+  }, [setValue]);
 
   // Auto-calculate currency conversion (only for storing in DB)
   useEffect(() => {
@@ -437,13 +462,16 @@ export default function NewSubscriptionPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="costCurrency">Currency</Label>
-                    <Select value={watchedCostCurrency || 'QAR'} onValueChange={(value) => setValue('costCurrency', value)}>
+                    <Select value={watchedCostCurrency || availableCurrencies[0] || 'QAR'} onValueChange={(value) => setValue('costCurrency', value)}>
                       <SelectTrigger className={errors.costCurrency ? 'border-red-500' : ''}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="QAR">QAR (Qatari Riyal)</SelectItem>
-                        <SelectItem value="USD">USD (US Dollar)</SelectItem>
+                        {availableCurrencies.map((currency) => (
+                          <SelectItem key={currency} value={currency}>
+                            {currency}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     {errors.costCurrency && (

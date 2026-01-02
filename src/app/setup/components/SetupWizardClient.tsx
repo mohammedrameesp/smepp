@@ -184,7 +184,8 @@ export function SetupWizardClient() {
       });
 
       if (!settingsResponse.ok) {
-        console.warn('Settings update response:', await settingsResponse.text());
+        const errorData = await settingsResponse.json().catch(() => ({ error: 'Failed to save settings' }));
+        throw new Error(errorData.error || 'Failed to save organization settings');
       }
 
       // 3. Initialize setup progress

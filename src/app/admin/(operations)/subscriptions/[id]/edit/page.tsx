@@ -49,6 +49,7 @@ export default function EditSubscriptionPage() {
   const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
   const [lastAssignmentDate, setLastAssignmentDate] = useState<string>('');
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
 
   const {
     register,
@@ -96,6 +97,7 @@ export default function EditSubscriptionPage() {
     }
     fetchUsers();
     fetchCategorySuggestions(); // Fetch all categories initially
+    fetchOrgSettings(); // Fetch org currencies for dropdown
   }, [params?.id]);
 
   // Auto-calculate currency conversion (only for storing in DB)
@@ -168,6 +170,21 @@ export default function EditSubscriptionPage() {
       setIsInitialLoad(false);
     }
   }, [watchedPurchaseDate, watchedBillingCycle, setValue, isInitialLoad]);
+
+  const fetchOrgSettings = async () => {
+    try {
+      const response = await fetch('/api/organizations/settings');
+      if (response.ok) {
+        const data = await response.json();
+        const primary = data.settings?.currency || 'QAR';
+        const additional: string[] = data.settings?.additionalCurrencies || [];
+        const currencies = [primary, ...additional.filter((c: string) => c !== primary)];
+        setAvailableCurrencies(currencies.length > 0 ? currencies : ['QAR', 'USD']);
+      }
+    } catch (error) {
+      console.error('Error fetching org settings:', error);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -580,8 +597,11 @@ export default function EditSubscriptionPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="QAR">QAR (Qatari Riyal)</SelectItem>
-                        <SelectItem value="USD">USD (US Dollar)</SelectItem>
+                        {availableCurrencies.map((currency) => (
+                          <SelectItem key={currency} value={currency}>
+                            {currency}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>

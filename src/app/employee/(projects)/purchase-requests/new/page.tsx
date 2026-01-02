@@ -107,7 +107,7 @@ interface LineItem {
   quantity: number;
   unitPrice: number;
   amountPerCycle: number; // For subscriptions
-  currency: 'QAR' | 'USD' | 'OTHER';
+  currency: string;
   billingCycle: 'MONTHLY' | 'YEARLY';
   durationMonths: number | null;
   productUrl: string;
@@ -144,8 +144,29 @@ export default function NewPurchaseRequestPage() {
   const [additionalNotes, setAdditionalNotes] = useState('');
 
   // Currency (form-level for all items)
-  const [currency, setCurrency] = useState<'QAR' | 'USD' | 'OTHER'>('QAR');
+  const [currency, setCurrency] = useState<string>('QAR');
   const [customCurrency, setCustomCurrency] = useState('');
+  const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
+
+  // Fetch org settings for currency defaults
+  useEffect(() => {
+    async function fetchOrgSettings() {
+      try {
+        const response = await fetch('/api/organizations/settings');
+        if (response.ok) {
+          const data = await response.json();
+          const primary = data.settings?.currency || 'QAR';
+          const additional: string[] = data.settings?.additionalCurrencies || [];
+          const currencies = [primary, ...additional.filter((c: string) => c !== primary)];
+          setAvailableCurrencies(currencies.length > 0 ? currencies : ['QAR', 'USD']);
+          setCurrency(primary);
+        }
+      } catch (error) {
+        console.error('Error fetching org settings:', error);
+      }
+    }
+    fetchOrgSettings();
+  }, []);
 
   // Line Items
   const [items, setItems] = useState<LineItem[]>([
@@ -473,13 +494,16 @@ export default function NewPurchaseRequestPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="currency">Currency</Label>
-                  <Select value={currency} onValueChange={(v) => setCurrency(v as 'QAR' | 'USD' | 'OTHER')}>
+                  <Select value={currency} onValueChange={(v) => setCurrency(v)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="QAR">QAR (Qatari Riyal)</SelectItem>
-                      <SelectItem value="USD">USD (US Dollar)</SelectItem>
+                      {availableCurrencies.map((curr) => (
+                        <SelectItem key={curr} value={curr}>
+                          {curr}
+                        </SelectItem>
+                      ))}
                       <SelectItem value="OTHER">Other</SelectItem>
                     </SelectContent>
                   </Select>

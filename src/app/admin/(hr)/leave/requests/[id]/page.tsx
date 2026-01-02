@@ -37,7 +37,7 @@ interface LeaveRequest {
   rejectedAt?: string | null;
   cancelledAt?: string | null;
   createdAt: string;
-  user: {
+  member: {
     id: string;
     name: string | null;
     email: string;
@@ -112,12 +112,12 @@ export default function AdminLeaveRequestDetailPage() {
       const data = await response.json();
       setRequest(data);
 
-      // Fetch balance for this user and leave type
-      if (data.user?.id && data.leaveType?.id) {
+      // Fetch balance for this member and leave type
+      if (data.member?.id && data.leaveType?.id) {
         const year = new Date(data.startDate).getFullYear();
         const [balanceResponse, userResponse] = await Promise.all([
-          fetch(`/api/leave/balances?userId=${data.user.id}&leaveTypeId=${data.leaveType.id}&year=${year}`),
-          fetch(`/api/users/${data.user.id}`),
+          fetch(`/api/leave/balances?memberId=${data.member.id}&leaveTypeId=${data.leaveType.id}&year=${year}`),
+          fetch(`/api/users/${data.member.id}`),
         ]);
 
         if (balanceResponse.ok) {
@@ -215,8 +215,8 @@ export default function AdminLeaveRequestDetailPage() {
         title={request.requestNumber}
         subtitle={
           request.createdBy
-            ? `Leave request from ${request.user.name} (submitted by ${request.createdBy.name || request.createdBy.email})`
-            : `Leave request from ${request.user.name}`
+            ? `Leave request from ${request.member.name} (submitted by ${request.createdBy.name || request.createdBy.email})`
+            : `Leave request from ${request.member.name}`
         }
         breadcrumbs={[
           { label: 'Leave', href: '/admin/leave' },
@@ -396,18 +396,18 @@ export default function AdminLeaveRequestDetailPage() {
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
                   <span className="text-indigo-600 font-semibold">
-                    {request.user.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                    {request.member.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
                   </span>
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-900">{request.user.name}</p>
+                  <p className="font-semibold text-slate-900">{request.member.name}</p>
                   <p className="text-sm text-slate-500 flex items-center gap-1">
                     <Mail className="h-3 w-3" />
-                    {request.user.email}
+                    {request.member.email}
                   </p>
                 </div>
               </div>
-              <Link href={`/admin/users/${request.user.id}`}>
+              <Link href={`/admin/users/${request.member.id}`}>
                 <Button variant="outline" size="sm" className="w-full">
                   View Profile
                 </Button>

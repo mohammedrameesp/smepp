@@ -37,6 +37,7 @@ export default function NewAssetPage() {
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [users, setUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
   const [depreciationCategories, setDepreciationCategories] = useState<DepreciationCategory[]>([]);
+  const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
 
   const {
     register,
@@ -94,6 +95,30 @@ export default function NewAssetPage() {
     fetchUsers();
     fetchDepreciationCategories();
   }, []);
+
+  // Fetch org settings to get available currencies
+  useEffect(() => {
+    async function fetchOrgSettings() {
+      try {
+        const response = await fetch('/api/organizations/settings');
+        if (response.ok) {
+          const data = await response.json();
+          const primary = data.settings?.currency || 'QAR';
+          const additional: string[] = data.settings?.additionalCurrencies || [];
+
+          // Build unique currency list: primary first, then additional
+          const currencies = [primary, ...additional.filter((c: string) => c !== primary)];
+          setAvailableCurrencies(currencies.length > 0 ? currencies : ['QAR', 'USD']);
+
+          // Set primary as default
+          setValue('priceCurrency', primary);
+        }
+      } catch (error) {
+        console.error('Error fetching org settings:', error);
+      }
+    }
+    fetchOrgSettings();
+  }, [setValue]);
 
   // Fetch asset type suggestions
   useEffect(() => {
@@ -498,15 +523,18 @@ export default function NewAssetPage() {
                           />
                         </div>
                         <Select
-                          value={watchedCurrency || 'QAR'}
+                          value={watchedCurrency || availableCurrencies[0] || 'QAR'}
                           onValueChange={(value) => setValue('priceCurrency', value)}
                         >
                           <SelectTrigger className="w-24">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="QAR">QAR</SelectItem>
-                            <SelectItem value="USD">USD</SelectItem>
+                            {availableCurrencies.map((currency) => (
+                              <SelectItem key={currency} value={currency}>
+                                {currency}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>

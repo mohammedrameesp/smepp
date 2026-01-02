@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 
 interface LeaveBalance {
   id: string;
-  userId: string;
+  memberId: string;
   leaveTypeId: string;
   year: number;
   entitlement: number | string;
@@ -23,7 +23,7 @@ interface LeaveBalance {
   pending: number | string;
   carriedForward: number | string;
   adjustment: number | string;
-  user: {
+  member: {
     id: string;
     name: string | null;
     email: string;
@@ -38,7 +38,7 @@ interface LeaveBalance {
 }
 
 interface UserGroup {
-  user: {
+  member: {
     id: string;
     name: string | null;
     email: string;
@@ -163,10 +163,10 @@ export default function AdminLeaveBalancesPage() {
     const groupMap = new Map<string, UserGroup>();
 
     balances.forEach((balance) => {
-      const userId = balance.user.id;
-      if (!groupMap.has(userId)) {
-        groupMap.set(userId, {
-          user: balance.user,
+      const odId = balance.member.id;
+      if (!groupMap.has(odId)) {
+        groupMap.set(odId, {
+          member: balance.member,
           balances: [],
           totalEntitlement: 0,
           totalUsed: 0,
@@ -175,10 +175,10 @@ export default function AdminLeaveBalancesPage() {
         });
       }
 
-      const group = groupMap.get(userId)!;
+      const group = groupMap.get(odId)!;
       group.balances.push(balance);
 
-      const dateOfJoining = getUserDateOfJoining(userId);
+      const dateOfJoining = getUserDateOfJoining(odId);
       const effectiveEntitlement = getEffectiveEntitlement(balance, dateOfJoining);
       const remaining = effectiveEntitlement + Number(balance.carriedForward) + Number(balance.adjustment) - Number(balance.used) - Number(balance.pending);
 
@@ -196,8 +196,8 @@ export default function AdminLeaveBalancesPage() {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
-      group.user.name?.toLowerCase().includes(query) ||
-      group.user.email.toLowerCase().includes(query)
+      group.member.name?.toLowerCase().includes(query) ||
+      group.member.email.toLowerCase().includes(query)
     );
   });
 
@@ -214,7 +214,7 @@ export default function AdminLeaveBalancesPage() {
   };
 
   const expandAll = () => {
-    setExpandedUsers(new Set(filteredGroups.map((g) => g.user.id)));
+    setExpandedUsers(new Set(filteredGroups.map((g) => g.member.id)));
   };
 
   const collapseAll = () => {
@@ -233,7 +233,7 @@ export default function AdminLeaveBalancesPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: initUserId,
+          memberId: initUserId,
           leaveTypeId: initLeaveTypeId,
           year: parseInt(yearFilter),
           entitlement: initEntitlement ? parseFloat(initEntitlement) : undefined,
@@ -346,17 +346,17 @@ export default function AdminLeaveBalancesPage() {
             ) : (
               <div className="space-y-3">
                 {filteredGroups.map((group) => {
-                  const isExpanded = expandedUsers.has(group.user.id);
+                  const isExpanded = expandedUsers.has(group.member.id);
 
                   return (
                     <div
-                      key={group.user.id}
+                      key={group.member.id}
                       className="border rounded-lg overflow-hidden"
                     >
                       {/* Employee Header */}
                       <div
                         className="flex items-center justify-between p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
-                        onClick={() => toggleExpand(group.user.id)}
+                        onClick={() => toggleExpand(group.member.id)}
                       >
                         <div className="flex items-center gap-4">
                           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
@@ -364,9 +364,9 @@ export default function AdminLeaveBalancesPage() {
                           </div>
                           <div>
                             <div className="font-medium text-gray-900">
-                              {group.user.name || 'No Name'}
+                              {group.member.name || 'No Name'}
                             </div>
-                            <div className="text-sm text-gray-500">{group.user.email}</div>
+                            <div className="text-sm text-gray-500">{group.member.email}</div>
                           </div>
                         </div>
 
@@ -393,7 +393,7 @@ export default function AdminLeaveBalancesPage() {
 
                           <div className="flex items-center gap-2">
                             <Link
-                              href={`/admin/employees/${group.user.id}?tab=leave`}
+                              href={`/admin/employees/${group.member.id}?tab=leave`}
                               onClick={(e) => e.stopPropagation()}
                             >
                               <Button variant="ghost" size="sm" title="View Employee Profile">
@@ -414,7 +414,7 @@ export default function AdminLeaveBalancesPage() {
                         <div className="p-4 border-t bg-white">
                           <div className="grid gap-3">
                             {group.balances.map((balance) => {
-                              const dateOfJoining = getUserDateOfJoining(group.user.id);
+                              const dateOfJoining = getUserDateOfJoining(group.member.id);
                               const isAccrualBased = balance.leaveType.accrualBased === true;
                               const effectiveEntitlement = getEffectiveEntitlement(balance, dateOfJoining);
 
@@ -493,7 +493,7 @@ export default function AdminLeaveBalancesPage() {
 
                                     <AdjustBalanceDialog
                                       balanceId={balance.id}
-                                      userName={balance.user.name || balance.user.email}
+                                      userName={balance.member.name || balance.member.email}
                                       leaveTypeName={balance.leaveType.name}
                                       currentBalance={remaining}
                                       onAdjusted={fetchBalances}
