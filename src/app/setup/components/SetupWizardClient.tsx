@@ -54,8 +54,9 @@ export function SetupWizardClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Step 1: Org name
+  // Step 1: Org name and code prefix
   const [orgName, setOrgName] = useState('');
+  const [codePrefix, setCodePrefix] = useState('');
 
   // Step 2: Currencies
   const [primaryCurrency, setPrimaryCurrency] = useState('QAR');
@@ -130,13 +131,14 @@ export function SetupWizardClient() {
   const canProceed = useCallback(() => {
     switch (currentStep) {
       case 1:
-        return orgName.trim().length >= 2;
+        // Org name must be at least 2 chars, code prefix must be exactly 3 uppercase alphanumeric
+        return orgName.trim().length >= 2 && /^[A-Z0-9]{3}$/.test(codePrefix);
       case 6:
         return selectedModules.length > 0;
       default:
         return true;
     }
-  }, [currentStep, orgName, selectedModules]);
+  }, [currentStep, orgName, codePrefix, selectedModules]);
 
   // Check if current step is skippable
   // Team (step 5) is skippable, Modules (step 6) is NOT skippable
@@ -172,6 +174,7 @@ export function SetupWizardClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: orgName.trim(),
+          codePrefix,
           enabledModules: selectedModules,
           primaryColor,
           secondaryColor,
@@ -320,7 +323,14 @@ export function SetupWizardClient() {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <OrgNameStep value={orgName} onChange={setOrgName} />;
+        return (
+          <OrgNameStep
+            value={orgName}
+            onChange={setOrgName}
+            codePrefix={codePrefix}
+            onCodePrefixChange={setCodePrefix}
+          />
+        );
       case 2:
         return (
           <CurrencyStep

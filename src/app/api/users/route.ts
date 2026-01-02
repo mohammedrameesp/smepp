@@ -13,6 +13,7 @@ import { sendEmail } from '@/lib/email';
 import { welcomeUserEmail, welcomeUserWithPasswordSetupEmail } from '@/lib/core/email-templates';
 import { randomBytes } from 'crypto';
 import { updateSetupProgress } from '@/lib/domains/system/setup';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 async function getUsersHandler(request: NextRequest, context: APIContext) {
   const { tenant } = context;
@@ -114,9 +115,10 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
   // Generate employee code if not provided (only for employees)
   let finalEmployeeId = employeeId;
   if (isEmployee && !finalEmployeeId) {
-    // Generate employee code: EMP-YYYY-XXX (e.g., EMP-2026-001)
+    // Generate employee code using organization's code prefix: {PREFIX}-YYYY-XXX (e.g., BEC-2026-001)
     const year = new Date().getFullYear();
-    const prefix = `EMP-${year}`;
+    const orgPrefix = await getOrganizationCodePrefix(tenantId);
+    const prefix = `${orgPrefix}-${year}`;
     const count = await prisma.teamMember.count({
       where: {
         tenantId,

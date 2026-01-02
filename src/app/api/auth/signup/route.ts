@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { validatePassword, DEFAULT_PASSWORD_REQUIREMENTS } from '@/lib/security/password-validation';
 import { TeamMemberRole, OrgRole } from '@prisma/client';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION SCHEMA
@@ -135,11 +136,12 @@ export async function POST(request: NextRequest) {
             ? TeamMemberRole.ADMIN
             : TeamMemberRole.MEMBER;
 
-        // Generate employee code for employees
+        // Generate employee code for employees using organization's code prefix
         let employeeCode: string | null = null;
         if (finalIsEmployee) {
           const year = new Date().getFullYear();
-          const prefix = `EMP-${year}`;
+          const orgPrefix = await getOrganizationCodePrefix(invitation.organizationId);
+          const prefix = `${orgPrefix}-${year}`;
           const count = await tx.teamMember.count({
             where: {
               tenantId: invitation.organizationId,

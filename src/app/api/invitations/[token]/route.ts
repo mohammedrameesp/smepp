@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { TeamMemberRole, OrgRole } from '@prisma/client';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/invitations/[token] - Get invitation details
@@ -239,11 +240,12 @@ export async function POST(
         },
       });
 
-      // Generate employee code for employees
+      // Generate employee code for employees using organization's code prefix
       let employeeCode: string | null = null;
       if (finalIsEmployee) {
         const year = new Date().getFullYear();
-        const prefix = `EMP-${year}`;
+        const orgPrefix = await getOrganizationCodePrefix(invitation.organizationId);
+        const prefix = `${orgPrefix}-${year}`;
         const count = await tx.teamMember.count({
           where: {
             tenantId: invitation.organizationId,

@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import { updateSetupProgressBulk } from '@/lib/domains/system/setup';
+import { clearPrefixCache } from '@/lib/utils/code-prefix';
 
 // Valid module IDs
 const VALID_MODULES = [
@@ -23,6 +24,7 @@ const VALID_CURRENCIES = ['QAR', 'USD', 'EUR', 'GBP', 'SAR', 'AED', 'KWD'];
 
 const updateSettingsSchema = z.object({
   name: z.string().min(2).max(100).optional(),
+  codePrefix: z.string().regex(/^[A-Z0-9]{3}$/, 'Code prefix must be exactly 3 uppercase letters/numbers').optional(),
   enabledModules: z.array(z.string()).optional(),
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
@@ -92,7 +94,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { name, enabledModules, primaryColor, secondaryColor, currency, additionalCurrencies } = result.data;
+    const { name, codePrefix, enabledModules, primaryColor, secondaryColor, currency, additionalCurrencies } = result.data;
 
     // Validate modules
     if (enabledModules) {
@@ -129,6 +131,7 @@ export async function PUT(request: NextRequest) {
       where: { id: session.user.organizationId },
       data: {
         ...(name && { name }),
+        ...(codePrefix && { codePrefix }),
         ...(enabledModules && { enabledModules }),
         ...(primaryColor && { primaryColor }),
         ...(secondaryColor && { secondaryColor }),
@@ -140,6 +143,7 @@ export async function PUT(request: NextRequest) {
       },
       select: {
         name: true,
+        codePrefix: true,
         enabledModules: true,
         primaryColor: true,
         secondaryColor: true,
@@ -148,6 +152,11 @@ export async function PUT(request: NextRequest) {
         onboardingCompleted: true,
       },
     });
+
+    // Clear prefix cache if code prefix was updated
+    if (codePrefix) {
+      clearPrefixCache(session.user.organizationId);
+    }
 
     // Revalidate admin layout to reflect module changes in the navigation
     revalidatePath('/admin', 'layout');
