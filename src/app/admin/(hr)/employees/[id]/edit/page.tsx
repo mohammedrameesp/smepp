@@ -78,10 +78,13 @@ interface HRProfileData {
   bypassNoticeRequirement?: boolean;
 }
 
-const ROLES = [
-  { value: 'EMPLOYEE', label: 'Employee', description: 'Can view and manage their own assigned assets/subscriptions' },
-  { value: 'ADMIN', label: 'Admin', description: 'Full access to all features and user management' },
-  { value: 'EMPLOYEE', label: 'Temporary Staff', description: 'No login access, only appears in assignment dropdowns' },
+const APPROVAL_ROLES = [
+  { value: 'EMPLOYEE', label: 'Employee', description: 'No approval authority - can only submit requests' },
+  { value: 'MANAGER', label: 'Manager', description: 'Can approve leave and general requests for their team' },
+  { value: 'HR_MANAGER', label: 'HR Manager', description: 'Can approve leave and HR-related requests' },
+  { value: 'FINANCE_MANAGER', label: 'Finance Manager', description: 'Can approve purchase requests and budget items' },
+  { value: 'DIRECTOR', label: 'Director', description: 'Can approve high-value and executive-level requests' },
+  { value: 'ADMIN', label: 'Admin', description: 'Full approval authority for all request types' },
 ];
 
 export default function AdminEmployeeEditPage() {
@@ -255,22 +258,22 @@ export default function AdminEmployeeEditPage() {
 
       <PageContent className="max-w-5xl">
 
-          {/* Role Management */}
+          {/* Approval Role Management */}
           {hrProfile?.user && (
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
-                  Role & Permissions
+                  Approval Role
                 </CardTitle>
                 <CardDescription>
-                  Manage the employee&apos;s system role and access level
+                  Assign an approval role to allow this employee to approve requests (leave, purchases, etc.)
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="role">System Role</Label>
+                    <Label htmlFor="role">Approval Role</Label>
                     <Select
                       value={selectedRole}
                       onValueChange={(value) => {
@@ -280,10 +283,10 @@ export default function AdminEmployeeEditPage() {
                       disabled={isUpdatingRole}
                     >
                       <SelectTrigger id="role" className="w-full md:w-[300px]">
-                        <SelectValue placeholder="Select role" />
+                        <SelectValue placeholder="Select approval role" />
                       </SelectTrigger>
                       <SelectContent>
-                        {ROLES.map((role) => (
+                        {APPROVAL_ROLES.map((role) => (
                           <SelectItem key={role.value} value={role.value}>
                             {role.label}
                           </SelectItem>
@@ -298,7 +301,7 @@ export default function AdminEmployeeEditPage() {
                     )}
                   </div>
                   <div className="text-sm text-gray-500 space-y-1 bg-gray-50 p-3 rounded-md">
-                    {ROLES.map((role) => (
+                    {APPROVAL_ROLES.map((role) => (
                       <div key={role.value} className={selectedRole === role.value ? 'font-medium text-gray-700' : ''}>
                         <span className="font-semibold">{role.label}:</span> {role.description}
                       </div>

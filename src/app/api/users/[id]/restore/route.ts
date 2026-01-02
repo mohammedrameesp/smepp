@@ -36,15 +36,21 @@ export async function POST(
         id,
         isDeleted: false,
       },
+      select: {
+        id: true,
+        email: true,
+      },
     });
 
     if (!membership) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Get user details
-    const user = await prisma.user.findUnique({
-      where: { id },
+    // Get user details - SECURITY: Use email from validated TeamMember for tenant isolation
+    const user = await prisma.user.findFirst({
+      where: {
+        email: membership.email.toLowerCase(),
+      },
       select: {
         id: true,
         name: true,
@@ -68,8 +74,9 @@ export async function POST(
     }
 
     // Restore user - clear all soft-delete fields
+    // SECURITY: Use user.id from validated lookup, not raw param
     await prisma.user.update({
-      where: { id },
+      where: { id: user.id },
       data: {
         isDeleted: false,
         deletedAt: null,

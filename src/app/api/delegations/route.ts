@@ -130,6 +130,7 @@ export async function POST(request: NextRequest) {
 
     const overlapping = await prisma.approverDelegation.findFirst({
       where: {
+        tenantId, // SECURITY: Tenant isolation for overlap check
         delegatorId: session.user.id,
         isActive: true,
         OR: [

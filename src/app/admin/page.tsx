@@ -322,7 +322,7 @@ export default async function AdminDashboard() {
       count: dashboardData?.stats.employees,
       badge: dashboardData?.stats.pendingChangeRequests ? `${dashboardData.stats.pendingChangeRequests} change req` : null,
       badgeColor: 'bg-orange-500',
-      enabled: isModuleEnabled('employees'),
+      enabled: true,  // Always enabled - core feature
     },
     {
       id: 'leave',

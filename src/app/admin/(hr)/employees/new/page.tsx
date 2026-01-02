@@ -204,29 +204,35 @@ export default function NewEmployeePage() {
                   </p>
                 </div>
 
-                {/* Role */}
+                {/* Approval Role */}
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role *</Label>
+                  <Label htmlFor="role">Approval Role *</Label>
                   <Select
                     value={watch('role') || ''}
                     onValueChange={(value) => setValue('role', value as any)}
                   >
                     <SelectTrigger id="role" className={errors.role ? 'border-red-500' : ''}>
-                      <SelectValue placeholder="Select role" />
+                      <SelectValue placeholder="Select approval role" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="EMPLOYEE">Employee</SelectItem>
+                      <SelectItem value="MANAGER">Manager</SelectItem>
+                      <SelectItem value="HR_MANAGER">HR Manager</SelectItem>
+                      <SelectItem value="FINANCE_MANAGER">Finance Manager</SelectItem>
+                      <SelectItem value="DIRECTOR">Director</SelectItem>
                       <SelectItem value="ADMIN">Admin</SelectItem>
-                      <SelectItem value="EMPLOYEE">Temporary Staff</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.role && (
                     <p className="text-sm text-red-500">{errors.role.message}</p>
                   )}
                   <div className="text-sm text-gray-500 space-y-1">
-                    <div><strong>Employee:</strong> Can view and manage their own assigned assets/subscriptions</div>
-                    <div><strong>Admin:</strong> Full access to all features and user management</div>
-                    <div><strong>Temporary Staff:</strong> No login access, only appears in assignment dropdowns</div>
+                    <div><strong>Employee:</strong> No approval authority - can only submit requests</div>
+                    <div><strong>Manager:</strong> Can approve leave and general requests for their team</div>
+                    <div><strong>HR Manager:</strong> Can approve leave and HR-related requests</div>
+                    <div><strong>Finance Manager:</strong> Can approve purchase requests and budget items</div>
+                    <div><strong>Director:</strong> Can approve high-value and executive-level requests</div>
+                    <div><strong>Admin:</strong> Full approval authority for all request types</div>
                   </div>
                 </div>
 

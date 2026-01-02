@@ -137,11 +137,14 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
   }
 
   // Create TeamMember directly (replaces User + OrganizationUser + HRProfile)
+  // Note: TeamMemberRole (ADMIN/MEMBER) controls dashboard access
+  //       approvalRole controls who can approve requests
   const member = await prisma.teamMember.create({
     data: {
       name,
       email: finalEmail,
-      role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+      role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER', // Dashboard access: ADMIN → /admin, MEMBER → /employee
+      approvalRole: role, // Approval authority: MANAGER, HR_MANAGER, FINANCE_MANAGER, etc.
       isEmployee,
       canLogin,
       isOnWps: isEmployee ? isOnWps : false, // Only set WPS for employees

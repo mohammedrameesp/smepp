@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Durj - User & Role System</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1 { color: #1e293b; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
+    h2 { color: #334155; margin-top: 30px; }
+    h3 { color: #475569; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+    th { background: #f1f5f9; font-weight: 600; }
+    tr:nth-child(even) { background: #f8fafc; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .admin { background: #fef3c7; color: #92400e; }
+    .member { background: #dbeafe; color: #1e40af; }
+    .manager { background: #d1fae5; color: #065f46; }
+    .deprecated { background: #fee2e2; color: #991b1b; }
+    .core { background: #e0e7ff; color: #3730a3; }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    .note { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px; margin: 15px 0; }
+    .diagram { background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin: 20px 0; font-family: monospace; }
+  </style>
+</head>
+<body>
+
+<h1>Durj User & Role System</h1>
+
+<h2>Overview: Two Authentication Contexts</h2>
+
+<div class="diagram">
+<pre>
++-----------------------------------------------------------------------------+
+|                              AUTHENTICATION                                  |
++---------------------------------+-------------------------------------------+
+|     SUPER ADMIN (Platform)      |      TEAM MEMBER (Organization)           |
+|     -----------------------     |      ----------------------------         |
+|     Model: User                 |      Model: TeamMember                    |
+|     Table: users                |      Table: team_members                  |
+|     Multi-org access            |      Single-org access                    |
+|     isSuperAdmin = true         |      isTeamMember = true                  |
++---------------------------------+-------------------------------------------+
+</pre>
+</div>
+
+<h2>Model: User (Super Admins Only)</h2>
+<p>The <code>User</code> model is for <strong>platform-level super admins</strong> who can manage all organizations.</p>
+
+<table>
+  <tr>
+    <th>Field</th>
+    <th>Type</th>
+    <th>Purpose</th>
+  </tr>
+  <tr>
+    <td><code>id</code></td>
+    <td>String</td>
+    <td>Unique identifier</td>
+  </tr>
+  <tr>
+    <td><code>email</code></td>
+    <td>String</td>
+    <td>Login email (unique globally)</td>
+  </tr>
+  <tr>
+    <td><code>role</code></td>
+    <td>Role enum</td>
+    <td><span class="badge deprecated">DEPRECATED</span> Legacy role field</td>
+  </tr>
+  <tr>
+    <td><code>isSuperAdmin</code></td>
+    <td>Boolean</td>
+    <td><span class="badge admin">IMPORTANT</span> Platform admin flag</td>
+  </tr>
+</table>
+
+<h2>Model: TeamMember (Organization Users)</h2>
+<p>The <code>TeamMember</code> model is the <strong>main model for all organization users</strong>.</p>
+
+<table>
+  <tr>
+    <th>Field</th>
+    <th>Type</th>
+    <th>Purpose</th>
+  </tr>
+  <tr>
+    <td><code>id</code></td>
+    <td>String</td>
+    <td>Unique identifier</td>
+  </tr>
+  <tr>
+    <td><code>tenantId</code></td>
+    <td>String</td>
+    <td>Organization this member belongs to</td>
+  </tr>
+  <tr>
+    <td><code>email</code></td>
+    <td>String</td>
+    <td>Login email (unique per organization)</td>
+  </tr>
+  <tr>
+    <td><code>role</code></td>
+    <td>TeamMemberRole</td>
+    <td><span class="badge core">ACCESS CONTROL</span> ADMIN or MEMBER</td>
+  </tr>
+  <tr>
+    <td><code>approvalRole</code></td>
+    <td>Role</td>
+    <td><span class="badge manager">APPROVALS</span> For approval workflows</td>
+  </tr>
+  <tr>
+    <td><code>isOwner</code></td>
+    <td>Boolean</td>
+    <td>Organization creator (cannot be removed)</td>
+  </tr>
+  <tr>
+    <td><code>isEmployee</code></td>
+    <td>Boolean</td>
+    <td>Has HR features? (leave, payroll)</td>
+  </tr>
+  <tr>
+    <td><code>isOnWps</code></td>
+    <td>Boolean</td>
+    <td>Included in WPS (payroll) file?</td>
+  </tr>
+</table>
+
+<h2>Role Enums</h2>
+
+<h3>TeamMemberRole (Access Control)</h3>
+<p>Controls <strong>what pages/features</strong> a user can access.</p>
+
+<table>
+  <tr>
+    <th>Value</th>
+    <th>Access</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td><span class="badge admin">ADMIN</span></td>
+    <td>/admin/*</td>
+    <td>Full access to admin dashboard and all management features</td>
+  </tr>
+  <tr>
+    <td><span class="badge member">MEMBER</span></td>
+    <td>/employee/*</td>
+    <td>Self-service only: own profile, leave requests, payslips</td>
+  </tr>
+</table>
+
+<h3>Role (Approval Workflows)</h3>
+<p>Controls <strong>who can approve</strong> requests. Stored in <code>approvalRole</code> field.</p>
+
+<table>
+  <tr>
+    <th>Value</th>
+    <th>Can Approve</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td><span class="badge admin">ADMIN</span></td>
+    <td>Everything</td>
+    <td>Full approval authority</td>
+  </tr>
+  <tr>
+    <td><span class="badge manager">MANAGER</span></td>
+    <td>Leave, general requests</td>
+    <td>First-level approver</td>
+  </tr>
+  <tr>
+    <td><span class="badge manager">HR_MANAGER</span></td>
+    <td>Leave, HR requests</td>
+    <td>HR-specific approvals</td>
+  </tr>
+  <tr>
+    <td><span class="badge manager">FINANCE_MANAGER</span></td>
+    <td>Purchase, budget requests</td>
+    <td>Finance/budget approvals</td>
+  </tr>
+  <tr>
+    <td><span class="badge manager">DIRECTOR</span></td>
+    <td>High-value requests</td>
+    <td>Executive-level approvals</td>
+  </tr>
+  <tr>
+    <td><span class="badge member">EMPLOYEE</span></td>
+    <td>None</td>
+    <td>Cannot approve (default)</td>
+  </tr>
+</table>
+
+<h2>Session Structure</h2>
+
+<p>When a user logs in, the session contains:</p>
+
+<table>
+  <tr>
+    <th>Session Field</th>
+    <th>Source</th>
+    <th>Used For</th>
+  </tr>
+  <tr>
+    <td><code>session.user.teamMemberRole</code></td>
+    <td>TeamMember.role</td>
+    <td>Dashboard access control (ADMIN -> /admin, MEMBER -> /employee)</td>
+  </tr>
+  <tr>
+    <td><code>session.user.role</code></td>
+    <td>TeamMember.approvalRole</td>
+    <td>Approval workflow authorization</td>
+  </tr>
+  <tr>
+    <td><code>session.user.isTeamMember</code></td>
+    <td>Computed</td>
+    <td>true = org user, false = super admin</td>
+  </tr>
+  <tr>
+    <td><code>session.user.isOwner</code></td>
+    <td>TeamMember.isOwner</td>
+    <td>Organization creator flag</td>
+  </tr>
+  <tr>
+    <td><code>session.user.isEmployee</code></td>
+    <td>TeamMember.isEmployee</td>
+    <td>Has HR features enabled</td>
+  </tr>
+  <tr>
+    <td><code>session.user.isSuperAdmin</code></td>
+    <td>User.isSuperAdmin</td>
+    <td>Platform-level admin</td>
+  </tr>
+</table>
+
+<h2>Common Scenarios</h2>
+
+<div class="note">
+  <strong>Scenario 1: Owner who is also an Employee</strong><br>
+  The first user who signs up and creates an organization can be both admin AND employee.
+  <ul>
+    <li><code>role = ADMIN</code> (TeamMemberRole) -> Can access /admin</li>
+    <li><code>isEmployee = true</code> -> Has HR profile, leave balances</li>
+    <li><code>isOnWps = true</code> -> Included in payroll</li>
+    <li><code>approvalRole = ADMIN</code> -> Can approve all requests</li>
+  </ul>
+</div>
+
+<div class="note">
+  <strong>Scenario 2: Manager who approves leave</strong><br>
+  A team lead who manages employees and approves their leave.
+  <ul>
+    <li><code>role = MEMBER</code> (TeamMemberRole) -> Accesses /employee</li>
+    <li><code>approvalRole = MANAGER</code> -> Can approve leave requests</li>
+    <li><code>isEmployee = true</code> -> Has own HR profile too</li>
+  </ul>
+</div>
+
+<div class="note">
+  <strong>Scenario 3: Regular Employee</strong><br>
+  A staff member with no admin or approval rights.
+  <ul>
+    <li><code>role = MEMBER</code> (TeamMemberRole) -> Accesses /employee only</li>
+    <li><code>approvalRole = EMPLOYEE</code> -> Cannot approve anything</li>
+    <li><code>isEmployee = true</code> -> Has HR profile, can request leave</li>
+  </ul>
+</div>
+
+<h2>Access Control Flow</h2>
+
+<div class="diagram">
+<pre>
+User Login
+    |
+    v
++-------------------------------------+
+|  Is isSuperAdmin = true?            |
++-------------------+-----------------+
+                    |
+            +-------+-------+
+            v               v
+          YES              NO
+            |               |
+            v               v
+      /super-admin    +-------------------------------------+
+                      |  teamMemberRole = ?                 |
+                      +-------------------+-----------------+
+                                          |
+                                  +-------+-------+
+                                  v               v
+                                ADMIN           MEMBER
+                                  |               |
+                                  v               v
+                              /admin          /employee
+                                  |               |
+                                  v               v
+                      +-------------------------------------------+
+                      |  For approvals, check approvalRole        |
+                      |  (MANAGER, HR_MANAGER, etc.)              |
+                      +-------------------------------------------+
+</pre>
+</div>
+
+<h2>Assigning Roles in the UI</h2>
+
+<p>Approval roles can be assigned when creating or editing employees:</p>
+
+<h3>Creating a New Employee</h3>
+<p>Navigate to <code>/admin/employees/new</code> and select the Approval Role:</p>
+<ul>
+  <li><strong>Employee:</strong> No approval authority</li>
+  <li><strong>Manager:</strong> Can approve leave requests</li>
+  <li><strong>HR Manager:</strong> Can approve HR-related requests</li>
+  <li><strong>Finance Manager:</strong> Can approve purchase/budget requests</li>
+  <li><strong>Director:</strong> Can approve high-value requests</li>
+  <li><strong>Admin:</strong> Full approval authority + admin dashboard access</li>
+</ul>
+
+<h3>Editing an Employee's Role</h3>
+<p>Navigate to <code>/admin/employees/[id]/edit</code> to change an employee's approval role.</p>
+
+<div class="note">
+  <strong>Note:</strong> Only selecting "Admin" gives access to the /admin dashboard. All other roles (Manager, HR Manager, etc.) access the /employee dashboard but can still approve requests.
+</div>
+
+<h2>API Handler Usage</h2>
+
+<h3>Access Control (Dashboard)</h3>
+<pre><code>// Require ADMIN teamMemberRole
+export const GET = withErrorHandler(handler, {
+  requireAdmin: true
+});
+</code></pre>
+
+<h3>Approval Workflows</h3>
+<pre><code>// Require specific approval roles
+import { Role } from '@prisma/client';
+
+export const POST = withErrorHandler(handler, {
+  requireApproverRole: [Role.ADMIN, Role.MANAGER, Role.HR_MANAGER],
+  requireModule: 'leave'
+});
+</code></pre>
+
+<h2>Summary Table</h2>
+
+<table>
+  <tr>
+    <th>Term</th>
+    <th>Model</th>
+    <th>Field</th>
+    <th>Values</th>
+    <th>Purpose</th>
+  </tr>
+  <tr>
+    <td><strong>User</strong></td>
+    <td>User</td>
+    <td>-</td>
+    <td>-</td>
+    <td>Super admins only (platform-level)</td>
+  </tr>
+  <tr>
+    <td><strong>TeamMember</strong></td>
+    <td>TeamMember</td>
+    <td>-</td>
+    <td>-</td>
+    <td>Organization users (main model)</td>
+  </tr>
+  <tr>
+    <td><strong>Admin</strong></td>
+    <td>TeamMember</td>
+    <td>role</td>
+    <td>ADMIN</td>
+    <td>Full access to /admin dashboard</td>
+  </tr>
+  <tr>
+    <td><strong>Member</strong></td>
+    <td>TeamMember</td>
+    <td>role</td>
+    <td>MEMBER</td>
+    <td>Self-service /employee only</td>
+  </tr>
+  <tr>
+    <td><strong>Employee</strong></td>
+    <td>TeamMember</td>
+    <td>isEmployee</td>
+    <td>true/false</td>
+    <td>Has HR features (leave, payroll)</td>
+  </tr>
+  <tr>
+    <td><strong>Approver</strong></td>
+    <td>TeamMember</td>
+    <td>approvalRole</td>
+    <td>MANAGER, HR_MANAGER, etc.</td>
+    <td>Can approve requests</td>
+  </tr>
+</table>
+
+</body>
+</html>
