@@ -58,7 +58,8 @@ export function SetupWizardClient() {
   const [orgName, setOrgName] = useState('');
 
   // Step 2: Currencies
-  const [currencies, setCurrencies] = useState<string[]>(['USD']);
+  const [primaryCurrency, setPrimaryCurrency] = useState('QAR');
+  const [additionalCurrencies, setAdditionalCurrencies] = useState<string[]>([]);
 
   // Step 3: Logo
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -66,6 +67,7 @@ export function SetupWizardClient() {
 
   // Step 4: Colors
   const [primaryColor, setPrimaryColor] = useState('#0f172a');
+  const [secondaryColor, setSecondaryColor] = useState('#334155');
 
   // Step 5: Team invites
   const [teamInvites, setTeamInvites] = useState<TeamInvite[]>([]);
@@ -172,7 +174,9 @@ export function SetupWizardClient() {
           name: orgName.trim(),
           enabledModules: selectedModules,
           primaryColor,
-          additionalCurrencies: currencies,
+          secondaryColor,
+          currency: primaryCurrency,
+          additionalCurrencies,
         }),
       });
 
@@ -318,7 +322,14 @@ export function SetupWizardClient() {
       case 1:
         return <OrgNameStep value={orgName} onChange={setOrgName} />;
       case 2:
-        return <CurrencyStep selected={currencies} onChange={setCurrencies} />;
+        return (
+          <CurrencyStep
+            primaryCurrency={primaryCurrency}
+            additionalCurrencies={additionalCurrencies}
+            onPrimaryChange={setPrimaryCurrency}
+            onAdditionalChange={setAdditionalCurrencies}
+          />
+        );
       case 3:
         return (
           <LogoStep
@@ -334,7 +345,9 @@ export function SetupWizardClient() {
         return (
           <ColorStep
             primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
             onPrimaryChange={setPrimaryColor}
+            onSecondaryChange={setSecondaryColor}
             orgName={orgName}
             logoPreview={logoPreview}
           />
@@ -358,7 +371,8 @@ export function SetupWizardClient() {
             orgName={orgName}
             selectedModules={selectedModules}
             inviteCount={teamInvites.length}
-            currencies={currencies}
+            primaryCurrency={primaryCurrency}
+            additionalCurrencies={additionalCurrencies}
           />
         );
       default:

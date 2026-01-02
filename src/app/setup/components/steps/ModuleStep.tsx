@@ -45,12 +45,12 @@ const DEFAULT_MODULES: Module[] = [
   { id: 'suppliers', name: 'Suppliers', description: 'Vendor management', icon: Building },
 ];
 
-// Add-on modules: optional features
+// Add-on modules: optional features (Company Documents first as requested)
 const ADDON_MODULES: Module[] = [
+  { id: 'documents', name: 'Company Documents', description: 'Document management', icon: FileText },
   { id: 'leave', name: 'Leave Management', description: 'Leave requests & balances', icon: Calendar },
   { id: 'payroll', name: 'Payroll', description: 'Salary & payslips', icon: DollarSign },
   { id: 'purchase-requests', name: 'Purchase Requests', description: 'Procurement workflow', icon: ShoppingCart },
-  { id: 'documents', name: 'Company Documents', description: 'Document management', icon: FileText },
 ];
 
 const SECTIONS: Section[] = [

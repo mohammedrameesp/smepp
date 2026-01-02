@@ -13,7 +13,8 @@ interface WelcomeStepProps {
   orgName: string;
   selectedModules: string[];
   inviteCount: number;
-  currencies: string[];
+  primaryCurrency: string;
+  additionalCurrencies: string[];
   isRedirecting?: boolean;
 }
 
@@ -32,7 +33,8 @@ export function WelcomeStep({
   orgName,
   selectedModules,
   inviteCount,
-  currencies,
+  primaryCurrency,
+  additionalCurrencies,
   isRedirecting = true,
 }: WelcomeStepProps) {
   const moduleNames = selectedModules
@@ -133,8 +135,8 @@ export function WelcomeStep({
                 Currencies configured
               </p>
               <p className="text-xs text-slate-500">
-                QAR (Primary)
-                {currencies.length > 0 && `, ${currencies.join(', ')}`}
+                {primaryCurrency} (Primary)
+                {additionalCurrencies.length > 0 && `, ${additionalCurrencies.join(', ')}`}
               </p>
             </div>
           </div>

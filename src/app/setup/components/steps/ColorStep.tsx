@@ -11,12 +11,14 @@ import { Input } from '@/components/ui/input';
 
 interface ColorStepProps {
   primaryColor: string;
+  secondaryColor: string;
   onPrimaryChange: (color: string) => void;
+  onSecondaryChange: (color: string) => void;
   orgName: string;
   logoPreview?: string | null;
 }
 
-const COLOR_PRESETS = [
+const PRIMARY_PRESETS = [
   { name: 'Slate', value: '#0f172a' },
   { name: 'Blue', value: '#2563eb' },
   { name: 'Indigo', value: '#4f46e5' },
@@ -31,9 +33,26 @@ const COLOR_PRESETS = [
   { name: 'Cyan', value: '#0891b2' },
 ];
 
+const SECONDARY_PRESETS = [
+  { name: 'Slate', value: '#334155' },
+  { name: 'Blue', value: '#3b82f6' },
+  { name: 'Indigo', value: '#6366f1' },
+  { name: 'Purple', value: '#a855f7' },
+  { name: 'Pink', value: '#ec4899' },
+  { name: 'Rose', value: '#f43f5e' },
+  { name: 'Red', value: '#ef4444' },
+  { name: 'Orange', value: '#f97316' },
+  { name: 'Amber', value: '#f59e0b' },
+  { name: 'Green', value: '#22c55e' },
+  { name: 'Teal', value: '#14b8a6' },
+  { name: 'Cyan', value: '#06b6d4' },
+];
+
 export function ColorStep({
   primaryColor,
+  secondaryColor,
   onPrimaryChange,
+  onSecondaryChange,
   orgName,
   logoPreview,
 }: ColorStepProps) {
@@ -44,21 +63,21 @@ export function ColorStep({
           <Palette className="w-8 h-8 text-slate-600" />
         </div>
         <h1 className="text-3xl font-bold text-slate-900 mb-3">
-          Choose your brand color
+          Choose your brand colors
         </h1>
         <p className="text-slate-600">
-          This color will be used for buttons and accents
+          These colors will be used for buttons, accents, and gradients
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-8">
-        {/* Color presets grid */}
-        <div className="mb-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-8 space-y-8">
+        {/* Primary Color */}
+        <div>
           <p className="text-sm font-medium text-slate-700 mb-3">
-            Pick a preset
+            Primary color
           </p>
-          <div className="grid grid-cols-6 gap-3">
-            {COLOR_PRESETS.map((color) => (
+          <div className="grid grid-cols-6 gap-3 mb-4">
+            {PRIMARY_PRESETS.map((color) => (
               <button
                 key={color.value}
                 onClick={() => onPrimaryChange(color.value)}
@@ -76,16 +95,9 @@ export function ColorStep({
               </button>
             ))}
           </div>
-        </div>
-
-        {/* Custom color input */}
-        <div className="mb-6">
-          <p className="text-sm font-medium text-slate-700 mb-3">
-            Or enter a custom color
-          </p>
           <div className="flex items-center gap-3">
             <div
-              className="w-12 h-12 rounded-xl border-2 border-white shadow-md flex-shrink-0"
+              className="w-10 h-10 rounded-xl border-2 border-white shadow-md flex-shrink-0"
               style={{ backgroundColor: primaryColor }}
             />
             <Input
@@ -93,6 +105,45 @@ export function ColorStep({
               value={primaryColor}
               onChange={(e) => onPrimaryChange(e.target.value)}
               placeholder="#0f172a"
+              className="flex-1 font-mono text-sm bg-slate-50"
+            />
+          </div>
+        </div>
+
+        {/* Secondary Color */}
+        <div>
+          <p className="text-sm font-medium text-slate-700 mb-3">
+            Secondary color <span className="text-slate-400 font-normal">(optional)</span>
+          </p>
+          <div className="grid grid-cols-6 gap-3 mb-4">
+            {SECONDARY_PRESETS.map((color) => (
+              <button
+                key={color.value}
+                onClick={() => onSecondaryChange(color.value)}
+                className={`relative w-10 h-10 rounded-lg transition-all ${
+                  secondaryColor === color.value
+                    ? 'ring-2 ring-slate-900 ring-offset-2 scale-110'
+                    : 'hover:scale-110'
+                }`}
+                style={{ backgroundColor: color.value }}
+                title={color.name}
+              >
+                {secondaryColor === color.value && (
+                  <Check className="w-5 h-5 text-white absolute inset-0 m-auto" />
+                )}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl border-2 border-white shadow-md flex-shrink-0"
+              style={{ backgroundColor: secondaryColor || primaryColor }}
+            />
+            <Input
+              type="text"
+              value={secondaryColor}
+              onChange={(e) => onSecondaryChange(e.target.value)}
+              placeholder="#334155"
               className="flex-1 font-mono text-sm bg-slate-50"
             />
           </div>
@@ -124,7 +175,11 @@ export function ColorStep({
             <div className="flex gap-2">
               <button
                 className="px-4 py-2 text-white rounded-lg text-sm font-medium transition-opacity hover:opacity-90"
-                style={{ backgroundColor: primaryColor }}
+                style={{
+                  background: secondaryColor
+                    ? `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`
+                    : primaryColor,
+                }}
               >
                 Primary Button
               </button>

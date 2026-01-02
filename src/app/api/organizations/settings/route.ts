@@ -18,14 +18,15 @@ const VALID_MODULES = [
   'documents',
 ];
 
-// Valid additional currencies
-const VALID_CURRENCIES = ['USD', 'EUR', 'GBP', 'SAR', 'AED', 'KWD'];
+// Valid currencies
+const VALID_CURRENCIES = ['QAR', 'USD', 'EUR', 'GBP', 'SAR', 'AED', 'KWD'];
 
 const updateSettingsSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   enabledModules: z.array(z.string()).optional(),
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  currency: z.string().optional(), // Primary currency
   additionalCurrencies: z.array(z.string()).optional(),
 });
 
@@ -46,6 +47,7 @@ export async function GET() {
         enabledModules: true,
         primaryColor: true,
         secondaryColor: true,
+        currency: true,
         additionalCurrencies: true,
         onboardingCompleted: true,
         onboardingStep: true,
@@ -90,7 +92,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { name, enabledModules, primaryColor, secondaryColor, additionalCurrencies } = result.data;
+    const { name, enabledModules, primaryColor, secondaryColor, currency, additionalCurrencies } = result.data;
 
     // Validate modules
     if (enabledModules) {
@@ -103,7 +105,15 @@ export async function PUT(request: NextRequest) {
       }
     }
 
-    // Validate currencies
+    // Validate primary currency
+    if (currency && !VALID_CURRENCIES.includes(currency)) {
+      return NextResponse.json(
+        { error: `Invalid currency: ${currency}` },
+        { status: 400 }
+      );
+    }
+
+    // Validate additional currencies
     if (additionalCurrencies) {
       const invalidCurrencies = additionalCurrencies.filter(c => !VALID_CURRENCIES.includes(c));
       if (invalidCurrencies.length > 0) {
@@ -122,6 +132,7 @@ export async function PUT(request: NextRequest) {
         ...(enabledModules && { enabledModules }),
         ...(primaryColor && { primaryColor }),
         ...(secondaryColor && { secondaryColor }),
+        ...(currency && { currency }),
         ...(additionalCurrencies && { additionalCurrencies }),
         // Mark onboarding as complete when settings are saved
         onboardingCompleted: true,
@@ -132,6 +143,7 @@ export async function PUT(request: NextRequest) {
         enabledModules: true,
         primaryColor: true,
         secondaryColor: true,
+        currency: true,
         additionalCurrencies: true,
         onboardingCompleted: true,
       },

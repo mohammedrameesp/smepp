@@ -2,18 +2,21 @@
 
 /**
  * @file CurrencyStep.tsx
- * @description Step 2 - Additional currencies selection (skippable)
+ * @description Step 2 - Currency selection (primary + additional)
  * @module setup/steps
  */
 
 import { Coins, Check } from 'lucide-react';
 
 interface CurrencyStepProps {
-  selected: string[];
-  onChange: (currencies: string[]) => void;
+  primaryCurrency: string;
+  additionalCurrencies: string[];
+  onPrimaryChange: (currency: string) => void;
+  onAdditionalChange: (currencies: string[]) => void;
 }
 
-const CURRENCIES = [
+const ALL_CURRENCIES = [
+  { code: 'QAR', name: 'Qatari Riyal', flag: '🇶🇦' },
   { code: 'USD', name: 'US Dollar', flag: '🇺🇸' },
   { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
   { code: 'GBP', name: 'British Pound', flag: '🇬🇧' },
@@ -22,14 +25,33 @@ const CURRENCIES = [
   { code: 'KWD', name: 'Kuwaiti Dinar', flag: '🇰🇼' },
 ];
 
-export function CurrencyStep({ selected, onChange }: CurrencyStepProps) {
-  const toggleCurrency = (code: string) => {
-    onChange(
-      selected.includes(code)
-        ? selected.filter((c) => c !== code)
-        : [...selected, code]
+export function CurrencyStep({
+  primaryCurrency,
+  additionalCurrencies,
+  onPrimaryChange,
+  onAdditionalChange,
+}: CurrencyStepProps) {
+  const toggleAdditional = (code: string) => {
+    // Can't add primary as additional
+    if (code === primaryCurrency) return;
+
+    onAdditionalChange(
+      additionalCurrencies.includes(code)
+        ? additionalCurrencies.filter((c) => c !== code)
+        : [...additionalCurrencies, code]
     );
   };
+
+  const selectPrimary = (code: string) => {
+    onPrimaryChange(code);
+    // Remove from additional if it was there
+    if (additionalCurrencies.includes(code)) {
+      onAdditionalChange(additionalCurrencies.filter((c) => c !== code));
+    }
+  };
+
+  // Get additional currencies excluding primary
+  const availableAdditional = ALL_CURRENCIES.filter(c => c.code !== primaryCurrency);
 
   return (
     <div className="max-w-lg mx-auto">
@@ -38,41 +60,66 @@ export function CurrencyStep({ selected, onChange }: CurrencyStepProps) {
           <Coins className="w-8 h-8 text-slate-600" />
         </div>
         <h1 className="text-3xl font-bold text-slate-900 mb-3">
-          Need additional currencies?
+          Select your currencies
         </h1>
         <p className="text-slate-600">
-          QAR is your primary currency. Select any additional currencies you use.
+          Choose your primary currency and any additional currencies you use
         </p>
       </div>
 
-      {/* Primary Currency - Fixed */}
+      {/* Primary Currency Selection */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">🇶🇦</span>
-            <div>
-              <p className="font-medium text-slate-900">QAR - Qatari Riyal</p>
-              <p className="text-sm text-slate-500">Primary currency</p>
-            </div>
-          </div>
-          <span className="text-xs bg-slate-900 text-white px-3 py-1 rounded-full font-medium">
-            Primary
-          </span>
+        <p className="text-sm font-medium text-slate-700 mb-4">
+          Primary currency
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {ALL_CURRENCIES.map((currency) => {
+            const isSelected = primaryCurrency === currency.code;
+            return (
+              <button
+                key={currency.code}
+                onClick={() => selectPrimary(currency.code)}
+                className={`flex items-center gap-3 p-4 border-2 rounded-xl transition-all text-left ${
+                  isSelected
+                    ? 'border-slate-900 bg-slate-50'
+                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <span className="text-xl">{currency.flag}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-slate-900 text-sm">
+                    {currency.code}
+                  </p>
+                  <p className="text-xs text-slate-500 truncate">
+                    {currency.name}
+                  </p>
+                </div>
+                {isSelected && (
+                  <span className="text-xs bg-slate-900 text-white px-2 py-0.5 rounded-full font-medium">
+                    Primary
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Additional Currencies */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
         <p className="text-sm font-medium text-slate-700 mb-4">
-          Additional currencies (optional)
+          Additional currencies <span className="text-slate-400 font-normal">(optional)</span>
+        </p>
+        <p className="text-xs text-slate-500 mb-4">
+          Select currencies you accept in addition to {primaryCurrency}. You can set exchange rates in settings.
         </p>
         <div className="grid grid-cols-2 gap-3">
-          {CURRENCIES.map((currency) => {
-            const isSelected = selected.includes(currency.code);
+          {availableAdditional.map((currency) => {
+            const isSelected = additionalCurrencies.includes(currency.code);
             return (
               <button
                 key={currency.code}
-                onClick={() => toggleCurrency(currency.code)}
+                onClick={() => toggleAdditional(currency.code)}
                 className={`flex items-center gap-3 p-4 border-2 rounded-xl transition-all text-left ${
                   isSelected
                     ? 'border-slate-900 bg-slate-50'

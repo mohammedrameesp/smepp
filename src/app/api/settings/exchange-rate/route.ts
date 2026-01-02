@@ -3,10 +3,21 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 
-const EXCHANGE_RATE_KEY = 'USD_TO_QAR_RATE';
-const DEFAULT_RATE = '3.64';
+// Default rates for common currencies to primary currency (QAR)
+const DEFAULT_RATES: Record<string, string> = {
+  USD: '3.64',
+  EUR: '3.96',
+  GBP: '4.60',
+  SAR: '0.97',
+  AED: '0.99',
+  KWD: '11.85',
+};
 
-export async function GET() {
+function getExchangeRateKey(currency: string, primaryCurrency: string): string {
+  return `${currency}_TO_${primaryCurrency}_RATE`;
+}
+
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user.organizationId) {
@@ -14,17 +25,29 @@ export async function GET() {
     }
 
     const tenantId = session.user.organizationId;
+    const { searchParams } = new URL(request.url);
+    const currency = searchParams.get('currency') || 'USD';
+
+    // Get organization's primary currency
+    const org = await prisma.organization.findUnique({
+      where: { id: tenantId },
+      select: { currency: true },
+    });
+    const primaryCurrency = org?.currency || 'QAR';
 
     // Get exchange rate from database (tenant-scoped)
+    const key = getExchangeRateKey(currency, primaryCurrency);
     const setting = await prisma.systemSettings.findUnique({
       where: {
-        tenantId_key: { tenantId, key: EXCHANGE_RATE_KEY },
+        tenantId_key: { tenantId, key },
       },
     });
 
-    const rate = setting?.value || DEFAULT_RATE;
+    const rate = setting?.value || DEFAULT_RATES[currency] || '1.00';
 
     return NextResponse.json({
+      currency,
+      primaryCurrency,
       rate: parseFloat(rate),
       lastUpdated: setting?.updatedAt || null,
       updatedById: setting?.updatedById || null,
@@ -45,7 +68,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { rate } = await request.json();
+    const { currency, rate } = await request.json();
 
     // Validate rate
     const rateNum = parseFloat(rate);
@@ -58,15 +81,25 @@ export async function PUT(request: NextRequest) {
 
     const tenantId = session.user.organizationId!;
 
+    // Get organization's primary currency
+    const org = await prisma.organization.findUnique({
+      where: { id: tenantId },
+      select: { currency: true },
+    });
+    const primaryCurrency = org?.currency || 'QAR';
+
+    // Get key for this currency pair
+    const currencyCode = currency || 'USD';
+    const key = getExchangeRateKey(currencyCode, primaryCurrency);
+
     // Update or create setting (tenant-scoped)
-    // Note: session.user.id is TeamMember ID when isTeamMember is true
     const memberId = session.user.isTeamMember ? session.user.id : null;
     const setting = await prisma.systemSettings.upsert({
       where: {
-        tenantId_key: { tenantId, key: EXCHANGE_RATE_KEY },
+        tenantId_key: { tenantId, key },
       },
       create: {
-        key: EXCHANGE_RATE_KEY,
+        key,
         value: rateNum.toString(),
         updatedById: memberId,
         tenantId,
@@ -90,6 +123,8 @@ export async function PUT(request: NextRequest) {
         entityType: 'SystemSettings',
         entityId: setting.id,
         payload: {
+          currency: currencyCode,
+          primaryCurrency,
           oldRate: rate,
           newRate: rateNum,
         },
@@ -99,6 +134,8 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      currency: currencyCode,
+      primaryCurrency,
       rate: parseFloat(setting.value),
       lastUpdated: setting.updatedAt,
       updatedBy: setting.updatedBy?.name || setting.updatedBy?.email,

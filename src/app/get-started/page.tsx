@@ -50,8 +50,7 @@ function generateSlug(name: string): string {
   return name
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+    .replace(/[^a-z0-9]/g, '') // Remove all non-alphanumeric (including spaces)
     .slice(0, 63);
 }
 
