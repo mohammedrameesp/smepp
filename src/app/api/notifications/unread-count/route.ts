@@ -25,5 +25,5 @@ export const GET = withErrorHandler(
 
     return NextResponse.json({ count });
   },
-  { requireAuth: true, skipLogging: true }
+  { requireAuth: true, requireTenant: false, skipLogging: true }
 );
