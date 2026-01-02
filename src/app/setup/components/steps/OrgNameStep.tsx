@@ -10,34 +10,13 @@ import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Building2, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { generateCodePrefixFromName } from '@/lib/utils/code-prefix';
 
 interface OrgNameStepProps {
   value: string;
   onChange: (value: string) => void;
   codePrefix: string;
   onCodePrefixChange: (value: string) => void;
-}
-
-/**
- * Generate a 3-letter code prefix from an organization name (client-side)
- */
-function generateCodePrefixFromName(orgName: string): string {
-  const cleanName = orgName.trim().replace(/[^a-zA-Z0-9\s]/g, '');
-  const words = cleanName.split(/\s+/).filter((w) => w.length > 0);
-
-  let prefix: string;
-
-  if (words.length >= 3) {
-    prefix = words.slice(0, 3).map((w) => w[0]).join('');
-  } else if (words.length === 2) {
-    prefix = words[0].substring(0, 2) + words[1][0];
-  } else if (words.length === 1) {
-    prefix = words[0].substring(0, 3);
-  } else {
-    prefix = 'ORG';
-  }
-
-  return prefix.toUpperCase().padEnd(3, 'X');
 }
 
 export function OrgNameStep({

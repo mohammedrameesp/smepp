@@ -206,13 +206,13 @@ export async function resolveTenantFromSubdomain(
 
 /**
  * Generate a URL-friendly slug from organization name
+ * Removes all non-alphanumeric characters (including spaces) for cleaner URLs
  */
 export function generateSlug(name: string): string {
   return name
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with hyphens
-    .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+    .replace(/[^a-z0-9]/g, '') // Remove ALL non-alphanumeric (including spaces)
     .slice(0, 63); // Max subdomain length
 }
 
@@ -235,10 +235,10 @@ export function validateSlug(slug: string): {
     return { valid: false, error: 'Slug must be 63 characters or less' };
   }
 
-  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(slug)) {
+  if (!/^[a-z0-9]+$/.test(slug)) {
     return {
       valid: false,
-      error: 'Slug must start and end with a letter or number, and contain only lowercase letters, numbers, and hyphens',
+      error: 'Slug must contain only lowercase letters and numbers',
     };
   }
 

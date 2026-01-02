@@ -32,6 +32,8 @@ import {
   FileText,
   Boxes,
 } from 'lucide-react';
+import { generateSlug } from '@/lib/multi-tenant/subdomain';
+import { generateCodePrefixFromName } from '@/lib/utils/code-prefix';
 
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 
@@ -59,24 +61,17 @@ const COMPANY_SIZES = [
   { value: '500+', label: '500+ employees' },
 ];
 
-// Available modules
+// Available modules (Company Documents first, then others alphabetically by category)
 const MODULES = [
+  { id: 'documents', label: 'Company Documents', description: 'Manage company documents and policies', defaultEnabled: true },
   { id: 'assets', label: 'Assets', description: 'Track and manage company assets', defaultEnabled: true },
   { id: 'subscriptions', label: 'Subscriptions', description: 'Manage software subscriptions', defaultEnabled: true },
   { id: 'suppliers', label: 'Suppliers', description: 'Vendor management', defaultEnabled: true },
   { id: 'employees', label: 'Employees', description: 'HR and employee profiles', defaultEnabled: false },
   { id: 'leave', label: 'Leave Management', description: 'Leave requests and approvals', defaultEnabled: false },
   { id: 'payroll', label: 'Payroll', description: 'Salary and payroll processing', defaultEnabled: false },
+  { id: 'purchase-requests', label: 'Purchase Requests', description: 'Manage purchase approvals', defaultEnabled: false },
 ];
-
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 63);
-}
 
 export default function CreateOrganizationPage() {
   const router = useRouter();
@@ -91,6 +86,8 @@ export default function CreateOrganizationPage() {
   const [organizationName, setOrganizationName] = useState('');
   const [subdomain, setSubdomain] = useState('');
   const [subdomainEdited, setSubdomainEdited] = useState(false);
+  const [codePrefix, setCodePrefix] = useState('');
+  const [codePrefixEdited, setCodePrefixEdited] = useState(false);
   const [industry, setIndustry] = useState('');
   const [companySize, setCompanySize] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
@@ -108,12 +105,24 @@ export default function CreateOrganizationPage() {
     error?: string;
   } | null>(null);
 
-  // Auto-generate subdomain from org name
+  // Email availability check
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<{
+    available: boolean;
+    error?: string;
+  } | null>(null);
+
+  // Auto-generate subdomain and code prefix from org name
   useEffect(() => {
-    if (!subdomainEdited && organizationName) {
-      setSubdomain(generateSlug(organizationName));
+    if (organizationName) {
+      if (!subdomainEdited) {
+        setSubdomain(generateSlug(organizationName));
+      }
+      if (!codePrefixEdited) {
+        setCodePrefix(generateCodePrefixFromName(organizationName));
+      }
     }
-  }, [organizationName, subdomainEdited]);
+  }, [organizationName, subdomainEdited, codePrefixEdited]);
 
   // Check subdomain availability
   const checkSubdomain = useCallback(async (slug: string) => {
@@ -148,11 +157,50 @@ export default function CreateOrganizationPage() {
     return () => clearTimeout(timer);
   }, [subdomain, checkSubdomain]);
 
+  // Check email availability
+  const checkEmailAvailability = useCallback(async (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      setEmailStatus(null);
+      return;
+    }
+
+    setCheckingEmail(true);
+    try {
+      const response = await fetch(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
+      const data = await response.json();
+      setEmailStatus({
+        available: data.available,
+        error: data.available ? undefined : 'This email is already registered',
+      });
+    } catch {
+      setEmailStatus(null);
+    } finally {
+      setCheckingEmail(false);
+    }
+  }, []);
+
+  // Debounced email check
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (adminEmail) {
+        checkEmailAvailability(adminEmail.trim().toLowerCase());
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [adminEmail, checkEmailAvailability]);
+
   const handleSubdomainChange = (value: string) => {
-    const cleaned = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    const cleaned = value.toLowerCase().replace(/[^a-z0-9]/g, '');
     setSubdomain(cleaned);
     setSubdomainEdited(true);
     setSubdomainStatus(null);
+  };
+
+  const handleCodePrefixChange = (value: string) => {
+    const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3);
+    setCodePrefix(cleaned);
+    setCodePrefixEdited(true);
   };
 
   const handleModuleToggle = (moduleId: string, checked: boolean) => {
@@ -181,9 +229,19 @@ export default function CreateOrganizationPage() {
       return;
     }
 
+    if (!/^[A-Z0-9]{3}$/.test(codePrefix)) {
+      setError('Organization code must be exactly 3 uppercase letters/numbers');
+      return;
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!adminEmail || !emailRegex.test(adminEmail.trim())) {
       setError('Please enter a valid email address');
+      return;
+    }
+
+    if (emailStatus && !emailStatus.available) {
+      setError('This email is already registered');
       return;
     }
 
@@ -197,6 +255,7 @@ export default function CreateOrganizationPage() {
         body: JSON.stringify({
           name: organizationName.trim(),
           slug: subdomain,
+          codePrefix,
           adminEmail: adminEmail.trim().toLowerCase(),
           adminName: adminName.trim() || undefined,
           industry: industry || undefined,
@@ -308,10 +367,13 @@ export default function CreateOrganizationPage() {
                   setOrganizationName('');
                   setSubdomain('');
                   setSubdomainEdited(false);
+                  setCodePrefix('');
+                  setCodePrefixEdited(false);
                   setIndustry('');
                   setCompanySize('');
                   setAdminEmail('');
                   setAdminName('');
+                  setEmailStatus(null);
                   setEnabledModules(MODULES.filter(m => m.defaultEnabled).map(m => m.id));
                   setInternalNotes('');
                   setInviteUrl(null);
@@ -429,6 +491,38 @@ export default function CreateOrganizationPage() {
                   {subdomainStatus.available
                     ? 'This subdomain is available!'
                     : subdomainStatus.error || 'This subdomain is not available'}
+                </p>
+              )}
+            </div>
+
+            {/* Organization Code */}
+            <div className="space-y-2">
+              <Label htmlFor="codePrefix" className="text-sm text-slate-700">
+                Organization Code <span className="text-red-500">*</span>
+                <span className="text-slate-400 font-normal ml-1">(3 letters)</span>
+              </Label>
+              <div className="relative max-w-[200px]">
+                <Input
+                  id="codePrefix"
+                  placeholder="ABC"
+                  value={codePrefix}
+                  onChange={(e) => handleCodePrefixChange(e.target.value)}
+                  maxLength={3}
+                  className="font-mono tracking-widest uppercase bg-slate-50 border-slate-200 focus:ring-slate-900 pr-10"
+                  required
+                  disabled={isLoading}
+                />
+                <div className="absolute right-3 top-3">
+                  {/^[A-Z0-9]{3}$/.test(codePrefix) ? (
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  ) : codePrefix.length > 0 ? (
+                    <AlertCircle className="h-4 w-4 text-amber-500" />
+                  ) : null}
+                </div>
+              </div>
+              {/^[A-Z0-9]{3}$/.test(codePrefix) && (
+                <p className="text-xs text-slate-500">
+                  Employee IDs will look like: <span className="font-mono font-medium">{codePrefix}-{new Date().getFullYear()}-001</span>
                 </p>
               )}
             </div>

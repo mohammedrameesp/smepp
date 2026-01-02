@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { detectServiceEmail } from '@/lib/utils/email-pattern-detection';
+import { generateSlug } from '@/lib/multi-tenant/subdomain';
 import './get-started.css';
 
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
@@ -45,14 +46,6 @@ const COMPANY_SIZES = [
   { value: '201-500', label: '201-500 employees' },
   { value: '500+', label: '500+ employees' },
 ];
-
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]/g, '') // Remove all non-alphanumeric (including spaces)
-    .slice(0, 63);
-}
 
 export default function GetStartedPage() {
   const [step, setStep] = useState(1);
