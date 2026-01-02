@@ -49,8 +49,8 @@ export function ExchangeRateSettings() {
       if (!orgResponse.ok) throw new Error('Failed to fetch organization');
       const orgData = await orgResponse.json();
 
-      const currency = orgData.currency || 'QAR';
-      const additionalCurrencies = orgData.additionalCurrencies || [];
+      const currency = orgData.organization?.currency || 'QAR';
+      const additionalCurrencies = orgData.organization?.additionalCurrencies || [];
       setPrimaryCurrency(currency);
 
       // Fetch exchange rates for each additional currency
