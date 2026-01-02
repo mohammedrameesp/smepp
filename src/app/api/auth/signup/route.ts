@@ -109,6 +109,21 @@ export async function POST(request: NextRequest) {
     const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.toLowerCase().trim();
     const isSuperAdmin = superAdminEmail === normalizedEmail;
 
+    // Pre-fetch data needed in transaction (to minimize transaction time)
+    let employeeCodePrefix: string | null = null;
+    let employeeCount = 0;
+    if (invitation && (invitation.isEmployee ?? true)) {
+      const year = new Date().getFullYear();
+      const orgPrefix = await getOrganizationCodePrefix(invitation.organizationId);
+      employeeCodePrefix = `${orgPrefix}-${year}`;
+      employeeCount = await prisma.teamMember.count({
+        where: {
+          tenantId: invitation.organizationId,
+          employeeCode: { startsWith: employeeCodePrefix },
+        },
+      });
+    }
+
     // Create user and optionally accept invitation in a transaction
     const userWithOrg = await prisma.$transaction(async (tx) => {
       // Create user
@@ -136,19 +151,10 @@ export async function POST(request: NextRequest) {
             ? TeamMemberRole.ADMIN
             : TeamMemberRole.MEMBER;
 
-        // Generate employee code for employees using organization's code prefix
+        // Generate employee code for employees using pre-fetched data
         let employeeCode: string | null = null;
-        if (finalIsEmployee) {
-          const year = new Date().getFullYear();
-          const orgPrefix = await getOrganizationCodePrefix(invitation.organizationId);
-          const prefix = `${orgPrefix}-${year}`;
-          const count = await tx.teamMember.count({
-            where: {
-              tenantId: invitation.organizationId,
-              employeeCode: { startsWith: prefix },
-            },
-          });
-          employeeCode = `${prefix}-${String(count + 1).padStart(3, '0')}`;
+        if (finalIsEmployee && employeeCodePrefix) {
+          employeeCode = `${employeeCodePrefix}-${String(employeeCount + 1).padStart(3, '0')}`;
         }
 
         // Create TeamMember (the unified model for org users)

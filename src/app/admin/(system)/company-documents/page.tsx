@@ -17,7 +17,6 @@ async function getCompanyDocuments(tenantId: string) {
     where: { tenantId },
     orderBy: { expiryDate: 'asc' },
     include: {
-      documentType: true,
       asset: {
         select: {
           id: true,
@@ -128,11 +127,12 @@ async function DocumentList({ tenantId }: { tenantId: string }) {
                   {documents.map((doc) => (
                     <tr key={doc.id} className="border-b last:border-0 hover:bg-slate-50">
                       <td className="py-3">
-                        <div className="font-medium text-slate-900">{doc.documentType.name}</div>
-                        <div className="text-xs text-slate-500">
-                          {doc.documentType.category}
-                          {doc.asset && ` • ${doc.asset.assetTag || doc.asset.brand}`}
-                        </div>
+                        <div className="font-medium text-slate-900">{doc.documentTypeName}</div>
+                        {doc.asset && (
+                          <div className="text-xs text-slate-500">
+                            {doc.asset.assetTag || doc.asset.brand}
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 text-sm text-slate-600">
                         {doc.referenceNumber || '-'}

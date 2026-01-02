@@ -211,7 +211,7 @@ export default function NewEmployeePage() {
                     <p className="text-sm text-red-500">{errors.email.message}</p>
                   )}
                   <p className="text-sm text-muted-foreground">
-                    Must match their OAuth provider email (Google/Microsoft)
+                    Used for login (email/password or Google/Microsoft)
                   </p>
                 </div>
               )}
@@ -308,20 +308,23 @@ export default function NewEmployeePage() {
                     )}
                   </div>
 
-                  {/* WPS Toggle - only show if payroll module is enabled */}
+                  {/* WPS Checkbox - only show if payroll module is enabled */}
                   {isPayrollEnabled && (
-                    <div className="flex items-center justify-between py-2">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="isOnWps" className="text-base font-medium">On WPS</Label>
+                    <div className="flex items-start gap-3 py-2">
+                      <Checkbox
+                        id="isOnWps"
+                        checked={isOnWps}
+                        onCheckedChange={(checked) => setValue('isOnWps', checked as boolean)}
+                        className="mt-0.5"
+                      />
+                      <div className="space-y-1">
+                        <Label htmlFor="isOnWps" className="text-base font-medium cursor-pointer">
+                          On WPS
+                        </Label>
                         <p className="text-sm text-muted-foreground">
                           Include in Wage Protection System payroll
                         </p>
                       </div>
-                      <Switch
-                        id="isOnWps"
-                        checked={isOnWps}
-                        onCheckedChange={(checked) => setValue('isOnWps', checked)}
-                      />
                     </div>
                   )}
                 </div>
@@ -358,50 +361,22 @@ export default function NewEmployeePage() {
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="EMPLOYEE">
-                      <div className="flex flex-col">
-                        <span>Employee</span>
-                        <span className="text-xs text-muted-foreground">{roleDescriptions.EMPLOYEE}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="MANAGER">
-                      <div className="flex flex-col">
-                        <span>Manager</span>
-                        <span className="text-xs text-muted-foreground">{roleDescriptions.MANAGER}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="HR_MANAGER">
-                      <div className="flex flex-col">
-                        <span>HR Manager</span>
-                        <span className="text-xs text-muted-foreground">{roleDescriptions.HR_MANAGER}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="FINANCE_MANAGER">
-                      <div className="flex flex-col">
-                        <span>Finance Manager</span>
-                        <span className="text-xs text-muted-foreground">{roleDescriptions.FINANCE_MANAGER}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="DIRECTOR">
-                      <div className="flex flex-col">
-                        <span>Director</span>
-                        <span className="text-xs text-muted-foreground">{roleDescriptions.DIRECTOR}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="ADMIN">
-                      <div className="flex flex-col">
-                        <span>Admin</span>
-                        <span className="text-xs text-muted-foreground">{roleDescriptions.ADMIN}</span>
-                      </div>
-                    </SelectItem>
+                    <SelectItem value="EMPLOYEE">Employee</SelectItem>
+                    <SelectItem value="MANAGER">Manager</SelectItem>
+                    <SelectItem value="HR_MANAGER">HR Manager</SelectItem>
+                    <SelectItem value="FINANCE_MANAGER">Finance Manager</SelectItem>
+                    <SelectItem value="DIRECTOR">Director</SelectItem>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.role && (
                   <p className="text-sm text-red-500">{errors.role.message}</p>
                 )}
-                <p className="text-sm text-muted-foreground">
-                  Determines what requests this person can approve
-                </p>
+                {role && (
+                  <p className="text-sm text-muted-foreground">
+                    {roleDescriptions[role]}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -411,7 +386,7 @@ export default function NewEmployeePage() {
             <Alert className="bg-slate-50 border-slate-200">
               <Building2 className="h-4 w-4 text-slate-600" />
               <AlertDescription className="text-slate-700">
-                This employee will authenticate using their organization email. On first login, they&apos;ll be prompted to complete their profile.
+                This employee can log in using the authentication method configured for your organization. On first login, they&apos;ll be prompted to complete their profile.
               </AlertDescription>
             </Alert>
           )}

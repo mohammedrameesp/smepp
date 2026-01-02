@@ -12,28 +12,23 @@ import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import {
   Settings,
-  ChevronDown,
   Search,
   User,
-  CreditCard,
   LogOut,
   HelpCircle,
-  Truck,
   BarChart3,
   Building2,
   Activity,
-  ShoppingCart,
 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { NotificationBell } from '@/components/domains/system/notifications';
-import { type BadgeCounts, getBadgeCount } from '@/components/layout/badge-types';
+import { type BadgeCounts } from '@/components/layout/badge-types';
 import { cn } from '@/lib/utils';
 
 interface AdminTopNavProps {
@@ -60,18 +55,6 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
     { label: 'Payroll', href: '/admin/payroll', moduleId: 'payroll' },
   ].filter(item => isModuleEnabled(item.moduleId));
 
-  // More dropdown items (grouped)
-  const moreItems = {
-    operations: [
-      { label: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard, moduleId: 'subscriptions' },
-      { label: 'Suppliers', href: '/admin/suppliers', icon: Truck, moduleId: 'suppliers', badgeKey: 'pendingSuppliers' },
-    ].filter(item => isModuleEnabled(item.moduleId)),
-    procurement: [
-      { label: 'Purchase Requests', href: '/admin/purchase-requests', icon: ShoppingCart, moduleId: 'purchase-requests', badgeKey: 'pendingPurchaseRequests' },
-    ].filter(item => isModuleEnabled(item.moduleId)),
-  };
-
-  const hasMoreItems = moreItems.operations.length > 0 || moreItems.procurement.length > 0;
 
 
   return (
@@ -129,54 +112,6 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
                   </Link>
                 )}
 
-                {/* More Dropdown */}
-                {hasMoreItems && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="px-3 py-1.5 text-sm font-medium text-slate-300 hover:text-white flex items-center gap-1 outline-none">
-                      More
-                      <ChevronDown className="h-3 w-3" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-56">
-                      {moreItems.operations.length > 0 && (
-                        <>
-                          <DropdownMenuLabel className="text-xs text-slate-400 font-normal">Operations</DropdownMenuLabel>
-                          {moreItems.operations.map((item) => (
-                            <DropdownMenuItem key={item.href} asChild>
-                              <Link href={item.href} className="flex items-center gap-2 cursor-pointer">
-                                <item.icon className="h-4 w-4 text-slate-400" />
-                                {item.label}
-                                {item.badgeKey && getBadgeCount(badgeCounts, item.badgeKey) ? (
-                                  <span className="ml-auto bg-rose-100 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-full">
-                                    {getBadgeCount(badgeCounts, item.badgeKey)}
-                                  </span>
-                                ) : null}
-                              </Link>
-                            </DropdownMenuItem>
-                          ))}
-                          <DropdownMenuSeparator />
-                        </>
-                      )}
-                      {moreItems.procurement.length > 0 && (
-                        <>
-                          <DropdownMenuLabel className="text-xs text-slate-400 font-normal">Procurement</DropdownMenuLabel>
-                          {moreItems.procurement.map((item) => (
-                            <DropdownMenuItem key={item.href} asChild>
-                              <Link href={item.href} className="flex items-center gap-2 cursor-pointer">
-                                <item.icon className="h-4 w-4 text-slate-400" />
-                                {item.label}
-                                {item.badgeKey && getBadgeCount(badgeCounts, item.badgeKey) ? (
-                                  <span className="ml-auto bg-rose-100 text-rose-600 text-[10px] px-1.5 py-0.5 rounded-full">
-                                    {getBadgeCount(badgeCounts, item.badgeKey)}
-                                  </span>
-                                ) : null}
-                              </Link>
-                            </DropdownMenuItem>
-                          ))}
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
               </nav>
             </div>
 

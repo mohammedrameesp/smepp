@@ -24,11 +24,6 @@ export const GET = withErrorHandler(async (
   // Use findFirst with tenantId to prevent cross-tenant access
   const documentType = await prisma.companyDocumentType.findFirst({
     where: { id, tenantId },
-    include: {
-      _count: {
-        select: { documents: true },
-      },
-    },
   });
 
   if (!documentType) {
@@ -38,13 +33,7 @@ export const GET = withErrorHandler(async (
     );
   }
 
-  return NextResponse.json({
-    documentType: {
-      ...documentType,
-      documentCount: documentType._count.documents,
-      _count: undefined,
-    },
-  });
+  return NextResponse.json({ documentType });
 }, { requireAuth: true, requireModule: 'documents' });
 
 // PUT /api/company-document-types/[id] - Update a document type
@@ -118,28 +107,12 @@ export const DELETE = withErrorHandler(async (
   // Use findFirst with tenantId to prevent cross-tenant access
   const existing = await prisma.companyDocumentType.findFirst({
     where: { id, tenantId },
-    include: {
-      _count: {
-        select: { documents: true },
-      },
-    },
   });
 
   if (!existing) {
     return NextResponse.json(
       { error: 'Document type not found' },
       { status: 404 }
-    );
-  }
-
-  // Prevent deletion if documents are using this type
-  if (existing._count.documents > 0) {
-    return NextResponse.json(
-      {
-        error: 'Cannot delete document type',
-        message: `This document type has ${existing._count.documents} document(s) associated with it. Please delete or reassign them first.`,
-      },
-      { status: 400 }
     );
   }
 

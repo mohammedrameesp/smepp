@@ -28,7 +28,6 @@ export const GET = withErrorHandler(async (
   const document = await prisma.companyDocument.findFirst({
     where: { id, tenantId },
     include: {
-      documentType: true,
       asset: {
         select: {
           id: true,
@@ -88,7 +87,6 @@ export const PUT = withErrorHandler(async (
   // Check if document exists within tenant
   const existing = await prisma.companyDocument.findFirst({
     where: { id, tenantId },
-    include: { documentType: true },
   });
 
   if (!existing) {
@@ -96,20 +94,6 @@ export const PUT = withErrorHandler(async (
       { error: 'Document not found' },
       { status: 404 }
     );
-  }
-
-  // If document type is being changed, validate it exists within tenant
-  if (validatedData.documentTypeId && validatedData.documentTypeId !== existing.documentTypeId) {
-    const documentType = await prisma.companyDocumentType.findFirst({
-      where: { id: validatedData.documentTypeId, tenantId },
-    });
-
-    if (!documentType) {
-      return NextResponse.json(
-        { error: 'Invalid document type' },
-        { status: 400 }
-      );
-    }
   }
 
   // If asset is being changed, validate it exists within tenant
@@ -128,7 +112,7 @@ export const PUT = withErrorHandler(async (
 
   // Build update data with proper type conversion
   const updateData: Record<string, unknown> = {};
-  if (validatedData.documentTypeId !== undefined) updateData.documentTypeId = validatedData.documentTypeId;
+  if (validatedData.documentTypeName !== undefined) updateData.documentTypeName = validatedData.documentTypeName;
   if (validatedData.referenceNumber !== undefined) updateData.referenceNumber = validatedData.referenceNumber || null;
   if (validatedData.expiryDate !== undefined) updateData.expiryDate = new Date(validatedData.expiryDate);
   if (validatedData.documentUrl !== undefined) updateData.documentUrl = validatedData.documentUrl || null;
@@ -140,7 +124,6 @@ export const PUT = withErrorHandler(async (
     where: { id },
     data: updateData,
     include: {
-      documentType: true,
       asset: {
         select: {
           id: true,
@@ -159,7 +142,7 @@ export const PUT = withErrorHandler(async (
     'CompanyDocument',
     document.id,
     {
-      documentType: document.documentType.name,
+      documentType: document.documentTypeName,
       changes: Object.keys(validatedData),
     }
   );
@@ -195,7 +178,6 @@ export const DELETE = withErrorHandler(async (
   // Check if document exists within tenant
   const existing = await prisma.companyDocument.findFirst({
     where: { id, tenantId },
-    include: { documentType: true },
   });
 
   if (!existing) {
@@ -222,7 +204,7 @@ export const DELETE = withErrorHandler(async (
     'CompanyDocument',
     id,
     {
-      documentType: existing.documentType.name,
+      documentType: existing.documentTypeName,
       referenceNumber: existing.referenceNumber,
     }
   );

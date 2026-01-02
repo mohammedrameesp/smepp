@@ -45,12 +45,12 @@ const DEFAULT_MODULES: Module[] = [
   { id: 'suppliers', name: 'Suppliers', description: 'Vendor management', icon: Building },
 ];
 
-// Add-on modules: optional features (Company Documents first as requested)
+// Add-on modules: optional features
 const ADDON_MODULES: Module[] = [
   { id: 'documents', name: 'Company Documents', description: 'Document management', icon: FileText },
+  { id: 'purchase-requests', name: 'Purchase Requests', description: 'Procurement workflow', icon: ShoppingCart },
   { id: 'leave', name: 'Leave Management', description: 'Leave requests & balances', icon: Calendar },
   { id: 'payroll', name: 'Payroll', description: 'Salary & payslips', icon: DollarSign },
-  { id: 'purchase-requests', name: 'Purchase Requests', description: 'Procurement workflow', icon: ShoppingCart },
 ];
 
 const SECTIONS: Section[] = [
@@ -85,19 +85,19 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 mx-auto mb-6 bg-slate-100 rounded-2xl flex items-center justify-center">
-          <Blocks className="w-8 h-8 text-slate-600" />
+      <div className="text-center mb-4">
+        <div className="w-12 h-12 mx-auto mb-4 bg-slate-100 rounded-2xl flex items-center justify-center">
+          <Blocks className="w-6 h-6 text-slate-600" />
         </div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-3">
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">
           Choose your modules
         </h1>
-        <p className="text-slate-600">
+        <p className="text-sm text-slate-600">
           Select the features you need. You can change these anytime.
         </p>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-5">
         {SECTIONS.map((section) => (
           <div key={section.title}>
             <div className="mb-3">
@@ -119,13 +119,13 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
                   <button
                     key={module.id}
                     onClick={() => toggleModule(module.id)}
-                    className={`bg-white border-2 rounded-xl p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${
+                    className={`bg-white border-2 rounded-xl p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${
                       isSelected ? 'border-slate-900 bg-slate-50' : 'border-slate-200'
                     }`}
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between mb-2">
                       <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center transition-colors"
+                        className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
                         style={{
                           backgroundColor: isSelected
                             ? `${section.color}20`
@@ -133,7 +133,7 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
                           color: isSelected ? section.color : '#94a3b8',
                         }}
                       >
-                        <Icon className="w-5 h-5" />
+                        <Icon className="w-4 h-4" />
                       </div>
                       <div
                         className={`w-5 h-5 rounded-full flex items-center justify-center ${
@@ -143,7 +143,7 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
                         {isSelected && <Check className="w-3 h-3 text-white" />}
                       </div>
                     </div>
-                    <h4 className="font-semibold text-slate-900 text-sm mb-1">
+                    <h4 className="font-semibold text-slate-900 text-sm mb-0.5">
                       {module.name}
                     </h4>
                     <p className="text-xs text-slate-500">{module.description}</p>
@@ -156,7 +156,7 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
       </div>
 
       {/* Selection summary */}
-      <div className="mt-6 p-4 bg-slate-100 rounded-xl border border-slate-200">
+      <div className="mt-4 p-3 bg-slate-100 rounded-xl border border-slate-200">
         <div className="flex items-center justify-between">
           <div>
             <span className="text-sm font-medium text-slate-900">

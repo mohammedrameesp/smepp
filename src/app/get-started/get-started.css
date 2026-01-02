@@ -490,6 +490,37 @@
   padding-left: 0.125rem;
 }
 
+/* Help icon for tooltips */
+.gs-help-icon {
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+  cursor: help;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.gs-help-icon:hover {
+  color: #64748b;
+}
+
+/* Tooltip styles */
+.gs-tooltip {
+  max-width: 280px;
+}
+
+.gs-tooltip-title {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  margin-bottom: 2px;
+}
+
+.gs-tooltip-text {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
 /* Modules Grid */
 .gs-modules-grid {
   display: grid;

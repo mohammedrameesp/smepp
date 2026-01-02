@@ -28,7 +28,6 @@ async function getDocument(id: string) {
   const document = await prisma.companyDocument.findUnique({
     where: { id },
     include: {
-      documentType: true,
       asset: {
         select: {
           id: true,
@@ -93,11 +92,10 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
   return (
     <>
       <PageHeader
-        title={document.documentType.name}
-        subtitle={document.documentType.category}
+        title={document.documentTypeName}
         breadcrumbs={[
           { label: 'Company Documents', href: '/admin/company-documents' },
-          { label: document.documentType.name },
+          { label: document.documentTypeName },
         ]}
         badge={{
           text: document.expiryInfo.status === 'expired'
@@ -138,13 +136,9 @@ export default async function CompanyDocumentDetailPage({ params }: Props) {
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-slate-50 rounded-xl p-4">
+                <div className="bg-slate-50 rounded-xl p-4 sm:col-span-2">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Document Type</p>
-                  <p className="text-sm font-semibold text-slate-900">{document.documentType.name}</p>
-                </div>
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Category</p>
-                  <Badge variant="outline" className="mt-1">{document.documentType.category}</Badge>
+                  <p className="text-sm font-semibold text-slate-900">{document.documentTypeName}</p>
                 </div>
                 {document.referenceNumber && (
                   <div className="bg-slate-50 rounded-xl p-4">

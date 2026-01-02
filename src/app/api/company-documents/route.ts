@@ -19,8 +19,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
 
   const query = companyDocumentQuerySchema.parse({
-    documentTypeId: searchParams.get('documentTypeId') || undefined,
-    category: searchParams.get('category') || undefined,
+    documentTypeName: searchParams.get('documentTypeName') || undefined,
     assetId: searchParams.get('assetId') || undefined,
     expiryStatus: searchParams.get('expiryStatus') || 'all',
     search: searchParams.get('search') || undefined,
@@ -38,12 +37,8 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   // Build where clause with tenant filter
   const where: Prisma.CompanyDocumentWhereInput = { tenantId };
 
-  if (query.documentTypeId) {
-    where.documentTypeId = query.documentTypeId;
-  }
-
-  if (query.category) {
-    where.documentType = { category: query.category };
+  if (query.documentTypeName) {
+    where.documentTypeName = query.documentTypeName;
   }
 
   if (query.assetId) {
@@ -66,20 +61,16 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
   if (query.search) {
     where.OR = [
+      { documentTypeName: { contains: query.search, mode: 'insensitive' } },
       { referenceNumber: { contains: query.search, mode: 'insensitive' } },
       { issuedBy: { contains: query.search, mode: 'insensitive' } },
       { notes: { contains: query.search, mode: 'insensitive' } },
-      { documentType: { name: { contains: query.search, mode: 'insensitive' } } },
     ];
   }
 
   // Build order by
   const orderBy: Prisma.CompanyDocumentOrderByWithRelationInput = {};
-  if (query.sortBy === 'documentType') {
-    orderBy.documentType = { name: query.sortOrder };
-  } else {
-    orderBy[query.sortBy as keyof Prisma.CompanyDocumentOrderByWithRelationInput] = query.sortOrder;
-  }
+  orderBy[query.sortBy as keyof Prisma.CompanyDocumentOrderByWithRelationInput] = query.sortOrder;
 
   const skip = (query.page - 1) * query.limit;
 
@@ -90,7 +81,6 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       skip,
       take: query.limit,
       include: {
-        documentType: true,
         asset: {
           select: {
             id: true,
@@ -142,18 +132,6 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   const body = await request.json();
   const validatedData = companyDocumentSchema.parse(body);
 
-  // Validate document type exists within tenant
-  const documentType = await prisma.companyDocumentType.findFirst({
-    where: { id: validatedData.documentTypeId, tenantId },
-  });
-
-  if (!documentType) {
-    return NextResponse.json(
-      { error: 'Invalid document type' },
-      { status: 400 }
-    );
-  }
-
   // If asset is specified, validate it exists within tenant
   if (validatedData.assetId) {
     const asset = await prisma.asset.findFirst({
@@ -170,7 +148,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
   const document = await prisma.companyDocument.create({
     data: {
-      documentTypeId: validatedData.documentTypeId,
+      documentTypeName: validatedData.documentTypeName,
       referenceNumber: validatedData.referenceNumber || null,
       expiryDate: new Date(validatedData.expiryDate),
       documentUrl: validatedData.documentUrl || null,
@@ -181,7 +159,6 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       tenantId: session.user.organizationId,
     },
     include: {
-      documentType: true,
       asset: {
         select: {
           id: true,
@@ -200,7 +177,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     'CompanyDocument',
     document.id,
     {
-      documentType: documentType.name,
+      documentType: validatedData.documentTypeName,
       referenceNumber: validatedData.referenceNumber,
       expiryDate: validatedData.expiryDate,
     }

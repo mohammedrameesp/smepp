@@ -16,7 +16,14 @@ import {
   Users,
   ArrowLeft,
   Sparkles,
+  HelpCircle,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { detectServiceEmail } from '@/lib/utils/email-pattern-detection';
 import { generateSlug } from '@/lib/multi-tenant/subdomain';
 import './get-started.css';
@@ -485,34 +492,53 @@ export default function GetStartedPage() {
 
                   {/* Employee/WPS options - only shown for non-system emails */}
                   {showEmployeeOptions && (
-                    <div className="gs-employee-options">
-                      <div className="gs-inline-checkboxes">
-                        <label className="gs-inline-checkbox">
-                          <input
-                            type="checkbox"
-                            checked={isEmployee}
-                            onChange={(e) => {
-                              setIsEmployee(e.target.checked);
-                              if (!e.target.checked) setIsOnWps(false);
-                            }}
-                          />
-                          <span>Employee</span>
-                        </label>
-                        {isEmployee && (
+                    <TooltipProvider>
+                      <div className="gs-employee-options">
+                        <div className="gs-inline-checkboxes">
                           <label className="gs-inline-checkbox">
                             <input
                               type="checkbox"
-                              checked={isOnWps}
-                              onChange={(e) => setIsOnWps(e.target.checked)}
+                              checked={isEmployee}
+                              onChange={(e) => {
+                                setIsEmployee(e.target.checked);
+                                if (!e.target.checked) setIsOnWps(false);
+                              }}
                             />
-                            <span>On WPS</span>
+                            <span>Employee</span>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="gs-help-icon" />
+                              </TooltipTrigger>
+                              <TooltipContent className="gs-tooltip" side="top">
+                                <p className="gs-tooltip-title">Employee</p>
+                                <p className="gs-tooltip-text">Full HR profile with document tracking (QID, passport, health card expiry), leave management, and payroll.</p>
+                                <p className="gs-tooltip-title" style={{ marginTop: '8px' }}>Non-employee</p>
+                                <p className="gs-tooltip-text">System accounts like info@company.com, sales@company.com, or admin users who don&apos;t need HR tracking.</p>
+                              </TooltipContent>
+                            </Tooltip>
                           </label>
-                        )}
+                          {isEmployee && (
+                            <label className="gs-inline-checkbox">
+                              <input
+                                type="checkbox"
+                                checked={isOnWps}
+                                onChange={(e) => setIsOnWps(e.target.checked)}
+                              />
+                              <span>On WPS</span>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <HelpCircle className="gs-help-icon" />
+                                </TooltipTrigger>
+                                <TooltipContent className="gs-tooltip" side="top">
+                                  <p className="gs-tooltip-title">WPS (Wage Protection System)</p>
+                                  <p className="gs-tooltip-text">Include this user in the company&apos;s monthly salary file for Qatar labor compliance. Only for employees receiving salary through your company.</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </label>
+                          )}
+                        </div>
                       </div>
-                      <p className="gs-employee-hint">
-                        Does this admin user need an HR profile{isOnWps ? ' and WPS payroll (if enabled)?' : '?'}
-                      </p>
-                    </div>
+                    </TooltipProvider>
                   )}
                 </div>
 

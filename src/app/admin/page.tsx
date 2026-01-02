@@ -118,7 +118,7 @@ export default async function AdminDashboard() {
           tenantId,
           expiryDate: { gte: today, lte: thirtyDaysFromNow },
         },
-        select: { id: true, documentType: { select: { name: true } }, expiryDate: true },
+        select: { id: true, documentTypeName: true, expiryDate: true },
         take: 5,
       }),
       // Expiring subscriptions (next 30 days)
@@ -362,7 +362,7 @@ export default async function AdminDashboard() {
       count: dashboardData?.stats.companyDocuments,
       badge: (dashboardData?.expiringCompanyDocs?.length || 0) > 0 ? `${dashboardData?.expiringCompanyDocs?.length} expiring` : null,
       badgeColor: 'bg-red-500',
-      enabled: true, // Always enabled
+      enabled: isModuleEnabled('documents'),
     },
     {
       id: 'reports',
@@ -539,7 +539,7 @@ export default async function AdminDashboard() {
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-lg">📄</span>
-                    <span className="text-sm font-medium text-gray-900">{doc.documentType?.name || 'Document'} Expires</span>
+                    <span className="text-sm font-medium text-gray-900">{doc.documentTypeName || 'Document'} Expires</span>
                   </div>
                   <span className="text-xs text-amber-600 font-medium">
                     {doc.expiryDate && format(new Date(doc.expiryDate), 'MMM d')}

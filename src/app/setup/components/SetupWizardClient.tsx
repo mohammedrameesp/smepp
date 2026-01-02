@@ -66,9 +66,9 @@ export function SetupWizardClient() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-  // Step 4: Colors
-  const [primaryColor, setPrimaryColor] = useState('#0f172a');
-  const [secondaryColor, setSecondaryColor] = useState('#334155');
+  // Step 4: Colors (empty by default, user must select)
+  const [primaryColor, setPrimaryColor] = useState('');
+  const [secondaryColor, setSecondaryColor] = useState('');
 
   // Step 5: Team invites
   const [teamInvites, setTeamInvites] = useState<TeamInvite[]>([]);
@@ -176,8 +176,8 @@ export function SetupWizardClient() {
           name: orgName.trim(),
           codePrefix,
           enabledModules: selectedModules,
-          primaryColor,
-          secondaryColor,
+          ...(primaryColor && { primaryColor }),
+          ...(secondaryColor && { secondaryColor }),
           currency: primaryCurrency,
           additionalCurrencies,
         }),

@@ -62,32 +62,32 @@ export function OrgNameStep({
 
   return (
     <div className="max-w-md mx-auto">
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 mx-auto mb-6 bg-slate-100 rounded-2xl flex items-center justify-center">
-          <Building2 className="w-8 h-8 text-slate-600" />
+      <div className="text-center mb-4">
+        <div className="w-12 h-12 mx-auto mb-4 bg-slate-100 rounded-2xl flex items-center justify-center">
+          <Building2 className="w-6 h-6 text-slate-600" />
         </div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-3">
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">
           What's your organization called?
         </h1>
-        <p className="text-slate-600">
+        <p className="text-sm text-slate-600">
           This will be the name shown throughout your workspace
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 space-y-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
         {/* Organization Name */}
         <div>
           <Input
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder="Enter organization name"
-            className="h-14 text-lg text-center bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
+            className="h-12 text-base text-center bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
             autoFocus
           />
         </div>
 
         {/* Organization Code */}
-        <div className="pt-4 border-t border-slate-100">
+        <div className="pt-3 border-t border-slate-100">
           <label className="block text-sm font-medium text-slate-700 mb-2 text-center">
             Organization Code
             <span className="text-slate-400 font-normal ml-1">(3 letters)</span>

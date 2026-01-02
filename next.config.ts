@@ -131,7 +131,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Sentry configuration options
+// Sentry configuration options (optimized for faster builds)
 const sentryConfig = {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
@@ -139,11 +139,11 @@ const sentryConfig = {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
 
-  // Only upload source maps in production
+  // Only upload source maps in production CI
   silent: !process.env.CI,
 
-  // Upload source maps to Sentry
-  widenClientFileUpload: true,
+  // Upload source maps to Sentry (disabled to reduce build time by ~15-30s)
+  widenClientFileUpload: false,
 
   // Automatically tree-shake Sentry logger statements
   disableLogger: true,
@@ -151,15 +151,16 @@ const sentryConfig = {
   // Hides source maps from generated client bundles
   hideSourceMaps: true,
 
-  // Automatically instrument React components
+  // Disable component annotation - adds build overhead without significant benefit
+  // This was adding instrumentation to every React component
   reactComponentAnnotation: {
-    enabled: true,
+    enabled: false,
   },
 
   // Route handlers and middleware
   tunnelRoute: "/monitoring",
 
-  // Disable automatic instrumentation if issues occur
+  // Vercel monitoring integration
   automaticVercelMonitors: true,
 };
 

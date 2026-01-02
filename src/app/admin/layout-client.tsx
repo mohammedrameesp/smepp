@@ -2,12 +2,19 @@
 
 import * as React from 'react';
 import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { type BadgeCounts } from '@/components/layout/badge-types';
 import { ImpersonationHandler, ImpersonationBanner } from '@/components/impersonation';
 import { AdminTopNav } from '@/components/layout/admin-top-nav';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { CommandPalette } from '@/components/layout/command-palette';
-import { ChatWidget } from '@/components/chat/chat-widget';
+
+// Lazy load ChatWidget - only loaded when AI chat is enabled
+// This saves 50-200KB from the initial JS bundle
+const ChatWidget = dynamic(
+  () => import('@/components/chat/chat-widget').then(mod => ({ default: mod.ChatWidget })),
+  { ssr: false, loading: () => null }
+);
 
 interface AdminLayoutClientProps {
   children: React.ReactNode;

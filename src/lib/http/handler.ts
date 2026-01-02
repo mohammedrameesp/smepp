@@ -45,7 +45,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
+import { getServerSession, Session } from 'next-auth';
 import { authOptions } from '@/lib/core/auth';
 import { formatError, errorResponse, ErrorCodes } from './errors';
 import { logRequest, generateRequestId } from '@/lib/core/log';
@@ -112,6 +112,16 @@ export function withErrorHandler(
     const startTime = Date.now();
     const requestId = request.headers.get('x-request-id') || generateRequestId();
 
+    // Session cache - fetched once, reused throughout the request lifecycle
+    // This prevents multiple expensive getServerSession() calls per request (was 6, now 1)
+    let cachedSession: Session | null | undefined;
+    const getSession = async () => {
+      if (cachedSession === undefined) {
+        cachedSession = await getServerSession(authOptions);
+      }
+      return cachedSession;
+    };
+
     try {
       const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method);
 
@@ -177,7 +187,7 @@ export function withErrorHandler(
 
       // Authentication check
       if (options.requireAuth || options.requireAdmin || options.requireApproverRole) {
-        const session = await getServerSession(authOptions);
+        const session = await getSession();
 
         if (!session) {
           const response = errorResponse('Unauthorized', 401, {
@@ -333,7 +343,7 @@ export function withErrorHandler(
 
       // Module access check (enabledModules only - tier restrictions disabled)
       if (options.requireModule) {
-        const session = await getServerSession(authOptions);
+        const session = await getSession();
         const moduleId = options.requireModule;
 
         // Validate module exists
@@ -383,7 +393,7 @@ export function withErrorHandler(
           response.headers.set('x-request-id', requestId);
 
           if (!options.skipLogging) {
-            const session = await getServerSession(authOptions);
+            const session = await getSession();
             logRequest(
               request.method, request.url, 403, Date.now() - startTime,
               requestId, session?.user.id, session?.user.email
@@ -396,7 +406,7 @@ export function withErrorHandler(
 
       // Permission check
       if (options.requirePermission) {
-        const session = await getServerSession(authOptions);
+        const session = await getSession();
 
         if (!tenantContext?.tenantId || !tenantContext?.orgRole) {
           const response = errorResponse('Forbidden', 403, {
@@ -469,7 +479,7 @@ export function withErrorHandler(
       
       // Log successful request
       if (!options.skipLogging) {
-        const session = await getServerSession(authOptions);
+        const session = await getSession();
         logRequest(
           request.method,
           request.url,
@@ -489,9 +499,9 @@ export function withErrorHandler(
         error as Error,
         requestId
       );
-      
+
       if (!options.skipLogging) {
-        const session = await getServerSession(authOptions);
+        const session = await getSession();
         logRequest(
           request.method,
           request.url,

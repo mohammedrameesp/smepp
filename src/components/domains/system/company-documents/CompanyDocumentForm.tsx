@@ -1,11 +1,11 @@
 /**
  * @file CompanyDocumentForm.tsx
- * @description Form component for creating and editing company documents with support for document types, vehicle linking, and file uploads
+ * @description Form component for creating and editing company documents
  * @module components/domains/system/company-documents
  */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,26 +27,20 @@ import { companyDocumentSchema, type CompanyDocumentInput } from '@/lib/validati
 import { DatePicker } from '@/components/ui/date-picker';
 import { DocumentUpload } from '@/components/domains/hr/profile/document-upload';
 
-interface DocumentType {
-  id: string;
-  name: string;
-  code: string;
-  category: string;
-  isActive?: boolean;
-}
-
-interface Asset {
-  id: string;
-  assetTag: string | null;
-  brand: string | null;
-  model: string;
-  type: string;
-}
+// Hardcoded document types - users can also enter custom names via "Other"
+const DOCUMENT_TYPES = [
+  'Commercial Registration',
+  'Establishment Card',
+  'Commercial License',
+  'Tenancy/Lease Contract',
+  'Vehicle Istmara',
+  'Vehicle Insurance',
+] as const;
 
 interface CompanyDocumentFormProps {
   initialData?: {
     id: string;
-    documentTypeId: string;
+    documentTypeName: string;
     referenceNumber: string | null;
     expiryDate: Date | string;
     documentUrl: string | null;
@@ -66,14 +60,22 @@ function formatDateForInput(date: Date | string | null | undefined): string {
 export function CompanyDocumentForm({ initialData, mode }: CompanyDocumentFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
-  const [vehicles, setVehicles] = useState<Asset[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+
+  // Determine if initial data uses a predefined type or custom
+  const initialIsOther = initialData?.documentTypeName &&
+    !DOCUMENT_TYPES.includes(initialData.documentTypeName as typeof DOCUMENT_TYPES[number]);
+
+  const [selectedType, setSelectedType] = useState<string>(
+    initialIsOther ? 'Other' : (initialData?.documentTypeName || '')
+  );
+  const [customTypeName, setCustomTypeName] = useState<string>(
+    initialIsOther ? initialData.documentTypeName : ''
+  );
 
   const form = useForm<CompanyDocumentInput>({
     resolver: zodResolver(companyDocumentSchema),
     defaultValues: {
-      documentTypeId: initialData?.documentTypeId || '',
+      documentTypeName: initialData?.documentTypeName || '',
       referenceNumber: initialData?.referenceNumber || '',
       expiryDate: formatDateForInput(initialData?.expiryDate),
       documentUrl: initialData?.documentUrl || '',
@@ -84,49 +86,34 @@ export function CompanyDocumentForm({ initialData, mode }: CompanyDocumentFormPr
   });
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = form;
-  const watchedDocumentTypeId = watch('documentTypeId');
 
-  // Fetch document types
-  useEffect(() => {
-    async function fetchDocumentTypes() {
-      try {
-        const res = await fetch('/api/company-document-types');
-        const data = await res.json();
-        setDocumentTypes(data.documentTypes || []);
-      } catch (error) {
-        console.error('Failed to fetch document types:', error);
-      }
-    }
-    fetchDocumentTypes();
-  }, []);
+  const isOtherSelected = selectedType === 'Other';
 
-  // Fetch vehicles (assets with type Vehicle)
-  useEffect(() => {
-    async function fetchVehicles() {
-      try {
-        const res = await fetch('/api/assets?type=Vehicle');
-        const data = await res.json();
-        setVehicles(data.assets || []);
-      } catch (error) {
-        console.error('Failed to fetch vehicles:', error);
-      }
+  const handleTypeChange = (value: string) => {
+    setSelectedType(value);
+    if (value === 'Other') {
+      // Clear the type name, user will enter custom
+      setValue('documentTypeName', customTypeName || '');
+    } else {
+      // Use the selected predefined type
+      setValue('documentTypeName', value);
+      setCustomTypeName('');
     }
-    fetchVehicles();
-  }, []);
+  };
 
-  // Update selected category when document type changes
-  useEffect(() => {
-    if (watchedDocumentTypeId) {
-      const docType = documentTypes.find(t => t.id === watchedDocumentTypeId);
-      setSelectedCategory(docType?.category || '');
-      // Clear asset if not a vehicle document
-      if (docType?.category !== 'VEHICLE') {
-        setValue('assetId', '');
-      }
-    }
-  }, [watchedDocumentTypeId, documentTypes, setValue]);
+  const handleCustomTypeChange = (value: string) => {
+    setCustomTypeName(value);
+    setValue('documentTypeName', value);
+  };
 
   const onSubmit = async (data: CompanyDocumentInput) => {
+    // Validate that we have a document type name
+    const typeName = isOtherSelected ? customTypeName.trim() : selectedType;
+    if (!typeName) {
+      toast.error('Please select or enter a document type');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const url = mode === 'create'
@@ -140,6 +127,7 @@ export function CompanyDocumentForm({ initialData, mode }: CompanyDocumentFormPr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
+          documentTypeName: typeName,
           assetId: data.assetId || null,
           renewalCost: data.renewalCost || null,
         }),
@@ -169,26 +157,43 @@ export function CompanyDocumentForm({ initialData, mode }: CompanyDocumentFormPr
         <CardContent className="space-y-4">
           {/* Document Type */}
           <div className="space-y-2">
-            <Label htmlFor="documentTypeId">Document Type *</Label>
+            <Label htmlFor="documentType">Document Type *</Label>
             <Select
-              value={watch('documentTypeId')}
-              onValueChange={(value) => setValue('documentTypeId', value)}
+              value={selectedType}
+              onValueChange={handleTypeChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select document type" />
               </SelectTrigger>
               <SelectContent>
-                {documentTypes.filter(t => t.isActive !== false).map((type) => (
-                  <SelectItem key={type.id} value={type.id}>
-                    {type.name} ({type.category})
+                {DOCUMENT_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
                   </SelectItem>
                 ))}
+                <SelectItem value="Other">Other (enter custom name)</SelectItem>
               </SelectContent>
             </Select>
-            {errors.documentTypeId && (
-              <p className="text-sm text-red-500">{errors.documentTypeId.message}</p>
+            {errors.documentTypeName && !isOtherSelected && (
+              <p className="text-sm text-red-500">{errors.documentTypeName.message}</p>
             )}
           </div>
+
+          {/* Custom Document Type Name (when "Other" selected) */}
+          {isOtherSelected && (
+            <div className="space-y-2">
+              <Label htmlFor="customTypeName">Document Type Name *</Label>
+              <Input
+                id="customTypeName"
+                value={customTypeName}
+                onChange={(e) => handleCustomTypeChange(e.target.value)}
+                placeholder="Enter the document type name"
+              />
+              {!customTypeName.trim() && (
+                <p className="text-sm text-amber-600">Please enter a document type name</p>
+              )}
+            </div>
+          )}
 
           {/* Reference Number */}
           <div className="space-y-2">
@@ -207,35 +212,12 @@ export function CompanyDocumentForm({ initialData, mode }: CompanyDocumentFormPr
               id="expiryDate"
               value={watch('expiryDate') || ''}
               onChange={(val) => setValue('expiryDate', val)}
-              placeholder="Select expiry date"
+              placeholder="DD/MM/YYYY"
             />
             {errors.expiryDate && (
               <p className="text-sm text-red-500">{errors.expiryDate.message}</p>
             )}
           </div>
-
-          {/* Vehicle (only for VEHICLE category) */}
-          {selectedCategory === 'VEHICLE' && (
-            <div className="space-y-2">
-              <Label htmlFor="assetId">Linked Vehicle</Label>
-              <Select
-                value={watch('assetId') || 'none'}
-                onValueChange={(value) => setValue('assetId', value === 'none' ? '' : value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select vehicle (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No vehicle linked</SelectItem>
-                  {vehicles.map((vehicle) => (
-                    <SelectItem key={vehicle.id} value={vehicle.id}>
-                      {vehicle.assetTag || `${vehicle.brand} ${vehicle.model}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
 
           {/* Document Upload */}
           <div className="space-y-2">

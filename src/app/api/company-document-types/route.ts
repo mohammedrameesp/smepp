@@ -17,19 +17,10 @@ export const GET = withErrorHandler(async (_request: NextRequest, context: APICo
       { sortOrder: 'asc' },
       { name: 'asc' },
     ],
-    include: {
-      _count: {
-        select: { documents: true },
-      },
-    },
   });
 
   return NextResponse.json({
-    documentTypes: documentTypes.map(type => ({
-      ...type,
-      documentCount: type._count.documents,
-      _count: undefined,
-    })),
+    documentTypes,
   });
 }, { requireAuth: true, requireModule: 'documents' });
 

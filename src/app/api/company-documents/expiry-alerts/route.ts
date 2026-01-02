@@ -26,7 +26,6 @@ export const GET = withErrorHandler(async (_request: NextRequest) => {
     },
     orderBy: { expiryDate: 'asc' },
     include: {
-      documentType: true,
       asset: {
         select: {
           id: true,
@@ -43,8 +42,7 @@ export const GET = withErrorHandler(async (_request: NextRequest) => {
     const expiryInfo = getDocumentExpiryInfo(doc.expiryDate);
     return {
       id: doc.id,
-      documentType: doc.documentType.name,
-      documentTypeCategory: doc.documentType.category,
+      documentType: doc.documentTypeName,
       referenceNumber: doc.referenceNumber,
       expiryDate: doc.expiryDate.toISOString(),
       status: expiryInfo.status,

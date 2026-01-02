@@ -34,11 +34,11 @@ export type CompanyDocumentTypeUpdateInput = z.infer<typeof companyDocumentTypeU
 // ============================================================================
 
 export const companyDocumentSchema = z.object({
-  documentTypeId: z.string().cuid('Invalid document type'),
+  documentTypeName: z.string().min(1, 'Document type is required').max(100),
   referenceNumber: z.string().max(100).optional().nullable(),
   expiryDate: z.string().min(1, 'Expiry date is required'),
   documentUrl: z.string().url().optional().nullable().or(z.literal('')),
-  assetId: z.string().cuid().optional().nullable().or(z.literal('')), // For vehicle documents
+  assetId: z.string().optional().nullable().or(z.literal('')),
   renewalCost: z.number().positive().optional().nullable(),
   notes: z.string().max(1000).optional().nullable(),
 });
@@ -55,14 +55,13 @@ export type CompanyDocumentUpdateInput = z.infer<typeof companyDocumentUpdateSch
 // ============================================================================
 
 export const companyDocumentQuerySchema = z.object({
-  documentTypeId: z.string().cuid().optional(),
-  category: z.enum(['COMPANY', 'VEHICLE']).optional(),
+  documentTypeName: z.string().optional(),
   assetId: z.string().cuid().optional(),
   expiryStatus: z.enum(['all', 'expired', 'expiring', 'valid']).optional().default('all'),
   search: z.string().optional(),
   page: z.coerce.number().int().positive().optional().default(1),
   limit: z.coerce.number().int().positive().max(100).optional().default(20),
-  sortBy: z.enum(['expiryDate', 'createdAt', 'documentType']).optional().default('expiryDate'),
+  sortBy: z.enum(['expiryDate', 'createdAt', 'documentTypeName']).optional().default('expiryDate'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('asc'),
 });
 

@@ -22,12 +22,15 @@ const VALID_MODULES = [
 // Valid currencies
 const VALID_CURRENCIES = ['QAR', 'USD', 'EUR', 'GBP', 'SAR', 'AED', 'KWD'];
 
+// Helper to transform empty strings to undefined
+const emptyToUndefined = (val: string | undefined) => (val === '' ? undefined : val);
+
 const updateSettingsSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   codePrefix: z.string().regex(/^[A-Z0-9]{3}$/, 'Code prefix must be exactly 3 uppercase letters/numbers').optional(),
   enabledModules: z.array(z.string()).optional(),
-  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  primaryColor: z.preprocess(emptyToUndefined, z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional()),
+  secondaryColor: z.preprocess(emptyToUndefined, z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional()),
   currency: z.string().optional(), // Primary currency
   additionalCurrencies: z.array(z.string()).optional(),
 });

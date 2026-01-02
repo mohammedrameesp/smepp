@@ -59,26 +59,26 @@ export function LogoStep({
 
   return (
     <div className="max-w-md mx-auto">
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 mx-auto mb-6 bg-slate-100 rounded-2xl flex items-center justify-center">
-          <Image className="w-8 h-8 text-slate-600" />
+      <div className="text-center mb-4">
+        <div className="w-12 h-12 mx-auto mb-4 bg-slate-100 rounded-2xl flex items-center justify-center">
+          <Image className="w-6 h-6 text-slate-600" />
         </div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-3">
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">
           Add your company logo
         </h1>
-        <p className="text-slate-600">
+        <p className="text-sm text-slate-600">
           Your logo will appear in the navigation and reports
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-8">
+      <div className="bg-white rounded-2xl border border-slate-200 p-5">
         {preview ? (
           <div className="text-center">
             <div className="relative inline-block">
               <img
                 src={preview}
                 alt="Logo preview"
-                className="h-32 w-32 object-contain rounded-xl border border-slate-200 bg-white mx-auto"
+                className="h-24 w-24 object-contain rounded-xl border border-slate-200 bg-white mx-auto"
               />
               <button
                 type="button"
@@ -103,19 +103,16 @@ export function LogoStep({
         ) : (
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-slate-300 rounded-xl p-12 text-center hover:border-slate-400 transition-colors cursor-pointer"
+            className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-slate-400 transition-colors cursor-pointer"
           >
-            <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-xl flex items-center justify-center">
-              <Upload className="w-8 h-8 text-slate-400" />
+            <div className="w-12 h-12 mx-auto mb-3 bg-slate-100 rounded-xl flex items-center justify-center">
+              <Upload className="w-6 h-6 text-slate-400" />
             </div>
-            <p className="text-slate-600 mb-2">
+            <p className="text-sm text-slate-600 mb-1">
               Drag and drop your logo here
             </p>
-            <p className="text-sm text-slate-400">
-              or click to browse
-            </p>
-            <p className="mt-4 text-xs text-slate-400">
-              PNG, JPG, SVG up to 2MB
+            <p className="text-xs text-slate-400">
+              or click to browse (PNG, JPG, SVG up to 2MB)
             </p>
           </div>
         )}

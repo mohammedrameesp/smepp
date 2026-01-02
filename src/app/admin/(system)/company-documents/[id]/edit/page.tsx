@@ -10,9 +10,6 @@ interface Props {
 async function getDocument(id: string) {
   const document = await prisma.companyDocument.findUnique({
     where: { id },
-    include: {
-      documentType: true,
-    },
   });
 
   return document;
@@ -30,10 +27,10 @@ export default async function EditCompanyDocumentPage({ params }: Props) {
     <>
       <PageHeader
         title="Edit Document"
-        subtitle={document.documentType.name}
+        subtitle={document.documentTypeName}
         breadcrumbs={[
           { label: 'Company Documents', href: '/admin/company-documents' },
-          { label: document.documentType.name, href: `/admin/company-documents/${document.id}` },
+          { label: document.documentTypeName, href: `/admin/company-documents/${document.id}` },
           { label: 'Edit' },
         ]}
       />
@@ -43,7 +40,7 @@ export default async function EditCompanyDocumentPage({ params }: Props) {
           mode="edit"
           initialData={{
             id: document.id,
-            documentTypeId: document.documentTypeId,
+            documentTypeName: document.documentTypeName,
             referenceNumber: document.referenceNumber,
             expiryDate: document.expiryDate,
             documentUrl: document.documentUrl,

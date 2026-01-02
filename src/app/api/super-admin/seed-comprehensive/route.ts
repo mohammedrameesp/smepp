@@ -637,7 +637,7 @@ export async function POST(request: NextRequest) {
         await prisma.companyDocument.create({
           data: {
             tenantId,
-            documentTypeId: docTypes[i].id,
+            documentTypeName: docTypes[i].name,
             referenceNumber: `DEMO-DOC-${currentYear}-${String(i + 1).padStart(5, '0')}`,
             issuedBy: 'Ministry of Commerce',
             expiryDate: addMonths(today, randomInt(-2, 24)),

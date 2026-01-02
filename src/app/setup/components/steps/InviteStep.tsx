@@ -7,11 +7,17 @@
  */
 
 import { useState, useMemo } from 'react';
-import { UserPlus, Plus, Trash2, Users, UserCheck, Banknote } from 'lucide-react';
+import { UserPlus, Plus, Trash2, Users, UserCheck, Banknote, HelpCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { detectServiceEmail } from '@/lib/utils/email-pattern-detection';
 
 interface TeamInvite {
@@ -74,19 +80,19 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
 
   return (
     <div className="max-w-lg mx-auto">
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 mx-auto mb-6 bg-slate-100 rounded-2xl flex items-center justify-center">
-          <UserPlus className="w-8 h-8 text-slate-600" />
+      <div className="text-center mb-4">
+        <div className="w-12 h-12 mx-auto mb-4 bg-slate-100 rounded-2xl flex items-center justify-center">
+          <UserPlus className="w-6 h-6 text-slate-600" />
         </div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-3">
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">
           Invite your team
         </h1>
-        <p className="text-slate-600">
+        <p className="text-sm text-slate-600">
           Add team members to get started together
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-5">
         {/* Invite form */}
         <div className="flex gap-2">
           <Input
@@ -116,40 +122,59 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
 
         {/* Employee options - only shown for non-system emails */}
         {showEmployeeOptions && (
-          <div className="mt-3 px-1 animate-in slide-in-from-top-2 fade-in duration-200">
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="isEmployee"
-                  checked={isEmployee}
-                  onCheckedChange={(checked) => {
-                    setIsEmployee(!!checked);
-                    if (!checked) setOnWPS(false);
-                  }}
-                />
-                <Label htmlFor="isEmployee" className="text-sm text-slate-600 cursor-pointer flex items-center gap-1.5">
-                  <UserCheck className="w-3.5 h-3.5" />
-                  Employee
-                </Label>
-              </div>
-              {isEmployee && (
-                <div className="flex items-center gap-2 animate-in fade-in duration-150">
+          <TooltipProvider>
+            <div className="mt-3 px-1 animate-in slide-in-from-top-2 fade-in duration-200">
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2">
                   <Checkbox
-                    id="onWPS"
-                    checked={onWPS}
-                    onCheckedChange={(checked) => setOnWPS(!!checked)}
+                    id="isEmployee"
+                    checked={isEmployee}
+                    onCheckedChange={(checked) => {
+                      setIsEmployee(!!checked);
+                      if (!checked) setOnWPS(false);
+                    }}
                   />
-                  <Label htmlFor="onWPS" className="text-sm text-slate-600 cursor-pointer flex items-center gap-1.5">
-                    <Banknote className="w-3.5 h-3.5" />
-                    On WPS
+                  <Label htmlFor="isEmployee" className="text-sm text-slate-600 cursor-pointer flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5" />
+                    Employee
                   </Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs" side="top">
+                      <p className="font-medium mb-1">Employee</p>
+                      <p className="text-xs">Full HR profile with document tracking (QID, passport, health card expiry), leave management, and payroll.</p>
+                      <p className="font-medium mt-2 mb-1">Non-employee</p>
+                      <p className="text-xs">System accounts like info@company.com, sales@company.com, or admin users who don't need HR tracking.</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
-              )}
+                {isEmployee && (
+                  <div className="flex items-center gap-2 animate-in fade-in duration-150">
+                    <Checkbox
+                      id="onWPS"
+                      checked={onWPS}
+                      onCheckedChange={(checked) => setOnWPS(!!checked)}
+                    />
+                    <Label htmlFor="onWPS" className="text-sm text-slate-600 cursor-pointer flex items-center gap-1.5">
+                      <Banknote className="w-3.5 h-3.5" />
+                      On WPS
+                    </Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="w-3.5 h-3.5 text-slate-400 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs" side="top">
+                        <p className="font-medium mb-1">WPS (Wage Protection System)</p>
+                        <p className="text-xs">Include this user in the company's monthly salary file for Qatar labor compliance. Only for employees receiving salary through your company.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                )}
+              </div>
             </div>
-            <p className="text-xs text-slate-500 mt-1.5">
-              Does this user need an HR profile{onWPS ? ' and WPS payroll (if enabled)?' : '?'}
-            </p>
-          </div>
+          </TooltipProvider>
         )}
 
         {error && (
@@ -206,10 +231,10 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
             </div>
           </div>
         ) : (
-          <div className="mt-6 text-center py-8">
-            <Users className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-            <p className="text-slate-500">No team members added yet</p>
-            <p className="text-sm text-slate-400 mt-1">
+          <div className="mt-4 text-center py-6">
+            <Users className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+            <p className="text-sm text-slate-500">No team members added yet</p>
+            <p className="text-xs text-slate-400 mt-1">
               You can always invite people later
             </p>
           </div>

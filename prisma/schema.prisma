@@ -778,6 +778,7 @@ model TeamMember {
   @@index([tenantId, contractExpiry])
   @@index([tenantId, dateOfJoining])
   @@index([tenantId, dateOfLeaving])
+  @@index([tenantId, dateOfBirth]) // For birthday queries
   @@index([tenantId, isDeleted]) // For soft-delete queries
 }
 
@@ -984,6 +985,7 @@ model ActivityLog {
   @@index([actorMemberId])
   @@index([at])
   @@index([tenantId])
+  @@index([tenantId, at]) // For sorted activity queries per tenant
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1988,8 +1990,7 @@ model CompanyDocumentType {
   isActive    Boolean      @default(true)
   sortOrder   Int          @default(0)
 
-  // Relations
-  documents CompanyDocument[]
+  // Note: documents relation removed - CompanyDocument now uses documentTypeName string
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2004,10 +2005,9 @@ model CompanyDocument {
   tenantId String
   tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  // Document Classification (linked to admin-managed types)
-  documentTypeId  String
-  documentType    CompanyDocumentType @relation(fields: [documentTypeId], references: [id])
-  referenceNumber String? // Document number/ID
+  // Document Classification (simple string - no FK)
+  documentTypeName String // e.g., "Commercial Registration", "Vehicle Insurance", custom name
+  referenceNumber  String? // Document number/ID
 
   // Issuing Authority & Expiry
   issuedBy   String? // e.g., "Ministry of Commerce"
@@ -2016,7 +2016,7 @@ model CompanyDocument {
   // File Storage
   documentUrl String? // Supabase storage URL
 
-  // Vehicle Linking (optional - for VEHICLE category types)
+  // Vehicle Linking (optional)
   assetId String?
   asset   Asset?  @relation(fields: [assetId], references: [id])
 
@@ -2032,7 +2032,6 @@ model CompanyDocument {
   updatedAt DateTime @updatedAt
 
   @@index([expiryDate])
-  @@index([documentTypeId])
   @@index([assetId])
   @@index([tenantId])
   // SECURITY: Compound index for tenant-scoped expiry alerts (prevents full table scan)

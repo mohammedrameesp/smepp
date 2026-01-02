@@ -630,12 +630,29 @@ export default function CreateOrganizationPage() {
                   onChange={(e) => {
                     setAdminEmail(e.target.value);
                     setError(null);
+                    setEmailStatus(null);
                   }}
-                  className="pl-10 bg-slate-50 border-slate-200 focus:ring-slate-900"
+                  className="pl-10 pr-10 bg-slate-50 border-slate-200 focus:ring-slate-900"
                   required
                   disabled={isLoading}
                 />
+                <div className="absolute right-3 top-3">
+                  {checkingEmail ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                  ) : emailStatus ? (
+                    emailStatus.available ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-red-500" />
+                    )
+                  ) : null}
+                </div>
               </div>
+              {emailStatus && (
+                <p className={`text-xs ${emailStatus.available ? 'text-green-600' : 'text-red-600'}`}>
+                  {emailStatus.available ? 'This email is available!' : emailStatus.error}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
