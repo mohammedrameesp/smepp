@@ -84,19 +84,16 @@ interface Organization {
   companySize: string | null;
   internalNotes: string | null;
   _count: {
-    members: number;
+    teamMembers: number;
     assets: number;
   };
-  members: Array<{
+  teamMembers: Array<{
     id: string;
+    name: string | null;
+    email: string;
     role: string;
     isOwner: boolean;
     joinedAt: string;
-    user: {
-      id: string;
-      name: string | null;
-      email: string;
-    };
   }>;
 }
 
@@ -804,7 +801,7 @@ export default function OrganizationDetailPage() {
     );
   }
 
-  const owner = org.members.find(m => m.isOwner);
+  const owner = org.teamMembers?.find(m => m.isOwner);
 
   return (
     <div className="space-y-6">
@@ -893,7 +890,7 @@ export default function OrganizationDetailPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Members</CardDescription>
-            <CardTitle className="text-2xl">{org._count.members}</CardTitle>
+            <CardTitle className="text-2xl">{org._count.teamMembers}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -905,7 +902,7 @@ export default function OrganizationDetailPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Owner</CardDescription>
-            <CardTitle className="text-lg truncate">{owner?.user.email || 'No owner'}</CardTitle>
+            <CardTitle className="text-lg truncate">{owner?.email || 'No owner'}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -1693,20 +1690,20 @@ export default function OrganizationDetailPage() {
           <CardDescription>Users in this organization</CardDescription>
         </CardHeader>
         <CardContent>
-          {org.members.length === 0 ? (
+          {(org.teamMembers?.length || 0) === 0 ? (
             <p className="text-muted-foreground text-center py-4">No members yet</p>
           ) : (
             <div className="divide-y">
-              {org.members.map((member) => (
+              {org.teamMembers?.map((member) => (
                 <div key={member.id} className="py-3 flex items-center justify-between">
                   <div>
                     <p className="font-medium">
-                      {member.user.name || member.user.email}
+                      {member.name || member.email}
                       {member.isOwner && (
                         <Badge variant="outline" className="ml-2">Owner</Badge>
                       )}
                     </p>
-                    <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                    <p className="text-sm text-muted-foreground">{member.email}</p>
                   </div>
                   <div className="text-right">
                     <Badge variant="secondary">{member.role}</Badge>
@@ -1910,7 +1907,7 @@ export default function OrganizationDetailPage() {
               <AlertDescription>
                 Deleting this organization will remove:
                 <ul className="mt-2 list-disc list-inside text-sm">
-                  <li>{org._count.members} member(s)</li>
+                  <li>{org._count.teamMembers} member(s)</li>
                   <li>{org._count.assets} asset(s)</li>
                   <li>{invitations.length} pending invitation(s)</li>
                   <li>All organization data</li>
