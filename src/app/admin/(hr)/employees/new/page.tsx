@@ -59,7 +59,7 @@ export default function NewEmployeePage() {
         const response = await fetch('/api/admin/organization');
         if (response.ok) {
           const data = await response.json();
-          setEnabledModules(data.enabledModules || []);
+          setEnabledModules(data.organization?.enabledModules || []);
         }
       } catch (err) {
         console.error('Failed to fetch organization settings:', err);
