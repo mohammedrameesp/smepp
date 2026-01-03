@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { TenantBrandedPanel } from '@/components/auth/TenantBrandedPanel';
 import { useTenantBranding } from '@/hooks/use-tenant-branding';
+import { useSubdomain } from '@/hooks/use-subdomain';
 
 interface InvitationAuthConfig {
   hasCustomGoogleOAuth: boolean;
@@ -40,6 +41,9 @@ function SignupForm() {
   const [error, setError] = useState<string | null>(null);
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [loadingInvite, setLoadingInvite] = useState(false);
+
+  // Get subdomain for variant selection
+  const { subdomain } = useSubdomain();
 
   // Get invite token, pre-filled email and name from URL
   const inviteToken = searchParams.get('invite');
@@ -267,7 +271,7 @@ function SignupForm() {
       <TenantBrandedPanel
         branding={branding}
         isLoading={loadingInvite || brandingLoading}
-        variant="tenant"
+        variant={subdomain ? 'tenant' : 'super-admin'}
         welcomeTitleOverride="Welcome to Durj"
         welcomeSubtitleOverride="Track assets, manage subscriptions, stay organized — effortlessly"
       />

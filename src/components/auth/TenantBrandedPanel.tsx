@@ -94,19 +94,25 @@ export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleO
   const orgName = branding?.organizationName || 'Durj';
   const logoUrl = branding?.logoUrl;
 
+  // Use gradient when falling back to default slate color (no custom branding)
+  const isDefaultColor = primaryColor === '#0f172a' && !secondaryColor && !backgroundImage;
+
   const backgroundStyle = backgroundImage
     ? `url(${backgroundImage}) center/cover no-repeat`
-    : secondaryColor
-      ? `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`
-      : primaryColor;
+    : isDefaultColor
+      ? 'linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a)'
+      : secondaryColor
+        ? `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`
+        : primaryColor;
 
   return (
     <div
       className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
       style={{ background: backgroundStyle }}
     >
-      {/* Subtle decorative orb */}
+      {/* Subtle decorative orbs */}
       <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-20 left-20 w-60 h-60 bg-white/5 rounded-full blur-2xl" />
 
       {/* Overlay */}
       <div
