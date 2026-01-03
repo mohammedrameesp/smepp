@@ -53,11 +53,11 @@ export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleO
             </div>
 
             <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
-              All-in-One Business<br />
-              <span className="text-slate-400">Management Platform</span>
+              Less Chaos.<br />
+              <span className="text-slate-400">More Clarity.</span>
             </h1>
             <p className="text-lg text-slate-300 leading-relaxed">
-              Streamline your operations, empower your team, and accelerate growth.
+              Track your assets, manage subscriptions, and stay in control — effortlessly.
             </p>
           </div>
 
