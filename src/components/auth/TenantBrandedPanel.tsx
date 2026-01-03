@@ -110,15 +110,17 @@ export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleO
       className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
       style={{ background: backgroundStyle }}
     >
-      {/* Subtle decorative orbs */}
-      <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-20 left-20 w-60 h-60 bg-white/5 rounded-full blur-2xl" />
+      {/* Subtle decorative orbs - match super-admin styling when using default colors */}
+      <div className={`absolute -top-40 -right-40 w-80 h-80 rounded-full blur-3xl ${isDefaultColor ? 'bg-slate-500/10' : 'bg-white/10'}`} />
+      <div className={`absolute bottom-20 left-20 w-60 h-60 rounded-full blur-2xl ${isDefaultColor ? 'bg-slate-400/5' : 'bg-white/5'}`} />
 
-      {/* Overlay */}
-      <div
-        className="absolute inset-0"
-        style={{ backgroundColor: backgroundImage ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.1)' }}
-      />
+      {/* Overlay - only for custom branding, not default colors */}
+      {!isDefaultColor && (
+        <div
+          className="absolute inset-0"
+          style={{ backgroundColor: backgroundImage ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.1)' }}
+        />
+      )}
 
       <div className="relative z-10 flex flex-col justify-between px-12 py-16 h-full w-full">
         {/* Spacer */}
