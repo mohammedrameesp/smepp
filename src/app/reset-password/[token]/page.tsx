@@ -115,6 +115,8 @@ export default function ResetPasswordPage() {
         branding={branding}
         isLoading={subdomainLoading || brandingLoading}
         variant={subdomain ? 'tenant' : 'super-admin'}
+        welcomeTitleOverride="Almost There"
+        welcomeSubtitleOverride="Just set a new password to get back in"
       />
 
       {/* Right Column - Form */}
