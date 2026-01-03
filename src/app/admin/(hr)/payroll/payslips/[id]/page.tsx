@@ -90,7 +90,7 @@ export default async function AdminPayslipDetailPage({ params }: PageProps) {
         badge={{ text: payslip.isPaid ? 'Paid' : 'Pending', variant: statusBadgeVariant }}
         actions={
           <Button asChild variant="outline" size="sm">
-            <Link href={`/admin/team/${payslip.memberId}`}>
+            <Link href={`/admin/employees/${payslip.memberId}`}>
               <User className="mr-2 h-4 w-4" />
               View Employee
             </Link>

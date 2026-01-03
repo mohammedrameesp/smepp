@@ -361,7 +361,7 @@ export default async function AssetDetailPage({ params }: Props) {
                       <p className="font-medium text-slate-900">{formatDate(assignmentDate)}</p>
                     </div>
                   )}
-                  <Link href={`/admin/team/${asset.assignedMember.id}`} className="mt-4 block">
+                  <Link href={`/admin/employees/${asset.assignedMember.id}`} className="mt-4 block">
                     <Button variant="outline" size="sm" className="w-full">
                       View Profile
                     </Button>

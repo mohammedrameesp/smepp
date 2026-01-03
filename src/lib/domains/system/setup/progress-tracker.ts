@@ -209,7 +209,7 @@ export const CHECKLIST_ITEMS = [
     field: 'firstTeamMemberInvited' as const,
     title: 'Invite a team member',
     description: 'Bring your team on board',
-    link: '/admin/team',
+    link: '/admin/employees',
     icon: 'UserPlus',
   },
   {

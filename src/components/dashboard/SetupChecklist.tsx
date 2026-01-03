@@ -81,7 +81,7 @@ const CHECKLIST_ITEMS: ChecklistItemConfig[] = [
     field: 'firstTeamMemberInvited',
     title: 'Invite a team member',
     description: 'Bring your team on board',
-    link: '/admin/team',
+    link: '/admin/employees',
     icon: UserPlus,
   },
   {

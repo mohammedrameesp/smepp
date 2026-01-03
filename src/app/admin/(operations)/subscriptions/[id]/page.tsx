@@ -312,7 +312,7 @@ export default async function SubscriptionDetailPage({ params }: Props) {
                       <p className="font-medium text-slate-900">{formatDate(currentMemberAssignmentDate)}</p>
                     </div>
                   )}
-                  <Link href={`/admin/team/${subscription.assignedMember.id}`}>
+                  <Link href={`/admin/employees/${subscription.assignedMember.id}`}>
                     <Button variant="outline" size="sm" className="w-full">
                       View Profile
                     </Button>

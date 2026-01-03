@@ -53,7 +53,7 @@ interface CommandPaletteProps {
 // Static command items - defined outside component to avoid recreation
 const COMMAND_ITEMS: CommandItem[] = [
   // Quick Actions
-  { id: 'add-team-member', label: 'Add Team Member', description: 'Invite a new team member', icon: UserPlus, href: '/admin/team/invite', category: 'action' },
+  { id: 'add-team-member', label: 'Add Team Member', description: 'Add or invite a new team member', icon: UserPlus, href: '/admin/employees', category: 'action' },
   { id: 'add-asset', label: 'Add Asset', description: 'Register new asset', icon: Plus, href: '/admin/assets/new', shortcut: 'N A', moduleId: 'assets', category: 'action' },
   { id: 'add-document', label: 'Add Document', description: 'Track company document', icon: FileCheck, href: '/admin/company-documents/new', moduleId: 'documents', category: 'action' },
   { id: 'run-payroll', label: 'Run Payroll', description: 'Process monthly payroll', icon: DollarSign, href: '/admin/payroll/runs/new', shortcut: 'P', moduleId: 'payroll', category: 'action' },
@@ -63,7 +63,7 @@ const COMMAND_ITEMS: CommandItem[] = [
 
   // Navigation
   { id: 'nav-dashboard', label: 'Dashboard', icon: Building2, href: '/admin', category: 'navigation' },
-  { id: 'nav-team', label: 'Team', icon: Users, href: '/admin/team', category: 'navigation' },
+  { id: 'nav-team', label: 'Team', icon: Users, href: '/admin/employees', category: 'navigation' },
   { id: 'nav-assets', label: 'Assets', icon: Box, href: '/admin/assets', moduleId: 'assets', category: 'navigation' },
   { id: 'nav-documents', label: 'Company Documents', icon: FileCheck, href: '/admin/company-documents', moduleId: 'documents', category: 'navigation' },
   { id: 'nav-leave', label: 'Leave Requests', icon: Calendar, href: '/admin/leave/requests', moduleId: 'leave', category: 'navigation' },

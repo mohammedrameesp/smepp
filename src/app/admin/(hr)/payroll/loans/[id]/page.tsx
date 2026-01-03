@@ -131,7 +131,7 @@ export default async function LoanDetailPage({ params }: PageProps) {
         actions={
           <div className="flex gap-2">
             <Button asChild variant="outline" size="sm">
-              <Link href={`/admin/team/${loan.memberId}`}>
+              <Link href={`/admin/employees/${loan.memberId}`}>
                 <User className="mr-2 h-4 w-4" />
                 View Employee
               </Link>

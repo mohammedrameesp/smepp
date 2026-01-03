@@ -41,9 +41,9 @@ export function MobileBottomNav({ badgeCounts = {}, enabledModules = [], userRol
     {
       id: 'team',
       label: 'Team',
-      href: '/admin/team',
+      href: '/admin/employees',
       icon: Users,
-      isActive: pathname?.startsWith('/admin/team'),
+      isActive: pathname?.startsWith('/admin/employees'),
       show: true, // Team management is always available
     },
     {
