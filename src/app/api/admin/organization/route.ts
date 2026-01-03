@@ -62,11 +62,18 @@ export async function GET() {
 // PATCH /api/admin/organization - Update organization details
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Color validation: allow null, empty string, or valid hex color
+const colorSchema = z.union([
+  z.literal(''),
+  z.literal(null),
+  z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format'),
+]).optional().nullable();
+
 const updateOrgSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
   codePrefix: z.string().length(3, 'Code prefix must be exactly 3 characters').regex(/^[A-Z0-9]+$/, 'Only uppercase letters and numbers allowed').optional(),
-  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional().nullable(),
-  secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional().nullable(),
+  primaryColor: colorSchema,
+  secondaryColor: colorSchema,
   additionalCurrencies: z.array(z.string()).optional(),
   enabledModules: z.array(z.string()).optional(),
 });
@@ -96,13 +103,18 @@ export async function PATCH(request: NextRequest) {
 
     const { name, codePrefix, primaryColor, secondaryColor, additionalCurrencies, enabledModules } = result.data;
 
+    // Normalize colors: empty/null resets to default for primaryColor, null for secondaryColor
+    const DEFAULT_PRIMARY_COLOR = '#0f172a';
+    const normalizedPrimaryColor = (!primaryColor || primaryColor === '') ? DEFAULT_PRIMARY_COLOR : primaryColor;
+    const normalizedSecondaryColor = (!secondaryColor || secondaryColor === '') ? null : secondaryColor;
+
     const updated = await prisma.organization.update({
       where: { id: session.user.organizationId },
       data: {
         ...(name && { name }),
         ...(codePrefix && { codePrefix }),
-        ...(primaryColor !== undefined && { primaryColor: primaryColor ?? '#0f172a' }),
-        ...(secondaryColor !== undefined && { secondaryColor }),
+        ...(primaryColor !== undefined && { primaryColor: normalizedPrimaryColor }),
+        ...(secondaryColor !== undefined && { secondaryColor: normalizedSecondaryColor }),
         ...(additionalCurrencies !== undefined && { additionalCurrencies }),
         ...(enabledModules !== undefined && { enabledModules }),
       },
