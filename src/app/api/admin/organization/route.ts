@@ -63,11 +63,10 @@ export async function GET() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // Color validation: allow null, empty string, or valid hex color
-const colorSchema = z.union([
-  z.literal(''),
-  z.literal(null),
-  z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format'),
-]).optional().nullable();
+const colorSchema = z.preprocess(
+  (val) => (val === '' || val === null || val === undefined) ? null : val,
+  z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').nullable()
+).optional();
 
 const updateOrgSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
