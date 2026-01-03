@@ -268,8 +268,8 @@ function SignupForm() {
         branding={branding}
         isLoading={loadingInvite || brandingLoading}
         variant="tenant"
-        welcomeTitleOverride="Welcome to Clarity"
-        welcomeSubtitleOverride="Where organized businesses come to thrive"
+        welcomeTitleOverride="Welcome to Durj"
+        welcomeSubtitleOverride="Track assets, manage subscriptions, stay organized — effortlessly"
       />
 
       {/* Right Panel - Form */}
