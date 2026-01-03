@@ -39,7 +39,13 @@ export const companyDocumentSchema = z.object({
   expiryDate: z.string().min(1, 'Expiry date is required'),
   documentUrl: z.string().url().optional().nullable().or(z.literal('')),
   assetId: z.string().optional().nullable().or(z.literal('')),
-  renewalCost: z.number().positive().optional().nullable(),
+  // Handle NaN from empty number inputs - transform to undefined before validation
+  renewalCost: z.union([
+    z.number().positive(),
+    z.nan().transform(() => undefined),
+    z.undefined(),
+    z.null(),
+  ]).optional().nullable(),
   notes: z.string().max(1000).optional().nullable(),
 });
 
