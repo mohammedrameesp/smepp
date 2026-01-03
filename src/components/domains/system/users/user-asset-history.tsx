@@ -30,7 +30,7 @@ interface Asset {
   type: string;
   assetTag: string | null;
   status: string;
-  userPeriods: AssignmentPeriod[];
+  memberPeriods: AssignmentPeriod[];
   totalDays: number;
   currentPeriod?: AssignmentPeriod | null;
   isCurrentlyAssigned: boolean;
@@ -135,7 +135,7 @@ export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistor
                     </div>
                     <div>
                       <div className="text-xs text-gray-600">Assignment Periods</div>
-                      <div className="font-semibold">{asset.userPeriods.length}</div>
+                      <div className="font-semibold">{asset.memberPeriods.length}</div>
                     </div>
                   </div>
                 </div>
@@ -181,7 +181,7 @@ export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistor
                   {/* Assignment History Summary */}
                   <div className="mt-3">
                     <div className="text-xs text-gray-600 mb-2">Assignment History:</div>
-                    {[...asset.userPeriods].reverse().map((period, index) => (
+                    {[...asset.memberPeriods].reverse().map((period, index) => (
                       <div key={index} className="text-sm text-gray-700 mb-1">
                         <Calendar className="h-3 w-3 inline mr-1" />
                         {formatDate(period.startDate)} - {period.endDate ? formatDate(period.endDate) : 'Present'}
@@ -198,7 +198,7 @@ export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistor
                     </div>
                     <div>
                       <div className="text-xs text-gray-600">Assignment Periods</div>
-                      <div className="font-semibold">{asset.userPeriods.length}</div>
+                      <div className="font-semibold">{asset.memberPeriods.length}</div>
                     </div>
                   </div>
                 </div>
