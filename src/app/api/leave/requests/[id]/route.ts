@@ -282,7 +282,7 @@ async function deleteLeaveRequestHandler(request: NextRequest, context: APIConte
 
     // Only admin can delete requests (or owner if draft/pending)
     const isOwner = existing.memberId === currentUserId;
-    const isAdmin = tenant!.userRole === 'ADMIN';
+    const isAdmin = tenant!.orgRole === 'ADMIN';
 
     if (!isAdmin && (!isOwner || existing.status !== 'PENDING')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

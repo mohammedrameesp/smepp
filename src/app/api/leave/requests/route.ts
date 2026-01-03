@@ -146,7 +146,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
     const { tenant } = context;
     const tenantId = tenant!.tenantId;
     const sessionMemberId = tenant!.userId; // Now refers to TeamMember.id
-    const isAdmin = tenant!.userRole === 'ADMIN';
+    const isAdmin = tenant!.orgRole === 'ADMIN';
 
     const body = await request.json();
     const validation = createLeaveRequestSchema.safeParse(body);
