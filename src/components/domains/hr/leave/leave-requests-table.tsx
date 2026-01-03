@@ -70,7 +70,7 @@ export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/adm
 
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get('status') || 'all');
-  const [yearFilter, setYearFilter] = useState<string>(searchParams.get('year') || new Date().getFullYear().toString());
+  const [yearFilter, setYearFilter] = useState<string>(searchParams.get('year') || 'all');
 
   const fetchRequests = useCallback(async () => {
     setLoading(true);
@@ -81,7 +81,7 @@ export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/adm
 
       if (search) params.set('q', search);
       if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
-      if (yearFilter) params.set('year', yearFilter);
+      if (yearFilter && yearFilter !== 'all') params.set('year', yearFilter);
       if (memberId) params.set('memberId', memberId);
 
       const response = await fetch(`/api/leave/requests?${params}`);
@@ -155,10 +155,11 @@ export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/adm
         </Select>
 
         <Select value={yearFilter} onValueChange={handleYearChange}>
-          <SelectTrigger className="w-[100px]">
+          <SelectTrigger className="w-[120px]">
             <SelectValue placeholder="Year" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">All Years</SelectItem>
             {years.map(year => (
               <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
             ))}
