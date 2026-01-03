@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Palmtree, ShoppingCart, Search, User, HelpCircle } from 'lucide-react';
+import { Palmtree, ShoppingCart, Search, CreditCard, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface QuickAction {
@@ -41,13 +41,13 @@ const defaultActions: QuickAction[] = [
     iconColor: 'text-emerald-600',
   },
   {
-    label: 'My Profile',
-    href: '/profile',
-    icon: User,
-    bgColor: 'bg-gray-50',
-    hoverBgColor: 'hover:bg-gray-100',
-    iconBgColor: 'bg-gray-100',
-    iconColor: 'text-gray-600',
+    label: 'Browse Subscriptions',
+    href: '/employee/subscriptions',
+    icon: CreditCard,
+    bgColor: 'bg-amber-50',
+    hoverBgColor: 'hover:bg-amber-100',
+    iconBgColor: 'bg-amber-100',
+    iconColor: 'text-amber-600',
   },
 ];
 

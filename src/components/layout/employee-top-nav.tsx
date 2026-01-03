@@ -44,7 +44,7 @@ export function EmployeeTopNav({ enabledModules = [] }: EmployeeTopNavProps) {
     { label: 'Dashboard', href: '/employee', exact: true },
     { label: 'Leave', href: '/employee/leave', moduleId: 'leave' },
     { label: 'Purchases', href: '/employee/purchase-requests', moduleId: 'purchase-requests' },
-    { label: 'My Assets', href: '/employee/my-assets', moduleId: 'assets' },
+    { label: 'My Holdings', href: '/employee/my-assets', moduleId: 'assets' },
     { label: 'Subscriptions', href: '/employee/subscriptions', moduleId: 'subscriptions' },
   ].filter(item => !item.moduleId || isModuleEnabled(item.moduleId));
 
@@ -119,7 +119,7 @@ export function EmployeeTopNav({ enabledModules = [] }: EmployeeTopNavProps) {
                   <DropdownMenuItem asChild>
                     <Link href="/employee/my-assets" className="flex items-center gap-2 cursor-pointer">
                       <Package className="h-4 w-4 text-slate-400" />
-                      My Assets
+                      My Holdings
                     </Link>
                   </DropdownMenuItem>
                 )}

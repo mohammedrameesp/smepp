@@ -34,6 +34,42 @@ function getGreeting(): string {
   return 'Good evening';
 }
 
+function formatTenure(dateOfJoining: Date | null): string | null {
+  if (!dateOfJoining) return null;
+
+  const now = new Date();
+  const joinDate = new Date(dateOfJoining);
+
+  let years = now.getFullYear() - joinDate.getFullYear();
+  let months = now.getMonth() - joinDate.getMonth();
+
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  // Adjust for day of month
+  if (now.getDate() < joinDate.getDate()) {
+    months--;
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+  }
+
+  if (years === 0 && months === 0) {
+    const days = Math.floor((now.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (days < 30) return `${days} day${days !== 1 ? 's' : ''}`;
+    return '< 1 month';
+  }
+
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years} year${years !== 1 ? 's' : ''}`);
+  if (months > 0) parts.push(`${months} month${months !== 1 ? 's' : ''}`);
+
+  return parts.join(', ');
+}
+
 export default async function EmployeeDashboard() {
   const session = await getServerSession(authOptions);
 
@@ -315,6 +351,9 @@ export default async function EmployeeDashboard() {
       })),
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+    // Calculate tenure
+    const tenure = formatTenure(memberProfile?.dateOfJoining || null);
+
     return (
       <>
         {/* Header */}
@@ -325,9 +364,15 @@ export default async function EmployeeDashboard() {
                 <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
                   {getGreeting()}, {session.user.name?.split(' ')[0]}!
                 </h1>
-                <p className="text-sm text-gray-500">
-                  {format(new Date(), 'EEEE, MMMM d, yyyy')}
-                </p>
+                <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <span>{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
+                  {tenure && (
+                    <>
+                      <span className="text-gray-300">•</span>
+                      <span className="text-emerald-600 font-medium">{tenure} with the company</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
