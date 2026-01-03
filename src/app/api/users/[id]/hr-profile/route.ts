@@ -226,6 +226,32 @@ export async function PATCH(
       delete processedData.employeeId;
     }
 
+    // Convert empty strings to null for enum fields (Prisma requires null, not empty string)
+    const enumFields = ['gender', 'maritalStatus', 'sponsorshipType'];
+    enumFields.forEach((field) => {
+      if (processedData[field] === '') {
+        processedData[field] = null;
+      }
+    });
+
+    // Convert empty strings to null for optional string fields
+    const optionalStringFields = [
+      'nationality', 'religion', 'qatarMobile', 'otherMobileCode', 'otherMobileNumber',
+      'personalEmail', 'qatarZone', 'qatarStreet', 'qatarBuilding', 'qatarUnit',
+      'homeCountryAddress', 'localEmergencyName', 'localEmergencyRelation',
+      'localEmergencyPhoneCode', 'localEmergencyPhone', 'homeEmergencyName',
+      'homeEmergencyRelation', 'homeEmergencyPhoneCode', 'homeEmergencyPhone',
+      'qidNumber', 'passportNumber', 'designation', 'bankName', 'iban',
+      'highestQualification', 'specialization', 'institutionName',
+      'qidUrl', 'passportCopyUrl', 'photoUrl', 'contractCopyUrl',
+      'languagesKnown', 'skillsCertifications', 'licenseNumber',
+    ];
+    optionalStringFields.forEach((field) => {
+      if (processedData[field] === '') {
+        processedData[field] = null;
+      }
+    });
+
     const dateFields = [
       'dateOfBirth',
       'qidExpiry',
