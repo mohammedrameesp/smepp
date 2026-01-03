@@ -1,6 +1,6 @@
 # Pages to Review
 
-Total: **120 pages**
+Total: **123 pages**
 
 ---
 
@@ -25,11 +25,13 @@ Total: **120 pages**
 
 ---
 
-## Onboarding & Setup (3 pages)
+## Onboarding & Setup (5 pages)
 
 - [ ] `/onboarding` - Onboarding wizard
+- [ ] `/employee-onboarding` - Employee onboarding wizard
 - [ ] `/setup` - Organization setup
 - [ ] `/forbidden` - Access forbidden
+- [ ] `/org-deleted` - Organization deleted
 
 ---
 
@@ -54,7 +56,7 @@ Total: **120 pages**
 
 ---
 
-## Admin - Employees (7 pages)
+## Admin - Employees (6 pages)
 
 - [ ] `/admin/employees` - Employee list
 - [ ] `/admin/employees/new` - Add employee
@@ -77,7 +79,7 @@ Total: **120 pages**
 
 ---
 
-## Admin - Payroll (12 pages)
+## Admin - Payroll (13 pages)
 
 - [ ] `/admin/payroll` - Payroll overview
 - [ ] `/admin/payroll/runs` - Payroll runs list
@@ -95,7 +97,7 @@ Total: **120 pages**
 
 ---
 
-## Admin - Assets (5 pages)
+## Admin - Assets (4 pages)
 
 - [ ] `/admin/assets` - Assets list
 - [ ] `/admin/assets/new` - Add asset
@@ -144,8 +146,9 @@ Total: **120 pages**
 
 ---
 
-## Admin - System (6 pages)
+## Admin - System (7 pages)
 
+- [ ] `/admin/alerts` - Alerts (birthdays, expiries, renewals)
 - [ ] `/admin/my-approvals` - My approvals
 - [ ] `/admin/activity` - Activity log
 - [ ] `/admin/notifications` - Notifications
@@ -155,7 +158,7 @@ Total: **120 pages**
 
 ---
 
-## Admin - Users (4 pages)
+## Admin - Users (5 pages)
 
 - [ ] `/admin/users` - Users list
 - [ ] `/admin/users/new` - Add user
@@ -209,7 +212,7 @@ Total: **120 pages**
 
 ---
 
-## Employee - Assets (4 pages)
+## Employee - Assets (5 pages)
 
 - [ ] `/employee/assets` - Browse assets
 - [ ] `/employee/assets/[id]` - Asset detail
@@ -280,20 +283,20 @@ Total: **120 pages**
 |---------|-------|----------|
 | Public/Marketing | 3 | 0 |
 | Authentication | 8 | 0 |
-| Onboarding | 3 | 0 |
+| Onboarding | 5 | 0 |
 | User Profile | 2 | 0 |
 | Help | 3 | 0 |
 | Admin Dashboard | 1 | 0 |
-| Admin Employees | 7 | 0 |
+| Admin Employees | 6 | 0 |
 | Admin Leave | 7 | 0 |
-| Admin Payroll | 12 | 0 |
-| Admin Assets | 5 | 0 |
+| Admin Payroll | 13 | 0 |
+| Admin Assets | 4 | 0 |
 | Admin Asset Requests | 2 | 0 |
 | Admin Subscriptions | 4 | 0 |
 | Admin Suppliers | 3 | 0 |
 | Admin Purchase Requests | 2 | 0 |
 | Admin Documents | 4 | 0 |
-| Admin System | 6 | 0 |
+| Admin System | 7 | 0 |
 | Admin Users | 5 | 0 |
 | Admin Settings | 9 | 0 |
 | Admin Modules | 1 | 0 |
@@ -307,4 +310,4 @@ Total: **120 pages**
 | Supplier Portal | 1 | 0 |
 | Other | 2 | 0 |
 | Super Admin | 14 | 0 |
-| **TOTAL** | **120** | **0** |
+| **TOTAL** | **123** | **0** |
