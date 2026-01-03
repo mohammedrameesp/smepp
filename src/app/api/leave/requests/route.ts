@@ -47,7 +47,8 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
     const { q, status, userId, memberId, leaveTypeId, year, startDate, endDate, p, ps, sort, order } = validation.data;
 
     // Non-admin users can only see their own requests
-    const isAdmin = tenant!.userRole === 'ADMIN';
+    // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole, NOT the approval role
+    const isAdmin = tenant!.orgRole === 'ADMIN';
     // Support both memberId and legacy userId parameter
     const filterMemberId = memberId || userId;
     const effectiveMemberId = isAdmin ? filterMemberId : tenant!.userId;
