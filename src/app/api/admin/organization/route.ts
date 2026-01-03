@@ -65,7 +65,7 @@ export async function GET() {
 const updateOrgSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
   codePrefix: z.string().length(3, 'Code prefix must be exactly 3 characters').regex(/^[A-Z0-9]+$/, 'Only uppercase letters and numbers allowed').optional(),
-  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional(),
+  primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional().nullable(),
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional().nullable(),
   additionalCurrencies: z.array(z.string()).optional(),
   enabledModules: z.array(z.string()).optional(),
@@ -101,7 +101,7 @@ export async function PATCH(request: NextRequest) {
       data: {
         ...(name && { name }),
         ...(codePrefix && { codePrefix }),
-        ...(primaryColor !== undefined && { primaryColor }),
+        ...(primaryColor !== undefined && { primaryColor: primaryColor ?? '#0f172a' }),
         ...(secondaryColor !== undefined && { secondaryColor }),
         ...(additionalCurrencies !== undefined && { additionalCurrencies }),
         ...(enabledModules !== undefined && { enabledModules }),
