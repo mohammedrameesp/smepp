@@ -59,6 +59,8 @@ export default function ForgotPasswordPage() {
         branding={branding}
         isLoading={subdomainLoading || brandingLoading}
         variant={subdomain ? 'tenant' : 'super-admin'}
+        welcomeTitleOverride="Happens to Everyone"
+        welcomeSubtitleOverride="We'll email you a link to reset your password"
       />
 
       {/* Right Column - Form */}
