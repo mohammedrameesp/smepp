@@ -42,30 +42,28 @@ function formatTenure(dateOfJoining: Date | null): string | null {
 
   let years = now.getFullYear() - joinDate.getFullYear();
   let months = now.getMonth() - joinDate.getMonth();
+  let days = now.getDate() - joinDate.getDate();
 
+  // Adjust for negative days
+  if (days < 0) {
+    months--;
+    // Get days in previous month
+    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+
+  // Adjust for negative months
   if (months < 0) {
     years--;
     months += 12;
   }
 
-  // Adjust for day of month
-  if (now.getDate() < joinDate.getDate()) {
-    months--;
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
-  }
-
-  if (years === 0 && months === 0) {
-    const days = Math.floor((now.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (days < 30) return `${days} day${days !== 1 ? 's' : ''}`;
-    return '< 1 month';
-  }
-
   const parts: string[] = [];
   if (years > 0) parts.push(`${years} year${years !== 1 ? 's' : ''}`);
   if (months > 0) parts.push(`${months} month${months !== 1 ? 's' : ''}`);
+  if (days > 0) parts.push(`${days} day${days !== 1 ? 's' : ''}`);
+
+  if (parts.length === 0) return 'Today';
 
   return parts.join(', ');
 }
