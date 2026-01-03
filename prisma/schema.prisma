@@ -572,7 +572,7 @@ model TeamMember {
 
   // Qatar-specific contact fields
   qatarMobile        String?
-  otherMobileCode    String? @default("+961")
+  otherMobileCode    String? @default("+91")
   otherMobileNumber  String?
   qatarZone          String?
   qatarStreet        String?
@@ -589,7 +589,7 @@ model TeamMember {
   // Emergency Contacts - Home Country
   homeEmergencyName      String?
   homeEmergencyRelation  String?
-  homeEmergencyPhoneCode String? @default("+961")
+  homeEmergencyPhoneCode String? @default("+91")
   homeEmergencyPhone     String?
 
   // ═══════════════════════════════════════════════════════════════════════════════
