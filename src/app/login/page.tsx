@@ -512,28 +512,13 @@ function LoginForm() {
 
             {/* Only show on main domain */}
             {!subdomain && (
-              <>
-                {/* Organization login hint */}
-                <div className="mt-6 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg">
-                  <p className="text-xs text-slate-700 dark:text-slate-300 text-center">
-                    Using your organization email?{' '}
-                    <span className="font-medium">Login from your organization&apos;s subdomain</span>{' '}
-                    (e.g., yourcompany.quriosityhub.com) for SSO options.
-                  </p>
-                </div>
-
-                {/* Signup link */}
-                <p className="text-center text-sm text-muted-foreground mt-4">
-                  Don&apos;t have an account?{' '}
-                  <Link
-                    href="/signup"
-                    className="font-medium hover:underline"
-                    style={{ color: primaryColor }}
-                  >
-                    Sign up free
-                  </Link>
+              <div className="mt-6 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg">
+                <p className="text-xs text-slate-700 dark:text-slate-300 text-center">
+                  Using your organization email?{' '}
+                  <span className="font-medium">Login from your organization&apos;s subdomain</span>{' '}
+                  (e.g., yourcompany.quriosityhub.com) for SSO options.
                 </p>
-              </>
+              </div>
             )}
           </div>
         </div>
