@@ -123,6 +123,8 @@ export async function GET(
       // Skills
       languagesKnown: member.languagesKnown,
       skillsCertifications: member.skillsCertifications,
+      // Payroll
+      isOnWps: member.isOnWps,
       // Onboarding
       onboardingStep: member.onboardingStep,
       onboardingComplete: member.onboardingComplete,

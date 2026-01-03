@@ -676,12 +676,13 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                         </>
                       )}
                     </Button>
-                    {isOwner && (
+                    {isAdmin && (
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveMember(member.id, member.user.name || member.user.email)}
                         disabled={removingId === member.id}
+                        title="Remove pending member"
                       >
                         {removingId === member.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

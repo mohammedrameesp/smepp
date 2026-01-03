@@ -9,7 +9,7 @@ import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Loader2, Shield, Calendar, ArrowLeft } from 'lucide-react';
+import { User, Loader2, Shield, Calendar, ArrowLeft, Banknote } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { HRProfileForm } from '@/components/domains/hr/profile';
 import { toast } from 'sonner';
@@ -76,6 +76,7 @@ interface HRProfileData {
   workEmail?: string;
   isAdmin?: boolean;
   bypassNoticeRequirement?: boolean;
+  isOnWps?: boolean;
 }
 
 const APPROVAL_ROLES = [
@@ -98,14 +99,30 @@ export default function AdminEmployeeEditPage() {
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
   const [bypassNotice, setBypassNotice] = useState(false);
   const [isUpdatingBypass, setIsUpdatingBypass] = useState(false);
+  const [isOnWps, setIsOnWps] = useState(false);
+  const [isUpdatingWps, setIsUpdatingWps] = useState(false);
+  const [payrollEnabled, setPayrollEnabled] = useState(false);
 
   const employeeId = params?.id as string;
 
   useEffect(() => {
     if (employeeId) {
       fetchHRProfile();
+      fetchEnabledModules();
     }
   }, [employeeId]);
+
+  const fetchEnabledModules = async () => {
+    try {
+      const response = await fetch('/api/admin/organization');
+      if (response.ok) {
+        const data = await response.json();
+        setPayrollEnabled(data.enabledModules?.includes('payroll') ?? false);
+      }
+    } catch (err) {
+      // Ignore error - payroll toggle just won't show
+    }
+  };
 
   const fetchHRProfile = async (isRefresh = false) => {
     try {
@@ -133,6 +150,7 @@ export default function AdminEmployeeEditPage() {
         setSelectedRole(data.user.role);
       }
       setBypassNotice(data.bypassNoticeRequirement === true);
+      setIsOnWps(data.isOnWps === true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load HR profile');
     } finally {
@@ -194,6 +212,33 @@ export default function AdminEmployeeEditPage() {
       setBypassNotice(!enabled); // Revert on error
     } finally {
       setIsUpdatingBypass(false);
+    }
+  };
+
+  const updateWps = async (enabled: boolean) => {
+    setIsUpdatingWps(true);
+    try {
+      const response = await fetch(`/api/users/${employeeId}/hr-profile`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isOnWps: enabled }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update WPS setting');
+      }
+
+      setIsOnWps(enabled);
+      toast.success(enabled
+        ? 'Employee added to WPS'
+        : 'Employee removed from WPS'
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update WPS setting');
+      setIsOnWps(!enabled); // Revert on error
+    } finally {
+      setIsUpdatingWps(false);
     }
   };
 
@@ -351,6 +396,42 @@ export default function AdminEmployeeEditPage() {
                     </p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Payroll Settings - only shown if payroll module enabled */}
+          {hrProfile && payrollEnabled && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Banknote className="h-5 w-5" />
+                  Payroll Settings
+                </CardTitle>
+                <CardDescription>
+                  Configure payroll-related settings for this employee
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="is-on-wps">On WPS (Wage Protection System)</Label>
+                    <p className="text-sm text-gray-500">
+                      Employee&apos;s salary is paid through the Wage Protection System
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isUpdatingWps && (
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                    )}
+                    <Switch
+                      id="is-on-wps"
+                      checked={isOnWps}
+                      onCheckedChange={updateWps}
+                      disabled={isUpdatingWps}
+                    />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           )}
