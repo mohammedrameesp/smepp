@@ -508,7 +508,7 @@ export default async function AdminDashboard() {
           <div className="bg-white rounded-lg border border-gray-200 p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900">Upcoming This Week</h3>
-              <Link href="/admin/employees" className="text-sm text-slate-600 hover:text-slate-800 font-medium">
+              <Link href="/admin/alerts" className="text-sm text-slate-600 hover:text-slate-800 font-medium">
                 View all
               </Link>
             </div>
