@@ -164,103 +164,187 @@ export function SetupChecklist() {
       animate={{ opacity: 1, y: 0 }}
       className="bg-gradient-to-r from-slate-700 to-slate-800 rounded-xl p-4 mb-6 text-white shadow-lg"
     >
-      <div className="flex items-center gap-4">
-        {/* Icon */}
-        <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentItem.field}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <Icon className="w-6 h-6" />
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
+      {/* Mobile Layout */}
+      <div className="md:hidden">
+        {/* Header row with dismiss */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-white/70 uppercase tracking-wide">
-              Setup {safeIndex + 1} of {pendingItems.length} remaining
+              Setup {safeIndex + 1}/{pendingItems.length}
             </span>
             <span className="text-white/40">•</span>
             <span className="text-xs text-white/70">
               {completedCount}/{totalCount} done
             </span>
           </div>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentItem.field}
-              initial={{ x: 10, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -10, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <p className="font-semibold text-white truncate">{currentItem.title}</p>
-              <p className="text-sm text-white/70 truncate">{currentItem.description}</p>
-            </motion.div>
-          </AnimatePresence>
+          <button
+            onClick={() => setIsDismissed(true)}
+            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+            aria-label="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Navigation */}
+        {/* Content */}
+        <div className="flex items-start gap-3 mb-3">
+          <div className="flex-shrink-0 w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+            <Icon className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-white">{currentItem.title}</p>
+            <p className="text-sm text-white/70">{currentItem.description}</p>
+          </div>
+        </div>
+
+        {/* Actions row */}
+        <div className="flex items-center gap-2">
+          <Link
+            href={currentItem.link}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+          >
+            <span>Start</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          {pendingItems.length > 1 && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={goPrev}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                aria-label="Previous task"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={goNext}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                aria-label="Next task"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Progress dots */}
         {pendingItems.length > 1 && (
-          <div className="flex-shrink-0 flex items-center gap-1">
-            <button
-              onClick={goPrev}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-              aria-label="Previous task"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={goNext}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-              aria-label="Next task"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+          <div className="flex items-center justify-center gap-1.5 mt-3">
+            {pendingItems.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentIndex(idx)}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  idx === safeIndex
+                    ? 'w-4 bg-white'
+                    : 'bg-white/40 hover:bg-white/60'
+                }`}
+                aria-label={`Go to task ${idx + 1}`}
+              />
+            ))}
           </div>
         )}
-
-        {/* Action Button */}
-        <Link
-          href={currentItem.link}
-          className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
-        >
-          <span>Start</span>
-          <ArrowRight className="w-4 h-4" />
-        </Link>
-
-        {/* Dismiss */}
-        <button
-          onClick={() => setIsDismissed(true)}
-          className="flex-shrink-0 p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/60 hover:text-white"
-          aria-label="Dismiss"
-        >
-          <X className="w-5 h-5" />
-        </button>
       </div>
 
-      {/* Progress dots */}
-      {pendingItems.length > 1 && (
-        <div className="flex items-center justify-center gap-1.5 mt-3">
-          {pendingItems.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentIndex(idx)}
-              className={`w-1.5 h-1.5 rounded-full transition-all ${
-                idx === safeIndex
-                  ? 'w-4 bg-white'
-                  : 'bg-white/40 hover:bg-white/60'
-              }`}
-              aria-label={`Go to task ${idx + 1}`}
-            />
-          ))}
+      {/* Desktop Layout */}
+      <div className="hidden md:block">
+        <div className="flex items-center gap-4">
+          {/* Icon */}
+          <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentItem.field}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <Icon className="w-6 h-6" />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-xs font-medium text-white/70 uppercase tracking-wide">
+                Setup {safeIndex + 1} of {pendingItems.length} remaining
+              </span>
+              <span className="text-white/40">•</span>
+              <span className="text-xs text-white/70">
+                {completedCount}/{totalCount} done
+              </span>
+            </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentItem.field}
+                initial={{ x: 10, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -10, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+              >
+                <p className="font-semibold text-white truncate">{currentItem.title}</p>
+                <p className="text-sm text-white/70 truncate">{currentItem.description}</p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Navigation */}
+          {pendingItems.length > 1 && (
+            <div className="flex-shrink-0 flex items-center gap-1">
+              <button
+                onClick={goPrev}
+                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                aria-label="Previous task"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={goNext}
+                className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                aria-label="Next task"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+
+          {/* Action Button */}
+          <Link
+            href={currentItem.link}
+            className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-white text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors"
+          >
+            <span>Start</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+
+          {/* Dismiss */}
+          <button
+            onClick={() => setIsDismissed(true)}
+            className="flex-shrink-0 p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+            aria-label="Dismiss"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-      )}
+
+        {/* Progress dots */}
+        {pendingItems.length > 1 && (
+          <div className="flex items-center justify-center gap-1.5 mt-3">
+            {pendingItems.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentIndex(idx)}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  idx === safeIndex
+                    ? 'w-4 bg-white'
+                    : 'bg-white/40 hover:bg-white/60'
+                }`}
+                aria-label={`Go to task ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }
