@@ -17,7 +17,6 @@ import {
   PalmtreeIcon,
   ShoppingCart,
   Package,
-  CreditCard,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -45,7 +44,6 @@ export function EmployeeTopNav({ enabledModules = [] }: EmployeeTopNavProps) {
     { label: 'Leave', href: '/employee/leave', moduleId: 'leave' },
     { label: 'Purchases', href: '/employee/purchase-requests', moduleId: 'purchase-requests' },
     { label: 'My Holdings', href: '/employee/my-assets', moduleId: 'assets' },
-    { label: 'Subscriptions', href: '/employee/subscriptions', moduleId: 'subscriptions' },
   ].filter(item => !item.moduleId || isModuleEnabled(item.moduleId));
 
   const isActive = (href: string, exact?: boolean) => {
@@ -136,14 +134,6 @@ export function EmployeeTopNav({ enabledModules = [] }: EmployeeTopNavProps) {
                     <Link href="/employee/purchase-requests" className="flex items-center gap-2 cursor-pointer">
                       <ShoppingCart className="h-4 w-4 text-slate-400" />
                       Purchase Requests
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                {isModuleEnabled('subscriptions') && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/employee/subscriptions" className="flex items-center gap-2 cursor-pointer">
-                      <CreditCard className="h-4 w-4 text-slate-400" />
-                      Subscriptions
                     </Link>
                   </DropdownMenuItem>
                 )}
