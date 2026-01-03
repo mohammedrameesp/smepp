@@ -2,12 +2,12 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { EmployeeListTable } from '@/components/domains/hr/employees';
 import { prisma } from '@/lib/core/prisma';
-import { UserPlus, ClipboardList, AlertTriangle, Calendar } from 'lucide-react';
+import { ClipboardList, AlertTriangle, Calendar } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { TeamClient } from './team-client';
 
-export default async function AdminEmployeesPage() {
+export default async function AdminTeamPage() {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -29,11 +29,12 @@ export default async function AdminEmployeesPage() {
 
   const [
     totalEmployees,
+    totalNonEmployees,
     pendingChangeRequests,
     expiringDocumentsCount,
     onLeaveToday,
   ] = await Promise.all([
-    // Count employees using TeamMember model
+    // Count employees
     prisma.teamMember.count({
       where: {
         tenantId,
@@ -41,10 +42,18 @@ export default async function AdminEmployeesPage() {
         isDeleted: false,
       },
     }),
+    // Count non-employees
+    prisma.teamMember.count({
+      where: {
+        tenantId,
+        isEmployee: false,
+        isDeleted: false,
+      },
+    }),
     prisma.profileChangeRequest.count({
       where: { tenantId, status: 'PENDING' },
     }),
-    // Count expiring documents directly from TeamMember
+    // Count expiring documents
     prisma.teamMember.count({
       where: {
         tenantId,
@@ -72,30 +81,24 @@ export default async function AdminEmployeesPage() {
   return (
     <>
       <PageHeader
-        title="Employees"
-        subtitle="Manage employee profiles and HR information"
+        title="Team"
+        subtitle="Manage team members, employees, and invitations"
         actions={
-          <>
-            <PageHeaderButton href="/admin/employees/change-requests" variant="secondary">
-              <ClipboardList className="h-4 w-4" />
-              Change Requests
-              {pendingChangeRequests > 0 && (
-                <span className="bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-                  {pendingChangeRequests}
-                </span>
-              )}
-            </PageHeaderButton>
-            <PageHeaderButton href="/admin/employees/new" variant="primary">
-              <UserPlus className="h-4 w-4" />
-              Add Employee
-            </PageHeaderButton>
-          </>
+          <PageHeaderButton href="/admin/employees/change-requests" variant="secondary">
+            <ClipboardList className="h-4 w-4" />
+            Change Requests
+            {pendingChangeRequests > 0 && (
+              <span className="bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                {pendingChangeRequests}
+              </span>
+            )}
+          </PageHeaderButton>
         }
       >
         {/* Stats Summary */}
         <div className="flex flex-wrap items-center gap-4 mt-4">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-            <span className="text-blue-400 text-sm font-medium">{totalEmployees} employees</span>
+            <span className="text-blue-400 text-sm font-medium">{totalEmployees + totalNonEmployees} members</span>
           </div>
           {onLeaveToday > 0 && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
@@ -124,16 +127,15 @@ export default async function AdminEmployeesPage() {
       </PageHeader>
 
       <PageContent>
-        {/* Employee Table */}
-        <div className="bg-white rounded-xl border border-slate-200">
-          <div className="px-4 py-4 border-b border-slate-100">
-            <h2 className="font-semibold text-slate-900">All Employees</h2>
-            <p className="text-sm text-slate-500">Complete directory with HR details and document status</p>
-          </div>
-          <div className="p-4">
-            <EmployeeListTable />
-          </div>
-        </div>
+        <TeamClient
+          initialStats={{
+            totalEmployees,
+            totalNonEmployees,
+            onLeaveToday,
+            expiringDocuments: expiringDocumentsCount,
+            pendingChangeRequests,
+          }}
+        />
       </PageContent>
     </>
   );

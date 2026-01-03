@@ -132,7 +132,7 @@ export default function NewEmployeePage() {
         title="Add New Team Member"
         subtitle="Add a new person to your organization"
         breadcrumbs={[
-          { label: 'Employees', href: '/admin/employees' },
+          { label: 'Team', href: '/admin/employees' },
           { label: 'New' },
         ]}
       />

@@ -88,7 +88,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
         title={employee.name || 'No name'}
         subtitle={employee.email}
         breadcrumbs={[
-          { label: 'Employees', href: '/admin/employees' },
+          { label: 'Team', href: '/admin/employees' },
           { label: employee.name || employee.email },
         ]}
         badge={{ text: employee.role, variant: roleBadgeVariant }}

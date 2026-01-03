@@ -249,7 +249,7 @@ export default function AdminEmployeeEditPage() {
         title="Edit Profile"
         subtitle={hrProfile?.user?.name || hrProfile?.user?.email || 'Employee'}
         breadcrumbs={[
-          { label: 'Employees', href: '/admin/employees' },
+          { label: 'Team', href: '/admin/employees' },
           { label: hrProfile?.user?.name || 'Employee', href: `/admin/employees/${employeeId}` },
           { label: 'Edit' },
         ]}
