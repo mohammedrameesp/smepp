@@ -32,6 +32,11 @@ export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleO
   const quote = getDailyQuote();
 
   // Super admin panel - fixed Durj branding (main domain)
+  // Use overrides if provided, otherwise show default Durj branding
+  const superAdminTitle = welcomeTitleOverride || 'Less Chaos.';
+  const superAdminSubtitle = welcomeSubtitleOverride || 'Track your assets, manage subscriptions, and stay in control — effortlessly.';
+  const isTwoLineTitle = !welcomeTitleOverride; // Only show "More Clarity" second line for default
+
   if (variant === 'super-admin') {
     return (
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
@@ -53,11 +58,11 @@ export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleO
             </div>
 
             <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
-              Less Chaos.<br />
-              <span className="text-slate-400">More Clarity.</span>
+              {superAdminTitle}
+              {isTwoLineTitle && <><br /><span className="text-slate-400">More Clarity.</span></>}
             </h1>
             <p className="text-lg text-slate-300 leading-relaxed">
-              Track your assets, manage subscriptions, and stay in control — effortlessly.
+              {superAdminSubtitle}
             </p>
           </div>
 
