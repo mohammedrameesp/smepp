@@ -101,6 +101,7 @@ export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/adm
     }
   }, [pagination.page, pagination.pageSize, search, statusFilter, yearFilter, memberId]);
 
+  // Fetch when dependencies change
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
