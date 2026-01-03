@@ -5,7 +5,6 @@
  */
 import { NextResponse } from 'next/server';
 import { supplierQuerySchema } from '@/lib/validations/suppliers';
-import { Role } from '@prisma/client';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler } from '@/lib/http/handler';
 
@@ -29,8 +28,9 @@ export const GET = withErrorHandler(
     const filters: Record<string, unknown> = {};
 
     // EMPLOYEE can only see APPROVED suppliers
-    // ADMIN can see all suppliers
-    if (tenant!.userRole !== Role.ADMIN) {
+    // ADMIN (orgRole) can see all suppliers
+    // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole
+    if (tenant!.orgRole !== 'ADMIN') {
       filters.status = 'APPROVED';
     } else if (status) {
       // Admin can filter by status
@@ -51,8 +51,8 @@ export const GET = withErrorHandler(
     // Calculate pagination
     const skip = (p - 1) * ps;
 
-    // Fetch suppliers
-    const [suppliers, total] = await Promise.all([
+    // Fetch suppliers, count, and unique categories
+    const [suppliers, total, categoriesRaw] = await Promise.all([
       prisma.supplier.findMany({
         where,
         orderBy: { [sort]: order },
@@ -74,10 +74,19 @@ export const GET = withErrorHandler(
         },
       }),
       prisma.supplier.count({ where }),
+      // Get all unique categories (not filtered by current filters)
+      prisma.supplier.findMany({
+        select: { category: true },
+        distinct: ['category'],
+        orderBy: { category: 'asc' },
+      }),
     ]);
+
+    const categories = categoriesRaw.map(c => c.category);
 
     return NextResponse.json({
       suppliers,
+      categories,
       pagination: {
         page: p,
         pageSize: ps,
