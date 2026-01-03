@@ -402,7 +402,7 @@ export default async function AdminDashboard() {
             )}
             {(dashboardData?.expiringDocsCount || 0) > 0 && (
               <Link
-                href="/admin/employees/document-expiry"
+                href="/admin/alerts"
                 className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-800"
               >
                 <span className="text-amber-400 text-sm font-medium">
