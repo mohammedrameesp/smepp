@@ -45,11 +45,25 @@ export async function GET() {
       ],
     });
 
-    // Get org limits
+    // Get org limits and auth config
     const org = await prisma.organization.findUnique({
       where: { id: session.user.organizationId },
-      select: { maxUsers: true },
+      select: {
+        maxUsers: true,
+        allowedAuthMethods: true,
+        customGoogleClientId: true,
+        customGoogleClientSecret: true,
+        customAzureClientId: true,
+        customAzureClientSecret: true,
+      },
     });
+
+    // Compute auth config
+    const allowedMethods = org?.allowedAuthMethods || [];
+    const hasCustomGoogleOAuth = !!(org?.customGoogleClientId && org?.customGoogleClientSecret);
+    const hasCustomAzureOAuth = !!(org?.customAzureClientId && org?.customAzureClientSecret);
+    const hasSSO = hasCustomGoogleOAuth || hasCustomAzureOAuth;
+    const hasCredentials = allowedMethods.length === 0 || allowedMethods.includes('credentials');
 
     return NextResponse.json({
       members: members.map((m) => ({
@@ -71,6 +85,13 @@ export async function GET() {
       limits: {
         maxUsers: org?.maxUsers || 5,
         currentUsers: members.length,
+      },
+      authConfig: {
+        allowedMethods,
+        hasCredentials,
+        hasSSO,
+        hasCustomGoogleOAuth,
+        hasCustomAzureOAuth,
       },
     });
   } catch (error) {

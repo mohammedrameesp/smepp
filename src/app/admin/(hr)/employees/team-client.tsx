@@ -7,6 +7,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -28,6 +45,8 @@ import {
   Shield,
   User,
   Briefcase,
+  ChevronDown,
+  Copy,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { EmployeeListTable } from '@/components/domains/hr/employees';
@@ -63,6 +82,14 @@ interface Limits {
   currentUsers: number;
 }
 
+interface AuthConfig {
+  allowedMethods: string[];
+  hasCredentials: boolean;
+  hasSSO: boolean;
+  hasCustomGoogleOAuth: boolean;
+  hasCustomAzureOAuth: boolean;
+}
+
 interface TeamClientProps {
   initialStats: {
     totalEmployees: number;
@@ -89,11 +116,19 @@ export function TeamClient({ initialStats }: TeamClientProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [limits, setLimits] = useState<Limits | null>(null);
+  const [authConfig, setAuthConfig] = useState<AuthConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Tab state - local for instant switching
   const [currentTab, setCurrentTab] = useState<FilterType>('employees');
+
+  // Invite dialog state
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<string>('MEMBER');
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteSuccess, setInviteSuccess] = useState<{ url: string; email: string } | null>(null);
 
   // Action states
   const [resendingId, setResendingId] = useState<string | null>(null);
@@ -132,6 +167,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
         const data = await membersRes.json();
         setMembers(data.members);
         setLimits(data.limits);
+        setAuthConfig(data.authConfig);
       }
 
       if (invitesRes.ok) {
@@ -143,6 +179,64 @@ export function TeamClient({ initialStats }: TeamClientProps) {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleInvite() {
+    if (!inviteEmail.trim()) {
+      setError('Email is required');
+      return;
+    }
+
+    setInviteLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/admin/team/invitations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: inviteEmail.trim().toLowerCase(),
+          role: inviteRole,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send invitation');
+      }
+
+      // Show success with invite URL
+      setInviteSuccess({
+        url: data.invitation.inviteUrl,
+        email: data.invitation.email,
+      });
+
+      // Add to invitations list
+      setInvitations((prev) => [
+        {
+          id: data.invitation.id,
+          email: data.invitation.email,
+          role: data.invitation.role,
+          expiresAt: data.invitation.expiresAt,
+          createdAt: new Date().toISOString(),
+          isExpired: false,
+        },
+        ...prev,
+      ]);
+
+      // Reset form
+      setInviteEmail('');
+      setInviteRole('MEMBER');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send invitation');
+    } finally {
+      setInviteLoading(false);
+    }
+  }
+
+  async function copyInviteUrl(url: string) {
+    await navigator.clipboard.writeText(url);
   }
 
   async function handleResendInvite(id: string) {
@@ -316,14 +410,51 @@ export function TeamClient({ initialStats }: TeamClientProps) {
           </button>
         </div>
 
-        {/* Add Member Button */}
+        {/* Smart Add/Invite Button based on auth config */}
         {isAdmin && (
-          <Button asChild disabled={!canAdd}>
-            <Link href="/admin/employees/new">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add Member
-            </Link>
-          </Button>
+          <>
+            {!authConfig?.hasSSO ? (
+              // No SSO configured - just show Add Member
+              <Button asChild disabled={!canAdd}>
+                <Link href="/admin/employees/new">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Add Member
+                </Link>
+              </Button>
+            ) : !authConfig?.hasCredentials ? (
+              // SSO only - just show Invite Member
+              <Button onClick={() => setInviteDialogOpen(true)} disabled={!canAdd}>
+                <Mail className="h-4 w-4 mr-2" />
+                Invite Member
+              </Button>
+            ) : (
+              // Both available - Invite is default, Add is secondary
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button disabled={!canAdd}>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Invite Member
+                    <ChevronDown className="h-4 w-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setInviteDialogOpen(true)}>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Send invitation
+                    <span className="text-xs text-muted-foreground ml-2">(user chooses auth)</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/employees/new">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Add directly
+                      <span className="text-xs text-muted-foreground ml-2">(set password)</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </>
         )}
       </div>
 
@@ -614,6 +745,115 @@ export function TeamClient({ initialStats }: TeamClientProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Invite Member Dialog */}
+      <Dialog
+        open={inviteDialogOpen}
+        onOpenChange={(open) => {
+          setInviteDialogOpen(open);
+          if (!open) {
+            setInviteSuccess(null);
+            setInviteEmail('');
+            setInviteRole('MEMBER');
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Invite Team Member</DialogTitle>
+            <DialogDescription>
+              Send an invitation email. They can sign in with{' '}
+              {authConfig?.hasCustomGoogleOAuth && authConfig?.hasCustomAzureOAuth
+                ? 'Google, Microsoft, or password'
+                : authConfig?.hasCustomGoogleOAuth
+                ? 'Google or password'
+                : authConfig?.hasCustomAzureOAuth
+                ? 'Microsoft or password'
+                : 'their preferred method'}
+              .
+            </DialogDescription>
+          </DialogHeader>
+
+          {inviteSuccess ? (
+            <div className="space-y-4">
+              <Alert className="border-green-200 bg-green-50">
+                <Check className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  Invitation sent to <strong>{inviteSuccess.email}</strong>
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-2">
+                <Label>Invite Link</Label>
+                <div className="flex gap-2">
+                  <Input value={inviteSuccess.url} readOnly className="text-xs" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => copyInviteUrl(inviteSuccess.url)}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Share this link if the email doesn&apos;t arrive. Expires in 7 days.
+                </p>
+              </div>
+
+              <DialogFooter>
+                <Button onClick={() => setInviteDialogOpen(false)}>Done</Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="invite-email">Email Address</Label>
+                <Input
+                  id="invite-email"
+                  type="email"
+                  placeholder="colleague@company.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  disabled={inviteLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="invite-role">Role</Label>
+                <Select value={inviteRole} onValueChange={setInviteRole} disabled={inviteLoading}>
+                  <SelectTrigger id="invite-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="MANAGER">Manager</SelectItem>
+                    <SelectItem value="MEMBER">Member</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleInvite} disabled={inviteLoading || !inviteEmail.trim()}>
+                  {inviteLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="h-4 w-4 mr-2" />
+                      Send Invitation
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
