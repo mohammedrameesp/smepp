@@ -39,7 +39,7 @@ async function getSubscriptionHandler(request: NextRequest, context: APIContext)
     }
 
     // Authorization check: Only admins or the assigned member can view the subscription
-    if (tenant!.userRole !== 'ADMIN' && subscription.assignedMemberId !== tenant!.userId) {
+    if (tenant!.orgRole !== 'ADMIN' && subscription.assignedMemberId !== tenant!.userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

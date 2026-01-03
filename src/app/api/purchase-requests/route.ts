@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma, Role, PurchaseRequestStatus, PurchaseRequestPriority } from '@prisma/client';
+import { Prisma, PurchaseRequestStatus, PurchaseRequestPriority } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createPurchaseRequestSchema } from '@/lib/validations/purchase-request';
 import { logAction, ActivityActions } from '@/lib/activity';
@@ -21,7 +21,6 @@ async function getPurchaseRequestsHandler(request: NextRequest, context: APICont
     const { tenant } = context;
     const tenantId = tenant!.tenantId;
     const userId = tenant!.userId;
-    const userRole = tenant!.userRole;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -34,7 +33,8 @@ async function getPurchaseRequestsHandler(request: NextRequest, context: APICont
     const where: Prisma.PurchaseRequestWhereInput = { tenantId };
 
     // Non-admin users can only see their own requests
-    if (userRole !== Role.ADMIN) {
+    // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole
+    if (tenant!.orgRole !== 'ADMIN') {
       where.requesterId = userId;
     }
 

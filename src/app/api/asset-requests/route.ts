@@ -4,7 +4,7 @@
  * @module operations/assets
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { Role, AssetRequestStatus, AssetRequestType } from '@prisma/client';
+import { AssetRequestStatus, AssetRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import {
   createAssetRequestSchema,
@@ -26,7 +26,6 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
     const { tenant } = context;
     const tenantId = tenant!.tenantId;
     const currentUserId = tenant!.userId;
-    const userRole = tenant!.userRole;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -42,7 +41,8 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
     const { q, type, status, memberId: filterMemberId, assetId, p, ps, sort, order } = validation.data;
 
     // Non-admin users can only see their own requests
-    const isAdmin = userRole === Role.ADMIN;
+    // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole
+    const isAdmin = tenant!.orgRole === 'ADMIN';
     const effectiveMemberId = isAdmin ? filterMemberId : currentUserId;
 
     // Build where clause with tenant filtering
@@ -133,11 +133,11 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
     const { tenant } = context;
     const tenantId = tenant!.tenantId;
     const currentUserId = tenant!.userId;
-    const userRole = tenant!.userRole;
 
     const body = await request.json();
     const requestType = body.type as AssetRequestType | undefined;
-    const isAdmin = userRole === Role.ADMIN;
+    // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole
+    const isAdmin = tenant!.orgRole === 'ADMIN';
 
     // Determine request type and validate accordingly
     let validatedData;

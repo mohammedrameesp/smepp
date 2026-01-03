@@ -77,7 +77,7 @@ async function getLeaveRequestHandler(request: NextRequest, context: APIContext)
     }
 
     // Non-admin members can only see their own requests
-    if (tenant!.userRole !== 'ADMIN' && leaveRequest.memberId !== tenant!.userId) {
+    if (tenant!.orgRole !== 'ADMIN' && leaveRequest.memberId !== tenant!.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -120,7 +120,7 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
     }
 
     // Only owner can edit their request
-    if (existing.memberId !== currentUserId && tenant!.userRole !== 'ADMIN') {
+    if (existing.memberId !== currentUserId && tenant!.orgRole !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
