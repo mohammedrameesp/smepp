@@ -15,6 +15,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Users,
   UserPlus,
   Mail,
@@ -119,6 +129,8 @@ export function TeamClient({ initialStats }: TeamClientProps) {
   const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
   const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null);
 
   const isOwner = session?.user?.orgRole === 'OWNER';
   const isAdmin = session?.user?.orgRole === 'ADMIN' || isOwner;
@@ -222,10 +234,18 @@ export function TeamClient({ initialStats }: TeamClientProps) {
     }
   }
 
-  async function handleRemoveMember(id: string, name: string) {
-    if (!confirm(`Remove ${name} from the organization?`)) return;
+  function openRemoveDialog(id: string, name: string) {
+    setMemberToRemove({ id, name });
+    setRemoveDialogOpen(true);
+  }
 
+  async function handleRemoveMember() {
+    if (!memberToRemove) return;
+
+    const { id, name } = memberToRemove;
     setRemovingId(id);
+    setRemoveDialogOpen(false);
+
     try {
       const response = await fetch(`/api/admin/team/${id}`, {
         method: 'DELETE',
@@ -244,6 +264,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
       setError(err instanceof Error ? err.message : 'Failed to remove');
     } finally {
       setRemovingId(null);
+      setMemberToRemove(null);
     }
   }
 
@@ -483,7 +504,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                           variant="ghost"
                           size="icon"
                           onClick={() =>
-                            handleRemoveMember(member.id, member.user.name || member.user.email)
+                            openRemoveDialog(member.id, member.user.name || member.user.email)
                           }
                           disabled={removingId === member.id}
                         >
@@ -680,7 +701,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleRemoveMember(member.id, member.user.name || member.user.email)}
+                        onClick={() => openRemoveDialog(member.id, member.user.name || member.user.email)}
                         disabled={removingId === member.id}
                         title="Remove pending member"
                       >
@@ -699,6 +720,27 @@ export function TeamClient({ initialStats }: TeamClientProps) {
         </Card>
       )}
 
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Member</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove <strong>{memberToRemove?.name}</strong> from the organization?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveMember}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

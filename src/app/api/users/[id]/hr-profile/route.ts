@@ -137,7 +137,7 @@ export async function GET(
         id: member.id,
         name: member.name,
         email: member.email,
-        role: member.role,
+        role: member.approvalRole, // Approval role for dropdown
       },
       workEmail: member.email,
       isAdmin: true, // Admin is viewing
