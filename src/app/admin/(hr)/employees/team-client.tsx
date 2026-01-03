@@ -2,13 +2,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
-import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -33,6 +31,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { EmployeeListTable } from '@/components/domains/hr/employees';
+import { cn } from '@/lib/utils';
 
 interface Member {
   id: string;
@@ -85,8 +84,6 @@ const roleIcons: Record<string, React.ReactNode> = {
 
 export function TeamClient({ initialStats }: TeamClientProps) {
   const { data: session } = useSession();
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
   // State
   const [members, setMembers] = useState<Member[]>([]);
@@ -95,8 +92,8 @@ export function TeamClient({ initialStats }: TeamClientProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Tab from URL
-  const currentTab = (searchParams.get('tab') as FilterType) || 'employees';
+  // Tab state - local for instant switching
+  const [currentTab, setCurrentTab] = useState<FilterType>('employees');
 
   // Action states
   const [resendingId, setResendingId] = useState<string | null>(null);
@@ -123,16 +120,6 @@ export function TeamClient({ initialStats }: TeamClientProps) {
   useEffect(() => {
     fetchData();
   }, []);
-
-  function setTab(tab: FilterType) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (tab === 'employees') {
-      params.delete('tab');
-    } else {
-      params.set('tab', tab);
-    }
-    router.push(`?${params.toString()}`, { scroll: false });
-  }
 
   async function fetchData() {
     try {
@@ -281,31 +268,53 @@ export function TeamClient({ initialStats }: TeamClientProps) {
 
       {/* Tabs Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <Tabs value={currentTab} onValueChange={(v) => setTab(v as FilterType)}>
-          <TabsList>
-            <TabsTrigger value="employees" className="gap-2">
-              <Briefcase className="h-4 w-4" />
-              Employees
-              <Badge variant="secondary" className="ml-1">
-                {stats.employees || initialStats.totalEmployees}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger value="non-employees" className="gap-2">
-              <User className="h-4 w-4" />
-              Non-Employees
-              <Badge variant="secondary" className="ml-1">
-                {stats.nonEmployees || initialStats.totalNonEmployees}
-              </Badge>
-            </TabsTrigger>
-            <TabsTrigger value="all" className="gap-2">
-              <Users className="h-4 w-4" />
-              All
-              <Badge variant="secondary" className="ml-1">
-                {stats.all || (initialStats.totalEmployees + initialStats.totalNonEmployees)}
-              </Badge>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
+          <button
+            onClick={() => setCurrentTab('employees')}
+            className={cn(
+              'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-2',
+              currentTab === 'employees'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'hover:bg-background/50'
+            )}
+          >
+            <Briefcase className="h-4 w-4" />
+            Employees
+            <Badge variant="secondary" className="ml-1">
+              {stats.employees || initialStats.totalEmployees}
+            </Badge>
+          </button>
+          <button
+            onClick={() => setCurrentTab('non-employees')}
+            className={cn(
+              'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-2',
+              currentTab === 'non-employees'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'hover:bg-background/50'
+            )}
+          >
+            <User className="h-4 w-4" />
+            Non-Employees
+            <Badge variant="secondary" className="ml-1">
+              {stats.nonEmployees || initialStats.totalNonEmployees}
+            </Badge>
+          </button>
+          <button
+            onClick={() => setCurrentTab('all')}
+            className={cn(
+              'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-2',
+              currentTab === 'all'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'hover:bg-background/50'
+            )}
+          >
+            <Users className="h-4 w-4" />
+            All
+            <Badge variant="secondary" className="ml-1">
+              {stats.all || (initialStats.totalEmployees + initialStats.totalNonEmployees)}
+            </Badge>
+          </button>
+        </div>
 
         {/* Add Member Button */}
         {isAdmin && (
@@ -440,38 +449,75 @@ export function TeamClient({ initialStats }: TeamClientProps) {
         </Card>
       </div>
 
-      {/* All Tab Content */}
+      {/* All Tab Content - Shows summary with links to specific tabs */}
       <div className={currentTab === 'all' ? 'space-y-6' : 'hidden'}>
-        {/* Employees Section */}
-        <div className="bg-white rounded-xl border border-slate-200">
-          <div className="px-4 py-4 border-b border-slate-100">
-            <h2 className="font-semibold text-slate-900">Employees ({stats.employees})</h2>
-          </div>
-          <div className="p-4">
-            <EmployeeListTable />
-          </div>
-        </div>
-
-        {/* Non-Employees Section */}
-        {nonEmployees.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Non-Employees ({nonEmployees.length})
+        {/* Quick Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card
+            className="cursor-pointer hover:border-blue-300 transition-colors"
+            onClick={() => setCurrentTab('employees')}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Briefcase className="h-5 w-5 text-blue-600" />
+                Employees
               </CardTitle>
             </CardHeader>
             <CardContent>
+              <p className="text-3xl font-bold text-blue-600">{stats.employees || initialStats.totalEmployees}</p>
+              <p className="text-sm text-muted-foreground mt-1">Team members with HR profiles</p>
+            </CardContent>
+          </Card>
+
+          <Card
+            className="cursor-pointer hover:border-slate-400 transition-colors"
+            onClick={() => setCurrentTab('non-employees')}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <User className="h-5 w-5 text-slate-600" />
+                Non-Employees
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-slate-600">{stats.nonEmployees || initialStats.totalNonEmployees}</p>
+              <p className="text-sm text-muted-foreground mt-1">Contractors, external users</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Combined List - Simple view of all members */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              All Team Members ({stats.all || (initialStats.totalEmployees + initialStats.totalNonEmployees)})
+            </CardTitle>
+            <CardDescription>
+              Click on Employees or Non-Employees tab for detailed view
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : members.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No team members found</p>
+              </div>
+            ) : (
               <div className="divide-y">
-                {nonEmployees.map((member) => (
+                {members.map((member) => (
                   <div key={member.id} className="py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
+                      <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center">
                         {member.user.image ? (
                           <img
                             src={member.user.image}
                             alt={member.user.name || ''}
-                            className="h-8 w-8 rounded-full"
+                            className="h-9 w-9 rounded-full"
                           />
                         ) : (
                           <span className="text-sm font-semibold text-slate-600">
@@ -481,15 +527,26 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                       </div>
                       <div>
                         <p className="font-medium text-sm">{member.user.name || member.user.email}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {member.isEmployee ? (
+                            <span className="text-blue-600">Employee</span>
+                          ) : (
+                            <span className="text-slate-500">Non-employee</span>
+                          )}
+                          {member.designation && ` • ${member.designation}`}
+                        </p>
                       </div>
                     </div>
-                    <Badge variant="secondary">{member.role}</Badge>
+                    <div className="flex items-center gap-2">
+                      {roleIcons[member.role]}
+                      <Badge variant="secondary">{member.role}</Badge>
+                    </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Pending Invitations */}
