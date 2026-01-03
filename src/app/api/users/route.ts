@@ -227,9 +227,9 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
         const setupToken = randomBytes(32).toString('hex');
         const setupTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-        // Update user with setup token
-        await prisma.user.update({
-          where: { id: user.id },
+        // Update TeamMember with setup token
+        await prisma.teamMember.update({
+          where: { id: member.id },
           data: { setupToken, setupTokenExpiry },
         });
 

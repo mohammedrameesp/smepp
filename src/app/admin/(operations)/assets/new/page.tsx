@@ -16,7 +16,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toInputDateString } from '@/lib/date-format';
 import { createAssetSchema, type CreateAssetRequest } from '@/lib/validations/assets';
 import { AssetStatus, AcquisitionType } from '@prisma/client';
-import { USD_TO_QAR_RATE } from '@/lib/constants';
+// Default exchange rates to QAR (fallback if not set in settings)
+const DEFAULT_RATES: Record<string, number> = {
+  USD: 3.64, EUR: 3.96, GBP: 4.60, SAR: 0.97, AED: 0.99, KWD: 11.85,
+  BHD: 9.66, OMR: 9.46, INR: 0.044, PKR: 0.013, PHP: 0.065,
+};
 import { getQatarEndOfDay } from '@/lib/qatar-timezone';
 
 interface DepreciationCategory {
@@ -38,6 +42,7 @@ export default function NewAssetPage() {
   const [users, setUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
   const [depreciationCategories, setDepreciationCategories] = useState<DepreciationCategory[]>([]);
   const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(DEFAULT_RATES);
 
   const {
     register,
@@ -96,7 +101,7 @@ export default function NewAssetPage() {
     fetchDepreciationCategories();
   }, []);
 
-  // Fetch org settings to get available currencies
+  // Fetch org settings to get available currencies and exchange rates
   useEffect(() => {
     async function fetchOrgSettings() {
       try {
@@ -112,6 +117,24 @@ export default function NewAssetPage() {
 
           // Set primary as default
           setValue('priceCurrency', primary);
+
+          // Fetch exchange rates for all currencies
+          const rates: Record<string, number> = { ...DEFAULT_RATES };
+          const allCurrencies = currencies.filter((c: string) => c !== 'QAR');
+          await Promise.all(
+            allCurrencies.map(async (currency: string) => {
+              try {
+                const rateRes = await fetch(`/api/settings/exchange-rate?currency=${currency}`);
+                if (rateRes.ok) {
+                  const rateData = await rateRes.json();
+                  if (rateData.rate) rates[currency] = rateData.rate;
+                }
+              } catch {
+                // Use default rate
+              }
+            })
+          );
+          setExchangeRates(rates);
         }
       } catch (error) {
         console.error('Error fetching org settings:', error);
@@ -147,19 +170,20 @@ export default function NewAssetPage() {
     }
   }, [watchedLocation]);
 
-  // Auto-calculate currency conversion
+  // Auto-calculate currency conversion to QAR
   useEffect(() => {
     if (watchedPrice && watchedCurrency) {
       if (watchedCurrency === 'QAR') {
         // QAR is base currency, no conversion needed
         setValue('priceQAR', null);
-      } else if (watchedCurrency === 'USD') {
-        // Convert USD to QAR
-        const qarValue = watchedPrice * USD_TO_QAR_RATE;
+      } else {
+        // Convert any other currency to QAR using exchange rate
+        const rate = exchangeRates[watchedCurrency] || 1;
+        const qarValue = watchedPrice * rate;
         setValue('priceQAR', qarValue);
       }
     }
-  }, [watchedPrice, watchedCurrency, setValue]);
+  }, [watchedPrice, watchedCurrency, exchangeRates, setValue]);
 
   const fetchUsers = async () => {
     try {
@@ -261,10 +285,12 @@ export default function NewAssetPage() {
       let priceInQAR = null;
 
       if (price) {
-        if (data.priceCurrency === 'QAR') {
+        if (data.priceCurrency === 'QAR' || !data.priceCurrency) {
           priceInQAR = price;
-        } else if (data.priceCurrency === 'USD') {
-          priceInQAR = price * USD_TO_QAR_RATE;
+        } else {
+          // Convert any other currency to QAR using exchange rate
+          const rate = exchangeRates[data.priceCurrency as string] || 1;
+          priceInQAR = price * rate;
         }
       }
 
@@ -538,13 +564,15 @@ export default function NewAssetPage() {
                           </SelectContent>
                         </Select>
                       </div>
-                      {watchedPrice && (
+                      {watchedPrice && watchedCurrency && (
                         <p className="text-xs text-muted-foreground">
-                          {watchedCurrency === 'USD' ? (
-                            <>≈ QAR {(watchedPrice * USD_TO_QAR_RATE).toFixed(2)}</>
-                          ) : watchedCurrency === 'QAR' ? (
-                            <>≈ USD {(watchedPrice / USD_TO_QAR_RATE).toFixed(2)}</>
-                          ) : null}
+                          {watchedCurrency === 'QAR' ? (
+                            // QAR selected: show USD equivalent
+                            <>≈ USD {(watchedPrice / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
+                          ) : (
+                            // Any other currency: show QAR equivalent
+                            <>≈ QAR {(watchedPrice * (exchangeRates[watchedCurrency as string] || 1)).toFixed(2)}</>
+                          )}
                         </p>
                       )}
                     </div>

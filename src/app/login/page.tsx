@@ -31,7 +31,7 @@ function LoginForm() {
   const { branding, isLoading: brandingLoading, error: brandingError } = useTenantBranding(subdomain);
 
   // Dynamic colors based on branding
-  const primaryColor = branding?.primaryColor || '#1E40AF';
+  const primaryColor = branding?.primaryColor || '#0f172a';
   const orgName = branding?.organizationName || 'Durj';
   const welcomeTitle = branding?.welcomeTitle || 'Welcome back';
   const welcomeSubtitle = branding?.welcomeSubtitle || 'Sign in to your account';
@@ -252,11 +252,11 @@ function LoginForm() {
 
             {/* Countdown Timer */}
             <div className="mb-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 rounded-full">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-full">
+                <div className="w-8 h-8 bg-slate-900 dark:bg-slate-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                   {notFoundCountdown}
                 </div>
-                <span className="text-blue-700 dark:text-blue-300 text-sm">
+                <span className="text-slate-700 dark:text-slate-300 text-sm">
                   Redirecting to home page...
                 </span>
               </div>
@@ -265,7 +265,7 @@ function LoginForm() {
             {/* Progress Bar */}
             <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full mb-6 overflow-hidden">
               <div
-                className="h-full bg-blue-500 transition-all duration-1000 ease-linear"
+                className="h-full bg-slate-900 dark:bg-slate-500 transition-all duration-1000 ease-linear"
                 style={{ width: `${((10 - notFoundCountdown) / 10) * 100}%` }}
               />
             </div>
@@ -273,7 +273,7 @@ function LoginForm() {
             {/* Action Button */}
             <Button
               onClick={() => { window.location.href = homeUrl; }}
-              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white"
             >
               <Home className="w-4 h-4 mr-2" />
               Go to Home Now
@@ -514,8 +514,8 @@ function LoginForm() {
             {!subdomain && (
               <>
                 {/* Organization login hint */}
-                <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <p className="text-xs text-blue-800 dark:text-blue-200 text-center">
+                <div className="mt-6 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 text-center">
                     Using your organization email?{' '}
                     <span className="font-medium">Login from your organization&apos;s subdomain</span>{' '}
                     (e.g., yourcompany.quriosityhub.com) for SSO options.

@@ -22,7 +22,7 @@ export default function ForgotPasswordPage() {
   const { branding, isLoading: brandingLoading } = useTenantBranding(subdomain);
 
   // Dynamic colors based on branding
-  const primaryColor = branding?.primaryColor || '#1E40AF';
+  const primaryColor = branding?.primaryColor || '#0f172a';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

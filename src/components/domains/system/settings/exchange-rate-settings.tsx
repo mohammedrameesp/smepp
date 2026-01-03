@@ -22,6 +22,7 @@ interface CurrencyRate {
   lastUpdated: string | null;
 }
 
+// Currency info - must match ALL_CURRENCIES in CurrencyStep.tsx
 const CURRENCY_INFO: Record<string, { name: string; flag: string }> = {
   QAR: { name: 'Qatari Riyal', flag: '🇶🇦' },
   USD: { name: 'US Dollar', flag: '🇺🇸' },
@@ -30,6 +31,30 @@ const CURRENCY_INFO: Record<string, { name: string; flag: string }> = {
   SAR: { name: 'Saudi Riyal', flag: '🇸🇦' },
   AED: { name: 'UAE Dirham', flag: '🇦🇪' },
   KWD: { name: 'Kuwaiti Dinar', flag: '🇰🇼' },
+  BHD: { name: 'Bahraini Dinar', flag: '🇧🇭' },
+  OMR: { name: 'Omani Rial', flag: '🇴🇲' },
+  INR: { name: 'Indian Rupee', flag: '🇮🇳' },
+  PKR: { name: 'Pakistani Rupee', flag: '🇵🇰' },
+  PHP: { name: 'Philippine Peso', flag: '🇵🇭' },
+  BDT: { name: 'Bangladeshi Taka', flag: '🇧🇩' },
+  NPR: { name: 'Nepalese Rupee', flag: '🇳🇵' },
+  LKR: { name: 'Sri Lankan Rupee', flag: '🇱🇰' },
+  EGP: { name: 'Egyptian Pound', flag: '🇪🇬' },
+  JOD: { name: 'Jordanian Dinar', flag: '🇯🇴' },
+  CNY: { name: 'Chinese Yuan', flag: '🇨🇳' },
+  JPY: { name: 'Japanese Yen', flag: '🇯🇵' },
+  AUD: { name: 'Australian Dollar', flag: '🇦🇺' },
+  CAD: { name: 'Canadian Dollar', flag: '🇨🇦' },
+  CHF: { name: 'Swiss Franc', flag: '🇨🇭' },
+  SGD: { name: 'Singapore Dollar', flag: '🇸🇬' },
+  MYR: { name: 'Malaysian Ringgit', flag: '🇲🇾' },
+  THB: { name: 'Thai Baht', flag: '🇹🇭' },
+  IDR: { name: 'Indonesian Rupiah', flag: '🇮🇩' },
+  ZAR: { name: 'South African Rand', flag: '🇿🇦' },
+  TRY: { name: 'Turkish Lira', flag: '🇹🇷' },
+  RUB: { name: 'Russian Ruble', flag: '🇷🇺' },
+  BRL: { name: 'Brazilian Real', flag: '🇧🇷' },
+  MXN: { name: 'Mexican Peso', flag: '🇲🇽' },
 };
 
 export function ExchangeRateSettings() {

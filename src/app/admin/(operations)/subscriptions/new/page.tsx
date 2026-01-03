@@ -17,8 +17,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { DatePicker } from '@/components/ui/date-picker';
 import { toInputDateString } from '@/lib/date-format';
 
-// USD to QAR exchange rate (typically around 3.64)
-const USD_TO_QAR_RATE = 3.64;
+// Default exchange rates to QAR (fallback if not set in settings)
+const DEFAULT_RATES: Record<string, number> = {
+  USD: 3.64, EUR: 3.96, GBP: 4.60, SAR: 0.97, AED: 0.99, KWD: 11.85,
+  BHD: 9.66, OMR: 9.46, INR: 0.044, PKR: 0.013, PHP: 0.065,
+};
 
 export default function NewSubscriptionPage() {
   const router = useRouter();
@@ -26,6 +29,7 @@ export default function NewSubscriptionPage() {
   const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
   const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
   const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(DEFAULT_RATES);
 
   const {
     register,
@@ -73,7 +77,7 @@ export default function NewSubscriptionPage() {
     fetchCategorySuggestions(); // Fetch all categories initially
   }, []);
 
-  // Fetch org settings to get available currencies
+  // Fetch org settings to get available currencies and exchange rates
   useEffect(() => {
     async function fetchOrgSettings() {
       try {
@@ -89,6 +93,24 @@ export default function NewSubscriptionPage() {
 
           // Set primary as default
           setValue('costCurrency', primary);
+
+          // Fetch exchange rates for all currencies
+          const rates: Record<string, number> = { ...DEFAULT_RATES };
+          const allCurrencies = currencies.filter((c: string) => c !== 'QAR');
+          await Promise.all(
+            allCurrencies.map(async (currency: string) => {
+              try {
+                const rateRes = await fetch(`/api/settings/exchange-rate?currency=${currency}`);
+                if (rateRes.ok) {
+                  const rateData = await rateRes.json();
+                  if (rateData.rate) rates[currency] = rateData.rate;
+                }
+              } catch {
+                // Use default rate
+              }
+            })
+          );
+          setExchangeRates(rates);
         }
       } catch (error) {
         console.error('Error fetching org settings:', error);
@@ -97,19 +119,20 @@ export default function NewSubscriptionPage() {
     fetchOrgSettings();
   }, [setValue]);
 
-  // Auto-calculate currency conversion (only for storing in DB)
+  // Auto-calculate currency conversion to QAR
   useEffect(() => {
     if (watchedCostPerCycle && watchedCostCurrency) {
       if (watchedCostCurrency === 'QAR') {
-        // QAR is base currency, store as-is
+        // QAR is base currency, no conversion needed
         setValue('costQAR', null);
-      } else if (watchedCostCurrency === 'USD') {
-        // Convert USD to QAR
-        const qarValue = watchedCostPerCycle * USD_TO_QAR_RATE;
+      } else {
+        // Convert any other currency to QAR using exchange rate
+        const rate = exchangeRates[watchedCostCurrency] || 1;
+        const qarValue = watchedCostPerCycle * rate;
         setValue('costQAR', qarValue);
       }
     }
-  }, [watchedCostPerCycle, watchedCostCurrency, setValue]);
+  }, [watchedCostPerCycle, watchedCostCurrency, exchangeRates, setValue]);
 
   // Auto-calculate renewal date based on purchase date and billing cycle
   useEffect(() => {
@@ -186,12 +209,13 @@ export default function NewSubscriptionPage() {
       let costInQAR = null;
 
       if (costPerCycle) {
-        if (data.costCurrency === 'QAR') {
-          // User entered QAR, so store as is and that's also the QAR value
+        if (data.costCurrency === 'QAR' || !data.costCurrency) {
+          // User entered QAR, so store as is
           costInQAR = costPerCycle;
         } else {
-          // User entered USD, calculate QAR equivalent
-          costInQAR = costPerCycle * USD_TO_QAR_RATE;
+          // Convert any other currency to QAR using exchange rate
+          const rate = exchangeRates[data.costCurrency as string] || 1;
+          costInQAR = costPerCycle * rate;
         }
       }
 
@@ -490,12 +514,14 @@ export default function NewSubscriptionPage() {
                       placeholder="0.00"
                       className={errors.costPerCycle ? 'border-red-500' : ''}
                     />
-                    {watchedCostPerCycle && (
+                    {watchedCostPerCycle && watchedCostCurrency && (
                       <p className="text-xs text-muted-foreground">
-                        {watchedCostCurrency === 'USD' ? (
-                          <>≈ QAR {(watchedCostPerCycle * USD_TO_QAR_RATE).toFixed(2)}</>
+                        {watchedCostCurrency === 'QAR' ? (
+                          // QAR selected: show USD equivalent
+                          <>≈ USD {(watchedCostPerCycle / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
                         ) : (
-                          <>≈ USD {(watchedCostPerCycle / USD_TO_QAR_RATE).toFixed(2)}</>
+                          // Any other currency: show QAR equivalent
+                          <>≈ QAR {(watchedCostPerCycle * (exchangeRates[watchedCostCurrency as string] || 1)).toFixed(2)}</>
                         )}
                       </p>
                     )}

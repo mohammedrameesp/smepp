@@ -302,7 +302,7 @@ model Organization {
 
   // Branding
   logoUrl            String?
-  primaryColor       String  @default("#1E40AF") // Deep Blue - brand primary
+  primaryColor       String  @default("#0f172a") // Slate - brand primary
   secondaryColor     String? // Accent color
   loginBackgroundUrl String? // Background image for login page
   welcomeTitle       String? // Custom welcome title (e.g., "Welcome to Acme")

@@ -19,8 +19,13 @@ const VALID_MODULES = [
   'documents',
 ];
 
-// Valid currencies
-const VALID_CURRENCIES = ['QAR', 'USD', 'EUR', 'GBP', 'SAR', 'AED', 'KWD'];
+// Valid currencies - must match ALL_CURRENCIES in CurrencyStep.tsx
+const VALID_CURRENCIES = [
+  'QAR', 'USD', 'EUR', 'GBP', 'SAR', 'AED', 'KWD', 'BHD', 'OMR',
+  'INR', 'PKR', 'PHP', 'BDT', 'NPR', 'LKR', 'EGP', 'JOD',
+  'CNY', 'JPY', 'AUD', 'CAD', 'CHF', 'SGD', 'MYR', 'THB',
+  'IDR', 'ZAR', 'TRY', 'RUB', 'BRL', 'MXN',
+];
 
 // Helper to transform empty strings to undefined
 const emptyToUndefined = (val: string | undefined) => (val === '' ? undefined : val);

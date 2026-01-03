@@ -140,9 +140,9 @@ export default function LandingPage() {
               { emoji: '📋', problem: '"I forgot to renew the trade license..."', solution: 'Expiry alerts for all company documents - CR, licenses, insurance' },
               { emoji: '💻', problem: '"Which laptop does Ahmed have?"', solution: 'Asset assignment tracking with full history in one click' },
               { emoji: '💳', problem: '"How much are we spending on software?"', solution: 'Subscription cost dashboard with renewal tracking' },
-              { emoji: '🛂', problem: '"Someone\'s passport is expiring?"', solution: 'Employee document tracking - QID, passport, visa expiry alerts' },
+              { emoji: '🛂', problem: '"Someone\'s passport is expiring?"', solution: 'Employee document tracking - QID, passport, health card expiry alerts' },
               { emoji: '🛒', problem: '"Who approved this purchase?"', solution: 'Simple purchase approval trail with full audit history' },
-              { emoji: '🚗', problem: '"The car registration expired!"', solution: 'Vehicle & Istimara tracking with insurance reminders' },
+              { emoji: '🚗', problem: '"The car registration expired!"', solution: 'Vehicle Istimara tracking with insurance reminders' },
               { emoji: '🏖️', problem: '"How many leave days does Sara have left?"', solution: 'Real-time leave balance tracking with approval workflow' },
               { emoji: '💰', problem: '"WPS file rejected again..."', solution: 'Qatar-compliant WPS file generation, every time' },
               { emoji: '🚚', problem: '"What was that supplier\'s contact?"', solution: 'Centralized supplier database with engagement history' },
@@ -181,12 +181,12 @@ export default function LandingPage() {
           </div>
           <div className="features-grid">
             {[
-              { icon: '📦', color: 'teal', title: 'Asset Management', desc: 'Track all your hardware and equipment with complete lifecycle management.', list: ['Assignment history tracking', 'Warranty & maintenance alerts', 'QR code asset labels', 'Depreciation calculations'] },
-              { icon: '💳', color: 'blue', title: 'Subscription Tracking', desc: 'Never miss a renewal. Monitor all your SaaS and service subscriptions.', list: ['Renewal date alerts', 'Cost analysis dashboard', 'License utilization', 'Spending trends'] },
-              { icon: '👥', color: 'purple', title: 'HR & Employees', desc: 'Manage employee profiles with comprehensive document tracking.', list: ['QID & passport expiry alerts', 'Visa tracking', 'Employee onboarding', 'Profile management'] },
+              { icon: '📦', color: 'teal', title: 'Asset Management', desc: 'Track all your hardware and equipment with complete lifecycle management.', list: ['Assignment history tracking', 'Warranty expiry alerts', 'Maintenance history', 'Location tracking', 'Depreciation calculations'] },
+              { icon: '💳', color: 'blue', title: 'Subscription Tracking', desc: 'Stop paying for unused subscriptions. Track all your SaaS and services.', list: ['Renewal date alerts', 'Cost analysis dashboard', 'Multi-currency support', 'Spending trends'] },
+              { icon: '👥', color: 'purple', title: 'HR & Employees', desc: 'Manage employee profiles with comprehensive document tracking.', list: ['QID & passport expiry alerts', 'Health card tracking', 'Employee onboarding', 'Profile management'] },
               { icon: '🏖️', color: 'amber', title: 'Leave Management', desc: 'Complete leave request and approval workflow for your team.', list: ['Multiple leave types', 'Balance tracking', 'Team calendar view', 'Approval workflow'] },
               { icon: '💰', color: 'emerald', title: 'Payroll Processing', desc: 'Qatar-compliant payroll with WPS file generation.', list: ['Salary structures', 'WPS file generation', 'Gratuity calculations', 'Loans & advances'] },
-              { icon: '🚚', color: 'rose', title: 'Supplier Management', desc: 'Manage your vendors with a complete registration and approval workflow.', list: ['Supplier registration', 'Approval workflow', 'Engagement tracking', 'Contact management'] },
+              { icon: '🚚', color: 'rose', title: 'Supplier Management', desc: 'Centralized vendor database with engagement tracking.', list: ['Supplier registration', 'Performance notes', 'Engagement tracking', 'Contact management'] },
               { icon: '🛒', color: 'cyan', title: 'Purchase Requests', desc: 'Streamline procurement with approval workflows and cost tracking.', list: ['Request submission', 'Multi-level approval', 'Cost categorization', 'Multi-currency support'] },
               { icon: '📄', color: 'indigo', title: 'Company Documents', desc: 'Track all your business licenses and compliance documents.', list: ['Trade license (CR) tracking', 'Municipality licenses', 'Insurance policies', 'Expiry alerts'] },
               { icon: '📊', color: 'orange', title: 'Reports & Analytics', desc: 'Comprehensive reporting with Excel exports and activity logs.', list: ['Dashboard insights', 'Excel exports', 'Activity audit trail', 'Cost analysis'] },
@@ -305,7 +305,7 @@ export default function LandingPage() {
                   <div className="qatar-feature-icon">📋</div>
                   <div className="qatar-feature-text">
                     <h4>Document Tracking</h4>
-                    <p>QID, passport, visa, and trade license expiry alerts</p>
+                    <p>QID, passport, health card, and trade license expiry alerts</p>
                   </div>
                 </div>
                 <div className="qatar-feature">

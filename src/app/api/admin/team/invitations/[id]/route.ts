@@ -45,6 +45,12 @@ export async function POST(
     const newToken = randomBytes(32).toString('hex');
     const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
+    // Get org for subdomain-based URL
+    const org = await prisma.organization.findUnique({
+      where: { id: session.user.organizationId },
+      select: { slug: true },
+    });
+
     const updated = await prisma.organizationInvitation.update({
       where: { id },
       data: {
@@ -53,7 +59,10 @@ export async function POST(
       },
     });
 
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invite/${newToken}`;
+    // Build organization-specific invite URL using subdomain (same as create)
+    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
+    const protocol = appDomain.includes('localhost') ? 'http' : 'https';
+    const inviteUrl = `${protocol}://${org?.slug}.${appDomain}/invite/${newToken}`;
 
     return NextResponse.json({
       success: true,

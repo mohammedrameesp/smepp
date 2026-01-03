@@ -36,7 +36,7 @@ export async function GET() {
 
     return NextResponse.json({
       logoUrl: org.logoUrl || null,
-      primaryColor: org.primaryColor || '#1E40AF',
+      primaryColor: org.primaryColor || '#0f172a',
       secondaryColor: org.secondaryColor || null,
       companyName: org.name || 'Durj',
     });

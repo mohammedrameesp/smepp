@@ -35,8 +35,8 @@ export interface TenantBrandingResponse {
  * Default branding values used when organization has no custom branding
  */
 export const DEFAULT_TENANT_BRANDING: Partial<TenantBranding> = {
-  primaryColor: '#1E40AF', // Deep Blue - brand primary
-  secondaryColor: '#3B82F6', // Blue - brand accent
+  primaryColor: '#0f172a', // Slate - brand primary
+  secondaryColor: '#334155', // Slate-700 - brand accent
   welcomeTitle: 'Welcome back',
   welcomeSubtitle: 'Sign in to your account',
   allowedAuthMethods: [], // Empty = all methods allowed

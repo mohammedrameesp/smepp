@@ -33,7 +33,7 @@ export default function SetPasswordPage() {
   const { branding, isLoading: brandingLoading } = useTenantBranding(subdomain);
 
   // Dynamic colors based on branding
-  const primaryColor = branding?.primaryColor || '#1E40AF';
+  const primaryColor = branding?.primaryColor || '#0f172a';
   const orgName = branding?.organizationName || 'Durj';
 
   // Validate token on mount

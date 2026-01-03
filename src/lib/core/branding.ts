@@ -17,7 +17,7 @@ export interface BrandingSettings {
 
 const DEFAULT_BRANDING: BrandingSettings = {
   logoUrl: null,
-  primaryColor: '#1E40AF',
+  primaryColor: '#0f172a',
   secondaryColor: null,
   companyName: 'Durj',
   timezone: 'Asia/Qatar',

@@ -115,37 +115,69 @@ export async function PATCH(request: NextRequest) {
 
     const data = validation.data;
 
-    // Update user profile
-    const user = await prisma.user.update({
+    // Check if user is a TeamMember (org user) or User (super admin)
+    const existingMember = await prisma.teamMember.findUnique({
       where: { id: session.user.id },
-      data: {
-        ...(data.name !== undefined && { name: data.name }),
-        ...(data.image !== undefined && { image: data.image }),
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        role: true,
-        isSystemAccount: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: { id: true },
     });
 
-    // Log activity
-    await logAction(
-      session.user.organizationId!,
-      session.user.id,
-      ActivityActions.USER_UPDATED,
-      'User',
-      user.id,
-      { changes: data }
-    );
+    let updatedUser;
+
+    if (existingMember) {
+      // Update TeamMember profile
+      const member = await prisma.teamMember.update({
+        where: { id: session.user.id },
+        data: {
+          ...(data.name !== undefined && { name: data.name }),
+          ...(data.image !== undefined && { image: data.image }),
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+      updatedUser = { ...member, isSystemAccount: false };
+    } else {
+      // Fall back to User model (for super admins)
+      const user = await prisma.user.update({
+        where: { id: session.user.id },
+        data: {
+          ...(data.name !== undefined && { name: data.name }),
+          ...(data.image !== undefined && { image: data.image }),
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          role: true,
+          isSystemAccount: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+      updatedUser = user;
+    }
+
+    // Log activity (only if user has an organization)
+    if (session.user.organizationId) {
+      await logAction(
+        session.user.organizationId,
+        session.user.id,
+        ActivityActions.USER_UPDATED,
+        'User',
+        updatedUser.id,
+        { changes: data }
+      );
+    }
 
     return NextResponse.json({
-      user,
+      user: updatedUser,
       message: 'Profile updated successfully',
     });
   } catch (error) {

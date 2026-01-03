@@ -34,9 +34,10 @@ export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleO
   // Super admin panel - fixed Durj branding (main domain)
   if (variant === 'super-admin') {
     return (
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
-        {/* Subtle decorative orb */}
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl" />
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
+        {/* Subtle decorative orbs */}
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-slate-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-20 w-60 h-60 bg-slate-400/5 rounded-full blur-2xl" />
 
         <div className="relative z-10 flex flex-col justify-between px-12 py-16 h-full w-full">
           {/* Spacer */}
@@ -53,7 +54,7 @@ export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleO
 
             <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
               All-in-One Business<br />
-              <span className="text-blue-400">Management Platform</span>
+              <span className="text-slate-400">Management Platform</span>
             </h1>
             <p className="text-lg text-slate-300 leading-relaxed">
               Streamline your operations, empower your team, and accelerate growth.
@@ -80,7 +81,7 @@ export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleO
   }
 
   // Tenant panel - dynamic branding
-  const primaryColor = branding?.primaryColor || '#1E40AF';
+  const primaryColor = branding?.primaryColor || '#0f172a';
   const secondaryColor = branding?.secondaryColor;
   const backgroundImage = branding?.loginBackgroundUrl;
   const welcomeTitle = welcomeTitleOverride || branding?.welcomeTitle || 'Welcome back';

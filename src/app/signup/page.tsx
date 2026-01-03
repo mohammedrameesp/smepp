@@ -52,7 +52,7 @@ function SignupForm() {
   const { branding, isLoading: brandingLoading } = useTenantBranding(orgSlug);
 
   // Dynamic colors based on branding
-  const primaryColor = branding?.primaryColor || '#1E40AF';
+  const primaryColor = branding?.primaryColor || '#0f172a';
   const orgName = branding?.organizationName || invitation?.organization?.name || 'Durj';
 
   // Fetch invitation details to get auth config
