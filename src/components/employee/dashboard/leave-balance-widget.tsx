@@ -22,10 +22,10 @@ export function LeaveBalanceWidget({ balances, year, className }: LeaveBalanceWi
   const hasBalances = balances.length > 0;
 
   return (
-    <div className={cn('bg-white border rounded-xl p-4', className)}>
+    <div className={cn('bg-white border border-gray-200 rounded-xl p-4', className)}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-          <CalendarDays className="h-5 w-5 text-blue-500" />
+          <CalendarDays className="h-5 w-5 text-gray-500" />
           Leave Balance
         </h3>
         <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{year}</span>
@@ -80,7 +80,7 @@ export function LeaveBalanceWidget({ balances, year, className }: LeaveBalanceWi
       )}
 
       <Link href="/employee/leave/new">
-        <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700">
+        <Button className="w-full mt-4 bg-slate-800 hover:bg-slate-900">
           <Plus className="h-4 w-4 mr-2" />
           Request Leave
         </Button>

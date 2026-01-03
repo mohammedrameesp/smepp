@@ -355,7 +355,7 @@ export default async function EmployeeDashboard() {
     return (
       <>
         {/* Header */}
-        <div className="bg-gradient-to-br from-slate-50 to-blue-50 border-b">
+        <div className="bg-white border-b border-gray-200">
           <div className="max-w-6xl mx-auto px-4 py-6">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -367,7 +367,7 @@ export default async function EmployeeDashboard() {
                   {tenure && (
                     <>
                       <span className="text-gray-300">•</span>
-                      <span className="text-emerald-600 font-medium">{tenure} with the company</span>
+                      <span className="text-gray-600 font-medium">{tenure} with the company</span>
                     </>
                   )}
                 </div>

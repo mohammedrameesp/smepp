@@ -33,25 +33,25 @@ function getAssetIcon(type?: string) {
 
 export function HoldingsCard({ assets, subscriptionCount, className }: HoldingsCardProps) {
   return (
-    <div className={cn('bg-white border rounded-xl p-4', className)}>
+    <div className={cn('bg-white border border-gray-200 rounded-xl p-4', className)}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-          <Package className="h-5 w-5 text-emerald-500" />
+          <Package className="h-5 w-5 text-gray-500" />
           My Holdings
         </h3>
-        <Link href="/employee/my-assets" className="text-sm text-blue-600 font-medium hover:text-blue-700">
+        <Link href="/employee/my-assets" className="text-sm text-gray-600 font-medium hover:text-gray-800">
           View All
         </Link>
       </div>
 
       <div className="flex items-center gap-4 mb-3 pb-3 border-b">
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-bold text-emerald-600">{assets.length}</span>
+          <span className="font-bold text-gray-900">{assets.length}</span>
           <span className="text-gray-500">Assets</span>
         </div>
         <div className="w-px h-4 bg-gray-200" />
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-bold text-blue-600">{subscriptionCount}</span>
+          <span className="font-bold text-gray-900">{subscriptionCount}</span>
           <span className="text-gray-500">Subscriptions</span>
         </div>
       </div>
@@ -80,7 +80,7 @@ export function HoldingsCard({ assets, subscriptionCount, className }: HoldingsC
           {assets.length > 3 && (
             <Link
               href="/employee/my-assets"
-              className="block text-center text-xs text-blue-600 hover:text-blue-700 py-1"
+              className="block text-center text-xs text-gray-600 hover:text-gray-800 py-1"
             >
               +{assets.length - 3} more
             </Link>

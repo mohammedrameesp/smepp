@@ -17,36 +17,36 @@ const defaultActions: QuickAction[] = [
     label: 'Request Leave',
     href: '/employee/leave/new',
     icon: Palmtree,
-    bgColor: 'bg-blue-50',
-    hoverBgColor: 'hover:bg-blue-100',
-    iconBgColor: 'bg-blue-100',
+    bgColor: 'bg-gray-50',
+    hoverBgColor: 'hover:bg-gray-100',
+    iconBgColor: 'bg-slate-100',
     iconColor: 'text-blue-600',
   },
   {
     label: 'New Purchase',
     href: '/employee/purchase-requests/new',
     icon: ShoppingCart,
-    bgColor: 'bg-violet-50',
-    hoverBgColor: 'hover:bg-violet-100',
-    iconBgColor: 'bg-violet-100',
+    bgColor: 'bg-gray-50',
+    hoverBgColor: 'hover:bg-gray-100',
+    iconBgColor: 'bg-slate-100',
     iconColor: 'text-violet-600',
   },
   {
     label: 'Browse Assets',
     href: '/employee/assets',
     icon: Search,
-    bgColor: 'bg-emerald-50',
-    hoverBgColor: 'hover:bg-emerald-100',
-    iconBgColor: 'bg-emerald-100',
+    bgColor: 'bg-gray-50',
+    hoverBgColor: 'hover:bg-gray-100',
+    iconBgColor: 'bg-slate-100',
     iconColor: 'text-emerald-600',
   },
   {
     label: 'Browse Subscriptions',
     href: '/employee/subscriptions',
     icon: CreditCard,
-    bgColor: 'bg-amber-50',
-    hoverBgColor: 'hover:bg-amber-100',
-    iconBgColor: 'bg-amber-100',
+    bgColor: 'bg-gray-50',
+    hoverBgColor: 'hover:bg-gray-100',
+    iconBgColor: 'bg-slate-100',
     iconColor: 'text-amber-600',
   },
 ];
@@ -58,9 +58,8 @@ interface QuickActionsProps {
 
 export function QuickActions({ actions = defaultActions, className }: QuickActionsProps) {
   return (
-    <div className={cn('bg-white border rounded-xl p-4', className)}>
+    <div className={cn('bg-white border border-gray-200 rounded-xl p-4', className)}>
       <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-4">
-        <span className="text-amber-500">⚡</span>
         Quick Actions
       </h3>
 

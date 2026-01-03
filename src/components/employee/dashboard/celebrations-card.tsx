@@ -43,13 +43,13 @@ export function CelebrationsCard({ celebrations, className }: CelebrationsCardPr
   return (
     <div
       className={cn(
-        'p-4 bg-gradient-to-r from-pink-50 to-purple-50 border border-pink-100 rounded-xl',
+        'p-4 bg-white border border-gray-200 rounded-xl',
         className
       )}
     >
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-lg">🎂</span>
-        <h3 className="font-semibold text-gray-900">Celebrations</h3>
+        <span className="text-lg">🎉</span>
+        <h3 className="font-semibold text-gray-900">Celebrations This Week</h3>
       </div>
 
       <div className="space-y-2">
@@ -60,8 +60,8 @@ export function CelebrationsCard({ celebrations, className }: CelebrationsCardPr
                 className={cn(
                   'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold',
                   celebration.type === 'birthday'
-                    ? 'bg-pink-200 text-pink-700'
-                    : 'bg-purple-200 text-purple-700'
+                    ? 'bg-slate-100 text-pink-600'
+                    : 'bg-slate-100 text-purple-600'
                 )}
               >
                 {getInitials(celebration.name)}
@@ -85,7 +85,7 @@ export function CelebrationsCard({ celebrations, className }: CelebrationsCardPr
       </div>
 
       {celebrations.length > 3 && (
-        <p className="text-xs text-purple-600 mt-2">
+        <p className="text-xs text-gray-500 mt-2">
           +{celebrations.length - 3} more this week
         </p>
       )}

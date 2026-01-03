@@ -11,29 +11,24 @@ interface StatCardProps {
   className?: string;
 }
 
-const colorStyles: Record<ColorVariant, { border: string; iconBg: string; iconColor: string }> = {
+const colorStyles: Record<ColorVariant, { iconBg: string; iconColor: string }> = {
   blue: {
-    border: 'border-blue-100',
-    iconBg: 'bg-blue-100',
+    iconBg: 'bg-slate-100',
     iconColor: 'text-blue-600',
   },
   emerald: {
-    border: 'border-emerald-100',
-    iconBg: 'bg-emerald-100',
+    iconBg: 'bg-slate-100',
     iconColor: 'text-emerald-600',
   },
   violet: {
-    border: 'border-violet-100',
-    iconBg: 'bg-violet-100',
+    iconBg: 'bg-slate-100',
     iconColor: 'text-violet-600',
   },
   amber: {
-    border: 'border-amber-100',
-    iconBg: 'bg-amber-100',
+    iconBg: 'bg-slate-100',
     iconColor: 'text-amber-600',
   },
   slate: {
-    border: 'border-slate-100',
     iconBg: 'bg-slate-100',
     iconColor: 'text-slate-600',
   },
@@ -45,8 +40,7 @@ export function StatCard({ icon: Icon, value, label, color = 'blue', className }
   return (
     <div
       className={cn(
-        'bg-white rounded-xl p-4 border shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5',
-        styles.border,
+        'bg-white rounded-xl p-4 border border-gray-200 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5',
         className
       )}
     >

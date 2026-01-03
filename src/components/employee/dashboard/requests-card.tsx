@@ -23,21 +23,21 @@ interface RequestsCardProps {
   className?: string;
 }
 
-const typeConfig: Record<RequestType, { icon: typeof ShoppingCart; bgColor: string; hoverBorder: string }> = {
+const typeConfig: Record<RequestType, { icon: typeof ShoppingCart; bgColor: string; iconColor: string }> = {
   purchase: {
     icon: ShoppingCart,
-    bgColor: 'bg-violet-100',
-    hoverBorder: 'hover:border-violet-200',
+    bgColor: 'bg-slate-100',
+    iconColor: 'text-violet-600',
   },
   leave: {
     icon: Palmtree,
-    bgColor: 'bg-blue-100',
-    hoverBorder: 'hover:border-blue-200',
+    bgColor: 'bg-slate-100',
+    iconColor: 'text-blue-600',
   },
   asset: {
     icon: Laptop,
-    bgColor: 'bg-emerald-100',
-    hoverBorder: 'hover:border-emerald-200',
+    bgColor: 'bg-slate-100',
+    iconColor: 'text-emerald-600',
   },
 };
 
@@ -98,22 +98,17 @@ export function RequestsCard({ requests, className }: RequestsCardProps) {
             return (
               <Link key={`${request.type}-${request.id}`} href={href}>
                 <div
-                  className={cn(
-                    'bg-white border rounded-xl p-3 transition-colors cursor-pointer',
-                    config.hoverBorder
-                  )}
+                  className="bg-white border border-gray-200 rounded-xl p-3 transition-colors cursor-pointer hover:border-gray-300 hover:bg-gray-50"
                 >
                   <div className="flex items-start gap-3">
                     <div
                       className={cn(
                         'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
-                        request.color ? '' : config.bgColor
+                        config.bgColor
                       )}
-                      style={request.color ? { backgroundColor: `${request.color}20` } : undefined}
                     >
                       <Icon
-                        className="h-4 w-4"
-                        style={request.color ? { color: request.color } : undefined}
+                        className={cn('h-4 w-4', config.iconColor)}
                       />
                     </div>
                     <div className="flex-1 min-w-0">

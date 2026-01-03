@@ -19,24 +19,26 @@ interface UpcomingCardProps {
   className?: string;
 }
 
-const typeConfig: Record<EventType, { bgColor: string; iconBg: string; textColor: string }> = {
+const typeConfig: Record<EventType, { bgColor: string; iconBg: string; textColor: string; iconColor: string }> = {
   leave: {
-    bgColor: 'bg-blue-50',
+    bgColor: 'bg-gray-50',
     iconBg: 'bg-white',
-    textColor: 'text-blue-600',
+    textColor: 'text-gray-700',
+    iconColor: 'text-blue-500',
   },
   renewal: {
-    bgColor: 'bg-amber-50',
+    bgColor: 'bg-gray-50',
     iconBg: 'bg-white',
-    textColor: 'text-amber-600',
+    textColor: 'text-gray-700',
+    iconColor: 'text-amber-500',
   },
 };
 
 export function UpcomingCard({ events, className }: UpcomingCardProps) {
   return (
-    <div className={cn('bg-white border rounded-xl p-4', className)}>
+    <div className={cn('bg-white border border-gray-200 rounded-xl p-4', className)}>
       <h3 className="font-semibold text-gray-900 flex items-center gap-2 mb-3">
-        <Calendar className="h-5 w-5 text-violet-500" />
+        <Calendar className="h-5 w-5 text-gray-500" />
         Upcoming
       </h3>
 
@@ -56,16 +58,16 @@ export function UpcomingCard({ events, className }: UpcomingCardProps) {
             return (
               <div
                 key={`${event.type}-${event.id}`}
-                className={cn('flex items-center gap-3 p-3 rounded-lg', config.bgColor)}
+                className={cn('flex items-center gap-3 p-3 rounded-lg border border-gray-100', config.bgColor)}
               >
                 <div
                   className={cn(
-                    'w-10 h-10 rounded-lg flex flex-col items-center justify-center shadow-sm',
+                    'w-10 h-10 rounded-lg flex flex-col items-center justify-center shadow-sm border border-gray-100',
                     config.iconBg
                   )}
                 >
                   <span className={cn('text-sm font-bold', config.textColor)}>{day}</span>
-                  <span className={cn('text-[10px]', config.textColor)}>{month}</span>
+                  <span className="text-[10px] text-gray-500">{month}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900 text-sm truncate">{event.title}</p>
@@ -81,9 +83,9 @@ export function UpcomingCard({ events, className }: UpcomingCardProps) {
                   </p>
                 </div>
                 {event.type === 'leave' ? (
-                  <Palmtree className="h-4 w-4 text-blue-400 flex-shrink-0" />
+                  <Palmtree className={cn('h-4 w-4 flex-shrink-0', config.iconColor)} />
                 ) : (
-                  <RefreshCw className="h-4 w-4 text-amber-400 flex-shrink-0" />
+                  <RefreshCw className={cn('h-4 w-4 flex-shrink-0', config.iconColor)} />
                 )}
               </div>
             );
