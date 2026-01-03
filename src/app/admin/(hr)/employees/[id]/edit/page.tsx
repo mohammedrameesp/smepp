@@ -117,7 +117,7 @@ export default function AdminEmployeeEditPage() {
       const response = await fetch('/api/admin/organization');
       if (response.ok) {
         const data = await response.json();
-        setPayrollEnabled(data.enabledModules?.includes('payroll') ?? false);
+        setPayrollEnabled(data.organization?.enabledModules?.includes('payroll') ?? false);
       }
     } catch (err) {
       // Ignore error - payroll toggle just won't show
