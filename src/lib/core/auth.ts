@@ -569,7 +569,13 @@ export const authOptions: NextAuthOptions = {
       try {
         // SECURITY: Check if password was changed after token was issued
         // This invalidates all existing sessions when password is reset
-        if (!user && token.id && token.iat) {
+        // OPTIMIZATION: Only check every 5 minutes to reduce database queries and prevent connection pool exhaustion
+        const SECURITY_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+        const now = Date.now();
+        const lastSecurityCheck = (token.lastSecurityCheck as number) || 0;
+        const shouldCheckSecurity = !user && token.id && token.iat && (now - lastSecurityCheck > SECURITY_CHECK_INTERVAL_MS);
+
+        if (shouldCheckSecurity) {
           // Check against TeamMember table for org users, User table for super admins
           if (token.isTeamMember) {
             const securityCheck = await prisma.teamMember.findUnique({
@@ -612,6 +618,8 @@ export const authOptions: NextAuthOptions = {
               }
             }
           }
+          // Update last security check timestamp
+          token.lastSecurityCheck = now;
         }
 
         // Initial sign in
