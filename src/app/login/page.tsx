@@ -295,7 +295,7 @@ function LoginForm() {
       <TenantBrandedPanel
         branding={branding}
         isLoading={subdomainLoading || brandingLoading}
-        variant="tenant"
+        variant={subdomain ? 'tenant' : 'super-admin'}
       />
 
       {/* Right Column - Login Form */}
