@@ -166,13 +166,12 @@ interface Session {
 - `/signup` - Create account + create organization
 - `/login` - Multi-provider login
 - `/invite/[token]` - Join existing organization via invite
-- `/onboarding` - Post-signup setup wizard
 
 ## Super Admin System
 
 The platform includes a super admin layer for platform-wide management:
 
-- `/super-admin/login` - Login with 2FA verification
+- `/super-admin` - Login form embedded in layout (with 2FA verification)
 - `/super-admin/*` - Platform management routes (organizations, users, settings)
 - **Impersonation**: Super admins can access tenant orgs via signed JWT tokens
 - Middleware validates `isSuperAdmin` flag from session for protected routes

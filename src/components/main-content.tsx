@@ -19,7 +19,6 @@ export default function MainContent({ children }: { children: React.ReactNode })
     '/login',
     '/signup',
     '/pricing',
-    '/onboarding',
     '/invite',
   ];
 

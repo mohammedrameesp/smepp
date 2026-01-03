@@ -25,9 +25,8 @@ Total: **123 pages**
 
 ---
 
-## Onboarding & Setup (5 pages)
+## Onboarding & Setup (4 pages)
 
-- [ ] `/onboarding` - Onboarding wizard
 - [ ] `/employee-onboarding` - Employee onboarding wizard
 - [ ] `/setup` - Organization setup
 - [ ] `/forbidden` - Access forbidden
@@ -35,10 +34,9 @@ Total: **123 pages**
 
 ---
 
-## User Profile (2 pages)
+## User Profile (1 page)
 
 - [ ] `/profile` - User profile
-- [ ] `/me` - My account
 
 ---
 
@@ -250,14 +248,13 @@ Total: **123 pages**
 
 ---
 
-## Other (2 pages)
+## Other (1 page)
 
 - [ ] `/browse` - Browse page
-- [ ] `/modules/assets-subscriptions` - Module info
 
 ---
 
-## Super Admin (14 pages)
+## Super Admin (13 pages)
 
 - [ ] `/super-admin` - Super admin dashboard
 - [ ] `/super-admin/organizations` - Organizations list
@@ -267,7 +264,6 @@ Total: **123 pages**
 - [ ] `/super-admin/admins` - Platform admins
 - [ ] `/super-admin/analytics` - Platform analytics
 - [ ] `/super-admin/backups` - Backups
-- [ ] `/super-admin/communication` - Communication
 - [ ] `/super-admin/seed-data` - Seed data
 - [ ] `/super-admin/reset` - Reset platform
 - [ ] `/super-admin/system` - System status

@@ -144,7 +144,6 @@ const PUBLIC_ROUTES = [
   '/reset-password',
   '/set-password', // Initial password setup for new employees
   '/get-started', // Public signup page
-  '/platform-login', // Super admin login (legacy)
   '/api/auth',
   '/api/health', // Health check endpoint for monitoring
   '/api/webhooks',

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Building2, Check, X, Mail, AlertCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { useTenantBranding } from '@/hooks/use-tenant-branding';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -23,6 +24,7 @@ interface InvitationData {
   organization: {
     id: string;
     name: string;
+    slug: string;
     logoUrl: string | null;
   };
   expiresAt: string;
@@ -39,6 +41,15 @@ export default function InvitePage() {
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Get tenant branding based on invitation org slug
+  const orgSlug = invitation?.organization?.slug || null;
+  const { branding, isLoading: brandingLoading } = useTenantBranding(orgSlug);
+
+  // Dynamic colors based on branding
+  const primaryColor = branding?.primaryColor || '#1E40AF';
+  const orgName = branding?.organizationName || invitation?.organization?.name || 'Durj';
+  const logoUrl = branding?.logoUrl || invitation?.organization?.logoUrl;
 
   // Fetch invitation details
   useEffect(() => {
@@ -117,8 +128,26 @@ export default function InvitePage() {
     }
   };
 
+  // Mobile logo header component
+  const MobileLogo = () => (
+    <div className="text-center mb-6">
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt={orgName}
+          className="h-12 w-auto mx-auto"
+        />
+      ) : (
+        <div className="flex items-center justify-center gap-2">
+          <img src="/sme-icon-shield-512.png" alt="Durj" className="h-10 w-10" />
+          <span className="text-2xl font-bold text-slate-900 dark:text-white">Durj</span>
+        </div>
+      )}
+    </div>
+  );
+
   // Loading state
-  if (loading || status === 'loading') {
+  if (loading || status === 'loading' || brandingLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -130,22 +159,25 @@ export default function InvitePage() {
   if (error && !invitation) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
-                <X className="h-6 w-6 text-red-600" />
+        <div className="w-full max-w-md">
+          <MobileLogo />
+          <Card className="shadow-xl">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="h-16 w-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <X className="h-8 w-8 text-red-600 dark:text-red-400" />
+                </div>
               </div>
-            </div>
-            <CardTitle className="text-xl">Invalid Invitation</CardTitle>
-            <CardDescription>{error}</CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Link href="/login">
-              <Button variant="outline">Go to Login</Button>
-            </Link>
-          </CardContent>
-        </Card>
+              <CardTitle className="text-xl">Invalid Invitation</CardTitle>
+              <CardDescription>{error}</CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <Link href="/login">
+                <Button variant="outline" className="w-full">Go to Login</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -154,25 +186,28 @@ export default function InvitePage() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
-                <Check className="h-8 w-8 text-green-600" />
+        <div className="w-full max-w-md">
+          <MobileLogo />
+          <Card className="shadow-xl">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                  <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
+                </div>
               </div>
-            </div>
-            <CardTitle className="text-xl">Welcome to {invitation?.organization.name}!</CardTitle>
-            <CardDescription>
-              You&apos;ve successfully joined the organization
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-muted-foreground mb-4">
-              Redirecting to your dashboard...
-            </p>
-            <Loader2 className="h-5 w-5 animate-spin mx-auto" />
-          </CardContent>
-        </Card>
+              <CardTitle className="text-xl">Welcome to {orgName}!</CardTitle>
+              <CardDescription>
+                You&apos;ve successfully joined the organization
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-muted-foreground mb-4">
+                Redirecting to your dashboard...
+              </p>
+              <Loader2 className="h-5 w-5 animate-spin mx-auto" />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -180,146 +215,166 @@ export default function InvitePage() {
   // Main invitation view
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="h-12 w-12 rounded-xl bg-slate-700 flex items-center justify-center">
-              <Building2 className="h-6 w-6 text-white" />
+      <div className="w-full max-w-md">
+        <MobileLogo />
+        <Card className="shadow-xl">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={orgName}
+                  className="h-16 w-auto object-contain"
+                />
+              ) : (
+                <div
+                  className="h-16 w-16 rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  <Building2 className="h-8 w-8 text-white" />
+                </div>
+              )}
             </div>
-          </div>
-          <CardTitle className="text-2xl">You&apos;re Invited!</CardTitle>
-          <CardDescription>
-            Join <span className="font-semibold text-foreground">{invitation?.organization.name}</span> on Durj
-          </CardDescription>
-        </CardHeader>
+            <CardTitle className="text-2xl">You&apos;re Invited!</CardTitle>
+            <CardDescription>
+              Join <span className="font-semibold text-foreground">{orgName}</span> on Durj
+            </CardDescription>
+          </CardHeader>
 
-        <CardContent className="space-y-6">
-          {/* Invitation details */}
-          <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-            <div className="flex items-center gap-3">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-xs text-muted-foreground">Invitation sent to</p>
-                <p className="font-medium">{invitation?.email}</p>
+          <CardContent className="space-y-6">
+            {/* Invitation details */}
+            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Invitation sent to</p>
+                  <p className="font-medium">{invitation?.email}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Your role</p>
+                  <p className="font-medium capitalize">{invitation?.role.toLowerCase()}</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-xs text-muted-foreground">Your role</p>
-                <p className="font-medium capitalize">{invitation?.role.toLowerCase()}</p>
-              </div>
-            </div>
-          </div>
 
-          {/* Error alert */}
-          {error && (
-            <Alert variant="error">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Expiry warning if less than 24 hours */}
-          {invitation?.expiresAt && (() => {
-            const hoursLeft = (new Date(invitation.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60);
-            if (hoursLeft > 0 && hoursLeft < 24) {
-              return (
-                <Alert className="border-amber-200 bg-amber-50 text-amber-800">
-                  <Clock className="h-4 w-4" />
-                  <AlertDescription>
-                    This invitation expires in {Math.ceil(hoursLeft)} hour{Math.ceil(hoursLeft) !== 1 ? 's' : ''}. Accept it soon!
-                  </AlertDescription>
-                </Alert>
-              );
-            }
-            return null;
-          })()}
-
-          {/* Email mismatch warning */}
-          {session?.user?.email && invitation?.email &&
-            session.user.email.toLowerCase() !== invitation.email.toLowerCase() && (
+            {/* Error alert */}
+            {error && (
               <Alert variant="error">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  You&apos;re signed in as <strong>{session.user.email}</strong>, but this invitation was sent to{' '}
-                  <strong>{invitation.email}</strong>. Please sign out and sign in with the correct email.
-                </AlertDescription>
+                <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
 
-          {/* Action buttons */}
-          <div className="space-y-3">
-            {!session?.user ? (
-              <>
+            {/* Expiry warning if less than 24 hours */}
+            {invitation?.expiresAt && (() => {
+              const hoursLeft = (new Date(invitation.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60);
+              if (hoursLeft > 0 && hoursLeft < 24) {
+                return (
+                  <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200">
+                    <Clock className="h-4 w-4" />
+                    <AlertDescription>
+                      This invitation expires in {Math.ceil(hoursLeft)} hour{Math.ceil(hoursLeft) !== 1 ? 's' : ''}. Accept it soon!
+                    </AlertDescription>
+                  </Alert>
+                );
+              }
+              return null;
+            })()}
+
+            {/* Email mismatch warning */}
+            {session?.user?.email && invitation?.email &&
+              session.user.email.toLowerCase() !== invitation.email.toLowerCase() && (
+                <Alert variant="error">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    You&apos;re signed in as <strong>{session.user.email}</strong>, but this invitation was sent to{' '}
+                    <strong>{invitation.email}</strong>. Please sign out and sign in with the correct email.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+            {/* Action buttons */}
+            <div className="space-y-3">
+              {!session?.user ? (
+                <>
+                  <Button
+                    className="w-full h-12 text-white"
+                    style={{ backgroundColor: primaryColor }}
+                    onClick={() => {
+                      // Redirect to signup with pre-filled email and name
+                      const params = new URLSearchParams({
+                        email: invitation?.email || '',
+                        invite: token,
+                      });
+                      if (invitation?.name) {
+                        params.set('name', invitation.name);
+                      }
+                      router.push(`/signup?${params.toString()}`);
+                    }}
+                    disabled={accepting}
+                  >
+                    Create Account & Join
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    Already have an account?{' '}
+                    <Link
+                      href={`/login?callbackUrl=/invite/${token}`}
+                      className="font-medium hover:underline"
+                      style={{ color: primaryColor }}
+                    >
+                      Sign in
+                    </Link>
+                  </p>
+                </>
+              ) : (
                 <Button
-                  className="w-full"
-                  onClick={() => {
-                    // Redirect to signup with pre-filled email and name
-                    const params = new URLSearchParams({
-                      email: invitation?.email || '',
-                      invite: token,
-                    });
-                    if (invitation?.name) {
-                      params.set('name', invitation.name);
-                    }
-                    router.push(`/signup?${params.toString()}`);
-                  }}
-                  disabled={accepting}
+                  className="w-full h-12 text-white"
+                  style={{ backgroundColor: primaryColor }}
+                  onClick={handleAccept}
+                  disabled={accepting || (session.user.email?.toLowerCase() !== invitation?.email.toLowerCase())}
                 >
-                  Create Account & Join
+                  {accepting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Joining...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="mr-2 h-4 w-4" />
+                      Accept Invitation
+                    </>
+                  )}
                 </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  Already have an account?{' '}
-                  <Link href={`/login?callbackUrl=/invite/${token}`} className="text-primary hover:underline">
-                    Sign in
-                  </Link>
-                </p>
-              </>
-            ) : (
+              )}
+
               <Button
+                variant="ghost"
                 className="w-full"
-                onClick={handleAccept}
-                disabled={accepting || (session.user.email?.toLowerCase() !== invitation?.email.toLowerCase())}
+                asChild
               >
-                {accepting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Joining...
-                  </>
-                ) : (
-                  <>
-                    <Check className="mr-2 h-4 w-4" />
-                    Accept Invitation
-                  </>
-                )}
+                <Link href="/">
+                  Decline
+                </Link>
               </Button>
+            </div>
+
+            {/* Expiry notice */}
+            {invitation?.expiresAt && (
+              <p className="text-xs text-center text-muted-foreground">
+                This invitation expires on{' '}
+                {new Date(invitation.expiresAt).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </p>
             )}
-
-            <Button
-              variant="ghost"
-              className="w-full"
-              asChild
-            >
-              <Link href="/">
-                Decline
-              </Link>
-            </Button>
-          </div>
-
-          {/* Expiry notice */}
-          {invitation?.expiresAt && (
-            <p className="text-xs text-center text-muted-foreground">
-              This invitation expires on{' '}
-              {new Date(invitation.expiresAt).toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, Mail, LogOut, Loader2, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
 
 export default function PendingPage() {
   const { data: session, status, update } = useSession();
@@ -55,75 +56,85 @@ export default function PendingPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 rounded-full bg-amber-100 flex items-center justify-center">
-              <Clock className="h-8 w-8 text-amber-600" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 p-4">
+      <div className="w-full max-w-md">
+        {/* Mobile Logo */}
+        <div className="text-center mb-6">
+          <Link href="/" className="inline-flex items-center justify-center gap-2">
+            <img src="/sme-icon-shield-512.png" alt="Durj" className="h-10 w-10" />
+            <span className="text-2xl font-bold text-slate-900 dark:text-white">Durj</span>
+          </Link>
+        </div>
+
+        <Card className="shadow-xl">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="h-16 w-16 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <Clock className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+              </div>
             </div>
-          </div>
-          <CardTitle className="text-2xl">Waiting for Invitation</CardTitle>
-          <CardDescription>
-            Your account is ready, but you haven&apos;t been added to an organization yet.
-          </CardDescription>
-        </CardHeader>
+            <CardTitle className="text-2xl">Waiting for Invitation</CardTitle>
+            <CardDescription>
+              Your account is ready, but you haven&apos;t been added to an organization yet.
+            </CardDescription>
+          </CardHeader>
 
-        <CardContent className="space-y-6">
-          <div className="bg-slate-50 border rounded-lg p-4 space-y-2">
-            <div className="flex items-center gap-2 text-sm">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Signed in as:</span>
+          <CardContent className="space-y-6">
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Signed in as:</span>
+              </div>
+              <p className="font-medium">{session?.user?.email}</p>
             </div>
-            <p className="font-medium">{session?.user?.email}</p>
-          </div>
 
-          <div className="text-center text-sm text-muted-foreground space-y-2">
-            <p>
-              Please contact your organization administrator to send you an invitation.
-            </p>
-            <p>
-              Once you receive an invitation email, click the link to join your organization.
-            </p>
-          </div>
+            <div className="text-center text-sm text-muted-foreground space-y-2">
+              <p>
+                Please contact your organization administrator to send you an invitation.
+              </p>
+              <p>
+                Once you receive an invitation email, click the link to join your organization.
+              </p>
+            </div>
 
-          <div className="flex flex-col gap-2">
-            <Button
-              variant="outline"
-              onClick={handleCheckStatus}
-              disabled={checking}
-              className="w-full"
-            >
-              {checking ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Checking...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Check Again
-                </>
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              className="w-full text-muted-foreground"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="flex flex-col gap-2">
+              <Button
+                variant="outline"
+                onClick={handleCheckStatus}
+                disabled={checking}
+                className="w-full h-12"
+              >
+                {checking ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Checking...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Check Again
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className="w-full text-muted-foreground"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
