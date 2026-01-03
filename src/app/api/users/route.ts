@@ -10,7 +10,7 @@ import { createUserSchema } from '@/lib/validations/users';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { sendEmail } from '@/lib/email';
-import { welcomeUserEmail, welcomeUserWithPasswordSetupEmail } from '@/lib/core/email-templates';
+import { welcomeUserEmail, welcomeUserWithPasswordSetupEmail, organizationInvitationEmail } from '@/lib/core/email-templates';
 import { randomBytes } from 'crypto';
 import { updateSetupProgress } from '@/lib/domains/system/setup';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
@@ -192,17 +192,19 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
   // Note: Leave balances are initialized when the employee completes
   // their HR profile onboarding with dateOfJoining set
 
-  // Send welcome email only to users who can login (non-blocking)
+  // Send welcome/invitation email only to users who can login (non-blocking)
   if (canLogin && finalEmail && !finalEmail.endsWith('.internal')) {
     try {
-      // Fetch organization with auth config for customized welcome email
+      // Fetch organization with auth config for customized email
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
         select: {
           slug: true,
           name: true,
           customGoogleClientId: true,
+          customGoogleClientSecret: true,
           customAzureClientId: true,
+          customAzureClientSecret: true,
           allowedAuthMethods: true,
         },
       });
@@ -212,18 +214,55 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
       const allowedMethods = org?.allowedAuthMethods || [];
       const allMethodsAllowed = allowedMethods.length === 0;
 
-      const hasGoogle = !!org?.customGoogleClientId && (allMethodsAllowed || allowedMethods.includes('google'));
-      const hasMicrosoft = !!org?.customAzureClientId && (allMethodsAllowed || allowedMethods.includes('azure-ad'));
+      const hasGoogle = !!(org?.customGoogleClientId && org?.customGoogleClientSecret) && (allMethodsAllowed || allowedMethods.includes('google'));
+      const hasMicrosoft = !!(org?.customAzureClientId && org?.customAzureClientSecret) && (allMethodsAllowed || allowedMethods.includes('azure-ad'));
       const hasPassword = allMethodsAllowed || allowedMethods.includes('credentials');
+      const hasSSO = hasGoogle || hasMicrosoft;
 
-      // Determine if we need to send password setup email
-      // Send password setup email if:
-      // 1. Password auth is allowed AND
-      // 2. No SSO is configured (user must use password to login)
-      const needsPasswordSetup = hasPassword && !hasGoogle && !hasMicrosoft;
+      // Determine email type based on auth config:
+      // 1. SSO available: Create invitation + send invitation email
+      // 2. Credentials only: Generate setup token + send password setup email
+      if (hasSSO) {
+        // SSO org: Create OrganizationInvitation and send invitation email
+        // Generate invitation token (7-day expiry)
+        const inviteToken = randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-      if (needsPasswordSetup) {
-        // Generate setup token (7-day expiry)
+        // Create invitation record linked by email
+        await prisma.organizationInvitation.create({
+          data: {
+            organizationId: tenantId,
+            email: finalEmail,
+            name: name,
+            role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+            token: inviteToken,
+            isEmployee,
+            isOnWps: isEmployee ? isOnWps : null,
+            invitedById: currentUserId,
+            expiresAt,
+          },
+        });
+
+        // Send invitation email
+        const emailContent = organizationInvitationEmail({
+          userName: user.name || user.email,
+          userEmail: user.email,
+          userRole: user.role,
+          orgSlug: org?.slug || 'app',
+          orgName: org?.name || 'Organization',
+          inviteToken,
+          authMethods: { hasGoogle, hasMicrosoft },
+          designation: isEmployee ? designation : null,
+          employeeCode: isEmployee ? finalEmployeeId : null,
+        });
+        await sendEmail({
+          to: user.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+          text: emailContent.text,
+        });
+      } else if (hasPassword) {
+        // Credentials-only org: Generate setup token and send password setup email
         const setupToken = randomBytes(32).toString('hex');
         const setupTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
@@ -249,7 +288,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
           text: emailContent.text,
         });
       } else {
-        // Send regular welcome email (for SSO users or mixed auth)
+        // Fallback: Send regular welcome email
         const emailContent = welcomeUserEmail({
           userName: user.name || user.email,
           userEmail: user.email,
@@ -270,7 +309,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
         });
       }
     } catch (emailError) {
-      console.error('[Email] Failed to send welcome email:', emailError);
+      console.error('[Email] Failed to send welcome/invitation email:', emailError);
       // Don't fail the request if email fails
     }
   }

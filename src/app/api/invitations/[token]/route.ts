@@ -200,6 +200,7 @@ export async function POST(
           : TeamMemberRole.MEMBER;
 
       // Check if TeamMember already exists for this email in this org
+      // (This happens when admin creates member via Add Member form for SSO orgs)
       const existingTeamMember = await tx.teamMember.findUnique({
         where: {
           tenantId_email: {
@@ -210,7 +211,40 @@ export async function POST(
       });
 
       if (existingTeamMember) {
-        // Mark invitation as accepted since member already exists
+        // Get user data to update TeamMember with (e.g., profile image from SSO)
+        const userData = await tx.user.findUnique({
+          where: { id: session.user.id },
+          select: {
+            image: true,
+            passwordHash: true,
+            emailVerified: true,
+          },
+        });
+
+        // Update TeamMember with user data (profile image from SSO, etc.)
+        // Only update if TeamMember hasn't set these values yet
+        await tx.teamMember.update({
+          where: { id: existingTeamMember.id },
+          data: {
+            // Update image from SSO if not already set (but only for employees)
+            // Non-employees keep org logo as their image
+            ...(existingTeamMember.isEmployee && !existingTeamMember.image && userData?.image
+              ? { image: userData.image }
+              : {}),
+            // Copy password hash if available (for credentials fallback)
+            ...(userData?.passwordHash && !existingTeamMember.passwordHash
+              ? { passwordHash: userData.passwordHash }
+              : {}),
+            // Set email verified if verified by OAuth
+            ...(userData?.emailVerified && !existingTeamMember.emailVerified
+              ? { emailVerified: userData.emailVerified }
+              : {}),
+            // Set joinedAt if not already set
+            ...(!existingTeamMember.joinedAt ? { joinedAt: new Date() } : {}),
+          },
+        });
+
+        // Mark invitation as accepted
         await tx.organizationInvitation.update({
           where: { id: invitation.id },
           data: { acceptedAt: new Date() },
@@ -219,7 +253,7 @@ export async function POST(
         return {
           success: true,
           alreadyMember: true,
-          message: 'You are already a member of this organization',
+          message: 'You have successfully joined this organization',
           organization: {
             id: invitation.organization.id,
             name: invitation.organization.name,

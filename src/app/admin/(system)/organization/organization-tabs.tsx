@@ -18,20 +18,16 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   Building2,
   Palette,
-  Users,
   Settings2,
   Globe,
   Camera,
   Loader2,
-  Check,
   AlertCircle,
-  Calendar,
   Coins,
   LayoutGrid,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
-import { TeamMembers } from '@/components/domains/system/organization';
 import { CodeFormatSettings } from '@/components/domains/system/settings';
 import type { OrgRole } from '@prisma/client';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
@@ -53,26 +49,8 @@ interface Organization {
   _count: { teamMembers: number };
 }
 
-interface TeamMember {
-  id: string;
-  role: OrgRole;
-  isOwner: boolean;
-  joinedAt: string;
-  // TeamMember has name/email directly now
-  user: { id: string; name: string | null; email: string; image: string | null };
-}
-
-interface Invitation {
-  id: string;
-  email: string;
-  role: OrgRole;
-  expiresAt: string;
-}
-
 interface OrganizationTabsProps {
   organization: Organization;
-  members: TeamMember[];
-  invitations: Invitation[];
   currentUserRole: OrgRole;
   isOwner: boolean;
 }
@@ -102,8 +80,6 @@ const AVAILABLE_MODULES = [
 
 export function OrganizationTabs({
   organization: initialOrg,
-  members: initialMembers,
-  invitations: initialInvitations,
   currentUserRole,
   isOwner,
 }: OrganizationTabsProps) {
@@ -112,8 +88,6 @@ export function OrganizationTabs({
 
   // State
   const [org, setOrg] = useState(initialOrg);
-  const [members, setMembers] = useState(initialMembers);
-  const [invitations, setInvitations] = useState(initialInvitations);
 
   // Form state for auto-save
   const [name, setName] = useState(org.name);
@@ -263,14 +237,10 @@ export function OrganizationTabs({
   return (
     <div className="space-y-6">
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <Building2 className="h-4 w-4" />
             Profile & Branding
-          </TabsTrigger>
-          <TabsTrigger value="team" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Team
           </TabsTrigger>
           <TabsTrigger value="config" className="flex items-center gap-2">
             <Settings2 className="h-4 w-4" />
@@ -486,17 +456,6 @@ export function OrganizationTabs({
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* Team Tab */}
-        <TabsContent value="team" className="space-y-6">
-          <TeamMembers
-            organizationId={org.id}
-            members={members}
-            invitations={invitations}
-            currentUserOrgRole={currentUserRole}
-            isOwner={isOwner}
-          />
         </TabsContent>
 
         {/* Configuration Tab */}

@@ -33,8 +33,8 @@ export default async function OrganizationPage() {
     );
   }
 
-  // Fetch all data in parallel
-  const [organization, memberData, invitationData, currentMembership] = await Promise.all([
+  // Fetch organization and current membership
+  const [organization, currentMembership] = await Promise.all([
     prisma.organization.findUnique({
       where: { id: session.user.organizationId },
       select: {
@@ -52,27 +52,6 @@ export default async function OrganizationPage() {
         enabledModules: true,
         _count: { select: { teamMembers: true } },
       },
-    }),
-    prisma.teamMember.findMany({
-      where: { tenantId: session.user.organizationId, isDeleted: false },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        role: true,
-        isOwner: true,
-        joinedAt: true,
-      },
-      orderBy: [{ isOwner: 'desc' }, { role: 'asc' }, { joinedAt: 'asc' }],
-    }),
-    prisma.organizationInvitation.findMany({
-      where: {
-        organizationId: session.user.organizationId,
-        acceptedAt: null,
-        expiresAt: { gt: new Date() },
-      },
-      orderBy: { createdAt: 'desc' },
     }),
     prisma.teamMember.findFirst({
       where: {
@@ -96,27 +75,6 @@ export default async function OrganizationPage() {
     );
   }
 
-  // Transform data for client component
-  const members = memberData.map((m) => ({
-    id: m.id,
-    role: m.role,
-    isOwner: m.isOwner,
-    joinedAt: m.joinedAt?.toISOString() || new Date().toISOString(),
-    user: {
-      id: m.id,
-      name: m.name,
-      email: m.email,
-      image: m.image,
-    },
-  }));
-
-  const invitations = invitationData.map((i) => ({
-    id: i.id,
-    email: i.email,
-    role: i.role,
-    expiresAt: i.expiresAt.toISOString(),
-  }));
-
   const orgData = {
     id: organization.id,
     name: organization.name,
@@ -138,14 +96,12 @@ export default async function OrganizationPage() {
       <div>
         <h1 className="text-2xl font-bold">Organization Settings</h1>
         <p className="text-muted-foreground">
-          Manage your organization profile, team, and configuration
+          Manage your organization profile and configuration
         </p>
       </div>
 
       <OrganizationTabs
         organization={orgData}
-        members={members}
-        invitations={invitations}
         currentUserRole={currentMembership.role}
         isOwner={currentMembership.isOwner}
       />

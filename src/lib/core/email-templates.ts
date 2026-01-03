@@ -688,6 +688,141 @@ ${data.orgName} Team
 }
 
 // ============================================================================
+// ORGANIZATION INVITATION EMAIL
+// For inviting members to join an organization (SSO authentication)
+// ============================================================================
+
+interface OrganizationInvitationEmailData {
+  userName: string;
+  userEmail: string;
+  userRole: string;
+  orgSlug: string;
+  orgName: string;
+  inviteToken: string;
+  authMethods: {
+    hasGoogle: boolean;
+    hasMicrosoft: boolean;
+  };
+  designation?: string | null;
+  employeeCode?: string | null;
+}
+
+export function organizationInvitationEmail(data: OrganizationInvitationEmailData): { subject: string; html: string; text: string } {
+  const subject = `You're invited to join ${data.orgName}`;
+
+  // Format role for display
+  const roleDisplay = data.userRole.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+  // Get invitation URL
+  const inviteUrl = getTenantPortalUrl(data.orgSlug, `/invite/${data.inviteToken}`);
+
+  // Build sign-in method description
+  const authMethodDescription = data.authMethods.hasGoogle && data.authMethods.hasMicrosoft
+    ? 'Google or Microsoft account'
+    : data.authMethods.hasGoogle
+      ? 'Google account'
+      : 'Microsoft account';
+
+  const html = emailWrapper(`
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">You're Invited to Join ${data.orgName}!</h2>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      Dear <strong>${data.userName}</strong>,
+    </p>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      You have been invited to join <strong>${data.orgName}</strong>. Click the button below to accept this invitation and set up your account.
+    </p>
+
+    <!-- Account Details Box -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
+      <tr>
+        <td style="padding: 25px;">
+          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Your Account Details</h3>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Name:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${data.userName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Email:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.userEmail}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Role:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${roleDisplay}</td>
+            </tr>
+            ${data.employeeCode ? `
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Employee ID:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.employeeCode}</td>
+            </tr>
+            ` : ''}
+            ${data.designation ? `
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Designation:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.designation}</td>
+            </tr>
+            ` : ''}
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- CTA Button -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
+      <tr>
+        <td align="center">
+          <a href="${inviteUrl}"
+             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+            Accept Invitation
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
+      <strong>How to join:</strong> Click the button above and sign in with your ${authMethodDescription}. Your account will be automatically linked to ${data.orgName}.
+    </p>
+
+    <p style="color: #888888; font-size: 13px; line-height: 1.6; margin: 0 0 20px 0;">
+      This invitation will expire in 7 days. If you didn't expect this invitation, you can safely ignore this email.
+    </p>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
+      Welcome aboard!<br>
+      <strong>${data.orgName} Team</strong>
+    </p>
+  `, data.orgName);
+
+  const text = `
+You're Invited to Join ${data.orgName}!
+
+Dear ${data.userName},
+
+You have been invited to join ${data.orgName}. Visit the link below to accept this invitation and set up your account.
+
+Your Account Details:
+- Name: ${data.userName}
+- Email: ${data.userEmail}
+- Role: ${roleDisplay}
+${data.employeeCode ? `- Employee ID: ${data.employeeCode}` : ''}
+${data.designation ? `- Designation: ${data.designation}` : ''}
+
+Accept Invitation: ${inviteUrl}
+
+How to join: Click the link above and sign in with your ${authMethodDescription}. Your account will be automatically linked to ${data.orgName}.
+
+This invitation will expire in 7 days. If you didn't expect this invitation, you can safely ignore this email.
+
+Welcome aboard!
+${data.orgName} Team
+`.trim();
+
+  return { subject, html, text };
+}
+
+// ============================================================================
 // DOCUMENT EXPIRY ALERT EMAIL
 // ============================================================================
 

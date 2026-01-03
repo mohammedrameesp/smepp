@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,15 +13,53 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RefreshCw, AlertTriangle, User, Briefcase, Shield, Mail, Building2 } from 'lucide-react';
+import { RefreshCw, AlertTriangle, User, Briefcase, Shield, Mail, Building2, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { createUserSchema, type CreateUserInput } from '@/lib/validations/users';
+
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+interface EmailCheckResult {
+  available: boolean;
+  valid: boolean;
+  reason?: string;
+  message?: string;
+  canProceed?: boolean;
+}
+
+interface AuthConfig {
+  allowedMethods: string[];
+  hasCredentials: boolean;
+  hasSSO: boolean;
+  hasCustomGoogleOAuth: boolean;
+  hasCustomAzureOAuth: boolean;
+}
 
 export default function NewEmployeePage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [nextEmployeeCode, setNextEmployeeCode] = useState<string>('');
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
+  const [authConfig, setAuthConfig] = useState<AuthConfig | null>(null);
   const [loadingModules, setLoadingModules] = useState(true);
+
+  // Email availability check state
+  const [emailCheckResult, setEmailCheckResult] = useState<EmailCheckResult | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
 
   const {
     register,
@@ -48,18 +86,63 @@ export default function NewEmployeePage() {
   const isEmployee = watch('isEmployee');
   const canLogin = watch('canLogin');
   const isOnWps = watch('isOnWps');
+  const email = watch('email');
+
+  // Debounce email for availability check
+  const debouncedEmail = useDebounce(email, 500);
 
   // Check if payroll module is enabled
   const isPayrollEnabled = enabledModules.includes('payroll');
 
-  // Fetch enabled modules on mount
+  // Check email availability when email changes
   useEffect(() => {
-    async function fetchModules() {
+    async function checkEmail() {
+      if (!debouncedEmail || !canLogin) {
+        setEmailCheckResult(null);
+        return;
+      }
+
+      // Basic format validation before API call
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(debouncedEmail)) {
+        setEmailCheckResult({
+          available: false,
+          valid: false,
+          message: 'Please enter a valid email address',
+        });
+        return;
+      }
+
+      setCheckingEmail(true);
+      try {
+        const response = await fetch(`/api/admin/team/check-email?email=${encodeURIComponent(debouncedEmail)}`);
+        if (response.ok) {
+          const result = await response.json();
+          setEmailCheckResult(result);
+        }
+      } catch (err) {
+        console.error('Email check failed:', err);
+      } finally {
+        setCheckingEmail(false);
+      }
+    }
+
+    checkEmail();
+  }, [debouncedEmail, canLogin]);
+
+  // Fetch organization settings (modules and auth config) on mount
+  useEffect(() => {
+    async function fetchOrgSettings() {
       try {
         const response = await fetch('/api/admin/organization');
         if (response.ok) {
           const data = await response.json();
           setEnabledModules(data.organization?.enabledModules || []);
+          setAuthConfig(data.authConfig || null);
+          // For SSO orgs, canLogin is always true (they need to authenticate)
+          if (data.authConfig?.hasSSO) {
+            setValue('canLogin', true);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch organization settings:', err);
@@ -67,8 +150,8 @@ export default function NewEmployeePage() {
         setLoadingModules(false);
       }
     }
-    fetchModules();
-  }, []);
+    fetchOrgSettings();
+  }, [setValue]);
 
   // Generate next employee code when isEmployee is enabled
   useEffect(() => {
@@ -171,25 +254,28 @@ export default function NewEmployeePage() {
                 )}
               </div>
 
-              {/* Can Login Toggle */}
-              <div className="flex items-center justify-between py-2">
-                <div className="space-y-0.5">
-                  <Label htmlFor="canLogin" className="text-base font-medium">System Access</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Can this person log in to the system?
-                  </p>
+              {/* Can Login Toggle - Only show for credentials-only orgs */}
+              {/* For SSO orgs, canLogin is always true (they authenticate via SSO) */}
+              {!authConfig?.hasSSO && (
+                <div className="flex items-center justify-between py-2">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="canLogin" className="text-base font-medium">System Access</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Can this person log in to the system?
+                    </p>
+                  </div>
+                  <Switch
+                    id="canLogin"
+                    checked={canLogin}
+                    onCheckedChange={(checked) => {
+                      setValue('canLogin', checked);
+                      if (!checked) {
+                        setValue('email', '');
+                      }
+                    }}
+                  />
                 </div>
-                <Switch
-                  id="canLogin"
-                  checked={canLogin}
-                  onCheckedChange={(checked) => {
-                    setValue('canLogin', checked);
-                    if (!checked) {
-                      setValue('email', '');
-                    }
-                  }}
-                />
-              </div>
+              )}
 
               {/* Email - only shown when canLogin is true */}
               {canLogin && (
@@ -200,19 +286,57 @@ export default function NewEmployeePage() {
                       Email Address <span className="text-red-500">*</span>
                     </div>
                   </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    {...register('email')}
-                    placeholder="name@company.com"
-                    className={errors.email ? 'border-red-500' : ''}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="email"
+                      type="email"
+                      {...register('email')}
+                      placeholder="name@company.com"
+                      className={`pr-10 ${
+                        errors.email || (emailCheckResult && !emailCheckResult.available && !emailCheckResult.canProceed)
+                          ? 'border-red-500'
+                          : emailCheckResult?.available
+                          ? 'border-green-500'
+                          : ''
+                      }`}
+                    />
+                    {/* Email check status indicator */}
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      {checkingEmail ? (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      ) : emailCheckResult?.available ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : emailCheckResult && !emailCheckResult.available && !emailCheckResult.canProceed ? (
+                        <XCircle className="h-4 w-4 text-red-500" />
+                      ) : null}
+                    </div>
+                  </div>
                   {errors.email && (
                     <p className="text-sm text-red-500">{errors.email.message}</p>
                   )}
-                  <p className="text-sm text-muted-foreground">
-                    Used for login (email/password or Google/Microsoft)
-                  </p>
+                  {/* Email check result message */}
+                  {emailCheckResult && !errors.email && (
+                    <p className={`text-sm ${
+                      emailCheckResult.available
+                        ? 'text-green-600'
+                        : emailCheckResult.canProceed
+                        ? 'text-amber-600'
+                        : 'text-red-500'
+                    }`}>
+                      {emailCheckResult.available
+                        ? 'Email is available'
+                        : emailCheckResult.message
+                      }
+                    </p>
+                  )}
+                  {!emailCheckResult && !errors.email && (
+                    <p className="text-sm text-muted-foreground">
+                      {authConfig?.hasSSO
+                        ? `Used for login via ${authConfig.hasCustomGoogleOAuth && authConfig.hasCustomAzureOAuth ? 'Google or Microsoft' : authConfig.hasCustomGoogleOAuth ? 'Google' : 'Microsoft'}`
+                        : 'Used for login (email will receive password setup link)'
+                      }
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -386,7 +510,10 @@ export default function NewEmployeePage() {
             <Alert className="bg-slate-50 border-slate-200">
               <Building2 className="h-4 w-4 text-slate-600" />
               <AlertDescription className="text-slate-700">
-                This employee can log in using the authentication method configured for your organization. On first login, they&apos;ll be prompted to complete their profile.
+                {authConfig?.hasSSO
+                  ? `An invitation email will be sent. They can join by logging in with ${authConfig.hasCustomGoogleOAuth && authConfig.hasCustomAzureOAuth ? 'Google or Microsoft' : authConfig.hasCustomGoogleOAuth ? 'Google' : 'Microsoft'}.`
+                  : 'A password setup email will be sent. On first login, they\'ll be prompted to complete their profile.'
+                }
               </AlertDescription>
             </Alert>
           )}
@@ -400,7 +527,14 @@ export default function NewEmployeePage() {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={
+                isSubmitting ||
+                checkingEmail ||
+                !!(canLogin && emailCheckResult && !emailCheckResult.available && !emailCheckResult.canProceed)
+              }
+            >
               {isSubmitting ? 'Creating...' : 'Create'}
             </Button>
           </div>

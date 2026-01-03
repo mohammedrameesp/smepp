@@ -35,6 +35,12 @@ export async function GET() {
         additionalCurrencies: true,
         // Module settings
         enabledModules: true,
+        // Auth settings
+        allowedAuthMethods: true,
+        customGoogleClientId: true,
+        customGoogleClientSecret: true,
+        customAzureClientId: true,
+        customAzureClientSecret: true,
         _count: {
           select: {
             teamMembers: true,
@@ -48,7 +54,26 @@ export async function GET() {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ organization });
+    // Compute auth config (don't expose actual secrets)
+    const allowedMethods = organization.allowedAuthMethods || [];
+    const hasCustomGoogleOAuth = !!(organization.customGoogleClientId && organization.customGoogleClientSecret);
+    const hasCustomAzureOAuth = !!(organization.customAzureClientId && organization.customAzureClientSecret);
+    const hasSSO = hasCustomGoogleOAuth || hasCustomAzureOAuth;
+    const hasCredentials = allowedMethods.length === 0 || allowedMethods.includes('credentials');
+
+    // Remove sensitive fields before returning
+    const { customGoogleClientId, customGoogleClientSecret, customAzureClientId, customAzureClientSecret, ...orgData } = organization;
+
+    return NextResponse.json({
+      organization: orgData,
+      authConfig: {
+        allowedMethods,
+        hasCredentials,
+        hasSSO,
+        hasCustomGoogleOAuth,
+        hasCustomAzureOAuth,
+      },
+    });
   } catch (error) {
     console.error('Get organization error:', error);
     return NextResponse.json(

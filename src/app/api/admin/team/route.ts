@@ -37,6 +37,8 @@ export async function GET() {
         isEmployee: true,
         employeeCode: true,
         designation: true,
+        setupToken: true, // For credentials pending detection
+        passwordHash: true, // For credentials pending detection
       },
       orderBy: [
         { isOwner: 'desc' },
@@ -44,6 +46,23 @@ export async function GET() {
         { joinedAt: 'asc' },
       ],
     });
+
+    // Fetch pending SSO invitations (for pending detection)
+    const pendingInvitations = await prisma.organizationInvitation.findMany({
+      where: {
+        organizationId: session.user.organizationId,
+        acceptedAt: null,
+      },
+      select: {
+        email: true,
+        expiresAt: true,
+      },
+    });
+
+    // Create a map of pending SSO invitations by email
+    const pendingInviteMap = new Map(
+      pendingInvitations.map((inv) => [inv.email.toLowerCase(), inv])
+    );
 
     // Get org limits and auth config
     const org = await prisma.organization.findUnique({
@@ -65,8 +84,39 @@ export async function GET() {
     const hasSSO = hasCustomGoogleOAuth || hasCustomAzureOAuth;
     const hasCredentials = allowedMethods.length === 0 || allowedMethods.includes('credentials');
 
-    return NextResponse.json({
-      members: members.map((m) => ({
+    // Determine pending status for each member
+    const membersWithPendingStatus = members.map((m) => {
+      // Check for pending status:
+      // 1. Credentials pending: has setupToken but no passwordHash
+      // 2. SSO pending: has matching invitation that's not accepted
+      const credentialsPending = !!(m.setupToken && !m.passwordHash);
+      const ssoInvite = pendingInviteMap.get(m.email.toLowerCase());
+      const ssoPending = !!ssoInvite;
+
+      let pendingStatus: {
+        isPending: boolean;
+        type: 'credentials' | 'sso' | null;
+        message: string | null;
+        isExpired?: boolean;
+      } | null = null;
+
+      if (credentialsPending) {
+        pendingStatus = {
+          isPending: true,
+          type: 'credentials',
+          message: 'Awaiting password setup',
+        };
+      } else if (ssoPending && ssoInvite) {
+        const isExpired = new Date(ssoInvite.expiresAt) < new Date();
+        pendingStatus = {
+          isPending: true,
+          type: 'sso',
+          message: isExpired ? 'Invitation expired' : 'Awaiting invitation acceptance',
+          isExpired,
+        };
+      }
+
+      return {
         id: m.id,
         role: m.role,
         isOwner: m.isOwner,
@@ -74,6 +124,7 @@ export async function GET() {
         isEmployee: m.isEmployee,
         employeeCode: m.employeeCode,
         designation: m.designation,
+        pendingStatus,
         user: {
           id: m.id,
           name: m.name,
@@ -81,7 +132,11 @@ export async function GET() {
           image: m.image,
           createdAt: m.createdAt,
         },
-      })),
+      };
+    });
+
+    return NextResponse.json({
+      members: membersWithPendingStatus,
       limits: {
         maxUsers: org?.maxUsers || 5,
         currentUsers: members.length,
