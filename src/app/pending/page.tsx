@@ -1,3 +1,22 @@
+/**
+ * Pending Page - Safety net for authenticated users without an organization
+ *
+ * This page is shown when a user is logged in but doesn't belong to any organization.
+ *
+ * DO NOT REMOVE - This page handles important edge cases:
+ * - User account exists but was removed from their organization
+ * - Invitation flow was partially completed
+ * - Database inconsistencies where user has no org membership
+ *
+ * Redirected here from:
+ * - middleware.ts: When authenticated users without org access protected routes
+ * - login/page.tsx: After login if user has no organization
+ * - signup/page.tsx: After signup if invitation flow wasn't completed
+ * - setup wizard: "Skip" button for users who want to wait for invitation
+ *
+ * With signup-by-invitation-only flow, this page is rarely reached but serves
+ * as a safety net to prevent redirect loops and provide clear user guidance.
+ */
 'use client';
 
 import { useState } from 'react';
