@@ -114,6 +114,16 @@ export function SetupWizardClient() {
     }
   }, [status, router]);
 
+  // Redirect non-admins to employee dashboard
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.orgRole) {
+      const role = session.user.orgRole;
+      if (role !== 'ADMIN' && role !== 'OWNER') {
+        router.push('/employee');
+      }
+    }
+  }, [status, session?.user?.orgRole, router]);
+
   // Navigation functions
   const goNext = useCallback(() => {
     setError(null);
