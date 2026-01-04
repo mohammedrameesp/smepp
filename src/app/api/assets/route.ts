@@ -14,6 +14,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { updateSetupProgress } from '@/lib/domains/system/setup';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { prisma as globalPrisma } from '@/lib/core/prisma';
+import { ASSET_TYPE_SUGGESTIONS } from '@/lib/constants/asset-type-suggestions';
 
 // Type for asset list filters
 interface AssetFilters {
@@ -21,6 +22,43 @@ interface AssetFilters {
   type?: string;
   categoryId?: string;
   category?: string;
+}
+
+/**
+ * Auto-learn: Save a new type-to-category mapping if it doesn't exist in defaults
+ * This allows the system to learn from user entries automatically
+ */
+async function autoLearnTypeMapping(tenantId: string, typeName: string, categoryId: string) {
+  const normalizedType = typeName.trim();
+  if (!normalizedType || normalizedType.length < 2) return;
+
+  // Check if this type already exists in default suggestions (case-insensitive)
+  const isDefaultType = ASSET_TYPE_SUGGESTIONS.some(
+    (s) => s.type.toLowerCase() === normalizedType.toLowerCase()
+  );
+
+  // Skip if it's already a default type
+  if (isDefaultType) return;
+
+  // Check if mapping already exists for this tenant (case-insensitive)
+  const existingMapping = await globalPrisma.assetTypeMapping.findFirst({
+    where: {
+      tenantId,
+      typeName: { equals: normalizedType, mode: 'insensitive' },
+    },
+  });
+
+  // Skip if mapping already exists
+  if (existingMapping) return;
+
+  // Create new mapping (auto-learned)
+  await globalPrisma.assetTypeMapping.create({
+    data: {
+      tenantId,
+      typeName: normalizedType,
+      categoryId,
+    },
+  });
 }
 
 async function getAssetsHandler(request: NextRequest, context: APIContext) {
@@ -217,6 +255,11 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
 
     // Update setup progress (non-blocking)
     updateSetupProgress(tenantId, 'firstAssetAdded', true).catch(() => {});
+
+    // Auto-learn: Save type-to-category mapping if it's a new type (non-blocking)
+    if (data.type && data.categoryId) {
+      autoLearnTypeMapping(tenantId, data.type, data.categoryId).catch(() => {});
+    }
 
     return NextResponse.json(asset, { status: 201 });
   } catch (error) {

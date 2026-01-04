@@ -3,18 +3,22 @@
 /**
  * @file asset-type-combobox.tsx
  * @description Combobox for asset types with auto-suggest and auto-category assignment
+ *              Fetches suggestions from API (merges defaults + custom tenant mappings)
  * @module components/domains/operations/assets
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  searchAssetTypes,
-  findCategoryForType,
-  type AssetTypeSuggestion,
-} from '@/lib/constants/asset-type-suggestions';
+import { Star, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+interface AssetTypeSuggestion {
+  type: string;
+  categoryCode: string;
+  categoryName: string;
+  isCustom: boolean;
+}
 
 interface AssetTypeComboboxProps {
   value: string;
@@ -36,32 +40,70 @@ export function AssetTypeCombobox({
   const [suggestions, setSuggestions] = useState<AssetTypeSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Update suggestions when value changes
-  useEffect(() => {
-    if (value && value.length >= 1) {
-      const matches = searchAssetTypes(value, 8);
-      setSuggestions(matches);
-    } else {
-      setSuggestions([]);
+  // Debounced fetch suggestions from API
+  const fetchSuggestions = useCallback(async (query: string) => {
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
-  }, [value]);
 
-  // Check for category match when value changes (with debounce)
-  useEffect(() => {
-    if (!value || !onCategoryMatch) return;
+    if (!query || query.length < 1) {
+      setSuggestions([]);
+      return;
+    }
 
-    const timer = setTimeout(() => {
-      const match = findCategoryForType(value);
-      if (match) {
-        onCategoryMatch(match.categoryCode, match.categoryName);
+    setIsLoading(true);
+    abortControllerRef.current = new AbortController();
+
+    try {
+      const response = await fetch(
+        `/api/asset-types/suggestions?q=${encodeURIComponent(query)}&limit=8`,
+        { signal: abortControllerRef.current.signal }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch suggestions');
       }
-    }, 300);
+
+      const data = await response.json();
+      setSuggestions(data.suggestions || []);
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        console.error('Error fetching suggestions:', error);
+        setSuggestions([]);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Update suggestions when value changes (with debounce)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchSuggestions(value);
+    }, 150);
 
     return () => clearTimeout(timer);
-  }, [value, onCategoryMatch]);
+  }, [value, fetchSuggestions]);
+
+  // Auto-assign category when user selects a suggestion or types a matching value
+  useEffect(() => {
+    if (!value || !onCategoryMatch || suggestions.length === 0) return;
+
+    // Check if current value exactly matches any suggestion
+    const exactMatch = suggestions.find(
+      (s) => s.type.toLowerCase() === value.toLowerCase()
+    );
+
+    if (exactMatch) {
+      onCategoryMatch(exactMatch.categoryCode, exactMatch.categoryName);
+    }
+  }, [value, suggestions, onCategoryMatch]);
 
   // Handle click outside to close suggestions
   useEffect(() => {
@@ -77,6 +119,15 @@ export function AssetTypeCombobox({
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -123,17 +174,24 @@ export function AssetTypeCombobox({
 
   return (
     <div className="relative">
-      <Input
-        ref={inputRef}
-        value={value}
-        onChange={handleInputChange}
-        onFocus={() => value && suggestions.length > 0 && setShowSuggestions(true)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={className}
-        autoComplete="off"
-      />
+      <div className="relative">
+        <Input
+          ref={inputRef}
+          value={value}
+          onChange={handleInputChange}
+          onFocus={() => value && suggestions.length > 0 && setShowSuggestions(true)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={cn(className, isLoading && 'pr-8')}
+          autoComplete="off"
+        />
+        {isLoading && (
+          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          </div>
+        )}
+      </div>
 
       {/* Suggestions dropdown */}
       {showSuggestions && suggestions.length > 0 && (
@@ -143,7 +201,7 @@ export function AssetTypeCombobox({
         >
           {suggestions.map((suggestion, index) => (
             <button
-              key={`${suggestion.categoryCode}-${suggestion.type}`}
+              key={`${suggestion.categoryCode}-${suggestion.type}-${suggestion.isCustom}`}
               type="button"
               onClick={() => handleSuggestionClick(suggestion)}
               className={cn(
@@ -151,7 +209,12 @@ export function AssetTypeCombobox({
                 index === selectedIndex && 'bg-accent'
               )}
             >
-              <span className="font-medium">{suggestion.type}</span>
+              <span className="flex items-center gap-2">
+                <span className="font-medium">{suggestion.type}</span>
+                {suggestion.isCustom && (
+                  <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+                )}
+              </span>
               <Badge variant="outline" className="text-xs font-mono">
                 {suggestion.categoryCode}
               </Badge>

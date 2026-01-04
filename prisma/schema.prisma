@@ -376,6 +376,7 @@ model Organization {
   // Tenant-scoped data relations
   assets                Asset[]
   assetCategories       AssetCategory[]
+  assetTypeMappings     AssetTypeMapping[]
   assetHistories        AssetHistory[]
   subscriptions         Subscription[]
   activityLogs          ActivityLog[]
@@ -879,14 +880,34 @@ model AssetCategory {
   isDefault   Boolean      @default(false) // True for seeded categories
   sortOrder   Int          @default(0)
 
-  assets      Asset[]
+  assets       Asset[]
+  typeMappings AssetTypeMapping[]
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, code])
   @@index([tenantId])
   @@index([tenantId, isActive])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ASSET TYPE MAPPING - Custom type-to-category mappings per organization
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model AssetTypeMapping {
+  id         String       @id @default(cuid())
+  tenantId   String
+  tenant     Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  typeName   String // e.g., "Drawings", "Blueprint"
+  categoryId String
+  category   AssetCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, typeName])
+  @@index([tenantId])
 }
 
 enum AssetHistoryAction {
