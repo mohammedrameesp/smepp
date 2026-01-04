@@ -717,17 +717,32 @@ export default function EditAssetPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
-                  <Select value={watchedStatus || ''} onValueChange={(value) => setValue('status', value as AssetStatus)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="IN_USE">In Use</SelectItem>
-                      <SelectItem value="SPARE">Spare</SelectItem>
-                      <SelectItem value="REPAIR">In Repair</SelectItem>
-                      <SelectItem value="DISPOSED">Disposed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {asset?.status === 'DISPOSED' ? (
+                    <div className="flex items-center gap-2 p-3 bg-slate-100 rounded-lg">
+                      <span className="px-2 py-1 bg-slate-200 text-slate-700 text-sm font-medium rounded">
+                        Disposed
+                      </span>
+                      <span className="text-sm text-slate-500">
+                        (Status cannot be changed for disposed assets)
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <Select value={watchedStatus || ''} onValueChange={(value) => setValue('status', value as AssetStatus)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="IN_USE">In Use</SelectItem>
+                          <SelectItem value="SPARE">Spare</SelectItem>
+                          <SelectItem value="REPAIR">In Repair</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-slate-500">
+                        To dispose this asset, use the &ldquo;Dispose Asset&rdquo; button on the asset detail page.
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 {watchedStatus === AssetStatus.IN_USE && (

@@ -79,6 +79,14 @@ enum AssetStatus {
   DISPOSED
 }
 
+enum DisposalMethod {
+  SOLD // Asset sold to third party
+  SCRAPPED // Asset physically destroyed/discarded
+  DONATED // Asset given to charity/organization
+  WRITTEN_OFF // Asset written off (theft, loss, obsolete)
+  TRADED_IN // Asset traded in for new purchase
+}
+
 enum SupplierStatus {
   PENDING
   APPROVED
@@ -674,6 +682,7 @@ model TeamMember {
 
   // Assets
   assets                       Asset[]               @relation("MemberAssets")
+  assetsDisposed               Asset[]               @relation("AssetDisposer")
   assetHistoryFrom             AssetHistory[]        @relation("AssetHistoryFromMember")
   assetHistoryTo               AssetHistory[]        @relation("AssetHistoryToMember")
   assetHistoryPerformed        AssetHistory[]        @relation("AssetHistoryPerformer")
@@ -803,13 +812,13 @@ model RevokedImpersonationToken {
 }
 
 model Asset {
-  id               String          @id @default(cuid())
+  id               String         @id @default(cuid())
   tenantId         String
-  tenant           Organization    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant           Organization   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assetTag         String? // #1 Asset ID/Tag (format: ORG-CAT-YYSEQ e.g., BCE-CP-25001)
   type             String // #2 Asset Type (Laptop, Mouse, Monitor, etc.) - sub-type within category
   categoryId       String? // FK to AssetCategory
-  assetCategory    AssetCategory?  @relation(fields: [categoryId], references: [id])
+  assetCategory    AssetCategory? @relation(fields: [categoryId], references: [id])
   category         String? // #3 Category/Department - DEPRECATED: use categoryId
   brand            String? // #4 Brand/Manufacturer (Apple, Dell, HP, etc.)
   model            String // #5 Model/Version (MacBook Pro 16", Dell XPS 15, etc.)
@@ -820,11 +829,11 @@ model Asset {
   supplier         String? // #10 Supplier/Vendor (where purchased from)
   invoiceNumber    String? // #12 Invoice/PO Number
   assignedMemberId String? // #13 Assigned To (TeamMember)
-  assignedMember   TeamMember?     @relation("MemberAssets", fields: [assignedMemberId], references: [id])
+  assignedMember   TeamMember?    @relation("MemberAssets", fields: [assignedMemberId], references: [id])
   assignmentDate   DateTime? // When the asset was assigned to current member
-  status           AssetStatus     @default(IN_USE) // #14 Status/Condition
+  status           AssetStatus    @default(IN_USE) // #14 Status/Condition
   price            Decimal? // #15 Cost/Value
-  priceCurrency    String?         @default("QAR")
+  priceCurrency    String?        @default("QAR")
   priceQAR         Decimal?
 
   // Additional fields
@@ -842,6 +851,16 @@ model Asset {
   netBookValue            Decimal?              @db.Decimal(12, 2)
   lastDepreciationDate    DateTime?
   isFullyDepreciated      Boolean               @default(false)
+
+  // Disposal tracking (IFRS/IAS 16 compliant)
+  disposalDate         DateTime?
+  disposalMethod       DisposalMethod?
+  disposalProceeds     Decimal?        @db.Decimal(12, 2) // Sale price / proceeds
+  disposalNotes        String? // Reason/notes for disposal
+  disposalNetBookValue Decimal?        @db.Decimal(12, 2) // NBV at disposal date (immutable)
+  disposalGainLoss     Decimal?        @db.Decimal(12, 2) // Gain (+) or Loss (-)
+  disposedById         String?
+  disposedBy           TeamMember?     @relation("AssetDisposer", fields: [disposedById], references: [id])
 
   // Relations & Metadata
   history             AssetHistory[]
@@ -861,6 +880,7 @@ model Asset {
   @@index([assetTag])
   @@index([categoryId])
   @@index([tenantId])
+  @@index([tenantId, status, disposalDate]) // For disposal reporting
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -868,17 +888,17 @@ model Asset {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model AssetCategory {
-  id          String       @id @default(cuid())
-  tenantId    String
-  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String       @id @default(cuid())
+  tenantId String
+  tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   code        String // 2-letter code (e.g., "CP", "MO", "DP")
   name        String // Human-readable name (e.g., "Computing")
   description String?
   icon        String? // Optional icon identifier for UI
-  isActive    Boolean      @default(true)
-  isDefault   Boolean      @default(false) // True for seeded categories
-  sortOrder   Int          @default(0)
+  isActive    Boolean @default(true)
+  isDefault   Boolean @default(false) // True for seeded categories
+  sortOrder   Int     @default(0)
 
   assets       Asset[]
   typeMappings AssetTypeMapping[]
@@ -896,9 +916,9 @@ model AssetCategory {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model AssetTypeMapping {
-  id         String       @id @default(cuid())
+  id         String        @id @default(cuid())
   tenantId   String
-  tenant     Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant     Organization  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   typeName   String // e.g., "Drawings", "Blueprint"
   categoryId String
   category   AssetCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)

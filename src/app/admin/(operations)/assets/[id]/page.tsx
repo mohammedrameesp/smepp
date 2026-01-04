@@ -6,13 +6,16 @@ import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 import { Role, AssetRequestStatus } from '@prisma/client';
 import Link from 'next/link';
-import { AssetHistory } from '@/components/domains/operations/assets';
+import {
+  AssetHistory,
+  AssetCostBreakdown,
+  CloneAssetButton,
+  DeleteAssetButton,
+  AssetMaintenanceRecords,
+  DepreciationCard,
+  DisposeAssetDialog,
+} from '@/components/domains/operations/assets';
 import { formatDate, formatDateTime } from '@/lib/date-format';
-import { AssetCostBreakdown } from '@/components/domains/operations/assets/asset-cost-breakdown';
-import { CloneAssetButton } from '@/components/domains/operations/assets/clone-asset-button';
-import { DeleteAssetButton } from '@/components/domains/operations/assets/delete-asset-button';
-import { AssetMaintenanceRecords } from '@/components/domains/operations/assets/asset-maintenance-records';
-import { DepreciationCard } from '@/components/domains/operations/assets';
 import { AssetAssignDialog } from '@/components/domains/operations/asset-requests';
 import {
   Package,
@@ -28,6 +31,9 @@ import {
   Building2,
   CheckCircle,
   XCircle,
+  TrendingUp,
+  TrendingDown,
+  Trash2,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
@@ -60,6 +66,13 @@ export default async function AssetDetailPage({ params }: Props) {
     where: { id },
     include: {
       assignedMember: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      disposedBy: {
         select: {
           id: true,
           name: true,
@@ -132,6 +145,12 @@ export default async function AssetDetailPage({ params }: Props) {
               Edit Asset
             </PageHeaderButton>
             <CloneAssetButton assetId={asset.id} assetModel={asset.model} />
+            <DisposeAssetDialog
+              assetId={asset.id}
+              assetTag={asset.assetTag}
+              assetModel={asset.model}
+              assetStatus={asset.status}
+            />
             <DeleteAssetButton assetId={asset.id} assetModel={asset.model} />
           </div>
         }
@@ -374,6 +393,69 @@ export default async function AssetDetailPage({ params }: Props) {
               </div>
               <div className="p-5">
                 <p className="text-slate-700">{asset.location}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Disposal Info Card - Only show for disposed assets */}
+          {asset.status === 'DISPOSED' && asset.disposalDate && (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+                  <Trash2 className="h-5 w-5 text-slate-600" />
+                </div>
+                <h2 className="font-semibold text-slate-900">Disposal Information</h2>
+              </div>
+              <div className="p-5 space-y-3">
+                <div>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Disposal Date</p>
+                  <p className="text-sm font-medium text-slate-900">{formatDate(asset.disposalDate)}</p>
+                </div>
+                {asset.disposalMethod && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Method</p>
+                    <p className="text-sm font-medium text-slate-900">{asset.disposalMethod.replace(/_/g, ' ')}</p>
+                  </div>
+                )}
+                {asset.disposalProceeds !== null && asset.disposalProceeds !== undefined && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Proceeds</p>
+                    <p className="text-sm font-medium text-slate-900">QAR {Number(asset.disposalProceeds).toFixed(2)}</p>
+                  </div>
+                )}
+                {asset.disposalNetBookValue !== null && asset.disposalNetBookValue !== undefined && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">NBV at Disposal</p>
+                    <p className="text-sm font-medium text-slate-900">QAR {Number(asset.disposalNetBookValue).toFixed(2)}</p>
+                  </div>
+                )}
+                {asset.disposalGainLoss !== null && asset.disposalGainLoss !== undefined && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
+                      {Number(asset.disposalGainLoss) >= 0 ? 'Gain on Disposal' : 'Loss on Disposal'}
+                    </p>
+                    <p className={`text-sm font-medium flex items-center gap-1 ${Number(asset.disposalGainLoss) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {Number(asset.disposalGainLoss) >= 0 ? (
+                        <TrendingUp className="h-4 w-4" />
+                      ) : (
+                        <TrendingDown className="h-4 w-4" />
+                      )}
+                      QAR {Math.abs(Number(asset.disposalGainLoss)).toFixed(2)}
+                    </p>
+                  </div>
+                )}
+                {asset.disposedBy && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Disposed By</p>
+                    <p className="text-sm font-medium text-slate-900">{asset.disposedBy.name || asset.disposedBy.email}</p>
+                  </div>
+                )}
+                {asset.disposalNotes && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Notes</p>
+                    <p className="text-sm text-slate-700">{asset.disposalNotes}</p>
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -236,3 +236,114 @@ export function isPeriodAlreadyProcessed(
 
   return periodEndMonth <= lastProcessedMonth;
 }
+
+/**
+ * Result of pro-rata depreciation calculation for disposal
+ */
+export interface ProRataDepreciationResult {
+  days: number;
+  amount: number;
+  newAccumulatedAmount: number;
+  newNetBookValue: number;
+  dailyRate: number;
+  periodStart: Date;
+  periodEnd: Date;
+}
+
+/**
+ * Calculate pro-rata depreciation for a partial period (disposal scenario)
+ *
+ * Used when disposing an asset to calculate depreciation from the day after
+ * the last depreciation run (or start date) to the disposal date.
+ *
+ * @param input - Depreciation input parameters
+ * @param fromDate - Start of period (day after last depreciation, or depreciation start date)
+ * @param toDate - End of period (disposal date, inclusive)
+ * @returns Pro-rata depreciation result, or null if no depreciation needed
+ */
+export function calculateProRataDepreciation(
+  input: DepreciationInput,
+  fromDate: Date,
+  toDate: Date
+): ProRataDepreciationResult | null {
+  const { acquisitionCost, salvageValue, usefulLifeMonths, accumulatedDepreciation } = input;
+
+  // Validate inputs
+  if (acquisitionCost <= 0 || usefulLifeMonths <= 0) {
+    return null;
+  }
+
+  // Depreciable amount
+  const depreciableAmount = acquisitionCost - salvageValue;
+  if (depreciableAmount <= 0) {
+    return null;
+  }
+
+  // Check if already fully depreciated
+  const remainingDepreciable = depreciableAmount - accumulatedDepreciation;
+  if (remainingDepreciable <= 0.01) {
+    return null; // Already fully depreciated
+  }
+
+  // Normalize dates to start of day
+  const start = new Date(fromDate);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(toDate);
+  end.setHours(0, 0, 0, 0);
+
+  // Validate date range
+  if (start > end) {
+    return null; // Invalid date range
+  }
+
+  // Calculate days in period (inclusive of both start and end)
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const days = Math.round((end.getTime() - start.getTime()) / msPerDay) + 1;
+
+  if (days <= 0) {
+    return null;
+  }
+
+  // Daily depreciation rate
+  // Monthly rate / average days per month (30.44)
+  const monthlyDepreciation = depreciableAmount / usefulLifeMonths;
+  const dailyRate = monthlyDepreciation / 30.44; // Average days per month
+
+  // Calculate depreciation for the period
+  let periodDepreciation = dailyRate * days;
+
+  // Cap at remaining amount (don't depreciate below salvage value)
+  periodDepreciation = Math.min(periodDepreciation, remainingDepreciable);
+
+  const newAccumulatedAmount = accumulatedDepreciation + periodDepreciation;
+  const newNetBookValue = acquisitionCost - newAccumulatedAmount;
+
+  return {
+    days,
+    amount: round2(periodDepreciation),
+    newAccumulatedAmount: round2(newAccumulatedAmount),
+    newNetBookValue: round2(newNetBookValue),
+    dailyRate: round2(dailyRate),
+    periodStart: start,
+    periodEnd: end,
+  };
+}
+
+/**
+ * Calculate gain or loss on asset disposal
+ *
+ * Per IFRS/IAS 16:
+ * - Gain = Disposal Proceeds > Net Book Value (positive)
+ * - Loss = Disposal Proceeds < Net Book Value (negative)
+ *
+ * @param disposalProceeds - Amount received from disposal (0 for scrapped/donated)
+ * @param netBookValueAtDisposal - NBV after final depreciation
+ * @returns Positive number for gain, negative for loss
+ */
+export function calculateDisposalGainLoss(
+  disposalProceeds: number,
+  netBookValueAtDisposal: number
+): number {
+  return round2(disposalProceeds - netBookValueAtDisposal);
+}

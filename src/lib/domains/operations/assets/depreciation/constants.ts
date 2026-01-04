@@ -9,48 +9,60 @@
  * Based on Qatar Tax Authority guidelines and IFRS compliance
  */
 
+/**
+ * Qatar Tax Authority Depreciation Rates
+ * Per Income Tax Law No. 24 of 2018 and Executive Regulations
+ * Source: https://taxsummaries.pwc.com/qatar/corporate/deductions
+ */
 export const QATAR_TAX_CATEGORIES = [
   {
     code: 'BUILDINGS',
     name: 'Buildings',
-    annualRate: 4,
-    usefulLifeYears: 25,
-    description: 'Commercial and industrial buildings, structures',
+    annualRate: 5,
+    usefulLifeYears: 20,
+    description: 'Offices, warehouses, hospitals, commercial structures',
   },
   {
     code: 'MACHINERY',
     name: 'Machinery & Equipment',
-    annualRate: 20,
-    usefulLifeYears: 5,
-    description: 'Industrial machinery, manufacturing equipment',
+    annualRate: 15,
+    usefulLifeYears: 7,
+    description: 'Plants, machinery, mechanical devices',
   },
   {
     code: 'VEHICLES',
     name: 'Vehicles',
     annualRate: 20,
     usefulLifeYears: 5,
-    description: 'Cars, trucks, delivery vehicles, company fleet',
+    description: 'Cars, motorcycles, lorries, company fleet',
   },
   {
     code: 'FURNITURE',
     name: 'Furniture & Office Equipment',
-    annualRate: 20,
-    usefulLifeYears: 5,
+    annualRate: 15,
+    usefulLifeYears: 7,
     description: 'Desks, chairs, filing cabinets, office furnishings',
   },
   {
     code: 'IT_EQUIPMENT',
     name: 'Computers & IT Equipment',
+    annualRate: 33.33,
+    usefulLifeYears: 3,
+    description: 'Laptops, desktops, servers, networking equipment',
+  },
+  {
+    code: 'ELECTRICAL',
+    name: 'Electrical Equipment',
     annualRate: 20,
     usefulLifeYears: 5,
-    description: 'Laptops, desktops, servers, networking equipment',
+    description: 'Air conditioners, electrical devices',
   },
   {
     code: 'INTANGIBLE',
     name: 'Intangible Assets',
-    annualRate: 0, // Custom - based on useful life
-    usefulLifeYears: 0, // Custom - must be set per asset
-    description: 'Software licenses, patents, trademarks (requires custom useful life)',
+    annualRate: 15, // Maximum allowed per Qatar Tax Law
+    usefulLifeYears: 7,
+    description: 'Software licenses, patents, trademarks (max 15% per year)',
   },
 ] as const;
 
