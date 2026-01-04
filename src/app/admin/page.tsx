@@ -66,6 +66,10 @@ export default async function AdminDashboard() {
   if (isAdmin && session.user.organizationId) {
     const tenantId = session.user.organizationId;
     const today = new Date();
+    // Start of today (midnight) for date-only comparisons (e.g., leave requests)
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    // End of today (23:59:59.999) for inclusive date comparisons
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
     const thirtyDaysFromNow = new Date(today);
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
     const sevenDaysFromNow = new Date(today);
@@ -106,8 +110,8 @@ export default async function AdminDashboard() {
         where: {
           tenantId,
           status: 'APPROVED',
-          startDate: { lte: today },
-          endDate: { gte: today },
+          startDate: { lte: endOfToday },
+          endDate: { gte: startOfToday },
         },
       }),
       prisma.supplier.count({ where: { tenantId, status: 'PENDING' } }),
@@ -209,13 +213,13 @@ export default async function AdminDashboard() {
           };
         });
       }),
-      // On leave today
+      // On leave today - use start/end of day for proper date-only comparison
       prisma.leaveRequest.findMany({
         where: {
           tenantId,
           status: 'APPROVED',
-          startDate: { lte: today },
-          endDate: { gte: today },
+          startDate: { lte: endOfToday },
+          endDate: { gte: startOfToday },
         },
         take: 5,
         include: {
