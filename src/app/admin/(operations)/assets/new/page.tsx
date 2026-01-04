@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Package, ShoppingCart, MapPin, Info, RefreshCw } from 'lucide-react';
 import { toInputDateString } from '@/lib/date-format';
 import { createAssetSchema, type CreateAssetRequest } from '@/lib/validations/assets';
 import { AssetStatus } from '@prisma/client';
@@ -349,32 +350,15 @@ export default function NewAssetPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Basic Information Section */}
+              {/* Section 1: Asset Details */}
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">1. Basic Information</h3>
-                <p className="text-xs text-gray-600">What is this asset?</p>
-
-                {/* Category - now a dropdown */}
-                <div className="space-y-2">
-                  <Label htmlFor="categoryId">Category *</Label>
-                  <CategorySelector
-                    value={watchedCategoryId || null}
-                    onChange={(categoryId, categoryCode) => {
-                      setValue('categoryId', categoryId || '');
-                      setSelectedCategoryCode(categoryCode);
-                      // Reset tag when category changes (unless manually edited)
-                      if (!isTagManuallyEdited && categoryId) {
-                        setSuggestedTag(''); // Will be refetched by useEffect
-                      }
-                    }}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Select a category to auto-generate the asset tag
-                  </p>
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Asset Details</h3>
                 </div>
+                <p className="text-xs text-muted-foreground">What is this asset?</p>
 
-                {/* Asset Type - sub-type within category with auto-suggest */}
+                {/* Asset Type - PRIMARY INPUT with auto-suggest */}
                 <div className="space-y-2">
                   <Label htmlFor="type">Asset Type *</Label>
                   <AssetTypeCombobox
@@ -406,8 +390,23 @@ export default function NewAssetPage() {
                   {errors.type && (
                     <p className="text-sm text-red-500">{errors.type.message}</p>
                   )}
+                </div>
+
+                {/* Category - auto-selected based on type */}
+                <div className="space-y-2">
+                  <Label htmlFor="categoryId">Category</Label>
+                  <CategorySelector
+                    value={watchedCategoryId || null}
+                    onChange={(categoryId, categoryCode) => {
+                      setValue('categoryId', categoryId || '');
+                      setSelectedCategoryCode(categoryCode);
+                      if (!isTagManuallyEdited && categoryId) {
+                        setSuggestedTag('');
+                      }
+                    }}
+                  />
                   <p className="text-xs text-muted-foreground">
-                    Type to see suggestions. Category will be auto-selected based on your choice.
+                    Auto-selected based on asset type, or choose manually
                   </p>
                 </div>
 
@@ -425,7 +424,7 @@ export default function NewAssetPage() {
                     <Input
                       id="model"
                       {...register('model')}
-                      placeholder="MacBook Pro 16, Dell XPS 15, etc."
+                      placeholder="MacBook Pro 16, XPS 15, etc."
                       className={errors.model ? 'border-red-500' : ''}
                     />
                     {errors.model && (
@@ -434,60 +433,33 @@ export default function NewAssetPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="serial">Serial Number</Label>
-                  <Input
-                    id="serial"
-                    {...register('serial')}
-                    placeholder="Manufacturer's serial number"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="configuration">Configuration / Specs</Label>
-                  <Input
-                    id="configuration"
-                    {...register('configuration')}
-                    placeholder="16GB RAM, 512GB SSD, Intel i7, etc."
-                  />
-                </div>
-              </div>
-
-              {/* Asset Identification Section */}
-              <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">2. Asset Identification</h3>
-                <p className="text-xs text-gray-600">Unique identifier for this asset</p>
-
-                <div className="space-y-2">
-                  <Label htmlFor="assetTag">Asset ID / Tag</Label>
-                  <Input
-                    id="assetTag"
-                    {...register('assetTag')}
-                    placeholder={!watchedCategoryId ? 'Select a category first...' : ''}
-                    onChange={(e) => {
-                      e.target.value = e.target.value.toUpperCase();
-                      register('assetTag').onChange(e);
-                      // Mark as manually edited if user changes from suggested
-                      if (e.target.value !== suggestedTag) {
-                        setIsTagManuallyEdited(true);
-                      }
-                    }}
-                    style={{ textTransform: 'uppercase' }}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {suggestedTag && !isTagManuallyEdited
-                      ? `Auto-generated: ${selectedCategoryCode ? `ORG-${selectedCategoryCode}-YYSEQ` : 'Based on category'}. Edit if needed.`
-                      : isTagManuallyEdited
-                      ? 'Using custom tag.'
-                      : 'Select a category above to auto-generate tag.'}
-                  </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="serial">Serial Number</Label>
+                    <Input
+                      id="serial"
+                      {...register('serial')}
+                      placeholder="Manufacturer's serial"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="configuration">Configuration / Specs</Label>
+                    <Input
+                      id="configuration"
+                      {...register('configuration')}
+                      placeholder="16GB RAM, 512GB SSD, etc."
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Financial Information Section */}
+              {/* Section 2: Acquisition Details */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">3. Financial Information</h3>
-                <p className="text-xs text-gray-600">Procurement and cost details</p>
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5 text-green-600" />
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Acquisition Details</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">Where did this asset come from?</p>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -496,7 +468,26 @@ export default function NewAssetPage() {
                       id="purchaseDate"
                       value={watchedPurchaseDate || ''}
                       onChange={(value) => setValue('purchaseDate', value)}
-                      maxDate={getQatarEndOfDay()} // Only allow today and past dates (Qatar timezone)
+                      maxDate={getQatarEndOfDay()}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="supplier">Supplier / Vendor</Label>
+                    <Input
+                      id="supplier"
+                      {...register('supplier')}
+                      placeholder="Where purchased from"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="invoiceNumber">Invoice / PO Number</Label>
+                    <Input
+                      id="invoiceNumber"
+                      {...register('invoiceNumber')}
+                      placeholder="Invoice reference"
                     />
                   </div>
                   <div className="space-y-2">
@@ -530,10 +521,8 @@ export default function NewAssetPage() {
                     {watchedPrice && watchedCurrency && (
                       <p className="text-xs text-muted-foreground">
                         {watchedCurrency === 'QAR' ? (
-                          // QAR selected: show USD equivalent
                           <>≈ USD {(watchedPrice / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
                         ) : (
-                          // Any other currency: show QAR equivalent
                           <>≈ QAR {(watchedPrice * (exchangeRates[watchedCurrency as string] || 1)).toFixed(2)}</>
                         )}
                       </p>
@@ -541,30 +530,8 @@ export default function NewAssetPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="supplier">Supplier / Vendor</Label>
-                    <Input
-                      id="supplier"
-                      {...register('supplier')}
-                      placeholder="Where purchased from"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="invoiceNumber">Invoice / PO Number</Label>
-                    <Input
-                      id="invoiceNumber"
-                      {...register('invoiceNumber')}
-                      placeholder="Invoice or purchase order reference"
-                    />
-                  </div>
-                </div>
-
                 <div className="space-y-2">
-                  <Label htmlFor="warrantyExpiry">
-                    Warranty Expiry
-                    <span className="text-gray-500 text-sm ml-2">(Optional)</span>
-                  </Label>
+                  <Label htmlFor="warrantyExpiry">Warranty Expiry</Label>
                   <DatePicker
                     id="warrantyExpiry"
                     value={watchedWarrantyExpiry || ''}
@@ -573,99 +540,94 @@ export default function NewAssetPage() {
                     placeholder="No warranty or unknown"
                     minDate={watchedPurchaseDate ? new Date(watchedPurchaseDate) : undefined}
                   />
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {watchedPurchaseDate
-                      ? 'Auto-filled to 1 year from purchase date. Must be on or after purchase date.'
-                      : 'Enter a purchase date first to set warranty expiry.'
-                    } Click × to clear for items without warranty.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="depreciationCategoryId">
-                    Depreciation Category
-                    <span className="text-gray-500 text-sm ml-2">(Optional)</span>
-                  </Label>
-                  <Select
-                    value={watchedDepreciationCategoryId || '__none__'}
-                    onValueChange={(value) => setValue('depreciationCategoryId', value === '__none__' ? '' : value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select depreciation category..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">None</SelectItem>
-                      {depreciationCategories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name} ({cat.annualRate}% / {cat.usefulLifeYears} years)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">
-                    Select a depreciation category to track asset value over time
+                      ? 'Auto-filled to 1 year from purchase. Click × to clear.'
+                      : 'Set purchase date first for auto-fill.'}
                   </p>
                 </div>
               </div>
 
-              {/* Current Status Section */}
+              {/* Section 3: Status & Assignment */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">4. Current Status</h3>
-                <p className="text-xs text-gray-600">Current state and usage information</p>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-orange-600" />
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Status & Assignment</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">Current state and who is using it</p>
 
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={watchedStatus || ''}
-                    onValueChange={(value) => setValue('status', value as AssetStatus)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="IN_USE">In Use</SelectItem>
-                      <SelectItem value="SPARE">Spare</SelectItem>
-                      <SelectItem value="REPAIR">In Repair</SelectItem>
-                      <SelectItem value="DISPOSED">Disposed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status *</Label>
+                    <Select
+                      value={watchedStatus || ''}
+                      onValueChange={(value) => setValue('status', value as AssetStatus)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="IN_USE">In Use</SelectItem>
+                        <SelectItem value="SPARE">Spare</SelectItem>
+                        <SelectItem value="REPAIR">In Repair</SelectItem>
+                        <SelectItem value="DISPOSED">Disposed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <div className="relative">
+                      <Input
+                        id="location"
+                        {...register('location')}
+                        onFocus={() => setShowLocationSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+                        placeholder="Building, floor, room..."
+                        autoComplete="off"
+                      />
+                      {showLocationSuggestions && locationSuggestions.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
+                          {locationSuggestions.map((location, index) => (
+                            <div
+                              key={index}
+                              className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                              onClick={() => {
+                                setValue('location', location);
+                                setShowLocationSuggestions(false);
+                              }}
+                            >
+                              {location}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {watchedStatus === AssetStatus.IN_USE && (
-                  <div className="flex items-start space-x-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <Checkbox
                       id="isShared"
                       checked={watchedIsShared}
                       onCheckedChange={(checked) => {
                         setValue('isShared', !!checked);
-                        // Clear assignment when marking as shared
                         if (checked) {
                           setValue('assignedMemberId', '');
                           setValue('assignmentDate', '');
                         }
                       }}
                     />
-                    <div className="space-y-1">
-                      <Label htmlFor="isShared" className="font-medium cursor-pointer">
-                        This is a shared/common resource
-                      </Label>
-                      <p className="text-xs text-gray-600">
-                        Check this for assets like printers, conference room equipment, or shared workstations
-                        that are not assigned to any specific person.
-                      </p>
-                    </div>
+                    <Label htmlFor="isShared" className="text-sm cursor-pointer">
+                      Shared resource (not assigned to anyone)
+                    </Label>
                   </div>
                 )}
-              </div>
 
-              {/* Assignment Section - Only show when status is IN_USE and NOT shared */}
-              {watchedStatus === AssetStatus.IN_USE && !watchedIsShared && (
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">5. Assignment</h3>
-                  <p className="text-xs text-gray-600">Who is using this asset?</p>
-                  <div className="grid grid-cols-2 gap-4">
+                {watchedStatus === AssetStatus.IN_USE && !watchedIsShared && (
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
                     <div className="space-y-2">
-                      <Label htmlFor="assignedMemberId">Assign to User *</Label>
+                      <Label htmlFor="assignedMemberId">Assign to *</Label>
                       <Select
                         value={watchedAssignedUserId || "__none__"}
                         onValueChange={(value) => handleUserAssignment(value === "__none__" ? '' : value)}
@@ -698,80 +660,95 @@ export default function NewAssetPage() {
                       {errors.assignmentDate && (
                         <p className="text-sm text-red-500">{errors.assignmentDate.message}</p>
                       )}
-                      <p className="text-xs text-gray-500">
-                        When was this asset assigned?
-                      </p>
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* Location Section */}
-              <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  {watchedIsShared ? '5. Location' : '6. Location'}
-                </h3>
-                <div className="space-y-2 relative">
-                  <Label htmlFor="location">
-                    Physical Location {watchedIsShared ? '(Recommended)' : '(Optional)'}
-                  </Label>
-                  <Input
-                    id="location"
-                    {...register('location')}
-                    onFocus={() => setShowLocationSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
-                    placeholder={watchedIsShared
-                      ? "E.g., Reception, Conference Room A, IT Room"
-                      : "E.g., Office 3rd Floor, Building A, Storage Room 201"
-                    }
-                    autoComplete="off"
-                  />
-                  {showLocationSuggestions && locationSuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
-                      {locationSuggestions.map((location, index) => (
-                        <div
-                          key={index}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                          onClick={() => {
-                            setValue('location', location);
-                            setShowLocationSuggestions(false);
-                          }}
-                        >
-                          {location}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <p className="text-xs text-gray-500">
-                    {watchedIsShared
-                      ? "Where can people find this shared resource?"
-                      : "Where is this asset physically located?"
-                    }
-                  </p>
-                </div>
+                )}
               </div>
 
-              {/* Notes Section */}
+              {/* Section 4: Additional Information */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  {watchedIsShared ? '6. Notes / Remarks' : '7. Notes / Remarks'}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-gray-600" />
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Additional Information</h3>
+                </div>
+
+                {/* Asset Tag - Info Display */}
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-xs text-muted-foreground uppercase tracking-wide">Asset Tag</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Input
+                          id="assetTag"
+                          {...register('assetTag')}
+                          placeholder={!watchedCategoryId ? 'Select category...' : 'Auto-generated'}
+                          onChange={(e) => {
+                            e.target.value = e.target.value.toUpperCase();
+                            register('assetTag').onChange(e);
+                            if (e.target.value !== suggestedTag) {
+                              setIsTagManuallyEdited(true);
+                            }
+                          }}
+                          className="font-mono text-lg h-10 max-w-[200px] uppercase"
+                        />
+                        {isTagManuallyEdited && suggestedTag && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setValue('assetTag', suggestedTag);
+                              setIsTagManuallyEdited(false);
+                            }}
+                            title="Reset to auto-generated tag"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground max-w-[200px]">
+                      {isTagManuallyEdited ? 'Custom tag' : 'Auto-generated from category'}
+                    </p>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="notes">Additional Notes (optional)</Label>
+                  <Label htmlFor="depreciationCategoryId">Depreciation Category</Label>
+                  <Select
+                    value={watchedDepreciationCategoryId || '__none__'}
+                    onValueChange={(value) => setValue('depreciationCategoryId', value === '__none__' ? '' : value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select for value tracking..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">None</SelectItem>
+                      {depreciationCategories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name} ({cat.annualRate}% / {cat.usefulLifeYears} yrs)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes</Label>
                   <textarea
                     id="notes"
                     {...register('notes')}
-                    placeholder="Any additional information about this asset..."
-                    className="w-full min-h-[100px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Any additional information..."
+                    className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-4">
+              <div className="flex justify-end space-x-2 pt-4 border-t">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push('/')}
+                  onClick={() => router.push('/admin/assets')}
                 >
                   Cancel
                 </Button>
