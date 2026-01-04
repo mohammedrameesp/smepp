@@ -81,8 +81,6 @@ async function cloneAssetHandler(request: NextRequest, context: APIContext) {
         priceCurrency: originalAsset.priceCurrency,
         priceQAR: originalAsset.priceQAR,
         status: 'SPARE', // New cloned assets default to SPARE
-        acquisitionType: originalAsset.acquisitionType,
-        transferNotes: originalAsset.transferNotes,
         assignedMemberId: null, // Clear assignment
         notes: originalAsset.notes,
         location: originalAsset.location,

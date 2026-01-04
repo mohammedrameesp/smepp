@@ -10,7 +10,7 @@
  * FEATURES:
  * - Flexible column name matching (accepts various naming conventions)
  * - Currency conversion (QAR/USD)
- * - Status and acquisition type parsing
+ * - Status parsing
  * - Date parsing with multiple format support
  */
 
@@ -43,7 +43,6 @@ export interface ParsedAssetData {
   priceCurrency: 'QAR' | 'USD';
   priceQAR: number | null;
   status: AssetStatus;
-  acquisitionType: 'NEW_PURCHASE' | 'TRANSFERRED';
   assignedUserId: string | null;
   assignmentDate: string | null;
 }
@@ -76,7 +75,6 @@ const ASSET_COLUMN_MAPPINGS: Record<string, string[]> = {
   status: ['Status', 'status'],
   price: ['Price', 'price', 'Cost', 'Cost / Value'],
   currency: ['Currency', 'currency'],
-  acquisitionType: ['Acquisition Type', 'acquisition_type', 'acquisitionType'],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -116,7 +114,6 @@ export function parseAssetRow(row: ImportRow): AssetParseResult {
   const statusStr = getRowValue(ASSET_COLUMN_MAPPINGS.status);
   const priceStr = getRowValue(ASSET_COLUMN_MAPPINGS.price);
   const currencyStr = getRowValue(ASSET_COLUMN_MAPPINGS.currency);
-  const acquisitionTypeStr = getRowValue(ASSET_COLUMN_MAPPINGS.acquisitionType);
 
   // Validate required fields
   if (!type || !model) {
@@ -135,13 +132,6 @@ export function parseAssetRow(row: ImportRow): AssetParseResult {
 
   // Parse currency
   const priceCurrency = parseEnumValue<'QAR' | 'USD'>(currencyStr, ['QAR', 'USD'], 'QAR');
-
-  // Parse acquisition type
-  const acquisitionType = parseEnumValue<'NEW_PURCHASE' | 'TRANSFERRED'>(
-    acquisitionTypeStr,
-    ['NEW_PURCHASE', 'TRANSFERRED'],
-    'NEW_PURCHASE'
-  );
 
   // Parse price and convert to QAR
   let price: number | null = null;
@@ -178,7 +168,6 @@ export function parseAssetRow(row: ImportRow): AssetParseResult {
       priceCurrency,
       priceQAR,
       status,
-      acquisitionType,
       assignedUserId: assignedUserId || null,
       assignmentDate: assignmentDate || null,
     },
@@ -203,7 +192,6 @@ export interface AssetDbData {
   priceCurrency: 'QAR' | 'USD';
   priceQAR: number | null;
   status: AssetStatus;
-  acquisitionType: 'NEW_PURCHASE' | 'TRANSFERRED';
   assignedUserId: string | null;
   assignmentDate: string | null;
   assetTag?: string;
@@ -231,7 +219,6 @@ export function buildAssetDbData(data: ParsedAssetData): AssetDbData {
     priceCurrency: data.priceCurrency,
     priceQAR: data.priceQAR,
     status: data.status,
-    acquisitionType: data.acquisitionType,
     assignedUserId: data.assignedUserId,
     assignmentDate: data.assignmentDate,
   };

@@ -16,7 +16,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toInputDateString } from '@/lib/date-format';
 import { updateAssetSchema, type UpdateAssetRequest } from '@/lib/validations/assets';
-import { AssetStatus, AcquisitionType } from '@prisma/client';
+import { AssetStatus } from '@prisma/client';
 // Default exchange rates to QAR (fallback if not set in settings)
 const DEFAULT_RATES: Record<string, number> = {
   USD: 3.64, EUR: 3.96, GBP: 4.60, SAR: 0.97, AED: 0.99, KWD: 11.85,
@@ -40,8 +40,6 @@ interface Asset {
   priceCurrency?: string;
   priceQAR?: number;
   status: string;
-  acquisitionType?: string;
-  transferNotes?: string;
   createdAt?: string;
   depreciationCategoryId?: string;
 }
@@ -95,8 +93,6 @@ export default function EditAssetPage() {
       priceCurrency: 'QAR',
       priceQAR: null,
       status: AssetStatus.IN_USE,
-      acquisitionType: AcquisitionType.NEW_PURCHASE,
-      transferNotes: '',
       assignedMemberId: '',
       assignmentDate: '',
       notes: '',
@@ -114,7 +110,6 @@ export default function EditAssetPage() {
   const watchedPrice = watch('price');
   const watchedCurrency = watch('priceCurrency');
   const watchedStatus = watch('status');
-  const watchedAcquisitionType = watch('acquisitionType');
   const watchedAssignedUserId = watch('assignedMemberId');
   const watchedPurchaseDate = watch('purchaseDate');
   const watchedDepreciationCategoryId = watch('depreciationCategoryId');
@@ -304,8 +299,6 @@ export default function EditAssetPage() {
           priceCurrency: assetData.priceCurrency || 'QAR',
           priceQAR: assetData.priceQAR || null,
           status: (assetData.status || AssetStatus.IN_USE) as AssetStatus,
-          acquisitionType: (assetData.acquisitionType || AcquisitionType.NEW_PURCHASE) as AcquisitionType,
-          transferNotes: assetData.transferNotes || '',
           assignedMemberId: assetData.assignedMemberId || '',
           assignmentDate: toInputDateString(assetData.assignmentDate),
           notes: assetData.notes || '',
@@ -573,53 +566,24 @@ export default function EditAssetPage() {
                 </div>
               </div>
 
-              {/* Acquisition Details Section */}
+              {/* Asset Identification Section */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">2. Acquisition Details</h3>
-                <p className="text-xs text-gray-600">How did we acquire this asset?</p>
+                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">2. Asset Identification</h3>
+                <p className="text-xs text-gray-600">Unique identifier for this asset</p>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="acquisitionType">Acquisition Type *</Label>
-                    <Select value={watchedAcquisitionType || ''} onValueChange={(value) => setValue('acquisitionType', value as AcquisitionType)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="NEW_PURCHASE">New Purchase</SelectItem>
-                        <SelectItem value="TRANSFERRED">Transferred</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="assetTag">Asset ID/Tag</Label>
-                    <Input
-                      id="assetTag"
-                      {...register('assetTag')}
-                      placeholder="Auto-generated if empty"
-                      onChange={(e) => {
-                        e.target.value = e.target.value.toUpperCase();
-                        register('assetTag').onChange(e);
-                      }}
-                      style={{ textTransform: 'uppercase' }}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="assetTag">Asset ID/Tag</Label>
+                  <Input
+                    id="assetTag"
+                    {...register('assetTag')}
+                    placeholder="Auto-generated if empty"
+                    onChange={(e) => {
+                      e.target.value = e.target.value.toUpperCase();
+                      register('assetTag').onChange(e);
+                    }}
+                    style={{ textTransform: 'uppercase' }}
+                  />
                 </div>
-
-                {watchedAcquisitionType === 'TRANSFERRED' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="transferNotes">Transfer Notes *</Label>
-                    <textarea
-                      id="transferNotes"
-                      {...register('transferNotes')}
-                      placeholder="E.g., From previous company, Personal laptop donated by boss, etc."
-                      className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <p className="text-xs text-gray-500">
-                      Provide details about where this asset came from
-                    </p>
-                  </div>
-                )}
               </div>
 
               {/* Financial Information Section */}
@@ -627,59 +591,57 @@ export default function EditAssetPage() {
                 <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">3. Financial Information</h3>
                 <p className="text-xs text-gray-600">Procurement and cost details</p>
 
-                {watchedAcquisitionType !== 'TRANSFERRED' && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="purchaseDate">Purchase Date</Label>
-                      <DatePicker
-                        id="purchaseDate"
-                        value={watch('purchaseDate') || ''}
-                        onChange={(value) => setValue('purchaseDate', value)}
-                        maxDate={getQatarEndOfDay()} // Only allow today and past dates
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Cost / Value</Label>
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <Input
-                            id="price"
-                            type="number"
-                            step="0.01"
-                            {...register('price', { valueAsNumber: true })}
-                            placeholder="0.00"
-                          />
-                        </div>
-                        <Select
-                          value={watchedCurrency || ''}
-                          onValueChange={(value) => setValue('priceCurrency', value)}
-                        >
-                          <SelectTrigger className="w-24">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableCurrencies.map((currency) => (
-                              <SelectItem key={currency} value={currency}>
-                                {currency}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      {watchedPrice && watchedCurrency && (
-                        <p className="text-xs text-muted-foreground">
-                          {watchedCurrency === 'QAR' ? (
-                            // QAR selected: show USD equivalent
-                            <>≈ USD {(watchedPrice / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
-                          ) : (
-                            // Any other currency: show QAR equivalent
-                            <>≈ QAR {(watchedPrice * (exchangeRates[watchedCurrency as string] || 1)).toFixed(2)}</>
-                          )}
-                        </p>
-                      )}
-                    </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="purchaseDate">Purchase Date</Label>
+                    <DatePicker
+                      id="purchaseDate"
+                      value={watch('purchaseDate') || ''}
+                      onChange={(value) => setValue('purchaseDate', value)}
+                      maxDate={getQatarEndOfDay()} // Only allow today and past dates
+                    />
                   </div>
-                )}
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Cost / Value</Label>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <Input
+                          id="price"
+                          type="number"
+                          step="0.01"
+                          {...register('price', { valueAsNumber: true })}
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <Select
+                        value={watchedCurrency || ''}
+                        onValueChange={(value) => setValue('priceCurrency', value)}
+                      >
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableCurrencies.map((currency) => (
+                            <SelectItem key={currency} value={currency}>
+                              {currency}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {watchedPrice && watchedCurrency && (
+                      <p className="text-xs text-muted-foreground">
+                        {watchedCurrency === 'QAR' ? (
+                          // QAR selected: show USD equivalent
+                          <>≈ USD {(watchedPrice / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
+                        ) : (
+                          // Any other currency: show QAR equivalent
+                          <>≈ QAR {(watchedPrice * (exchangeRates[watchedCurrency as string] || 1)).toFixed(2)}</>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -700,28 +662,26 @@ export default function EditAssetPage() {
                   </div>
                 </div>
 
-                {watchedAcquisitionType !== 'TRANSFERRED' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="warrantyExpiry">
-                      Warranty Expiry
-                      <span className="text-gray-500 text-sm ml-2">(Optional)</span>
-                    </Label>
-                    <DatePicker
-                      id="warrantyExpiry"
-                      value={watch('warrantyExpiry') || ''}
-                      onChange={(value) => setValue('warrantyExpiry', value)}
-                      required={false}
-                      placeholder="No warranty or unknown"
-                      minDate={watchedPurchaseDate ? new Date(watchedPurchaseDate) : undefined}
-                    />
-                    <p className="text-xs text-gray-500">
-                      {watchedPurchaseDate
-                        ? 'Must be on or after purchase date.'
-                        : 'Enter a purchase date first to set warranty expiry.'
-                      } Click × to clear for items without warranty.
-                    </p>
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label htmlFor="warrantyExpiry">
+                    Warranty Expiry
+                    <span className="text-gray-500 text-sm ml-2">(Optional)</span>
+                  </Label>
+                  <DatePicker
+                    id="warrantyExpiry"
+                    value={watch('warrantyExpiry') || ''}
+                    onChange={(value) => setValue('warrantyExpiry', value)}
+                    required={false}
+                    placeholder="No warranty or unknown"
+                    minDate={watchedPurchaseDate ? new Date(watchedPurchaseDate) : undefined}
+                  />
+                  <p className="text-xs text-gray-500">
+                    {watchedPurchaseDate
+                      ? 'Must be on or after purchase date.'
+                      : 'Enter a purchase date first to set warranty expiry.'
+                    } Click × to clear for items without warranty.
+                  </p>
+                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="depreciationCategoryId">

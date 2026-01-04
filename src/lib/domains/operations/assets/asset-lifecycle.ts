@@ -263,8 +263,6 @@ export async function getMemberAssetHistory(memberId: string) {
         priceQAR: asset.priceQAR ? Number(asset.priceQAR) : null,
         warrantyExpiry: asset.warrantyExpiry,
         status: asset.status,
-        acquisitionType: asset.acquisitionType,
-        transferNotes: asset.transferNotes,
         assignedMemberId: asset.assignedMemberId,
         createdAt: asset.createdAt,
         updatedAt: asset.updatedAt,

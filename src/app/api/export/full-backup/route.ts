@@ -268,7 +268,6 @@ export async function GET() {
       assignedMemberId: a.assignedMemberId || '',
       assignedMember: a.assignedMember ? (a.assignedMember.name || a.assignedMember.email) : '',
       status: a.status,
-      acquisitionType: a.acquisitionType,
       location: a.location || '',
       price: a.price ? Number(a.price) : '',
       priceCurrency: a.priceCurrency || '',

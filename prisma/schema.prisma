@@ -79,11 +79,6 @@ enum AssetStatus {
   DISPOSED
 }
 
-enum AcquisitionType {
-  NEW_PURCHASE
-  TRANSFERRED
-}
-
 enum SupplierStatus {
   PENDING
   APPROVED
@@ -824,9 +819,7 @@ model Asset {
   assignedMember   TeamMember?     @relation("MemberAssets", fields: [assignedMemberId], references: [id])
   assignmentDate   DateTime? // When the asset was assigned to current member
   status           AssetStatus     @default(IN_USE) // #14 Status/Condition
-  acquisitionType  AcquisitionType @default(NEW_PURCHASE) // #15 Asset Movement (New/Transferred)
-  transferNotes    String? // Notes for transferred assets
-  price            Decimal? // #16 Cost/Value
+  price            Decimal? // #15 Cost/Value
   priceCurrency    String?         @default("QAR")
   priceQAR         Decimal?
 

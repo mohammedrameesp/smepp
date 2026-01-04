@@ -259,26 +259,6 @@ export default async function AssetDetailPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Acquisition Info */}
-          {asset.acquisitionType === 'TRANSFERRED' && asset.transferNotes && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-slate-900">Transfer Information</h2>
-                  <p className="text-sm text-slate-500">Asset was transferred</p>
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">
-                  {asset.transferNotes}
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Notes */}
           {asset.notes && (
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
@@ -397,25 +377,6 @@ export default async function AssetDetailPage({ params }: Props) {
               </div>
             </div>
           )}
-
-          {/* Acquisition Type Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-cyan-100 rounded-xl flex items-center justify-center">
-                <Tag className="h-5 w-5 text-cyan-600" />
-              </div>
-              <h2 className="font-semibold text-slate-900">Acquisition</h2>
-            </div>
-            <div className="p-5">
-              <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
-                asset.acquisitionType === 'NEW_PURCHASE'
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-amber-100 text-amber-700'
-              }`}>
-                {asset.acquisitionType === 'NEW_PURCHASE' ? 'New Purchase' : 'Transferred'}
-              </span>
-            </div>
-          </div>
 
           {/* System Info Card */}
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">

@@ -155,8 +155,6 @@ export async function POST(request: NextRequest) {
             assignedMemberId,
             assignmentDate: assignedMemberId && asset.assignmentDate ? new Date(asset.assignmentDate) : null,
             status: asset.status,
-            acquisitionType: asset.acquisitionType || 'NEW_PURCHASE',
-            transferNotes: asset.transferNotes,
             price: asset.price ? parseFloat(asset.price) : null,
             priceCurrency: asset.priceCurrency || 'QAR',
             priceQAR: asset.priceQAR ? parseFloat(asset.priceQAR) : null,

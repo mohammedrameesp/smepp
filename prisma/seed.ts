@@ -1,4 +1,4 @@
-import { PrismaClient, Role, BillingCycle, AssetStatus, AcquisitionType } from '@prisma/client';
+import { PrismaClient, Role, BillingCycle, AssetStatus } from '@prisma/client';
 import { DEFAULT_LEAVE_TYPES } from '../src/lib/leave-utils';
 
 const prisma = new PrismaClient();
@@ -76,7 +76,6 @@ async function main() {
         priceCurrency: 'QAR',
         priceQAR: 10997,
         status: AssetStatus.IN_USE,
-        acquisitionType: AcquisitionType.NEW_PURCHASE,
         assignedUserId: employees[0].id,
       },
     }),
@@ -96,7 +95,6 @@ async function main() {
         priceCurrency: 'QAR',
         priceQAR: 2200,
         status: AssetStatus.IN_USE,
-        acquisitionType: AcquisitionType.NEW_PURCHASE,
         assignedUserId: employees[1].id,
       },
     }),
@@ -116,7 +114,6 @@ async function main() {
         priceCurrency: 'QAR',
         priceQAR: 4000,
         status: AssetStatus.IN_USE,
-        acquisitionType: AcquisitionType.NEW_PURCHASE,
         assignedUserId: employees[2].id,
       },
     }),
@@ -136,7 +133,6 @@ async function main() {
         priceCurrency: 'QAR',
         priceQAR: 4750,
         status: AssetStatus.SPARE,
-        acquisitionType: AcquisitionType.NEW_PURCHASE,
       },
     }),
     prisma.asset.create({
@@ -155,7 +151,6 @@ async function main() {
         priceCurrency: 'QAR',
         priceQAR: 1450,
         status: AssetStatus.REPAIR,
-        acquisitionType: AcquisitionType.NEW_PURCHASE,
       },
     }),
   ]);

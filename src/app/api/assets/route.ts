@@ -147,8 +147,6 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
         priceCurrency: currency,
         priceQAR: priceQAR || null,
         status: data.status,
-        acquisitionType: data.acquisitionType,
-        transferNotes: data.transferNotes || null,
         notes: data.notes || null,
         location: data.location || null,
         isShared: data.isShared || false,

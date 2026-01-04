@@ -48,8 +48,6 @@ export const ASSET_FIELD_LABELS: Record<string, string> = {
   priceQAR: 'Price (QAR)',
   warrantyExpiry: 'Warranty Expiry',
   status: 'Status',
-  acquisitionType: 'Acquisition Type',
-  transferNotes: 'Transfer Notes',
   assignedUserId: 'Assigned User',
   assignmentDate: 'Assignment Date',
   notes: 'Notes',

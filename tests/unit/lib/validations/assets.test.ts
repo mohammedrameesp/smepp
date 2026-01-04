@@ -3,7 +3,7 @@
  * @see src/lib/validations/assets.ts
  */
 
-import { AssetStatus, AcquisitionType } from '@prisma/client';
+import { AssetStatus } from '@prisma/client';
 import {
   createAssetSchema,
   updateAssetSchema,
@@ -30,7 +30,6 @@ describe('Asset Validation Schemas', () => {
         priceCurrency: 'USD',
         priceQAR: 9100,
         status: AssetStatus.SPARE,
-        acquisitionType: AcquisitionType.NEW_PURCHASE,
         notes: 'New laptop for development team',
         location: 'Building A, Room 101',
       };
@@ -44,7 +43,6 @@ describe('Asset Validation Schemas', () => {
         type: 'Mouse',
         model: 'MX Master 3',
         status: AssetStatus.SPARE,
-        acquisitionType: AcquisitionType.NEW_PURCHASE,
       };
 
       const result = createAssetSchema.safeParse(minimalAsset);
@@ -152,17 +150,6 @@ describe('Asset Validation Schemas', () => {
         type: 'Laptop',
         model: 'MacBook Pro',
         status: 'INVALID_STATUS',
-      };
-
-      const result = createAssetSchema.safeParse(invalidAsset);
-      expect(result.success).toBe(false);
-    });
-
-    it('should fail with invalid acquisition type', () => {
-      const invalidAsset = {
-        type: 'Laptop',
-        model: 'MacBook Pro',
-        acquisitionType: 'STOLEN',
       };
 
       const result = createAssetSchema.safeParse(invalidAsset);

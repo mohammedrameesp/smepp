@@ -6,7 +6,6 @@
 import {
   Role,
   AssetStatus,
-  AcquisitionType,
   BillingCycle,
   SubscriptionStatus,
   SupplierStatus,
@@ -73,8 +72,6 @@ export interface MockAsset {
   assignedUserId: string | null;
   assignmentDate: string | null;
   status: AssetStatus;
-  acquisitionType: AcquisitionType;
-  transferNotes: string | null;
   price: number | null;
   priceCurrency: string | null;
   priceQAR: number | null;
@@ -100,8 +97,6 @@ export const createMockAsset = (overrides: Partial<MockAsset> = {}): MockAsset =
   assignedUserId: null,
   assignmentDate: null,
   status: AssetStatus.SPARE,
-  acquisitionType: AcquisitionType.NEW_PURCHASE,
-  transferNotes: null,
   price: 1500,
   priceCurrency: 'USD',
   priceQAR: 5460,

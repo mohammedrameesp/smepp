@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { AssetStatus, AcquisitionType, BillingCycle, SubscriptionStatus, Role } from '@prisma/client';
+import { AssetStatus, BillingCycle, SubscriptionStatus, Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import ExcelJS from 'exceljs';
 
@@ -150,8 +150,6 @@ export async function POST(request: NextRequest) {
             priceCurrency: row.getCell(14).value?.toString() || 'QAR',
             priceQAR: row.getCell(15).value ? parseFloat(row.getCell(15).value?.toString() || '0') : null,
             status: (row.getCell(16).value?.toString() || 'IN_USE') as AssetStatus,
-            acquisitionType: (row.getCell(17).value?.toString() || 'NEW_PURCHASE') as AcquisitionType,
-            transferNotes: row.getCell(18).value?.toString() || null,
             assignedMemberId: newUserId,
             notes: row.getCell(25).value?.toString() || null,
           };

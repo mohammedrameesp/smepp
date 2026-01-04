@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod';
-import { AssetStatus, AcquisitionType } from '@prisma/client';
+import { AssetStatus } from '@prisma/client';
 
 export const createAssetSchema = z.object({
   assetTag: z.string().optional().nullable().or(z.literal('')),
@@ -23,8 +23,6 @@ export const createAssetSchema = z.object({
   priceCurrency: z.string().optional().nullable().or(z.literal('')),
   priceQAR: z.number().positive().optional().nullable(),
   status: z.nativeEnum(AssetStatus).default(AssetStatus.IN_USE),
-  acquisitionType: z.nativeEnum(AcquisitionType).default(AcquisitionType.NEW_PURCHASE),
-  transferNotes: z.string().optional().nullable().or(z.literal('')),
   assignedMemberId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
   assignmentDate: z.string().optional().nullable().or(z.literal('')),
   notes: z.string().optional().nullable().or(z.literal('')),
@@ -77,8 +75,6 @@ const baseAssetSchema = z.object({
   priceCurrency: z.string().optional().nullable().or(z.literal('')),
   priceQAR: z.number().positive().optional().nullable(),
   status: z.nativeEnum(AssetStatus).optional(),
-  acquisitionType: z.nativeEnum(AcquisitionType).optional(),
-  transferNotes: z.string().optional().nullable().or(z.literal('')),
   assignedMemberId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
   assignmentDate: z.string().optional().nullable().or(z.literal('')),
   notes: z.string().optional().nullable().or(z.literal('')),

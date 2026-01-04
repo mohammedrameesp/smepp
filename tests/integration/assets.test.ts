@@ -165,7 +165,6 @@ describe('Assets API Tests', () => {
         type: 'Laptop',
         brand: 'Apple',
         status: 'AVAILABLE',
-        acquisitionType: 'PURCHASED',
       };
 
       const mockPrismaAsset = prisma.asset as any;
@@ -186,7 +185,7 @@ describe('Assets API Tests', () => {
         brand: 'Apple',
       };
 
-      const requiredFields = ['model', 'type', 'status', 'acquisitionType'];
+      const requiredFields = ['model', 'type', 'status'];
       const hasAllRequired = requiredFields.every(field => field in invalidData);
 
       expect(hasAllRequired).toBe(false);

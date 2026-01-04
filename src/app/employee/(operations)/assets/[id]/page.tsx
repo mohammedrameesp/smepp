@@ -154,36 +154,6 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
         )}
 
         <div className="grid gap-6">
-          {/* Acquisition Type */}
-          {asset.acquisitionType && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Acquisition Information</CardTitle>
-                <CardDescription>
-                  How this asset was acquired
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Acquisition Type</Label>
-                    <div>
-                      <Badge variant={asset.acquisitionType === 'NEW_PURCHASE' ? 'default' : 'secondary'}>
-                        {asset.acquisitionType === 'NEW_PURCHASE' ? 'New Purchase' : 'Transferred'}
-                      </Badge>
-                    </div>
-                  </div>
-                  {asset.acquisitionType === 'TRANSFERRED' && asset.transferNotes && (
-                    <div>
-                      <Label>Transfer Notes</Label>
-                      <div className="text-gray-700 whitespace-pre-wrap">{asset.transferNotes}</div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Basic Information */}
           <Card>
             <CardHeader>

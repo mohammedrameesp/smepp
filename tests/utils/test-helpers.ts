@@ -25,7 +25,6 @@ export const createMockAsset = (overrides: any = {}) => {
     brand: 'Apple',
     serial: 'SN123456',
     status: 'AVAILABLE',
-    acquisitionType: 'PURCHASED',
     price: 2000,
     priceCurrency: 'USD',
     priceQAR: 7200,
