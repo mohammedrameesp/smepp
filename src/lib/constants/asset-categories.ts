@@ -14,8 +14,9 @@ export interface DefaultAssetCategory {
 }
 
 /**
- * 18 Universal Asset Categories
+ * 16 Universal Asset Categories (Physical & Hardware Assets)
  * These are seeded for every new organization by default
+ * Note: SW (Software) and DG (Digital Assets) are in Subscriptions module
  */
 export const DEFAULT_ASSET_CATEGORIES: DefaultAssetCategory[] = [
   { code: 'CP', name: 'Computing', description: 'Laptops, desktops, servers, workstations, mini PCs, thin clients' },
@@ -34,8 +35,6 @@ export const DEFAULT_ASSET_CATEGORIES: DefaultAssetCategory[] = [
   { code: 'CL', name: 'Cleaning Equipment', description: 'Vacuums, air purifiers, floor scrubbers, pressure washers, steam cleaners' },
   { code: 'VH', name: 'Vehicles', description: 'Cars, vans, trucks, motorcycles, scooters, bicycles, forklifts' },
   { code: 'ME', name: 'Measurement Tools', description: 'Laser meters, tape measures, scales, thermometers, multimeters, levels' },
-  { code: 'SW', name: 'Software & SaaS', description: 'Operating systems, productivity suites, CRM, accounting, design, cloud subscriptions' },
-  { code: 'DG', name: 'Digital Assets', description: 'Domains, SSL certificates, trademarks, patents, copyrights, digital licenses' },
 ];
 
 /**
