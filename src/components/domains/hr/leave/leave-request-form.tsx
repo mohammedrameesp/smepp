@@ -380,7 +380,17 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
                   id="endDate"
                   value={form.watch('endDate')}
                   onChange={(value) => form.setValue('endDate', value)}
-                  minDate={form.watch('startDate') ? new Date(form.watch('startDate')) : (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })()}
+                  minDate={(() => {
+                    const startDate = form.watch('startDate');
+                    if (startDate) {
+                      // Parse as local time, not UTC (new Date("yyyy-mm-dd") parses as UTC)
+                      const [y, m, d] = startDate.split('-').map(Number);
+                      return new Date(y, m - 1, d, 0, 0, 0);
+                    }
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return today;
+                  })()}
                   placeholder="DD/MM/YYYY"
                 />
                 {form.formState.errors.endDate && (
