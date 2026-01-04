@@ -140,7 +140,7 @@ export async function GET(
         role: member.approvalRole, // Approval role for dropdown
       },
       workEmail: member.email,
-      isAdmin: true, // Admin is viewing
+      isAdmin: member.role === 'ADMIN', // Dashboard access (TeamMemberRole)
     });
   } catch (error) {
     console.error('Get HR Profile error:', error);

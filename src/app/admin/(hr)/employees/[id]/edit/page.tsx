@@ -102,6 +102,8 @@ export default function AdminEmployeeEditPage() {
   const [isOnWps, setIsOnWps] = useState(false);
   const [isUpdatingWps, setIsUpdatingWps] = useState(false);
   const [payrollEnabled, setPayrollEnabled] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isUpdatingAdmin, setIsUpdatingAdmin] = useState(false);
 
   const employeeId = params?.id as string;
 
@@ -151,6 +153,7 @@ export default function AdminEmployeeEditPage() {
       }
       setBypassNotice(data.bypassNoticeRequirement === true);
       setIsOnWps(data.isOnWps === true);
+      setIsAdmin(data.isAdmin === true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load HR profile');
     } finally {
@@ -242,6 +245,33 @@ export default function AdminEmployeeEditPage() {
     }
   };
 
+  const updateAdminAccess = async (enabled: boolean) => {
+    setIsUpdatingAdmin(true);
+    try {
+      const response = await fetch(`/api/users/${employeeId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isAdmin: enabled }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update admin access');
+      }
+
+      setIsAdmin(enabled);
+      toast.success(enabled
+        ? 'Admin access granted - user must log out and back in'
+        : 'Admin access revoked - user must log out and back in'
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update admin access');
+      setIsAdmin(!enabled); // Revert on error
+    } finally {
+      setIsUpdatingAdmin(false);
+    }
+  };
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'ADMIN':
@@ -302,6 +332,49 @@ export default function AdminEmployeeEditPage() {
       />
 
       <PageContent className="max-w-5xl">
+
+          {/* Admin Access */}
+          {hrProfile?.user && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Dashboard Access
+                </CardTitle>
+                <CardDescription>
+                  Control whether this user can access the admin dashboard or only the employee portal
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="admin-access">Admin Access</Label>
+                    <p className="text-sm text-gray-500">
+                      Enable to grant access to the admin dashboard (/admin). Disable for employee-only access (/employee).
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isUpdatingAdmin && (
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                    )}
+                    <Switch
+                      id="admin-access"
+                      checked={isAdmin}
+                      onCheckedChange={updateAdminAccess}
+                      disabled={isUpdatingAdmin}
+                    />
+                  </div>
+                </div>
+                {isAdmin && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-sm text-blue-800">
+                      This user has admin access. They can manage assets, employees, and organization settings. The user must log out and log back in for changes to take effect.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Approval Role Management */}
           {hrProfile?.user && (

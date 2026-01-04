@@ -7,21 +7,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { TeamMemberRole } from '@prisma/client';
+import { Role, TeamMemberRole } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { z } from 'zod';
 
 const updateUserSchema = z.object({
   name: z.string().optional(),
-  role: z.nativeEnum(TeamMemberRole).optional(),
+  // role field updates approvalRole (for approval authority: EMPLOYEE, MANAGER, HR_MANAGER, etc.)
+  role: z.nativeEnum(Role).optional(),
+  // isAdmin field updates TeamMemberRole (for dashboard access: true = ADMIN, false = MEMBER)
+  isAdmin: z.boolean().optional(),
 });
 
 // Transform the data for TeamMember updates
-function transformUpdateData(data: { name?: string; role?: TeamMemberRole }) {
+function transformUpdateData(data: { name?: string; role?: Role; isAdmin?: boolean }) {
   return {
     ...(data.name && { name: data.name }),
-    ...(data.role && { role: data.role }), // Update the actual role on TeamMember
+    ...(data.role && { approvalRole: data.role }), // Update approval authority
+    ...(data.isAdmin !== undefined && { role: (data.isAdmin ? 'ADMIN' : 'MEMBER') as TeamMemberRole }), // Update dashboard access
   };
 }
 

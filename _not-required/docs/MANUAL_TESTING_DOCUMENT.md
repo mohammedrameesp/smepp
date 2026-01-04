@@ -1,11 +1,18 @@
 # Durj Comprehensive Manual Testing Document
 
-**Version:** 2.0
-**Date:** December 31, 2025
+**Version:** 2.1
+**Date:** January 4, 2026
 **Platform:** Durj Multi-Tenant Business Management Platform
 **Total Features:** 200+ across 11 modules, 190+ API routes, 89 pages
 
 ---
+
+## Document Updates (v2.1)
+
+Added test cases for:
+- **Setup page security** (1.3.11-1.3.13) - Verifies only admins/owners can access /setup
+- **User role management** (6.4.1-6.4.7) - Tests for role assignment and session updates
+- **Asset creation** (8.1.18-8.1.24) - Tests for asset tag auto-generation
 
 ## Document Updates (v2.0)
 
@@ -145,22 +152,30 @@ This version includes comprehensive testing for:
 | 1.3.9 | API call with other org's ID | Rejected (not found) | 🔴 | [ ] | |
 | 1.3.10 | Subdomain mismatch (logged in to wrong subdomain) | Redirected to correct subdomain | 🔴 | [ ] | |
 
+### Setup Page Access Control
+
+| # | Test Case | Expected Result | Priority | Pass | Notes |
+|---|-----------|-----------------|----------|------|-------|
+| 1.3.11 | Employee accesses /setup | Redirected to /employee dashboard | 🔴 | [ ] | |
+| 1.3.12 | Admin accesses /setup | Setup wizard displays | 🟡 | [ ] | |
+| 1.3.13 | Owner accesses /setup | Setup wizard displays | 🟡 | [ ] | |
+
 ### File Storage Isolation (STORAGE-001)
 
 | # | Test Case | Expected Result | Priority | Pass | Notes |
 |---|-----------|-----------------|----------|------|-------|
-| 1.3.11 | Upload file | Stored with tenant prefix | 🔴 | [ ] | |
-| 1.3.12 | File path format | {tenantId}/{timestamp}.{ext} | 🔴 | [ ] | |
-| 1.3.13 | Access other tenant's file URL | Rejected or not found | 🔴 | [ ] | |
+| 1.3.14 | Upload file | Stored with tenant prefix | 🔴 | [ ] | |
+| 1.3.15 | File path format | {tenantId}/{timestamp}.{ext} | 🔴 | [ ] | |
+| 1.3.16 | Access other tenant's file URL | Rejected or not found | 🔴 | [ ] | |
 
 ### Path Traversal Prevention (STORAGE-002)
 
 | # | Test Case | Expected Result | Priority | Pass | Notes |
 |---|-----------|-----------------|----------|------|-------|
-| 1.3.14 | Backup download with "../" | Rejected with error | 🔴 | [ ] | |
-| 1.3.15 | Backup download with absolute path | Rejected with error | 🔴 | [ ] | |
-| 1.3.16 | Backup download with null bytes | Rejected with error | 🔴 | [ ] | |
-| 1.3.17 | Valid backup path | File downloaded successfully | 🟡 | [ ] | |
+| 1.3.17 | Backup download with "../" | Rejected with error | 🔴 | [ ] | |
+| 1.3.18 | Backup download with absolute path | Rejected with error | 🔴 | [ ] | |
+| 1.3.19 | Backup download with null bytes | Rejected with error | 🔴 | [ ] | |
+| 1.3.20 | Valid backup path | File downloaded successfully | 🟡 | [ ] | |
 
 **Tested By:** _____________ **Date:** _____________ **Signature:** _____________
 
@@ -611,6 +626,24 @@ This version includes comprehensive testing for:
 
 ---
 
+## 6.4 User Role Management
+
+### Role Assignment
+
+| # | Test Case | Expected Result | Priority | Pass | Notes |
+|---|-----------|-----------------|----------|------|-------|
+| 6.4.1 | Admin changes user role MEMBER → ADMIN | API returns 200, role saved to database | 🔴 | [ ] | |
+| 6.4.2 | Verify role persists after page refresh | Role still shows as ADMIN | 🔴 | [ ] | |
+| 6.4.3 | Changed user logs out and logs back in | New role reflected in session | 🔴 | [ ] | |
+| 6.4.4 | Changed user can access /admin routes | Admin dashboard accessible | 🔴 | [ ] | |
+| 6.4.5 | Admin changes user role ADMIN → MEMBER | Role updated, user redirected to /employee | 🔴 | [ ] | |
+| 6.4.6 | Cannot change own role to MEMBER | Action blocked or warning shown | 🟡 | [ ] | |
+| 6.4.7 | Cannot change owner's role | Action blocked | 🔴 | [ ] | |
+
+**Tested By:** _____________ **Date:** _____________ **Signature:** _____________
+
+---
+
 # PART 7: ADMIN DASHBOARD
 
 ## 7.1 Dashboard (`/admin`)
@@ -691,6 +724,18 @@ This version includes comprehensive testing for:
 | 8.1.15 | Mark asset as shared | isShared=true in database | 🟡 | [ ] | |
 | 8.1.16 | Shared asset badge | Shows "Shared" indicator | 🟡 | [ ] | |
 | 8.1.17 | Shared asset multiple assignments | Can assign to multiple users | 🟡 | [ ] | |
+
+### Asset Creation (`/admin/assets/new`)
+
+| # | Test Case | Expected Result | Priority | Pass | Notes |
+|---|-----------|-----------------|----------|------|-------|
+| 8.1.18 | Load new asset form | Form displays with empty fields | 🟡 | [ ] | |
+| 8.1.19 | Select asset type | Asset tag auto-populates based on type | 🟡 | [ ] | |
+| 8.1.20 | Asset tag format | Shows pattern like "LAP-001" for Laptop | 🟡 | [ ] | |
+| 8.1.21 | Change asset type | Asset tag updates to new type prefix | 🟡 | [ ] | |
+| 8.1.22 | Edit suggested asset tag | Custom tag accepted and saved | 🟡 | [ ] | |
+| 8.1.23 | Duplicate asset tag | Error shown, creation blocked | 🔴 | [ ] | |
+| 8.1.24 | Submit valid asset | Asset created, redirects to detail page | 🟡 | [ ] | |
 
 **Tested By:** _____________ **Date:** _____________ **Signature:** _____________
 
@@ -899,4 +944,4 @@ Minimum test data for comprehensive testing:
 
 **Document End**
 
-Version: 2.0 | Last Updated: December 31, 2025
+Version: 2.1 | Last Updated: January 4, 2026
