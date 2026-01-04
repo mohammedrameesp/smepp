@@ -110,7 +110,7 @@ function LoginForm() {
 
         // If on subdomain but user has no org (e.g., super admin)
         if (subdomain && !userOrgSlug) {
-          setError('You do not belong to this organization. Please use the main login page or super admin portal.');
+          setError('You do not belong to this organization. Please use the main login page.');
           return;
         }
 
@@ -183,7 +183,7 @@ function LoginForm() {
 
           // If on subdomain but user has no org (e.g., super admin)
           if (subdomain && !userOrgSlug) {
-            setError('You do not belong to this organization. Please use the main login page or super admin portal.');
+            setError('You do not belong to this organization. Please use the main login page.');
             setIsLoading(false);
             return;
           }
