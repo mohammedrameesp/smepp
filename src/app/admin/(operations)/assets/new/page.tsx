@@ -144,6 +144,7 @@ export default function NewAssetPage() {
   }, [setValue]);
 
   // Fetch suggested asset tag when category changes (new format: ORG-CAT-YYSEQ)
+  // Only generates tag when category is selected - not during typing
   useEffect(() => {
     async function fetchSuggestedTag() {
       if (watchedCategoryId && !isTagManuallyEdited) {
@@ -157,25 +158,13 @@ export default function NewAssetPage() {
         } catch (error) {
           console.error('Error fetching suggested tag:', error);
         }
-      } else if (!watchedCategoryId && watchedType && watchedType.length >= 2 && !isTagManuallyEdited) {
-        // Fallback to type-based tag generation if no category selected
-        try {
-          const response = await fetch(`/api/assets/next-tag?type=${encodeURIComponent(watchedType)}`);
-          if (response.ok) {
-            const data = await response.json();
-            setSuggestedTag(data.tag);
-            setValue('assetTag', data.tag);
-          }
-        } catch (error) {
-          console.error('Error fetching suggested tag:', error);
-        }
       }
     }
 
     // Debounce the fetch to avoid too many API calls
-    const timeoutId = setTimeout(fetchSuggestedTag, 500);
+    const timeoutId = setTimeout(fetchSuggestedTag, 300);
     return () => clearTimeout(timeoutId);
-  }, [watchedCategoryId, watchedType, isTagManuallyEdited, setValue]);
+  }, [watchedCategoryId, isTagManuallyEdited, setValue]);
 
   // Fetch location suggestions
   useEffect(() => {
@@ -660,12 +649,10 @@ export default function NewAssetPage() {
                         This is a shared/common resource
                       </Label>
                     </div>
-                    {watchedIsShared && (
-                      <p className="text-xs text-blue-700 ml-7">
-                        Shared assets are available for use by multiple team members (e.g., conference room equipment,
-                        shared printers, common area devices). They won&apos;t be assigned to any specific person.
-                      </p>
-                    )}
+                    <p className="text-xs text-blue-700 ml-7">
+                      Check this for assets used by multiple team members (e.g., conference room equipment,
+                      shared printers, common area devices). Shared assets won&apos;t be assigned to any specific person.
+                    </p>
                   </div>
                 )}
 
