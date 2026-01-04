@@ -499,6 +499,7 @@ export function OrganizationTabs({
             organizationId={org.id}
             codePrefix={codePrefix}
             initialFormats={org.codeFormats || {}}
+            enabledModules={enabledModules}
           />
 
           {/* Currencies */}

@@ -68,6 +68,18 @@ export const ENTITY_LABELS: Record<EntityType, string> = {
   suppliers: 'Supplier Code',
 };
 
+// Map entity types to required module IDs for filtering
+export const ENTITY_TO_MODULE: Record<EntityType, string> = {
+  employees: 'employees',
+  assets: 'assets',
+  suppliers: 'suppliers',
+  'leave-requests': 'leave',
+  'purchase-requests': 'purchase-requests',
+  'asset-requests': 'assets',
+  loans: 'payroll',
+  'payroll-runs': 'payroll',
+};
+
 // Example values for preview
 export const EXAMPLE_VALUES: Record<string, string> = {
   PREFIX: 'BEC',

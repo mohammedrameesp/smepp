@@ -26,6 +26,7 @@ import {
   type CodeFormatConfig,
   DEFAULT_FORMATS,
   ENTITY_LABELS,
+  ENTITY_TO_MODULE,
   FORMAT_TOKENS,
   generateFormatPreview,
   validateFormatPattern,
@@ -35,12 +36,14 @@ interface CodeFormatSettingsProps {
   organizationId: string;
   codePrefix: string;
   initialFormats?: CodeFormatConfig;
+  enabledModules?: string[];
 }
 
 export function CodeFormatSettings({
   organizationId,
   codePrefix,
   initialFormats = {},
+  enabledModules,
 }: CodeFormatSettingsProps) {
   const [formats, setFormats] = useState<CodeFormatConfig>({});
   const [saving, setSaving] = useState(false);
@@ -189,7 +192,13 @@ export function CodeFormatSettings({
 
         {/* Format Editors */}
         <div className="grid gap-4">
-          {(Object.keys(DEFAULT_FORMATS) as EntityType[]).map((entityType) => {
+          {(Object.keys(DEFAULT_FORMATS) as EntityType[])
+            .filter((entityType) => {
+              // If no enabledModules provided, show all
+              if (!enabledModules || enabledModules.length === 0) return true;
+              return enabledModules.includes(ENTITY_TO_MODULE[entityType]);
+            })
+            .map((entityType) => {
             const pattern = formats[entityType] || DEFAULT_FORMATS[entityType];
             const preview = getPreview(pattern);
             const isDefault = pattern === DEFAULT_FORMATS[entityType];

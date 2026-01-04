@@ -7,16 +7,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AssetStatus, Prisma } from '@prisma/client';
 import { createAssetSchema, assetQuerySchema } from '@/lib/validations/assets';
 import { logAction, ActivityActions } from '@/lib/activity';
-import { generateAssetTag } from '@/lib/asset-utils';
+import { generateAssetTag, generateAssetTagByCategory } from '@/lib/asset-utils';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { updateSetupProgress } from '@/lib/domains/system/setup';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
+import { prisma as globalPrisma } from '@/lib/core/prisma';
 
 // Type for asset list filters
 interface AssetFilters {
   status?: AssetStatus;
   type?: string;
+  categoryId?: string;
   category?: string;
 }
 
@@ -35,12 +38,13 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
     }, { status: 400 });
   }
 
-  const { q, status, type, category, p, ps, sort, order } = validation.data;
+  const { q, status, type, categoryId, category, p, ps, sort, order } = validation.data;
 
   // Build filters object with proper typing
   const filters: AssetFilters = {};
   if (status) filters.status = status;
   if (type) filters.type = type;
+  if (categoryId) filters.categoryId = categoryId;
   if (category) filters.category = category;
 
   // Build where clause using reusable search filter
@@ -66,6 +70,13 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
             id: true,
             name: true,
             email: true,
+          },
+        },
+        assetCategory: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
           },
         },
       },
@@ -105,8 +116,26 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
 
   const data = validation.data;
 
-  // Generate asset tag if not provided, and ensure it's always uppercase
-  let assetTag = data.assetTag || await generateAssetTag(data.type, tenantId);
+  // Generate asset tag if not provided
+  let assetTag = data.assetTag;
+  if (!assetTag) {
+    // If categoryId is provided, use new format (ORG-CAT-YYSEQ)
+    if (data.categoryId) {
+      const category = await globalPrisma.assetCategory.findFirst({
+        where: { id: data.categoryId, tenantId },
+        select: { code: true },
+      });
+      if (category) {
+        const orgPrefix = await getOrganizationCodePrefix(tenantId);
+        assetTag = await generateAssetTagByCategory(category.code, tenantId, orgPrefix);
+      }
+    }
+    // Fallback to legacy format (ORG-TYPE-YEAR-SEQ) if no category or category not found
+    if (!assetTag) {
+      assetTag = await generateAssetTag(data.type, tenantId);
+    }
+  }
+  // Ensure tag is always uppercase
   if (assetTag) {
     assetTag = assetTag.toUpperCase();
   }
@@ -134,7 +163,8 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
       data: {
         assetTag,
         type: data.type,
-        category: data.category || null,
+        categoryId: data.categoryId || null,
+        category: data.category || null, // DEPRECATED: for backward compat
         brand: data.brand || null,
         model: data.model,
         serial: data.serial || null,
@@ -159,6 +189,13 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
             id: true,
             name: true,
             email: true,
+          },
+        },
+        assetCategory: {
+          select: {
+            id: true,
+            code: true,
+            name: true,
           },
         },
       },

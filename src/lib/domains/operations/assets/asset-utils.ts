@@ -8,7 +8,61 @@ import { prisma } from '@/lib/core/prisma';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 /**
+ * Generate a unique asset tag based on category code
+ * Format: {ORG_PREFIX}-{CATEGORY_CODE}-{YY}{SEQUENCE}
+ * Example: BCE-CP-25001 (BeCreative, Computing, 2025, sequence 001)
+ *
+ * @param categoryCode - 2-letter category code (e.g., "CP", "MO", "DP")
+ * @param tenantId - Organization ID
+ * @param orgPrefix - Organization code prefix (e.g., "BCE")
+ */
+export async function generateAssetTagByCategory(
+  categoryCode: string,
+  tenantId: string,
+  orgPrefix: string
+): Promise<string> {
+  const yearSuffix = new Date().getFullYear().toString().slice(-2); // "25" for 2025
+
+  // Format: ORG-CAT-YYSEQ (e.g., BCE-CP-25001)
+  const searchPrefix = `${orgPrefix.toUpperCase()}-${categoryCode.toUpperCase()}-${yearSuffix}`;
+
+  // Find the highest sequence number for this org/category/year
+  const existingAssets = await prisma.asset.findMany({
+    where: {
+      tenantId,
+      assetTag: {
+        startsWith: searchPrefix,
+      },
+    },
+    orderBy: {
+      assetTag: 'desc',
+    },
+    take: 1,
+  });
+
+  let nextSequence = 1;
+
+  if (existingAssets.length > 0) {
+    const latestTag = existingAssets[0].assetTag;
+    if (latestTag) {
+      // Extract sequence number from tag like "BCE-CP-25001"
+      const seqPart = latestTag.substring(searchPrefix.length);
+      const currentSequence = parseInt(seqPart, 10);
+      if (!isNaN(currentSequence)) {
+        nextSequence = currentSequence + 1;
+      }
+    }
+  }
+
+  // Format sequence with leading zeros (3 digits)
+  const sequence = nextSequence.toString().padStart(3, '0');
+
+  return `${searchPrefix}${sequence}`;
+}
+
+/**
  * Generate a unique asset tag based on the asset type
+ * DEPRECATED: Use generateAssetTagByCategory instead
  * Format: {ORG_PREFIX}-{TYPE_PREFIX}-{YEAR}-{SEQUENCE}
  * Example: BCE-LAP-2024-001, JAS-PHN-2024-002
  */

@@ -16,6 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toInputDateString } from '@/lib/date-format';
 import { createAssetSchema, type CreateAssetRequest } from '@/lib/validations/assets';
 import { AssetStatus } from '@prisma/client';
+import { CategorySelector } from '@/components/domains/operations/assets/category-selector';
 // Default exchange rates to QAR (fallback if not set in settings)
 const DEFAULT_RATES: Record<string, number> = {
   USD: 3.64, EUR: 3.96, GBP: 4.60, SAR: 0.97, AED: 0.99, KWD: 11.85,
@@ -35,8 +36,6 @@ export default function NewAssetPage() {
   const router = useRouter();
   const [assetTypeSuggestions, setAssetTypeSuggestions] = useState<string[]>([]);
   const [showTypeSuggestions, setShowTypeSuggestions] = useState(false);
-  const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
-  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [users, setUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
@@ -45,6 +44,7 @@ export default function NewAssetPage() {
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(DEFAULT_RATES);
   const [suggestedTag, setSuggestedTag] = useState<string>('');
   const [isTagManuallyEdited, setIsTagManuallyEdited] = useState(false);
+  const [selectedCategoryCode, setSelectedCategoryCode] = useState<string | null>(null);
 
   const {
     register,
@@ -58,7 +58,8 @@ export default function NewAssetPage() {
     defaultValues: {
       assetTag: '',
       type: '',
-      category: '',
+      categoryId: '',
+      category: '', // deprecated
       brand: '',
       model: '',
       serial: '',
@@ -83,7 +84,7 @@ export default function NewAssetPage() {
 
   // Watch critical fields for side effects
   const watchedType = watch('type');
-  const watchedCategory = watch('category');
+  const watchedCategoryId = watch('categoryId');
   const watchedLocation = watch('location');
   const watchedPrice = watch('price');
   const watchedCurrency = watch('priceCurrency');
@@ -151,10 +152,22 @@ export default function NewAssetPage() {
     }
   }, [watchedType]);
 
-  // Fetch suggested asset tag when type changes
+  // Fetch suggested asset tag when category changes (new format: ORG-CAT-YYSEQ)
   useEffect(() => {
     async function fetchSuggestedTag() {
-      if (watchedType && watchedType.length >= 2 && !isTagManuallyEdited) {
+      if (watchedCategoryId && !isTagManuallyEdited) {
+        try {
+          const response = await fetch(`/api/assets/next-tag?categoryId=${encodeURIComponent(watchedCategoryId)}`);
+          if (response.ok) {
+            const data = await response.json();
+            setSuggestedTag(data.tag);
+            setValue('assetTag', data.tag);
+          }
+        } catch (error) {
+          console.error('Error fetching suggested tag:', error);
+        }
+      } else if (!watchedCategoryId && watchedType && watchedType.length >= 2 && !isTagManuallyEdited) {
+        // Fallback to type-based tag generation if no category selected
         try {
           const response = await fetch(`/api/assets/next-tag?type=${encodeURIComponent(watchedType)}`);
           if (response.ok) {
@@ -171,16 +184,7 @@ export default function NewAssetPage() {
     // Debounce the fetch to avoid too many API calls
     const timeoutId = setTimeout(fetchSuggestedTag, 500);
     return () => clearTimeout(timeoutId);
-  }, [watchedType, isTagManuallyEdited, setValue]);
-
-  // Fetch category suggestions
-  useEffect(() => {
-    if (watchedCategory && watchedCategory.length > 0) {
-      fetchCategories(watchedCategory);
-    } else {
-      setCategorySuggestions([]);
-    }
-  }, [watchedCategory]);
+  }, [watchedCategoryId, watchedType, isTagManuallyEdited, setValue]);
 
   // Fetch location suggestions
   useEffect(() => {
@@ -227,18 +231,6 @@ export default function NewAssetPage() {
       }
     } catch (error) {
       console.error('Error fetching asset types:', error);
-    }
-  };
-
-  const fetchCategories = async (query: string) => {
-    try {
-      const response = await fetch(`/api/assets/categories?q=${encodeURIComponent(query)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCategorySuggestions(data.categories || []);
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
     }
   };
 
@@ -322,6 +314,7 @@ export default function NewAssetPage() {
         },
         body: JSON.stringify({
           ...data,
+          categoryId: data.categoryId || null,
           price: price,
           priceQAR: priceInQAR,
           assetTag: data.assetTag || null,
@@ -383,6 +376,27 @@ export default function NewAssetPage() {
                 <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">1. Basic Information</h3>
                 <p className="text-xs text-gray-600">What is this asset?</p>
 
+                {/* Category - now a dropdown */}
+                <div className="space-y-2">
+                  <Label htmlFor="categoryId">Category *</Label>
+                  <CategorySelector
+                    value={watchedCategoryId || null}
+                    onChange={(categoryId, categoryCode) => {
+                      setValue('categoryId', categoryId || '');
+                      setSelectedCategoryCode(categoryCode);
+                      // Reset tag when category changes (unless manually edited)
+                      if (!isTagManuallyEdited && categoryId) {
+                        setSuggestedTag(''); // Will be refetched by useEffect
+                      }
+                    }}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Select a category to auto-generate the asset tag
+                  </p>
+                </div>
+
+                {/* Asset Type - sub-type within category */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2 relative">
                     <Label htmlFor="type">Asset Type *</Label>
@@ -414,33 +428,9 @@ export default function NewAssetPage() {
                         ))}
                       </div>
                     )}
-                  </div>
-                  <div className="space-y-2 relative">
-                    <Label htmlFor="category">Category / Department</Label>
-                    <Input
-                      id="category"
-                      {...register('category')}
-                      onFocus={() => setShowCategorySuggestions(true)}
-                      onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
-                      placeholder="IT, Marketing, Engineering, etc."
-                      autoComplete="off"
-                    />
-                    {showCategorySuggestions && categorySuggestions.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
-                        {categorySuggestions.map((category, index) => (
-                          <div
-                            key={index}
-                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                            onClick={() => {
-                              setValue('category', category);
-                              setShowCategorySuggestions(false);
-                            }}
-                          >
-                            {category}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Specific type within the category (e.g., Laptop within Computing)
+                    </p>
                   </div>
                 </div>
 
@@ -496,7 +486,7 @@ export default function NewAssetPage() {
                   <Input
                     id="assetTag"
                     {...register('assetTag')}
-                    placeholder={!watchedType ? 'Enter asset type first...' : ''}
+                    placeholder={!watchedCategoryId ? 'Select a category first...' : ''}
                     onChange={(e) => {
                       e.target.value = e.target.value.toUpperCase();
                       register('assetTag').onChange(e);
@@ -509,10 +499,10 @@ export default function NewAssetPage() {
                   />
                   <p className="text-xs text-muted-foreground">
                     {suggestedTag && !isTagManuallyEdited
-                      ? 'Auto-generated tag. Edit if needed.'
+                      ? `Auto-generated: ${selectedCategoryCode ? `ORG-${selectedCategoryCode}-YYSEQ` : 'Based on category'}. Edit if needed.`
                       : isTagManuallyEdited
                       ? 'Using custom tag.'
-                      : 'Enter asset type above to auto-generate tag.'}
+                      : 'Select a category above to auto-generate tag.'}
                   </p>
                 </div>
               </div>

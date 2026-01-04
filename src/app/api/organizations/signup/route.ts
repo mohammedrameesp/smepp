@@ -7,6 +7,7 @@ import { sendEmail } from '@/lib/core/email';
 import { newOrganizationSignupEmail } from '@/lib/core/email-templates';
 import { seedDefaultPermissions } from '@/lib/access-control';
 import { seedDefaultLeaveTypes } from '@/lib/domains/hr/leave/seed-leave-types';
+import { seedDefaultAssetCategories } from '@/lib/domains/operations/assets/seed-asset-categories';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION
@@ -131,6 +132,11 @@ export async function POST(request: NextRequest) {
     // Seed default leave types for the new organization (non-blocking)
     seedDefaultLeaveTypes(organization.id).catch((err: Error) => {
       console.error('[Signup] Failed to seed default leave types:', err);
+    });
+
+    // Seed default asset categories for the new organization (non-blocking)
+    seedDefaultAssetCategories(organization.id).catch((err: Error) => {
+      console.error('[Signup] Failed to seed default asset categories:', err);
     });
 
     // Build organization-specific invite URL using subdomain

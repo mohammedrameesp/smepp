@@ -5,3 +5,4 @@
  */
 
 export * from './limits';
+export * from './asset-categories';

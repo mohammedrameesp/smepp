@@ -10,7 +10,8 @@ import { AssetStatus } from '@prisma/client';
 export const createAssetSchema = z.object({
   assetTag: z.string().optional().nullable().or(z.literal('')),
   type: z.string().min(1, 'Type is required'),
-  category: z.string().optional().nullable().or(z.literal('')),
+  categoryId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  category: z.string().optional().nullable().or(z.literal('')), // DEPRECATED: use categoryId
   brand: z.string().optional().nullable().or(z.literal('')),
   model: z.string().min(1, 'Model is required'),
   serial: z.string().optional().nullable().or(z.literal('')),
@@ -62,7 +63,8 @@ export const createAssetSchema = z.object({
 const baseAssetSchema = z.object({
   assetTag: z.string().optional().nullable().or(z.literal('')),
   type: z.string().min(1, 'Type is required'),
-  category: z.string().optional().nullable().or(z.literal('')),
+  categoryId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  category: z.string().optional().nullable().or(z.literal('')), // DEPRECATED: use categoryId
   brand: z.string().optional().nullable().or(z.literal('')),
   model: z.string().min(1, 'Model is required'),
   serial: z.string().optional().nullable().or(z.literal('')),
@@ -123,7 +125,8 @@ export const assetQuerySchema = z.object({
   q: z.string().optional(),
   status: z.nativeEnum(AssetStatus).optional(),
   type: z.string().optional(),
-  category: z.string().optional(),
+  categoryId: z.string().optional(),
+  category: z.string().optional(), // DEPRECATED: use categoryId
   p: z.coerce.number().min(1).default(1),
   ps: z.coerce.number().min(1).max(100).default(20),
   sort: z.enum(['model', 'brand', 'type', 'category', 'purchaseDate', 'warrantyExpiry', 'priceQAR', 'createdAt', 'assetTag']).default('createdAt'),

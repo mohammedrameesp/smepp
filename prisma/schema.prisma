@@ -375,6 +375,7 @@ model Organization {
 
   // Tenant-scoped data relations
   assets                Asset[]
+  assetCategories       AssetCategory[]
   assetHistories        AssetHistory[]
   subscriptions         Subscription[]
   activityLogs          ActivityLog[]
@@ -804,9 +805,11 @@ model Asset {
   id               String          @id @default(cuid())
   tenantId         String
   tenant           Organization    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  assetTag         String? // #1 Asset ID/Tag
-  type             String // #2 Asset Type (Laptop, Mouse, Monitor, etc.)
-  category         String? // #3 Category/Department (IT, Marketing, Engineering, etc.)
+  assetTag         String? // #1 Asset ID/Tag (format: ORG-CAT-YYSEQ e.g., BCE-CP-25001)
+  type             String // #2 Asset Type (Laptop, Mouse, Monitor, etc.) - sub-type within category
+  categoryId       String? // FK to AssetCategory
+  assetCategory    AssetCategory?  @relation(fields: [categoryId], references: [id])
+  category         String? // #3 Category/Department - DEPRECATED: use categoryId
   brand            String? // #4 Brand/Manufacturer (Apple, Dell, HP, etc.)
   model            String // #5 Model/Version (MacBook Pro 16", Dell XPS 15, etc.)
   serial           String? // #6 Serial Number
@@ -855,7 +858,35 @@ model Asset {
   @@index([type])
   @@index([serial])
   @@index([assetTag])
+  @@index([categoryId])
   @@index([tenantId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ASSET CATEGORY - Universal categories with tenant customization
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model AssetCategory {
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  code        String // 2-letter code (e.g., "CP", "MO", "DP")
+  name        String // Human-readable name (e.g., "Computing")
+  description String?
+  icon        String? // Optional icon identifier for UI
+  isActive    Boolean      @default(true)
+  isDefault   Boolean      @default(false) // True for seeded categories
+  sortOrder   Int          @default(0)
+
+  assets      Asset[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
 }
 
 enum AssetHistoryAction {
