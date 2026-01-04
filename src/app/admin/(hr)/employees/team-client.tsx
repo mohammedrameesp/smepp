@@ -624,6 +624,72 @@ export function TeamClient({ initialStats }: TeamClientProps) {
         </Card>
       </div>
 
+      {/* Pending Invitations - People who haven't accepted yet */}
+      {invitations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Pending Invitations
+            </CardTitle>
+            <CardDescription>
+              {invitations.length} invitation{invitations.length !== 1 ? 's' : ''} waiting to be accepted
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="divide-y">
+              {invitations.map((inv) => (
+                <div key={inv.id} className="py-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{inv.email}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge variant="secondary">{inv.role}</Badge>
+                      {inv.isExpired ? (
+                        <span className="text-xs text-red-600 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          Expired
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          Expires {format(new Date(inv.expiresAt), 'MMM d')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleResendInvite(inv.id)}
+                      disabled={resendingId === inv.id}
+                    >
+                      {resendingId === inv.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : copiedInviteId === inv.id ? (
+                        <>
+                          <Check className="h-4 w-4 mr-1 text-green-600" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-1" />
+                          {inv.isExpired ? 'Regenerate' : 'Resend'}
+                        </>
+                      )}
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleCancelInvite(inv.id)}>
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Pending Members - Members who haven't authenticated yet */}
       {pendingMembers.length > 0 && (
         <Card>

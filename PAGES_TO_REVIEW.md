@@ -1,18 +1,17 @@
 # Pages to Review
 
-Total: **123 pages**
+Total: **119 pages**
 
 ---
 
-## Public / Marketing (3 pages)
+## Public / Marketing (2 pages)
 
 - [ ] `/` - Landing page
-- [ ] `/pricing` - Pricing page
 - [ ] `/get-started` - Get started page
 
 ---
 
-## Authentication (8 pages)
+## Authentication (7 pages)
 
 - [ ] `/login` - Login page
 - [ ] `/signup` - Signup page
@@ -20,7 +19,6 @@ Total: **123 pages**
 - [ ] `/reset-password/[token]` - Reset password
 - [ ] `/set-password/[token]` - Set password (invite)
 - [ ] `/invite/[token]` - Accept invitation
-- [ ] `/platform-login` - Platform login
 - [ ] `/pending` - Pending approval
 
 ---
@@ -144,14 +142,13 @@ Total: **123 pages**
 
 ---
 
-## Admin - System (7 pages)
+## Admin - System (6 pages)
 
 - [ ] `/admin/alerts` - Alerts (birthdays, expiries, renewals)
 - [ ] `/admin/my-approvals` - My approvals
 - [ ] `/admin/activity` - Activity log
 - [ ] `/admin/notifications` - Notifications
 - [ ] `/admin/organization` - Organization settings
-- [ ] `/admin/team` - Team members
 - [ ] `/admin/reports` - Reports
 
 ---
@@ -248,12 +245,6 @@ Total: **123 pages**
 
 ---
 
-## Other (1 page)
-
-- [ ] `/browse` - Browse page
-
----
-
 ## Super Admin (13 pages)
 
 - [ ] `/super-admin` - Super admin dashboard
@@ -277,10 +268,10 @@ Total: **123 pages**
 
 | Section | Pages | Reviewed |
 |---------|-------|----------|
-| Public/Marketing | 3 | 0 |
-| Authentication | 8 | 0 |
-| Onboarding | 5 | 0 |
-| User Profile | 2 | 0 |
+| Public/Marketing | 2 | 0 |
+| Authentication | 7 | 0 |
+| Onboarding | 4 | 0 |
+| User Profile | 1 | 0 |
 | Help | 3 | 0 |
 | Admin Dashboard | 1 | 0 |
 | Admin Employees | 6 | 0 |
@@ -292,7 +283,7 @@ Total: **123 pages**
 | Admin Suppliers | 3 | 0 |
 | Admin Purchase Requests | 2 | 0 |
 | Admin Documents | 4 | 0 |
-| Admin System | 7 | 0 |
+| Admin System | 6 | 0 |
 | Admin Users | 5 | 0 |
 | Admin Settings | 9 | 0 |
 | Admin Modules | 1 | 0 |
@@ -304,6 +295,5 @@ Total: **123 pages**
 | Employee Suppliers | 2 | 0 |
 | Employee Purchase Requests | 3 | 0 |
 | Supplier Portal | 1 | 0 |
-| Other | 2 | 0 |
-| Super Admin | 14 | 0 |
-| **TOTAL** | **123** | **0** |
+| Super Admin | 13 | 0 |
+| **TOTAL** | **119** | **0** |

@@ -407,7 +407,7 @@ export async function createTeamMemberSessionToken(memberId: string): Promise<st
     organizationLogoUrl: teamMember.tenant.logoUrl,
     subscriptionTier: teamMember.tenant.subscriptionTier,
     enabledModules: teamMember.tenant.enabledModules,
-    orgRole: teamMember.role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+    orgRole: teamMember.isOwner ? 'OWNER' : teamMember.role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30 days
   };

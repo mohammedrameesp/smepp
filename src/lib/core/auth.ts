@@ -365,7 +365,11 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
   }
 
   // Map TeamMemberRole to legacy OrgRole for backwards compatibility
-  const orgRole = member.role === TeamMemberRole.ADMIN ? OrgRole.ADMIN : OrgRole.MEMBER;
+  const orgRole = member.isOwner
+    ? OrgRole.OWNER
+    : member.role === TeamMemberRole.ADMIN
+      ? OrgRole.ADMIN
+      : OrgRole.MEMBER;
 
   return {
     organization: {
@@ -646,8 +650,12 @@ export const authOptions: NextAuthOptions = {
             token.organizationLogoUrl = userData.organizationLogoUrl as string | null;
             token.subscriptionTier = userData.subscriptionTier as SubscriptionTier;
             token.enabledModules = userData.enabledModules as string[];
-            // Map TeamMemberRole to legacy OrgRole
-            token.orgRole = token.teamMemberRole === TeamMemberRole.ADMIN ? OrgRole.ADMIN : OrgRole.MEMBER;
+            // Map TeamMemberRole to legacy OrgRole - owners get OWNER role
+            token.orgRole = token.isOwner
+              ? OrgRole.OWNER
+              : token.teamMemberRole === TeamMemberRole.ADMIN
+                ? OrgRole.ADMIN
+                : OrgRole.MEMBER;
           } else {
             // Super admin or OAuth login
             token.isTeamMember = false;
@@ -706,7 +714,12 @@ export const authOptions: NextAuthOptions = {
                 token.organizationLogoUrl = teamMember.tenant.logoUrl;
                 token.subscriptionTier = teamMember.tenant.subscriptionTier;
                 token.enabledModules = teamMember.tenant.enabledModules;
-                token.orgRole = teamMember.role === TeamMemberRole.ADMIN ? OrgRole.ADMIN : OrgRole.MEMBER;
+                // Owners get OWNER role, otherwise map from teamMemberRole
+                token.orgRole = teamMember.isOwner
+                  ? OrgRole.OWNER
+                  : teamMember.role === TeamMemberRole.ADMIN
+                    ? OrgRole.ADMIN
+                    : OrgRole.MEMBER;
               }
             }
 
