@@ -7,22 +7,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Role } from '@prisma/client';
+import { TeamMemberRole } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { z } from 'zod';
 
 const updateUserSchema = z.object({
   name: z.string().optional(),
-  // Note: role updates use approvalRole for legacy approval workflows
-  role: z.nativeEnum(Role).optional(),
+  role: z.nativeEnum(TeamMemberRole).optional(),
 });
 
 // Transform the data for TeamMember updates
-function transformUpdateData(data: { name?: string; role?: Role }) {
+function transformUpdateData(data: { name?: string; role?: TeamMemberRole }) {
   return {
     ...(data.name && { name: data.name }),
-    ...(data.role && { approvalRole: data.role }), // Map to approvalRole on TeamMember
+    ...(data.role && { role: data.role }), // Update the actual role on TeamMember
   };
 }
 
