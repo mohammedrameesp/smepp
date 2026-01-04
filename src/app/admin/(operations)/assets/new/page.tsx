@@ -43,6 +43,8 @@ export default function NewAssetPage() {
   const [depreciationCategories, setDepreciationCategories] = useState<DepreciationCategory[]>([]);
   const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(DEFAULT_RATES);
+  const [suggestedTag, setSuggestedTag] = useState<string>('');
+  const [isTagManuallyEdited, setIsTagManuallyEdited] = useState(false);
 
   const {
     register,
@@ -151,6 +153,28 @@ export default function NewAssetPage() {
       setAssetTypeSuggestions([]);
     }
   }, [watchedType]);
+
+  // Fetch suggested asset tag when type changes
+  useEffect(() => {
+    async function fetchSuggestedTag() {
+      if (watchedType && watchedType.length >= 2 && !isTagManuallyEdited) {
+        try {
+          const response = await fetch(`/api/assets/next-tag?type=${encodeURIComponent(watchedType)}`);
+          if (response.ok) {
+            const data = await response.json();
+            setSuggestedTag(data.tag);
+            setValue('assetTag', data.tag);
+          }
+        } catch (error) {
+          console.error('Error fetching suggested tag:', error);
+        }
+      }
+    }
+
+    // Debounce the fetch to avoid too many API calls
+    const timeoutId = setTimeout(fetchSuggestedTag, 500);
+    return () => clearTimeout(timeoutId);
+  }, [watchedType, isTagManuallyEdited, setValue]);
 
   // Fetch category suggestions
   useEffect(() => {
@@ -491,15 +515,23 @@ export default function NewAssetPage() {
                     <Input
                       id="assetTag"
                       {...register('assetTag')}
-                      placeholder="Auto-generated if empty"
+                      placeholder={!watchedType ? 'Enter asset type first...' : ''}
                       onChange={(e) => {
                         e.target.value = e.target.value.toUpperCase();
                         register('assetTag').onChange(e);
+                        // Mark as manually edited if user changes from suggested
+                        if (e.target.value !== suggestedTag) {
+                          setIsTagManuallyEdited(true);
+                        }
                       }}
                       style={{ textTransform: 'uppercase' }}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Leave empty to auto-generate (e.g., LAP-2024-001)
+                      {suggestedTag && !isTagManuallyEdited
+                        ? 'Auto-generated tag. Edit if needed.'
+                        : isTagManuallyEdited
+                        ? 'Using custom tag.'
+                        : 'Enter asset type above to auto-generate tag.'}
                     </p>
                   </div>
                 </div>

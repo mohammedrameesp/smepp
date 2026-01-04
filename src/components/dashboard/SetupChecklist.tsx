@@ -14,13 +14,11 @@ import {
   Palette,
   Package,
   UserPlus,
-  Users,
   Loader2,
   ChevronLeft,
   ChevronRight,
   ArrowRight,
   X,
-  CheckCircle2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
@@ -32,7 +30,6 @@ interface SetupProgressData {
     brandingConfigured: boolean;
     firstAssetAdded: boolean;
     firstTeamMemberInvited: boolean;
-    firstEmployeeAdded: boolean;
   } | null;
   completedCount: number;
   totalCount: number;
@@ -83,13 +80,6 @@ const CHECKLIST_ITEMS: ChecklistItemConfig[] = [
     description: 'Bring your team on board',
     link: '/admin/employees',
     icon: UserPlus,
-  },
-  {
-    field: 'firstEmployeeAdded',
-    title: 'Add your first employee',
-    description: 'Create your first employee record',
-    link: '/admin/employees/new',
-    icon: Users,
   },
 ];
 
