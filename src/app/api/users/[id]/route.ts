@@ -22,11 +22,25 @@ const updateUserSchema = z.object({
 
 // Transform the data for TeamMember updates
 function transformUpdateData(data: { name?: string; role?: Role; isAdmin?: boolean }) {
-  return {
-    ...(data.name && { name: data.name }),
-    ...(data.role && { approvalRole: data.role }), // Update approval authority
-    ...(data.isAdmin !== undefined && { role: (data.isAdmin ? 'ADMIN' : 'MEMBER') as TeamMemberRole }), // Update dashboard access
-  };
+  const updates: Record<string, unknown> = {};
+
+  if (data.name) {
+    updates.name = data.name;
+  }
+
+  if (data.role) {
+    updates.approvalRole = data.role; // Update approval authority
+  }
+
+  if (data.isAdmin !== undefined) {
+    updates.role = (data.isAdmin ? 'ADMIN' : 'MEMBER') as TeamMemberRole;
+    // Admin should always have approval authority
+    if (data.isAdmin) {
+      updates.approvalRole = 'ADMIN' as Role;
+    }
+  }
+
+  return updates;
 }
 
 export async function GET(
