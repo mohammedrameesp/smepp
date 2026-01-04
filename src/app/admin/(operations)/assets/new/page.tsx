@@ -358,56 +358,95 @@ export default function NewAssetPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">What is this asset?</p>
 
-                {/* Asset Type - PRIMARY INPUT with auto-suggest */}
-                <div className="space-y-2">
-                  <Label htmlFor="type">Asset Type *</Label>
-                  <AssetTypeCombobox
-                    value={watchedType || ''}
-                    onChange={(type) => setValue('type', type)}
-                    onCategoryMatch={async (categoryCode) => {
-                      // Auto-select category based on type match
-                      if (!watchedCategoryId) {
-                        try {
-                          const response = await fetch('/api/asset-categories');
-                          if (response.ok) {
-                            const data = await response.json();
-                            const matchedCategory = data.categories?.find(
-                              (c: { code: string; id: string }) => c.code === categoryCode
-                            );
-                            if (matchedCategory) {
-                              setValue('categoryId', matchedCategory.id);
-                              setSelectedCategoryCode(categoryCode);
-                            }
+                {/* Asset Tag - Info Display at Top */}
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Label className="text-xs text-blue-700 uppercase tracking-wide">Asset Tag</Label>
+                      <Input
+                        id="assetTag"
+                        {...register('assetTag')}
+                        placeholder={!watchedCategoryId ? 'Select category...' : 'Auto-generated'}
+                        onChange={(e) => {
+                          e.target.value = e.target.value.toUpperCase();
+                          register('assetTag').onChange(e);
+                          if (e.target.value !== suggestedTag) {
+                            setIsTagManuallyEdited(true);
                           }
-                        } catch (error) {
-                          console.error('Error fetching categories:', error);
-                        }
-                      }
-                    }}
-                    placeholder="Start typing: Laptop, Monitor, Printer..."
-                    className={errors.type ? 'border-red-500' : ''}
-                  />
-                  {errors.type && (
-                    <p className="text-sm text-red-500">{errors.type.message}</p>
-                  )}
+                        }}
+                        className="font-mono text-base h-9 w-44 uppercase bg-white"
+                      />
+                      {isTagManuallyEdited && suggestedTag && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setValue('assetTag', suggestedTag);
+                            setIsTagManuallyEdited(false);
+                          }}
+                          title="Reset to auto-generated tag"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-blue-600">
+                      {isTagManuallyEdited ? 'Custom tag' : 'Auto-generated'}
+                    </p>
+                  </div>
                 </div>
 
-                {/* Category - auto-selected based on type */}
-                <div className="space-y-2">
-                  <Label htmlFor="categoryId">Category</Label>
-                  <CategorySelector
-                    value={watchedCategoryId || null}
-                    onChange={(categoryId, categoryCode) => {
-                      setValue('categoryId', categoryId || '');
-                      setSelectedCategoryCode(categoryCode);
-                      if (!isTagManuallyEdited && categoryId) {
-                        setSuggestedTag('');
-                      }
-                    }}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Auto-selected based on asset type, or choose manually
-                  </p>
+                {/* Asset Type & Category - Same Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="type">Asset Type *</Label>
+                    <AssetTypeCombobox
+                      value={watchedType || ''}
+                      onChange={(type) => setValue('type', type)}
+                      onCategoryMatch={async (categoryCode) => {
+                        // Auto-select category based on type match
+                        if (!watchedCategoryId) {
+                          try {
+                            const response = await fetch('/api/asset-categories');
+                            if (response.ok) {
+                              const data = await response.json();
+                              const matchedCategory = data.categories?.find(
+                                (c: { code: string; id: string }) => c.code === categoryCode
+                              );
+                              if (matchedCategory) {
+                                setValue('categoryId', matchedCategory.id);
+                                setSelectedCategoryCode(categoryCode);
+                              }
+                            }
+                          } catch (error) {
+                            console.error('Error fetching categories:', error);
+                          }
+                        }
+                      }}
+                      placeholder="Laptop, Monitor, Printer..."
+                      className={errors.type ? 'border-red-500' : ''}
+                    />
+                    {errors.type && (
+                      <p className="text-sm text-red-500">{errors.type.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="categoryId">Category</Label>
+                    <CategorySelector
+                      value={watchedCategoryId || null}
+                      onChange={(categoryId, categoryCode) => {
+                        setValue('categoryId', categoryId || '');
+                        setSelectedCategoryCode(categoryCode);
+                        if (!isTagManuallyEdited && categoryId) {
+                          setSuggestedTag('');
+                        }
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Auto-selected based on type
+                    </p>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -472,6 +511,23 @@ export default function NewAssetPage() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="warrantyExpiry">Warranty Expiry</Label>
+                    <DatePicker
+                      id="warrantyExpiry"
+                      value={watchedWarrantyExpiry || ''}
+                      onChange={(value) => setValue('warrantyExpiry', value)}
+                      required={false}
+                      placeholder="No warranty"
+                      minDate={watchedPurchaseDate ? new Date(watchedPurchaseDate) : undefined}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {watchedPurchaseDate ? 'Auto-filled +1 year' : ''}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <Label htmlFor="supplier">Supplier / Vendor</Label>
                     <Input
                       id="supplier"
@@ -479,9 +535,6 @@ export default function NewAssetPage() {
                       placeholder="Where purchased from"
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="invoiceNumber">Invoice / PO Number</Label>
                     <Input
@@ -490,61 +543,45 @@ export default function NewAssetPage() {
                       placeholder="Invoice reference"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Cost / Value</Label>
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <Input
-                          id="price"
-                          type="number"
-                          step="0.01"
-                          {...register('price', { valueAsNumber: true })}
-                          placeholder="0.00"
-                        />
-                      </div>
-                      <Select
-                        value={watchedCurrency || availableCurrencies[0] || 'QAR'}
-                        onValueChange={(value) => setValue('priceCurrency', value)}
-                      >
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableCurrencies.map((currency) => (
-                            <SelectItem key={currency} value={currency}>
-                              {currency}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {watchedPrice && watchedCurrency && (
-                      <p className="text-xs text-muted-foreground">
-                        {watchedCurrency === 'QAR' ? (
-                          <>≈ USD {(watchedPrice / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
-                        ) : (
-                          <>≈ QAR {(watchedPrice * (exchangeRates[watchedCurrency as string] || 1)).toFixed(2)}</>
-                        )}
-                      </p>
-                    )}
-                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="warrantyExpiry">Warranty Expiry</Label>
-                  <DatePicker
-                    id="warrantyExpiry"
-                    value={watchedWarrantyExpiry || ''}
-                    onChange={(value) => setValue('warrantyExpiry', value)}
-                    required={false}
-                    placeholder="No warranty or unknown"
-                    minDate={watchedPurchaseDate ? new Date(watchedPurchaseDate) : undefined}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {watchedPurchaseDate
-                      ? 'Auto-filled to 1 year from purchase. Click × to clear.'
-                      : 'Set purchase date first for auto-fill.'}
-                  </p>
+                  <Label htmlFor="price">Cost / Value</Label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Input
+                        id="price"
+                        type="number"
+                        step="0.01"
+                        {...register('price', { valueAsNumber: true })}
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <Select
+                      value={watchedCurrency || availableCurrencies[0] || 'QAR'}
+                      onValueChange={(value) => setValue('priceCurrency', value)}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableCurrencies.map((currency) => (
+                          <SelectItem key={currency} value={currency}>
+                            {currency}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {watchedPrice && watchedCurrency && (
+                    <p className="text-xs text-muted-foreground">
+                      {watchedCurrency === 'QAR' ? (
+                        <>≈ USD {(watchedPrice / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
+                      ) : (
+                        <>≈ QAR {(watchedPrice * (exchangeRates[watchedCurrency as string] || 1)).toFixed(2)}</>
+                      )}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -606,21 +643,29 @@ export default function NewAssetPage() {
                 </div>
 
                 {watchedStatus === AssetStatus.IN_USE && (
-                  <div className="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <Checkbox
-                      id="isShared"
-                      checked={watchedIsShared}
-                      onCheckedChange={(checked) => {
-                        setValue('isShared', !!checked);
-                        if (checked) {
-                          setValue('assignedMemberId', '');
-                          setValue('assignmentDate', '');
-                        }
-                      }}
-                    />
-                    <Label htmlFor="isShared" className="text-sm cursor-pointer">
-                      Shared resource (not assigned to anyone)
-                    </Label>
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="isShared"
+                        checked={watchedIsShared}
+                        onCheckedChange={(checked) => {
+                          setValue('isShared', !!checked);
+                          if (checked) {
+                            setValue('assignedMemberId', '');
+                            setValue('assignmentDate', '');
+                          }
+                        }}
+                      />
+                      <Label htmlFor="isShared" className="text-sm font-medium cursor-pointer">
+                        This is a shared/common resource
+                      </Label>
+                    </div>
+                    {watchedIsShared && (
+                      <p className="text-xs text-blue-700 ml-7">
+                        Shared assets are available for use by multiple team members (e.g., conference room equipment,
+                        shared printers, common area devices). They won&apos;t be assigned to any specific person.
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -670,47 +715,6 @@ export default function NewAssetPage() {
                 <div className="flex items-center gap-2">
                   <Info className="h-5 w-5 text-gray-600" />
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Additional Information</h3>
-                </div>
-
-                {/* Asset Tag - Info Display */}
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-xs text-muted-foreground uppercase tracking-wide">Asset Tag</Label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Input
-                          id="assetTag"
-                          {...register('assetTag')}
-                          placeholder={!watchedCategoryId ? 'Select category...' : 'Auto-generated'}
-                          onChange={(e) => {
-                            e.target.value = e.target.value.toUpperCase();
-                            register('assetTag').onChange(e);
-                            if (e.target.value !== suggestedTag) {
-                              setIsTagManuallyEdited(true);
-                            }
-                          }}
-                          className="font-mono text-lg h-10 max-w-[200px] uppercase"
-                        />
-                        {isTagManuallyEdited && suggestedTag && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setValue('assetTag', suggestedTag);
-                              setIsTagManuallyEdited(false);
-                            }}
-                            title="Reset to auto-generated tag"
-                          >
-                            <RefreshCw className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground max-w-[200px]">
-                      {isTagManuallyEdited ? 'Custom tag' : 'Auto-generated from category'}
-                    </p>
-                  </div>
                 </div>
 
                 <div className="space-y-2">

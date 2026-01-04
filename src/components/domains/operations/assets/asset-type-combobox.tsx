@@ -9,7 +9,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Star, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -205,19 +204,14 @@ export function AssetTypeCombobox({
               type="button"
               onClick={() => handleSuggestionClick(suggestion)}
               className={cn(
-                'w-full px-3 py-2 text-left flex items-center justify-between hover:bg-accent transition-colors',
+                'w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-accent transition-colors',
                 index === selectedIndex && 'bg-accent'
               )}
             >
-              <span className="flex items-center gap-2">
-                <span className="font-medium">{suggestion.type}</span>
-                {suggestion.isCustom && (
-                  <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
-                )}
-              </span>
-              <Badge variant="outline" className="text-xs font-mono">
-                {suggestion.categoryCode}
-              </Badge>
+              <span className="font-medium">{suggestion.type}</span>
+              {suggestion.isCustom && (
+                <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
+              )}
             </button>
           ))}
         </div>
