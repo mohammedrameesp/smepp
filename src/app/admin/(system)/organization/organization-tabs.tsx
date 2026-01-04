@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
-import { CodeFormatSettings } from '@/components/domains/system/settings';
+import { AssetCategoriesSettings, CodeFormatSettings } from '@/components/domains/system/settings';
 import type { OrgRole } from '@prisma/client';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
 
@@ -501,6 +501,15 @@ export function OrganizationTabs({
             initialFormats={org.codeFormats || {}}
             enabledModules={enabledModules}
           />
+
+          {/* Asset Categories - only show if assets module is enabled */}
+          {enabledModules.includes('assets') && (
+            <AssetCategoriesSettings
+              organizationId={org.id}
+              codePrefix={codePrefix}
+              isAdmin={isAdmin}
+            />
+          )}
 
           {/* Currencies */}
           <Card>
