@@ -17,6 +17,7 @@ import { toInputDateString } from '@/lib/date-format';
 import { createAssetSchema, type CreateAssetRequest } from '@/lib/validations/assets';
 import { AssetStatus } from '@prisma/client';
 import { CategorySelector } from '@/components/domains/operations/assets/category-selector';
+import { AssetTypeCombobox } from '@/components/domains/operations/assets/asset-type-combobox';
 // Default exchange rates to QAR (fallback if not set in settings)
 const DEFAULT_RATES: Record<string, number> = {
   USD: 3.64, EUR: 3.96, GBP: 4.60, SAR: 0.97, AED: 0.99, KWD: 11.85,
@@ -34,8 +35,6 @@ interface DepreciationCategory {
 
 export default function NewAssetPage() {
   const router = useRouter();
-  const [assetTypeSuggestions, setAssetTypeSuggestions] = useState<string[]>([]);
-  const [showTypeSuggestions, setShowTypeSuggestions] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [users, setUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
@@ -143,15 +142,6 @@ export default function NewAssetPage() {
     fetchOrgSettings();
   }, [setValue]);
 
-  // Fetch asset type suggestions
-  useEffect(() => {
-    if (watchedType && watchedType.length > 0) {
-      fetchAssetTypes(watchedType);
-    } else {
-      setAssetTypeSuggestions([]);
-    }
-  }, [watchedType]);
-
   // Fetch suggested asset tag when category changes (new format: ORG-CAT-YYSEQ)
   useEffect(() => {
     async function fetchSuggestedTag() {
@@ -219,18 +209,6 @@ export default function NewAssetPage() {
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-    }
-  };
-
-  const fetchAssetTypes = async (query: string) => {
-    try {
-      const response = await fetch(`/api/assets/types?q=${encodeURIComponent(query)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAssetTypeSuggestions(data.types || []);
-      }
-    } catch (error) {
-      console.error('Error fetching asset types:', error);
     }
   };
 
@@ -396,42 +374,41 @@ export default function NewAssetPage() {
                   </p>
                 </div>
 
-                {/* Asset Type - sub-type within category */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2 relative">
-                    <Label htmlFor="type">Asset Type *</Label>
-                    <Input
-                      id="type"
-                      {...register('type')}
-                      onFocus={() => setShowTypeSuggestions(true)}
-                      onBlur={() => setTimeout(() => setShowTypeSuggestions(false), 200)}
-                      placeholder="Laptop, Mouse, Monitor, etc."
-                      autoComplete="off"
-                      className={errors.type ? 'border-red-500' : ''}
-                    />
-                    {errors.type && (
-                      <p className="text-sm text-red-500">{errors.type.message}</p>
-                    )}
-                    {showTypeSuggestions && assetTypeSuggestions.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
-                        {assetTypeSuggestions.map((type, index) => (
-                          <div
-                            key={index}
-                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                            onClick={() => {
-                              setValue('type', type);
-                              setShowTypeSuggestions(false);
-                            }}
-                          >
-                            {type}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Specific type within the category (e.g., Laptop within Computing)
-                    </p>
-                  </div>
+                {/* Asset Type - sub-type within category with auto-suggest */}
+                <div className="space-y-2">
+                  <Label htmlFor="type">Asset Type *</Label>
+                  <AssetTypeCombobox
+                    value={watchedType || ''}
+                    onChange={(type) => setValue('type', type)}
+                    onCategoryMatch={async (categoryCode) => {
+                      // Auto-select category based on type match
+                      if (!watchedCategoryId) {
+                        try {
+                          const response = await fetch('/api/asset-categories');
+                          if (response.ok) {
+                            const data = await response.json();
+                            const matchedCategory = data.categories?.find(
+                              (c: { code: string; id: string }) => c.code === categoryCode
+                            );
+                            if (matchedCategory) {
+                              setValue('categoryId', matchedCategory.id);
+                              setSelectedCategoryCode(categoryCode);
+                            }
+                          }
+                        } catch (error) {
+                          console.error('Error fetching categories:', error);
+                        }
+                      }
+                    }}
+                    placeholder="Start typing: Laptop, Monitor, Printer..."
+                    className={errors.type ? 'border-red-500' : ''}
+                  />
+                  {errors.type && (
+                    <p className="text-sm text-red-500">{errors.type.message}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Type to see suggestions. Category will be auto-selected based on your choice.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
