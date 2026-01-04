@@ -298,11 +298,18 @@ function formatServiceRequirement(months: number): string {
 
 /**
  * Validate document requirement
+ * Document is optional for 1-day leave (e.g., single day sick leave)
  */
 export function validateDocumentRequirement(
   leaveType: LeaveType,
-  documentUrl?: string | null
+  documentUrl?: string | null,
+  totalDays?: number
 ): ValidationResult {
+  // Skip document requirement for 1-day leave
+  if (totalDays !== undefined && totalDays <= 1) {
+    return { valid: true };
+  }
+
   if (leaveType.requiresDocument && !documentUrl) {
     return {
       valid: false,

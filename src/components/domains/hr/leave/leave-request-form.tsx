@@ -165,9 +165,10 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
     selectedLeaveType?.maxConsecutiveDays !== undefined &&
     calculatedDays > selectedLeaveType.maxConsecutiveDays;
 
-  // Check if required document is missing
+  // Check if required document is missing (optional for 1-day leave)
   const watchDocumentUrl = form.watch('documentUrl');
-  const missingRequiredDocument = selectedLeaveType?.requiresDocument && !watchDocumentUrl;
+  const isOneDayLeave = calculatedDays !== null && calculatedDays <= 1;
+  const missingRequiredDocument = selectedLeaveType?.requiresDocument && !watchDocumentUrl && !isOneDayLeave;
 
   const onSubmit = async (data: FormData) => {
     setIsSubmitting(true);
@@ -366,7 +367,7 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
                   }
                 }}
                 placeholder="DD/MM/YYYY"
-                minDate={(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })()}
+                minDate={isAdmin ? undefined : (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })()}
               />
               {form.formState.errors.startDate && (
                 <p className="text-sm text-red-500">{form.formState.errors.startDate.message}</p>
@@ -380,7 +381,7 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
                   id="endDate"
                   value={form.watch('endDate')}
                   onChange={(value) => form.setValue('endDate', value)}
-                  minDate={(() => {
+                  minDate={isAdmin ? undefined : (() => {
                     const startDate = form.watch('startDate');
                     if (startDate) {
                       // Parse as local time, not UTC (new Date("yyyy-mm-dd") parses as UTC)
@@ -441,7 +442,11 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
         <Label htmlFor="documentUrl">
           Supporting Document URL
           {selectedLeaveType?.requiresDocument ? (
-            <span className="text-red-500 font-normal ml-1">*</span>
+            isOneDayLeave ? (
+              <span className="text-gray-400 font-normal ml-1">(optional for 1-day leave)</span>
+            ) : (
+              <span className="text-red-500 font-normal ml-1">*</span>
+            )
           ) : (
             <span className="text-gray-400 font-normal ml-1">(optional)</span>
           )}

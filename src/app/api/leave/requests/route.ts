@@ -285,7 +285,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
     const totalDays = dateValidation.totalDays;
 
     // Check for document requirement
-    const docResult = validateDocumentRequirement(leaveType, data.documentUrl);
+    const docResult = validateDocumentRequirement(leaveType, data.documentUrl, totalDays);
     if (!docResult.valid) {
       return NextResponse.json({ error: docResult.error }, { status: 400 });
     }
