@@ -51,7 +51,7 @@ export type UpdateLocationInput = z.infer<typeof updateLocationSchema>;
 export const locationQuerySchema = z.object({
   includeInactive: z
     .string()
-    .optional()
+    .nullish()  // Accept null, undefined, or string
     .transform((val) => val === 'true'),
 });
 
