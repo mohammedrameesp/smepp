@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
 import { prisma } from '@/lib/core/prisma';
+import { AssetHistoryAction } from '@prisma/client';
 import {
   validateAndConsumeToken,
   updateMessageStatus,
@@ -390,8 +391,8 @@ async function executeAssetAction(
   const request = await prisma.assetRequest.findUnique({
     where: { id: entityId },
     include: {
-      member: { select: { name: true } },
-      asset: { select: { model: true, type: true } },
+      member: { select: { id: true, name: true } },
+      asset: { select: { id: true, model: true, type: true, assetTag: true, status: true, assignedMemberId: true } },
     },
   });
 
@@ -426,14 +427,34 @@ async function executeAssetAction(
     },
   });
 
-  // If approved, assign the asset to the member
+  // If approved, assign the asset to the member and create history
   if (action === 'approve') {
+    const isReassignment = request.asset.assignedMemberId !== null;
+
     await prisma.asset.update({
       where: { id: request.assetId },
       data: {
         assignedMemberId: request.memberId,
         assignmentDate: new Date().toISOString(),
         status: 'IN_USE',
+      },
+    });
+
+    // Create asset history entry
+    await prisma.assetHistory.create({
+      data: {
+        tenantId,
+        assetId: request.asset.id,
+        action: AssetHistoryAction.ASSIGNED,
+        fromMemberId: request.asset.assignedMemberId,
+        toMemberId: request.memberId,
+        fromStatus: request.asset.status,
+        toStatus: 'IN_USE',
+        notes: isReassignment
+          ? `Reassigned via WhatsApp approval (${request.requestNumber})`
+          : `Assigned via WhatsApp approval (${request.requestNumber})`,
+        performedById: approverId,
+        assignmentDate: new Date(),
       },
     });
   }
