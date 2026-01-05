@@ -21,11 +21,7 @@ import { updateAssetSchema, type UpdateAssetRequest } from '@/lib/validations/op
 import { AssetStatus } from '@prisma/client';
 import { CategorySelector } from '@/components/domains/operations/assets/category-selector';
 import { AssetTypeCombobox } from '@/components/domains/operations/assets/asset-type-combobox';
-// Default exchange rates to QAR (fallback if not set in settings)
-const DEFAULT_RATES: Record<string, number> = {
-  USD: 3.64, EUR: 3.96, GBP: 4.60, SAR: 0.97, AED: 0.99, KWD: 11.85,
-  BHD: 9.66, OMR: 9.46, INR: 0.044, PKR: 0.013, PHP: 0.065,
-};
+import { DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
 import { getQatarEndOfDay } from '@/lib/qatar-timezone';
 
 interface Asset {
@@ -71,7 +67,7 @@ export default function EditAssetPage() {
   const [users, setUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
   const [depreciationCategories, setDepreciationCategories] = useState<DepreciationCategory[]>([]);
   const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(DEFAULT_RATES);
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(DEFAULT_RATES_TO_QAR);
   const [selectedCategoryCode, setSelectedCategoryCode] = useState<string | null>(null);
   const [suggestedTag, setSuggestedTag] = useState<string>('');
   const [isTagManuallyEdited, setIsTagManuallyEdited] = useState(false);
@@ -155,7 +151,7 @@ export default function EditAssetPage() {
         setHasMultipleLocations(data.settings?.hasMultipleLocations || false);
 
         // Fetch exchange rates for all currencies
-        const rates: Record<string, number> = { ...DEFAULT_RATES };
+        const rates: Record<string, number> = { ...DEFAULT_RATES_TO_QAR };
         const allCurrencies = currencies.filter((c: string) => c !== 'QAR');
         await Promise.all(
           allCurrencies.map(async (currency: string) => {

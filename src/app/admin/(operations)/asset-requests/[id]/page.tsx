@@ -39,9 +39,14 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
   }
 
   const { id } = await params;
+  const tenantId = session.user.organizationId;
 
-  const request = await prisma.assetRequest.findUnique({
-    where: { id },
+  if (!tenantId) {
+    redirect('/login');
+  }
+
+  const request = await prisma.assetRequest.findFirst({
+    where: { id, tenantId },
     include: {
       asset: {
         select: {

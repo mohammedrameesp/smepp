@@ -22,10 +22,15 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
     redirect('/login');
   }
 
+  const tenantId = session.user.organizationId;
+  if (!tenantId) {
+    redirect('/login');
+  }
+
   const { id } = await params;
 
-  const asset = await prisma.asset.findUnique({
-    where: { id },
+  const asset = await prisma.asset.findFirst({
+    where: { id, tenantId },
     include: {
       assignedMember: {
         select: {

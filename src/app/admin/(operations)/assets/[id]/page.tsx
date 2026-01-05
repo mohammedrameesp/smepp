@@ -4,7 +4,7 @@ import { prisma } from '@/lib/core/prisma';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
-import { Role, AssetRequestStatus } from '@prisma/client';
+import { AssetRequestStatus } from '@prisma/client';
 import Link from 'next/link';
 import {
   AssetHistory,
@@ -60,9 +60,10 @@ export default async function AssetDetailPage({ params }: Props) {
   }
 
   const { id } = await params;
+  const tenantId = session.user.organizationId;
 
-  const asset = await prisma.asset.findUnique({
-    where: { id },
+  const asset = await prisma.asset.findFirst({
+    where: { id, tenantId },
     include: {
       assignedMember: {
         select: {

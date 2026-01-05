@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
-import { Role, AssetRequestStatus } from '@prisma/client';
+import { AssetRequestStatus } from '@prisma/client';
 import { AssetRequestListTable } from '@/components/domains/operations/asset-requests';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Package } from 'lucide-react';

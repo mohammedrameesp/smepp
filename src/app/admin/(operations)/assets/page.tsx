@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
-import { Role, AssetRequestStatus } from '@prisma/client';
+import { AssetRequestStatus } from '@prisma/client';
 import Link from 'next/link';
 import { AssetListTableServerSearch } from '@/components/domains/operations/assets/asset-list-table-server-search';
 import { Plus, Inbox } from 'lucide-react';
@@ -43,7 +43,6 @@ export default async function AdminAssetsPage() {
   ]);
 
   const totalAssets = assetStats._count._all;
-  const assignedAssets = assignedCount;
   const totalValueQAR = Number(assetStats._sum.priceQAR || 0);
   const totalPendingRequests = pendingRequests + pendingReturns;
 
@@ -76,7 +75,7 @@ export default async function AdminAssetsPage() {
             <span className="text-blue-400 text-sm font-medium">{totalAssets} total assets</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-            <span className="text-emerald-400 text-sm font-medium">{assignedAssets} assigned</span>
+            <span className="text-emerald-400 text-sm font-medium">{assignedCount} assigned</span>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 rounded-lg">
             <span className="text-purple-400 text-sm font-medium">QAR {totalValueQAR.toLocaleString()} value</span>
