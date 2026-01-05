@@ -246,7 +246,7 @@ export function getFormattedChanges(changes: ChangeDetail[]): string[] {
 /**
  * Transform update data for Prisma compatibility
  * - Converts date strings to Date objects
- * - Converts empty string to null for user ID
+ * - Converts relation IDs to Prisma connect/disconnect syntax
  * - Removes non-model fields like assignmentDate
  *
  * @param data - Raw update data
@@ -257,13 +257,9 @@ export function transformAssetUpdateData(
 ): Record<string, unknown> {
   const transformed = { ...data };
 
-  // Remove assignmentDate as it's only used for history tracking
+  // Remove fields that are only used for history tracking
   delete transformed.assignmentDate;
-
-  // Convert empty string to null for assignedMemberId
-  if (transformed.assignedMemberId !== undefined) {
-    transformed.assignedMemberId = transformed.assignedMemberId === '' ? null : transformed.assignedMemberId;
-  }
+  delete transformed.statusChangeDate;
 
   // Convert date strings to Date objects
   if (transformed.purchaseDate !== undefined) {
@@ -275,6 +271,55 @@ export function transformAssetUpdateData(
     transformed.warrantyExpiry = transformed.warrantyExpiry
       ? new Date(transformed.warrantyExpiry as string)
       : null;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Convert relation IDs to Prisma connect/disconnect syntax
+  // Prisma requires relations to be set via nested writes, not direct IDs
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // assignedMemberId → assignedMember
+  if (transformed.assignedMemberId !== undefined) {
+    const memberId = transformed.assignedMemberId === '' ? null : transformed.assignedMemberId;
+    delete transformed.assignedMemberId;
+    if (memberId) {
+      transformed.assignedMember = { connect: { id: memberId } };
+    } else {
+      transformed.assignedMember = { disconnect: true };
+    }
+  }
+
+  // categoryId → assetCategory
+  if (transformed.categoryId !== undefined) {
+    const categoryId = transformed.categoryId === '' ? null : transformed.categoryId;
+    delete transformed.categoryId;
+    if (categoryId) {
+      transformed.assetCategory = { connect: { id: categoryId } };
+    } else {
+      transformed.assetCategory = { disconnect: true };
+    }
+  }
+
+  // locationId → location
+  if (transformed.locationId !== undefined) {
+    const locationId = transformed.locationId === '' ? null : transformed.locationId;
+    delete transformed.locationId;
+    if (locationId) {
+      transformed.location = { connect: { id: locationId } };
+    } else {
+      transformed.location = { disconnect: true };
+    }
+  }
+
+  // depreciationCategoryId → depreciationCategory
+  if (transformed.depreciationCategoryId !== undefined) {
+    const depCategoryId = transformed.depreciationCategoryId === '' ? null : transformed.depreciationCategoryId;
+    delete transformed.depreciationCategoryId;
+    if (depCategoryId) {
+      transformed.depreciationCategory = { connect: { id: depCategoryId } };
+    } else {
+      transformed.depreciationCategory = { disconnect: true };
+    }
   }
 
   return transformed;

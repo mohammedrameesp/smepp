@@ -259,11 +259,12 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 5: Validate assigned member belongs to same organization
+    // Note: We check data.assignedMemberId before transform since transform converts it to relation syntax
     // ─────────────────────────────────────────────────────────────────────────────
-    if (updateData.assignedMemberId) {
+    if (data.assignedMemberId) {
       const assignedMember = await prisma.teamMember.findFirst({
         where: {
-          id: updateData.assignedMemberId as string,
+          id: data.assignedMemberId,
           tenantId,
         },
         select: { id: true },
@@ -283,7 +284,8 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     if (statusChanged && data.status !== 'IN_USE') {
       // Auto-unassign if currently assigned
       if (currentAsset.assignedMemberId) {
-        updateData.assignedMemberId = null;
+        // Override the assignedMember relation to disconnect
+        updateData.assignedMember = { disconnect: true };
 
         // Record unassignment in history
         const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
