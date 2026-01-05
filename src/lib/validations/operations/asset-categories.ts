@@ -55,7 +55,7 @@ export const createAssetCategorySchema = z.object({
   code: z
     .string()
     .length(2, 'Code must be exactly 2 characters')
-    .regex(/^[A-Z]{2}$/, 'Code must be 2 uppercase letters')
+    .regex(/^[A-Za-z]{2}$/, 'Code must be 2 letters')
     .transform((val) => val.toUpperCase()),
   /** Human-readable category name (required, max 50 chars) */
   name: z.string().min(1, 'Name is required').max(50, 'Name must be at most 50 characters'),
@@ -89,7 +89,7 @@ export const updateAssetCategorySchema = z.object({
   code: z
     .string()
     .length(2, 'Code must be exactly 2 characters')
-    .regex(/^[A-Z]{2}$/, 'Code must be 2 uppercase letters')
+    .regex(/^[A-Za-z]{2}$/, 'Code must be 2 letters')
     .transform((val) => val.toUpperCase())
     .optional(),
   /** Updated category name */
