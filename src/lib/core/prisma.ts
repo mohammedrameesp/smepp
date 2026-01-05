@@ -21,11 +21,12 @@ function getConnectionUrl(): string {
   // If URL already has query params, append with &, otherwise use ?
   const separator = baseUrl.includes('?') ? '&' : '?';
 
-  // For Supabase session pooler (port 5432) with serverless:
-  // - connection_limit=1: Each serverless instance gets 1 connection (prevents MaxClientsInSessionMode)
+  // For Supabase Transaction pooler (port 6543):
+  // - No connection_limit needed (transaction mode handles this automatically)
   // - pool_timeout=0: Fail immediately if no connection available (let Vercel retry)
   // - statement_timeout: Max query execution time (ms)
-  return `${baseUrl}${separator}connection_limit=1&pool_timeout=0&statement_timeout=${QUERY_TIMEOUT_MS}`;
+  // Note: Use port 6543 for Transaction mode (serverless) instead of 5432 (Session mode)
+  return `${baseUrl}${separator}pool_timeout=0&statement_timeout=${QUERY_TIMEOUT_MS}`;
 }
 
 export const prisma =
