@@ -246,8 +246,9 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 4: Calculate priceQAR for multi-currency support
+    // Supports ALL currencies with tenant-specific exchange rates
     // ─────────────────────────────────────────────────────────────────────────────
-    const calculatedPriceQAR = calculateAssetPriceQAR(data, currentAsset, data.priceQAR);
+    const calculatedPriceQAR = await calculateAssetPriceQAR(data, currentAsset, tenantId, data.priceQAR);
 
     // Transform data for Prisma (converts dates, handles empty strings)
     const updateData = transformAssetUpdateData(data) as Record<string, unknown>;

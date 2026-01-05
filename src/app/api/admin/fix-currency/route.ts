@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { USD_TO_QAR_RATE } from '@/lib/constants';
+import { convertToQAR } from '@/lib/core/currency';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const tenantId = session.user.organizationId;
     const { subscriptionId, currency } = await request.json();
 
-    if (!subscriptionId || !currency || !['USD', 'QAR'].includes(currency)) {
+    if (!subscriptionId || !currency) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
     }
 
@@ -33,15 +33,9 @@ export async function POST(request: NextRequest) {
     }
 
     const cost = subscription.costPerCycle ? Number(subscription.costPerCycle) : 0;
-    let costQAR = null;
 
-    if (currency === 'USD') {
-      // If setting to USD, the cost is already in USD
-      costQAR = cost;
-    } else {
-      // If setting to QAR, calculate USD equivalent
-      costQAR = cost / USD_TO_QAR_RATE;
-    }
+    // Convert to QAR using multi-currency support
+    const costQAR = await convertToQAR(cost, currency, tenantId);
 
     // SECURITY: Use updateMany with tenantId for defense in depth
     // This prevents IDOR even if findFirst check is bypassed

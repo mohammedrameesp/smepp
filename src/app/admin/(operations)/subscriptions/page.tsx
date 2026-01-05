@@ -4,7 +4,7 @@ import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 
 import { SubscriptionListTableServerSearch } from '@/components/domains/operations/subscriptions/subscription-list-table-server-search';
-import { USD_TO_QAR_RATE } from '@/lib/constants';
+import { getExchangeRateToQAR } from '@/lib/core/currency';
 import { Plus } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
@@ -77,9 +77,12 @@ export default async function AdminSubscriptionsPage() {
     }
   });
 
+  // Get exchange rate for USD to QAR conversion
+  const usdToQarRate = await getExchangeRateToQAR(tenantId, 'USD');
+
   const totalQAR = monthlyQAR + yearlyRenewingQAR;
   const totalUSD = monthlyUSD + yearlyRenewingUSD;
-  const totalInQAR = totalQAR + (totalUSD * USD_TO_QAR_RATE);
+  const totalInQAR = totalQAR + (totalUSD * usdToQarRate);
 
   return (
     <>

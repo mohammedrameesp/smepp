@@ -286,9 +286,9 @@ export async function assignDepreciationCategory(
     depreciationStartDate?: Date;
   }
 ) {
-  // Verify category exists
-  const category = await prisma.depreciationCategory.findUnique({
-    where: { id: data.depreciationCategoryId },
+  // Verify category exists AND belongs to same tenant
+  const category = await prisma.depreciationCategory.findFirst({
+    where: { id: data.depreciationCategoryId, tenantId },
   });
 
   if (!category) {

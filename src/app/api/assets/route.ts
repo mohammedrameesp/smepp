@@ -26,7 +26,7 @@ import { AssetStatus, Prisma } from '@prisma/client';
 import { createAssetSchema, assetQuerySchema } from '@/lib/validations/operations/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { generateAssetTagByCategory } from '@/lib/domains/operations/assets/asset-utils';
-import { USD_TO_QAR_RATE } from '@/lib/constants';
+import { convertToQAR } from '@/lib/core/currency';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { updateSetupProgress } from '@/lib/domains/system/setup';
@@ -325,18 +325,14 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
   // STEP 3: Handle multi-currency pricing
   // Always calculate priceQAR to prevent data loss
   // QAR is the base currency for all financial calculations
+  // Supports ALL currencies with tenant-specific exchange rates
   // ─────────────────────────────────────────────────────────────────────────────
   let priceQAR = data.priceQAR;
   const currency = data.priceCurrency || 'QAR';
 
   if (data.price && !priceQAR) {
-    if (currency === 'QAR') {
-      // QAR is base currency, store as-is
-      priceQAR = data.price;
-    } else {
-      // USD - convert to QAR using fixed rate
-      priceQAR = data.price * USD_TO_QAR_RATE;
-    }
+    // Convert any currency to QAR using tenant-specific rate
+    priceQAR = await convertToQAR(data.price, currency, tenantId);
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

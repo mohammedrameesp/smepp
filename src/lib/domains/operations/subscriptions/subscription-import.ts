@@ -15,7 +15,7 @@
  */
 
 import { BillingCycle, SubscriptionStatus } from '@prisma/client';
-import { USD_TO_QAR_RATE } from '@/lib/constants';
+import { convertToQARSync, DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -262,19 +262,18 @@ export function parseSubscriptionCost(
     }
   }
 
-  // Calculate costQAR (USD equivalent for reporting)
+  // Calculate costQAR using multi-currency conversion
+  // Note: This is sync because it runs during CSV parsing (client-side context)
+  // Uses default rates - for precise conversion, amounts should be recalculated server-side
   if (costUsdStr) {
+    // Legacy: If Cost USD column provided, treat as QAR equivalent (backwards compatibility)
     const usdCost = parseFloat(costUsdStr);
     if (!isNaN(usdCost)) {
       costQAR = usdCost;
     }
   } else if (costPerCycle !== null) {
-    // Auto-calculate if not provided
-    if (costCurrency === 'USD') {
-      costQAR = costPerCycle;
-    } else {
-      costQAR = costPerCycle / USD_TO_QAR_RATE;
-    }
+    // Convert to QAR using sync conversion (default rates)
+    costQAR = convertToQARSync(costPerCycle, costCurrency);
   }
 
   return { costPerCycle, costCurrency, costQAR };

@@ -10,7 +10,7 @@ import { createSubscriptionSchema, subscriptionQuerySchema } from '@/lib/validat
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { getQatarNow, getQatarStartOfDay } from '@/lib/qatar-timezone';
 import { parseInputDateString } from '@/lib/date-format';
-import { USD_TO_QAR_RATE } from '@/lib/constants';
+import { convertToQAR } from '@/lib/core/currency';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
@@ -120,14 +120,8 @@ async function createSubscriptionHandler(request: NextRequest, context: APIConte
     const currency = data.costCurrency || 'QAR';
 
     if (data.costPerCycle && !costQAR) {
-      // If costQAR is missing, calculate it based on currency
-      if (currency === 'QAR') {
-        // QAR is base currency, store as-is
-        costQAR = data.costPerCycle;
-      } else {
-        // USD - convert to QAR
-        costQAR = data.costPerCycle * USD_TO_QAR_RATE;
-      }
+      // Convert to QAR using multi-currency support (supports ALL configured currencies)
+      costQAR = await convertToQAR(data.costPerCycle, currency, tenantId);
     }
 
     // Convert date strings to Date objects

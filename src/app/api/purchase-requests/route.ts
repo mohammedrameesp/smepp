@@ -132,7 +132,7 @@ async function createPurchaseRequestHandler(request: NextRequest, context: APICo
       totalOneTime,
       totalMonthly,
       totalContractValue,
-    } = calculatePurchaseRequestItems(data.items, formCurrency, isSubscriptionType);
+    } = await calculatePurchaseRequestItems(data.items, formCurrency, isSubscriptionType, tenantId);
 
     // Create purchase request with items
     const purchaseRequest = await prisma.purchaseRequest.create({

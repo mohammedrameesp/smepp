@@ -9,7 +9,7 @@ import { prisma } from '@/lib/core/prisma';
 import { updateSubscriptionSchema } from '@/lib/validations/subscriptions';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { parseInputDateString } from '@/lib/date-format';
-import { USD_TO_QAR_RATE } from '@/lib/constants';
+import { convertToQAR } from '@/lib/core/currency';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getSubscriptionHandler(request: NextRequest, context: APIContext) {
@@ -88,23 +88,17 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
       const currency = data.costCurrency !== undefined ? data.costCurrency : currentSubscription.costCurrency;
 
       if (costPerCycle && !costQAR) {
-        if (currency === 'USD') {
-          costQAR = costPerCycle * USD_TO_QAR_RATE;
-        } else {
-          costQAR = costPerCycle;
-        }
+        // Convert to QAR using multi-currency support
+        costQAR = await convertToQAR(costPerCycle, currency || 'QAR', tenantId);
       }
     }
 
     // If only currency is changing, recalculate costQAR
-    if (data.costCurrency !== undefined && data.costPerCycle === undefined) {
+    if (data.costCurrency !== undefined && data.costCurrency !== null && data.costPerCycle === undefined) {
       const currentCost = currentSubscription.costPerCycle ? Number(currentSubscription.costPerCycle) : 0;
       if (currentCost > 0) {
-        if (data.costCurrency === 'USD') {
-          costQAR = currentCost * USD_TO_QAR_RATE;
-        } else {
-          costQAR = currentCost;
-        }
+        // Convert to QAR using multi-currency support
+        costQAR = await convertToQAR(currentCost, data.costCurrency, tenantId);
       }
     }
 

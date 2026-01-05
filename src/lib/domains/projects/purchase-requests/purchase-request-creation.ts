@@ -11,11 +11,11 @@
  * - ONE_TIME: Full amount added to totalOneTime and totalContractValue
  * - MONTHLY: Amount * duration months (default 12) added to totalContractValue
  * - YEARLY: Full amount added to totalContractValue, monthly = amount/12
- * - USD amounts converted to QAR using USD_TO_QAR_RATE for totals
+ * - Non-QAR amounts converted to QAR using tenant-specific exchange rates
  */
 
 import { prisma } from '@/lib/core/prisma';
-import { USD_TO_QAR_RATE } from '@/lib/constants';
+import { getExchangeRateToQAR } from '@/lib/core/currency';
 import { sendEmail } from '@/lib/core/email';
 import { purchaseRequestSubmittedEmail } from '@/lib/core/email-templates';
 import { createBulkNotifications, createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
@@ -92,18 +92,24 @@ export interface PurchaseRequestNotificationParams {
  * @param items - Raw item inputs from the request
  * @param formCurrency - Form-level currency (defaults to first item's currency or 'QAR')
  * @param isSubscriptionType - Whether this is a software subscription purchase
+ * @param tenantId - Organization ID for exchange rate lookup
  * @returns Calculated items with totals
  *
  * @example
- * const result = calculatePurchaseRequestItems(items, 'USD', true);
+ * const result = await calculatePurchaseRequestItems(items, 'USD', true, 'tenant-123');
  * // result.totalAmountQAR contains total in QAR
  * // result.items contains items ready for database
  */
-export function calculatePurchaseRequestItems(
+export async function calculatePurchaseRequestItems(
   items: PurchaseRequestItemInput[],
   formCurrency: string,
-  isSubscriptionType: boolean
-): ItemCalculationResult {
+  isSubscriptionType: boolean,
+  tenantId: string
+): Promise<ItemCalculationResult> {
+  // Get exchange rate for the form currency (fetch once for performance)
+  const exchangeRate = formCurrency !== 'QAR'
+    ? await getExchangeRateToQAR(tenantId, formCurrency)
+    : 1;
   let totalAmount = 0;
   let totalAmountQAR = 0;
   let totalOneTime = 0;
@@ -133,12 +139,12 @@ export function calculatePurchaseRequestItems(
       }
     }
 
-    // Convert to QAR for totals if USD
-    const isUSD = item.currency === 'USD' || formCurrency === 'USD';
-    const lineTotalQAR = isUSD ? lineTotal * USD_TO_QAR_RATE : lineTotal;
-    const unitPriceQAR = isUSD ? unitPriceForDb * USD_TO_QAR_RATE : unitPriceForDb;
-    const amountPerCycleQAR = amountPerCycle && isUSD
-      ? amountPerCycle * USD_TO_QAR_RATE
+    // Convert to QAR for totals if not already QAR
+    const needsConversion = (item.currency && item.currency !== 'QAR') || formCurrency !== 'QAR';
+    const lineTotalQAR = needsConversion ? lineTotal * exchangeRate : lineTotal;
+    const unitPriceQAR = needsConversion ? unitPriceForDb * exchangeRate : unitPriceForDb;
+    const amountPerCycleQAR = amountPerCycle && needsConversion
+      ? amountPerCycle * exchangeRate
       : amountPerCycle;
 
     // Calculate totals based on billing cycle

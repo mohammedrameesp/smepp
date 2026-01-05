@@ -10,7 +10,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { updatePurchaseRequestSchema } from '@/lib/validations/purchase-request';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { calculatePurchaseRequestItems } from '@/lib/domains/projects/purchase-requests/purchase-request-creation';
+import { calculatePurchaseRequestItems, CalculatedItem } from '@/lib/domains/projects/purchase-requests/purchase-request-creation';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // GET - Get single purchase request
@@ -128,13 +128,13 @@ async function updatePurchaseRequestHandler(request: NextRequest, context: APICo
     let totalOneTime = 0;
     let totalMonthly = 0;
     let totalContractValue = 0;
-    let itemsData: ReturnType<typeof calculatePurchaseRequestItems>['items'] | undefined;
+    let itemsData: CalculatedItem[] | undefined;
 
     if (data.items) {
       const formCurrency = data.items[0]?.currency || 'QAR';
       const isSubscriptionType = currentRequest.purchaseType === 'SOFTWARE_SUBSCRIPTION';
 
-      const calculated = calculatePurchaseRequestItems(data.items, formCurrency, isSubscriptionType);
+      const calculated = await calculatePurchaseRequestItems(data.items, formCurrency, isSubscriptionType, tenantId);
       itemsData = calculated.items;
       totalAmount = calculated.totalAmount;
       totalAmountQAR = calculated.totalAmountQAR;

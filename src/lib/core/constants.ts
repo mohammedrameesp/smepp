@@ -1,62 +1,59 @@
 /**
  * @file constants.ts
- * @description Application-wide constants and exchange rate utilities for currency conversion
+ * @description Legacy constants - mostly re-exports from currency.ts
  * @module lib/core
+ *
+ * @deprecated Most functions in this file are deprecated. Use @/lib/core/currency instead.
+ *
+ * MIGRATION GUIDE:
+ * - USD_TO_QAR_RATE → DEFAULT_RATES_TO_QAR.USD (from @/lib/core/currency)
+ * - getExchangeRate() → getExchangeRateToQAR() (supports ALL currencies)
+ * - convertUsdToQar() → convertToQARSync() (supports ALL currencies)
+ * - convertQarToUsd() → No direct replacement (rarely needed)
+ * - convertUsdToQarAsync() → convertToQAR() (supports ALL currencies)
+ * - convertQarToUsdAsync() → No direct replacement (rarely needed)
  */
 
-import { prisma } from './prisma';
+import { DEFAULT_RATES_TO_QAR, getExchangeRateToQAR, convertToQAR, convertToQARSync } from './currency';
 
 /**
  * Exchange rate: US Dollar to Qatari Riyal
  * Default fallback rate - actual rate is stored in SystemSettings
+ *
+ * @deprecated Use DEFAULT_RATES_TO_QAR.USD from @/lib/core/currency instead.
+ * The new module supports ALL currencies, not just USD.
  */
-export const USD_TO_QAR_RATE = 3.64;
-
-// Cache for exchange rate per tenant (avoid repeated DB calls)
-const rateCache: Map<string, { rate: number; time: number }> = new Map();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+export const USD_TO_QAR_RATE = DEFAULT_RATES_TO_QAR.USD;
 
 /**
  * Get current exchange rate from database (server-side only)
  * Falls back to constant if database unavailable
+ *
+ * @deprecated Use getExchangeRateToQAR(tenantId, currency) from @/lib/core/currency instead.
+ * The new function supports ALL currencies, not just USD.
+ *
  * @param tenantId - The organization/tenant ID
  */
 export async function getExchangeRate(tenantId: string): Promise<number> {
-  // Return cached value if still fresh
-  const cached = rateCache.get(tenantId);
-  if (cached && Date.now() - cached.time < CACHE_DURATION) {
-    return cached.rate;
-  }
-
-  try {
-    const setting = await prisma.systemSettings.findUnique({
-      where: {
-        tenantId_key: { tenantId, key: 'USD_TO_QAR_RATE' },
-      },
-    });
-
-    if (setting?.value) {
-      const rate = parseFloat(setting.value);
-      rateCache.set(tenantId, { rate, time: Date.now() });
-      return rate;
-    }
-  } catch (error) {
-    console.error('Failed to fetch exchange rate from database:', error);
-  }
-
-  // Fallback to constant
-  return USD_TO_QAR_RATE;
+  // Delegate to new multi-currency function for USD
+  return getExchangeRateToQAR(tenantId, 'USD');
 }
 
 /**
  * Convert USD amount to QAR (client-side safe)
+ *
+ * @deprecated Use convertToQARSync(amount, currency) from @/lib/core/currency instead.
+ * The new function supports ALL currencies, not just USD.
  */
 export function convertUsdToQar(usdAmount: number): number {
-  return usdAmount * USD_TO_QAR_RATE;
+  return convertToQARSync(usdAmount, 'USD');
 }
 
 /**
  * Convert QAR amount to USD (client-side safe)
+ *
+ * @deprecated This function is rarely needed. If you need to convert FROM QAR,
+ * consider storing the original currency and amount separately.
  */
 export function convertQarToUsd(qarAmount: number): number {
   return qarAmount / USD_TO_QAR_RATE;
@@ -64,20 +61,28 @@ export function convertQarToUsd(qarAmount: number): number {
 
 /**
  * Convert USD amount to QAR using database rate (server-side only)
+ *
+ * @deprecated Use convertToQAR(amount, currency, tenantId) from @/lib/core/currency instead.
+ * The new function supports ALL currencies, not just USD.
+ *
  * @param usdAmount - Amount in USD
  * @param tenantId - The organization/tenant ID
  */
 export async function convertUsdToQarAsync(usdAmount: number, tenantId: string): Promise<number> {
-  const rate = await getExchangeRate(tenantId);
-  return usdAmount * rate;
+  const result = await convertToQAR(usdAmount, 'USD', tenantId);
+  return result ?? usdAmount * USD_TO_QAR_RATE;
 }
 
 /**
  * Convert QAR amount to USD using database rate (server-side only)
+ *
+ * @deprecated This function is rarely needed. If you need to convert FROM QAR,
+ * consider storing the original currency and amount separately.
+ *
  * @param qarAmount - Amount in QAR
  * @param tenantId - The organization/tenant ID
  */
 export async function convertQarToUsdAsync(qarAmount: number, tenantId: string): Promise<number> {
-  const rate = await getExchangeRate(tenantId);
+  const rate = await getExchangeRateToQAR(tenantId, 'USD');
   return qarAmount / rate;
 }

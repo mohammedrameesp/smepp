@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { USD_TO_QAR_RATE } from '@/lib/constants';
+import { DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
 
 export async function GET() {
   try {
@@ -83,7 +83,8 @@ export async function POST() {
         correctCurrency = 'USD';
       }
       // If costQAR exists and is about 3.64x less than cost, original was QAR
-      else if (costQAR && Math.abs((cost / USD_TO_QAR_RATE) - costQAR) < 0.5) {
+      // Using default USD rate for backwards compatibility detection
+      else if (costQAR && Math.abs((cost / DEFAULT_RATES_TO_QAR.USD) - costQAR) < 0.5) {
         correctCurrency = 'QAR';
       }
 

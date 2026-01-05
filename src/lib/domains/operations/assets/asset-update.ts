@@ -14,7 +14,7 @@
  */
 
 import { Asset } from '@prisma/client';
-import { USD_TO_QAR_RATE } from '@/lib/constants';
+import { convertToQAR } from '@/lib/core/currency';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -60,48 +60,33 @@ export const ASSET_FIELD_LABELS: Record<string, string> = {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Calculate QAR price from price and currency
- * QAR is the base currency; USD is converted at the standard rate
- *
- * @param price - Price value
- * @param currency - Currency code ('QAR' or 'USD')
- * @returns Calculated QAR price
- *
- * @example
- * calculatePriceQAR(100, 'USD'); // Returns 365 (100 * 3.65)
- * calculatePriceQAR(100, 'QAR'); // Returns 100
- */
-export function calculatePriceQAR(
-  price: number | null | undefined,
-  currency: string
-): number | null {
-  if (!price) return null;
-
-  if (currency === 'QAR') {
-    return price;
-  } else if (currency === 'USD') {
-    return price * USD_TO_QAR_RATE;
-  }
-
-  return price;
-}
-
-/**
  * Calculate priceQAR for an asset update, handling various scenarios:
  * - Price is being updated
  * - Currency is being updated
  * - Both are being updated
  *
+ * Supports ALL currencies configured by the tenant, not just USD.
+ * Uses tenant-specific exchange rates from SystemSettings.
+ *
  * @param data - Update data with optional price/priceCurrency
  * @param currentAsset - Current asset state
+ * @param tenantId - Organization ID for exchange rate lookup
  * @param explicitPriceQAR - Explicitly provided priceQAR (if any)
  * @returns Calculated priceQAR or undefined if no calculation needed
+ *
+ * @example
+ * // USD price being updated
+ * const qar = await calculateAssetPriceQAR({ price: 100, priceCurrency: 'USD' }, asset, 'tenant-123');
+ *
+ * // EUR price with tenant-specific rate
+ * const qar = await calculateAssetPriceQAR({ price: 100, priceCurrency: 'EUR' }, asset, 'tenant-123');
  */
-export function calculateAssetPriceQAR(
+export async function calculateAssetPriceQAR(
   data: { price?: number | null; priceCurrency?: string | null },
   currentAsset: Pick<Asset, 'price' | 'priceCurrency'>,
+  tenantId: string,
   explicitPriceQAR?: number | null
-): number | null | undefined {
+): Promise<number | null | undefined> {
   // If explicit priceQAR provided and price is being updated, use explicit
   if (explicitPriceQAR !== undefined && data.price !== undefined) {
     return explicitPriceQAR;
@@ -114,7 +99,7 @@ export function calculateAssetPriceQAR(
     const currency = data.priceCurrency ?? currentAsset.priceCurrency ?? 'QAR';
 
     if (price && !explicitPriceQAR) {
-      return calculatePriceQAR(price, currency);
+      return convertToQAR(price, currency, tenantId);
     }
   }
 
@@ -122,7 +107,7 @@ export function calculateAssetPriceQAR(
   if (data.priceCurrency !== undefined && data.priceCurrency !== null && data.price === undefined) {
     const currentPrice = currentAsset.price ? Number(currentAsset.price) : 0;
     if (currentPrice > 0) {
-      return calculatePriceQAR(currentPrice, data.priceCurrency);
+      return convertToQAR(currentPrice, data.priceCurrency, tenantId);
     }
   }
 

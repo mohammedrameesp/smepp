@@ -146,29 +146,29 @@ Complete list of all asset-related files for code review and understanding.
 ### Domain Logic
 | File | Description |
 |------|-------------|
-| [src/lib/domains/operations/assets/asset-utils.ts](../src/lib/domains/operations/assets/asset-utils.ts) | Tag generation, auto-learn |
-| [src/lib/domains/operations/assets/asset-history.ts](../src/lib/domains/operations/assets/asset-history.ts) | History recording |
-| [src/lib/domains/operations/assets/asset-lifecycle.ts](../src/lib/domains/operations/assets/asset-lifecycle.ts) | Assignment periods, utilization |
-| [src/lib/domains/operations/assets/asset-import.ts](../src/lib/domains/operations/assets/asset-import.ts) | CSV import parsing |
-| [src/lib/domains/operations/assets/asset-export.ts](../src/lib/domains/operations/assets/asset-export.ts) | CSV/Excel export utilities |
-| [src/lib/domains/operations/assets/asset-update.ts](../src/lib/domains/operations/assets/asset-update.ts) | Update helpers, change detection |
-| [src/lib/domains/operations/assets/seed-asset-categories.ts](../src/lib/domains/operations/assets/seed-asset-categories.ts) | Category seeding |
+[Done] | [src/lib/domains/operations/assets/asset-utils.ts](../src/lib/domains/operations/assets/asset-utils.ts) | Tag generation, auto-learn |
+[Done] | [src/lib/domains/operations/assets/asset-history.ts](../src/lib/domains/operations/assets/asset-history.ts) | History recording |
+[Done] | [src/lib/domains/operations/assets/asset-lifecycle.ts](../src/lib/domains/operations/assets/asset-lifecycle.ts) | Assignment periods, utilization |
+[Done] | [src/lib/domains/operations/assets/asset-import.ts](../src/lib/domains/operations/assets/asset-import.ts) | CSV import parsing |
+[Done] | [src/lib/domains/operations/assets/asset-export.ts](../src/lib/domains/operations/assets/asset-export.ts) | CSV/Excel export utilities |
+[Done] | [src/lib/domains/operations/assets/asset-update.ts](../src/lib/domains/operations/assets/asset-update.ts) | Update helpers, change detection |
+[Done] | [src/lib/domains/operations/assets/seed-asset-categories.ts](../src/lib/domains/operations/assets/seed-asset-categories.ts) | Category seeding |
 
 ### Depreciation System
 | File | Description |
 |------|-------------|
-| [src/lib/domains/operations/assets/depreciation/index.ts](../src/lib/domains/operations/assets/depreciation/index.ts) | Module exports |
-| [src/lib/domains/operations/assets/depreciation/constants.ts](../src/lib/domains/operations/assets/depreciation/constants.ts) | IFRS rates, Qatar tax |
-| [src/lib/domains/operations/assets/depreciation/calculator.ts](../src/lib/domains/operations/assets/depreciation/calculator.ts) | Calculation functions |
-| [src/lib/domains/operations/assets/depreciation/service.ts](../src/lib/domains/operations/assets/depreciation/service.ts) | Depreciation service |
-| [src/lib/domains/operations/assets/depreciation/disposal.ts](../src/lib/domains/operations/assets/depreciation/disposal.ts) | Disposal with gain/loss |
+[Done] | [src/lib/domains/operations/assets/depreciation/index.ts](../src/lib/domains/operations/assets/depreciation/index.ts) | Module exports |
+[Done] | [src/lib/domains/operations/assets/depreciation/constants.ts](../src/lib/domains/operations/assets/depreciation/constants.ts) | IFRS rates, Qatar tax |
+[Done] | [src/lib/domains/operations/assets/depreciation/calculator.ts](../src/lib/domains/operations/assets/depreciation/calculator.ts) | Calculation functions |
+[Done] | [src/lib/domains/operations/assets/depreciation/service.ts](../src/lib/domains/operations/assets/depreciation/service.ts) | Depreciation service |
+[Done] | [src/lib/domains/operations/assets/depreciation/disposal.ts](../src/lib/domains/operations/assets/depreciation/disposal.ts) | Disposal with gain/loss |
 
 ### Asset Requests Logic
 | File | Description |
 |------|-------------|
-| [src/lib/domains/operations/asset-requests/asset-request-utils.ts](../src/lib/domains/operations/asset-requests/asset-request-utils.ts) | Request utilities |
-| [src/lib/domains/operations/asset-requests/asset-request-notifications.ts](../src/lib/domains/operations/asset-requests/asset-request-notifications.ts) | Notifications |
-| [src/lib/core/asset-request-emails.ts](../src/lib/core/asset-request-emails.ts) | Email templates |
+[Done] | [src/lib/domains/operations/asset-requests/asset-request-utils.ts](../src/lib/domains/operations/asset-requests/asset-request-utils.ts) | Request utilities |
+[Done] | [src/lib/domains/operations/asset-requests/asset-request-notifications.ts](../src/lib/domains/operations/asset-requests/asset-request-notifications.ts) | Notifications |
+[Done] | [src/lib/core/asset-request-emails.ts](../src/lib/core/asset-request-emails.ts) | Email templates |
 
 ---
 
