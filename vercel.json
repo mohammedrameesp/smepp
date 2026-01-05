@@ -13,13 +13,6 @@
       "schedule": "0 2 * * *"
     }
   ],
-  "_disabled_crons_upgrade_plan": [
-    {
-      "path": "/api/cron/depreciation",
-      "schedule": "5 0 1 * *",
-      "note": "Monthly depreciation calculation - disabled due to Vercel plan limit (2 crons max)"
-    }
-  ],
   "functions": {
     "app/api/**/*": {
       "maxDuration": 30
