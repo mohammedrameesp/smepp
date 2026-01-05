@@ -218,6 +218,7 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
         notes: data.notes || null,
         location: data.location || null,
         isShared: data.isShared || false,
+        depreciationCategoryId: data.depreciationCategoryId || null,
         tenantId,
         assignedMemberId: data.assignedMemberId || null,
       },

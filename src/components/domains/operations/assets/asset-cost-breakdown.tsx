@@ -18,9 +18,14 @@ interface Utilization {
 interface AssetUtilizationProps {
   assetId: string;
   purchaseDate?: Date | null;
+  isShared?: boolean;
 }
 
-export function AssetCostBreakdown({ assetId, purchaseDate }: AssetUtilizationProps) {
+export function AssetCostBreakdown({ assetId, purchaseDate, isShared }: AssetUtilizationProps) {
+  // Don't show utilization for shared assets - they're always available for use
+  if (isShared) {
+    return null;
+  }
   const [utilization, setUtilization] = useState<Utilization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

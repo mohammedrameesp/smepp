@@ -347,45 +347,6 @@ export default function NewAssetPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">What is this asset?</p>
 
-                {/* Asset Tag - Info Display at Top */}
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Label className="text-xs text-blue-700 uppercase tracking-wide">Asset Tag</Label>
-                      <Input
-                        id="assetTag"
-                        {...register('assetTag')}
-                        placeholder={!watchedCategoryId ? 'Select category...' : 'Auto-generated'}
-                        onChange={(e) => {
-                          e.target.value = e.target.value.toUpperCase();
-                          register('assetTag').onChange(e);
-                          if (e.target.value !== suggestedTag) {
-                            setIsTagManuallyEdited(true);
-                          }
-                        }}
-                        className="font-mono text-base h-9 w-44 uppercase bg-white"
-                      />
-                      {isTagManuallyEdited && suggestedTag && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setValue('assetTag', suggestedTag);
-                            setIsTagManuallyEdited(false);
-                          }}
-                          title="Reset to auto-generated tag"
-                        >
-                          <RefreshCw className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <p className="text-xs text-blue-600">
-                      {isTagManuallyEdited ? 'Custom tag' : 'Auto-generated'}
-                    </p>
-                  </div>
-                </div>
-
                 {/* Asset Type & Category - Same Row */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -434,6 +395,45 @@ export default function NewAssetPage() {
                     />
                     <p className="text-xs text-muted-foreground">
                       Auto-selected based on type
+                    </p>
+                  </div>
+                </div>
+
+                {/* Asset Tag - Generated from category, editable if needed */}
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Label className="text-xs text-blue-700 uppercase tracking-wide">Asset Tag</Label>
+                      <Input
+                        id="assetTag"
+                        {...register('assetTag')}
+                        placeholder={!watchedCategoryId ? 'Select category first' : 'Auto-generated'}
+                        onChange={(e) => {
+                          e.target.value = e.target.value.toUpperCase();
+                          register('assetTag').onChange(e);
+                          if (e.target.value !== suggestedTag) {
+                            setIsTagManuallyEdited(true);
+                          }
+                        }}
+                        className="font-mono text-base h-9 w-44 uppercase bg-white"
+                      />
+                      {isTagManuallyEdited && suggestedTag && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setValue('assetTag', suggestedTag);
+                            setIsTagManuallyEdited(false);
+                          }}
+                          title="Reset to auto-generated tag"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-blue-600">
+                      {isTagManuallyEdited ? 'Custom tag' : 'Auto-generated from category. Edit if needed.'}
                     </p>
                   </div>
                 </div>

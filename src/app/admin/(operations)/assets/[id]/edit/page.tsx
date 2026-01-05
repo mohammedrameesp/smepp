@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Package, ShoppingCart, MapPin, Info, Tag, Wrench } from 'lucide-react';
 import { toInputDateString } from '@/lib/date-format';
 import { updateAssetSchema, type UpdateAssetRequest } from '@/lib/validations/assets';
 import { AssetStatus } from '@prisma/client';
@@ -464,8 +465,11 @@ export default function EditAssetPage() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Basic Information Section */}
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">1. Basic Information</h3>
-                <p className="text-xs text-gray-600">What is this asset?</p>
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5 text-blue-600" />
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Asset Details</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">What is this asset?</p>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2 relative">
@@ -568,8 +572,11 @@ export default function EditAssetPage() {
 
               {/* Asset Identification Section */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">2. Asset Identification</h3>
-                <p className="text-xs text-gray-600">Unique identifier for this asset</p>
+                <div className="flex items-center gap-2">
+                  <Tag className="h-5 w-5 text-purple-600" />
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Asset Identification</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">Unique identifier for this asset</p>
 
                 <div className="space-y-2">
                   <Label htmlFor="assetTag">Asset ID/Tag</Label>
@@ -588,8 +595,11 @@ export default function EditAssetPage() {
 
               {/* Financial Information Section */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">3. Financial Information</h3>
-                <p className="text-xs text-gray-600">Procurement and cost details</p>
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5 text-green-600" />
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Acquisition Details</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">Where did it come from?</p>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -712,8 +722,11 @@ export default function EditAssetPage() {
 
               {/* Current Status Section */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">4. Current Status</h3>
-                <p className="text-xs text-gray-600">Current state and usage information</p>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-orange-600" />
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Status & Assignment</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">Current state and location</p>
 
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
@@ -774,9 +787,9 @@ export default function EditAssetPage() {
 
               {/* Assignment Section - Only show when status is IN_USE and NOT shared */}
               {watchedStatus === AssetStatus.IN_USE && !watchedIsShared && (
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">5. Assignment</h3>
-                  <p className="text-xs text-gray-600">Who is using this asset?</p>
+                <div className="p-4 bg-gray-50 rounded-lg border space-y-4">
+                  <h4 className="text-sm font-semibold text-gray-700">Assignment</h4>
+                  <p className="text-xs text-muted-foreground">Who is using this asset?</p>
 
                   <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -823,9 +836,10 @@ export default function EditAssetPage() {
 
               {/* Location Section */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  {watchedIsShared ? '5. Location' : '6. Location'}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-rose-600" />
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Location</h3>
+                </div>
                 <div className="space-y-2 relative">
                   <Label htmlFor="location">
                     Physical Location {watchedIsShared ? '(Recommended)' : '(Optional)'}
@@ -868,9 +882,10 @@ export default function EditAssetPage() {
 
               {/* Notes Section */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                  {watchedIsShared ? '6. Notes / Remarks' : '7. Notes / Remarks'}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-gray-600" />
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Additional Information</h3>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="notes">Additional Notes (optional)</Label>
                   <textarea
@@ -887,10 +902,11 @@ export default function EditAssetPage() {
                 <div className="space-y-4 pt-4 border-t">
                   <div className="flex justify-between items-center">
                     <div>
-                      <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                        {watchedIsShared ? '7. Maintenance History' : '8. Maintenance History'}
-                      </h3>
-                      <p className="text-xs text-gray-600">Track all maintenance performed on this asset</p>
+                      <div className="flex items-center gap-2">
+                        <Wrench className="h-5 w-5 text-amber-600" />
+                        <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Maintenance History</h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Track all maintenance performed on this asset</p>
                     </div>
                     <Button
                       type="button"

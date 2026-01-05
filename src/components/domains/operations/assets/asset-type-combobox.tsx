@@ -81,11 +81,11 @@ export function AssetTypeCombobox({
     }
   }, []);
 
-  // Update suggestions when value changes (with debounce)
+  // Update suggestions when value changes (with debounce - reduced for snappier feel)
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchSuggestions(value);
-    }, 150);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [value, fetchSuggestions]);
@@ -178,7 +178,15 @@ export function AssetTypeCombobox({
           ref={inputRef}
           value={value}
           onChange={handleInputChange}
-          onFocus={() => value && suggestions.length > 0 && setShowSuggestions(true)}
+          onFocus={() => {
+            if (value) {
+              setShowSuggestions(true);
+              // Trigger immediate fetch on focus if we have a value but no suggestions yet
+              if (suggestions.length === 0) {
+                fetchSuggestions(value);
+              }
+            }
+          }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}

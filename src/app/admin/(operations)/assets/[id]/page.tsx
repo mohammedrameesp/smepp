@@ -79,6 +79,13 @@ export default async function AssetDetailPage({ params }: Props) {
           email: true,
         },
       },
+      assetCategory: {
+        select: {
+          id: true,
+          code: true,
+          name: true,
+        },
+      },
       assetRequests: {
         where: {
           status: {
@@ -206,7 +213,11 @@ export default async function AssetDetailPage({ params }: Props) {
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Category</p>
-                  <p className="font-semibold text-slate-900">{asset.category || 'Not specified'}</p>
+                  <p className="font-semibold text-slate-900">{asset.assetCategory?.name || asset.category || 'Not specified'}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Brand / Manufacturer</p>
+                  <p className="font-semibold text-slate-900">{asset.brand || 'Not specified'}</p>
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Serial Number</p>
@@ -296,7 +307,7 @@ export default async function AssetDetailPage({ params }: Props) {
           )}
 
           {/* Asset Utilization */}
-          <AssetCostBreakdown assetId={asset.id} purchaseDate={asset.purchaseDate} />
+          <AssetCostBreakdown assetId={asset.id} purchaseDate={asset.purchaseDate} isShared={asset.isShared} />
 
           {/* Depreciation */}
           <DepreciationCard assetId={asset.id} />
