@@ -52,7 +52,7 @@ export function AssetListTableServerSearch() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('active');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('createdAt');
@@ -87,7 +87,11 @@ export function AssetListTableServerSearch() {
       });
 
       if (debouncedSearch) params.append('q', debouncedSearch);
-      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
+      if (statusFilter === 'active') {
+        params.append('excludeStatus', 'DISPOSED');
+      } else if (statusFilter && statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
       if (typeFilter && typeFilter !== 'all') params.append('type', typeFilter);
       if (categoryFilter && categoryFilter !== 'all') params.append('category', categoryFilter);
 
@@ -147,10 +151,11 @@ export function AssetListTableServerSearch() {
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger>
-            <SelectValue placeholder="All Statuses" />
+            <SelectValue placeholder="Active" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="all">All (incl. Disposed)</SelectItem>
             <SelectItem value="IN_USE">In Use</SelectItem>
             <SelectItem value="SPARE">Spare</SelectItem>
             <SelectItem value="REPAIR">Repair</SelectItem>
@@ -256,7 +261,7 @@ export function AssetListTableServerSearch() {
             ) : assets.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                  {debouncedSearch || statusFilter !== 'all' || typeFilter !== 'all' || categoryFilter !== 'all'
+                  {debouncedSearch || (statusFilter !== 'all' && statusFilter !== 'active') || typeFilter !== 'all' || categoryFilter !== 'all'
                     ? 'No assets match your filters'
                     : 'No assets found. Create your first asset!'}
                 </TableCell>

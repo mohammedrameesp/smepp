@@ -1,8 +1,33 @@
 /**
  * @file route.ts
  * @description Asset assignment acceptance API endpoint
- * @module operations/assets
+ * @module api/asset-requests/[id]/accept
+ *
+ * FEATURES:
+ * - User accepts an asset assignment
+ * - Assigns asset to user (status → IN_USE)
+ * - Creates asset history entry
+ * - Notifies all admins via email and in-app
+ *
+ * ACCEPTANCE FLOW:
+ * - Request: PENDING_USER_ACCEPTANCE → ACCEPTED
+ * - Asset: SPARE → IN_USE (assigned to member)
+ *
+ * This endpoint is called when:
+ * 1. Admin created ADMIN_ASSIGNMENT and user accepts
+ * 2. Employee's EMPLOYEE_REQUEST was approved and user accepts
+ *
+ * SECURITY:
+ * - Only the target member can accept their assignment
+ * - Auth required
+ * - Assets module must be enabled
+ * - Tenant-isolated
  */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -16,6 +41,48 @@ import { assetAssignmentAcceptedEmail } from '@/lib/email-templates';
 import { createBulkNotifications, NotificationTemplates } from '@/lib/domains/system/notifications';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/asset-requests/[id]/accept - Accept Assignment
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Accept an asset assignment.
+ * Only the target member can accept their own assignment.
+ *
+ * Actions performed:
+ * 1. Updates request status to ACCEPTED
+ * 2. Assigns asset to user (assignedMemberId, assignmentDate)
+ * 3. Changes asset status to IN_USE
+ * 4. Creates asset history entry
+ * 5. Creates request history entry
+ * 6. Notifies all admins
+ *
+ * @route POST /api/asset-requests/[id]/accept
+ *
+ * @param {string} id - Request ID (path parameter)
+ *
+ * @body {string} [notes] - Optional acceptance notes
+ *
+ * @returns {AssetRequest} Updated request with asset and member info
+ *
+ * @throws {400} ID is required
+ * @throws {400} Invalid request body
+ * @throws {400} Cannot accept this assignment (invalid state)
+ * @throws {403} Organization context required
+ * @throws {403} Access denied (not the target member)
+ * @throws {404} Asset request not found
+ *
+ * @example Request body:
+ * { "notes": "Received in good condition" }
+ *
+ * @example Response:
+ * {
+ *   "id": "clx...",
+ *   "requestNumber": "AR-25-001",
+ *   "status": "ACCEPTED",
+ *   "asset": { "assetTag": "BCE-CP-25001", "status": "IN_USE" }
+ * }
+ */
 async function acceptAssetAssignmentHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
@@ -28,6 +95,9 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 1: Validate request body
+    // ─────────────────────────────────────────────────────────────────────────────
     const body = await request.json();
 
     const validation = acceptAssetAssignmentSchema.safeParse(body);
@@ -40,7 +110,9 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
 
     const { notes } = validation.data;
 
-    // Use findFirst with tenantId to prevent IDOR attacks
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 2: Fetch request (tenant-scoped for IDOR prevention)
+    // ─────────────────────────────────────────────────────────────────────────────
     const assetRequest = await prisma.assetRequest.findFirst({
       where: { id, tenantId },
       include: {
@@ -54,15 +126,23 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       return NextResponse.json({ error: 'Asset request not found' }, { status: 404 });
     }
 
-    // Only the target member can accept
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 3: Verify only target member can accept
+    // ─────────────────────────────────────────────────────────────────────────────
     if (assetRequest.memberId !== session.user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 4: Check if user can respond to this request
+    // ─────────────────────────────────────────────────────────────────────────────
     if (!canUserRespond(assetRequest.status, assetRequest.type)) {
       return NextResponse.json({ error: 'Cannot accept this assignment' }, { status: 400 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 5: Accept assignment in transaction
+    // ─────────────────────────────────────────────────────────────────────────────
     const updatedRequest = await prisma.$transaction(async (tx) => {
       // Update request status
       const updated = await tx.assetRequest.update({
@@ -123,6 +203,9 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       return updated;
     });
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 6: Log activity
+    // ─────────────────────────────────────────────────────────────────────────────
     await logAction(
       tenantId,
       session.user.id,
@@ -136,9 +219,10 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       }
     );
 
-    // Send email and in-app notifications to admins (tenant-scoped)
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 7: Notify all admins via email and in-app
+    // ─────────────────────────────────────────────────────────────────────────────
     try {
-      // Get org slug/name for email URLs
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
         select: { slug: true, name: true },
@@ -146,6 +230,7 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       const orgSlug = org?.slug || 'app';
       const orgName = org?.name || 'Durj';
 
+      // Get all admins in tenant
       const admins = await prisma.teamMember.findMany({
         where: {
           tenantId,
@@ -153,6 +238,8 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
         },
         select: { id: true, email: true },
       });
+
+      // Send batch email to all admins
       const emailData = assetAssignmentAcceptedEmail({
         requestNumber: assetRequest.requestNumber,
         assetTag: assetRequest.asset.assetTag,
@@ -166,7 +253,7 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       });
       await sendBatchEmails(admins.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
 
-      // In-app notifications
+      // Send in-app notifications to all admins
       const notifications = admins.map(admin =>
         NotificationTemplates.assetAssignmentAccepted(
           admin.id,

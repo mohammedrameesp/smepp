@@ -33,7 +33,6 @@ interface Asset {
   assetTag?: string;
   type: string;
   categoryId?: string;
-  category?: string; // deprecated
   brand?: string;
   model: string;
   serial?: string;
@@ -86,7 +85,6 @@ export default function EditAssetPage() {
       assetTag: '',
       type: '',
       categoryId: '',
-      category: '', // deprecated
       brand: '',
       model: '',
       serial: '',
@@ -252,7 +250,6 @@ export default function EditAssetPage() {
           assetTag: assetData.assetTag || '',
           type: assetData.type || '',
           categoryId: assetData.categoryId || '',
-          category: assetData.category || '', // deprecated fallback
           brand: assetData.brand || '',
           model: assetData.model || '',
           serial: assetData.serial || '',

@@ -5,7 +5,6 @@
 
 import {
   assignDepreciationCategorySchema,
-  triggerDepreciationSchema,
   depreciationRecordsQuerySchema,
   createDepreciationCategorySchema,
   updateDepreciationCategorySchema,
@@ -122,72 +121,6 @@ describe('Depreciation Validation Schemas', () => {
 
       const result = assignDepreciationCategorySchema.safeParse(input);
       expect(result.success).toBe(true);
-    });
-  });
-
-  describe('triggerDepreciationSchema', () => {
-    it('should accept empty input and use defaults', () => {
-      const result = triggerDepreciationSchema.safeParse({});
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.calculationDate).toBeInstanceOf(Date);
-      }
-    });
-
-    it('should accept valid calculation date', () => {
-      const input = {
-        calculationDate: '2024-06-15T00:00:00.000Z',
-      };
-
-      const result = triggerDepreciationSchema.safeParse(input);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.calculationDate).toBeInstanceOf(Date);
-        expect(result.data.calculationDate.toISOString()).toBe(input.calculationDate);
-      }
-    });
-
-    it('should accept notes within limit', () => {
-      const input = {
-        notes: 'Manual depreciation for Q2 2024',
-      };
-
-      const result = triggerDepreciationSchema.safeParse(input);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.notes).toBe(input.notes);
-      }
-    });
-
-    it('should reject notes exceeding 500 characters', () => {
-      const input = {
-        notes: 'x'.repeat(501),
-      };
-
-      const result = triggerDepreciationSchema.safeParse(input);
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toContain('500');
-      }
-    });
-
-    it('should accept notes exactly 500 characters', () => {
-      const input = {
-        notes: 'x'.repeat(500),
-      };
-
-      const result = triggerDepreciationSchema.safeParse(input);
-      expect(result.success).toBe(true);
-    });
-
-    it('should reject invalid datetime format', () => {
-      const input = {
-        calculationDate: 'not-a-date',
-      };
-
-      const result = triggerDepreciationSchema.safeParse(input);
-      expect(result.success).toBe(false);
     });
   });
 
@@ -544,16 +477,6 @@ describe('Depreciation Validation Schemas', () => {
       };
 
       const result = assignDepreciationCategorySchema.safeParse(input);
-      expect(result.success).toBe(true);
-    });
-
-    it('should handle year-end depreciation run', () => {
-      const input = {
-        calculationDate: '2024-12-31T23:59:59.999Z',
-        notes: 'Year-end depreciation calculation for 2024 fiscal year closing',
-      };
-
-      const result = triggerDepreciationSchema.safeParse(input);
       expect(result.success).toBe(true);
     });
 

@@ -23,20 +23,6 @@ export const assignDepreciationCategorySchema = z.object({
 export type AssignDepreciationCategoryInput = z.infer<typeof assignDepreciationCategorySchema>;
 
 /**
- * Schema for manually triggering depreciation calculation
- */
-export const triggerDepreciationSchema = z.object({
-  calculationDate: z
-    .string()
-    .datetime()
-    .optional()
-    .transform((val) => (val ? new Date(val) : new Date())),
-  notes: z.string().max(500, 'Notes cannot exceed 500 characters').optional(),
-});
-
-export type TriggerDepreciationInput = z.infer<typeof triggerDepreciationSchema>;
-
-/**
  * Schema for querying depreciation records
  */
 export const depreciationRecordsQuerySchema = z.object({

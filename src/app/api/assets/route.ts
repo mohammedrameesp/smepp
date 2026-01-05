@@ -1,13 +1,31 @@
 /**
  * @file route.ts
  * @description Asset list and creation API endpoints
- * @module operations/assets
+ * @module api/assets
+ *
+ * FEATURES:
+ * - Paginated asset listing with search and filters
+ * - Asset creation with auto-tag generation
+ * - Multi-currency support (QAR/USD) with automatic conversion
+ * - Auto-learning type-to-category mappings
+ * - Setup progress tracking for onboarding
+ *
+ * SECURITY:
+ * - GET: Requires authentication + assets module enabled
+ * - POST: Requires admin role + assets module enabled
+ *
+ * RATE LIMITING: Enabled for both endpoints
  */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import { NextRequest, NextResponse } from 'next/server';
 import { AssetStatus, Prisma } from '@prisma/client';
 import { createAssetSchema, assetQuerySchema } from '@/lib/validations/assets';
 import { logAction, ActivityActions } from '@/lib/activity';
-import { generateAssetTag, generateAssetTagByCategory } from '@/lib/asset-utils';
+import { generateAssetTagByCategory } from '@/lib/asset-utils';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -16,20 +34,46 @@ import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { prisma as globalPrisma } from '@/lib/core/prisma';
 import { ASSET_TYPE_SUGGESTIONS } from '@/lib/constants/asset-type-suggestions';
 
-// Type for asset list filters
-interface AssetFilters {
-  status?: AssetStatus;
-  type?: string;
-  categoryId?: string;
-  category?: string;
-}
+// ═══════════════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Auto-learn: Save a new type-to-category mapping if it doesn't exist in defaults
- * This allows the system to learn from user entries automatically
+ * Filter parameters for asset list queries
+ */
+interface AssetFilters {
+  /** Filter by asset status (AVAILABLE, IN_USE, MAINTENANCE, etc.) */
+  status?: AssetStatus;
+  /** Exclude assets with this status (e.g., DISPOSED for active-only view) */
+  statusNot?: AssetStatus;
+  /** Filter by asset type (e.g., "Laptop", "Monitor") */
+  type?: string;
+  /** Filter by asset category ID */
+  categoryId?: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Auto-learn: Save a new type-to-category mapping if it doesn't exist in defaults.
+ * This allows the system to learn from user entries automatically and provide
+ * better suggestions for future asset creation.
+ *
+ * @param tenantId - Organization ID
+ * @param typeName - Asset type name (e.g., "Gaming Laptop")
+ * @param categoryId - Category ID to map to
+ *
+ * @example
+ * // When user creates asset with type "Gaming Laptop" under "Computing" category,
+ * // future "Gaming Laptop" entries will auto-suggest "Computing" category
+ * await autoLearnTypeMapping(tenantId, "Gaming Laptop", "category-id-123");
  */
 async function autoLearnTypeMapping(tenantId: string, typeName: string, categoryId: string) {
   const normalizedType = typeName.trim();
+
+  // Skip empty or too-short type names
   if (!normalizedType || normalizedType.length < 2) return;
 
   // Check if this type already exists in default suggestions (case-insensitive)
@@ -37,7 +81,7 @@ async function autoLearnTypeMapping(tenantId: string, typeName: string, category
     (s) => s.type.toLowerCase() === normalizedType.toLowerCase()
   );
 
-  // Skip if it's already a default type
+  // Skip if it's already a default type - no need to learn
   if (isDefaultType) return;
 
   // Check if mapping already exists for this tenant (case-insensitive)
@@ -51,7 +95,7 @@ async function autoLearnTypeMapping(tenantId: string, typeName: string, category
   // Skip if mapping already exists
   if (existingMapping) return;
 
-  // Create new mapping (auto-learned)
+  // Create new mapping (auto-learned from user behavior)
   await globalPrisma.assetTypeMapping.create({
     data: {
       tenantId,
@@ -61,10 +105,55 @@ async function autoLearnTypeMapping(tenantId: string, typeName: string, category
   });
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /api/assets - List Assets (Most Used)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * List assets with pagination, search, and filters.
+ * This is the most frequently called endpoint - used on every asset list page load.
+ *
+ * @route GET /api/assets
+ *
+ * @query {string} [q] - Search term (searches: assetTag, model, brand, serial, type, supplier, configuration)
+ * @query {AssetStatus} [status] - Filter by status
+ * @query {string} [type] - Filter by asset type
+ * @query {string} [categoryId] - Filter by category ID
+ * @query {number} [p=1] - Page number
+ * @query {number} [ps=10] - Page size
+ * @query {string} [sort=createdAt] - Sort field
+ * @query {string} [order=desc] - Sort order (asc/desc)
+ *
+ * @returns {Object} Paginated asset list with assigned member and category info
+ * @returns {Asset[]} assets - Array of assets
+ * @returns {Object} pagination - Pagination metadata
+ *
+ * @example Response:
+ * {
+ *   "assets": [
+ *     {
+ *       "id": "clx...",
+ *       "assetTag": "BCE-CP-25001",
+ *       "model": "MacBook Pro 14",
+ *       "assignedMember": { "id": "...", "name": "John", "email": "john@..." },
+ *       "assetCategory": { "id": "...", "code": "CP", "name": "Computing" }
+ *     }
+ *   ],
+ *   "pagination": {
+ *     "page": 1,
+ *     "pageSize": 10,
+ *     "total": 45,
+ *     "totalPages": 5,
+ *     "hasMore": true
+ *   }
+ * }
+ */
 async function getAssetsHandler(request: NextRequest, context: APIContext) {
   const { prisma } = context;
 
-  // Parse query parameters
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 1: Parse and validate query parameters
+  // ─────────────────────────────────────────────────────────────────────────────
   const { searchParams } = new URL(request.url);
   const queryParams = Object.fromEntries(searchParams.entries());
 
@@ -76,26 +165,31 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
     }, { status: 400 });
   }
 
-  const { q, status, type, categoryId, category, p, ps, sort, order } = validation.data;
+  const { q, status, excludeStatus, type, categoryId, p, ps, sort, order } = validation.data;
 
-  // Build filters object with proper typing
-  const filters: AssetFilters = {};
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 2: Build filter object (Prisma-compatible format)
+  // ─────────────────────────────────────────────────────────────────────────────
+  const filters: Record<string, unknown> = {};
   if (status) filters.status = status;
+  if (excludeStatus) filters.status = { not: excludeStatus };
   if (type) filters.type = type;
   if (categoryId) filters.categoryId = categoryId;
-  if (category) filters.category = category;
 
-  // Build where clause using reusable search filter
+  // Build where clause using reusable search filter utility
+  // Searches across multiple fields with OR logic
   const where = buildFilterWithSearch({
     searchTerm: q,
     searchFields: ['assetTag', 'model', 'brand', 'serial', 'type', 'supplier', 'configuration'],
     filters: Object.keys(filters).length > 0 ? filters : undefined,
   });
 
-  // Calculate pagination
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 3: Execute query with pagination
+  // Note: Tenant filtering is handled automatically by context.prisma
+  // ─────────────────────────────────────────────────────────────────────────────
   const skip = (p - 1) * ps;
 
-  // Fetch assets (tenant filtering handled by context.prisma)
   const [assets, total] = await Promise.all([
     prisma.asset.findMany({
       where,
@@ -103,6 +197,7 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
       take: ps,
       skip,
       include: {
+        // Include assigned team member info for display
         assignedMember: {
           select: {
             id: true,
@@ -110,6 +205,7 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
             email: true,
           },
         },
+        // Include category info for grouping/filtering
         assetCategory: {
           select: {
             id: true,
@@ -122,6 +218,9 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
     prisma.asset.count({ where }),
   ]);
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 4: Return paginated response
+  // ─────────────────────────────────────────────────────────────────────────────
   return NextResponse.json({
     assets,
     pagination: {
@@ -136,12 +235,58 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
 
 export const GET = withErrorHandler(getAssetsHandler, { requireAuth: true, rateLimit: true, requireModule: 'assets' });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/assets - Create Asset
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Create a new asset with automatic tag generation and currency conversion.
+ *
+ * @route POST /api/assets
+ *
+ * @body {string} type - Asset type (e.g., "Laptop", "Monitor")
+ * @body {string} model - Model name/number (required)
+ * @body {string} [categoryId] - Category ID (required for auto-tag generation)
+ * @body {string} [assetTag] - Custom asset tag (auto-generated if not provided)
+ * @body {string} [brand] - Brand name
+ * @body {string} [serial] - Serial number
+ * @body {string} [configuration] - Configuration details
+ * @body {string} [purchaseDate] - Purchase date (ISO string)
+ * @body {string} [warrantyExpiry] - Warranty expiry date (ISO string)
+ * @body {string} [supplier] - Supplier name
+ * @body {string} [invoiceNumber] - Invoice/PO number
+ * @body {number} [price] - Purchase price
+ * @body {string} [priceCurrency=QAR] - Price currency (QAR or USD)
+ * @body {number} [priceQAR] - Price in QAR (auto-calculated if not provided)
+ * @body {AssetStatus} [status=AVAILABLE] - Initial status
+ * @body {string} [notes] - Additional notes
+ * @body {string} [location] - Physical location
+ * @body {boolean} [isShared=false] - Whether asset is shared resource
+ * @body {string} [depreciationCategoryId] - Depreciation category for IFRS
+ * @body {string} [assignedMemberId] - Initially assigned team member
+ *
+ * @returns {Asset} Created asset with relations
+ *
+ * @throws {400} Invalid request body
+ * @throws {400} Asset tag already exists (P2002)
+ *
+ * @example Request:
+ * {
+ *   "type": "Laptop",
+ *   "model": "MacBook Pro 14",
+ *   "categoryId": "clx...",
+ *   "price": 1500,
+ *   "priceCurrency": "USD"
+ * }
+ */
 async function createAssetHandler(request: NextRequest, context: APIContext) {
   const { prisma, tenant } = context;
   const tenantId = tenant!.tenantId;
   const userId = tenant!.userId;
 
-  // Parse and validate request body
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 1: Parse and validate request body
+  // ─────────────────────────────────────────────────────────────────────────────
   const body = await request.json();
   const validation = createAssetSchema.safeParse(body);
 
@@ -154,55 +299,56 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
 
   const data = validation.data;
 
-  // Generate asset tag if not provided
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 2: Generate asset tag if not provided
+  // Format: ORG-CAT-YYSEQ (e.g., BCE-CP-25001)
+  // Requires categoryId to generate tag
+  // ─────────────────────────────────────────────────────────────────────────────
   let assetTag = data.assetTag;
-  if (!assetTag) {
-    // If categoryId is provided, use new format (ORG-CAT-YYSEQ)
-    if (data.categoryId) {
-      const category = await globalPrisma.assetCategory.findFirst({
-        where: { id: data.categoryId, tenantId },
-        select: { code: true },
-      });
-      if (category) {
-        const orgPrefix = await getOrganizationCodePrefix(tenantId);
-        assetTag = await generateAssetTagByCategory(category.code, tenantId, orgPrefix);
-      }
-    }
-    // Fallback to legacy format (ORG-TYPE-YEAR-SEQ) if no category or category not found
-    if (!assetTag) {
-      assetTag = await generateAssetTag(data.type, tenantId);
+  if (!assetTag && data.categoryId) {
+    const category = await globalPrisma.assetCategory.findFirst({
+      where: { id: data.categoryId, tenantId },
+      select: { code: true },
+    });
+    if (category) {
+      const orgPrefix = await getOrganizationCodePrefix(tenantId);
+      assetTag = await generateAssetTagByCategory(category.code, tenantId, orgPrefix);
     }
   }
-  // Ensure tag is always uppercase
+
+  // Ensure tag is always uppercase for consistency
   if (assetTag) {
     assetTag = assetTag.toUpperCase();
   }
 
-  // SAFEGUARD: Always calculate priceQAR to prevent data loss
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 3: Handle multi-currency pricing
+  // Always calculate priceQAR to prevent data loss
+  // QAR is the base currency for all financial calculations
+  // ─────────────────────────────────────────────────────────────────────────────
   let priceQAR = data.priceQAR;
-
-  // Default currency to QAR if not specified
   const currency = data.priceCurrency || 'QAR';
 
   if (data.price && !priceQAR) {
-    // If priceQAR is missing, calculate it based on currency
     if (currency === 'QAR') {
       // QAR is base currency, store as-is
       priceQAR = data.price;
     } else {
-      // USD - convert to QAR
+      // USD - convert to QAR using fixed rate
       priceQAR = data.price * USD_TO_QAR_RATE;
     }
   }
 
-  // Create asset (tenantId auto-injected by context.prisma)
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 4: Create asset in database
+  // Note: tenantId is explicitly set (not auto-injected) for clarity
+  // ─────────────────────────────────────────────────────────────────────────────
   try {
     const asset = await prisma.asset.create({
       data: {
         assetTag,
         type: data.type,
         categoryId: data.categoryId || null,
-        category: data.category || null, // DEPRECATED: for backward compat
         brand: data.brand || null,
         model: data.model,
         serial: data.serial || null,
@@ -240,7 +386,12 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
       },
     });
 
-    // Log activity (non-critical, don't fail if this errors)
+    // ───────────────────────────────────────────────────────────────────────────
+    // STEP 5: Post-creation tasks (non-blocking)
+    // These are fire-and-forget operations that shouldn't fail the request
+    // ───────────────────────────────────────────────────────────────────────────
+
+    // Log activity for audit trail
     try {
       await logAction(
         tenantId,
@@ -251,26 +402,29 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
         { assetModel: asset.model, assetType: asset.type, assetTag: asset.assetTag }
       );
     } catch {
-      // Ignore activity log errors
+      // Ignore activity log errors - non-critical
     }
 
-    // Update setup progress (non-blocking)
+    // Update onboarding checklist progress
     updateSetupProgress(tenantId, 'firstAssetAdded', true).catch(() => {});
 
-    // Auto-learn: Save type-to-category mapping if it's a new type (non-blocking)
+    // Auto-learn type-to-category mapping for better future suggestions
     if (data.type && data.categoryId) {
       autoLearnTypeMapping(tenantId, data.type, data.categoryId).catch(() => {});
     }
 
     return NextResponse.json(asset, { status: 201 });
   } catch (error) {
-    // Handle unique constraint violation (P2002)
+    // ───────────────────────────────────────────────────────────────────────────
+    // Handle unique constraint violation (duplicate asset tag)
+    // ───────────────────────────────────────────────────────────────────────────
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return NextResponse.json({
         error: 'Asset tag already exists',
         details: [{ message: `Asset tag "${assetTag}" is already in use. Please use a unique asset tag.` }]
       }, { status: 400 });
     }
+
     // Re-throw other errors to be handled by withErrorHandler
     throw error;
   }

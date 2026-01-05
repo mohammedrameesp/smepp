@@ -1,8 +1,42 @@
 /**
  * @file route.ts
  * @description Asset request statistics API endpoint
- * @module operations/assets
+ * @module api/asset-requests/stats
+ *
+ * FEATURES:
+ * - Returns request counts by status
+ * - Role-based response (admin vs regular user)
+ * - Admins see org-wide pending counts
+ * - Users see only their own pending counts
+ *
+ * USE CASES:
+ * - Dashboard statistics widgets
+ * - Notification badge counts
+ * - Admin workqueue indicators
+ * - User pending items summary
+ *
+ * ADMIN VIEW:
+ * - pendingRequests: Employee requests needing approval
+ * - pendingReturns: Return requests needing approval
+ * - pendingAssignments: Assignments waiting user response
+ * - totalPendingAdmin: Sum of items admin can action
+ *
+ * USER VIEW:
+ * - pendingAssignments: Assignments waiting for their response
+ * - pendingRequests: Their requests waiting for admin
+ * - pendingReturns: Their return requests waiting for admin
+ *
+ * SECURITY:
+ * - Auth required
+ * - Role-based response filtering
+ * - Tenant-isolated counts
+ * - Assets module must be enabled
  */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -10,6 +44,39 @@ import { AssetRequestStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /api/asset-requests/stats - Get Request Statistics
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get asset request statistics based on user role.
+ *
+ * Admins get organization-wide counts of items needing action.
+ * Regular users get counts of their own pending items.
+ *
+ * @route GET /api/asset-requests/stats
+ *
+ * @returns {Object} Request counts by status category
+ *
+ * @throws {403} Organization context required
+ *
+ * @example Admin Response:
+ * {
+ *   "pendingRequests": 5,
+ *   "pendingReturns": 2,
+ *   "pendingAssignments": 3,
+ *   "totalPendingAdmin": 7,
+ *   "totalPending": 10
+ * }
+ *
+ * @example User Response:
+ * {
+ *   "pendingAssignments": 1,
+ *   "pendingRequests": 2,
+ *   "pendingReturns": 0,
+ *   "totalPending": 3
+ * }
+ */
 async function getAssetRequestStatsHandler(_request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
@@ -20,14 +87,20 @@ async function getAssetRequestStatsHandler(_request: NextRequest, context: APICo
     const isAdmin = session.user.teamMemberRole === 'ADMIN';
 
     if (isAdmin) {
-      // Admin stats - all pending items needing admin action (tenant-scoped)
+      // ─────────────────────────────────────────────────────────────────────────────
+      // ADMIN VIEW: Organization-wide pending counts
+      // Shows items that need admin action or attention
+      // ─────────────────────────────────────────────────────────────────────────────
       const [pendingRequests, pendingReturns, pendingAssignments] = await Promise.all([
+        // Employee requests waiting for admin approval
         prisma.assetRequest.count({
           where: { tenantId, status: AssetRequestStatus.PENDING_ADMIN_APPROVAL },
         }),
+        // Return requests waiting for admin approval
         prisma.assetRequest.count({
           where: { tenantId, status: AssetRequestStatus.PENDING_RETURN_APPROVAL },
         }),
+        // Assignments waiting for user acceptance (FYI for admin)
         prisma.assetRequest.count({
           where: { tenantId, status: AssetRequestStatus.PENDING_USER_ACCEPTANCE },
         }),
@@ -41,8 +114,12 @@ async function getAssetRequestStatsHandler(_request: NextRequest, context: APICo
         totalPending: pendingRequests + pendingReturns + pendingAssignments,
       });
     } else {
-      // User stats - their pending items (tenant-scoped)
+      // ─────────────────────────────────────────────────────────────────────────────
+      // USER VIEW: Only their own pending items
+      // Shows what the user needs to respond to or is waiting on
+      // ─────────────────────────────────────────────────────────────────────────────
       const [myPendingAssignments, myPendingRequests, myPendingReturns] = await Promise.all([
+        // Assignments waiting for this user to accept/decline
         prisma.assetRequest.count({
           where: {
             tenantId,
@@ -50,6 +127,7 @@ async function getAssetRequestStatsHandler(_request: NextRequest, context: APICo
             status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
           },
         }),
+        // This user's requests waiting for admin approval
         prisma.assetRequest.count({
           where: {
             tenantId,
@@ -57,6 +135,7 @@ async function getAssetRequestStatsHandler(_request: NextRequest, context: APICo
             status: AssetRequestStatus.PENDING_ADMIN_APPROVAL,
           },
         }),
+        // This user's return requests waiting for admin approval
         prisma.assetRequest.count({
           where: {
             tenantId,

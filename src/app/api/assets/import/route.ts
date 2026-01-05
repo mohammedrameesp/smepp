@@ -25,7 +25,6 @@ import {
   type ImportRow,
 } from '@/lib/core/import-utils';
 import { parseAssetRow, buildAssetDbData } from '@/lib/domains/operations/assets/asset-import';
-import { generateAssetTag } from '@/lib/asset-utils';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
@@ -95,10 +94,8 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
               }
             }
             assetData.assetTag = assetTag;
-          } else if (!existingAssetById) {
-            // New asset needs a tag
-            assetData.assetTag = await generateAssetTag(type, tenantId);
           }
+          // If no assetTag provided and asset is new, leave it undefined (can be set later via UI)
 
           // Use upsert with ID to preserve relationships
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -148,8 +145,8 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
           continue;
         }
 
-        // No ID provided - use tag-based logic
-        const finalAssetTag = assetTag || (await generateAssetTag(type, tenantId));
+        // No ID provided - use tag-based logic (assetTag from CSV or null)
+        const finalAssetTag = assetTag || null;
 
         // Check if asset tag already exists IN THIS TENANT
         if (finalAssetTag) {
@@ -188,7 +185,7 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
           }
         }
 
-        assetData.assetTag = finalAssetTag;
+        assetData.assetTag = finalAssetTag || undefined;
 
         // Create new asset
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

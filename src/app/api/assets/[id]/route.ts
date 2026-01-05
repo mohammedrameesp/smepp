@@ -1,8 +1,27 @@
 /**
  * @file route.ts
  * @description Single asset CRUD API endpoints (GET, PUT, DELETE)
- * @module operations/assets
+ * @module api/assets/[id]
+ *
+ * FEATURES:
+ * - Get single asset with assignment details
+ * - Update asset with change tracking and history
+ * - Delete asset with audit logging
+ * - Assignment change notifications (email + in-app)
+ * - Auto-unassign when status changes from IN_USE
+ * - Location change tracking
+ *
+ * SECURITY:
+ * - GET: Auth required, user can only view assigned assets (admins can view all)
+ * - PUT: Admin role required
+ * - DELETE: Admin role required
+ * - All operations verify tenantId to prevent IDOR attacks
  */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -21,6 +40,34 @@ import {
   transformAssetUpdateData,
 } from '@/lib/domains/operations/assets/asset-update';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /api/assets/[id] - Get Single Asset (Most Used)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get a single asset by ID with assignment details.
+ * Most frequently called when viewing asset detail page.
+ *
+ * @route GET /api/assets/[id]
+ *
+ * @param {string} id - Asset ID (path parameter)
+ *
+ * @returns {Asset} Asset with assigned member info and assignment date
+ *
+ * @throws {403} Organization context required
+ * @throws {400} ID is required
+ * @throws {404} Asset not found
+ * @throws {403} Forbidden (non-admin trying to view unassigned asset)
+ *
+ * @example Response:
+ * {
+ *   "id": "clx...",
+ *   "assetTag": "BCE-CP-25001",
+ *   "model": "MacBook Pro",
+ *   "assignedMember": { "id": "...", "name": "John", "email": "john@..." },
+ *   "assignmentDate": "2025-01-15T00:00:00.000Z"
+ * }
+ */
 async function getAssetHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
@@ -33,7 +80,9 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Use findFirst with tenantId to prevent IDOR attacks
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 1: Fetch asset with tenant isolation (prevents IDOR attacks)
+    // ─────────────────────────────────────────────────────────────────────────────
     const asset = await prisma.asset.findFirst({
       where: { id, tenantId },
       include: {
@@ -51,12 +100,18 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
     }
 
-    // Authorization check: Only admins or the assigned member can view the asset
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 2: Authorization check
+    // Admins can view any asset, members can only view their assigned assets
+    // ─────────────────────────────────────────────────────────────────────────────
     if (session.user.teamMemberRole !== TeamMemberRole.ADMIN && asset.assignedMemberId !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Fetch the most recent assignment date from history if asset is assigned
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 3: Fetch assignment date from history (if asset is assigned)
+    // This provides the "assigned since" date for display
+    // ─────────────────────────────────────────────────────────────────────────────
     let assignmentDate = null;
     if (asset.assignedMemberId) {
       const mostRecentAssignment = await prisma.assetHistory.findFirst({
@@ -77,6 +132,44 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
     });
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// PUT /api/assets/[id] - Update Asset
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Update an asset with full change tracking and history recording.
+ * Handles assignment changes, location tracking, and email notifications.
+ *
+ * @route PUT /api/assets/[id]
+ *
+ * @param {string} id - Asset ID (path parameter)
+ *
+ * @body {string} [assetTag] - Updated asset tag (must be unique)
+ * @body {string} [type] - Asset type
+ * @body {string} [model] - Model name
+ * @body {string} [brand] - Brand name
+ * @body {string} [serial] - Serial number
+ * @body {AssetStatus} [status] - Status (auto-unassigns if not IN_USE)
+ * @body {string} [assignedMemberId] - New assigned member ID
+ * @body {string} [assignmentDate] - Custom assignment date (ISO string)
+ * @body {string} [location] - Physical location
+ * @body {number} [price] - Purchase price
+ * @body {string} [priceCurrency] - Currency (QAR/USD)
+ * @body ... (see updateAssetSchema for full list)
+ *
+ * @returns {Asset} Updated asset with relations
+ *
+ * @throws {400} Invalid request body
+ * @throws {400} Asset tag already exists
+ * @throws {400} Assigned member not found in organization
+ * @throws {404} Asset not found
+ *
+ * @sideEffects
+ * - Records changes in AssetHistory
+ * - Sends assignment email to new member
+ * - Auto-unassigns if status changes from IN_USE
+ * - Records location changes in history
+ */
 async function updateAssetHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
@@ -89,7 +182,9 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Parse and validate request body
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 1: Parse and validate request body
+    // ─────────────────────────────────────────────────────────────────────────────
     const body = await request.json();
     const validation = updateAssetSchema.safeParse(body);
 
@@ -102,12 +197,14 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
 
     const data = validation.data;
 
-    // Ensure asset tag is always uppercase if provided
+    // Ensure asset tag is always uppercase for consistency
     if (data.assetTag) {
       data.assetTag = data.assetTag.toUpperCase();
     }
 
-    // Get current asset state within tenant
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 2: Get current asset state for change detection
+    // ─────────────────────────────────────────────────────────────────────────────
     const currentAsset = await prisma.asset.findFirst({
       where: { id, tenantId },
       include: {
@@ -121,7 +218,9 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
     }
 
-    // Check if asset tag is being changed and if the new tag already exists within tenant
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 3: Validate asset tag uniqueness (if changing)
+    // ─────────────────────────────────────────────────────────────────────────────
     if (data.assetTag && data.assetTag !== currentAsset.assetTag) {
       const existingAsset = await prisma.asset.findFirst({
         where: {
@@ -139,18 +238,21 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       }
     }
 
-    // Calculate priceQAR using helper (handles price/currency updates and conversions)
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 4: Calculate priceQAR for multi-currency support
+    // ─────────────────────────────────────────────────────────────────────────────
     const calculatedPriceQAR = calculateAssetPriceQAR(data, currentAsset, data.priceQAR);
 
-    // Transform data for Prisma (converts dates, handles empty strings, removes non-model fields)
+    // Transform data for Prisma (converts dates, handles empty strings)
     const updateData = transformAssetUpdateData(data) as Record<string, unknown>;
 
-    // Set calculated priceQAR if available
     if (calculatedPriceQAR !== undefined) {
       updateData.priceQAR = calculatedPriceQAR;
     }
 
-    // Validate that the assigned member belongs to the same organization
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 5: Validate assigned member belongs to same organization
+    // ─────────────────────────────────────────────────────────────────────────────
     if (updateData.assignedMemberId) {
       const assignedMember = await prisma.teamMember.findFirst({
         where: {
@@ -165,7 +267,10 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       }
     }
 
-    // Auto-unassign if status is changing to anything other than IN_USE
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 6: Auto-unassign if status is changing to non-IN_USE
+    // Business rule: Asset cannot be assigned if it's in MAINTENANCE, SPARE, etc.
+    // ─────────────────────────────────────────────────────────────────────────────
     if (data.status && data.status !== 'IN_USE' && currentAsset.assignedMemberId) {
       updateData.assignedMemberId = null;
 
@@ -180,7 +285,9 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       );
     }
 
-    // Track location changes
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 7: Track location changes for audit trail
+    // ─────────────────────────────────────────────────────────────────────────────
     if (data.location !== undefined && data.location !== currentAsset.location) {
       const { recordAssetLocationChange } = await import('@/lib/domains/operations/assets/asset-history');
       await recordAssetLocationChange(
@@ -191,7 +298,9 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       );
     }
 
-    // Update asset
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 8: Update asset in database
+    // ─────────────────────────────────────────────────────────────────────────────
     const asset = await prisma.asset.update({
       where: { id },
       data: updateData,
@@ -206,7 +315,9 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       },
     });
 
-    // Track assignment changes with custom date
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 9: Handle assignment changes (with custom date support)
+    // ─────────────────────────────────────────────────────────────────────────────
     const memberChanged = data.assignedMemberId !== undefined && data.assignedMemberId !== currentAsset.assignedMemberId;
 
     if (memberChanged) {
@@ -223,10 +334,9 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         assignmentDate
       );
 
-      // Send assignment email to the new member (if assigned, not unassigned)
+      // Send assignment email to the new member (non-blocking)
       if (asset.assignedMember?.email) {
         try {
-          // Get org name for email
           const org = await prisma.organization.findUnique({
             where: { id: tenantId },
             select: { name: true },
@@ -253,8 +363,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         }
       }
     } else if (data.assignmentDate && currentAsset.assignedMemberId && !memberChanged) {
-      // Member didn't change but assignment date might have changed
-      // Find the most recent assignment history for the current member
+      // Assignment date changed but member stayed the same - update existing history
       const mostRecentAssignment = await prisma.assetHistory.findFirst({
         where: {
           assetId: id,
@@ -267,12 +376,10 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       const newDate = new Date(data.assignmentDate);
 
       if (mostRecentAssignment) {
-        // Compare dates to see if it actually changed
         const currentDate = mostRecentAssignment.assignmentDate;
         const datesDiffer = !currentDate ||
           newDate.toISOString().split('T')[0] !== currentDate.toISOString().split('T')[0];
 
-        // Only update if the date actually changed
         if (datesDiffer) {
           await prisma.assetHistory.update({
             where: { id: mostRecentAssignment.id },
@@ -284,7 +391,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
         await recordAssetAssignment(
           id,
-          null,  // No previous member
+          null,
           currentAsset.assignedMemberId,
           session.user.id,
           'Historical assignment record created during date update',
@@ -293,7 +400,11 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       }
     }
 
-    // Pre-fetch member data for change detection display (fixes N+1 query)
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 10: Detect and log changes for audit trail
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    // Pre-fetch member data for change detection display (prevents N+1 queries)
     const memberIdsToFetch = new Set<string>();
     if (currentAsset.assignedMemberId) memberIdsToFetch.add(currentAsset.assignedMemberId);
     if (data.assignedMemberId && typeof data.assignedMemberId === 'string') memberIdsToFetch.add(data.assignedMemberId);
@@ -307,7 +418,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       members.forEach(m => memberMap.set(m.id, { name: m.name, email: m.email }));
     }
 
-    // Detect changes using helper (handles date/decimal normalization, human-readable labels)
+    // Detect changes using helper (handles date/decimal normalization)
     const changes = detectAssetChanges(
       data as Record<string, unknown>,
       currentAsset as unknown as Record<string, unknown>,
@@ -315,7 +426,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     );
     const changeDetails = getFormattedChanges(changes);
 
-    // Log activity
+    // Log activity for audit
     await logAction(
       tenantId,
       session.user.id,
@@ -325,7 +436,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       { assetModel: asset.model, assetType: asset.type, assetTag: asset.assetTag, changes: changeDetails }
     );
 
-    // Record asset update history only if there were changes
+    // Record update in asset history (only if there were actual changes)
     if (changeDetails.length > 0) {
       const updatedFieldsMessage = changeDetails.join('\n');
       await recordAssetUpdate(
@@ -338,6 +449,29 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     return NextResponse.json(asset);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// DELETE /api/assets/[id] - Delete Asset
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Delete an asset permanently.
+ * For financial tracking, consider using disposal (dispose route) instead.
+ *
+ * @route DELETE /api/assets/[id]
+ *
+ * @param {string} id - Asset ID (path parameter)
+ *
+ * @returns {{ message: string }} Success message
+ *
+ * @throws {403} Organization context required
+ * @throws {400} ID is required
+ * @throws {404} Asset not found
+ *
+ * @sideEffects
+ * - Permanently removes asset from database
+ * - Cascades to related records (history, maintenance, etc.)
+ * - Logs deletion activity for audit
+ */
 async function deleteAssetHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
@@ -350,7 +484,9 @@ async function deleteAssetHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Get asset details within tenant before deletion for logging
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 1: Get asset details for logging before deletion
+    // ─────────────────────────────────────────────────────────────────────────────
     const asset = await prisma.asset.findFirst({
       where: { id, tenantId },
       select: { id: true, model: true, brand: true, type: true, assetTag: true },
@@ -360,12 +496,16 @@ async function deleteAssetHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
     }
 
-    // Delete asset
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 2: Delete asset (cascades to related records)
+    // ─────────────────────────────────────────────────────────────────────────────
     await prisma.asset.delete({
       where: { id },
     });
 
-    // Log activity
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 3: Log deletion for audit trail
+    // ─────────────────────────────────────────────────────────────────────────────
     await logAction(
       tenantId,
       session.user.id,
@@ -377,6 +517,10 @@ async function deleteAssetHandler(request: NextRequest, context: APIContext) {
 
     return NextResponse.json({ message: 'Asset deleted successfully' });
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EXPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export const GET = withErrorHandler(getAssetHandler, { requireAuth: true, requireModule: 'assets' });
 export const PUT = withErrorHandler(updateAssetHandler, { requireAdmin: true, requireModule: 'assets' });

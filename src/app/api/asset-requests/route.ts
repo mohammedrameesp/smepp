@@ -1,14 +1,42 @@
 /**
  * @file route.ts
  * @description Asset requests list and creation API endpoints
- * @module operations/assets
+ * @module api/asset-requests
+ *
+ * FEATURES:
+ * - List all asset requests with filtering and pagination
+ * - Create new asset requests (employee request, employee return request)
+ * - Search across request numbers, assets, members, and reasons
+ * - Role-based access (non-admins see only their own requests)
+ *
+ * REQUEST TYPES:
+ * - EMPLOYEE_REQUEST: Employee requests to be assigned an asset
+ * - RETURN_REQUEST: Employee requests to return an assigned asset
+ *
+ * NOTE: ADMIN_ASSIGNMENT is now handled via /api/assets/[id]/assign
+ * which provides a unified check-in/check-out workflow with conditional
+ * acceptance based on user type (canLogin flag).
+ *
+ * REQUEST LIFECYCLE:
+ * - Employee Request: PENDING_ADMIN_APPROVAL → APPROVED/REJECTED
+ * - Return Request: PENDING_RETURN_APPROVAL → APPROVED/REJECTED
+ *
+ * SECURITY:
+ * - Auth required for all operations
+ * - Non-admins can only view/create their own requests
+ * - Assets module must be enabled
+ * - Tenant-isolated data
  */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import { NextRequest, NextResponse } from 'next/server';
 import { AssetRequestStatus, AssetRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import {
   createAssetRequestSchema,
-  createAssetAssignmentSchema,
   createReturnRequestSchema,
   assetRequestQuerySchema,
 } from '@/lib/validations/operations/asset-request';
@@ -16,17 +44,56 @@ import { logAction, ActivityActions } from '@/lib/activity';
 import {
   generateRequestNumber,
   canRequestAsset,
-  canAssignAsset,
   canReturnAsset,
 } from '@/lib/domains/operations/asset-requests/asset-request-utils';
 import { sendAssetRequestNotifications } from '@/lib/domains/operations/asset-requests/asset-request-notifications';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /api/asset-requests - List Asset Requests (Most Used)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get paginated list of asset requests with filtering.
+ * Non-admin users can only see their own requests.
+ *
+ * @route GET /api/asset-requests
+ *
+ * @query {string} [q] - Search query (request number, asset, member, reason)
+ * @query {AssetRequestType} [type] - Filter by request type
+ * @query {AssetRequestStatus} [status] - Filter by status
+ * @query {string} [memberId] - Filter by member (admin only)
+ * @query {string} [assetId] - Filter by asset
+ * @query {number} [p=1] - Page number
+ * @query {number} [ps=20] - Page size
+ * @query {string} [sort=createdAt] - Sort field
+ * @query {string} [order=desc] - Sort order
+ *
+ * @returns {{ requests: AssetRequest[], pagination: PaginationMeta }}
+ *
+ * @example Response:
+ * {
+ *   "requests": [
+ *     {
+ *       "id": "clx...",
+ *       "requestNumber": "AR-25-001",
+ *       "type": "EMPLOYEE_REQUEST",
+ *       "status": "PENDING_ADMIN_APPROVAL",
+ *       "asset": { "assetTag": "BCE-CP-25001", "model": "MacBook Pro" },
+ *       "member": { "name": "John Doe", "email": "john@example.com" }
+ *     }
+ *   ],
+ *   "pagination": { "page": 1, "pageSize": 20, "total": 50, "totalPages": 3 }
+ * }
+ */
 async function getAssetRequestsHandler(request: NextRequest, context: APIContext) {
     const { tenant } = context;
     const tenantId = tenant!.tenantId;
     const currentUserId = tenant!.userId;
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 1: Parse and validate query parameters
+    // ─────────────────────────────────────────────────────────────────────────────
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
 
@@ -40,12 +107,16 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
 
     const { q, type, status, memberId: filterMemberId, assetId, p, ps, sort, order } = validation.data;
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 2: Apply role-based access control
     // Non-admin users can only see their own requests
-    // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole
+    // ─────────────────────────────────────────────────────────────────────────────
     const isAdmin = tenant!.orgRole === 'ADMIN';
     const effectiveMemberId = isAdmin ? filterMemberId : currentUserId;
 
-    // Build where clause with tenant filtering
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 3: Build where clause with filters
+    // ─────────────────────────────────────────────────────────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: Record<string, any> = { tenantId };
 
@@ -72,6 +143,9 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
       ];
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 4: Execute paginated query with related data
+    // ─────────────────────────────────────────────────────────────────────────────
     const skip = (p - 1) * ps;
 
     const [requests, total] = await Promise.all([
@@ -129,6 +203,40 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
 
 export const GET = withErrorHandler(getAssetRequestsHandler, { requireAuth: true, requireModule: 'assets' });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/asset-requests - Create Asset Request
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Create a new asset request based on type.
+ *
+ * Types:
+ * - EMPLOYEE_REQUEST: Employee requests an available asset (default)
+ * - RETURN_REQUEST: Employee requests to return assigned asset
+ *
+ * NOTE: For admin assignments, use POST /api/assets/[id]/assign instead.
+ * That endpoint provides check-in/check-out with conditional acceptance.
+ *
+ * @route POST /api/asset-requests
+ *
+ * @body {string} assetId - Target asset ID
+ * @body {AssetRequestType} [type] - Request type (default: EMPLOYEE_REQUEST)
+ * @body {string} [reason] - Request reason
+ * @body {string} [notes] - Additional notes
+ *
+ * @returns {AssetRequest} Created request with asset and member info
+ *
+ * @throws {400} Invalid request body
+ * @throws {400} Cannot request/return this asset (validation failed)
+ * @throws {400} Admin assignment not supported (use /api/assets/[id]/assign)
+ * @throws {404} Asset not found
+ *
+ * @example EMPLOYEE_REQUEST body:
+ * { "assetId": "clx...", "reason": "Need for project work" }
+ *
+ * @example RETURN_REQUEST body:
+ * { "type": "RETURN_REQUEST", "assetId": "clx...", "reason": "Project completed" }
+ */
 async function createAssetRequestHandler(request: NextRequest, context: APIContext) {
     const { tenant } = context;
     const tenantId = tenant!.tenantId;
@@ -136,10 +244,10 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
 
     const body = await request.json();
     const requestType = body.type as AssetRequestType | undefined;
-    // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole
-    const isAdmin = tenant!.orgRole === 'ADMIN';
 
-    // Determine request type and validate accordingly
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 1: Determine request type and validate accordingly
+    // ─────────────────────────────────────────────────────────────────────────────
     let validatedData;
     let assetId: string;
     let memberId: string;
@@ -150,36 +258,18 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
     let activityAction: string;
 
     if (requestType === AssetRequestType.ADMIN_ASSIGNMENT) {
-      // Admin assigning asset to user
-      if (!isAdmin) {
-        return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-      }
-
-      const validation = createAssetAssignmentSchema.safeParse(body);
-      if (!validation.success) {
-        return NextResponse.json({
-          error: 'Invalid request body',
-          details: validation.error.issues,
-        }, { status: 400 });
-      }
-
-      validatedData = validation.data;
-      assetId = validatedData.assetId;
-      memberId = validatedData.memberId;
-      reason = validatedData.reason || null;
-      notes = validatedData.notes || null;
-      type = AssetRequestType.ADMIN_ASSIGNMENT;
-      status = AssetRequestStatus.PENDING_USER_ACCEPTANCE;
-      activityAction = ActivityActions.ASSET_ASSIGNMENT_CREATED;
-
-      // Check if can assign
-      const canAssign = await canAssignAsset(assetId, memberId);
-      if (!canAssign.canAssign) {
-        return NextResponse.json({ error: canAssign.reason }, { status: 400 });
-      }
+      // ─────────────────────────────────────────────────────────────────────────────
+      // ADMIN_ASSIGNMENT: Redirect to /api/assets/[id]/assign
+      // ─────────────────────────────────────────────────────────────────────────────
+      return NextResponse.json({
+        error: 'Admin assignment is now handled via /api/assets/[id]/assign',
+        hint: 'Use POST /api/assets/{assetId}/assign with { assignedMemberId: memberId }',
+      }, { status: 400 });
 
     } else if (requestType === AssetRequestType.RETURN_REQUEST) {
-      // User requesting to return asset
+      // ─────────────────────────────────────────────────────────────────────────────
+      // RETURN_REQUEST: User requesting to return asset
+      // ─────────────────────────────────────────────────────────────────────────────
       const validation = createReturnRequestSchema.safeParse(body);
       if (!validation.success) {
         return NextResponse.json({
@@ -197,14 +287,16 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
       status = AssetRequestStatus.PENDING_RETURN_APPROVAL;
       activityAction = ActivityActions.ASSET_RETURN_REQUESTED;
 
-      // Check if can return
-      const canReturn = await canReturnAsset(assetId, memberId);
+      // Check if user can return this asset (tenant-scoped)
+      const canReturn = await canReturnAsset(assetId, memberId, tenantId);
       if (!canReturn.canReturn) {
         return NextResponse.json({ error: canReturn.reason }, { status: 400 });
       }
 
     } else {
-      // Employee requesting asset (default)
+      // ─────────────────────────────────────────────────────────────────────────────
+      // EMPLOYEE_REQUEST: Employee requesting asset (default)
+      // ─────────────────────────────────────────────────────────────────────────────
       const validation = createAssetRequestSchema.safeParse(body);
       if (!validation.success) {
         return NextResponse.json({
@@ -222,14 +314,16 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
       status = AssetRequestStatus.PENDING_ADMIN_APPROVAL;
       activityAction = ActivityActions.ASSET_REQUEST_CREATED;
 
-      // Check if can request
-      const canRequest = await canRequestAsset(assetId, memberId);
+      // Check if user can request this asset (tenant-scoped)
+      const canRequest = await canRequestAsset(assetId, memberId, tenantId);
       if (!canRequest.canRequest) {
         return NextResponse.json({ error: canRequest.reason }, { status: 400 });
       }
     }
 
-    // Get asset info for activity log - verify asset belongs to tenant
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 2: Verify asset exists and belongs to tenant
+    // ─────────────────────────────────────────────────────────────────────────────
     const asset = await prisma.asset.findFirst({
       where: { id: assetId, tenantId },
       select: { assetTag: true, model: true, brand: true },
@@ -239,8 +333,11 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
     }
 
-    // Create the request in a transaction
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 3: Create request in transaction with history entry
+    // ─────────────────────────────────────────────────────────────────────────────
     const assetRequest = await prisma.$transaction(async (tx) => {
+      // Generate unique request number (AR-YY-NNNN format)
       const requestNumber = await generateRequestNumber(tenantId, tx);
 
       const newRequest = await tx.assetRequest.create({
@@ -253,7 +350,8 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
           memberId,
           reason,
           notes,
-          assignedById: type === AssetRequestType.ADMIN_ASSIGNMENT ? currentUserId : null,
+          // Note: assignedById is only set for ADMIN_ASSIGNMENT which is now
+          // handled via /api/assets/[id]/assign
         },
         include: {
           asset: {
@@ -275,7 +373,7 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
         },
       });
 
-      // Create history entry
+      // Create initial history entry
       await tx.assetRequestHistory.create({
         data: {
           assetRequestId: newRequest.id,
@@ -288,6 +386,9 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
       return newRequest;
     });
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 4: Log activity
+    // ─────────────────────────────────────────────────────────────────────────────
     await logAction(
       tenantId,
       currentUserId,
@@ -303,7 +404,9 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
       }
     );
 
-    // Send email and in-app notifications (non-blocking)
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 5: Send notifications (non-blocking)
+    // ─────────────────────────────────────────────────────────────────────────────
     try {
       await sendAssetRequestNotifications({
         tenantId,

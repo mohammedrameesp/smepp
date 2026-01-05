@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/cleanup-deleted-users",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/depreciation",
+      "schedule": "5 0 1 * *"
     }
   ],
   "functions": {

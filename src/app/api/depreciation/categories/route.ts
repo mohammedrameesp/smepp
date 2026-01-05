@@ -1,127 +1,126 @@
+/**
+ * @file route.ts
+ * @description Depreciation categories API - CRUD operations for tenant-scoped categories
+ * @module api/depreciation/categories
+ *
+ * FEATURES:
+ * - List categories for current organization
+ * - Create new categories
+ * - Seed default categories (Qatar Tax Rates)
+ *
+ * SECURITY:
+ * - Auth required
+ * - Admin role required for create/seed
+ * - All queries are tenant-scoped
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
-import { Prisma } from '@prisma/client';
+import {
+  getDepreciationCategories,
+  seedDepreciationCategories,
+  createDepreciationCategory,
+} from '@/lib/domains/operations/assets/depreciation';
 import { createDepreciationCategorySchema } from '@/lib/validations/operations/depreciation';
-import { getDepreciationCategories, seedDepreciationCategories } from '@/lib/domains/operations/assets/depreciation';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-/**
- * GET /api/depreciation/categories - List all depreciation categories
- */
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /api/depreciation/categories - List depreciation categories
+// ═══════════════════════════════════════════════════════════════════════════════
 
-    const { searchParams } = new URL(request.url);
-    const includeInactive = searchParams.get('includeInactive') === 'true';
+async function getHandler(request: NextRequest, context: APIContext) {
+  const { tenant } = context;
+  const tenantId = tenant!.tenantId;
 
-    const categories = await getDepreciationCategories(!includeInactive);
+  const { searchParams } = new URL(request.url);
+  const includeInactive = searchParams.get('includeInactive') === 'true';
 
+  const categories = await getDepreciationCategories(tenantId, !includeInactive);
+
+  return NextResponse.json({
+    categories: categories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      code: c.code,
+      annualRate: Number(c.annualRate),
+      usefulLifeYears: c.usefulLifeYears,
+      description: c.description,
+      isActive: c.isActive,
+    })),
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/depreciation/categories - Create or seed categories
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function postHandler(request: NextRequest, context: APIContext) {
+  const { prisma, tenant } = context;
+  const tenantId = tenant!.tenantId;
+
+  const body = await request.json();
+
+  // Special action: seed default categories
+  if (body.action === 'seed') {
+    const results = await seedDepreciationCategories(tenantId);
     return NextResponse.json({
-      categories: categories.map((c) => ({
-        id: c.id,
-        name: c.name,
-        code: c.code,
-        annualRate: Number(c.annualRate),
-        usefulLifeYears: c.usefulLifeYears,
-        description: c.description,
-        isActive: c.isActive,
-      })),
+      message: 'Default depreciation categories seeded',
+      results,
     });
-  } catch (error) {
-    console.error('Get depreciation categories error:', error);
+  }
+
+  // Create new category
+  const validation = createDepreciationCategorySchema.safeParse(body);
+
+  if (!validation.success) {
     return NextResponse.json(
-      { error: 'Failed to fetch depreciation categories' },
-      { status: 500 }
+      { error: 'Invalid request body', details: validation.error.issues },
+      { status: 400 }
     );
   }
-}
 
-/**
- * POST /api/depreciation/categories - Create a new depreciation category or seed defaults
- */
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const { name, code, annualRate, usefulLifeYears, description, isActive } = validation.data;
 
-    // Only super admins can create categories (they are system-wide)
-    if (!session.user.isSuperAdmin) {
-      return NextResponse.json({ error: 'Super admin access required' }, { status: 403 });
-    }
+  // Check if code already exists for this tenant
+  const existing = await prisma.depreciationCategory.findFirst({
+    where: { tenantId, code },
+  });
 
-    const body = await request.json();
-
-    // Special action: seed default categories
-    if (body.action === 'seed') {
-      const results = await seedDepreciationCategories();
-      return NextResponse.json({
-        message: 'Default depreciation categories seeded',
-        results,
-      });
-    }
-
-    // Create new category
-    const validation = createDepreciationCategorySchema.safeParse(body);
-
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: 'Invalid request body', details: validation.error.issues },
-        { status: 400 }
-      );
-    }
-
-    const { name, code, annualRate, usefulLifeYears, description, isActive } = validation.data;
-
-    // Check if code already exists
-    const existing = await prisma.depreciationCategory.findUnique({
-      where: { code },
-    });
-
-    if (existing) {
-      return NextResponse.json(
-        { error: `Category with code "${code}" already exists` },
-        { status: 400 }
-      );
-    }
-
-    const category = await prisma.depreciationCategory.create({
-      data: {
-        name,
-        code,
-        annualRate: new Prisma.Decimal(annualRate),
-        usefulLifeYears,
-        description,
-        isActive,
-      },
-    });
-
+  if (existing) {
     return NextResponse.json(
-      {
-        message: 'Depreciation category created successfully',
-        category: {
-          id: category.id,
-          name: category.name,
-          code: category.code,
-          annualRate: Number(category.annualRate),
-          usefulLifeYears: category.usefulLifeYears,
-          description: category.description,
-          isActive: category.isActive,
-        },
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error('Create depreciation category error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create depreciation category' },
-      { status: 500 }
+      { error: `Category with code "${code}" already exists` },
+      { status: 400 }
     );
   }
+
+  const category = await createDepreciationCategory(tenantId, {
+    name,
+    code,
+    annualRate,
+    usefulLifeYears,
+    description,
+    isActive,
+  });
+
+  return NextResponse.json(
+    {
+      message: 'Depreciation category created successfully',
+      category: {
+        id: category.id,
+        name: category.name,
+        code: category.code,
+        annualRate: Number(category.annualRate),
+        usefulLifeYears: category.usefulLifeYears,
+        description: category.description,
+        isActive: category.isActive,
+      },
+    },
+    { status: 201 }
+  );
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EXPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const GET = withErrorHandler(getHandler, { requireAuth: true });
+export const POST = withErrorHandler(postHandler, { requireAdmin: true });

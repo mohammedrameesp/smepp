@@ -1,14 +1,72 @@
 /**
  * @file route.ts
  * @description Asset history retrieval API endpoint
- * @module operations/assets
+ * @module api/assets/[id]/history
+ *
+ * FEATURES:
+ * - Retrieve complete audit trail for an asset
+ * - Assignment history (who had the asset, when)
+ * - Location changes
+ * - Status changes
+ * - Update records with field-level changes
+ *
+ * HISTORY TYPES:
+ * - CREATED: Asset was created
+ * - ASSIGNED: Asset assigned to team member
+ * - UNASSIGNED: Asset unassigned from member
+ * - UPDATED: Asset properties changed
+ * - LOCATION_CHANGED: Asset moved to new location
+ * - MAINTENANCE: Maintenance performed
+ *
+ * SECURITY:
+ * - Auth required
+ * - Assets module must be enabled
+ * - Tenant-filtered results
  */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { getAssetHistory } from '@/lib/domains/operations/assets/asset-history';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /api/assets/[id]/history - Get Asset History Timeline
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get the complete history timeline for an asset.
+ * Returns all changes, assignments, and events in chronological order.
+ *
+ * @route GET /api/assets/[id]/history
+ *
+ * @param {string} id - Asset ID (path parameter)
+ *
+ * @returns {AssetHistory[]} Array of history records sorted by date
+ *
+ * @throws {403} Organization context required
+ * @throws {400} ID is required
+ *
+ * @example Response:
+ * [
+ *   {
+ *     "id": "clx...",
+ *     "action": "CREATED",
+ *     "createdAt": "2025-01-01T00:00:00.000Z",
+ *     "performedBy": { "name": "Admin", "email": "admin@..." }
+ *   },
+ *   {
+ *     "id": "clx...",
+ *     "action": "ASSIGNED",
+ *     "toMember": { "name": "John", "email": "john@..." },
+ *     "assignmentDate": "2025-01-15T00:00:00.000Z"
+ *   }
+ * ]
+ */
 async function getAssetHistoryHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
@@ -21,10 +79,16 @@ async function getAssetHistoryHandler(request: NextRequest, context: APIContext)
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Get asset history (with tenant filtering)
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Fetch asset history (tenant filtering handled by the service function)
+    // ─────────────────────────────────────────────────────────────────────────────
     const history = await getAssetHistory(id, tenantId);
 
     return NextResponse.json(history);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EXPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export const GET = withErrorHandler(getAssetHistoryHandler, { requireAuth: true, requireModule: 'assets' });

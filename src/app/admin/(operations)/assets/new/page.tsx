@@ -59,7 +59,6 @@ export default function NewAssetPage() {
       assetTag: '',
       type: '',
       categoryId: '',
-      category: '', // deprecated
       brand: '',
       model: '',
       serial: '',

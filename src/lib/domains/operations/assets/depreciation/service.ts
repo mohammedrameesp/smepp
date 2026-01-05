@@ -8,12 +8,8 @@ import { prisma } from '@/lib/core/prisma';
 import { Prisma } from '@prisma/client';
 import {
   calculateMonthlyDepreciation,
-  generateDepreciationSchedule,
-  calculateDepreciationSummary,
   isPeriodAlreadyProcessed,
   DepreciationInput,
-  MonthlyDepreciationResult,
-  DepreciationSummary,
 } from './calculator';
 
 export interface DepreciationResult {
@@ -278,54 +274,6 @@ export async function getDepreciationRecords(
 }
 
 /**
- * Get projected depreciation schedule for an asset
- */
-export async function getDepreciationSchedule(
-  assetId: string,
-  tenantId: string
-): Promise<{
-  asset: { id: string; assetTag: string | null; model: string };
-  summary: DepreciationSummary;
-  schedule: MonthlyDepreciationResult[];
-} | null> {
-  const asset = await prisma.asset.findFirst({
-    where: { id: assetId, tenantId },
-    include: { depreciationCategory: true },
-  });
-
-  if (!asset || !asset.depreciationCategory) {
-    return null;
-  }
-
-  const usefulLifeMonths =
-    asset.customUsefulLifeMonths || asset.depreciationCategory.usefulLifeYears * 12;
-
-  const input: DepreciationInput = {
-    acquisitionCost: Number(asset.priceQAR || asset.price || 0),
-    salvageValue: Number(asset.salvageValue || 0),
-    usefulLifeMonths,
-    depreciationStartDate: asset.depreciationStartDate || asset.purchaseDate || new Date(),
-    accumulatedDepreciation: 0, // Full schedule from start
-  };
-
-  const schedule = generateDepreciationSchedule(input);
-  const summary = calculateDepreciationSummary({
-    ...input,
-    accumulatedDepreciation: Number(asset.accumulatedDepreciation || 0),
-  });
-
-  return {
-    asset: {
-      id: asset.id,
-      assetTag: asset.assetTag,
-      model: asset.model,
-    },
-    summary,
-    schedule,
-  };
-}
-
-/**
  * Assign depreciation category to an asset
  */
 export async function assignDepreciationCategory(
@@ -380,31 +328,36 @@ export async function assignDepreciationCategory(
 }
 
 /**
- * Get all depreciation categories
+ * Get all depreciation categories for a tenant
  */
-export async function getDepreciationCategories(activeOnly = true) {
+export async function getDepreciationCategories(tenantId: string, activeOnly = true) {
   return prisma.depreciationCategory.findMany({
-    where: activeOnly ? { isActive: true } : undefined,
+    where: {
+      tenantId,
+      ...(activeOnly ? { isActive: true } : {}),
+    },
     orderBy: { name: 'asc' },
   });
 }
 
 /**
- * Seed default depreciation categories (Qatar Tax Rates)
+ * Seed default depreciation categories for a tenant (Qatar Tax Rates)
+ * Also sets up default mappings to asset categories
  */
-export async function seedDepreciationCategories() {
-  const { QATAR_TAX_CATEGORIES } = await import('./constants');
+export async function seedDepreciationCategories(tenantId: string) {
+  const { DEFAULT_DEPRECIATION_CATEGORIES } = await import('./constants');
 
   const results = [];
 
-  for (const category of QATAR_TAX_CATEGORIES) {
-    const existing = await prisma.depreciationCategory.findUnique({
-      where: { code: category.code },
+  for (const category of DEFAULT_DEPRECIATION_CATEGORIES) {
+    const existing = await prisma.depreciationCategory.findFirst({
+      where: { tenantId, code: category.code },
     });
 
     if (!existing) {
       const created = await prisma.depreciationCategory.create({
         data: {
+          tenantId,
           name: category.name,
           code: category.code,
           annualRate: new Prisma.Decimal(category.annualRate),
@@ -414,10 +367,106 @@ export async function seedDepreciationCategories() {
         },
       });
       results.push({ code: category.code, action: 'created', id: created.id });
+
+      // Set up default mapping to asset category if specified
+      if (category.assetCategoryCode) {
+        const assetCategory = await prisma.assetCategory.findFirst({
+          where: { tenantId, code: category.assetCategoryCode },
+        });
+        if (assetCategory) {
+          await prisma.assetCategory.update({
+            where: { id: assetCategory.id },
+            data: { defaultDepreciationCategoryId: created.id },
+          });
+          results[results.length - 1] = {
+            ...results[results.length - 1],
+            mappedToAssetCategory: category.assetCategoryCode,
+          };
+        }
+      }
     } else {
       results.push({ code: category.code, action: 'exists', id: existing.id });
     }
   }
 
   return results;
+}
+
+/**
+ * Create a depreciation category for a tenant
+ */
+export async function createDepreciationCategory(
+  tenantId: string,
+  data: {
+    name: string;
+    code: string;
+    annualRate: number;
+    usefulLifeYears: number;
+    description?: string;
+    isActive?: boolean;
+  }
+) {
+  return prisma.depreciationCategory.create({
+    data: {
+      tenantId,
+      name: data.name,
+      code: data.code,
+      annualRate: new Prisma.Decimal(data.annualRate),
+      usefulLifeYears: data.usefulLifeYears,
+      description: data.description,
+      isActive: data.isActive ?? true,
+    },
+  });
+}
+
+/**
+ * Update a depreciation category
+ */
+export async function updateDepreciationCategory(
+  id: string,
+  tenantId: string,
+  data: {
+    name?: string;
+    code?: string;
+    annualRate?: number;
+    usefulLifeYears?: number;
+    description?: string | null;
+    isActive?: boolean;
+  }
+) {
+  return prisma.depreciationCategory.update({
+    where: { id, tenantId },
+    data: {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.code !== undefined && { code: data.code }),
+      ...(data.annualRate !== undefined && { annualRate: new Prisma.Decimal(data.annualRate) }),
+      ...(data.usefulLifeYears !== undefined && { usefulLifeYears: data.usefulLifeYears }),
+      ...(data.description !== undefined && { description: data.description }),
+      ...(data.isActive !== undefined && { isActive: data.isActive }),
+    },
+  });
+}
+
+/**
+ * Delete a depreciation category (only if not in use)
+ */
+export async function deleteDepreciationCategory(id: string, tenantId: string) {
+  // Check if any assets are using this category
+  const assetsUsingCategory = await prisma.asset.count({
+    where: { depreciationCategoryId: id, tenantId },
+  });
+
+  if (assetsUsingCategory > 0) {
+    throw new Error(`Cannot delete: ${assetsUsingCategory} asset(s) are using this category`);
+  }
+
+  // Clear any asset category mappings
+  await prisma.assetCategory.updateMany({
+    where: { defaultDepreciationCategoryId: id, tenantId },
+    data: { defaultDepreciationCategoryId: null },
+  });
+
+  return prisma.depreciationCategory.delete({
+    where: { id, tenantId },
+  });
 }

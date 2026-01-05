@@ -1,11 +1,38 @@
 /**
  * @file asset-history.ts
- * @description Asset history tracking - records assignment, status, location, and lifecycle changes
+ * @description Asset history tracking functions
  * @module domains/operations/assets
+ *
+ * FEATURES:
+ * - Record assignment changes (assigned/unassigned)
+ * - Record status changes (IN_USE, SPARE, REPAIR, DISPOSED)
+ * - Record location changes
+ * - Record asset creation and updates
+ * - Query asset history (by asset or member)
+ *
+ * HISTORY ACTIONS:
+ * - CREATED: Asset was created
+ * - UPDATED: Asset fields were modified
+ * - ASSIGNED: Asset assigned to a member
+ * - UNASSIGNED: Asset returned/unassigned
+ * - STATUS_CHANGED: Asset status changed
+ * - LOCATION_CHANGED: Asset moved to new location
+ *
+ * NON-BLOCKING:
+ * All history operations are wrapped in try/catch to avoid
+ * breaking main operations if history recording fails.
  */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 import { prisma } from '@/lib/core/prisma';
 import { AssetHistoryAction, AssetStatus } from '@prisma/client';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface RecordAssetHistoryParams {
   assetId: string;
@@ -21,6 +48,27 @@ interface RecordAssetHistoryParams {
   performedById: string;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// CORE HISTORY RECORDING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Record a history entry for an asset.
+ * This is the low-level function that other helpers use.
+ *
+ * @param params - History entry parameters
+ *
+ * @example
+ * await recordAssetHistory({
+ *   assetId: 'asset-123',
+ *   tenantId: 'tenant-456',
+ *   action: AssetHistoryAction.STATUS_CHANGED,
+ *   fromStatus: AssetStatus.IN_USE,
+ *   toStatus: AssetStatus.REPAIR,
+ *   performedById: 'user-789',
+ *   notes: 'Sent for repair - screen damage',
+ * });
+ */
 export async function recordAssetHistory({
   assetId,
   tenantId,
@@ -56,6 +104,31 @@ export async function recordAssetHistory({
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ASSIGNMENT TRACKING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Record an asset assignment change.
+ *
+ * Creates ASSIGNED action when toMemberId is provided,
+ * or UNASSIGNED action when toMemberId is null.
+ *
+ * @param assetId - Asset being assigned/unassigned
+ * @param fromMemberId - Previous assignee (null if first assignment)
+ * @param toMemberId - New assignee (null if being returned)
+ * @param performedById - User performing the action
+ * @param notes - Optional notes about the assignment
+ * @param assignmentDate - Date of assignment (defaults to now)
+ * @param returnDate - Date of return for unassignment (defaults to now)
+ *
+ * @example
+ * // Assign to user
+ * await recordAssetAssignment('asset-123', null, 'user-456', 'admin-789');
+ *
+ * // Return from user
+ * await recordAssetAssignment('asset-123', 'user-456', null, 'admin-789');
+ */
 export async function recordAssetAssignment(
   assetId: string,
   fromMemberId: string | null,
@@ -118,6 +191,28 @@ export async function recordAssetAssignment(
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATUS TRACKING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Record an asset status change.
+ *
+ * @param assetId - Asset whose status changed
+ * @param fromStatus - Previous status
+ * @param toStatus - New status
+ * @param performedById - User performing the change
+ * @param notes - Optional notes about the change
+ *
+ * @example
+ * await recordAssetStatusChange(
+ *   'asset-123',
+ *   AssetStatus.IN_USE,
+ *   AssetStatus.REPAIR,
+ *   'admin-456',
+ *   'Sent for screen repair'
+ * );
+ */
 export async function recordAssetStatusChange(
   assetId: string,
   fromStatus: AssetStatus,
@@ -146,6 +241,28 @@ export async function recordAssetStatusChange(
   });
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOCATION TRACKING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Record an asset location change.
+ *
+ * @param assetId - Asset being moved
+ * @param fromLocation - Previous location (null if not set)
+ * @param toLocation - New location (null if clearing)
+ * @param performedById - User performing the change
+ * @param notes - Optional notes about the move
+ *
+ * @example
+ * await recordAssetLocationChange(
+ *   'asset-123',
+ *   'Main Office',
+ *   'Warehouse B',
+ *   'admin-456',
+ *   'Moving to warehouse for inventory'
+ * );
+ */
 export async function recordAssetLocationChange(
   assetId: string,
   fromLocation: string | null,
@@ -174,6 +291,18 @@ export async function recordAssetLocationChange(
   });
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// LIFECYCLE TRACKING
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Record asset creation event.
+ *
+ * @param assetId - Newly created asset ID
+ * @param performedById - User who created the asset
+ * @param initialMemberId - Initial assignee (if assigned at creation)
+ * @param _initialProjectId - Reserved for future project tracking
+ */
 export async function recordAssetCreation(
   assetId: string,
   performedById: string,
@@ -200,6 +329,16 @@ export async function recordAssetCreation(
   });
 }
 
+/**
+ * Record asset update event.
+ *
+ * @param assetId - Updated asset ID
+ * @param performedById - User who updated the asset
+ * @param notes - Description of what was changed
+ *
+ * @example
+ * await recordAssetUpdate('asset-123', 'admin-456', 'Price updated: 5000 → 5500');
+ */
 export async function recordAssetUpdate(
   assetId: string,
   performedById: string,
@@ -224,6 +363,17 @@ export async function recordAssetUpdate(
   });
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// HISTORY QUERIES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get full history timeline for an asset.
+ *
+ * @param assetId - Asset to get history for
+ * @param tenantId - Tenant ID for isolation
+ * @returns Array of history entries with performer info
+ */
 export async function getAssetHistory(assetId: string, tenantId: string) {
   return await prisma.assetHistory.findMany({
     where: { assetId, tenantId },
@@ -242,6 +392,14 @@ export async function getAssetHistory(assetId: string, tenantId: string) {
   });
 }
 
+/**
+ * Get asset history for a specific member.
+ * Shows all assets they've been assigned to or unassigned from.
+ *
+ * @param memberId - Member to get history for
+ * @param tenantId - Tenant ID for isolation
+ * @returns Array of history entries with asset details
+ */
 export async function getMemberAssetHistory(memberId: string, tenantId: string) {
   return await prisma.assetHistory.findMany({
     where: {

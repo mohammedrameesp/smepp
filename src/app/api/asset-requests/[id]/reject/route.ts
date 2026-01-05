@@ -1,8 +1,30 @@
 /**
  * @file route.ts
  * @description Asset request rejection API endpoint
- * @module operations/assets
+ * @module api/asset-requests/[id]/reject
+ *
+ * FEATURES:
+ * - Reject employee requests or return requests
+ * - Requires rejection reason for audit trail
+ * - Creates history entry
+ * - Sends email and in-app notifications
+ * - Invalidates WhatsApp action tokens
+ *
+ * REJECTION OUTCOME:
+ * - Request status set to REJECTED
+ * - No changes to asset (remains as-is)
+ * - User notified via email and in-app notification
+ *
+ * SECURITY:
+ * - Admin role required
+ * - Assets module must be enabled
+ * - Tenant-isolated (prevents IDOR attacks)
  */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -17,6 +39,46 @@ import { createNotification, NotificationTemplates } from '@/lib/domains/system/
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { invalidateTokensForEntity } from '@/lib/whatsapp';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/asset-requests/[id]/reject - Reject Request
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Reject an asset request (employee request or return request).
+ *
+ * For EMPLOYEE_REQUEST:
+ * - Asset remains available for other requests
+ *
+ * For RETURN_REQUEST:
+ * - Asset remains assigned to the member
+ * - User must continue using the asset
+ *
+ * @route POST /api/asset-requests/[id]/reject
+ *
+ * @param {string} id - Request ID (path parameter)
+ *
+ * @body {string} reason - Rejection reason (required for audit trail)
+ *
+ * @returns {AssetRequest} Updated request with asset and member info
+ *
+ * @throws {400} ID is required
+ * @throws {400} Invalid request body (missing reason)
+ * @throws {400} Cannot reject this request (invalid state)
+ * @throws {403} Organization context required
+ * @throws {404} Asset request not found
+ *
+ * @example Request body:
+ * { "reason": "Asset has already been assigned to another user" }
+ *
+ * @example Response:
+ * {
+ *   "id": "clx...",
+ *   "requestNumber": "AR-25-001",
+ *   "status": "REJECTED",
+ *   "processorNotes": "Asset has already been assigned...",
+ *   "processedById": "admin-id"
+ * }
+ */
 async function rejectAssetRequestHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
@@ -29,6 +91,9 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 1: Validate request body (reason is required)
+    // ─────────────────────────────────────────────────────────────────────────────
     const body = await request.json();
 
     const validation = rejectAssetRequestSchema.safeParse(body);
@@ -41,7 +106,9 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
 
     const { reason } = validation.data;
 
-    // Use findFirst with tenantId to prevent cross-tenant access
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 2: Fetch request (tenant-scoped for IDOR prevention)
+    // ─────────────────────────────────────────────────────────────────────────────
     const assetRequest = await prisma.assetRequest.findFirst({
       where: { id, tenantId },
       include: {
@@ -54,12 +121,18 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
       return NextResponse.json({ error: 'Asset request not found' }, { status: 404 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 3: Check if admin can process this request
+    // ─────────────────────────────────────────────────────────────────────────────
     if (!canAdminProcess(assetRequest.status, assetRequest.type)) {
       return NextResponse.json({ error: 'Cannot reject this request' }, { status: 400 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 4: Update request in transaction
+    // ─────────────────────────────────────────────────────────────────────────────
     const updatedRequest = await prisma.$transaction(async (tx) => {
-      // Update request status
+      // Update request status to REJECTED
       const updated = await tx.assetRequest.update({
         where: { id },
         data: {
@@ -91,6 +164,9 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
       return updated;
     });
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 5: Log activity
+    // ─────────────────────────────────────────────────────────────────────────────
     await logAction(
       tenantId,
       session.user.id,
@@ -104,12 +180,15 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
       }
     );
 
-    // NOTIF-004: Invalidate any pending WhatsApp action tokens for this request
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 6: Invalidate WhatsApp action tokens (if any pending)
+    // ─────────────────────────────────────────────────────────────────────────────
     await invalidateTokensForEntity('ASSET_REQUEST', id);
 
-    // Send email notification to user
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 7: Send email notification to user
+    // ─────────────────────────────────────────────────────────────────────────────
     try {
-      // Get org slug/name for email URLs
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
         select: { slug: true, name: true },
@@ -150,7 +229,9 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
       console.error('Failed to send email notification:', emailError);
     }
 
-    // Send in-app notification
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 8: Send in-app notification
+    // ─────────────────────────────────────────────────────────────────────────────
     await createNotification(
       NotificationTemplates.assetRequestRejected(
         assetRequest.memberId,

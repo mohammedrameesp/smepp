@@ -1,8 +1,37 @@
 /**
  * @file route.ts
- * @description Asset export to CSV/Excel API endpoint
- * @module operations/assets
+ * @description Asset export to Excel/CSV API endpoint
+ * @module api/assets/export
+ *
+ * FEATURES:
+ * - Export all tenant assets to Excel (.xlsx) format
+ * - Includes all asset fields with formatted dates and currencies
+ * - Includes assigned member information
+ * - Filename includes export date
+ *
+ * EXPORT COLUMNS:
+ * - Asset identifiers (ID, Tag, Type, Category)
+ * - Product info (Brand, Model, Serial, Configuration)
+ * - Purchase info (Supplier, Invoice, Date, Price)
+ * - Status and assignment info
+ * - Timestamps (Created, Updated)
+ *
+ * USE CASES:
+ * - Backup asset data
+ * - Financial reporting
+ * - Audit documentation
+ * - Data migration
+ *
+ * SECURITY:
+ * - Admin role required
+ * - Rate limiting enabled
+ * - Tenant-isolated data only
  */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -10,21 +39,43 @@ import { prisma } from '@/lib/core/prisma';
 import { arrayToCSV, formatDateForCSV, formatCurrencyForCSV } from '@/lib/csv-utils';
 import { withErrorHandler } from '@/lib/http/handler';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /api/assets/export - Export Assets to Excel
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Export all assets for the current tenant to an Excel file.
+ * Returns a downloadable .xlsx file with all asset data.
+ *
+ * @route GET /api/assets/export
+ *
+ * @returns {Buffer} Excel file download (Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)
+ *
+ * @throws {401} Unauthorized (non-admin)
+ * @throws {403} Organization context required
+ *
+ * @example Usage:
+ * // In browser, this will trigger a download:
+ * window.location.href = '/api/assets/export';
+ */
 async function exportAssetsHandler(_request: NextRequest) {
-  // Check authentication
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 1: Check authentication and authorization
+  // ─────────────────────────────────────────────────────────────────────────────
   const session = await getServerSession(authOptions);
   if (!session || session.user.teamMemberRole !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Require organization context for tenant isolation
   if (!session.user.organizationId) {
     return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
   }
 
   const tenantId = session.user.organizationId;
 
-  // Fetch assets for current tenant only
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 2: Fetch all assets for this tenant
+  // ─────────────────────────────────────────────────────────────────────────────
   const assets = await prisma.asset.findMany({
     where: { tenantId },
     include: {
@@ -35,7 +86,9 @@ async function exportAssetsHandler(_request: NextRequest) {
     orderBy: { createdAt: 'desc' },
   });
 
-  // Transform data for CSV
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 3: Transform data for CSV/Excel export
+  // ─────────────────────────────────────────────────────────────────────────────
   const csvData = assets.map(asset => ({
     id: asset.id,
     assetTag: asset.assetTag || '',
@@ -63,7 +116,9 @@ async function exportAssetsHandler(_request: NextRequest) {
     updatedAt: formatDateForCSV(asset.updatedAt),
   }));
 
-  // Define CSV headers
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 4: Define column headers for Excel
+  // ─────────────────────────────────────────────────────────────────────────────
   const headers = [
     { key: 'id' as const, header: 'ID' },
     { key: 'assetTag' as const, header: 'Asset Tag' },
@@ -91,10 +146,10 @@ async function exportAssetsHandler(_request: NextRequest) {
     { key: 'updatedAt' as const, header: 'Updated At' },
   ];
 
-  // Generate CSV
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 5: Generate Excel file and return as download
+  // ─────────────────────────────────────────────────────────────────────────────
   const csvBuffer = await arrayToCSV(csvData, headers);
-
-  // Return CSV file
   const filename = `assets_export_${new Date().toISOString().split('T')[0]}.xlsx`;
 
   return new NextResponse(csvBuffer as any, {
@@ -105,5 +160,9 @@ async function exportAssetsHandler(_request: NextRequest) {
     },
   });
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EXPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export const GET = withErrorHandler(exportAssetsHandler, { requireAdmin: true, rateLimit: true, requireModule: 'assets' });

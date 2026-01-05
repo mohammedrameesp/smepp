@@ -382,36 +382,37 @@ model Organization {
   setupProgress OrganizationSetupProgress?
 
   // Tenant-scoped data relations
-  assets                Asset[]
-  assetCategories       AssetCategory[]
-  assetTypeMappings     AssetTypeMapping[]
-  assetHistories        AssetHistory[]
-  subscriptions         Subscription[]
-  activityLogs          ActivityLog[]
-  notifications         Notification[]
-  approvalPolicies      ApprovalPolicy[]
-  approvalSteps         ApprovalStep[]
-  approverDelegations   ApproverDelegation[]
-  maintenanceRecords    MaintenanceRecord[]
-  suppliers             Supplier[]
-  supplierEngagements   SupplierEngagement[]
-  systemSettings        SystemSettings[]
-  profileChangeRequests ProfileChangeRequest[]
-  purchaseRequests      PurchaseRequest[]
-  leaveTypes            LeaveType[]
-  leaveBalances         LeaveBalance[]
-  leaveRequests         LeaveRequest[]
-  salaryStructures      SalaryStructure[]
-  payrollRuns           PayrollRun[]
-  payslips              Payslip[]
-  employeeLoans         EmployeeLoan[]
-  assetRequests         AssetRequest[]
-  companyDocumentTypes  CompanyDocumentType[]
-  companyDocuments      CompanyDocument[]
-  depreciationRecords   DepreciationRecord[]
-  chatConversations     ChatConversation[]
-  aiChatUsage           AIChatUsage[]
-  aiChatAuditLogs       AIChatAuditLog[]
+  assets                 Asset[]
+  assetCategories        AssetCategory[]
+  assetTypeMappings      AssetTypeMapping[]
+  assetHistories         AssetHistory[]
+  subscriptions          Subscription[]
+  activityLogs           ActivityLog[]
+  notifications          Notification[]
+  approvalPolicies       ApprovalPolicy[]
+  approvalSteps          ApprovalStep[]
+  approverDelegations    ApproverDelegation[]
+  maintenanceRecords     MaintenanceRecord[]
+  suppliers              Supplier[]
+  supplierEngagements    SupplierEngagement[]
+  systemSettings         SystemSettings[]
+  profileChangeRequests  ProfileChangeRequest[]
+  purchaseRequests       PurchaseRequest[]
+  leaveTypes             LeaveType[]
+  leaveBalances          LeaveBalance[]
+  leaveRequests          LeaveRequest[]
+  salaryStructures       SalaryStructure[]
+  payrollRuns            PayrollRun[]
+  payslips               Payslip[]
+  employeeLoans          EmployeeLoan[]
+  assetRequests          AssetRequest[]
+  companyDocumentTypes   CompanyDocumentType[]
+  companyDocuments       CompanyDocument[]
+  depreciationCategories DepreciationCategory[]
+  depreciationRecords    DepreciationRecord[]
+  chatConversations      ChatConversation[]
+  aiChatUsage            AIChatUsage[]
+  aiChatAuditLogs        AIChatAuditLog[]
 
   // Access Control
   rolePermissions RolePermission[]
@@ -899,6 +900,10 @@ model AssetCategory {
   isActive    Boolean @default(true)
   isDefault   Boolean @default(false) // True for seeded categories
   sortOrder   Int     @default(0)
+
+  // Default depreciation category for assets in this category
+  defaultDepreciationCategoryId String?
+  defaultDepreciationCategory   DepreciationCategory? @relation("DefaultDepreciationCategory", fields: [defaultDepreciationCategoryId], references: [id], onDelete: SetNull)
 
   assets       Asset[]
   typeMappings AssetTypeMapping[]
@@ -2004,18 +2009,25 @@ model AssetRequestHistory {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model DepreciationCategory {
-  id              String  @id @default(cuid())
-  name            String // "Buildings", "Vehicles", etc.
-  code            String  @unique // "BUILDINGS", "VEHICLES", etc.
-  annualRate      Decimal @db.Decimal(5, 2) // 4.00, 20.00
-  usefulLifeYears Int // 25, 5, etc.
+  id       String       @id @default(cuid())
+  tenantId String
+  tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name            String // "Vehicles", "IT Equipment", etc.
+  code            String // "VEHICLES", "IT_EQUIPMENT", etc.
+  annualRate      Decimal @db.Decimal(5, 2) // 20.00, 33.33
+  usefulLifeYears Int // 5, 3, etc.
   description     String?
   isActive        Boolean @default(true)
 
-  assets Asset[]
+  assets          Asset[]
+  assetCategories AssetCategory[] @relation("DefaultDepreciationCategory")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
 }
 
 model DepreciationRecord {

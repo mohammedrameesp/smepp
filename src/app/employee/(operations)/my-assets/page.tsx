@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getMemberSubscriptionHistory } from '@/lib/subscription-lifecycle';
-import { getUserAssetHistory } from '@/lib/asset-lifecycle';
+import { getMemberAssetHistory } from '@/lib/asset-lifecycle';
 import { UserSubscriptionHistory, UserAssetHistory } from '@/components/domains/system/users';
 
 export default async function MyHoldingsPage() {
@@ -22,7 +22,7 @@ export default async function MyHoldingsPage() {
     const subscriptionHistory = await getMemberSubscriptionHistory(session.user.id);
 
     // Get complete asset history (including past assignments)
-    const assetHistory = await getUserAssetHistory(session.user.id, tenantId);
+    const assetHistory = await getMemberAssetHistory(session.user.id, tenantId);
 
     // Calculate stats
     const activeAssets = assetHistory.filter((a: any) => a.isCurrentlyAssigned);

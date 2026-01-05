@@ -12,7 +12,7 @@ import {
   Bell,
 } from 'lucide-react';
 import { getMemberSubscriptionHistory } from '@/lib/subscription-lifecycle';
-import { getUserAssetHistory } from '@/lib/asset-lifecycle';
+import { getMemberAssetHistory } from '@/lib/asset-lifecycle';
 import { getNextRenewalDate, getDaysUntilRenewal } from '@/lib/utils/renewal-date';
 import { getAnnualLeaveDetails } from '@/lib/leave-utils';
 import { format } from 'date-fns';
@@ -96,7 +96,7 @@ export default async function EmployeeDashboard() {
       celebrations,
     ] = await Promise.all([
       getMemberSubscriptionHistory(session.user.id),
-      getUserAssetHistory(session.user.id, organizationId),
+      getMemberAssetHistory(session.user.id, organizationId),
       prisma.purchaseRequest.findMany({
         where: { requesterId: session.user.id },
         orderBy: { createdAt: 'desc' },

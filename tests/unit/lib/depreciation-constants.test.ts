@@ -13,22 +13,15 @@ import {
 
 describe('Depreciation Constants', () => {
   describe('QATAR_TAX_CATEGORIES', () => {
-    it('should have 6 predefined categories', () => {
-      expect(QATAR_TAX_CATEGORIES).toHaveLength(6);
+    it('should have 5 predefined categories', () => {
+      expect(QATAR_TAX_CATEGORIES).toHaveLength(5);
     });
 
-    it('should include Buildings category with 4% rate', () => {
-      const buildings = QATAR_TAX_CATEGORIES.find((c) => c.code === 'BUILDINGS');
-      expect(buildings).toBeDefined();
-      expect(buildings!.annualRate).toBe(4);
-      expect(buildings!.usefulLifeYears).toBe(25);
-    });
-
-    it('should include Machinery category with 20% rate', () => {
+    it('should include Machinery category with 15% rate', () => {
       const machinery = QATAR_TAX_CATEGORIES.find((c) => c.code === 'MACHINERY');
       expect(machinery).toBeDefined();
-      expect(machinery!.annualRate).toBe(20);
-      expect(machinery!.usefulLifeYears).toBe(5);
+      expect(machinery!.annualRate).toBe(15);
+      expect(machinery!.usefulLifeYears).toBe(7);
     });
 
     it('should include Vehicles category with 20% rate', () => {
@@ -38,25 +31,25 @@ describe('Depreciation Constants', () => {
       expect(vehicles!.usefulLifeYears).toBe(5);
     });
 
-    it('should include Furniture category with 20% rate', () => {
+    it('should include Furniture category with 15% rate', () => {
       const furniture = QATAR_TAX_CATEGORIES.find((c) => c.code === 'FURNITURE');
       expect(furniture).toBeDefined();
-      expect(furniture!.annualRate).toBe(20);
-      expect(furniture!.usefulLifeYears).toBe(5);
+      expect(furniture!.annualRate).toBe(15);
+      expect(furniture!.usefulLifeYears).toBe(7);
     });
 
-    it('should include IT Equipment category with 20% rate', () => {
+    it('should include IT Equipment category with 33.33% rate', () => {
       const it = QATAR_TAX_CATEGORIES.find((c) => c.code === 'IT_EQUIPMENT');
       expect(it).toBeDefined();
-      expect(it!.annualRate).toBe(20);
-      expect(it!.usefulLifeYears).toBe(5);
+      expect(it!.annualRate).toBe(33.33);
+      expect(it!.usefulLifeYears).toBe(3);
     });
 
-    it('should include Intangible Assets category with custom rates', () => {
-      const intangible = QATAR_TAX_CATEGORIES.find((c) => c.code === 'INTANGIBLE');
-      expect(intangible).toBeDefined();
-      expect(intangible!.annualRate).toBe(0);
-      expect(intangible!.usefulLifeYears).toBe(0);
+    it('should include Electrical Equipment category with 20% rate', () => {
+      const electrical = QATAR_TAX_CATEGORIES.find((c) => c.code === 'ELECTRICAL');
+      expect(electrical).toBeDefined();
+      expect(electrical!.annualRate).toBe(20);
+      expect(electrical!.usefulLifeYears).toBe(5);
     });
 
     it('should have unique codes for all categories', () => {
@@ -75,23 +68,30 @@ describe('Depreciation Constants', () => {
       });
     });
 
-    it('should have consistent rate-to-life mapping (except intangible)', () => {
-      QATAR_TAX_CATEGORIES.filter((c) => c.code !== 'INTANGIBLE').forEach((category) => {
-        // Rate = 100 / useful life
-        const expectedRate = Math.round(100 / category.usefulLifeYears);
-        expect(category.annualRate).toBe(expectedRate);
-      });
+    it('should have assetCategoryCode mappings for some categories', () => {
+      const vehicles = QATAR_TAX_CATEGORIES.find((c) => c.code === 'VEHICLES');
+      expect(vehicles!.assetCategoryCode).toBe('VH');
+
+      const furniture = QATAR_TAX_CATEGORIES.find((c) => c.code === 'FURNITURE');
+      expect(furniture!.assetCategoryCode).toBe('FR');
+
+      const it = QATAR_TAX_CATEGORIES.find((c) => c.code === 'IT_EQUIPMENT');
+      expect(it!.assetCategoryCode).toBe('CP');
     });
   });
 
   describe('DEPRECIATION_CATEGORY_CODES', () => {
     it('should contain all category codes', () => {
-      expect(DEPRECIATION_CATEGORY_CODES).toContain('BUILDINGS');
       expect(DEPRECIATION_CATEGORY_CODES).toContain('MACHINERY');
       expect(DEPRECIATION_CATEGORY_CODES).toContain('VEHICLES');
       expect(DEPRECIATION_CATEGORY_CODES).toContain('FURNITURE');
       expect(DEPRECIATION_CATEGORY_CODES).toContain('IT_EQUIPMENT');
-      expect(DEPRECIATION_CATEGORY_CODES).toContain('INTANGIBLE');
+      expect(DEPRECIATION_CATEGORY_CODES).toContain('ELECTRICAL');
+    });
+
+    it('should not contain removed categories', () => {
+      expect(DEPRECIATION_CATEGORY_CODES).not.toContain('BUILDINGS');
+      expect(DEPRECIATION_CATEGORY_CODES).not.toContain('INTANGIBLE');
     });
 
     it('should have same length as QATAR_TAX_CATEGORIES', () => {
@@ -101,15 +101,20 @@ describe('Depreciation Constants', () => {
 
   describe('getCategoryByCode', () => {
     it('should return category for valid code', () => {
-      const result = getCategoryByCode('BUILDINGS');
+      const result = getCategoryByCode('VEHICLES');
       expect(result).toBeDefined();
-      expect(result!.name).toBe('Buildings');
-      expect(result!.annualRate).toBe(4);
+      expect(result!.name).toBe('Vehicles');
+      expect(result!.annualRate).toBe(20);
     });
 
     it('should return undefined for invalid code', () => {
       const result = getCategoryByCode('INVALID_CODE');
       expect(result).toBeUndefined();
+    });
+
+    it('should return undefined for removed category codes', () => {
+      expect(getCategoryByCode('BUILDINGS')).toBeUndefined();
+      expect(getCategoryByCode('INTANGIBLE')).toBeUndefined();
     });
 
     it('should return undefined for empty string', () => {
@@ -118,7 +123,7 @@ describe('Depreciation Constants', () => {
     });
 
     it('should be case-sensitive', () => {
-      const result = getCategoryByCode('buildings');
+      const result = getCategoryByCode('vehicles');
       expect(result).toBeUndefined();
     });
 
@@ -132,10 +137,6 @@ describe('Depreciation Constants', () => {
   });
 
   describe('calculateAnnualRate', () => {
-    it('should return 4% for 25 years useful life', () => {
-      expect(calculateAnnualRate(25)).toBe(4);
-    });
-
     it('should return 20% for 5 years useful life', () => {
       expect(calculateAnnualRate(5)).toBe(20);
     });
@@ -168,10 +169,6 @@ describe('Depreciation Constants', () => {
   });
 
   describe('calculateUsefulLife', () => {
-    it('should return 25 years for 4% rate', () => {
-      expect(calculateUsefulLife(4)).toBe(25);
-    });
-
     it('should return 5 years for 20% rate', () => {
       expect(calculateUsefulLife(20)).toBe(5);
     });
@@ -206,7 +203,6 @@ describe('Depreciation Constants', () => {
   describe('Rate and Life conversion roundtrip', () => {
     it('should be approximately reversible for standard rates', () => {
       const testCases = [
-        { rate: 4, life: 25 },
         { rate: 20, life: 5 },
         { rate: 10, life: 10 },
         { rate: 50, life: 2 },
@@ -227,16 +223,10 @@ describe('Depreciation Constants', () => {
   });
 
   describe('Qatar Tax Compliance', () => {
-    it('should match official Qatar Tax Authority rates for Buildings', () => {
-      const buildings = getCategoryByCode('BUILDINGS');
-      // Qatar Tax: Buildings depreciate at 4% per year (25 year life)
-      expect(buildings!.annualRate).toBe(4);
-    });
-
-    it('should match official Qatar Tax Authority rates for Plant & Machinery', () => {
+    it('should match official Qatar Tax Authority rates for Machinery', () => {
       const machinery = getCategoryByCode('MACHINERY');
-      // Qatar Tax: Machinery depreciates at 20% per year (5 year life)
-      expect(machinery!.annualRate).toBe(20);
+      // Qatar Tax: Machinery depreciates at 15% per year (7 year life)
+      expect(machinery!.annualRate).toBe(15);
     });
 
     it('should match official Qatar Tax Authority rates for Motor Vehicles', () => {
@@ -245,16 +235,22 @@ describe('Depreciation Constants', () => {
       expect(vehicles!.annualRate).toBe(20);
     });
 
-    it('should match official Qatar Tax Authority rates for Furniture & Fixtures', () => {
+    it('should match official Qatar Tax Authority rates for Furniture', () => {
       const furniture = getCategoryByCode('FURNITURE');
-      // Qatar Tax: Furniture depreciates at 20% per year (5 year life)
-      expect(furniture!.annualRate).toBe(20);
+      // Qatar Tax: Furniture depreciates at 15% per year (7 year life)
+      expect(furniture!.annualRate).toBe(15);
     });
 
     it('should match official Qatar Tax Authority rates for Computers', () => {
       const it = getCategoryByCode('IT_EQUIPMENT');
-      // Qatar Tax: IT Equipment depreciates at 20% per year (5 year life)
-      expect(it!.annualRate).toBe(20);
+      // Qatar Tax: IT Equipment depreciates at 33.33% per year (3 year life)
+      expect(it!.annualRate).toBe(33.33);
+    });
+
+    it('should match official Qatar Tax Authority rates for Electrical Equipment', () => {
+      const electrical = getCategoryByCode('ELECTRICAL');
+      // Qatar Tax: Electrical depreciates at 20% per year (5 year life)
+      expect(electrical!.annualRate).toBe(20);
     });
   });
 });

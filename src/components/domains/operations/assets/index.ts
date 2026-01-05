@@ -8,6 +8,5 @@ export { AssignmentTimeline } from './assignment-timeline';
 export { CloneAssetButton } from './clone-asset-button';
 export { DeleteAssetButton } from './delete-asset-button';
 export { DepreciationCard } from './depreciation-card';
-export { DepreciationScheduleTable } from './depreciation-schedule-table';
 export { DisposeAssetDialog } from './dispose-asset-dialog';
 export { EmployeeAssetListTable } from './employee-asset-list-table';

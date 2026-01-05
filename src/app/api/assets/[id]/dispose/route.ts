@@ -1,8 +1,36 @@
 /**
  * @file route.ts
  * @description Asset disposal API endpoint with IFRS-compliant depreciation and gain/loss calculation
- * @module operations/assets
+ * @module api/assets/[id]/dispose
+ *
+ * FEATURES:
+ * - IFRS-compliant asset disposal
+ * - Pro-rata depreciation calculation up to disposal date
+ * - Gain/loss calculation (proceeds - net book value)
+ * - Multiple disposal methods (SOLD, SCRAPPED, DONATED, etc.)
+ * - Preview mode for showing expected values before commit
+ *
+ * ACCOUNTING:
+ * - Net Book Value (NBV) = Original Cost - Accumulated Depreciation
+ * - Gain = Proceeds - NBV (when proceeds > NBV)
+ * - Loss = NBV - Proceeds (when proceeds < NBV)
+ *
+ * DISPOSAL METHODS:
+ * - SOLD: Asset sold for cash
+ * - SCRAPPED: Asset destroyed/recycled
+ * - DONATED: Asset given away
+ * - WRITTEN_OFF: Asset removed from books
+ * - TRADED_IN: Asset exchanged for new asset
+ *
+ * SECURITY:
+ * - Admin role required
+ * - Rate limiting enabled
+ * - Assets module must be enabled
  */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
 import { disposeAssetSchema, previewDisposalSchema } from '@/lib/validations/operations/asset-disposal';
@@ -11,17 +39,54 @@ import { logAction, ActivityActions } from '@/lib/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { DisposalMethod } from '@prisma/client';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/assets/[id]/dispose - Process Asset Disposal
+// ═══════════════════════════════════════════════════════════════════════════════
+
 /**
- * POST /api/assets/[id]/dispose
+ * Process asset disposal with IFRS-compliant depreciation and gain/loss calculation.
+ * This permanently disposes the asset and records all financial details.
  *
- * Process asset disposal with IFRS-compliant depreciation calculation
+ * @route POST /api/assets/[id]/dispose
  *
- * Request Body:
+ * @param {string} id - Asset ID (path parameter)
+ *
+ * @body {string} disposalDate - Date of disposal (ISO date string)
+ * @body {string} disposalMethod - Method: SOLD, SCRAPPED, DONATED, WRITTEN_OFF, TRADED_IN
+ * @body {number} [disposalProceeds=0] - Sale proceeds (0 for scrapped/donated)
+ * @body {string} [disposalNotes] - Optional notes about disposal
+ *
+ * @returns {{ success: boolean, message: string, disposal: object }}
+ *
+ * @throws {400} Asset ID is required
+ * @throws {400} Invalid request body
+ * @throws {400} Asset is already disposed
+ * @throws {400} Failed to process disposal
+ * @throws {404} Asset not found
+ *
+ * @sideEffects
+ * - Updates asset status to DISPOSED
+ * - Calculates and stores final depreciation
+ * - Records disposal financial details
+ * - Logs activity for audit
+ *
+ * @example Request:
  * {
- *   disposalDate: string (ISO date),
- *   disposalMethod: "SOLD" | "SCRAPPED" | "DONATED" | "WRITTEN_OFF" | "TRADED_IN",
- *   disposalProceeds: number (default 0),
- *   disposalNotes?: string
+ *   "disposalDate": "2025-01-15",
+ *   "disposalMethod": "SOLD",
+ *   "disposalProceeds": 5000,
+ *   "disposalNotes": "Sold to employee at book value"
+ * }
+ *
+ * @example Response:
+ * {
+ *   "success": true,
+ *   "message": "Asset BCE-CP-25001 disposed successfully",
+ *   "disposal": {
+ *     "netBookValueAtDisposal": 4500,
+ *     "gainLoss": 500,
+ *     "isGain": true
+ *   }
  * }
  */
 async function disposeAssetHandler(request: NextRequest, context: APIContext) {
@@ -34,7 +99,9 @@ async function disposeAssetHandler(request: NextRequest, context: APIContext) {
     return NextResponse.json({ error: 'Asset ID is required' }, { status: 400 });
   }
 
-  // Parse and validate request body
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 1: Parse and validate request body
+  // ─────────────────────────────────────────────────────────────────────────────
   const body = await request.json();
   const validation = disposeAssetSchema.safeParse(body);
 
@@ -50,7 +117,9 @@ async function disposeAssetHandler(request: NextRequest, context: APIContext) {
 
   const { disposalDate, disposalMethod, disposalProceeds, disposalNotes } = validation.data;
 
-  // Verify asset exists and belongs to tenant
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 2: Verify asset exists and is not already disposed
+  // ─────────────────────────────────────────────────────────────────────────────
   const asset = await prisma.asset.findFirst({
     where: { id: assetId, tenantId },
     select: { id: true, assetTag: true, model: true, status: true },
@@ -67,7 +136,9 @@ async function disposeAssetHandler(request: NextRequest, context: APIContext) {
     );
   }
 
-  // Process disposal
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 3: Process disposal (calculates depreciation, gain/loss, updates status)
+  // ─────────────────────────────────────────────────────────────────────────────
   const result = await processAssetDisposal({
     assetId,
     tenantId,
@@ -85,7 +156,9 @@ async function disposeAssetHandler(request: NextRequest, context: APIContext) {
     );
   }
 
-  // Log activity
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 4: Log activity for audit trail (non-critical)
+  // ─────────────────────────────────────────────────────────────────────────────
   try {
     await logAction(
       tenantId,
@@ -118,11 +191,42 @@ export const POST = withErrorHandler(disposeAssetHandler, {
   requireModule: 'assets',
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GET /api/assets/[id]/dispose - Preview Disposal (Before Committing)
+// ═══════════════════════════════════════════════════════════════════════════════
+
 /**
- * GET /api/assets/[id]/dispose?date=YYYY-MM-DD&proceeds=0
+ * Preview disposal calculation without committing changes.
+ * Useful for showing expected gain/loss before user confirms disposal.
  *
- * Preview disposal calculation without committing changes
- * Useful for showing expected gain/loss before user confirms
+ * @route GET /api/assets/[id]/dispose?date=YYYY-MM-DD&proceeds=0
+ *
+ * @param {string} id - Asset ID (path parameter)
+ *
+ * @query {string} [date] - Disposal date (defaults to today)
+ * @query {number} [proceeds=0] - Expected sale proceeds
+ *
+ * @returns {{ canDispose: boolean, preview: object }}
+ *
+ * @throws {400} Asset ID is required
+ * @throws {400} Invalid query parameters
+ * @throws {400} Cannot dispose asset (with reason)
+ *
+ * @example Request:
+ * GET /api/assets/clx123/dispose?date=2025-01-15&proceeds=5000
+ *
+ * @example Response:
+ * {
+ *   "canDispose": true,
+ *   "preview": {
+ *     "originalCost": 10000,
+ *     "accumulatedDepreciation": 5500,
+ *     "netBookValue": 4500,
+ *     "proceeds": 5000,
+ *     "gainLoss": 500,
+ *     "isGain": true
+ *   }
+ * }
  */
 async function previewDisposeHandler(request: NextRequest, context: APIContext) {
   const { tenant } = context;
@@ -133,7 +237,9 @@ async function previewDisposeHandler(request: NextRequest, context: APIContext) 
     return NextResponse.json({ error: 'Asset ID is required' }, { status: 400 });
   }
 
-  // Parse query params
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 1: Parse query parameters
+  // ─────────────────────────────────────────────────────────────────────────────
   const { searchParams } = new URL(request.url);
   const dateParam = searchParams.get('date') || new Date().toISOString().split('T')[0];
   const proceedsParam = parseFloat(searchParams.get('proceeds') || '0');
@@ -155,7 +261,9 @@ async function previewDisposeHandler(request: NextRequest, context: APIContext) 
 
   const { disposalDate, disposalProceeds } = validation.data;
 
-  // Get preview
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 2: Get preview (read-only calculation, no database changes)
+  // ─────────────────────────────────────────────────────────────────────────────
   const result = await previewAssetDisposal(
     assetId,
     tenantId,

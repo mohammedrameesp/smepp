@@ -1,8 +1,35 @@
 /**
  * @file route.ts
  * @description Asset assignment decline API endpoint
- * @module operations/assets
+ * @module api/asset-requests/[id]/decline
+ *
+ * FEATURES:
+ * - User declines an asset assignment
+ * - Requires decline reason for audit trail
+ * - Asset remains available (not assigned)
+ * - Notifies all admins via email and in-app
+ *
+ * DECLINE OUTCOME:
+ * - Request: PENDING_USER_ACCEPTANCE → REJECTED_BY_USER
+ * - Asset: Remains as SPARE (never assigned)
+ * - Admin can then reassign to someone else
+ *
+ * USE CASES:
+ * - User doesn't need the asset
+ * - Wrong asset type assigned
+ * - User leaving the organization
+ *
+ * SECURITY:
+ * - Only the target member can decline their assignment
+ * - Auth required
+ * - Assets module must be enabled
+ * - Tenant-isolated
  */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -16,6 +43,48 @@ import { assetAssignmentDeclinedEmail } from '@/lib/email-templates';
 import { createBulkNotifications, NotificationTemplates } from '@/lib/domains/system/notifications';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/asset-requests/[id]/decline - Decline Assignment
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Decline an asset assignment.
+ * Only the target member can decline their own assignment.
+ *
+ * Actions performed:
+ * 1. Updates request status to REJECTED_BY_USER
+ * 2. Creates request history entry with reason
+ * 3. Notifies all admins (email + in-app)
+ *
+ * Note: Asset is NOT modified - it was never assigned in the first place.
+ * The asset remains available in SPARE status for reassignment.
+ *
+ * @route POST /api/asset-requests/[id]/decline
+ *
+ * @param {string} id - Request ID (path parameter)
+ *
+ * @body {string} reason - Decline reason (required for audit trail)
+ *
+ * @returns {AssetRequest} Updated request with asset and member info
+ *
+ * @throws {400} ID is required
+ * @throws {400} Invalid request body (missing reason)
+ * @throws {400} Cannot decline this assignment (invalid state)
+ * @throws {403} Organization context required
+ * @throws {403} Access denied (not the target member)
+ * @throws {404} Asset request not found
+ *
+ * @example Request body:
+ * { "reason": "I already have a laptop assigned to me" }
+ *
+ * @example Response:
+ * {
+ *   "id": "clx...",
+ *   "requestNumber": "AR-25-001",
+ *   "status": "REJECTED_BY_USER",
+ *   "processorNotes": "I already have a laptop..."
+ * }
+ */
 async function declineAssetAssignmentHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
@@ -28,6 +97,9 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 1: Validate request body (reason is required)
+    // ─────────────────────────────────────────────────────────────────────────────
     const body = await request.json();
 
     const validation = declineAssetAssignmentSchema.safeParse(body);
@@ -40,7 +112,9 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
 
     const { reason } = validation.data;
 
-    // Use findFirst with tenantId to prevent IDOR attacks
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 2: Fetch request (tenant-scoped for IDOR prevention)
+    // ─────────────────────────────────────────────────────────────────────────────
     const assetRequest = await prisma.assetRequest.findFirst({
       where: { id, tenantId },
       include: {
@@ -54,15 +128,24 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
       return NextResponse.json({ error: 'Asset request not found' }, { status: 404 });
     }
 
-    // Only the target member can decline
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 3: Verify only target member can decline
+    // ─────────────────────────────────────────────────────────────────────────────
     if (assetRequest.memberId !== session.user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 4: Check if user can respond to this request
+    // ─────────────────────────────────────────────────────────────────────────────
     if (!canUserRespond(assetRequest.status, assetRequest.type)) {
       return NextResponse.json({ error: 'Cannot decline this assignment' }, { status: 400 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 5: Decline assignment in transaction
+    // Note: We don't modify the asset - it was never actually assigned
+    // ─────────────────────────────────────────────────────────────────────────────
     const updatedRequest = await prisma.$transaction(async (tx) => {
       // Update request status
       const updated = await tx.assetRequest.update({
@@ -96,6 +179,9 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
       return updated;
     });
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 6: Log activity
+    // ─────────────────────────────────────────────────────────────────────────────
     await logAction(
       tenantId,
       session.user.id,
@@ -109,9 +195,10 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
       }
     );
 
-    // Send email and in-app notifications to admins (tenant-scoped)
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 7: Notify all admins via email and in-app
+    // ─────────────────────────────────────────────────────────────────────────────
     try {
-      // Get org slug/name for email URLs
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
         select: { slug: true, name: true },
@@ -119,6 +206,7 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
       const orgSlug = org?.slug || 'app';
       const orgName = org?.name || 'Durj';
 
+      // Get all admins in tenant
       const admins = await prisma.teamMember.findMany({
         where: {
           tenantId,
@@ -126,6 +214,8 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
         },
         select: { id: true, email: true },
       });
+
+      // Send batch email to all admins
       const emailData = assetAssignmentDeclinedEmail({
         requestNumber: assetRequest.requestNumber,
         assetTag: assetRequest.asset.assetTag,
@@ -140,7 +230,7 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
       });
       await sendBatchEmails(admins.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
 
-      // In-app notifications
+      // Send in-app notifications to all admins
       const notifications = admins.map(admin =>
         NotificationTemplates.assetAssignmentDeclined(
           admin.id,

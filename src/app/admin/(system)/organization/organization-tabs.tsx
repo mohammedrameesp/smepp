@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
-import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings } from '@/components/domains/system/settings';
+import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings } from '@/components/domains/system/settings';
 import type { OrgRole } from '@prisma/client';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
 
@@ -511,6 +511,10 @@ export function OrganizationTabs({
                 isAdmin={isAdmin}
               />
               <AssetTypeMappingsSettings
+                organizationId={org.id}
+                isAdmin={isAdmin}
+              />
+              <DepreciationCategoriesSettings
                 organizationId={org.id}
                 isAdmin={isAdmin}
               />

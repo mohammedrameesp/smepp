@@ -63,16 +63,19 @@ export async function generateRequestNumber(
 }
 
 /**
- * Check if a member can request an asset
- * - Asset must be SPARE status
- * - Asset must not have any pending requests
+ * Check if a member can request an asset.
+ * Tenant-scoped to prevent cross-tenant access.
+ *
+ * @param assetId - Asset ID to request
+ * @param memberId - Member making the request
+ * @param tenantId - Tenant ID for isolation
  */
-export async function canRequestAsset(assetId: string, memberId: string): Promise<{
+export async function canRequestAsset(assetId: string, memberId: string, tenantId: string): Promise<{
   canRequest: boolean;
   reason?: string;
 }> {
-  const asset = await prisma.asset.findUnique({
-    where: { id: assetId },
+  const asset = await prisma.asset.findFirst({
+    where: { id: assetId, tenantId },
     include: {
       assetRequests: {
         where: {
@@ -104,6 +107,7 @@ export async function canRequestAsset(assetId: string, memberId: string): Promis
     where: {
       assetId,
       memberId,
+      tenantId,
       status: AssetRequestStatus.PENDING_ADMIN_APPROVAL,
     },
   });
@@ -116,17 +120,19 @@ export async function canRequestAsset(assetId: string, memberId: string): Promis
 }
 
 /**
- * Check if admin can assign an asset to a member
- * - Asset must be SPARE status
- * - Asset must not have pending requests
- * - Member must not already have the asset
+ * Check if admin can assign an asset to a member.
+ * Tenant-scoped to prevent cross-tenant access.
+ *
+ * @param assetId - Asset ID to assign
+ * @param memberId - Target member ID
+ * @param tenantId - Tenant ID for isolation
  */
-export async function canAssignAsset(assetId: string, memberId: string): Promise<{
+export async function canAssignAsset(assetId: string, memberId: string, tenantId: string): Promise<{
   canAssign: boolean;
   reason?: string;
 }> {
-  const asset = await prisma.asset.findUnique({
-    where: { id: assetId },
+  const asset = await prisma.asset.findFirst({
+    where: { id: assetId, tenantId },
     include: {
       assetRequests: {
         where: {
@@ -161,17 +167,19 @@ export async function canAssignAsset(assetId: string, memberId: string): Promise
 }
 
 /**
- * Check if member can return an asset
- * - Asset must be assigned to the member
- * - Asset must be IN_USE status
- * - No pending return request for this asset
+ * Check if member can return an asset.
+ * Tenant-scoped to prevent cross-tenant access.
+ *
+ * @param assetId - Asset ID to return
+ * @param memberId - Member returning the asset
+ * @param tenantId - Tenant ID for isolation
  */
-export async function canReturnAsset(assetId: string, memberId: string): Promise<{
+export async function canReturnAsset(assetId: string, memberId: string, tenantId: string): Promise<{
   canReturn: boolean;
   reason?: string;
 }> {
-  const asset = await prisma.asset.findUnique({
-    where: { id: assetId },
+  const asset = await prisma.asset.findFirst({
+    where: { id: assetId, tenantId },
     include: {
       assetRequests: {
         where: {

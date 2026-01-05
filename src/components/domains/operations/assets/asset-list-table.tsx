@@ -40,7 +40,7 @@ interface AssetListTableProps {
 
 export function AssetListTable({ assets }: AssetListTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('active');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -75,7 +75,10 @@ export function AssetListTable({ assets }: AssetListTableProps) {
     }
 
     // Apply status filter
-    if (statusFilter !== 'all') {
+    if (statusFilter === 'active') {
+      // Active = all except DISPOSED
+      filtered = filtered.filter(asset => asset.status !== 'DISPOSED');
+    } else if (statusFilter !== 'all') {
       filtered = filtered.filter(asset => asset.status === statusFilter);
     }
 
@@ -178,10 +181,11 @@ export function AssetListTable({ assets }: AssetListTableProps) {
         <div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger>
-              <SelectValue placeholder="All Statuses" />
+              <SelectValue placeholder="Active" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="all">All (incl. Disposed)</SelectItem>
               {uniqueStatuses.map(status => (
                 <SelectItem key={status} value={status}>
                   {status.replace('_', ' ')}

@@ -26,7 +26,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { TrendingDown, Calculator, Settings, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { TrendingDown, Settings, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
@@ -69,9 +69,6 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [salvageValue, setSalvageValue] = useState<string>('0');
   const [isAssigning, setIsAssigning] = useState(false);
-
-  // Calculate depreciation state
-  const [isCalculating, setIsCalculating] = useState(false);
 
   const isAdmin = session?.user?.teamMemberRole === 'ADMIN' ||
                   session?.user?.role === 'ADMIN';
@@ -141,36 +138,6 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
       toast.error(err instanceof Error ? err.message : 'Failed to assign category');
     } finally {
       setIsAssigning(false);
-    }
-  };
-
-  const handleCalculateDepreciation = async () => {
-    try {
-      setIsCalculating(true);
-
-      const response = await fetch(`/api/assets/${assetId}/depreciation`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to calculate depreciation');
-      }
-
-      if (data.skipped) {
-        toast.info(data.message || 'Depreciation calculation skipped');
-      } else {
-        toast.success('Depreciation calculated successfully');
-        fetchData();
-        onUpdate?.();
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to calculate depreciation');
-    } finally {
-      setIsCalculating(false);
     }
   };
 
@@ -299,22 +266,6 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-
-              {hasCategory && !asset.isFullyDepreciated && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={handleCalculateDepreciation}
-                  disabled={isCalculating}
-                >
-                  {isCalculating ? (
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  ) : (
-                    <Calculator className="h-4 w-4 mr-1" />
-                  )}
-                  Calculate
-                </Button>
-              )}
             </div>
           )}
         </div>

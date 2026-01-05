@@ -1,8 +1,31 @@
 /**
  * @file route.ts
  * @description Asset request approval API endpoint
- * @module operations/assets
+ * @module api/asset-requests/[id]/approve
+ *
+ * FEATURES:
+ * - Approve employee requests (moves to PENDING_USER_ACCEPTANCE)
+ * - Approve return requests (unassigns asset, marks as SPARE)
+ * - Creates history entry and asset history for returns
+ * - Sends email and in-app notifications
+ * - Invalidates WhatsApp action tokens
+ *
+ * APPROVAL FLOWS:
+ * - EMPLOYEE_REQUEST: PENDING_ADMIN_APPROVAL → PENDING_USER_ACCEPTANCE
+ *   (User must still accept the assignment)
+ * - RETURN_REQUEST: PENDING_RETURN_APPROVAL → APPROVED
+ *   (Asset is immediately unassigned and marked SPARE)
+ *
+ * SECURITY:
+ * - Admin role required
+ * - Assets module must be enabled
+ * - Tenant-isolated (prevents IDOR attacks)
  */
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -17,6 +40,50 @@ import { createNotification, NotificationTemplates } from '@/lib/domains/system/
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { invalidateTokensForEntity } from '@/lib/whatsapp';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// POST /api/asset-requests/[id]/approve - Approve Request
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Approve an asset request (employee request or return request).
+ *
+ * For EMPLOYEE_REQUEST:
+ * - Changes status to PENDING_USER_ACCEPTANCE
+ * - Sets admin as assigner
+ * - User must still accept the assignment
+ *
+ * For RETURN_REQUEST:
+ * - Changes status to APPROVED
+ * - Unassigns asset from member
+ * - Changes asset status to SPARE
+ * - Creates asset history entry
+ *
+ * @route POST /api/asset-requests/[id]/approve
+ *
+ * @param {string} id - Request ID (path parameter)
+ *
+ * @body {string} [notes] - Admin notes for the approval
+ *
+ * @returns {AssetRequest} Updated request with asset and member info
+ *
+ * @throws {400} ID is required
+ * @throws {400} Invalid request body
+ * @throws {400} Cannot approve this request (invalid state or type)
+ * @throws {403} Organization context required
+ * @throws {404} Asset request not found
+ *
+ * @example Request body:
+ * { "notes": "Approved for new project assignment" }
+ *
+ * @example Response:
+ * {
+ *   "id": "clx...",
+ *   "requestNumber": "AR-25-001",
+ *   "status": "PENDING_USER_ACCEPTANCE",
+ *   "processedById": "admin-id",
+ *   "processedAt": "2025-01-05T..."
+ * }
+ */
 async function approveAssetRequestHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
@@ -29,6 +96,9 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 1: Validate request body
+    // ─────────────────────────────────────────────────────────────────────────────
     const body = await request.json();
 
     const validation = approveAssetRequestSchema.safeParse(body);
@@ -41,7 +111,9 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
 
     const { notes } = validation.data;
 
-    // Use findFirst with tenantId to prevent IDOR attacks
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 2: Fetch request (tenant-scoped for IDOR prevention)
+    // ─────────────────────────────────────────────────────────────────────────────
     const assetRequest = await prisma.assetRequest.findFirst({
       where: { id, tenantId },
       include: {
@@ -54,25 +126,34 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
       return NextResponse.json({ error: 'Asset request not found' }, { status: 404 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 3: Check if admin can process this request
+    // ─────────────────────────────────────────────────────────────────────────────
     if (!canAdminProcess(assetRequest.status, assetRequest.type)) {
       return NextResponse.json({ error: 'Cannot approve this request' }, { status: 400 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 4: Determine new status and activity based on type
+    // ─────────────────────────────────────────────────────────────────────────────
     let newStatus: AssetRequestStatus;
     let activityAction: string;
 
     if (assetRequest.type === AssetRequestType.EMPLOYEE_REQUEST) {
-      // When approving employee request, create an assignment that requires user acceptance
+      // Employee request approved → now pending user acceptance
       newStatus = AssetRequestStatus.PENDING_USER_ACCEPTANCE;
       activityAction = ActivityActions.ASSET_REQUEST_APPROVED;
     } else if (assetRequest.type === AssetRequestType.RETURN_REQUEST) {
-      // When approving return, unassign the asset
+      // Return approved → asset unassigned
       newStatus = AssetRequestStatus.APPROVED;
       activityAction = ActivityActions.ASSET_RETURN_APPROVED;
     } else {
       return NextResponse.json({ error: 'Invalid request type for approval' }, { status: 400 });
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 5: Update request and handle asset changes in transaction
+    // ─────────────────────────────────────────────────────────────────────────────
     const updatedRequest = await prisma.$transaction(async (tx) => {
       // Update request status
       const updated = await tx.assetRequest.update({
@@ -82,7 +163,7 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
           processedById: session.user.id,
           processedAt: new Date(),
           processorNotes: notes,
-          // For employee requests that get approved, set the admin as assigner
+          // For employee requests, set the admin as assigner
           assignedById: assetRequest.type === AssetRequestType.EMPLOYEE_REQUEST
             ? session.user.id
             : assetRequest.assignedById,
@@ -118,7 +199,7 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
           },
         });
 
-        // Create asset history entry
+        // Create asset history entry for the return
         await tx.assetHistory.create({
           data: {
             tenantId,
@@ -138,6 +219,9 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
       return updated;
     });
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 6: Log activity
+    // ─────────────────────────────────────────────────────────────────────────────
     await logAction(
       tenantId,
       session.user.id,
@@ -152,12 +236,15 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
       }
     );
 
-    // NOTIF-004: Invalidate any pending WhatsApp action tokens for this request
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 7: Invalidate WhatsApp action tokens (if any pending)
+    // ─────────────────────────────────────────────────────────────────────────────
     await invalidateTokensForEntity('ASSET_REQUEST', id);
 
-    // Send email notifications
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 8: Send email notifications
+    // ─────────────────────────────────────────────────────────────────────────────
     try {
-      // Get org slug/name for email URLs
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
         select: { slug: true, name: true },
@@ -199,7 +286,9 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
       console.error('Failed to send email notification:', emailError);
     }
 
-    // Send in-app notification
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 9: Send in-app notification
+    // ─────────────────────────────────────────────────────────────────────────────
     await createNotification(
       NotificationTemplates.assetRequestApproved(
         assetRequest.memberId,
