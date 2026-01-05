@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, ShoppingCart, MapPin, Info, Wrench, RefreshCw } from 'lucide-react';
+import { Package, ShoppingCart, MapPin, Info, Wrench, RefreshCw, AlertTriangle } from 'lucide-react';
+import { DisposeAssetDialog } from '@/components/domains/operations/assets';
 import { toInputDateString } from '@/lib/date-format';
 import { updateAssetSchema, type UpdateAssetRequest } from '@/lib/validations/assets';
 import { AssetStatus } from '@prisma/client';
@@ -921,6 +922,25 @@ export default function EditAssetPage() {
                     </p>
                   )
                 )}
+                </div>
+              )}
+
+              {/* Danger Zone - Dispose Asset */}
+              {asset && asset.status !== 'DISPOSED' && (
+                <div className="border border-red-200 rounded-lg p-4 bg-red-50/50 mt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                    <h3 className="font-semibold text-red-800">Danger Zone</h3>
+                  </div>
+                  <p className="text-sm text-red-700 mb-3">
+                    Permanent actions that cannot be undone. Disposing an asset will record its final value and remove it from active inventory.
+                  </p>
+                  <DisposeAssetDialog
+                    assetId={asset.id}
+                    assetTag={asset.assetTag || undefined}
+                    assetModel={asset.model}
+                    assetStatus={asset.status as AssetStatus}
+                  />
                 </div>
               )}
 

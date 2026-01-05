@@ -13,7 +13,6 @@ import {
   DeleteAssetButton,
   AssetMaintenanceRecords,
   DepreciationCard,
-  DisposeAssetDialog,
 } from '@/components/domains/operations/assets';
 import { formatDate, formatDateTime } from '@/lib/date-format';
 import { AssetAssignDialog } from '@/components/domains/operations/asset-requests';
@@ -152,12 +151,6 @@ export default async function AssetDetailPage({ params }: Props) {
               Edit Asset
             </PageHeaderButton>
             <CloneAssetButton assetId={asset.id} assetModel={asset.model} />
-            <DisposeAssetDialog
-              assetId={asset.id}
-              assetTag={asset.assetTag}
-              assetModel={asset.model}
-              assetStatus={asset.status}
-            />
             <DeleteAssetButton assetId={asset.id} assetModel={asset.model} />
           </div>
         }
