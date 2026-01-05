@@ -220,6 +220,10 @@ export default async function AssetDetailPage({ params }: Props) {
                   <p className="font-semibold text-slate-900">{asset.brand || 'Not specified'}</p>
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Model / Version</p>
+                  <p className="font-semibold text-slate-900">{asset.model}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Serial Number</p>
                   <p className="font-mono font-semibold text-slate-900">{asset.serial || 'Not provided'}</p>
                 </div>
