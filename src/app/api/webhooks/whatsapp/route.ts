@@ -13,6 +13,7 @@ import {
   validateAndConsumeToken,
   updateMessageStatus,
   sendActionConfirmation,
+  invalidateTokensForEntity,
 } from '@/lib/whatsapp';
 import type { MetaWebhookPayload, ApprovalEntityType } from '@/lib/whatsapp';
 
@@ -312,6 +313,9 @@ async function executeLeaveAction(
     });
   }
 
+  // Invalidate all other tokens for this entity
+  await invalidateTokensForEntity('LEAVE_REQUEST', entityId);
+
   return {
     requesterName: request.member.name || 'Employee',
     title: `${request.leaveType.name} Leave`,
@@ -364,6 +368,9 @@ async function executePurchaseAction(
       details: 'Processed via WhatsApp',
     },
   });
+
+  // Invalidate all other tokens for this entity
+  await invalidateTokensForEntity('PURCHASE_REQUEST', entityId);
 
   return {
     requesterName: request.requester.name || 'Employee',
@@ -430,6 +437,9 @@ async function executeAssetAction(
       },
     });
   }
+
+  // Invalidate all other tokens for this entity
+  await invalidateTokensForEntity('ASSET_REQUEST', entityId);
 
   return {
     requesterName: request.member.name || 'Employee',

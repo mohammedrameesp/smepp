@@ -36,14 +36,13 @@ Complete list of all asset-related files for code review and understanding.
 ### Autocomplete & Helpers
 | File | Description |
 |------|-------------|
-| [src/app/api/assets/types/route.ts](../src/app/api/assets/types/route.ts) | Get distinct asset types |
-| [src/app/api/assets/next-tag/route.ts](../src/app/api/assets/next-tag/route.ts) | Generate next asset tag |
+[Done] | [src/app/api/assets/next-tag/route.ts](../src/app/api/assets/next-tag/route.ts) | Generate next asset tag |
 
 ### Asset Requests API
 | File | Description |
 |------|-------------|
-| [src/app/api/asset-requests/route.ts](../src/app/api/asset-requests/route.ts) | List & Create asset requests |
-| [src/app/api/asset-requests/[id]/route.ts](../src/app/api/asset-requests/[id]/route.ts) | Get single request |
+[Done] | [src/app/api/asset-requests/route.ts](../src/app/api/asset-requests/route.ts) | List & Create asset requests |
+[Done] | [src/app/api/asset-requests/[id]/route.ts](../src/app/api/asset-requests/[id]/route.ts) | Get single request |
 | [src/app/api/asset-requests/[id]/approve/route.ts](../src/app/api/asset-requests/[id]/approve/route.ts) | Admin approves request |
 | [src/app/api/asset-requests/[id]/reject/route.ts](../src/app/api/asset-requests/[id]/reject/route.ts) | Admin rejects request |
 | [src/app/api/asset-requests/[id]/accept/route.ts](../src/app/api/asset-requests/[id]/accept/route.ts) | User accepts assignment |
