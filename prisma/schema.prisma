@@ -990,9 +990,10 @@ model AssetHistory {
   notes          String?
   performedById  String?
   performedBy    TeamMember?        @relation("AssetHistoryPerformer", fields: [performedById], references: [id])
-  assignmentDate DateTime? // When asset was assigned (for ASSIGNED action)
-  returnDate     DateTime? // When asset was returned (for UNASSIGNED action)
-  createdAt      DateTime           @default(now())
+  assignmentDate   DateTime? // When asset was assigned (for ASSIGNED action)
+  returnDate       DateTime? // When asset was returned (for UNASSIGNED action)
+  statusChangeDate DateTime? // When status changed (for STATUS_CHANGED action)
+  createdAt        DateTime           @default(now())
 
   @@index([assetId])
   @@index([createdAt])

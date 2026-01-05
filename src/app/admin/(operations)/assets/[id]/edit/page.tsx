@@ -122,6 +122,7 @@ export default function EditAssetPage() {
       status: AssetStatus.IN_USE,
       assignedMemberId: '',
       assignmentDate: '',
+      statusChangeDate: '',
       notes: '',
       locationId: '',
       isShared: false,
@@ -142,6 +143,7 @@ export default function EditAssetPage() {
   const watchedWarrantyExpiry = watch('warrantyExpiry');
   const watchedDepreciationCategoryId = watch('depreciationCategoryId');
   const watchedIsShared = watch('isShared');
+  const watchedStatusChangeDate = watch('statusChangeDate');
 
   // Maintenance tracking state
   const [maintenanceRecords, setMaintenanceRecords] = useState<Array<{ id: string; maintenanceDate: string; notes: string | null }>>([]);
@@ -289,6 +291,7 @@ export default function EditAssetPage() {
           status: (assetData.status || AssetStatus.IN_USE) as AssetStatus,
           assignedMemberId: assetData.assignedMemberId || '',
           assignmentDate: toInputDateString(assetData.assignmentDate),
+          statusChangeDate: '',
           notes: assetData.notes || '',
           locationId: assetData.locationId || '',
           isShared: assetData.isShared || false,
@@ -715,6 +718,24 @@ export default function EditAssetPage() {
                       </Select>
                     )}
                   </div>
+                  {/* Status Change Date - for SPARE and REPAIR */}
+                  {(watchedStatus === AssetStatus.SPARE || watchedStatus === AssetStatus.REPAIR) && (
+                    <div className="space-y-2">
+                      <Label htmlFor="statusChangeDate">
+                        {watchedStatus === AssetStatus.SPARE ? 'Marked Spare On' : 'Sent for Repair On'}
+                      </Label>
+                      <DatePicker
+                        id="statusChangeDate"
+                        value={watchedStatusChangeDate || ''}
+                        onChange={(value) => setValue('statusChangeDate', value)}
+                        maxDate={getQatarEndOfDay()}
+                        placeholder="Select date..."
+                      />
+                      <p className="text-xs text-gray-500">
+                        When did this asset become {watchedStatus === AssetStatus.SPARE ? 'spare' : 'sent for repair'}?
+                      </p>
+                    </div>
+                  )}
                   {hasMultipleLocations && locations.length > 0 && (
                     <div className="space-y-2">
                       <Label htmlFor="locationId">Location</Label>

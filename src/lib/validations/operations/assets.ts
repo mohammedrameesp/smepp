@@ -107,6 +107,8 @@ export const createAssetSchema = z.object({
   assignedMemberId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
   /** Date asset was assigned (required for IN_USE unless shared) */
   assignmentDate: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  /** Date of status change (for SPARE, REPAIR, etc.) */
+  statusChangeDate: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
   /** Additional notes about the asset */
   notes: z.string().optional().nullable().or(z.literal('')),
   /** Location ID (references Location model) */
@@ -176,6 +178,7 @@ const baseAssetSchema = z.object({
   status: z.nativeEnum(AssetStatus).optional(),
   assignedMemberId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
   assignmentDate: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  statusChangeDate: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
   notes: z.string().optional().nullable().or(z.literal('')),
   locationId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
   isShared: z.boolean().optional(),

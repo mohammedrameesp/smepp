@@ -46,6 +46,7 @@ interface RecordAssetHistoryParams {
   toLocation?: string | null;
   notes?: string;
   performedById: string;
+  statusChangeDate?: Date;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -81,6 +82,7 @@ export async function recordAssetHistory({
   toLocation,
   notes,
   performedById,
+  statusChangeDate,
 }: RecordAssetHistoryParams) {
   try {
     await prisma.assetHistory.create({
@@ -96,6 +98,7 @@ export async function recordAssetHistory({
         toLocation,
         notes,
         performedById,
+        statusChangeDate,
       },
     });
   } catch (error) {
@@ -202,6 +205,7 @@ export async function recordAssetAssignment(
  * @param fromStatus - Previous status
  * @param toStatus - New status
  * @param performedById - User performing the change
+ * @param statusChangeDate - Date when the status change occurred (defaults to now)
  * @param notes - Optional notes about the change
  *
  * @example
@@ -210,6 +214,7 @@ export async function recordAssetAssignment(
  *   AssetStatus.IN_USE,
  *   AssetStatus.REPAIR,
  *   'admin-456',
+ *   new Date('2025-01-01'),
  *   'Sent for screen repair'
  * );
  */
@@ -218,6 +223,7 @@ export async function recordAssetStatusChange(
   fromStatus: AssetStatus,
   toStatus: AssetStatus,
   performedById: string,
+  statusChangeDate?: Date,
   notes?: string
 ) {
   // Fetch tenantId from asset
@@ -237,6 +243,7 @@ export async function recordAssetStatusChange(
     fromStatus,
     toStatus,
     performedById,
+    statusChangeDate: statusChangeDate || new Date(),
     notes: notes || `Status changed from ${fromStatus} to ${toStatus}`,
   });
 }

@@ -25,7 +25,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { TeamMemberRole } from '@prisma/client';
+import { TeamMemberRole, AssetStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updateAssetSchema } from '@/lib/validations/operations/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -275,20 +275,36 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 6: Auto-unassign if status is changing to non-IN_USE
+    // STEP 6: Handle status changes (SPARE, REPAIR, etc.) with custom date
     // Business rule: Asset cannot be assigned if it's in MAINTENANCE, SPARE, etc.
     // ─────────────────────────────────────────────────────────────────────────────
-    if (data.status && data.status !== 'IN_USE' && currentAsset.assignedMemberId) {
-      updateData.assignedMemberId = null;
+    const statusChanged = data.status && data.status !== currentAsset.status;
 
-      // Record unassignment in history
-      const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
-      await recordAssetAssignment(
+    if (statusChanged && data.status !== 'IN_USE') {
+      // Auto-unassign if currently assigned
+      if (currentAsset.assignedMemberId) {
+        updateData.assignedMemberId = null;
+
+        // Record unassignment in history
+        const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
+        await recordAssetAssignment(
+          id,
+          currentAsset.assignedMemberId,
+          null,
+          session.user.id,
+          `Asset automatically unassigned due to status change to ${data.status}`
+        );
+      }
+
+      // Record status change in history with custom date
+      const { recordAssetStatusChange } = await import('@/lib/domains/operations/assets/asset-history');
+      const statusChangeDate = data.statusChangeDate ? new Date(data.statusChangeDate) : new Date();
+      await recordAssetStatusChange(
         id,
-        currentAsset.assignedMemberId,
-        null,
+        currentAsset.status,
+        data.status as AssetStatus,
         session.user.id,
-        `Asset automatically unassigned due to status change to ${data.status}`
+        statusChangeDate
       );
     }
 
