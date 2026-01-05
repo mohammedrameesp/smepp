@@ -15,13 +15,14 @@ async function getAssetHistoryHandler(request: NextRequest, context: APIContext)
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
+    const tenantId = session.user.organizationId;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Get asset history
-    const history = await getAssetHistory(id);
+    // Get asset history (with tenant filtering)
+    const history = await getAssetHistory(id, tenantId);
 
     return NextResponse.json(history);
 }

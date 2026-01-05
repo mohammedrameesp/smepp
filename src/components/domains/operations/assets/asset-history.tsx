@@ -14,19 +14,19 @@ import { formatDateTime } from '@/lib/date-format';
 interface AssetHistoryEntry {
   id: string;
   action: string;
-  fromUser?: {
+  fromMember?: {
     id: string;
-    name: string;
+    name: string | null;
     email: string;
   } | null;
-  toUser?: {
+  toMember?: {
     id: string;
-    name: string;
+    name: string | null;
     email: string;
   } | null;
-  performer?: {
+  performedBy?: {
     id: string;
-    name: string;
+    name: string | null;
     email: string;
   } | null;
   fromStatus?: string | null;
@@ -69,20 +69,20 @@ function formatActionText(entry: AssetHistoryEntry): string {
     case 'CREATED':
       return 'Asset created';
     case 'ASSIGNED':
-      if (entry.fromUser && entry.toUser) {
-        return `Reassigned from ${entry.fromUser.name || entry.fromUser.email} to ${entry.toUser.name || entry.toUser.email}`;
-      } else if (entry.toUser) {
-        return `Assigned to ${entry.toUser.name || entry.toUser.email}`;
+      if (entry.fromMember && entry.toMember) {
+        return `Reassigned from ${entry.fromMember.name || entry.fromMember.email} to ${entry.toMember.name || entry.toMember.email}`;
+      } else if (entry.toMember) {
+        return `Assigned to ${entry.toMember.name || entry.toMember.email}`;
       }
       return 'Assigned';
     case 'UNASSIGNED':
-      if (entry.fromUser) {
-        return `Unassigned from ${entry.fromUser.name || entry.fromUser.email}`;
+      if (entry.fromMember) {
+        return `Unassigned from ${entry.fromMember.name || entry.fromMember.email}`;
       }
       return 'Unassigned';
     case 'STATUS_CHANGED':
       if (entry.fromStatus && entry.toStatus) {
-        return `Status changed from ${entry.fromStatus} to ${entry.toStatus}`;
+        return `Status changed from ${entry.fromStatus.replace('_', ' ')} to ${entry.toStatus.replace('_', ' ')}`;
       }
       return 'Status changed';
     case 'PROJECT_CHANGED':
@@ -220,9 +220,9 @@ export default function AssetHistory({ assetId }: AssetHistoryProps) {
                     <div className="text-sm text-gray-500">
                       {formatDate(entry.createdAt)}
                     </div>
-                    {entry.performer && (
+                    {entry.performedBy && (
                       <div className="text-sm text-gray-500">
-                        by <span className={entry.performer.name ? '' : 'font-mono'}>{entry.performer.name || entry.performer.email}</span>
+                        by <span className={entry.performedBy.name ? '' : 'font-mono'}>{entry.performedBy.name || entry.performedBy.email}</span>
                       </div>
                     )}
                   </div>

@@ -224,9 +224,9 @@ export async function recordAssetUpdate(
   });
 }
 
-export async function getAssetHistory(assetId: string) {
+export async function getAssetHistory(assetId: string, tenantId: string) {
   return await prisma.assetHistory.findMany({
-    where: { assetId },
+    where: { assetId, tenantId },
     include: {
       fromMember: {
         select: { id: true, name: true, email: true },
