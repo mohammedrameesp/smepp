@@ -55,6 +55,10 @@ interface DisposeAssetDialogProps {
   assetModel: string;
   assetStatus: string;
   trigger?: React.ReactNode;
+  /** External control: whether the dialog is open */
+  isOpen?: boolean;
+  /** External control: callback when open state changes */
+  onOpenChange?: (open: boolean) => void;
 }
 
 const DISPOSAL_METHODS = [
@@ -71,9 +75,16 @@ export function DisposeAssetDialog({
   assetModel,
   assetStatus,
   trigger,
+  isOpen: externalOpen,
+  onOpenChange: externalOnOpenChange,
 }: DisposeAssetDialogProps) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  // Use external control if provided, otherwise use internal state
+  const isControlled = externalOpen !== undefined;
+  const open = isControlled ? externalOpen : internalOpen;
+  const setOpen = isControlled ? (externalOnOpenChange || (() => {})) : setInternalOpen;
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
 
@@ -178,14 +189,17 @@ export function DisposeAssetDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-            <Trash2 className="h-4 w-4 mr-2" />
-            Dispose Asset
-          </Button>
-        )}
-      </DialogTrigger>
+      {/* Only render trigger when not externally controlled */}
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Dispose Asset
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
 
       <DialogContent className="sm:max-w-[450px] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex-shrink-0">

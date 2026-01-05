@@ -621,7 +621,6 @@ export default function NewAssetPage() {
                         <SelectItem value="IN_USE">In Use</SelectItem>
                         <SelectItem value="SPARE">Spare</SelectItem>
                         <SelectItem value="REPAIR">In Repair</SelectItem>
-                        <SelectItem value="DISPOSED">Disposed</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
