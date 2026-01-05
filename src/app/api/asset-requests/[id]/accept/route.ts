@@ -172,17 +172,20 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
         },
       });
 
-      // Create asset history entry
+      // Create asset history entry (handle both fresh assignment and reassignment)
+      const isReassignment = assetRequest.asset.assignedMemberId !== null;
       await tx.assetHistory.create({
         data: {
           tenantId,
           assetId: assetRequest.assetId,
           action: AssetHistoryAction.ASSIGNED,
-          fromMemberId: null,
+          fromMemberId: assetRequest.asset.assignedMemberId, // Previous owner (null if fresh assignment)
           toMemberId: session.user.id,
-          fromStatus: AssetStatus.SPARE,
+          fromStatus: assetRequest.asset.status,
           toStatus: AssetStatus.IN_USE,
-          notes: `Assigned via request ${assetRequest.requestNumber}`,
+          notes: isReassignment
+            ? `Reassigned via request ${assetRequest.requestNumber}`
+            : `Assigned via request ${assetRequest.requestNumber}`,
           performedById: session.user.id,
           assignmentDate: new Date(),
         },
