@@ -9,7 +9,7 @@ import {
   updateAssetSchema,
   assignAssetSchema,
   assetQuerySchema,
-} from '@/lib/validations/assets';
+} from '@/lib/validations/operations/assets';
 
 describe('Asset Validation Schemas', () => {
   describe('createAssetSchema', () => {

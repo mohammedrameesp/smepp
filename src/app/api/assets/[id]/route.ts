@@ -27,7 +27,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { TeamMemberRole } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
-import { updateAssetSchema } from '@/lib/validations/assets';
+import { updateAssetSchema } from '@/lib/validations/operations/assets';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { recordAssetUpdate } from '@/lib/domains/operations/assets/asset-history';
 import { sendEmail } from '@/lib/email';

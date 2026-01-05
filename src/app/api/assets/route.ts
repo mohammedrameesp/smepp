@@ -23,7 +23,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { AssetStatus, Prisma } from '@prisma/client';
-import { createAssetSchema, assetQuerySchema } from '@/lib/validations/assets';
+import { createAssetSchema, assetQuerySchema } from '@/lib/validations/operations/assets';
 import { logAction, ActivityActions } from '@/lib/activity';
 import { generateAssetTagByCategory } from '@/lib/asset-utils';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
