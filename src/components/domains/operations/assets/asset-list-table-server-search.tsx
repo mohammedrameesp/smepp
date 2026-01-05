@@ -47,6 +47,18 @@ interface PaginationInfo {
   hasMore: boolean;
 }
 
+interface TypeOption {
+  type: string;
+  count: number;
+}
+
+interface CategoryOption {
+  id: string;
+  code: string;
+  name: string;
+  count: number;
+}
+
 export function AssetListTableServerSearch() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +76,27 @@ export function AssetListTableServerSearch() {
     totalPages: 0,
     hasMore: false,
   });
+
+  // Dynamic filter options
+  const [typeOptions, setTypeOptions] = useState<TypeOption[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+
+  // Fetch filter options on mount
+  useEffect(() => {
+    async function fetchFilterOptions() {
+      try {
+        const response = await fetch('/api/assets/filters');
+        if (response.ok) {
+          const data = await response.json();
+          setTypeOptions(data.types || []);
+          setCategoryOptions(data.categories || []);
+        }
+      } catch (error) {
+        console.error('Error fetching filter options:', error);
+      }
+    }
+    fetchFilterOptions();
+  }, []);
 
   // Debounce search input
   useEffect(() => {
@@ -93,7 +126,7 @@ export function AssetListTableServerSearch() {
         params.append('status', statusFilter);
       }
       if (typeFilter && typeFilter !== 'all') params.append('type', typeFilter);
-      if (categoryFilter && categoryFilter !== 'all') params.append('category', categoryFilter);
+      if (categoryFilter && categoryFilter !== 'all') params.append('categoryId', categoryFilter);
 
       const response = await fetch(`/api/assets?${params}`);
       if (!response.ok) throw new Error('Failed to fetch assets');
@@ -168,16 +201,11 @@ export function AssetListTableServerSearch() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="Laptop">Laptop</SelectItem>
-            <SelectItem value="Desktop">Desktop</SelectItem>
-            <SelectItem value="Monitor">Monitor</SelectItem>
-            <SelectItem value="Keyboard">Keyboard</SelectItem>
-            <SelectItem value="Mouse">Mouse</SelectItem>
-            <SelectItem value="Headset">Headset</SelectItem>
-            <SelectItem value="Phone">Phone</SelectItem>
-            <SelectItem value="Tablet">Tablet</SelectItem>
-            <SelectItem value="Printer">Printer</SelectItem>
-            <SelectItem value="Other">Other</SelectItem>
+            {typeOptions.map((opt) => (
+              <SelectItem key={opt.type} value={opt.type}>
+                {opt.type} ({opt.count})
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -186,13 +214,11 @@ export function AssetListTableServerSearch() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="IT">IT</SelectItem>
-            <SelectItem value="Marketing">Marketing</SelectItem>
-            <SelectItem value="Engineering">Engineering</SelectItem>
-            <SelectItem value="Sales">Sales</SelectItem>
-            <SelectItem value="HR">HR</SelectItem>
-            <SelectItem value="Finance">Finance</SelectItem>
-            <SelectItem value="Operations">Operations</SelectItem>
+            {categoryOptions.map((opt) => (
+              <SelectItem key={opt.id} value={opt.id}>
+                {opt.name} ({opt.count})
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
