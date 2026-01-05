@@ -10,7 +10,7 @@ import { Edit, AlertTriangle, Package, CreditCard, FileText, Calendar, Clock, Tr
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { EmployeeHRViewSection } from '@/components/domains/hr/employees';
 import { getMemberSubscriptionHistory } from '@/lib/subscription-lifecycle';
-import { getMemberAssetHistory } from '@/lib/asset-lifecycle';
+import { getMemberAssetHistory } from '@/lib/domains/operations/assets/asset-lifecycle';
 import {
   UserSubscriptionHistory,
   UserAssetHistory,

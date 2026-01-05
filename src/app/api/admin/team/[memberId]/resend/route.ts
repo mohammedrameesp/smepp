@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { sendEmail } from '@/lib/email';
+import { sendEmail } from '@/lib/core/email';
 import {
   welcomeUserWithPasswordSetupEmail,
   organizationInvitationEmail,

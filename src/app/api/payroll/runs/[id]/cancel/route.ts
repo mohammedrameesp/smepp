@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { rejectPayrollSchema } from '@/lib/validations/payroll';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 

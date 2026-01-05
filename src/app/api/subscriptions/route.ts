@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { createSubscriptionSchema, subscriptionQuerySchema } from '@/lib/validations/subscriptions';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { getQatarNow, getQatarStartOfDay } from '@/lib/qatar-timezone';
 import { parseInputDateString } from '@/lib/date-format';
 import { USD_TO_QAR_RATE } from '@/lib/constants';

@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { leaveBalanceQuerySchema, initializeLeaveBalanceSchema } from '@/lib/validations/leave';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { getCurrentYear } from '@/lib/leave-utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 

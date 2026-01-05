@@ -7,9 +7,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { logAction } from '@/lib/activity';
+import { logAction } from '@/lib/core/activity';
 import { generateUniqueSupplierCode } from '@/lib/supplier-utils';
-import { sendEmail } from '@/lib/email';
+import { sendEmail } from '@/lib/core/email';
 import { supplierApprovalEmail } from '@/lib/email-templates';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 

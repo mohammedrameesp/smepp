@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Prisma, PurchaseRequestStatus, PurchaseRequestPriority } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createPurchaseRequestSchema } from '@/lib/validations/purchase-request';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { generatePurchaseRequestNumber } from '@/lib/purchase-request-utils';
 import {
   calculatePurchaseRequestItems,

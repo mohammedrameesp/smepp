@@ -40,7 +40,7 @@ import {
   createReturnRequestSchema,
   assetRequestQuerySchema,
 } from '@/lib/validations/operations/asset-request';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import {
   generateRequestNumber,
   canRequestAsset,

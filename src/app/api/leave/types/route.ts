@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { createLeaveTypeSchema, leaveTypeQuerySchema } from '@/lib/validations/leave';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getLeaveTypesHandler(request: NextRequest, context: APIContext) {

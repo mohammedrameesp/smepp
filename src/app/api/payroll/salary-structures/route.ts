@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { createSalaryStructureSchema, salaryStructureQuerySchema } from '@/lib/validations/payroll';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { calculateGrossSalary, parseDecimal } from '@/lib/payroll/utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 

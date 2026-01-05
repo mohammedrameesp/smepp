@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { updateSubscriptionSchema } from '@/lib/validations/subscriptions';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { parseInputDateString } from '@/lib/date-format';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';

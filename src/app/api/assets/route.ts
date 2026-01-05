@@ -24,8 +24,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AssetStatus, Prisma } from '@prisma/client';
 import { createAssetSchema, assetQuerySchema } from '@/lib/validations/operations/assets';
-import { logAction, ActivityActions } from '@/lib/activity';
-import { generateAssetTagByCategory } from '@/lib/asset-utils';
+import { logAction, ActivityActions } from '@/lib/core/activity';
+import { generateAssetTagByCategory } from '@/lib/domains/operations/assets/asset-utils';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';

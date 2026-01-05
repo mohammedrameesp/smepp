@@ -5,7 +5,7 @@
 
 import { getServerSession } from 'next-auth/next';
 import { Role, LeaveStatus, LeaveRequestType } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 import {
   createMockUser,
   createMockLeaveType,

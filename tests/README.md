@@ -118,7 +118,7 @@ Current test coverage focuses on:
 ### API Endpoint Test Template
 ```typescript
 import { getServerSession } from 'next-auth/next';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 
 jest.mock('next-auth/next');
 jest.mock('@/lib/prisma');

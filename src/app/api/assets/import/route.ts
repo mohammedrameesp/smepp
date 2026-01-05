@@ -25,7 +25,7 @@ import {
   type ImportRow,
 } from '@/lib/core/import-utils';
 import { parseAssetRow, buildAssetDbData } from '@/lib/domains/operations/assets/asset-import';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function importAssetsHandler(request: NextRequest, _context: APIContext) {

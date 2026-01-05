@@ -60,8 +60,8 @@ import {
   NotificationType,
 } from '@prisma/client';
 import { z } from 'zod';
-import { logAction, ActivityActions } from '@/lib/activity';
-import { sendEmail } from '@/lib/email';
+import { logAction, ActivityActions } from '@/lib/core/activity';
+import { sendEmail } from '@/lib/core/email';
 import { assetAssignmentEmail, assetAssignmentPendingEmail } from '@/lib/email-templates';
 import { createNotification, createBulkNotifications, NotificationTemplates } from '@/lib/domains/system/notifications';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';

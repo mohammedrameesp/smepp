@@ -10,7 +10,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Role } from '@prisma/client';
 import { csvToArray } from '@/lib/csv-utils';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 
 interface ImportRow {
   [key: string]: string | undefined;

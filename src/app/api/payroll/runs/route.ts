@@ -9,7 +9,7 @@ import { authOptions } from '@/lib/core/auth';
 import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createPayrollRunSchema, payrollRunQuerySchema } from '@/lib/validations/payroll';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler } from '@/lib/http/handler';
 import {
   generatePayrollReferenceWithPrefix,

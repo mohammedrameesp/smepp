@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { Role } from '@prisma/client';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/core/prisma';
 
 jest.mock('next-auth/next');
 jest.mock('@/lib/prisma');

@@ -12,7 +12,7 @@ import {
   Bell,
 } from 'lucide-react';
 import { getMemberSubscriptionHistory } from '@/lib/subscription-lifecycle';
-import { getMemberAssetHistory } from '@/lib/asset-lifecycle';
+import { getMemberAssetHistory } from '@/lib/domains/operations/assets/asset-lifecycle';
 import { getNextRenewalDate, getDaysUntilRenewal } from '@/lib/utils/renewal-date';
 import { getAnnualLeaveDetails } from '@/lib/leave-utils';
 import { format } from 'date-fns';

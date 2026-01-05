@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { processApprovalSchema } from '@/lib/validations/system/approvals';
 import { processApproval } from '@/lib/domains/system/approvals';
-import { logAction } from '@/lib/activity';
+import { logAction } from '@/lib/core/activity';
 import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
 
 interface RouteParams {

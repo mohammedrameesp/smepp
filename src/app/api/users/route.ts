@@ -7,9 +7,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { createUserSchema } from '@/lib/validations/users';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import { sendEmail } from '@/lib/email';
+import { sendEmail } from '@/lib/core/email';
 import { welcomeUserEmail, welcomeUserWithPasswordSetupEmail, organizationInvitationEmail } from '@/lib/core/email-templates';
 import { randomBytes } from 'crypto';
 import { updateSetupProgress } from '@/lib/domains/system/setup';

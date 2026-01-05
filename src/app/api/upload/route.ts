@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { validateUploadedFile } from '@/lib/files/sanity';
 import { storageUpload, storagePublicUrl } from '@/lib/storage';
-import { logAction } from '@/lib/activity';
+import { logAction } from '@/lib/core/activity';
 
 // Force Node.js runtime for file upload handling
 export const runtime = 'nodejs';

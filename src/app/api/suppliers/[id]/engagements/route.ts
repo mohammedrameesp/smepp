@@ -8,7 +8,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { createEngagementSchema } from '@/lib/validations/suppliers';
-import { logAction } from '@/lib/activity';
+import { logAction } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getEngagementsHandler(request: NextRequest, context: APIContext) {

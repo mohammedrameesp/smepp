@@ -8,7 +8,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { generateWPSSIFFile, getBankCode, generateWPSFileName, validateWPSRecord } from '@/lib/payroll/wps';
 import { parseDecimal } from '@/lib/payroll/utils';
 import type { WPSEmployeeRecord, WPSFileHeader } from '@/lib/types/payroll';

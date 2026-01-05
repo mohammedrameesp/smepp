@@ -43,7 +43,7 @@ import {
   getDepreciationRecords,
   assignDepreciationCategory,
 } from '@/lib/domains/operations/assets/depreciation';
-import { logAction } from '@/lib/activity';
+import { logAction } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // ═══════════════════════════════════════════════════════════════════════════════

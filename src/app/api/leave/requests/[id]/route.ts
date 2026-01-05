@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { updateLeaveRequestSchema } from '@/lib/validations/leave';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import {
   calculateWorkingDays,
   canEditLeaveRequest,

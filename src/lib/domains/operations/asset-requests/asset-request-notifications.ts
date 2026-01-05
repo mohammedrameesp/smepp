@@ -15,7 +15,7 @@
 
 import { AssetRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
-import { sendEmail, sendBatchEmails } from '@/lib/email';
+import { sendEmail, sendBatchEmails } from '@/lib/core/email';
 import { createNotification, createBulkNotifications, NotificationTemplates } from '@/lib/domains/system/notifications';
 import {
   assetRequestSubmittedEmail,

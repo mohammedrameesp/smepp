@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { ActivityActions } from '@/lib/activity';
+import { ActivityActions } from '@/lib/core/activity';
 import { SubscriptionHistoryAction } from '@prisma/client';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import {

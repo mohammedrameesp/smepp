@@ -8,7 +8,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { TeamMemberRole, PayrollStatus, DeductionType, LoanStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import {
   generatePayslipNumberWithPrefix,
   parseDecimal,

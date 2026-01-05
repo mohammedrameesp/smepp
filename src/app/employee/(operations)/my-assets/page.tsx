@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getMemberSubscriptionHistory } from '@/lib/subscription-lifecycle';
-import { getMemberAssetHistory } from '@/lib/asset-lifecycle';
+import { getMemberAssetHistory } from '@/lib/domains/operations/assets/asset-lifecycle';
 import { UserSubscriptionHistory, UserAssetHistory } from '@/components/domains/system/users';
 
 export default async function MyHoldingsPage() {

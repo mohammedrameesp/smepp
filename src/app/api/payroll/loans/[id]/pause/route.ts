@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LoanStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function pauseLoanHandler(request: NextRequest, context: APIContext) {

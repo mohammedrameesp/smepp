@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createDelegationSchema } from '@/lib/validations/system/approvals';
-import { logAction } from '@/lib/activity';
+import { logAction } from '@/lib/core/activity';
 
 // Roles that can have delegations (uses approvalRole field exposed as session.user.role)
 const APPROVER_ROLES: Role[] = [Role.ADMIN, Role.MANAGER, Role.HR_MANAGER, Role.FINANCE_MANAGER, Role.DIRECTOR];

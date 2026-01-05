@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { updateDelegationSchema } from '@/lib/validations/system/approvals';
-import { logAction } from '@/lib/activity';
+import { logAction } from '@/lib/core/activity';
 
 interface RouteParams {
   params: Promise<{ id: string }>;

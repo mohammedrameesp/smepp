@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { approveLeaveRequestSchema } from '@/lib/validations/leave';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { invalidateTokensForEntity } from '@/lib/whatsapp';

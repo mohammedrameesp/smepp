@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createLeaveRequestSchema, leaveRequestQuerySchema } from '@/lib/validations/leave';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { createBulkNotifications, createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
 import { findApplicablePolicy, initializeApprovalChain } from '@/lib/domains/system/approvals';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
         // Fetch entity details based on type - use tenant filter for safety
         if (step.entityType === 'LEAVE_REQUEST') {
-          const { prisma } = await import('@/lib/prisma');
+          const { prisma } = await import('@/lib/core/prisma');
           const leaveRequest = await prisma.leaveRequest.findFirst({
             where: { id: step.entityId, tenantId },
             select: {
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
             };
           }
         } else if (step.entityType === 'PURCHASE_REQUEST') {
-          const { prisma } = await import('@/lib/prisma');
+          const { prisma } = await import('@/lib/core/prisma');
           const purchaseRequest = await prisma.purchaseRequest.findFirst({
             where: { id: step.entityId, tenantId },
             select: {
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
             };
           }
         } else if (step.entityType === 'ASSET_REQUEST') {
-          const { prisma } = await import('@/lib/prisma');
+          const { prisma } = await import('@/lib/core/prisma');
           const assetRequest = await prisma.assetRequest.findFirst({
             where: { id: step.entityId, tenantId },
             select: {

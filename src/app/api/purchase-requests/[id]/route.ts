@@ -9,7 +9,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { updatePurchaseRequestSchema } from '@/lib/validations/purchase-request';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { calculatePurchaseRequestItems } from '@/lib/domains/projects/purchase-requests/purchase-request-creation';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 

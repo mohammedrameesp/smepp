@@ -16,7 +16,7 @@
 
 import { prisma } from '@/lib/core/prisma';
 import { USD_TO_QAR_RATE } from '@/lib/constants';
-import { sendEmail } from '@/lib/email';
+import { sendEmail } from '@/lib/core/email';
 import { purchaseRequestSubmittedEmail } from '@/lib/core/email-templates';
 import { createBulkNotifications, createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
 import { findApplicablePolicy, initializeApprovalChain } from '@/lib/domains/system/approvals';

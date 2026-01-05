@@ -9,7 +9,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { Role, TeamMemberRole } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
-import { logAction, ActivityActions } from '@/lib/activity';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import { z } from 'zod';
 
 const updateUserSchema = z.object({
