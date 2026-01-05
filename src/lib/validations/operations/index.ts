@@ -9,5 +9,6 @@ export * from './assets';
 export * from './asset-disposal';
 export * from './asset-request';
 export * from './depreciation';
+export * from './locations';
 export * from './subscriptions';
 export * from './suppliers';

@@ -153,7 +153,7 @@ async function cloneAssetHandler(request: NextRequest, context: APIContext) {
         status: 'SPARE',                 // New cloned assets default to SPARE
         assignedMemberId: null,          // Clear assignment
         notes: originalAsset.notes,
-        location: originalAsset.location,
+        locationId: originalAsset.locationId,
         tenantId: session.user.organizationId,
       },
       include: {

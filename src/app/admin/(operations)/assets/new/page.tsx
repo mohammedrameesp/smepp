@@ -34,10 +34,14 @@ interface DepreciationCategory {
   usefulLifeYears: number;
 }
 
+interface Location {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
 export default function NewAssetPage() {
   const router = useRouter();
-  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
-  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [users, setUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
   const [depreciationCategories, setDepreciationCategories] = useState<DepreciationCategory[]>([]);
   const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
@@ -45,6 +49,8 @@ export default function NewAssetPage() {
   const [suggestedTag, setSuggestedTag] = useState<string>('');
   const [isTagManuallyEdited, setIsTagManuallyEdited] = useState(false);
   const [selectedCategoryCode, setSelectedCategoryCode] = useState<string | null>(null);
+  const [hasMultipleLocations, setHasMultipleLocations] = useState(false);
+  const [locations, setLocations] = useState<Location[]>([]);
 
   const {
     register,
@@ -74,7 +80,7 @@ export default function NewAssetPage() {
       assignedMemberId: '',
       assignmentDate: '',
       notes: '',
-      location: '',
+      locationId: '',
       isShared: false,
       depreciationCategoryId: '',
     },
@@ -84,7 +90,7 @@ export default function NewAssetPage() {
   // Watch critical fields for side effects
   const watchedType = watch('type');
   const watchedCategoryId = watch('categoryId');
-  const watchedLocation = watch('location');
+  const watchedLocationId = watch('locationId');
   const watchedPrice = watch('price');
   const watchedCurrency = watch('priceCurrency');
   const watchedPurchaseDate = watch('purchaseDate');
@@ -100,7 +106,7 @@ export default function NewAssetPage() {
     fetchDepreciationCategories();
   }, []);
 
-  // Fetch org settings to get available currencies and exchange rates
+  // Fetch org settings to get available currencies, exchange rates, and location settings
   useEffect(() => {
     async function fetchOrgSettings() {
       try {
@@ -116,6 +122,9 @@ export default function NewAssetPage() {
 
           // Set primary as default
           setValue('priceCurrency', primary);
+
+          // Check if multiple locations is enabled
+          setHasMultipleLocations(data.settings?.hasMultipleLocations || false);
 
           // Fetch exchange rates for all currencies
           const rates: Record<string, number> = { ...DEFAULT_RATES };
@@ -142,6 +151,26 @@ export default function NewAssetPage() {
     fetchOrgSettings();
   }, [setValue]);
 
+  // Fetch locations when multiple locations is enabled
+  useEffect(() => {
+    async function fetchLocations() {
+      if (!hasMultipleLocations) {
+        setLocations([]);
+        return;
+      }
+      try {
+        const response = await fetch('/api/locations');
+        if (response.ok) {
+          const data = await response.json();
+          setLocations(data.locations || []);
+        }
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    }
+    fetchLocations();
+  }, [hasMultipleLocations]);
+
   // Fetch suggested asset tag when category changes (new format: ORG-CAT-YYSEQ)
   // Only generates tag when category is selected - not during typing
   useEffect(() => {
@@ -165,15 +194,7 @@ export default function NewAssetPage() {
     return () => clearTimeout(timeoutId);
   }, [watchedCategoryId, isTagManuallyEdited, setValue]);
 
-  // Fetch location suggestions
-  useEffect(() => {
-    if (watchedLocation && watchedLocation.length > 0) {
-      fetchLocations(watchedLocation);
-    } else {
-      setLocationSuggestions([]);
-    }
-  }, [watchedLocation]);
-
+  
   // Auto-calculate currency conversion to QAR
   useEffect(() => {
     if (watchedPrice && watchedCurrency) {
@@ -198,18 +219,6 @@ export default function NewAssetPage() {
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-    }
-  };
-
-  const fetchLocations = async (query: string) => {
-    try {
-      const response = await fetch(`/api/assets/locations?q=${encodeURIComponent(query)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setLocationSuggestions(data.locations || []);
-      }
-    } catch (error) {
-      console.error('Error fetching locations:', error);
     }
   };
 
@@ -599,35 +608,27 @@ export default function NewAssetPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                    <div className="relative">
-                      <Input
-                        id="location"
-                        {...register('location')}
-                        onFocus={() => setShowLocationSuggestions(true)}
-                        onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
-                        placeholder="Building, floor, room..."
-                        autoComplete="off"
-                      />
-                      {showLocationSuggestions && locationSuggestions.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
-                          {locationSuggestions.map((location, index) => (
-                            <div
-                              key={index}
-                              className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                              onClick={() => {
-                                setValue('location', location);
-                                setShowLocationSuggestions(false);
-                              }}
-                            >
-                              {location}
-                            </div>
+                  {hasMultipleLocations && locations.length > 0 && (
+                    <div className="space-y-2">
+                      <Label htmlFor="locationId">Location</Label>
+                      <Select
+                        value={watchedLocationId || '__none__'}
+                        onValueChange={(value) => setValue('locationId', value === '__none__' ? '' : value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select location..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Not specified</SelectItem>
+                          {locations.map((loc) => (
+                            <SelectItem key={loc.id} value={loc.id}>
+                              {loc.name}
+                            </SelectItem>
                           ))}
-                        </div>
-                      )}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {watchedStatus === AssetStatus.IN_USE && (

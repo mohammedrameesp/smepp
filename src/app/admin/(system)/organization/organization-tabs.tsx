@@ -28,7 +28,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
-import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings } from '@/components/domains/system/settings';
+import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings, LocationsSettings } from '@/components/domains/system/settings';
+import { Switch } from '@/components/ui/switch';
 import type { OrgRole } from '@prisma/client';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
 
@@ -46,6 +47,7 @@ interface Organization {
   secondaryColor: string | null;
   additionalCurrencies: string[];
   enabledModules: string[];
+  hasMultipleLocations: boolean;
   _count: { teamMembers: number };
 }
 
@@ -96,6 +98,7 @@ export function OrganizationTabs({
   const [secondaryColor, setSecondaryColor] = useState(org.secondaryColor || '');
   const [additionalCurrencies, setAdditionalCurrencies] = useState<string[]>(org.additionalCurrencies || []);
   const [enabledModules, setEnabledModules] = useState<string[]>(org.enabledModules || ['assets', 'subscriptions', 'suppliers']);
+  const [hasMultipleLocations, setHasMultipleLocations] = useState(org.hasMultipleLocations || false);
 
   // Logo upload state
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -172,6 +175,20 @@ export function OrganizationTabs({
       });
       if (!res.ok) throw new Error('Failed to save');
       setOrg(prev => ({ ...prev, enabledModules: value }));
+    },
+  });
+
+  const locationsAutoSave = useAutoSave({
+    value: hasMultipleLocations,
+    enabled: isAdmin,
+    onSave: async (value) => {
+      const res = await fetch('/api/admin/organization', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hasMultipleLocations: value }),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      setOrg(prev => ({ ...prev, hasMultipleLocations: value }));
     },
   });
 
@@ -518,6 +535,45 @@ export function OrganizationTabs({
                 organizationId={org.id}
                 isAdmin={isAdmin}
               />
+
+              {/* Locations */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Globe className="h-5 w-5" />
+                        Multiple Locations
+                      </CardTitle>
+                      <CardDescription>
+                        Enable this if your organization has assets in multiple locations
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <AutoSaveIndicator status={locationsAutoSave.status} error={locationsAutoSave.error} />
+                      <Switch
+                        checked={hasMultipleLocations}
+                        onCheckedChange={setHasMultipleLocations}
+                        disabled={!isAdmin}
+                      />
+                    </div>
+                  </div>
+                </CardHeader>
+                {!hasMultipleLocations && (
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      When enabled, you can define locations and assign assets to specific locations.
+                    </p>
+                  </CardContent>
+                )}
+              </Card>
+
+              {hasMultipleLocations && (
+                <LocationsSettings
+                  organizationId={org.id}
+                  isAdmin={isAdmin}
+                />
+              )}
             </>
           )}
 

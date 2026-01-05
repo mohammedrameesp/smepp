@@ -52,6 +52,11 @@ export async function GET() {
               email: true,
             },
           },
+          location: {
+            select: {
+              name: true,
+            },
+          },
         },
       }),
       prisma.subscription.findMany({
@@ -268,7 +273,7 @@ export async function GET() {
       assignedMemberId: a.assignedMemberId || '',
       assignedMember: a.assignedMember ? (a.assignedMember.name || a.assignedMember.email) : '',
       status: a.status,
-      location: a.location || '',
+      location: a.location?.name || '',
       price: a.price ? Number(a.price) : '',
       priceCurrency: a.priceCurrency || '',
       priceQAR: a.priceQAR ? Number(a.priceQAR) : '',

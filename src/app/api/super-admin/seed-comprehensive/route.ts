@@ -410,7 +410,6 @@ export async function POST(request: NextRequest) {
             priceQAR: asset.price,
             status: asset.status || AssetStatus.IN_USE,
             assignedMemberId: asset.userIdx !== null && asset.userIdx !== undefined ? createdMembers[asset.userIdx].member.id : null,
-            location: asset.userIdx !== null ? 'Office' : asset.status === AssetStatus.SPARE ? 'IT Storage' : 'Studio',
           },
         });
         createdAssets.push({ id: created.id, status: created.status, assignedMemberId: created.assignedMemberId });

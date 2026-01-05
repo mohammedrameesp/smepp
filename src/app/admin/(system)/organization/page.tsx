@@ -50,6 +50,7 @@ export default async function OrganizationPage() {
         secondaryColor: true,
         additionalCurrencies: true,
         enabledModules: true,
+        hasMultipleLocations: true,
         _count: { select: { teamMembers: true } },
       },
     }),
@@ -88,6 +89,7 @@ export default async function OrganizationPage() {
     secondaryColor: organization.secondaryColor,
     additionalCurrencies: organization.additionalCurrencies,
     enabledModules: organization.enabledModules,
+    hasMultipleLocations: organization.hasMultipleLocations,
     _count: organization._count,
   };
 

@@ -93,6 +93,12 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
             email: true,
           },
         },
+        location: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -288,12 +294,12 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 7: Track location changes for audit trail
     // ─────────────────────────────────────────────────────────────────────────────
-    if (data.location !== undefined && data.location !== currentAsset.location) {
+    if (data.locationId !== undefined && data.locationId !== currentAsset.locationId) {
       const { recordAssetLocationChange } = await import('@/lib/domains/operations/assets/asset-history');
       await recordAssetLocationChange(
         id,
-        currentAsset.location,
-        data.location,
+        currentAsset.locationId,
+        data.locationId,
         session.user.id
       );
     }

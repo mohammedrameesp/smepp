@@ -28,6 +28,8 @@ export async function GET() {
         maxUsers: true,
         maxAssets: true,
         createdAt: true,
+        codePrefix: true,
+        codeFormats: true,
         // Branding
         primaryColor: true,
         secondaryColor: true,
@@ -35,6 +37,8 @@ export async function GET() {
         additionalCurrencies: true,
         // Module settings
         enabledModules: true,
+        // Location settings
+        hasMultipleLocations: true,
         // Auth settings
         allowedAuthMethods: true,
         customGoogleClientId: true,
@@ -100,6 +104,7 @@ const updateOrgSchema = z.object({
   secondaryColor: colorSchema,
   additionalCurrencies: z.array(z.string()).optional(),
   enabledModules: z.array(z.string()).optional(),
+  hasMultipleLocations: z.boolean().optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -125,7 +130,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const { name, codePrefix, primaryColor, secondaryColor, additionalCurrencies, enabledModules } = result.data;
+    const { name, codePrefix, primaryColor, secondaryColor, additionalCurrencies, enabledModules, hasMultipleLocations } = result.data;
 
     // Normalize colors: empty/null resets to default for primaryColor, null for secondaryColor
     const DEFAULT_PRIMARY_COLOR = '#0f172a';
@@ -141,6 +146,7 @@ export async function PATCH(request: NextRequest) {
         ...(secondaryColor !== undefined && { secondaryColor: normalizedSecondaryColor }),
         ...(additionalCurrencies !== undefined && { additionalCurrencies }),
         ...(enabledModules !== undefined && { enabledModules }),
+        ...(hasMultipleLocations !== undefined && { hasMultipleLocations }),
       },
       select: {
         id: true,
@@ -152,6 +158,7 @@ export async function PATCH(request: NextRequest) {
         secondaryColor: true,
         additionalCurrencies: true,
         enabledModules: true,
+        hasMultipleLocations: true,
       },
     });
 

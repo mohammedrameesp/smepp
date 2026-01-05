@@ -82,6 +82,9 @@ async function exportAssetsHandler(_request: NextRequest) {
       assignedMember: {
         select: { name: true, email: true },
       },
+      location: {
+        select: { name: true },
+      },
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -100,7 +103,7 @@ async function exportAssetsHandler(_request: NextRequest) {
     configuration: asset.configuration || '',
     supplier: asset.supplier || '',
     invoiceNumber: asset.invoiceNumber || '',
-    location: asset.location || '',
+    location: asset.location?.name || '',
     purchaseDate: formatDateForCSV(asset.purchaseDate),
     price: formatCurrencyForCSV(asset.price ? Number(asset.price) : null),
     priceCurrency: asset.priceCurrency || '',

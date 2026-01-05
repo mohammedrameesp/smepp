@@ -5,4 +5,5 @@ export { DepreciationCategoriesSettings } from './depreciation-categories-settin
 export { DatabaseStats } from './database-stats';
 export { DataExportImport } from './data-export-import';
 export { ExchangeRateSettings } from './exchange-rate-settings';
+export { LocationsSettings } from './locations-settings';
 export { PayrollSettings } from './payroll-settings';

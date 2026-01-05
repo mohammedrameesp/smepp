@@ -57,13 +57,17 @@ interface DepreciationCategory {
   usefulLifeYears: number;
 }
 
+interface Location {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
 export default function EditAssetPage() {
   const router = useRouter();
   const params = useParams();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [asset, setAsset] = useState<Asset | null>(null);
-  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
-  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [users, setUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
   const [depreciationCategories, setDepreciationCategories] = useState<DepreciationCategory[]>([]);
   const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
@@ -71,6 +75,8 @@ export default function EditAssetPage() {
   const [selectedCategoryCode, setSelectedCategoryCode] = useState<string | null>(null);
   const [suggestedTag, setSuggestedTag] = useState<string>('');
   const [isTagManuallyEdited, setIsTagManuallyEdited] = useState(false);
+  const [hasMultipleLocations, setHasMultipleLocations] = useState(false);
+  const [locations, setLocations] = useState<Location[]>([]);
 
   const {
     register,
@@ -100,7 +106,7 @@ export default function EditAssetPage() {
       assignedMemberId: '',
       assignmentDate: '',
       notes: '',
-      location: '',
+      locationId: '',
       isShared: false,
       depreciationCategoryId: '',
     },
@@ -110,7 +116,7 @@ export default function EditAssetPage() {
   // Watch critical fields
   const watchedType = watch('type');
   const watchedCategoryId = watch('categoryId');
-  const watchedLocation = watch('location');
+  const watchedLocationId = watch('locationId');
   const watchedPrice = watch('price');
   const watchedCurrency = watch('priceCurrency');
   const watchedStatus = watch('status');
@@ -134,7 +140,7 @@ export default function EditAssetPage() {
     fetchOrgSettings();
   }, [params?.id]);
 
-  // Fetch org settings to get available currencies and exchange rates
+  // Fetch org settings to get available currencies, exchange rates, and location settings
   const fetchOrgSettings = async () => {
     try {
       const response = await fetch('/api/organizations/settings');
@@ -144,6 +150,9 @@ export default function EditAssetPage() {
         const additional: string[] = data.settings?.additionalCurrencies || [];
         const currencies = [primary, ...additional.filter((c: string) => c !== primary)];
         setAvailableCurrencies(currencies.length > 0 ? currencies : ['QAR', 'USD']);
+
+        // Check if multiple locations is enabled
+        setHasMultipleLocations(data.settings?.hasMultipleLocations || false);
 
         // Fetch exchange rates for all currencies
         const rates: Record<string, number> = { ...DEFAULT_RATES };
@@ -168,6 +177,26 @@ export default function EditAssetPage() {
     }
   };
 
+  // Fetch locations when multiple locations is enabled
+  useEffect(() => {
+    async function fetchLocations() {
+      if (!hasMultipleLocations) {
+        setLocations([]);
+        return;
+      }
+      try {
+        const response = await fetch('/api/locations');
+        if (response.ok) {
+          const data = await response.json();
+          setLocations(data.locations || []);
+        }
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    }
+    fetchLocations();
+  }, [hasMultipleLocations]);
+
   // Auto-calculate currency conversion to QAR
   useEffect(() => {
     if (watchedPrice && watchedCurrency) {
@@ -181,15 +210,6 @@ export default function EditAssetPage() {
       }
     }
   }, [watchedPrice, watchedCurrency, exchangeRates, setValue]);
-
-  // Fetch location suggestions as user types
-  useEffect(() => {
-    if (watchedLocation && watchedLocation.length > 0) {
-      fetchLocations(watchedLocation);
-    } else {
-      setLocationSuggestions([]);
-    }
-  }, [watchedLocation]);
 
   // Clear assignment and isShared when status is not IN_USE
   useEffect(() => {
@@ -213,18 +233,6 @@ export default function EditAssetPage() {
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-    }
-  };
-
-  const fetchLocations = async (query: string) => {
-    try {
-      const response = await fetch(`/api/assets/locations?q=${encodeURIComponent(query)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setLocationSuggestions(data.locations || []);
-      }
-    } catch (error) {
-      console.error('Error fetching locations:', error);
     }
   };
 
@@ -265,7 +273,7 @@ export default function EditAssetPage() {
           assignedMemberId: assetData.assignedMemberId || '',
           assignmentDate: toInputDateString(assetData.assignmentDate),
           notes: assetData.notes || '',
-          location: assetData.location || '',
+          locationId: assetData.locationId || '',
           isShared: assetData.isShared || false,
           depreciationCategoryId: assetData.depreciationCategoryId || '',
         });
@@ -690,35 +698,27 @@ export default function EditAssetPage() {
                       </Select>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                    <div className="relative">
-                      <Input
-                        id="location"
-                        {...register('location')}
-                        onFocus={() => setShowLocationSuggestions(true)}
-                        onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
-                        placeholder="Building, floor, room..."
-                        autoComplete="off"
-                      />
-                      {showLocationSuggestions && locationSuggestions.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
-                          {locationSuggestions.map((location, index) => (
-                            <div
-                              key={index}
-                              className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                              onClick={() => {
-                                setValue('location', location);
-                                setShowLocationSuggestions(false);
-                              }}
-                            >
-                              {location}
-                            </div>
+                  {hasMultipleLocations && locations.length > 0 && (
+                    <div className="space-y-2">
+                      <Label htmlFor="locationId">Location</Label>
+                      <Select
+                        value={watchedLocationId || '__none__'}
+                        onValueChange={(value) => setValue('locationId', value === '__none__' ? '' : value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select location..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Not specified</SelectItem>
+                          {locations.map((loc) => (
+                            <SelectItem key={loc.id} value={loc.id}>
+                              {loc.name}
+                            </SelectItem>
                           ))}
-                        </div>
-                      )}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {watchedStatus === AssetStatus.IN_USE && (

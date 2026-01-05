@@ -52,6 +52,12 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
           memberId: true,
         },
       },
+      location: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 
@@ -290,7 +296,7 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
                 <div>
                   <Label>Location</Label>
                   <div>
-                    {asset.location || <span className="text-gray-500">Not specified</span>}
+                    {asset.location?.name || <span className="text-gray-500">Not specified</span>}
                   </div>
                 </div>
               </div>

@@ -102,6 +102,12 @@ export default async function AssetDetailPage({ params }: Props) {
           requestNumber: true,
         },
       },
+      location: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
 
@@ -345,7 +351,7 @@ export default async function AssetDetailPage({ params }: Props) {
                   {asset.location && (
                     <div className="mt-4 p-3 bg-blue-50 rounded-xl">
                       <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-1">Location</p>
-                      <p className="font-medium text-blue-800">{asset.location}</p>
+                      <p className="font-medium text-blue-800">{asset.location.name}</p>
                     </div>
                   )}
                 </div>
@@ -400,7 +406,7 @@ export default async function AssetDetailPage({ params }: Props) {
                 <h2 className="font-semibold text-slate-900">Location</h2>
               </div>
               <div className="p-5">
-                <p className="text-slate-700">{asset.location}</p>
+                <p className="text-slate-700">{asset.location.name}</p>
               </div>
             </div>
           )}

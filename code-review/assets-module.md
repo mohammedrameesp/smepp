@@ -31,13 +31,11 @@ Complete list of all asset-related files for code review and understanding.
 | File | Description |
 |------|-------------|
 [Done] | [src/app/api/assets/[id]/depreciation/route.ts](../src/app/api/assets/[id]/depreciation/route.ts) | Depreciation records |
-| [src/app/api/assets/[id]/dispose/route.ts](../src/app/api/assets/[id]/dispose/route.ts) | Dispose asset with gain/loss |
+[Done] | [src/app/api/assets/[id]/dispose/route.ts](../src/app/api/assets/[id]/dispose/route.ts) | Dispose asset with gain/loss |
 
 ### Autocomplete & Helpers
 | File | Description |
 |------|-------------|
-| [src/app/api/assets/categories/route.ts](../src/app/api/assets/categories/route.ts) | Get distinct categories |
-| [src/app/api/assets/locations/route.ts](../src/app/api/assets/locations/route.ts) | Get distinct locations |
 | [src/app/api/assets/types/route.ts](../src/app/api/assets/types/route.ts) | Get distinct asset types |
 | [src/app/api/assets/next-tag/route.ts](../src/app/api/assets/next-tag/route.ts) | Generate next asset tag |
 

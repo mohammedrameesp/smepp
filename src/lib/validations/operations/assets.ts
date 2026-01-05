@@ -109,8 +109,8 @@ export const createAssetSchema = z.object({
   assignmentDate: z.string().optional().nullable().or(z.literal('')),
   /** Additional notes about the asset */
   notes: z.string().optional().nullable().or(z.literal('')),
-  /** Physical location (room, building, etc.) */
-  location: z.string().optional().nullable().or(z.literal('')),
+  /** Location ID (references Location model) */
+  locationId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
   /** Whether asset is shared (no specific assignee) */
   isShared: z.boolean().default(false),
   /** Depreciation category ID for financial tracking */
@@ -177,7 +177,7 @@ const baseAssetSchema = z.object({
   assignedMemberId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
   assignmentDate: z.string().optional().nullable().or(z.literal('')),
   notes: z.string().optional().nullable().or(z.literal('')),
-  location: z.string().optional().nullable().or(z.literal('')),
+  locationId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
   isShared: z.boolean().optional(),
   depreciationCategoryId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
 });

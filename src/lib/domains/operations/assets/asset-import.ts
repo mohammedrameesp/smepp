@@ -35,7 +35,6 @@ export interface ParsedAssetData {
   model: string;
   serial: string | null;
   configuration: string | null;
-  location: string | null;
   supplier: string | null;
   purchaseDate: Date | null;
   warrantyExpiry: Date | null;
@@ -45,6 +44,7 @@ export interface ParsedAssetData {
   status: AssetStatus;
   assignedMemberId: string | null;
   assignmentDate: string | null;
+  // Note: Location is now a relationship (locationId) - must be assigned manually after import
 }
 
 export type AssetParseResult =
@@ -105,7 +105,7 @@ export function parseAssetRow(row: ImportRow): AssetParseResult {
   const brand = getRowValue(ASSET_COLUMN_MAPPINGS.brand);
   const serial = getRowValue(ASSET_COLUMN_MAPPINGS.serial);
   const configuration = getRowValue(ASSET_COLUMN_MAPPINGS.configuration);
-  const location = getRowValue(ASSET_COLUMN_MAPPINGS.location);
+  // Note: Location is now a relationship - must be assigned manually after import
   const purchaseDateStr = getRowValue(ASSET_COLUMN_MAPPINGS.purchaseDate);
   const warrantyExpiryStr = getRowValue(ASSET_COLUMN_MAPPINGS.warrantyExpiry);
   const supplier = getRowValue(ASSET_COLUMN_MAPPINGS.supplier);
@@ -160,7 +160,6 @@ export function parseAssetRow(row: ImportRow): AssetParseResult {
       model,
       serial: serial || null,
       configuration: configuration || null,
-      location: location || null,
       supplier: supplier || null,
       purchaseDate,
       warrantyExpiry,
@@ -176,6 +175,7 @@ export function parseAssetRow(row: ImportRow): AssetParseResult {
 
 /**
  * Asset data ready for Prisma create/update operations
+ * Note: Location is a relationship (locationId) - must be assigned manually after import
  */
 export interface AssetDbData {
   type: string;
@@ -184,7 +184,6 @@ export interface AssetDbData {
   model: string;
   serial: string | null;
   configuration: string | null;
-  location: string | null;
   supplier: string | null;
   purchaseDate: Date | null;
   warrantyExpiry: Date | null;
@@ -211,7 +210,6 @@ export function buildAssetDbData(data: ParsedAssetData): AssetDbData {
     model: data.model,
     serial: data.serial,
     configuration: data.configuration,
-    location: data.location,
     supplier: data.supplier,
     purchaseDate: data.purchaseDate,
     warrantyExpiry: data.warrantyExpiry,

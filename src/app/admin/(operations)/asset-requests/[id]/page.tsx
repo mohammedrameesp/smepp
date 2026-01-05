@@ -51,8 +51,13 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
           brand: true,
           type: true,
           configuration: true,
-          location: true,
           status: true,
+          location: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
       member: {
@@ -193,7 +198,7 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
                       <MapPin className="h-4 w-4 text-slate-400" />
                       <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Location</p>
                     </div>
-                    <p className="text-sm font-semibold text-slate-900">{request.asset.location}</p>
+                    <p className="text-sm font-semibold text-slate-900">{request.asset.location.name}</p>
                   </div>
                 )}
                 {request.asset.configuration && (

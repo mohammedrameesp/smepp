@@ -338,6 +338,9 @@ model Organization {
   // Additional currencies beyond QAR (e.g., ["USD", "EUR"])
   additionalCurrencies String[] @default([])
 
+  // Location tracking (for multi-location organizations)
+  hasMultipleLocations Boolean @default(false)
+
   // Onboarding tracking
   onboardingCompleted   Boolean   @default(false)
   onboardingCompletedAt DateTime?
@@ -385,6 +388,7 @@ model Organization {
   assets                 Asset[]
   assetCategories        AssetCategory[]
   assetTypeMappings      AssetTypeMapping[]
+  locations              Location[]
   assetHistories         AssetHistory[]
   subscriptions          Subscription[]
   activityLogs           ActivityLog[]
@@ -838,9 +842,10 @@ model Asset {
   priceQAR         Decimal?
 
   // Additional fields
-  notes    String? // General notes/remarks about the asset
-  location String? // Physical location of the asset (Office, Building, Room, etc.)
-  isShared Boolean @default(false) // Shared/common resource (e.g., printer, conference room equipment)
+  notes      String? // General notes/remarks about the asset
+  locationId String? // FK to Location
+  location   Location? @relation(fields: [locationId], references: [id])
+  isShared   Boolean   @default(false) // Shared/common resource (e.g., printer, conference room equipment)
 
   // Depreciation fields
   depreciationCategoryId  String?
@@ -880,6 +885,7 @@ model Asset {
   @@index([serial])
   @@index([assetTag])
   @@index([categoryId])
+  @@index([locationId])
   @@index([tenantId])
   @@index([tenantId, status, disposalDate]) // For disposal reporting
 }
@@ -932,6 +938,28 @@ model AssetTypeMapping {
   updatedAt DateTime @updatedAt
 
   @@unique([tenantId, typeName])
+  @@index([tenantId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOCATION - Physical locations for assets (multi-location organizations)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model Location {
+  id       String       @id @default(cuid())
+  tenantId String
+  tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String // "Main Office", "Warehouse A", "Branch - Doha"
+  description String?
+  isActive    Boolean @default(true)
+
+  assets Asset[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, name])
   @@index([tenantId])
 }
 
