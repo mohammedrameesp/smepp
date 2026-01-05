@@ -171,13 +171,18 @@ export default function NewAssetPage() {
   useEffect(() => {
     async function fetchLocations() {
       try {
+        console.log('[NewAsset] Fetching locations...');
         const response = await fetch('/api/locations');
+        console.log('[NewAsset] Locations response status:', response.status);
         if (response.ok) {
           const data = await response.json();
+          console.log('[NewAsset] Locations data:', data);
           setLocations(data.locations || []);
+        } else {
+          console.error('[NewAsset] Locations fetch failed:', response.status, response.statusText);
         }
       } catch (error) {
-        console.error('Error fetching locations:', error);
+        console.error('[NewAsset] Error fetching locations:', error);
       }
     }
     fetchLocations();
@@ -620,27 +625,25 @@ export default function NewAssetPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  {locations.length > 0 && (
-                    <div className="space-y-2">
-                      <Label htmlFor="locationId">Location</Label>
-                      <Select
-                        value={watchedLocationId || '__none__'}
-                        onValueChange={(value) => setValue('locationId', value === '__none__' ? '' : value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select location..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none__">Not specified</SelectItem>
-                          {locations.map((loc) => (
-                            <SelectItem key={loc.id} value={loc.id}>
-                              {loc.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="locationId">Location</Label>
+                    <Select
+                      value={watchedLocationId || '__none__'}
+                      onValueChange={(value) => setValue('locationId', value === '__none__' ? '' : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={locations.length > 0 ? "Select location..." : "No locations defined"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Not specified</SelectItem>
+                        {locations.map((loc) => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            {loc.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 {watchedStatus === AssetStatus.IN_USE && (
