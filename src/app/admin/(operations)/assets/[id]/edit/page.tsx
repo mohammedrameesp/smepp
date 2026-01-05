@@ -14,10 +14,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Package, ShoppingCart, MapPin, Info, Tag, Wrench } from 'lucide-react';
+import { Package, ShoppingCart, MapPin, Info, Wrench, RefreshCw } from 'lucide-react';
 import { toInputDateString } from '@/lib/date-format';
 import { updateAssetSchema, type UpdateAssetRequest } from '@/lib/validations/assets';
 import { AssetStatus } from '@prisma/client';
+import { CategorySelector } from '@/components/domains/operations/assets/category-selector';
+import { AssetTypeCombobox } from '@/components/domains/operations/assets/asset-type-combobox';
 // Default exchange rates to QAR (fallback if not set in settings)
 const DEFAULT_RATES: Record<string, number> = {
   USD: 3.64, EUR: 3.96, GBP: 4.60, SAR: 0.97, AED: 0.99, KWD: 11.85,
@@ -29,6 +31,8 @@ interface Asset {
   id: string;
   assetTag?: string;
   type: string;
+  categoryId?: string;
+  category?: string; // deprecated
   brand?: string;
   model: string;
   serial?: string;
@@ -58,16 +62,15 @@ export default function EditAssetPage() {
   const params = useParams();
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [asset, setAsset] = useState<Asset | null>(null);
-  const [assetTypeSuggestions, setAssetTypeSuggestions] = useState<string[]>([]);
-  const [showTypeSuggestions, setShowTypeSuggestions] = useState(false);
-  const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
-  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [users, setUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
   const [depreciationCategories, setDepreciationCategories] = useState<DepreciationCategory[]>([]);
   const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(DEFAULT_RATES);
+  const [selectedCategoryCode, setSelectedCategoryCode] = useState<string | null>(null);
+  const [suggestedTag, setSuggestedTag] = useState<string>('');
+  const [isTagManuallyEdited, setIsTagManuallyEdited] = useState(false);
 
   const {
     register,
@@ -81,7 +84,8 @@ export default function EditAssetPage() {
     defaultValues: {
       assetTag: '',
       type: '',
-      category: '',
+      categoryId: '',
+      category: '', // deprecated
       brand: '',
       model: '',
       serial: '',
@@ -106,13 +110,14 @@ export default function EditAssetPage() {
 
   // Watch critical fields
   const watchedType = watch('type');
-  const watchedCategory = watch('category');
+  const watchedCategoryId = watch('categoryId');
   const watchedLocation = watch('location');
   const watchedPrice = watch('price');
   const watchedCurrency = watch('priceCurrency');
   const watchedStatus = watch('status');
   const watchedAssignedUserId = watch('assignedMemberId');
   const watchedPurchaseDate = watch('purchaseDate');
+  const watchedWarrantyExpiry = watch('warrantyExpiry');
   const watchedDepreciationCategoryId = watch('depreciationCategoryId');
   const watchedIsShared = watch('isShared');
 
@@ -178,24 +183,6 @@ export default function EditAssetPage() {
     }
   }, [watchedPrice, watchedCurrency, exchangeRates, setValue]);
 
-  // Fetch asset type suggestions as user types
-  useEffect(() => {
-    if (watchedType && watchedType.length > 0) {
-      fetchAssetTypes(watchedType);
-    } else {
-      setAssetTypeSuggestions([]);
-    }
-  }, [watchedType]);
-
-  // Fetch category suggestions as user types
-  useEffect(() => {
-    if (watchedCategory && watchedCategory.length > 0) {
-      fetchCategories(watchedCategory);
-    } else {
-      setCategorySuggestions([]);
-    }
-  }, [watchedCategory]);
-
   // Fetch location suggestions as user types
   useEffect(() => {
     if (watchedLocation && watchedLocation.length > 0) {
@@ -227,30 +214,6 @@ export default function EditAssetPage() {
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-    }
-  };
-
-  const fetchAssetTypes = async (query: string) => {
-    try {
-      const response = await fetch(`/api/assets/types?q=${encodeURIComponent(query)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setAssetTypeSuggestions(data.types || []);
-      }
-    } catch (error) {
-      console.error('Error fetching asset types:', error);
-    }
-  };
-
-  const fetchCategories = async (query: string) => {
-    try {
-      const response = await fetch(`/api/assets/categories?q=${encodeURIComponent(query)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCategorySuggestions(data.categories || []);
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
     }
   };
 
@@ -287,7 +250,8 @@ export default function EditAssetPage() {
         reset({
           assetTag: assetData.assetTag || '',
           type: assetData.type || '',
-          category: assetData.category || '',
+          categoryId: assetData.categoryId || '',
+          category: assetData.category || '', // deprecated fallback
           brand: assetData.brand || '',
           model: assetData.model || '',
           serial: assetData.serial || '',
@@ -307,6 +271,11 @@ export default function EditAssetPage() {
           isShared: assetData.isShared || false,
           depreciationCategoryId: assetData.depreciationCategoryId || '',
         });
+        // If asset has a tag, mark as manually edited so we don't auto-generate
+        if (assetData.assetTag) {
+          setIsTagManuallyEdited(true);
+          setSuggestedTag(assetData.assetTag);
+        }
         // Fetch maintenance records
         fetchMaintenanceRecords(id);
       } else {
@@ -382,6 +351,7 @@ export default function EditAssetPage() {
         },
         body: JSON.stringify({
           ...data,
+          categoryId: data.categoryId || null,
           price: price,
           priceQAR: priceInQAR,
           assetTag: data.assetTag || null,
@@ -463,7 +433,7 @@ export default function EditAssetPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Basic Information Section */}
+              {/* Section 1: Asset Details */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Package className="h-5 w-5 text-blue-600" />
@@ -471,68 +441,97 @@ export default function EditAssetPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">What is this asset?</p>
 
+                {/* Asset Type & Category - Same Row */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2 relative">
+                  <div className="space-y-2">
                     <Label htmlFor="type">Asset Type *</Label>
-                    <Input
-                      id="type"
-                      {...register('type')}
-                      onFocus={() => setShowTypeSuggestions(true)}
-                      onBlur={() => setTimeout(() => setShowTypeSuggestions(false), 200)}
-                      placeholder="Laptop, Phone, Monitor, etc."
-                      autoComplete="off"
+                    <AssetTypeCombobox
+                      value={watchedType || ''}
+                      onChange={(type) => setValue('type', type)}
+                      onCategoryMatch={async (categoryCode) => {
+                        // Auto-select category based on type match
+                        if (!watchedCategoryId) {
+                          try {
+                            const response = await fetch('/api/asset-categories');
+                            if (response.ok) {
+                              const data = await response.json();
+                              const matchedCategory = data.categories?.find(
+                                (c: { code: string; id: string }) => c.code === categoryCode
+                              );
+                              if (matchedCategory) {
+                                setValue('categoryId', matchedCategory.id);
+                                setSelectedCategoryCode(categoryCode);
+                              }
+                            }
+                          } catch (error) {
+                            console.error('Error fetching categories:', error);
+                          }
+                        }
+                      }}
+                      placeholder="Laptop, Monitor, Printer..."
                       className={errors.type ? 'border-red-500' : ''}
                     />
-                    {errors.type && <p className="text-sm text-red-500">{errors.type.message}</p>}
-                    {showTypeSuggestions && assetTypeSuggestions.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
-                        {assetTypeSuggestions.map((type, index) => (
-                          <div
-                            key={index}
-                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                            onClick={() => {
-                              setValue('type', type);
-                              setShowTypeSuggestions(false);
-                            }}
-                          >
-                            {type}
-                          </div>
-                        ))}
-                      </div>
+                    {errors.type && (
+                      <p className="text-sm text-red-500">{errors.type.message}</p>
                     )}
                   </div>
-                  <div className="space-y-2 relative">
-                    <Label htmlFor="category">Category / Department</Label>
-                    <Input
-                      id="category"
-                      {...register('category')}
-                      onFocus={() => setShowCategorySuggestions(true)}
-                      onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
-                      placeholder="IT, Marketing, Engineering, etc."
-                      autoComplete="off"
+                  <div className="space-y-2">
+                    <Label htmlFor="categoryId">Category</Label>
+                    <CategorySelector
+                      value={watchedCategoryId || null}
+                      onChange={(categoryId, categoryCode) => {
+                        setValue('categoryId', categoryId || '');
+                        setSelectedCategoryCode(categoryCode);
+                      }}
                     />
-                    {showCategorySuggestions && categorySuggestions.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
-                        {categorySuggestions.map((category, index) => (
-                          <div
-                            key={index}
-                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                            onClick={() => {
-                              setValue('category', category);
-                              setShowCategorySuggestions(false);
-                            }}
-                          >
-                            {category}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Auto-selected based on type
+                    </p>
+                  </div>
+                </div>
+
+                {/* Asset Tag - Generated from category, editable if needed */}
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Label className="text-xs text-blue-700 uppercase tracking-wide">Asset Tag</Label>
+                      <Input
+                        id="assetTag"
+                        {...register('assetTag')}
+                        placeholder={!watchedCategoryId ? 'Select category first' : 'Auto-generated'}
+                        onChange={(e) => {
+                          e.target.value = e.target.value.toUpperCase();
+                          register('assetTag').onChange(e);
+                          if (e.target.value !== suggestedTag) {
+                            setIsTagManuallyEdited(true);
+                          }
+                        }}
+                        className="font-mono text-base h-9 w-44 uppercase bg-white"
+                      />
+                      {isTagManuallyEdited && suggestedTag && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setValue('assetTag', suggestedTag);
+                            setIsTagManuallyEdited(false);
+                          }}
+                          title="Reset to original tag"
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-blue-600">
+                      {isTagManuallyEdited ? 'Custom tag' : 'Edit if needed'}
+                    </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="brand">Brand/Manufacturer</Label>
+                    <Label htmlFor="brand">Brand / Manufacturer</Label>
                     <Input
                       id="brand"
                       {...register('brand')}
@@ -540,207 +539,147 @@ export default function EditAssetPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="model">Model/Version *</Label>
+                    <Label htmlFor="model">Model / Version *</Label>
                     <Input
                       id="model"
                       {...register('model')}
-                      placeholder="MacBook Pro 16&quot;, iPhone 14, etc."
+                      placeholder="MacBook Pro 16, XPS 15, etc."
                       className={errors.model ? 'border-red-500' : ''}
                     />
-                    {errors.model && <p className="text-sm text-red-500">{errors.model.message}</p>}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="serial">Serial Number</Label>
-                  <Input
-                    id="serial"
-                    {...register('serial')}
-                    placeholder="Serial number or identifier"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="configuration">Configuration/Specs</Label>
-                  <Input
-                    id="configuration"
-                    {...register('configuration')}
-                    placeholder="e.g., M2 Pro, 32GB RAM, 1TB SSD"
-                  />
-                </div>
-              </div>
-
-              {/* Asset Identification Section */}
-              <div className="space-y-4 pt-4 border-t">
-                <div className="flex items-center gap-2">
-                  <Tag className="h-5 w-5 text-purple-600" />
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Asset Identification</h3>
-                </div>
-                <p className="text-xs text-muted-foreground">Unique identifier for this asset</p>
-
-                <div className="space-y-2">
-                  <Label htmlFor="assetTag">Asset ID/Tag</Label>
-                  <Input
-                    id="assetTag"
-                    {...register('assetTag')}
-                    placeholder="Auto-generated if empty"
-                    onChange={(e) => {
-                      e.target.value = e.target.value.toUpperCase();
-                      register('assetTag').onChange(e);
-                    }}
-                    style={{ textTransform: 'uppercase' }}
-                  />
-                </div>
-              </div>
-
-              {/* Financial Information Section */}
-              <div className="space-y-4 pt-4 border-t">
-                <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-green-600" />
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Acquisition Details</h3>
-                </div>
-                <p className="text-xs text-muted-foreground">Where did it come from?</p>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="purchaseDate">Purchase Date</Label>
-                    <DatePicker
-                      id="purchaseDate"
-                      value={watch('purchaseDate') || ''}
-                      onChange={(value) => setValue('purchaseDate', value)}
-                      maxDate={getQatarEndOfDay()} // Only allow today and past dates
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Cost / Value</Label>
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <Input
-                          id="price"
-                          type="number"
-                          step="0.01"
-                          {...register('price', { valueAsNumber: true })}
-                          placeholder="0.00"
-                        />
-                      </div>
-                      <Select
-                        value={watchedCurrency || ''}
-                        onValueChange={(value) => setValue('priceCurrency', value)}
-                      >
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableCurrencies.map((currency) => (
-                            <SelectItem key={currency} value={currency}>
-                              {currency}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {watchedPrice && watchedCurrency && (
-                      <p className="text-xs text-muted-foreground">
-                        {watchedCurrency === 'QAR' ? (
-                          // QAR selected: show USD equivalent
-                          <>≈ USD {(watchedPrice / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
-                        ) : (
-                          // Any other currency: show QAR equivalent
-                          <>≈ QAR {(watchedPrice * (exchangeRates[watchedCurrency as string] || 1)).toFixed(2)}</>
-                        )}
-                      </p>
+                    {errors.model && (
+                      <p className="text-sm text-red-500">{errors.model.message}</p>
                     )}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="supplier">Supplier/Vendor</Label>
+                    <Label htmlFor="serial">Serial Number</Label>
                     <Input
-                      id="supplier"
-                      {...register('supplier')}
-                      placeholder="Apple Store Qatar, Dell Qatar, etc."
+                      id="serial"
+                      {...register('serial')}
+                      placeholder="Manufacturer's serial"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="invoiceNumber">Invoice/PO Number</Label>
+                    <Label htmlFor="configuration">Configuration / Specs</Label>
+                    <Input
+                      id="configuration"
+                      {...register('configuration')}
+                      placeholder="16GB RAM, 512GB SSD, etc."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Acquisition Details */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5 text-green-600" />
+                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Acquisition Details</h3>
+                </div>
+                <p className="text-xs text-muted-foreground">Where did this asset come from?</p>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="purchaseDate">Purchase Date</Label>
+                    <DatePicker
+                      id="purchaseDate"
+                      value={watchedPurchaseDate || ''}
+                      onChange={(value) => setValue('purchaseDate', value)}
+                      maxDate={getQatarEndOfDay()}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="warrantyExpiry">Warranty Expiry</Label>
+                    <DatePicker
+                      id="warrantyExpiry"
+                      value={watchedWarrantyExpiry || ''}
+                      onChange={(value) => setValue('warrantyExpiry', value)}
+                      required={false}
+                      placeholder="No warranty"
+                      minDate={watchedPurchaseDate ? new Date(watchedPurchaseDate) : undefined}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="supplier">Supplier / Vendor</Label>
+                    <Input
+                      id="supplier"
+                      {...register('supplier')}
+                      placeholder="Where purchased from"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="invoiceNumber">Invoice / PO Number</Label>
                     <Input
                       id="invoiceNumber"
                       {...register('invoiceNumber')}
-                      placeholder="INV-2023-001"
+                      placeholder="Invoice reference"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="warrantyExpiry">
-                    Warranty Expiry
-                    <span className="text-gray-500 text-sm ml-2">(Optional)</span>
-                  </Label>
-                  <DatePicker
-                    id="warrantyExpiry"
-                    value={watch('warrantyExpiry') || ''}
-                    onChange={(value) => setValue('warrantyExpiry', value)}
-                    required={false}
-                    placeholder="No warranty or unknown"
-                    minDate={watchedPurchaseDate ? new Date(watchedPurchaseDate) : undefined}
-                  />
-                  <p className="text-xs text-gray-500">
-                    {watchedPurchaseDate
-                      ? 'Must be on or after purchase date.'
-                      : 'Enter a purchase date first to set warranty expiry.'
-                    } Click × to clear for items without warranty.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="depreciationCategoryId">
-                    Depreciation Category
-                    <span className="text-gray-500 text-sm ml-2">(Optional)</span>
-                  </Label>
-                  <Select
-                    value={watchedDepreciationCategoryId || '__none__'}
-                    onValueChange={(value) => setValue('depreciationCategoryId', value === '__none__' ? '' : value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select depreciation category..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">None</SelectItem>
-                      {depreciationCategories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name} ({cat.annualRate}% / {cat.usefulLifeYears} years)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">
-                    Select a depreciation category to track asset value over time
-                  </p>
+                  <Label htmlFor="price">Cost / Value</Label>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Input
+                        id="price"
+                        type="number"
+                        step="0.01"
+                        {...register('price', { valueAsNumber: true })}
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <Select
+                      value={watchedCurrency || availableCurrencies[0] || 'QAR'}
+                      onValueChange={(value) => setValue('priceCurrency', value)}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableCurrencies.map((currency) => (
+                          <SelectItem key={currency} value={currency}>
+                            {currency}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {watchedPrice && watchedCurrency && (
+                    <p className="text-xs text-muted-foreground">
+                      {watchedCurrency === 'QAR' ? (
+                        <>≈ USD {(watchedPrice / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
+                      ) : (
+                        <>≈ QAR {(watchedPrice * (exchangeRates[watchedCurrency as string] || 1)).toFixed(2)}</>
+                      )}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* Current Status Section */}
+              {/* Section 3: Status & Assignment */}
               <div className="space-y-4 pt-4 border-t">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-orange-600" />
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Status & Assignment</h3>
                 </div>
-                <p className="text-xs text-muted-foreground">Current state and location</p>
+                <p className="text-xs text-muted-foreground">Current state and who is using it</p>
 
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  {asset?.status === 'DISPOSED' ? (
-                    <div className="flex items-center gap-2 p-3 bg-slate-100 rounded-lg">
-                      <span className="px-2 py-1 bg-slate-200 text-slate-700 text-sm font-medium rounded">
-                        Disposed
-                      </span>
-                      <span className="text-sm text-slate-500">
-                        (Status cannot be changed for disposed assets)
-                      </span>
-                    </div>
-                  ) : (
-                    <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status *</Label>
+                    {asset?.status === 'DISPOSED' ? (
+                      <div className="flex items-center gap-2 p-3 bg-slate-100 rounded-lg">
+                        <span className="px-2 py-1 bg-slate-200 text-slate-700 text-sm font-medium rounded">
+                          Disposed
+                        </span>
+                      </div>
+                    ) : (
                       <Select value={watchedStatus || ''} onValueChange={(value) => setValue('status', value as AssetStatus)}>
                         <SelectTrigger>
                           <SelectValue />
@@ -751,36 +690,61 @@ export default function EditAssetPage() {
                           <SelectItem value="REPAIR">In Repair</SelectItem>
                         </SelectContent>
                       </Select>
-                      <p className="text-xs text-slate-500">
-                        To dispose this asset, use the &ldquo;Dispose Asset&rdquo; button on the asset detail page.
-                      </p>
-                    </>
-                  )}
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
+                    <div className="relative">
+                      <Input
+                        id="location"
+                        {...register('location')}
+                        onFocus={() => setShowLocationSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+                        placeholder="Building, floor, room..."
+                        autoComplete="off"
+                      />
+                      {showLocationSuggestions && locationSuggestions.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
+                          {locationSuggestions.map((location, index) => (
+                            <div
+                              key={index}
+                              className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                              onClick={() => {
+                                setValue('location', location);
+                                setShowLocationSuggestions(false);
+                              }}
+                            >
+                              {location}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {watchedStatus === AssetStatus.IN_USE && (
-                  <div className="flex items-start space-x-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <Checkbox
-                      id="isShared"
-                      checked={watchedIsShared}
-                      onCheckedChange={(checked) => {
-                        setValue('isShared', !!checked);
-                        // Clear assignment when marking as shared
-                        if (checked) {
-                          setValue('assignedMemberId', '');
-                          setValue('assignmentDate', '');
-                        }
-                      }}
-                    />
-                    <div className="space-y-1">
-                      <Label htmlFor="isShared" className="font-medium cursor-pointer">
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id="isShared"
+                        checked={watchedIsShared}
+                        onCheckedChange={(checked) => {
+                          setValue('isShared', !!checked);
+                          if (checked) {
+                            setValue('assignedMemberId', '');
+                            setValue('assignmentDate', '');
+                          }
+                        }}
+                      />
+                      <Label htmlFor="isShared" className="text-sm font-medium cursor-pointer">
                         This is a shared/common resource
                       </Label>
-                      <p className="text-xs text-gray-600">
-                        Check this for assets like printers, conference room equipment, or shared workstations
-                        that are not assigned to any specific person.
-                      </p>
                     </div>
+                    <p className="text-xs text-blue-700 ml-7">
+                      Check this for assets used by multiple team members (e.g., conference room equipment,
+                      shared printers, common area devices). Shared assets won&apos;t be assigned to any specific person.
+                    </p>
                   </div>
                 )}
               </div>
@@ -834,65 +798,40 @@ export default function EditAssetPage() {
                 </div>
               )}
 
-              {/* Location Section */}
-              <div className="space-y-4 pt-4 border-t">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-rose-600" />
-                  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Location</h3>
-                </div>
-                <div className="space-y-2 relative">
-                  <Label htmlFor="location">
-                    Physical Location {watchedIsShared ? '(Recommended)' : '(Optional)'}
-                  </Label>
-                  <Input
-                    id="location"
-                    {...register('location')}
-                    onFocus={() => setShowLocationSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
-                    placeholder={watchedIsShared
-                      ? "E.g., Reception, Conference Room A, IT Room"
-                      : "E.g., Office 3rd Floor, Building A, Storage Room 201"
-                    }
-                    autoComplete="off"
-                  />
-                  {showLocationSuggestions && locationSuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
-                      {locationSuggestions.map((location, index) => (
-                        <div
-                          key={index}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                          onClick={() => {
-                            setValue('location', location);
-                            setShowLocationSuggestions(false);
-                          }}
-                        >
-                          {location}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <p className="text-xs text-gray-500">
-                    {watchedIsShared
-                      ? "Where can people find this shared resource?"
-                      : "Where is this asset physically located?"
-                    }
-                  </p>
-                </div>
-              </div>
-
-              {/* Notes Section */}
+              {/* Section 4: Additional Information */}
               <div className="space-y-4 pt-4 border-t">
                 <div className="flex items-center gap-2">
                   <Info className="h-5 w-5 text-gray-600" />
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Additional Information</h3>
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="notes">Additional Notes (optional)</Label>
+                  <Label htmlFor="depreciationCategoryId">Depreciation Category</Label>
+                  <Select
+                    value={watchedDepreciationCategoryId || '__none__'}
+                    onValueChange={(value) => setValue('depreciationCategoryId', value === '__none__' ? '' : value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select for value tracking..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">None</SelectItem>
+                      {depreciationCategories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name} ({cat.annualRate}% / {cat.usefulLifeYears} yrs)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes</Label>
                   <textarea
                     id="notes"
                     {...register('notes')}
-                    placeholder="Any additional information about this asset..."
-                    className="w-full min-h-[100px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Any additional information..."
+                    className="w-full min-h-[80px] px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
                 </div>
               </div>
