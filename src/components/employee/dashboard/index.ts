@@ -1,5 +1,6 @@
 export { StatCard } from './stat-card';
 export { AlertBanner } from './alert-banner';
+export { AssetAssignmentAlert } from './asset-assignment-alert';
 export { CelebrationsCard } from './celebrations-card';
 export { RequestsCard } from './requests-card';
 export { LeaveBalanceWidget } from './leave-balance-widget';

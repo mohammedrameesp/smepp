@@ -87,6 +87,9 @@ export default async function AdminDashboard() {
       onLeaveTodayCount,
       pendingSuppliers,
       pendingChangeRequests,
+      pendingAssetRequests,
+      pendingAssetReturns,
+      pendingAssetAssignments,
       expiringCompanyDocs,
       expiringSubscriptions,
       pendingApprovals,
@@ -116,6 +119,10 @@ export default async function AdminDashboard() {
       }),
       prisma.supplier.count({ where: { tenantId, status: 'PENDING' } }),
       prisma.profileChangeRequest.count({ where: { tenantId, status: 'PENDING' } }),
+      // Asset request stats
+      prisma.assetRequest.count({ where: { tenantId, status: 'PENDING_ADMIN_APPROVAL' } }),
+      prisma.assetRequest.count({ where: { tenantId, status: 'PENDING_RETURN_APPROVAL' } }),
+      prisma.assetRequest.count({ where: { tenantId, status: 'PENDING_USER_ACCEPTANCE' } }),
       // Expiring company documents (next 30 days)
       prisma.companyDocument.findMany({
         where: {
@@ -244,8 +251,8 @@ export default async function AdminDashboard() {
       }),
     ]);
 
-    // Calculate total pending approvals
-    const totalPendingApprovals = pendingApprovals + pendingLeaveCount + pendingPurchaseRequests + pendingSuppliers + pendingChangeRequests;
+    // Calculate total pending approvals (including asset requests and returns)
+    const totalPendingApprovals = pendingApprovals + pendingLeaveCount + pendingPurchaseRequests + pendingSuppliers + pendingChangeRequests + pendingAssetRequests + pendingAssetReturns;
 
     // Calculate expiring documents count
     const expiringDocsCount = expiringCompanyDocs.length + expiringSubscriptions.length + expiringEmployeeDocs.length;
@@ -262,6 +269,10 @@ export default async function AdminDashboard() {
         onLeaveToday: onLeaveTodayCount,
         pendingSuppliers,
         pendingChangeRequests,
+        pendingAssetRequests,
+        pendingAssetReturns,
+        pendingAssetAssignments,
+        totalPendingAssets: pendingAssetRequests + pendingAssetReturns,
       },
       totalPendingApprovals,
       expiringDocsCount,
@@ -295,6 +306,8 @@ export default async function AdminDashboard() {
       title: 'Assets',
       description: 'Physical and digital assets',
       count: dashboardData?.stats.assets,
+      badge: dashboardData?.stats.totalPendingAssets ? `${dashboardData.stats.totalPendingAssets} pending` : null,
+      badgeColor: 'bg-red-500',
       enabled: isModuleEnabled('assets'),
     },
     {

@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import {
   StatCard,
   AlertBanner,
+  AssetAssignmentAlert,
   CelebrationsCard,
   RequestsCard,
   LeaveBalanceWidget,
@@ -93,6 +94,7 @@ export default async function EmployeeDashboard() {
       leaveRequests,
       leaveBalances,
       assetRequests,
+      pendingAssetAssignments,
       celebrations,
     ] = await Promise.all([
       getMemberSubscriptionHistory(session.user.id),
@@ -145,6 +147,13 @@ export default async function EmployeeDashboard() {
         take: 5,
         include: {
           asset: { select: { model: true, assetTag: true, brand: true } },
+        },
+      }),
+      // Count of pending asset assignments awaiting user acceptance
+      prisma.assetRequest.count({
+        where: {
+          memberId: session.user.id,
+          status: 'PENDING_USER_ACCEPTANCE',
         },
       }),
       // Fetch celebrations (birthdays and anniversaries this week)
@@ -408,6 +417,9 @@ export default async function EmployeeDashboard() {
         <main className="max-w-6xl mx-auto px-4 py-6">
           {/* Alert Banner */}
           <AlertBanner alerts={documentAlerts} className="mb-4" />
+
+          {/* Asset Assignment Alert */}
+          <AssetAssignmentAlert pendingCount={pendingAssetAssignments} className="mb-4" />
 
           {/* Celebrations */}
           <CelebrationsCard celebrations={processedCelebrations} className="mb-4" />
