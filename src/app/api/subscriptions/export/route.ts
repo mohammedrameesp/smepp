@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { arrayToCSV, formatDateForCSV, formatCurrencyForCSV } from '@/lib/csv-utils';
+import { arrayToCSV, formatDateForCSV, formatCurrencyForCSV } from '@/lib/core/csv-utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function exportSubscriptionsHandler(_request: NextRequest, context: APIContext) {

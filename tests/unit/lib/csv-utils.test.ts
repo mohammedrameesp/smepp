@@ -1,4 +1,4 @@
-import { formatDateForCSV, formatCurrencyForCSV } from '@/lib/csv-utils';
+import { formatDateForCSV, formatCurrencyForCSV } from '@/lib/core/csv-utils';
 
 describe('CSV Utilities', () => {
   describe('formatDateForCSV', () => {

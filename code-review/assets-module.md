@@ -143,12 +143,6 @@ Complete list of all asset-related files for code review and understanding.
 
 ## 5. Library / Business Logic
 
-### Core Asset Utilities
-| File | Description |
-|------|-------------|
-| [src/lib/asset-utils.ts](../src/lib/asset-utils.ts) | Tag generation, prefixes (re-export) |
-| [src/lib/asset-lifecycle.ts](../src/lib/asset-lifecycle.ts) | Lifecycle helpers (re-export) |
-
 ### Domain Logic
 | File | Description |
 |------|-------------|
@@ -156,6 +150,7 @@ Complete list of all asset-related files for code review and understanding.
 | [src/lib/domains/operations/assets/asset-history.ts](../src/lib/domains/operations/assets/asset-history.ts) | History recording |
 | [src/lib/domains/operations/assets/asset-lifecycle.ts](../src/lib/domains/operations/assets/asset-lifecycle.ts) | Assignment periods, utilization |
 | [src/lib/domains/operations/assets/asset-import.ts](../src/lib/domains/operations/assets/asset-import.ts) | CSV import parsing |
+| [src/lib/domains/operations/assets/asset-export.ts](../src/lib/domains/operations/assets/asset-export.ts) | CSV/Excel export utilities |
 | [src/lib/domains/operations/assets/asset-update.ts](../src/lib/domains/operations/assets/asset-update.ts) | Update helpers, change detection |
 | [src/lib/domains/operations/assets/seed-asset-categories.ts](../src/lib/domains/operations/assets/seed-asset-categories.ts) | Category seeding |
 

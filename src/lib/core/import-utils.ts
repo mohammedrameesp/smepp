@@ -13,7 +13,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { csvToArray } from '@/lib/csv-utils';
+import { csvToArray } from '@/lib/core/csv-utils';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES

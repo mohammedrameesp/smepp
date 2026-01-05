@@ -8,7 +8,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { arrayToCSV } from '@/lib/csv-utils';
+import { arrayToCSV } from '@/lib/core/csv-utils';
 
 export async function GET() {
   try {

@@ -36,8 +36,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { arrayToCSV, formatDateForCSV, formatCurrencyForCSV } from '@/lib/csv-utils';
+import { arrayToCSV } from '@/lib/core/csv-utils';
 import { withErrorHandler } from '@/lib/http/handler';
+import {
+  ASSET_EXPORT_COLUMNS,
+  transformAssetsForExport,
+  getExportFilename,
+} from '@/lib/domains/operations/assets/asset-export';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/assets/export - Export Assets to Excel
@@ -90,70 +95,11 @@ async function exportAssetsHandler(_request: NextRequest) {
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // STEP 3: Transform data for CSV/Excel export
+  // STEP 3: Transform data and generate Excel file
   // ─────────────────────────────────────────────────────────────────────────────
-  const csvData = assets.map(asset => ({
-    id: asset.id,
-    assetTag: asset.assetTag || '',
-    type: asset.type,
-    category: asset.category || '',
-    brand: asset.brand || '',
-    model: asset.model,
-    serial: asset.serial || '',
-    configuration: asset.configuration || '',
-    supplier: asset.supplier || '',
-    invoiceNumber: asset.invoiceNumber || '',
-    location: asset.location?.name || '',
-    purchaseDate: formatDateForCSV(asset.purchaseDate),
-    price: formatCurrencyForCSV(asset.price ? Number(asset.price) : null),
-    priceCurrency: asset.priceCurrency || '',
-    priceQAR: formatCurrencyForCSV(asset.priceQAR ? Number(asset.priceQAR) : null),
-    warrantyExpiry: formatDateForCSV(asset.warrantyExpiry),
-    status: asset.status,
-    assignmentDate: asset.assignmentDate || '',
-    notes: asset.notes || '',
-    assignedMemberId: asset.assignedMemberId || '',
-    assignedMemberName: asset.assignedMember?.name || '',
-    assignedMemberEmail: asset.assignedMember?.email || '',
-    createdAt: formatDateForCSV(asset.createdAt),
-    updatedAt: formatDateForCSV(asset.updatedAt),
-  }));
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // STEP 4: Define column headers for Excel
-  // ─────────────────────────────────────────────────────────────────────────────
-  const headers = [
-    { key: 'id' as const, header: 'ID' },
-    { key: 'assetTag' as const, header: 'Asset Tag' },
-    { key: 'type' as const, header: 'Type' },
-    { key: 'category' as const, header: 'Category' },
-    { key: 'brand' as const, header: 'Brand' },
-    { key: 'model' as const, header: 'Model' },
-    { key: 'serial' as const, header: 'Serial Number' },
-    { key: 'configuration' as const, header: 'Configuration/Specs' },
-    { key: 'supplier' as const, header: 'Supplier' },
-    { key: 'invoiceNumber' as const, header: 'Invoice/PO Number' },
-    { key: 'location' as const, header: 'Location' },
-    { key: 'purchaseDate' as const, header: 'Purchase Date' },
-    { key: 'price' as const, header: 'Price' },
-    { key: 'priceCurrency' as const, header: 'Currency' },
-    { key: 'priceQAR' as const, header: 'Price (QAR)' },
-    { key: 'warrantyExpiry' as const, header: 'Warranty Expiry' },
-    { key: 'status' as const, header: 'Status' },
-    { key: 'assignmentDate' as const, header: 'Assignment Date' },
-    { key: 'notes' as const, header: 'Notes' },
-    { key: 'assignedMemberId' as const, header: 'Assigned Member ID' },
-    { key: 'assignedMemberName' as const, header: 'Assigned Member Name' },
-    { key: 'assignedMemberEmail' as const, header: 'Assigned Member Email' },
-    { key: 'createdAt' as const, header: 'Created At' },
-    { key: 'updatedAt' as const, header: 'Updated At' },
-  ];
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // STEP 5: Generate Excel file and return as download
-  // ─────────────────────────────────────────────────────────────────────────────
-  const csvBuffer = await arrayToCSV(csvData, headers);
-  const filename = `assets_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+  const csvData = transformAssetsForExport(assets);
+  const csvBuffer = await arrayToCSV(csvData, ASSET_EXPORT_COLUMNS);
+  const filename = getExportFilename();
 
   return new NextResponse(csvBuffer as any, {
     status: 200,

@@ -15,7 +15,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { arrayToCSV, formatDateForCSV, formatCurrencyForCSV } from '@/lib/csv-utils';
+import { arrayToCSV, formatDateForCSV, formatCurrencyForCSV } from '@/lib/core/csv-utils';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES

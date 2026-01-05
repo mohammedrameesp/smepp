@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { TeamMemberRole } from '@prisma/client';
-import { arrayToCSV, formatDateForCSV } from '@/lib/csv-utils';
+import { arrayToCSV, formatDateForCSV } from '@/lib/core/csv-utils';
 
 export const maxDuration = 60; // Set max duration to 60 seconds for large exports
 

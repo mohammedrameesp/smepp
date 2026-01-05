@@ -9,7 +9,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Role } from '@prisma/client';
-import { csvToArray } from '@/lib/csv-utils';
+import { csvToArray } from '@/lib/core/csv-utils';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 
 interface ImportRow {
