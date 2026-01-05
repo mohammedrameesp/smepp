@@ -252,35 +252,37 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
       const orgSlug = org?.slug || 'app';
       const orgName = org?.name || 'Durj';
 
-      if (assetRequest.type === AssetRequestType.EMPLOYEE_REQUEST) {
-        // Notify user that their request was approved (pending their acceptance)
-        const emailData = assetAssignmentPendingEmail({
-          requestNumber: assetRequest.requestNumber,
-          assetTag: assetRequest.asset?.assetTag || '',
-          assetModel: assetRequest.asset?.model || '',
-          assetBrand: assetRequest.asset?.brand || '',
-          assetType: assetRequest.asset?.type || '',
-          userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
-          assignerName: session.user.name || session.user.email || 'Admin',
-          reason: notes || undefined,
-          orgSlug,
-          orgName,
-        });
-        await sendEmail({ to: assetRequest.member?.email || '', subject: emailData.subject, html: emailData.html, text: emailData.text });
-      } else if (assetRequest.type === AssetRequestType.RETURN_REQUEST) {
-        // Notify user that their return was approved
-        const emailData = assetReturnApprovedEmail({
-          requestNumber: assetRequest.requestNumber,
-          assetTag: assetRequest.asset?.assetTag || '',
-          assetModel: assetRequest.asset?.model || '',
-          assetBrand: assetRequest.asset?.brand || '',
-          assetType: assetRequest.asset?.type || '',
-          userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
-          approverName: session.user.name || session.user.email || 'Admin',
-          orgSlug,
-          orgName,
-        });
-        await sendEmail({ to: assetRequest.member?.email || '', subject: emailData.subject, html: emailData.html, text: emailData.text });
+      if (assetRequest.member?.email) {
+        if (assetRequest.type === AssetRequestType.EMPLOYEE_REQUEST) {
+          // Notify user that their request was approved (pending their acceptance)
+          const emailData = assetAssignmentPendingEmail({
+            requestNumber: assetRequest.requestNumber,
+            assetTag: assetRequest.asset?.assetTag || '',
+            assetModel: assetRequest.asset?.model || '',
+            assetBrand: assetRequest.asset?.brand || '',
+            assetType: assetRequest.asset?.type || '',
+            userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
+            assignerName: session.user.name || session.user.email || 'Admin',
+            reason: notes || undefined,
+            orgSlug,
+            orgName,
+          });
+          await sendEmail({ to: assetRequest.member.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
+        } else if (assetRequest.type === AssetRequestType.RETURN_REQUEST) {
+          // Notify user that their return was approved
+          const emailData = assetReturnApprovedEmail({
+            requestNumber: assetRequest.requestNumber,
+            assetTag: assetRequest.asset?.assetTag || '',
+            assetModel: assetRequest.asset?.model || '',
+            assetBrand: assetRequest.asset?.brand || '',
+            assetType: assetRequest.asset?.type || '',
+            userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
+            approverName: session.user.name || session.user.email || 'Admin',
+            orgSlug,
+            orgName,
+          });
+          await sendEmail({ to: assetRequest.member.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
+        }
       }
     } catch (emailError) {
       console.error('Failed to send email notification:', emailError);
@@ -289,15 +291,19 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 9: Send in-app notification
     // ─────────────────────────────────────────────────────────────────────────────
-    await createNotification(
-      NotificationTemplates.assetRequestApproved(
-        assetRequest.memberId,
-        assetRequest.asset?.assetTag || assetRequest.asset?.model || 'Asset',
-        assetRequest.requestNumber,
-        id
-      ),
-      tenantId
-    );
+    try {
+      await createNotification(
+        NotificationTemplates.assetRequestApproved(
+          assetRequest.memberId,
+          assetRequest.asset?.assetTag || assetRequest.asset?.model || 'Asset',
+          assetRequest.requestNumber,
+          id
+        ),
+        tenantId
+      );
+    } catch (notifError) {
+      console.error('Failed to send in-app notification:', notifError);
+    }
 
     return NextResponse.json(updatedRequest);
 }

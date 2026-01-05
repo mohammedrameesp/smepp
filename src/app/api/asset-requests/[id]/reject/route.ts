@@ -196,34 +196,36 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
       const orgSlug = org?.slug || 'app';
       const orgName = org?.name || 'Durj';
 
-      if (assetRequest.type === AssetRequestType.EMPLOYEE_REQUEST) {
-        const emailData = assetRequestRejectedEmail({
-          requestNumber: assetRequest.requestNumber,
-          assetTag: assetRequest.asset.assetTag,
-          assetModel: assetRequest.asset.model,
-          assetBrand: assetRequest.asset.brand,
-          assetType: assetRequest.asset.type,
-          userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
-          rejectorName: session.user.name || session.user.email || 'Admin',
-          reason: reason || 'No reason provided',
-          orgSlug,
-          orgName,
-        });
-        await sendEmail({ to: assetRequest.member?.email || '', subject: emailData.subject, html: emailData.html, text: emailData.text });
-      } else if (assetRequest.type === AssetRequestType.RETURN_REQUEST) {
-        const emailData = assetReturnRejectedEmail({
-          requestNumber: assetRequest.requestNumber,
-          assetTag: assetRequest.asset.assetTag,
-          assetModel: assetRequest.asset.model,
-          assetBrand: assetRequest.asset.brand,
-          assetType: assetRequest.asset.type,
-          userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
-          rejectorName: session.user.name || session.user.email || 'Admin',
-          reason: reason || 'No reason provided',
-          orgSlug,
-          orgName,
-        });
-        await sendEmail({ to: assetRequest.member?.email || '', subject: emailData.subject, html: emailData.html, text: emailData.text });
+      if (assetRequest.member?.email) {
+        if (assetRequest.type === AssetRequestType.EMPLOYEE_REQUEST) {
+          const emailData = assetRequestRejectedEmail({
+            requestNumber: assetRequest.requestNumber,
+            assetTag: assetRequest.asset.assetTag,
+            assetModel: assetRequest.asset.model,
+            assetBrand: assetRequest.asset.brand,
+            assetType: assetRequest.asset.type,
+            userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
+            rejectorName: session.user.name || session.user.email || 'Admin',
+            reason: reason || 'No reason provided',
+            orgSlug,
+            orgName,
+          });
+          await sendEmail({ to: assetRequest.member.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
+        } else if (assetRequest.type === AssetRequestType.RETURN_REQUEST) {
+          const emailData = assetReturnRejectedEmail({
+            requestNumber: assetRequest.requestNumber,
+            assetTag: assetRequest.asset.assetTag,
+            assetModel: assetRequest.asset.model,
+            assetBrand: assetRequest.asset.brand,
+            assetType: assetRequest.asset.type,
+            userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
+            rejectorName: session.user.name || session.user.email || 'Admin',
+            reason: reason || 'No reason provided',
+            orgSlug,
+            orgName,
+          });
+          await sendEmail({ to: assetRequest.member.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
+        }
       }
     } catch (emailError) {
       console.error('Failed to send email notification:', emailError);
@@ -232,16 +234,20 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 8: Send in-app notification
     // ─────────────────────────────────────────────────────────────────────────────
-    await createNotification(
-      NotificationTemplates.assetRequestRejected(
-        assetRequest.memberId,
-        assetRequest.asset.assetTag || assetRequest.asset.model,
-        assetRequest.requestNumber,
-        reason,
-        id
-      ),
-      tenantId
-    );
+    try {
+      await createNotification(
+        NotificationTemplates.assetRequestRejected(
+          assetRequest.memberId,
+          assetRequest.asset.assetTag || assetRequest.asset.model,
+          assetRequest.requestNumber,
+          reason,
+          id
+        ),
+        tenantId
+      );
+    } catch (notifError) {
+      console.error('Failed to send in-app notification:', notifError);
+    }
 
     return NextResponse.json(updatedRequest);
 }

@@ -43,8 +43,8 @@ Complete list of all asset-related files for code review and understanding.
 |------|-------------|
 [Done] | [src/app/api/asset-requests/route.ts](../src/app/api/asset-requests/route.ts) | List & Create asset requests |
 [Done] | [src/app/api/asset-requests/[id]/route.ts](../src/app/api/asset-requests/[id]/route.ts) | Get single request |
-| [src/app/api/asset-requests/[id]/approve/route.ts](../src/app/api/asset-requests/[id]/approve/route.ts) | Admin approves request |
-| [src/app/api/asset-requests/[id]/reject/route.ts](../src/app/api/asset-requests/[id]/reject/route.ts) | Admin rejects request |
+[Done] | [src/app/api/asset-requests/[id]/approve/route.ts](../src/app/api/asset-requests/[id]/approve/route.ts) | Admin approves request |
+[Done] | [src/app/api/asset-requests/[id]/reject/route.ts](../src/app/api/asset-requests/[id]/reject/route.ts) | Admin rejects request |
 | [src/app/api/asset-requests/[id]/accept/route.ts](../src/app/api/asset-requests/[id]/accept/route.ts) | User accepts assignment |
 | [src/app/api/asset-requests/[id]/decline/route.ts](../src/app/api/asset-requests/[id]/decline/route.ts) | User declines assignment |
 | [src/app/api/asset-requests/my-pending/route.ts](../src/app/api/asset-requests/my-pending/route.ts) | Get user's pending requests |
