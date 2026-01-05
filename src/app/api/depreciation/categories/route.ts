@@ -62,9 +62,22 @@ async function postHandler(request: NextRequest, context: APIContext) {
   // Special action: seed default categories
   if (body.action === 'seed') {
     const results = await seedDepreciationCategories(tenantId);
+
+    // Return the seeded categories so frontend can use them directly
+    const categories = await getDepreciationCategories(tenantId, false);
+
     return NextResponse.json({
       message: 'Default depreciation categories seeded',
       results,
+      categories: categories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        code: c.code,
+        annualRate: Number(c.annualRate),
+        usefulLifeYears: c.usefulLifeYears,
+        description: c.description,
+        isActive: c.isActive,
+      })),
     });
   }
 

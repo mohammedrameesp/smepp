@@ -125,7 +125,13 @@ export function DepreciationCategoriesSettings({
       const response = await fetch('/api/depreciation/categories?includeInactive=true');
       if (response.ok) {
         const data = await response.json();
-        setCategories(data.categories || []);
+        const fetchedCategories = data.categories || [];
+        setCategories(fetchedCategories);
+
+        // Auto-seed defaults if no categories exist
+        if (fetchedCategories.length === 0 && isAdmin) {
+          await seedDefaultCategories();
+        }
       } else {
         toast.error('Failed to load depreciation categories');
       }
@@ -134,6 +140,23 @@ export function DepreciationCategoriesSettings({
       toast.error('Failed to load depreciation categories');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function seedDefaultCategories() {
+    try {
+      const response = await fetch('/api/depreciation/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'seed' }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories || []);
+      }
+    } catch (error) {
+      console.error('Error seeding default categories:', error);
     }
   }
 
@@ -380,18 +403,8 @@ export function DepreciationCategoriesSettings({
               Loading categories...
             </div>
           ) : displayCategories.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground space-y-4">
+            <div className="py-8 text-center text-muted-foreground">
               <p>No depreciation categories configured.</p>
-              {isAdmin && (
-                <Button variant="outline" onClick={handleSeedDefaults} disabled={seeding}>
-                  {seeding ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4 mr-2" />
-                  )}
-                  Load Qatar Tax Defaults
-                </Button>
-              )}
             </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
