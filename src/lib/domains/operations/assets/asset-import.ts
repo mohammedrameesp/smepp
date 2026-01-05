@@ -43,7 +43,7 @@ export interface ParsedAssetData {
   priceCurrency: 'QAR' | 'USD';
   priceQAR: number | null;
   status: AssetStatus;
-  assignedUserId: string | null;
+  assignedMemberId: string | null;
   assignmentDate: string | null;
 }
 
@@ -69,8 +69,8 @@ const ASSET_COLUMN_MAPPINGS: Record<string, string[]> = {
   purchaseDate: ['Purchase Date', 'purchase_date', 'purchaseDate'],
   warrantyExpiry: ['Warranty Expiry', 'warranty_expiry', 'warrantyExpiry', 'Warranty'],
   supplier: ['Supplier', 'supplier', 'Supplier / Vendor', 'Vendor'],
-  assignedUserId: ['Assigned User ID', 'assignedUserId', 'assigned_user_id'],
-  assignedUser: ['Assigned User', 'assigned_user', 'Assigned To', 'User'],
+  assignedMemberId: ['Assigned Member ID', 'Assigned User ID', 'assignedMemberId', 'assigned_member_id', 'assigned_user_id'],
+  assignedMember: ['Assigned Member', 'Assigned User', 'assigned_member', 'assigned_user', 'Assigned To'],
   assignmentDate: ['Assignment Date', 'assignmentDate', 'assignment_date'],
   status: ['Status', 'status'],
   price: ['Price', 'price', 'Cost', 'Cost / Value'],
@@ -109,7 +109,7 @@ export function parseAssetRow(row: ImportRow): AssetParseResult {
   const purchaseDateStr = getRowValue(ASSET_COLUMN_MAPPINGS.purchaseDate);
   const warrantyExpiryStr = getRowValue(ASSET_COLUMN_MAPPINGS.warrantyExpiry);
   const supplier = getRowValue(ASSET_COLUMN_MAPPINGS.supplier);
-  const assignedUserId = getRowValue(ASSET_COLUMN_MAPPINGS.assignedUserId);
+  const assignedMemberId = getRowValue(ASSET_COLUMN_MAPPINGS.assignedMemberId);
   const assignmentDate = getRowValue(ASSET_COLUMN_MAPPINGS.assignmentDate);
   const statusStr = getRowValue(ASSET_COLUMN_MAPPINGS.status);
   const priceStr = getRowValue(ASSET_COLUMN_MAPPINGS.price);
@@ -168,7 +168,7 @@ export function parseAssetRow(row: ImportRow): AssetParseResult {
       priceCurrency,
       priceQAR,
       status,
-      assignedUserId: assignedUserId || null,
+      assignedMemberId: assignedMemberId || null,
       assignmentDate: assignmentDate || null,
     },
   };
@@ -192,7 +192,7 @@ export interface AssetDbData {
   priceCurrency: 'QAR' | 'USD';
   priceQAR: number | null;
   status: AssetStatus;
-  assignedUserId: string | null;
+  assignedMemberId: string | null;
   assignmentDate: string | null;
   assetTag?: string;
 }
@@ -219,7 +219,7 @@ export function buildAssetDbData(data: ParsedAssetData): AssetDbData {
     priceCurrency: data.priceCurrency,
     priceQAR: data.priceQAR,
     status: data.status,
-    assignedUserId: data.assignedUserId,
+    assignedMemberId: data.assignedMemberId,
     assignmentDate: data.assignmentDate,
   };
 }

@@ -48,7 +48,7 @@ export const ASSET_FIELD_LABELS: Record<string, string> = {
   priceQAR: 'Price (QAR)',
   warrantyExpiry: 'Warranty Expiry',
   status: 'Status',
-  assignedUserId: 'Assigned User',
+  assignedMemberId: 'Assigned Member',
   assignmentDate: 'Assignment Date',
   notes: 'Notes',
   location: 'Location',
@@ -147,16 +147,16 @@ export function formatChangeValue(
   userMap?: Map<string, { name: string | null; email: string }>
 ): string {
   if (value === null || value === undefined || value === '') {
-    // For user field, show "Unassigned" instead of "(empty)"
-    if (fieldKey === 'assignedUserId') return 'Unassigned';
+    // For member field, show "Unassigned" instead of "(empty)"
+    if (fieldKey === 'assignedMemberId') return 'Unassigned';
     return '(empty)';
   }
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
   if (typeof value === 'number') return value.toString();
   if (value instanceof Date) return value.toISOString().split('T')[0];
 
-  // For user ID fields, use pre-fetched user data
-  if (fieldKey === 'assignedUserId' && typeof value === 'string' && userMap) {
+  // For member ID fields, use pre-fetched member data
+  if (fieldKey === 'assignedMemberId' && typeof value === 'string' && userMap) {
     const user = userMap.get(value);
     return user?.name || user?.email || value;
   }
@@ -275,9 +275,9 @@ export function transformAssetUpdateData(
   // Remove assignmentDate as it's only used for history tracking
   delete transformed.assignmentDate;
 
-  // Convert empty string to null for assignedUserId
-  if (transformed.assignedUserId !== undefined) {
-    transformed.assignedUserId = transformed.assignedUserId === '' ? null : transformed.assignedUserId;
+  // Convert empty string to null for assignedMemberId
+  if (transformed.assignedMemberId !== undefined) {
+    transformed.assignedMemberId = transformed.assignedMemberId === '' ? null : transformed.assignedMemberId;
   }
 
   // Convert date strings to Date objects

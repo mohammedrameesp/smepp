@@ -77,15 +77,15 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
 
         // If ID is provided, use upsert to preserve relationships
         if (id) {
-          // Check if asset with this ID exists
-          const existingAssetById = await prisma.asset.findUnique({
-            where: { id },
+          // Check if asset with this ID exists IN THIS TENANT
+          const existingAssetById = await prisma.asset.findFirst({
+            where: { id, tenantId },
           });
 
-          // Check if asset tag is provided and conflicts
+          // Check if asset tag is provided and conflicts IN THIS TENANT
           if (assetTag) {
             const existingByTag = await prisma.asset.findFirst({
-              where: { assetTag },
+              where: { assetTag, tenantId },
             });
 
             if (existingByTag && existingByTag.id !== id) {
@@ -151,10 +151,10 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
         // No ID provided - use tag-based logic
         const finalAssetTag = assetTag || (await generateAssetTag(type, tenantId));
 
-        // Check if asset tag already exists
+        // Check if asset tag already exists IN THIS TENANT
         if (finalAssetTag) {
           const existingAsset = await prisma.asset.findFirst({
-            where: { assetTag: finalAssetTag },
+            where: { assetTag: finalAssetTag, tenantId },
           });
 
           if (existingAsset) {
