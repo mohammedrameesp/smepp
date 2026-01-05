@@ -45,10 +45,10 @@ Complete list of all asset-related files for code review and understanding.
 [Done] | [src/app/api/asset-requests/[id]/route.ts](../src/app/api/asset-requests/[id]/route.ts) | Get single request |
 [Done] | [src/app/api/asset-requests/[id]/approve/route.ts](../src/app/api/asset-requests/[id]/approve/route.ts) | Admin approves request |
 [Done] | [src/app/api/asset-requests/[id]/reject/route.ts](../src/app/api/asset-requests/[id]/reject/route.ts) | Admin rejects request |
-| [src/app/api/asset-requests/[id]/accept/route.ts](../src/app/api/asset-requests/[id]/accept/route.ts) | User accepts assignment |
-| [src/app/api/asset-requests/[id]/decline/route.ts](../src/app/api/asset-requests/[id]/decline/route.ts) | User declines assignment |
-| [src/app/api/asset-requests/my-pending/route.ts](../src/app/api/asset-requests/my-pending/route.ts) | Get user's pending requests |
-| [src/app/api/asset-requests/stats/route.ts](../src/app/api/asset-requests/stats/route.ts) | Request statistics |
+[Done] | [src/app/api/asset-requests/[id]/accept/route.ts](../src/app/api/asset-requests/[id]/accept/route.ts) | User accepts assignment |
+[Done] | [src/app/api/asset-requests/[id]/decline/route.ts](../src/app/api/asset-requests/[id]/decline/route.ts) | User declines assignment |
+[Done] | [src/app/api/asset-requests/my-pending/route.ts](../src/app/api/asset-requests/my-pending/route.ts) | Get user's pending requests |
+[Done] | [src/app/api/asset-requests/stats/route.ts](../src/app/api/asset-requests/stats/route.ts) | Request statistics |
 
 ---
 
@@ -181,12 +181,11 @@ Complete list of all asset-related files for code review and understanding.
 
 | File | Description |
 |------|-------------|
-| [src/lib/validations/assets.ts](../src/lib/validations/assets.ts) | Core asset schemas |
-| [src/lib/validations/operations/assets.ts](../src/lib/validations/operations/assets.ts) | Operations schemas |
-| [src/lib/validations/operations/asset-request.ts](../src/lib/validations/operations/asset-request.ts) | Request schemas |
-| [src/lib/validations/operations/asset-categories.ts](../src/lib/validations/operations/asset-categories.ts) | Category schemas |
-| [src/lib/validations/operations/asset-type-mappings.ts](../src/lib/validations/operations/asset-type-mappings.ts) | Type mapping schemas |
-| [src/lib/validations/operations/asset-disposal.ts](../src/lib/validations/operations/asset-disposal.ts) | Disposal schemas |
+[Done] | [src/lib/validations/operations/assets.ts](../src/lib/validations/operations/assets.ts) | Operations schemas |
+[Done] | [src/lib/validations/operations/asset-request.ts](../src/lib/validations/operations/asset-request.ts) | Request schemas |
+[Done] | [src/lib/validations/operations/asset-categories.ts](../src/lib/validations/operations/asset-categories.ts) | Category schemas |
+[Done] | [src/lib/validations/operations/asset-type-mappings.ts](../src/lib/validations/operations/asset-type-mappings.ts) | Type mapping schemas |
+[Done] | [src/lib/validations/operations/asset-disposal.ts](../src/lib/validations/operations/asset-disposal.ts) | Disposal schemas |
 
 ---
 
@@ -196,7 +195,6 @@ Complete list of all asset-related files for code review and understanding.
 |------|-------------|
 | [src/lib/constants/asset-categories.ts](../src/lib/constants/asset-categories.ts) | Default categories |
 | [src/lib/constants/asset-type-suggestions.ts](../src/lib/constants/asset-type-suggestions.ts) | Type suggestions |
-| [src/lib/help/content/operations/assets.ts](../src/lib/help/content/operations/assets.ts) | Help content |
 
 ---
 
