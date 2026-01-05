@@ -167,26 +167,25 @@ export default function NewAssetPage() {
     fetchOrgSettings();
   }, [setValue]);
 
-  // Fetch locations (always fetch, show dropdown if locations exist)
+  // Fetch locations when multiple locations is enabled
   useEffect(() => {
     async function fetchLocations() {
+      if (!hasMultipleLocations) {
+        setLocations([]);
+        return;
+      }
       try {
-        console.log('[NewAsset] Fetching locations...');
         const response = await fetch('/api/locations');
-        console.log('[NewAsset] Locations response status:', response.status);
         if (response.ok) {
           const data = await response.json();
-          console.log('[NewAsset] Locations data:', data);
           setLocations(data.locations || []);
-        } else {
-          console.error('[NewAsset] Locations fetch failed:', response.status, response.statusText);
         }
       } catch (error) {
-        console.error('[NewAsset] Error fetching locations:', error);
+        console.error('Error fetching locations:', error);
       }
     }
     fetchLocations();
-  }, []);
+  }, [hasMultipleLocations]);
 
   // Fetch suggested asset tag when category changes (new format: ORG-CAT-YYSEQ)
   // Only generates tag when category is selected - not during typing
@@ -625,25 +624,27 @@ export default function NewAssetPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="locationId">Location</Label>
-                    <Select
-                      value={watchedLocationId || '__none__'}
-                      onValueChange={(value) => setValue('locationId', value === '__none__' ? '' : value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={locations.length > 0 ? "Select location..." : "No locations defined"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">Not specified</SelectItem>
-                        {locations.map((loc) => (
-                          <SelectItem key={loc.id} value={loc.id}>
-                            {loc.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {hasMultipleLocations && locations.length > 0 && (
+                    <div className="space-y-2">
+                      <Label htmlFor="locationId">Location</Label>
+                      <Select
+                        value={watchedLocationId || '__none__'}
+                        onValueChange={(value) => setValue('locationId', value === '__none__' ? '' : value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select location..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Not specified</SelectItem>
+                          {locations.map((loc) => (
+                            <SelectItem key={loc.id} value={loc.id}>
+                              {loc.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
 
                 {watchedStatus === AssetStatus.IN_USE && (

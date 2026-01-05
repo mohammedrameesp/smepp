@@ -25,6 +25,7 @@ import {
   AlertCircle,
   Coins,
   LayoutGrid,
+  MapPin,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
@@ -97,6 +98,7 @@ export function OrganizationTabs({
   const [secondaryColor, setSecondaryColor] = useState(org.secondaryColor || '');
   const [additionalCurrencies, setAdditionalCurrencies] = useState<string[]>(org.additionalCurrencies || []);
   const [enabledModules, setEnabledModules] = useState<string[]>(org.enabledModules || ['assets', 'subscriptions', 'suppliers']);
+  const [hasMultipleLocations, setHasMultipleLocations] = useState(org.hasMultipleLocations || false);
 
   // Logo upload state
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -176,6 +178,19 @@ export function OrganizationTabs({
     },
   });
 
+  const locationsAutoSave = useAutoSave({
+    value: hasMultipleLocations,
+    enabled: isAdmin,
+    onSave: async (value) => {
+      const res = await fetch('/api/admin/organization', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hasMultipleLocations: value }),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      setOrg(prev => ({ ...prev, hasMultipleLocations: value }));
+    },
+  });
 
   // Logo upload handler
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -521,11 +536,50 @@ export function OrganizationTabs({
                 isAdmin={isAdmin}
               />
 
-              {/* Locations */}
-              <LocationsSettings
-                organizationId={org.id}
-                isAdmin={isAdmin}
-              />
+              {/* Multiple Locations Toggle */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <MapPin className="h-5 w-5" />
+                        Multiple Locations
+                      </CardTitle>
+                      <CardDescription>
+                        Enable this if your organization has assets in multiple locations
+                      </CardDescription>
+                    </div>
+                    <AutoSaveIndicator status={locationsAutoSave.status} error={locationsAutoSave.error} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        When enabled, you can define locations and assign assets to specific locations.
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={hasMultipleLocations}
+                        onChange={() => setHasMultipleLocations(!hasMultipleLocations)}
+                        disabled={!isAdmin}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Locations - only show when multiple locations is enabled */}
+              {hasMultipleLocations && (
+                <LocationsSettings
+                  organizationId={org.id}
+                  isAdmin={isAdmin}
+                />
+              )}
             </>
           )}
 
