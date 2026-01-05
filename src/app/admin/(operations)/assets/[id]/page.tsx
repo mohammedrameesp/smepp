@@ -1,3 +1,23 @@
+/**
+ * @file page.tsx
+ * @description Admin asset detail page - comprehensive view of a single asset
+ * @module app/admin/(operations)/assets/[id]
+ *
+ * Features:
+ * - Complete asset information (model, brand, type, category, status)
+ * - Purchase details (price, currency, purchase date, supplier)
+ * - Assignment information (current assignee, history)
+ * - Warranty tracking with expiry alerts
+ * - Depreciation card with IFRS-compliant calculations
+ * - Maintenance records management
+ * - Asset utilization metrics
+ * - Asset history timeline
+ * - Quick actions: Edit, Clone, Delete, Assign, Dispose
+ *
+ * Access: Admin only
+ * Route: /admin/assets/[id]
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -40,7 +60,7 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
-// Status styles
+/** Status badge styles mapping for visual consistency */
 const statusStyles: Record<string, { bg: string; text: string; icon: typeof CheckCircle }> = {
   IN_USE: { bg: 'bg-blue-100', text: 'text-blue-700', icon: CheckCircle },
   SPARE: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: Package },

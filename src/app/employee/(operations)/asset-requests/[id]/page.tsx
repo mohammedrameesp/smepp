@@ -1,3 +1,29 @@
+/**
+ * @file page.tsx
+ * @description Employee asset request detail page - view and respond to individual requests
+ * @module app/employee/(operations)/asset-requests/[id]
+ *
+ * Features:
+ * - Client-side component fetching request via API for real-time updates
+ * - Accept/Decline buttons for pending assignments
+ * - Cancel button for pending requests (before admin approval)
+ * - Asset details with link to full asset page
+ * - Request reason and notes display
+ * - Processing information (who approved/rejected, when, response notes)
+ * - Request history timeline with all status changes
+ * - Action required alert for pending acceptance
+ * - Loading skeleton during data fetch
+ * - Error state handling with back navigation
+ *
+ * Available Actions:
+ * - Accept: Confirm assignment of asset to user
+ * - Decline: Reject the assignment
+ * - Cancel: Withdraw pending request (PENDING_ADMIN_APPROVAL or PENDING_RETURN_APPROVAL only)
+ *
+ * Access: Current user only (API enforces ownership)
+ * Route: /employee/asset-requests/[id]
+ */
+
 'use client';
 
 import { useState, useEffect, use } from 'react';

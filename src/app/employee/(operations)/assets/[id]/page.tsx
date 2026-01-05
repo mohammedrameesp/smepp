@@ -1,3 +1,27 @@
+/**
+ * @file page.tsx
+ * @description Employee asset detail page - view individual asset with request/return actions
+ * @module app/employee/(operations)/assets/[id]
+ *
+ * Features:
+ * - Complete asset information (model, brand, type, serial, configuration)
+ * - Procurement details (purchase date, warranty expiry, supplier)
+ * - Current assignment information with "You" badge if assigned to viewer
+ * - Asset status badge with contextual colors
+ * - Request asset button (for spare assets without pending requests)
+ * - Return asset button (for assets assigned to current user)
+ * - Pending request alerts (own requests and requests from others)
+ * - Read-only maintenance records history
+ * - Notes/remarks section
+ *
+ * Available Actions:
+ * - Request: Submit request for SPARE assets (no pending requests)
+ * - Return: Request to return an asset assigned to you
+ *
+ * Access: All authenticated employees (tenant-scoped via findFirst)
+ * Route: /employee/assets/[id]
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -15,6 +39,10 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * Employee asset detail page component
+ * Displays asset details with request/return capabilities based on status
+ */
 export default async function EmployeeAssetDetailPage({ params }: Props) {
   const session = await getServerSession(authOptions);
 

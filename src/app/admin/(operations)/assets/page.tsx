@@ -1,3 +1,18 @@
+/**
+ * @file page.tsx
+ * @description Admin assets list page - displays all organization assets with stats and server-side search
+ * @module app/admin/(operations)/assets
+ *
+ * Features:
+ * - Asset statistics (total count, total value in QAR, assigned count)
+ * - Pending request/return indicators
+ * - Server-side search and filtering via AssetListTableServerSearch component
+ * - Quick actions: Add new asset, Import assets
+ *
+ * Access: Admin only (enforced via role check)
+ * Route: /admin/assets
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -8,6 +23,10 @@ import { AssetListTableServerSearch } from '@/components/domains/operations/asse
 import { Plus, Inbox } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
+/**
+ * Admin assets list page component
+ * Fetches asset statistics and renders the asset management interface
+ */
 export default async function AdminAssetsPage() {
   const session = await getServerSession(authOptions);
 

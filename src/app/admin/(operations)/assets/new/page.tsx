@@ -1,3 +1,23 @@
+/**
+ * @file page.tsx
+ * @description Admin create new asset page - form for adding new assets to inventory
+ * @module app/admin/(operations)/assets/new
+ *
+ * Features:
+ * - Multi-section form: Basic Info, Purchase Details, Location & Assignment
+ * - Auto-generated asset tags based on category and organization prefix
+ * - Multi-currency support with live QAR conversion preview
+ * - Type autocomplete with auto-category suggestion
+ * - Depreciation category assignment with salvage value
+ * - Warranty tracking with optional expiry date
+ * - Initial status selection (IN_USE, SPARE, REPAIR)
+ * - Shared asset marking for pool assets
+ *
+ * Form validation: Zod schema (createAssetSchema)
+ * Access: Admin only
+ * Route: /admin/assets/new
+ */
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';

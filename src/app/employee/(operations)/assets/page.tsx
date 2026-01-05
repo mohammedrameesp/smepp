@@ -1,3 +1,25 @@
+/**
+ * @file page.tsx
+ * @description Employee all assets page - browse and search company assets
+ * @module app/employee/(operations)/assets
+ *
+ * Features:
+ * - Complete list of all organization assets (not just assigned to user)
+ * - Personal asset stats card linking to "My Assets" page
+ * - Available/spare assets count for reference
+ * - Search and filter functionality via EmployeeAssetListTable component
+ * - Read-only view - employees can browse but not directly modify assets
+ *
+ * Use Cases:
+ * - Find available assets to request
+ * - View asset specifications before requesting
+ * - Search for specific equipment types
+ * - Track personal assignments via quick stats
+ *
+ * Access: All authenticated employees (tenant-scoped)
+ * Route: /employee/assets
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -7,6 +29,10 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { EmployeeAssetListTable } from '@/components/domains/operations/assets/employee-asset-list-table';
 
+/**
+ * Employee all assets page component
+ * Displays browsable list of all company assets with stats
+ */
 export default async function EmployeeAllAssetsPage() {
   const session = await getServerSession(authOptions);
 

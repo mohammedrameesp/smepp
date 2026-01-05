@@ -1,3 +1,26 @@
+/**
+ * @file page.tsx
+ * @description Admin asset request detail page - view and process individual requests
+ * @module app/admin/(operations)/asset-requests/[id]
+ *
+ * Features:
+ * - Complete request information (requestor, asset, dates, status)
+ * - Request type and status badges for quick identification
+ * - Asset details with link to full asset page
+ * - Request reason and notes from requestor
+ * - Admin action buttons (Approve, Reject) via AdminRequestActions component
+ * - Request history timeline showing all status transitions
+ * - Quick action links to related resources (asset, requestor profile)
+ *
+ * Request Processing:
+ * - PENDING_ADMIN_APPROVAL: Can approve (assigns to user) or reject
+ * - PENDING_RETURN_APPROVAL: Can approve return (unassigns asset) or reject
+ * - PENDING_USER_ACCEPTANCE: Waiting for user to accept/decline assignment
+ *
+ * Access: Admin only (enforced via role check + tenant isolation)
+ * Route: /admin/asset-requests/[id]
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -27,6 +50,10 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * Admin asset request detail page component
+ * Displays full request information with admin action capabilities
+ */
 export default async function AdminAssetRequestDetailPage({ params }: Props) {
   const session = await getServerSession(authOptions);
 

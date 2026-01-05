@@ -1,3 +1,23 @@
+/**
+ * @file page.tsx
+ * @description Admin asset requests list page - manages all asset request workflows
+ * @module app/admin/(operations)/asset-requests
+ *
+ * Features:
+ * - Lists all asset requests (assignments, user requests, returns) for the organization
+ * - Real-time status chips showing pending approvals, returns, and user acceptances
+ * - Sortable and filterable request table via AssetRequestListTable component
+ * - Links to individual request details for processing
+ *
+ * Request Types:
+ * - ASSET_REQUEST: Employee requests access to a spare asset
+ * - ADMIN_ASSIGNMENT: Admin assigns asset to employee (pending acceptance)
+ * - RETURN_REQUEST: Employee requests to return an assigned asset
+ *
+ * Access: Admin only (enforced via role check)
+ * Route: /admin/asset-requests
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -7,6 +27,10 @@ import { AssetRequestListTable } from '@/components/domains/operations/asset-req
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Package } from 'lucide-react';
 
+/**
+ * Admin asset requests list page component
+ * Fetches all asset requests and displays them with status summaries
+ */
 export default async function AdminAssetRequestsPage() {
   const session = await getServerSession(authOptions);
 

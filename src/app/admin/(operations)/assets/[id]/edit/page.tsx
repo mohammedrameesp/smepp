@@ -1,3 +1,24 @@
+/**
+ * @file page.tsx
+ * @description Admin edit asset page - form for modifying existing asset details
+ * @module app/admin/(operations)/assets/[id]/edit
+ *
+ * Features:
+ * - Pre-populated form with current asset data
+ * - Multi-section editing: Basic Info, Purchase Details, Location & Assignment
+ * - Multi-currency support with live QAR conversion preview
+ * - Type autocomplete with auto-category suggestion
+ * - Depreciation category management
+ * - Warranty tracking updates
+ * - Status changes with validation
+ * - Dispose asset action for end-of-life assets
+ * - Change tracking for audit history
+ *
+ * Form validation: Zod schema (updateAssetSchema)
+ * Access: Admin only
+ * Route: /admin/assets/[id]/edit
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

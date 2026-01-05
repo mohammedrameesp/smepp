@@ -1,3 +1,26 @@
+/**
+ * @file page.tsx
+ * @description Employee asset requests page - view and manage personal asset requests
+ * @module app/employee/(operations)/asset-requests
+ *
+ * Features:
+ * - Personal request history (only current user's requests)
+ * - Pending acceptance card with action needed highlight
+ * - Pending approval count (waiting for admin)
+ * - Total requests count
+ * - Alert banner for assets pending acceptance via PendingAssignmentsAlert
+ * - Request table with status filters
+ * - Link to browse available assets
+ *
+ * Request Categories Displayed:
+ * - Pending Acceptance: Assets assigned by admin awaiting user response
+ * - Pending Approval: User's requests waiting for admin decision
+ * - Completed: Approved, rejected, or accepted requests
+ *
+ * Access: All authenticated employees (filtered by current user)
+ * Route: /employee/asset-requests
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -8,6 +31,10 @@ import Link from 'next/link';
 import { AssetRequestListTable } from '@/components/domains/operations/asset-requests';
 import { PendingAssignmentsAlert } from '@/components/domains/operations/asset-requests';
 
+/**
+ * Employee asset requests page component
+ * Displays personal request history with pending action highlights
+ */
 export default async function EmployeeAssetRequestsPage() {
   const session = await getServerSession(authOptions);
 
