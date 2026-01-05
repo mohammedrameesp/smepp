@@ -110,9 +110,9 @@ export default async function AssetDetailPage({ params }: Props) {
     notFound();
   }
 
-  // Fetch the most recent assignment date from history if asset is assigned
-  let assignmentDate = null;
-  if (asset.assignedMemberId) {
+  // Get the assignment date - prefer the direct field on asset, fallback to history
+  let assignmentDate = asset.assignmentDate;
+  if (!assignmentDate && asset.assignedMemberId) {
     const mostRecentAssignment = await prisma.assetHistory.findFirst({
       where: {
         assetId: id,
