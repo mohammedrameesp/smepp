@@ -17,6 +17,7 @@ jest.mock('@/lib/core/prisma', () => ({
   prisma: {
     asset: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
     },
     assetHistory: {
@@ -25,6 +26,9 @@ jest.mock('@/lib/core/prisma', () => ({
     },
   },
 }));
+
+// Test tenant ID for all queries
+const TEST_TENANT_ID = 'tenant-test-123';
 
 import { prisma } from '@/lib/core/prisma';
 import {
@@ -59,20 +63,20 @@ describe('Asset Lifecycle Management', () => {
 
   describe('getAssignmentPeriods', () => {
     it('should throw error when asset not found', async () => {
-      (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.asset.findFirst as jest.Mock).mockResolvedValue(null);
 
-      await expect(getAssignmentPeriods('asset-1')).rejects.toThrow('Asset not found');
+      await expect(getAssignmentPeriods('asset-1', TEST_TENANT_ID)).rejects.toThrow('Asset not found');
     });
 
     it('should return empty array for unassigned asset with no history', async () => {
-      (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValue({
+      (mockPrisma.asset.findFirst as jest.Mock).mockResolvedValue({
         id: 'asset-1',
         assignedMember: null,
         assignedMemberId: null,
         history: [],
       });
 
-      const result = await getAssignmentPeriods('asset-1');
+      const result = await getAssignmentPeriods('asset-1', TEST_TENANT_ID);
 
       expect(result).toEqual([]);
     });
@@ -81,7 +85,7 @@ describe('Asset Lifecycle Management', () => {
       const assignmentDate = createDate(2024, 1, 15); // Jan 15
       const returnDate = createDate(2024, 3, 20); // Mar 20
 
-      (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValue({
+      (mockPrisma.asset.findFirst as jest.Mock).mockResolvedValue({
         id: 'asset-1',
         assignedMember: null,
         assignedMemberId: null,
@@ -105,7 +109,7 @@ describe('Asset Lifecycle Management', () => {
         ],
       });
 
-      const result = await getAssignmentPeriods('asset-1');
+      const result = await getAssignmentPeriods('asset-1', TEST_TENANT_ID);
 
       expect(result).toHaveLength(1);
       expect(result[0].memberId).toBe('user-1');
@@ -120,7 +124,7 @@ describe('Asset Lifecycle Management', () => {
     });
 
     it('should track multiple assignment periods', async () => {
-      (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValue({
+      (mockPrisma.asset.findFirst as jest.Mock).mockResolvedValue({
         id: 'asset-1',
         assignedMember: null,
         assignedMemberId: null,
@@ -160,7 +164,7 @@ describe('Asset Lifecycle Management', () => {
         ],
       });
 
-      const result = await getAssignmentPeriods('asset-1');
+      const result = await getAssignmentPeriods('asset-1', TEST_TENANT_ID);
 
       expect(result).toHaveLength(2);
       expect(result[0].memberId).toBe('user-1');
@@ -170,7 +174,7 @@ describe('Asset Lifecycle Management', () => {
     it('should include current assignment period for assigned asset', async () => {
       const assignmentDate = createDate(2024, 5, 1); // May 1
 
-      (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValue({
+      (mockPrisma.asset.findFirst as jest.Mock).mockResolvedValue({
         id: 'asset-1',
         assignedMember: { id: 'user-1', name: 'Current User', email: 'current@example.com' },
         assignedMemberId: 'user-1',
@@ -186,7 +190,7 @@ describe('Asset Lifecycle Management', () => {
         ],
       });
 
-      const result = await getAssignmentPeriods('asset-1');
+      const result = await getAssignmentPeriods('asset-1', TEST_TENANT_ID);
 
       expect(result).toHaveLength(1);
       expect(result[0].memberId).toBe('user-1');
@@ -197,7 +201,7 @@ describe('Asset Lifecycle Management', () => {
     });
 
     it('should handle asset assigned before history tracking', async () => {
-      (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValue({
+      (mockPrisma.asset.findFirst as jest.Mock).mockResolvedValue({
         id: 'asset-1',
         assignedMember: { id: 'user-1', name: 'Legacy User', email: 'legacy@example.com' },
         assignedMemberId: 'user-1',
@@ -211,7 +215,7 @@ describe('Asset Lifecycle Management', () => {
         notes: null,
       });
 
-      const result = await getAssignmentPeriods('asset-1');
+      const result = await getAssignmentPeriods('asset-1', TEST_TENANT_ID);
 
       expect(result).toHaveLength(1);
       expect(result[0].memberId).toBe('user-1');
@@ -221,7 +225,7 @@ describe('Asset Lifecycle Management', () => {
     it('should deduplicate periods based on user and dates', async () => {
       const sameDate = createDate(2024, 3, 15);
 
-      (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValue({
+      (mockPrisma.asset.findFirst as jest.Mock).mockResolvedValue({
         id: 'asset-1',
         assignedMember: null,
         assignedMemberId: null,
@@ -254,7 +258,7 @@ describe('Asset Lifecycle Management', () => {
         ],
       });
 
-      const result = await getAssignmentPeriods('asset-1');
+      const result = await getAssignmentPeriods('asset-1', TEST_TENANT_ID);
 
       // Should deduplicate to single period
       expect(result).toHaveLength(1);
@@ -267,13 +271,13 @@ describe('Asset Lifecycle Management', () => {
 
   describe('getAssetUtilization', () => {
     it('should throw error when asset not found', async () => {
-      (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.asset.findFirst as jest.Mock).mockResolvedValue(null);
 
-      await expect(getAssetUtilization('asset-1')).rejects.toThrow('Asset not found');
+      await expect(getAssetUtilization('asset-1', TEST_TENANT_ID)).rejects.toThrow('Asset not found');
     });
 
     it('should calculate 0% utilization for never-assigned asset', async () => {
-      (mockPrisma.asset.findUnique as jest.Mock)
+      (mockPrisma.asset.findFirst as jest.Mock)
         .mockResolvedValueOnce({
           id: 'asset-1',
           purchaseDate: createDate(2024, 1, 1),
@@ -286,7 +290,7 @@ describe('Asset Lifecycle Management', () => {
           history: [],
         });
 
-      const result = await getAssetUtilization('asset-1');
+      const result = await getAssetUtilization('asset-1', TEST_TENANT_ID);
 
       expect(result.totalAssignedDays).toBe(0);
       expect(result.utilizationPercentage).toBe(0);
@@ -298,7 +302,7 @@ describe('Asset Lifecycle Management', () => {
       const purchaseDate = createDate(2024, 1, 1);
       const currentDate = new Date(2024, 5, 15); // June 15
 
-      (mockPrisma.asset.findUnique as jest.Mock)
+      (mockPrisma.asset.findFirst as jest.Mock)
         .mockResolvedValueOnce({
           id: 'asset-1',
           purchaseDate,
@@ -320,7 +324,7 @@ describe('Asset Lifecycle Management', () => {
           ],
         });
 
-      const result = await getAssetUtilization('asset-1');
+      const result = await getAssetUtilization('asset-1', TEST_TENANT_ID);
 
       expect(result.totalOwnedDays).toBeGreaterThan(0);
       expect(result.totalAssignedDays).toBe(result.totalOwnedDays);
@@ -331,7 +335,7 @@ describe('Asset Lifecycle Management', () => {
       const purchaseDate = createDate(2024, 1, 1);
       const assignmentDate = createDate(2024, 4, 1); // April 1 - about halfway
 
-      (mockPrisma.asset.findUnique as jest.Mock)
+      (mockPrisma.asset.findFirst as jest.Mock)
         .mockResolvedValueOnce({
           id: 'asset-1',
           purchaseDate,
@@ -353,7 +357,7 @@ describe('Asset Lifecycle Management', () => {
           ],
         });
 
-      const result = await getAssetUtilization('asset-1');
+      const result = await getAssetUtilization('asset-1', TEST_TENANT_ID);
 
       // April 1 to June 15 = 75 days assigned
       // Jan 1 to June 15 = 166 days total
@@ -365,7 +369,7 @@ describe('Asset Lifecycle Management', () => {
     it('should use createdAt when purchaseDate is null', async () => {
       const createdAt = createDate(2024, 2, 1);
 
-      (mockPrisma.asset.findUnique as jest.Mock)
+      (mockPrisma.asset.findFirst as jest.Mock)
         .mockResolvedValueOnce({
           id: 'asset-1',
           purchaseDate: null,
@@ -378,7 +382,7 @@ describe('Asset Lifecycle Management', () => {
           history: [],
         });
 
-      const result = await getAssetUtilization('asset-1');
+      const result = await getAssetUtilization('asset-1', TEST_TENANT_ID);
 
       // Feb 1 to June 15 = approx 135 days
       expect(result.totalOwnedDays).toBeGreaterThan(130);
@@ -391,7 +395,7 @@ describe('Asset Lifecycle Management', () => {
       const assignDate = createDate(2024, 1, 10);
       const unassignDate = createDate(2024, 1, 23);
 
-      (mockPrisma.asset.findUnique as jest.Mock)
+      (mockPrisma.asset.findFirst as jest.Mock)
         .mockResolvedValueOnce({
           id: 'asset-1',
           purchaseDate,
@@ -421,7 +425,7 @@ describe('Asset Lifecycle Management', () => {
           ],
         });
 
-      const result = await getAssetUtilization('asset-1');
+      const result = await getAssetUtilization('asset-1', TEST_TENANT_ID);
 
       // Check that percentage has at most 2 decimal places
       const decimalPart = result.utilizationPercentage.toString().split('.')[1];
@@ -438,7 +442,7 @@ describe('Asset Lifecycle Management', () => {
       (mockPrisma.asset.findMany as jest.Mock).mockResolvedValue([]);
       (mockPrisma.assetHistory.findMany as jest.Mock).mockResolvedValue([]);
 
-      const result = await getMemberAssetHistory('user-1');
+      const result = await getMemberAssetHistory('user-1', TEST_TENANT_ID);
 
       expect(result).toEqual([]);
     });
@@ -467,7 +471,7 @@ describe('Asset Lifecycle Management', () => {
       (mockPrisma.assetHistory.findMany as jest.Mock).mockResolvedValue([]);
 
       // Mock getAssignmentPeriods for the asset
-      (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValue({
+      (mockPrisma.asset.findFirst as jest.Mock).mockResolvedValue({
         ...mockAsset,
         assignedMember: { id: 'user-1', name: 'Test User', email: 'test@example.com' },
         history: [
@@ -482,7 +486,7 @@ describe('Asset Lifecycle Management', () => {
         ],
       });
 
-      const result = await getMemberAssetHistory('user-1');
+      const result = await getMemberAssetHistory('user-1', TEST_TENANT_ID);
 
       expect(result).toHaveLength(1);
       expect(result[0]?.assetTag).toBe('AST-001');
@@ -521,7 +525,7 @@ describe('Asset Lifecycle Management', () => {
       (mockPrisma.assetHistory.findMany as jest.Mock).mockResolvedValue([mockHistoryEntry]);
 
       // Mock getAssignmentPeriods for the old asset
-      (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValue({
+      (mockPrisma.asset.findFirst as jest.Mock).mockResolvedValue({
         ...mockHistoryEntry.asset,
         assignedMember: null,
         history: [
@@ -544,7 +548,7 @@ describe('Asset Lifecycle Management', () => {
         ],
       });
 
-      const result = await getMemberAssetHistory('user-1');
+      const result = await getMemberAssetHistory('user-1', TEST_TENANT_ID);
 
       expect(result).toHaveLength(1);
       expect(result[0]?.assetTag).toBe('AST-OLD');
@@ -601,7 +605,7 @@ describe('Asset Lifecycle Management', () => {
       ]);
 
       // Mock getAssignmentPeriods for both assets
-      (mockPrisma.asset.findUnique as jest.Mock)
+      (mockPrisma.asset.findFirst as jest.Mock)
         .mockResolvedValueOnce({
           ...currentAsset,
           assignedMember: { id: 'user-1', name: 'User', email: 'user@example.com' },
@@ -639,7 +643,7 @@ describe('Asset Lifecycle Management', () => {
           ],
         });
 
-      const result = await getMemberAssetHistory('user-1');
+      const result = await getMemberAssetHistory('user-1', TEST_TENANT_ID);
 
       // Currently assigned should be first
       expect(result[0]?.isCurrentlyAssigned).toBe(true);
@@ -670,7 +674,7 @@ describe('Asset Lifecycle Management', () => {
       (mockPrisma.assetHistory.findMany as jest.Mock).mockResolvedValue([]);
 
       // User had asset for two separate periods
-      (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValue({
+      (mockPrisma.asset.findFirst as jest.Mock).mockResolvedValue({
         ...mockAsset,
         assignedMember: { id: 'user-1', name: 'User', email: 'user@example.com' },
         history: [
@@ -701,7 +705,7 @@ describe('Asset Lifecycle Management', () => {
         ],
       });
 
-      const result = await getMemberAssetHistory('user-1');
+      const result = await getMemberAssetHistory('user-1', TEST_TENANT_ID);
 
       expect(result).toHaveLength(1);
       expect(result[0]?.memberPeriods.length).toBe(2);

@@ -71,7 +71,7 @@ function formatTenure(dateOfJoining: Date | null): string | null {
 export default async function EmployeeDashboard() {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
+  if (!session?.user?.organizationId) {
     redirect('/login');
   }
 
@@ -82,7 +82,7 @@ export default async function EmployeeDashboard() {
 
   try {
     // Get organization ID from session (session.user.id is now the TeamMember ID)
-    const organizationId = session.user.organizationId;
+    const organizationId = session.user.organizationId
 
     // Get all data in parallel
     const [
@@ -96,7 +96,7 @@ export default async function EmployeeDashboard() {
       celebrations,
     ] = await Promise.all([
       getMemberSubscriptionHistory(session.user.id),
-      getUserAssetHistory(session.user.id),
+      getUserAssetHistory(session.user.id, organizationId),
       prisma.purchaseRequest.findMany({
         where: { requesterId: session.user.id },
         orderBy: { createdAt: 'desc' },

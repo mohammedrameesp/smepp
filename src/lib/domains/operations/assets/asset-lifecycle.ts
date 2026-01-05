@@ -19,9 +19,9 @@ export interface AssignmentPeriod {
 /**
  * Get all assignment periods for an asset
  */
-export async function getAssignmentPeriods(assetId: string): Promise<AssignmentPeriod[]> {
-  const asset = await prisma.asset.findUnique({
-    where: { id: assetId },
+export async function getAssignmentPeriods(assetId: string, tenantId: string): Promise<AssignmentPeriod[]> {
+  const asset = await prisma.asset.findFirst({
+    where: { id: assetId, tenantId },
     include: {
       assignedMember: {
         select: {
@@ -175,13 +175,13 @@ function calculateDaysBetween(start: Date, end: Date): number {
 /**
  * Get asset utilization percentage
  */
-export async function getAssetUtilization(assetId: string): Promise<{
+export async function getAssetUtilization(assetId: string, tenantId: string): Promise<{
   totalOwnedDays: number;
   totalAssignedDays: number;
   utilizationPercentage: number;
 }> {
-  const asset = await prisma.asset.findUnique({
-    where: { id: assetId },
+  const asset = await prisma.asset.findFirst({
+    where: { id: assetId, tenantId },
   });
 
   if (!asset) {
@@ -191,7 +191,7 @@ export async function getAssetUtilization(assetId: string): Promise<{
   const purchaseDate = asset.purchaseDate || asset.createdAt;
   const totalOwnedDays = calculateDaysBetween(purchaseDate, new Date());
 
-  const periods = await getAssignmentPeriods(assetId);
+  const periods = await getAssignmentPeriods(assetId, tenantId);
   const totalAssignedDays = periods.reduce((sum, period) => sum + period.days, 0);
 
   const utilizationPercentage = totalOwnedDays > 0
@@ -208,15 +208,16 @@ export async function getAssetUtilization(assetId: string): Promise<{
 /**
  * Get all assets for a member (including past assignments) with their assignment periods
  */
-export async function getMemberAssetHistory(memberId: string) {
-  // Get currently assigned assets
+export async function getMemberAssetHistory(memberId: string, tenantId: string) {
+  // Get currently assigned assets (within tenant)
   const currentAssets = await prisma.asset.findMany({
-    where: { assignedMemberId: memberId },
+    where: { assignedMemberId: memberId, tenantId },
   });
 
-  // Get all assets this member was ever assigned to (from history)
+  // Get all assets this member was ever assigned to (from history, within tenant)
   const pastAssignments = await prisma.assetHistory.findMany({
     where: {
+      tenantId,
       OR: [
         { toMemberId: memberId },
         { fromMemberId: memberId },
@@ -238,11 +239,11 @@ export async function getMemberAssetHistory(memberId: string) {
   const assetsWithPeriods = await Promise.all(
     Array.from(allAssetIds).map(async (assetId) => {
       const asset = currentAssets.find(a => a.id === assetId)
-        || await prisma.asset.findUnique({ where: { id: assetId } });
+        || await prisma.asset.findFirst({ where: { id: assetId, tenantId } });
 
       if (!asset) return null;
 
-      const allPeriods = await getAssignmentPeriods(assetId);
+      const allPeriods = await getAssignmentPeriods(assetId, tenantId);
       // Filter periods for this specific member
       const memberPeriods = allPeriods.filter(p => p.memberId === memberId);
 

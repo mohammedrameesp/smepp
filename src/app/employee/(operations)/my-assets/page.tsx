@@ -11,16 +11,18 @@ import { UserSubscriptionHistory, UserAssetHistory } from '@/components/domains/
 export default async function MyHoldingsPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
+  if (!session?.user?.organizationId) {
     redirect('/login');
   }
 
   try {
+    const tenantId = session.user.organizationId;
+
     // Get complete subscription history (including inactive ones)
     const subscriptionHistory = await getMemberSubscriptionHistory(session.user.id);
 
     // Get complete asset history (including past assignments)
-    const assetHistory = await getUserAssetHistory(session.user.id);
+    const assetHistory = await getUserAssetHistory(session.user.id, tenantId);
 
     // Calculate stats
     const activeAssets = assetHistory.filter((a: any) => a.isCurrentlyAssigned);

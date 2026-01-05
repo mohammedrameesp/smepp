@@ -27,13 +27,15 @@ interface Props {
 export default async function AdminEmployeeDetailPage({ params }: Props) {
   const session = await getServerSession(authOptions);
 
-  if (!session) {
+  if (!session?.user?.organizationId) {
     redirect('/login');
   }
 
   if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
     redirect('/forbidden');
   }
+
+  const tenantId = session.user.organizationId;
 
   const { id } = await params;
 
@@ -62,7 +64,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
 
   // Get asset and subscription history
   const subscriptionHistory = await getMemberSubscriptionHistory(id);
-  const assetHistory = await getMemberAssetHistory(id);
+  const assetHistory = await getMemberAssetHistory(id, tenantId);
 
   // Calculate profile completion
   const requiredFields = [

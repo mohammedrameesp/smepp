@@ -32,9 +32,10 @@ async function cloneAssetHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
     }
 
-    // Generate a new asset tag
+    // Generate a new asset tag (within tenant)
     const latestAsset = await prisma.asset.findFirst({
       where: {
+        tenantId,
         assetTag: {
           not: null,
         },

@@ -22,29 +22,51 @@ async function getMaintenanceHandler(request: NextRequest, context: APIContext) 
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
+    const tenantId = session.user.organizationId;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
+    // First verify the asset belongs to this tenant
+    const asset = await prisma.asset.findFirst({
+      where: { id, tenantId },
+      select: { id: true },
+    });
+
+    if (!asset) {
+      return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+    }
+
     const records = await prisma.maintenanceRecord.findMany({
-      where: { assetId: id },
+      where: { assetId: id, tenantId },
       orderBy: { maintenanceDate: 'desc' },
     });
 
     return NextResponse.json(records);
 }
 
-// POST /api/assets/[id]/maintenance - Add a new maintenance record
+// POST /api/assets/[id]/maintenance - Add a new maintenance record (admin only)
 async function createMaintenanceHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
+    const tenantId = session.user.organizationId;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    // Verify the asset belongs to this tenant
+    const asset = await prisma.asset.findFirst({
+      where: { id, tenantId },
+      select: { id: true },
+    });
+
+    if (!asset) {
+      return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
     }
 
     const body = await request.json();
@@ -65,7 +87,7 @@ async function createMaintenanceHandler(request: NextRequest, context: APIContex
         maintenanceDate: new Date(maintenanceDate),
         notes: notes || null,
         performedBy: session.user.id,
-        tenantId: session.user.organizationId,
+        tenantId,
       },
     });
 
@@ -73,4 +95,4 @@ async function createMaintenanceHandler(request: NextRequest, context: APIContex
 }
 
 export const GET = withErrorHandler(getMaintenanceHandler, { requireAuth: true, requireModule: 'assets' });
-export const POST = withErrorHandler(createMaintenanceHandler, { requireAuth: true, requireModule: 'assets' });
+export const POST = withErrorHandler(createMaintenanceHandler, { requireAuth: true, requireAdmin: true, requireModule: 'assets' });

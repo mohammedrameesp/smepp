@@ -242,9 +242,10 @@ export async function getAssetHistory(assetId: string) {
   });
 }
 
-export async function getMemberAssetHistory(memberId: string) {
+export async function getMemberAssetHistory(memberId: string, tenantId: string) {
   return await prisma.assetHistory.findMany({
     where: {
+      tenantId,
       OR: [
         { fromMemberId: memberId },
         { toMemberId: memberId },

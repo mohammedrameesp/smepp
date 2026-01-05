@@ -15,14 +15,21 @@ async function getUtilizationHandler(request: NextRequest, context: APIContext) 
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
+    const tenantId = session.user.organizationId;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const utilization = await getAssetUtilization(id);
-
-    return NextResponse.json(utilization);
+    try {
+      const utilization = await getAssetUtilization(id, tenantId);
+      return NextResponse.json(utilization);
+    } catch (error) {
+      if ((error as Error).message === 'Asset not found') {
+        return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+      }
+      throw error;
+    }
 }
 
 export const GET = withErrorHandler(getUtilizationHandler, { requireAuth: true, requireModule: 'assets' });

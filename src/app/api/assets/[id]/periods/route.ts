@@ -15,14 +15,21 @@ async function getPeriodsHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
+    const tenantId = session.user.organizationId;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const periods = await getAssignmentPeriods(id);
-
-    return NextResponse.json(periods);
+    try {
+      const periods = await getAssignmentPeriods(id, tenantId);
+      return NextResponse.json(periods);
+    } catch (error) {
+      if ((error as Error).message === 'Asset not found') {
+        return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+      }
+      throw error;
+    }
 }
 
 export const GET = withErrorHandler(getPeriodsHandler, { requireAuth: true, requireModule: 'assets' });
