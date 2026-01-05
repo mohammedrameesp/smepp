@@ -22,17 +22,18 @@ interface AssetUtilizationProps {
 }
 
 export function AssetCostBreakdown({ assetId, purchaseDate, isShared }: AssetUtilizationProps) {
-  // Don't show utilization for shared assets - they're always available for use
-  if (isShared) {
-    return null;
-  }
   const [utilization, setUtilization] = useState<Utilization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Don't fetch for shared assets - they're always available for use
+    if (isShared) {
+      setIsLoading(false);
+      return;
+    }
     fetchData();
-  }, [assetId]);
+  }, [assetId, isShared]);
 
   const fetchData = async () => {
     try {
@@ -54,6 +55,11 @@ export function AssetCostBreakdown({ assetId, purchaseDate, isShared }: AssetUti
       setIsLoading(false);
     }
   };
+
+  // Don't show utilization for shared assets - they're always available for use
+  if (isShared) {
+    return null;
+  }
 
   if (isLoading) {
     return (
