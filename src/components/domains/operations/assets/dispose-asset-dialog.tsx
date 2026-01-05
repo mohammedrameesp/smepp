@@ -187,55 +187,49 @@ export function DisposeAssetDialog({
         )}
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[450px] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Trash2 className="h-5 w-5 text-red-500" />
             Dispose Asset
           </DialogTitle>
           <DialogDescription>
-            Dispose <strong>{assetTag || assetModel}</strong>. This action will calculate final depreciation and record gain/loss.
+            Dispose <strong>{assetTag || assetModel}</strong>. This will calculate final depreciation.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <Alert variant="error">
+        <div className="space-y-3 py-3 overflow-y-auto flex-1">
+          <Alert variant="error" className="py-2">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Warning:</strong> Disposing an asset is permanent. The asset will be marked as disposed and removed from active inventory.
+            <AlertDescription className="text-xs">
+              Disposing an asset is permanent and removes it from active inventory.
             </AlertDescription>
           </Alert>
 
           {/* Disposal Date */}
-          <div className="space-y-2">
-            <Label htmlFor="disposalDate">Disposal Date *</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="disposalDate" className="text-sm">Disposal Date *</Label>
             <DatePicker
               id="disposalDate"
               value={disposalDate}
               onChange={(value) => setDisposalDate(value)}
               maxDate={new Date()}
-              placeholder="Select disposal date"
+              placeholder="Select date"
               required
             />
-            <p className="text-xs text-muted-foreground">
-              When was the asset disposed? Cannot be in the future.
-            </p>
           </div>
 
           {/* Disposal Method */}
-          <div className="space-y-2">
-            <Label htmlFor="disposalMethod">Disposal Method *</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="disposalMethod" className="text-sm">Disposal Method *</Label>
             <Select value={disposalMethod} onValueChange={setDisposalMethod}>
               <SelectTrigger>
-                <SelectValue placeholder="Select disposal method..." />
+                <SelectValue placeholder="Select method..." />
               </SelectTrigger>
               <SelectContent>
                 {DISPOSAL_METHODS.map((method) => (
                   <SelectItem key={method.value} value={method.value}>
-                    <div className="flex flex-col">
-                      <span>{method.label}</span>
-                      <span className="text-xs text-muted-foreground">{method.description}</span>
-                    </div>
+                    {method.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -243,9 +237,9 @@ export function DisposeAssetDialog({
           </div>
 
           {/* Disposal Proceeds */}
-          <div className="space-y-2">
-            <Label htmlFor="disposalProceeds">
-              Disposal Proceeds (QAR) {disposalMethod === 'SOLD' && '*'}
+          <div className="space-y-1.5">
+            <Label htmlFor="disposalProceeds" className="text-sm">
+              Proceeds (QAR) {disposalMethod === 'SOLD' && '*'}
             </Label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -261,83 +255,65 @@ export function DisposeAssetDialog({
               />
             </div>
             {isSoldWithoutProceeds && (
-              <p className="text-xs text-red-500">
-                Proceeds are required when disposal method is "Sold"
-              </p>
+              <p className="text-xs text-red-500">Required for "Sold" method</p>
             )}
-            <p className="text-xs text-muted-foreground">
-              {disposalMethod === 'SOLD' || disposalMethod === 'TRADED_IN'
-                ? 'Amount received from the sale/trade'
-                : 'Usually 0 for scrapped/donated/written-off assets'}
-            </p>
           </div>
 
           {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="disposalNotes">Notes (Optional)</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="disposalNotes" className="text-sm">Notes (Optional)</Label>
             <Textarea
               id="disposalNotes"
               value={disposalNotes}
               onChange={(e) => setDisposalNotes(e.target.value)}
-              placeholder="E.g., Sold to vendor XYZ, Buyer reference #123..."
+              placeholder="E.g., Sold to vendor XYZ..."
               rows={2}
               maxLength={500}
+              className="resize-none"
             />
           </div>
 
           {/* Preview Section */}
-          <div className="border rounded-lg p-4 bg-slate-50 space-y-3">
-            <h4 className="font-medium text-sm">Disposal Preview</h4>
+          <div className="border rounded-lg p-3 bg-slate-50 space-y-2">
+            <h4 className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Preview</h4>
 
             {isLoadingPreview ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3 w-3 animate-spin" />
                 Calculating...
               </div>
             ) : previewError ? (
-              <p className="text-sm text-red-500">{previewError}</p>
+              <p className="text-xs text-red-500">{previewError}</p>
             ) : preview ? (
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
                   <p className="text-muted-foreground">Current NBV</p>
                   <p className="font-medium">QAR {preview.currentNetBookValue.toFixed(2)}</p>
                 </div>
-                {preview.finalDepreciationAmount > 0 && (
-                  <div>
-                    <p className="text-muted-foreground">Final Depreciation</p>
-                    <p className="font-medium">
-                      QAR {preview.finalDepreciationAmount.toFixed(2)}
-                      <span className="text-xs text-muted-foreground ml-1">
-                        ({preview.daysOfDepreciation} days)
-                      </span>
-                    </p>
-                  </div>
-                )}
                 <div>
                   <p className="text-muted-foreground">NBV at Disposal</p>
                   <p className="font-medium">QAR {preview.netBookValueAtDisposal.toFixed(2)}</p>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <p className="text-muted-foreground">Expected {preview.isGain ? 'Gain' : 'Loss'}</p>
                   <p className={`font-medium flex items-center gap-1 ${preview.isGain ? 'text-green-600' : 'text-red-600'}`}>
-                    {preview.isGain ? (
-                      <TrendingUp className="h-4 w-4" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4" />
-                    )}
+                    {preview.isGain ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                     QAR {Math.abs(preview.expectedGainLoss).toFixed(2)}
+                    {preview.finalDepreciationAmount > 0 && (
+                      <span className="text-muted-foreground ml-1">
+                        (incl. {preview.daysOfDepreciation}d depreciation)
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Enter disposal details to see preview
-              </p>
+              <p className="text-xs text-muted-foreground">Enter details to see preview</p>
             )}
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0 border-t pt-3">
           <Button
             variant="outline"
             onClick={() => handleOpenChange(false)}

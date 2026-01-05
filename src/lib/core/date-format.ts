@@ -135,3 +135,45 @@ export function parseInputDateString(dateString: string | null | undefined): Dat
 export function formatDateForCSV(date: Date | string | null | undefined): string {
   return formatDate(date, '');
 }
+
+/**
+ * Format a date to relative time (e.g., "2h ago", "3d ago", "2 Jan")
+ * Shows relative time for recent dates, absolute date for older ones
+ * @param date - Date object, string, or null
+ * @returns Relative time string or formatted date
+ */
+export function formatRelativeTime(date: Date | string | null | undefined): string {
+  if (!date) return '';
+
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(dateObj.getTime())) return '';
+
+  const now = new Date();
+  const diffMs = now.getTime() - dateObj.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  // Just now (< 1 min)
+  if (diffMins < 1) return 'now';
+
+  // Minutes (< 1 hour)
+  if (diffMins < 60) return `${diffMins}m ago`;
+
+  // Hours (< 24 hours)
+  if (diffHours < 24) return `${diffHours}h ago`;
+
+  // Days (< 7 days)
+  if (diffDays < 7) return `${diffDays}d ago`;
+
+  // Older: show short date (e.g., "2 Jan" or "2 Jan 24")
+  const day = dateObj.getDate();
+  const month = MONTH_NAMES[dateObj.getMonth()];
+  const year = dateObj.getFullYear();
+  const currentYear = now.getFullYear();
+
+  if (year === currentYear) {
+    return `${day} ${month}`;
+  }
+  return `${day} ${month} ${String(year).slice(-2)}`;
+}

@@ -1,15 +1,15 @@
 /**
  * @file AssetHistory.tsx
- * @description Asset history timeline component (legacy - prefer shared/AssetHistory)
+ * @description Compact asset history timeline component
  * @module components
  */
 
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { formatDateTime } from '@/lib/date-format';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatRelativeTime } from '@/lib/date-format';
+import { User, MapPin, RefreshCw, Plus, Edit, UserMinus } from 'lucide-react';
 
 interface AssetHistoryEntry {
   id: string;
@@ -43,68 +43,85 @@ interface AssetHistoryProps {
   assetId: string;
 }
 
-function getActionBadgeVariant(action: string) {
+function getActionIcon(action: string) {
   switch (action) {
     case 'CREATED':
-      return 'default';
+      return <Plus className="h-3 w-3" />;
     case 'ASSIGNED':
-      return 'default';
+      return <User className="h-3 w-3" />;
     case 'UNASSIGNED':
-      return 'secondary';
+      return <UserMinus className="h-3 w-3" />;
     case 'STATUS_CHANGED':
-      return 'outline';
-    case 'PROJECT_CHANGED':
-      return 'outline';
+      return <RefreshCw className="h-3 w-3" />;
     case 'LOCATION_CHANGED':
-      return 'outline';
+      return <MapPin className="h-3 w-3" />;
     case 'UPDATED':
-      return 'secondary';
+      return <Edit className="h-3 w-3" />;
     default:
-      return 'secondary';
+      return <Edit className="h-3 w-3" />;
   }
+}
+
+function getActionColor(action: string) {
+  switch (action) {
+    case 'CREATED':
+      return 'bg-green-500';
+    case 'ASSIGNED':
+      return 'bg-blue-500';
+    case 'UNASSIGNED':
+      return 'bg-orange-500';
+    case 'STATUS_CHANGED':
+      return 'bg-purple-500';
+    case 'LOCATION_CHANGED':
+      return 'bg-cyan-500';
+    case 'UPDATED':
+      return 'bg-gray-500';
+    default:
+      return 'bg-gray-500';
+  }
+}
+
+function formatMemberName(member: { name: string | null; email: string } | null | undefined): string {
+  if (!member) return '';
+  return member.name || member.email.split('@')[0];
+}
+
+function formatStatus(status: string | null | undefined): string {
+  if (!status) return '';
+  return status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
 }
 
 function formatActionText(entry: AssetHistoryEntry): string {
   switch (entry.action) {
     case 'CREATED':
-      return 'Asset created';
+      return 'Created';
     case 'ASSIGNED':
-      if (entry.fromMember && entry.toMember) {
-        return `Reassigned from ${entry.fromMember.name || entry.fromMember.email} to ${entry.toMember.name || entry.toMember.email}`;
-      } else if (entry.toMember) {
-        return `Assigned to ${entry.toMember.name || entry.toMember.email}`;
+      if (entry.toMember) {
+        return `Assigned to ${formatMemberName(entry.toMember)}`;
       }
       return 'Assigned';
     case 'UNASSIGNED':
       if (entry.fromMember) {
-        return `Unassigned from ${entry.fromMember.name || entry.fromMember.email}`;
+        return `Returned from ${formatMemberName(entry.fromMember)}`;
       }
-      return 'Unassigned';
+      return 'Returned';
     case 'STATUS_CHANGED':
       if (entry.fromStatus && entry.toStatus) {
-        return `Status changed from ${entry.fromStatus.replace('_', ' ')} to ${entry.toStatus.replace('_', ' ')}`;
+        return `${formatStatus(entry.fromStatus)} → ${formatStatus(entry.toStatus)}`;
       }
       return 'Status changed';
-    case 'PROJECT_CHANGED':
-      return 'Project changed';
     case 'LOCATION_CHANGED':
-      if (entry.fromLocation && entry.toLocation) {
-        return `Location changed from ${entry.fromLocation} to ${entry.toLocation}`;
-      } else if (entry.toLocation) {
-        return `Location set to ${entry.toLocation}`;
+      if (entry.toLocation) {
+        return `Moved to ${entry.toLocation}`;
       } else if (entry.fromLocation) {
-        return `Location removed (was ${entry.fromLocation})`;
+        return `Removed from ${entry.fromLocation}`;
       }
       return 'Location changed';
     case 'UPDATED':
-      return 'Asset updated';
+      return 'Updated';
     default:
-      return entry.action;
+      return entry.action.replace(/_/g, ' ').toLowerCase();
   }
-}
-
-function formatDate(dateString: string): string {
-  return formatDateTime(dateString);
 }
 
 export default function AssetHistory({ assetId }: AssetHistoryProps) {
@@ -138,15 +155,13 @@ export default function AssetHistory({ assetId }: AssetHistoryProps) {
   if (loading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Asset History</CardTitle>
-          <CardDescription>Loading timeline...</CardDescription>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">History</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          <div className="animate-pulse space-y-2">
+            <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
           </div>
         </CardContent>
       </Card>
@@ -156,12 +171,11 @@ export default function AssetHistory({ assetId }: AssetHistoryProps) {
   if (error) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Asset History</CardTitle>
-          <CardDescription>Error loading timeline</CardDescription>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">History</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-red-600">{error}</div>
+          <div className="text-sm text-red-600">{error}</div>
         </CardContent>
       </Card>
     );
@@ -169,66 +183,46 @@ export default function AssetHistory({ assetId }: AssetHistoryProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Asset History & Timeline</CardTitle>
-        <CardDescription>
-          Complete timeline of all changes: assignments, status updates, location changes, and more
-        </CardDescription>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">History</CardTitle>
       </CardHeader>
       <CardContent>
         {history.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            No history records found for this asset
+          <div className="text-center py-4 text-sm text-gray-500">
+            No history yet
           </div>
         ) : (
-          <div className="space-y-4">
-            {history.map((entry) => (
-              <div key={entry.id} className="flex items-start space-x-4 p-4 border rounded-lg">
-                <div className="flex-shrink-0 mt-1">
-                  <Badge variant={getActionBadgeVariant(entry.action)}>
-                    {entry.action.replace('_', ' ')}
-                  </Badge>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900">
-                    {formatActionText(entry)}
+          <div className="relative">
+            {/* Timeline line */}
+            <div className="absolute left-[11px] top-2 bottom-2 w-px bg-gray-200" />
+
+            <div className="space-y-3">
+              {history.map((entry) => (
+                <div key={entry.id} className="flex items-start gap-3 relative">
+                  {/* Timeline dot with icon */}
+                  <div className={`flex-shrink-0 w-6 h-6 rounded-full ${getActionColor(entry.action)} flex items-center justify-center text-white z-10`}>
+                    {getActionIcon(entry.action)}
                   </div>
-                  {entry.notes && (
-                    <div className="text-sm mt-2 space-y-2">
-                      {entry.notes.split('\n').map((line, idx) => {
-                        // Check if line contains before/after format: "Field: before → after"
-                        const arrowMatch = line.match(/^(.+?):\s*(.+?)\s*→\s*(.+)$/);
-                        if (arrowMatch) {
-                          const [, label, before, after] = arrowMatch;
-                          return (
-                            <div key={idx} className="bg-gray-50 p-2 rounded border border-gray-200">
-                              <div className="text-xs font-medium text-gray-500 mb-1">{label.trim()}</div>
-                              <div className="flex items-center gap-2 text-xs">
-                                <span className="text-red-600">{before.trim()}</span>
-                                <span className="text-gray-400">→</span>
-                                <span className="text-green-600">{after.trim()}</span>
-                              </div>
-                            </div>
-                          );
-                        }
-                        // Otherwise show as simple text
-                        return <div key={idx} className="text-gray-600">{line}</div>;
-                      })}
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="text-sm text-gray-500">
-                      {formatDate(entry.createdAt)}
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 pb-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-sm font-medium text-gray-900 truncate">
+                        {formatActionText(entry)}
+                      </span>
+                      <span className="text-xs text-gray-400 whitespace-nowrap">
+                        {formatRelativeTime(entry.createdAt)}
+                      </span>
                     </div>
                     {entry.performedBy && (
-                      <div className="text-sm text-gray-500">
-                        by <span className={entry.performedBy.name ? '' : 'font-mono'}>{entry.performedBy.name || entry.performedBy.email}</span>
+                      <div className="text-xs text-gray-500">
+                        by {formatMemberName(entry.performedBy)}
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </CardContent>
