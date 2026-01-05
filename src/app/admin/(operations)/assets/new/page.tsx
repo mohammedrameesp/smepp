@@ -167,13 +167,9 @@ export default function NewAssetPage() {
     fetchOrgSettings();
   }, [setValue]);
 
-  // Fetch locations when multiple locations is enabled
+  // Fetch locations (always fetch, show dropdown if locations exist)
   useEffect(() => {
     async function fetchLocations() {
-      if (!hasMultipleLocations) {
-        setLocations([]);
-        return;
-      }
       try {
         const response = await fetch('/api/locations');
         if (response.ok) {
@@ -185,7 +181,7 @@ export default function NewAssetPage() {
       }
     }
     fetchLocations();
-  }, [hasMultipleLocations]);
+  }, []);
 
   // Fetch suggested asset tag when category changes (new format: ORG-CAT-YYSEQ)
   // Only generates tag when category is selected - not during typing
@@ -624,7 +620,7 @@ export default function NewAssetPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  {hasMultipleLocations && locations.length > 0 && (
+                  {locations.length > 0 && (
                     <div className="space-y-2">
                       <Label htmlFor="locationId">Location</Label>
                       <Select

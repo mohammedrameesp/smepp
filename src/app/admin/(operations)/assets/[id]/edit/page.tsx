@@ -199,13 +199,9 @@ export default function EditAssetPage() {
     }
   };
 
-  // Fetch locations when multiple locations is enabled
+  // Fetch locations (always fetch, show dropdown if locations exist)
   useEffect(() => {
     async function fetchLocations() {
-      if (!hasMultipleLocations) {
-        setLocations([]);
-        return;
-      }
       try {
         const response = await fetch('/api/locations');
         if (response.ok) {
@@ -217,7 +213,7 @@ export default function EditAssetPage() {
       }
     }
     fetchLocations();
-  }, [hasMultipleLocations]);
+  }, []);
 
   // Auto-calculate currency conversion to QAR
   useEffect(() => {
@@ -750,7 +746,7 @@ export default function EditAssetPage() {
                       </p>
                     </div>
                   )}
-                  {hasMultipleLocations && locations.length > 0 && (
+                  {locations.length > 0 && (
                     <div className="space-y-2">
                       <Label htmlFor="locationId">Location</Label>
                       <Select
