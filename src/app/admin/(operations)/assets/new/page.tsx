@@ -40,7 +40,7 @@ import { AssetStatus } from '@prisma/client';
 import { CategorySelector } from '@/components/domains/operations/assets/category-selector';
 import { AssetTypeCombobox } from '@/components/domains/operations/assets/asset-type-combobox';
 import { DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
-import { getQatarEndOfDay } from '@/lib/qatar-timezone';
+import { getQatarEndOfDay, dateInputToQatarDate } from '@/lib/qatar-timezone';
 
 interface DepreciationCategory {
   id: string;
@@ -67,6 +67,7 @@ export default function NewAssetPage() {
   const [selectedCategoryCode, setSelectedCategoryCode] = useState<string | null>(null);
   const [hasMultipleLocations, setHasMultipleLocations] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [usingFallbackRates, setUsingFallbackRates] = useState(false);
 
   const {
     register,
@@ -145,6 +146,7 @@ export default function NewAssetPage() {
           // Fetch exchange rates for all currencies
           const rates: Record<string, number> = { ...DEFAULT_RATES_TO_QAR };
           const allCurrencies = currencies.filter((c: string) => c !== 'QAR');
+          let ratesFailed = false;
           await Promise.all(
             allCurrencies.map(async (currency: string) => {
               try {
@@ -152,13 +154,18 @@ export default function NewAssetPage() {
                 if (rateRes.ok) {
                   const rateData = await rateRes.json();
                   if (rateData.rate) rates[currency] = rateData.rate;
+                } else {
+                  ratesFailed = true;
                 }
               } catch {
-                // Use default rate
+                ratesFailed = true;
               }
             })
           );
           setExchangeRates(rates);
+          if (ratesFailed && allCurrencies.length > 0) {
+            setUsingFallbackRates(true);
+          }
         }
       } catch (error) {
         console.error('Error fetching org settings:', error);
@@ -285,20 +292,6 @@ export default function NewAssetPage() {
 
   const onSubmit = async (data: CreateAssetRequest) => {
     try {
-      // Calculate price in QAR based on currency
-      const price = data.price;
-      let priceInQAR = null;
-
-      if (price) {
-        if (data.priceCurrency === 'QAR' || !data.priceCurrency) {
-          priceInQAR = price;
-        } else {
-          // Convert any other currency to QAR using exchange rate
-          const rate = exchangeRates[data.priceCurrency as string] || 1;
-          priceInQAR = price * rate;
-        }
-      }
-
       const response = await fetch('/api/assets', {
         method: 'POST',
         headers: {
@@ -307,8 +300,9 @@ export default function NewAssetPage() {
         body: JSON.stringify({
           ...data,
           categoryId: data.categoryId || null,
-          price: price,
-          priceQAR: priceInQAR,
+          price: data.price,
+          // Don't send priceQAR - let API calculate with tenant-specific exchange rates
+          priceQAR: undefined,
           assetTag: data.assetTag || null,
           // Clear assignment for shared assets
           assignedMemberId: data.isShared ? null : data.assignedMemberId,
@@ -320,8 +314,26 @@ export default function NewAssetPage() {
         toast.success('Asset created successfully');
         router.push('/admin/assets');
       } else {
-        const errorData = await response.json();
-        toast.error(`Failed to create asset: ${errorData.error || 'Unknown error'}`, { duration: 10000 });
+        let errorMessage = 'Unknown error';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+          // Show field-specific validation errors if available
+          if (errorData.details && Array.isArray(errorData.details)) {
+            const fieldErrors = errorData.details
+              .map((d: { path?: string[]; message?: string }) =>
+                d.path?.length ? `${d.path.join('.')}: ${d.message}` : d.message
+              )
+              .filter(Boolean)
+              .join(', ');
+            if (fieldErrors) {
+              errorMessage = fieldErrors;
+            }
+          }
+        } catch {
+          // Response wasn't valid JSON
+        }
+        toast.error(`Failed to create asset: ${errorMessage}`, { duration: 10000 });
       }
     } catch (error) {
       console.error('Error creating asset:', error);
@@ -396,6 +408,7 @@ export default function NewAssetPage() {
                             }
                           } catch (error) {
                             console.error('Error fetching categories:', error);
+                            toast.error('Failed to load categories. Please select manually.');
                           }
                         }
                       }}
@@ -532,7 +545,7 @@ export default function NewAssetPage() {
                       onChange={(value) => setValue('warrantyExpiry', value)}
                       required={false}
                       placeholder="No warranty"
-                      minDate={watchedPurchaseDate ? new Date(watchedPurchaseDate) : undefined}
+                      minDate={watchedPurchaseDate ? dateInputToQatarDate(watchedPurchaseDate) ?? undefined : undefined}
                     />
                     <p className="text-xs text-muted-foreground">
                       {watchedPurchaseDate ? 'Auto-filled +1 year' : ''}
@@ -593,6 +606,9 @@ export default function NewAssetPage() {
                         <>≈ USD {(watchedPrice / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
                       ) : (
                         <>≈ QAR {(watchedPrice * (exchangeRates[watchedCurrency as string] || 1)).toFixed(2)}</>
+                      )}
+                      {usingFallbackRates && watchedCurrency !== 'QAR' && (
+                        <span className="text-amber-600 ml-1" title="Using default exchange rate - actual value may differ">⚠</span>
                       )}
                     </p>
                   )}
@@ -703,7 +719,7 @@ export default function NewAssetPage() {
                         value={watch('assignmentDate') || ''}
                         onChange={(value) => setValue('assignmentDate', value)}
                         maxDate={getQatarEndOfDay()}
-                        minDate={watchedPurchaseDate ? new Date(watchedPurchaseDate) : undefined}
+                        minDate={watchedPurchaseDate ? dateInputToQatarDate(watchedPurchaseDate) ?? undefined : undefined}
                       />
                       {errors.assignmentDate && (
                         <p className="text-sm text-red-500">{errors.assignmentDate.message}</p>

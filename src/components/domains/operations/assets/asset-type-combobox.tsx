@@ -7,7 +7,7 @@
  * @module components/domains/operations/assets
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { Input } from '@/components/ui/input';
 import { Star, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -43,6 +43,8 @@ export function AssetTypeCombobox({
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const listboxId = useId();
+  const getOptionId = (index: number) => `${listboxId}-option-${index}`;
 
   // Debounced fetch suggestions from API
   const fetchSuggestions = useCallback(async (query: string) => {
@@ -192,6 +194,11 @@ export function AssetTypeCombobox({
           disabled={disabled}
           className={cn(className, isLoading && 'pr-8')}
           autoComplete="off"
+          role="combobox"
+          aria-expanded={showSuggestions && suggestions.length > 0}
+          aria-controls={listboxId}
+          aria-activedescendant={selectedIndex >= 0 ? getOptionId(selectedIndex) : undefined}
+          aria-autocomplete="list"
         />
         {isLoading && (
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -204,12 +211,18 @@ export function AssetTypeCombobox({
       {showSuggestions && suggestions.length > 0 && (
         <div
           ref={suggestionsRef}
+          id={listboxId}
+          role="listbox"
+          aria-label="Asset type suggestions"
           className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto"
         >
           {suggestions.map((suggestion, index) => (
             <button
               key={`${suggestion.categoryCode}-${suggestion.type}-${suggestion.isCustom}`}
+              id={getOptionId(index)}
               type="button"
+              role="option"
+              aria-selected={index === selectedIndex}
               onClick={() => handleSuggestionClick(suggestion)}
               className={cn(
                 'w-full px-3 py-2 text-left flex items-center gap-2 hover:bg-accent transition-colors',

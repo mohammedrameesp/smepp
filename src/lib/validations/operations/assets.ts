@@ -117,22 +117,26 @@ export const createAssetSchema = z.object({
   isShared: z.boolean().default(false),
   /** Depreciation category ID for financial tracking */
   depreciationCategoryId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
-}).refine((data) => {
+}).superRefine((data, ctx) => {
   // ─────────────────────────────────────────────────────────────────────────────
   // RULE: IN_USE non-shared assets require assignment
   // ─────────────────────────────────────────────────────────────────────────────
   if (data.status === AssetStatus.IN_USE && !data.isShared) {
     if (!data.assignedMemberId) {
-      return false;
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Assigned member is required when status is "In Use"',
+        path: ['assignedMemberId'],
+      });
     }
     if (!data.assignmentDate || data.assignmentDate === '') {
-      return false;
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Assignment date is required when status is "In Use"',
+        path: ['assignmentDate'],
+      });
     }
   }
-  return true;
-}, {
-  message: 'Assignment and assignment date are required when status is "In Use" (unless shared)',
-  path: ['assignedMemberId'],
 }).refine((data) => {
   // ─────────────────────────────────────────────────────────────────────────────
   // RULE: Assignment date must not be before purchase date
