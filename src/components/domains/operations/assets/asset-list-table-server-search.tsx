@@ -44,40 +44,11 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { AssetActions } from './asset-actions';
+import { AssetStatusBadge, type AdminAsset } from './asset-shared';
 import { Loader2, Users, MapPin, Clock } from 'lucide-react';
 
-interface Asset {
-  id: string;
-  assetTag: string | null;
-  model: string;
-  brand: string | null;
-  category: string | null;
-  type: string;
-  status: string;
-  price: number | string | null;
-  priceCurrency: string | null;
-  priceQAR: number | string | null;
-  warrantyExpiry: Date | null;
-  serial: string | null;
-  supplier: string | null;
-  configuration: string | null;
-  isShared: boolean;
-  location: { id: string; name: string } | null;
-  assignedMember: {
-    id: string;
-    name: string | null;
-    email: string;
-  } | null;
-  assetRequests?: Array<{
-    id: string;
-    requestNumber: string;
-    member: {
-      id: string;
-      name: string | null;
-      email: string;
-    } | null;
-  }>;
-}
+// Using AdminAsset from asset-shared.tsx
+type Asset = AdminAsset;
 
 interface PaginationInfo {
   page: number;
@@ -195,18 +166,6 @@ export function AssetListTableServerSearch() {
       setSortBy(column);
       setSortOrder('asc');
     }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; className: string }> = {
-      IN_USE: { label: 'In Use', className: 'bg-green-100 text-green-800 border-green-300' },
-      SPARE: { label: 'Spare', className: 'bg-blue-100 text-blue-800 border-blue-300' },
-      REPAIR: { label: 'Repair', className: 'bg-yellow-100 text-yellow-800 border-yellow-300' },
-      DISPOSED: { label: 'Disposed', className: 'bg-gray-100 text-gray-800 border-gray-300' },
-    };
-
-    const config = statusConfig[status] || { label: status, className: 'bg-gray-100 text-gray-800' };
-    return <Badge className={config.className} variant="outline">{config.label}</Badge>;
   };
 
   return (
@@ -381,7 +340,7 @@ export function AssetListTableServerSearch() {
                       <span className="text-gray-400">-</span>
                     )}
                   </TableCell>
-                  <TableCell>{getStatusBadge(asset.status)}</TableCell>
+                  <TableCell><AssetStatusBadge status={asset.status} /></TableCell>
                   <TableCell className="text-sm">
                     {asset.isShared ? (
                       <div className="flex items-center gap-1.5">

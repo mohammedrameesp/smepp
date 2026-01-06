@@ -45,3 +45,19 @@ export { DisposeAssetDialog } from './dispose-asset-dialog';
 export { EmployeeAssetListTable } from './employee-asset-list-table';
 export { CategorySelector } from './category-selector';
 export { AssetTypeCombobox } from './asset-type-combobox';
+
+// Shared types and utilities
+export {
+  AssetStatusBadge,
+  ASSET_STATUS_CONFIG,
+  getStatusLabel,
+  formatMemberName,
+  type BaseAsset,
+  type AdminAsset,
+  type EmployeeAsset,
+  type AssetMember,
+  type AssetLocation,
+  type AssetPendingRequest,
+  type AssetStatus,
+  type StatusConfig,
+} from './asset-shared';

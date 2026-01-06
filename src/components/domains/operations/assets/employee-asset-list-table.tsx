@@ -46,26 +46,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDate } from '@/lib/date-format';
+import { AssetStatusBadge, type EmployeeAsset } from './asset-shared';
+import { Search } from 'lucide-react';
 
-interface Asset {
-  id: string;
-  assetTag: string | null;
-  model: string;
-  brand: string | null;
-  category: string | null;
-  type: string;
-  status: string;
-  price: number | null;
-  priceQAR: number | null;
-  warrantyExpiry: Date | null;
-  purchaseDate: Date | null;
-  assignedMemberId: string | null;
-  assignedMember: {
-    id: string;
-    name: string | null;
-    email: string;
-  } | null;
-}
+// Using EmployeeAsset from asset-shared.tsx
+type Asset = EmployeeAsset;
 
 interface EmployeeAssetListTableProps {
   assets: Asset[];
@@ -166,21 +151,6 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
 
     return sorted;
   }, [assets, searchTerm, statusFilter, typeFilter, assignmentFilter, sortBy, sortOrder, currentUserId]);
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'IN_USE':
-        return 'default';
-      case 'SPARE':
-        return 'secondary';
-      case 'REPAIR':
-        return 'destructive';
-      case 'DISPOSED':
-        return 'outline';
-      default:
-        return 'secondary';
-    }
-  };
 
   const toggleSort = (column: string) => {
     if (sortBy === column) {
@@ -335,9 +305,7 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
                   <TableCell>{asset.brand || '-'}</TableCell>
                   <TableCell>{asset.type}</TableCell>
                   <TableCell>
-                    <Badge variant={getStatusBadgeVariant(asset.status)}>
-                      {asset.status.replace('_', ' ')}
-                    </Badge>
+                    <AssetStatusBadge status={asset.status} />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -372,7 +340,9 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
         </div>
       ) : (
         <div className="text-center py-12 text-gray-500 border rounded-lg bg-gray-50">
-          <div className="text-4xl mb-4">🔍</div>
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Search className="h-8 w-8 text-slate-400" />
+          </div>
           <p className="text-lg font-medium">No assets found</p>
           <p className="text-sm">Try adjusting your filters or search terms</p>
         </div>
