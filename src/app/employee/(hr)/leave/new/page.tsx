@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, FileEdit } from 'lucide-react';
 import Link from 'next/link';
 import { LeaveRequestForm } from '@/components/domains/hr/leave';
 import { getAnnualLeaveDetails } from '@/lib/leave-utils';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 interface LeaveType {
   id: string;
@@ -132,38 +132,46 @@ export default function EmployeeNewLeavePage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-6">
+    <>
+      <PageHeader
+        title="Request Leave"
+        subtitle="Submit a new leave request for approval"
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/employee' },
+          { label: 'My Leave', href: '/employee/leave' },
+          { label: 'New Request' }
+        ]}
+        actions={
           <Link href="/employee/leave">
-            <Button variant="ghost" size="sm" className="mb-4">
+            <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to My Leave
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Request Leave</h1>
-          <p className="text-gray-600">
-            Submit a new leave request for approval
-          </p>
-        </div>
+        }
+      />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Leave Request Form</CardTitle>
-            <CardDescription>
-              Fill in the details below. Your request will be sent for approval.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      <PageContent className="max-w-2xl">
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+              <FileEdit className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-slate-900">Leave Request Form</h2>
+              <p className="text-sm text-slate-500">Fill in the details below. Your request will be sent for approval.</p>
+            </div>
+          </div>
+          <div className="p-6">
             {loading ? (
-              <div className="flex items-center justify-center py-8 gap-2 text-gray-500">
+              <div className="flex items-center justify-center py-12 gap-2 text-slate-500">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 <span>Loading...</span>
               </div>
             ) : balances.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <p className="mb-2">No leave balances available.</p>
-                <p className="text-sm">Please contact HR to set up your leave entitlements.</p>
+              <div className="text-center py-12">
+                <p className="text-slate-900 font-medium mb-2">No leave balances available.</p>
+                <p className="text-sm text-slate-500">Please contact HR to set up your leave entitlements.</p>
               </div>
             ) : (
               <LeaveRequestForm
@@ -173,9 +181,9 @@ export default function EmployeeNewLeavePage() {
                 isAdmin={isAdmin}
               />
             )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          </div>
+        </div>
+      </PageContent>
+    </>
   );
 }

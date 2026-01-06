@@ -1,11 +1,11 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, FileText } from 'lucide-react';
 import { LeaveRequestsTable } from '@/components/domains/hr/leave';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 export default async function EmployeeLeaveRequestsPage() {
   const session = await getServerSession(authOptions);
@@ -15,41 +15,45 @@ export default async function EmployeeLeaveRequestsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">My Leave Requests</h1>
-              <p className="text-gray-600">
-                View and manage all your leave requests
-              </p>
-            </div>
-            <Link href="/employee/leave/new">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                New Request
-              </Button>
-            </Link>
-          </div>
-        </div>
+    <>
+      <PageHeader
+        title="My Leave Requests"
+        subtitle="View and manage all your leave requests"
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/employee' },
+          { label: 'My Leave', href: '/employee/leave' },
+          { label: 'All Requests' }
+        ]}
+        actions={
+          <Link href="/employee/leave/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              New Request
+            </Button>
+          </Link>
+        }
+      />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>All Requests</CardTitle>
-            <CardDescription>
-              Filter and search through your leave requests
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      <PageContent>
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+              <FileText className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-slate-900">All Requests</h2>
+              <p className="text-sm text-slate-500">Filter and search through your leave requests</p>
+            </div>
+          </div>
+          <div className="p-5">
             <LeaveRequestsTable
               showUser={false}
               memberId={session.user.id}
               basePath="/employee/leave"
             />
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          </div>
+        </div>
+      </PageContent>
+    </>
   );
 }
