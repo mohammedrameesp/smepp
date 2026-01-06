@@ -17,7 +17,10 @@ import {
   Phone,
   User,
   Star,
+  FileText,
+  CheckCircle,
 } from 'lucide-react';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -78,120 +81,135 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
+    <>
+      <PageHeader
+        title={supplier.name}
+        subtitle={`${supplier.category} - ${supplier.suppCode || 'No code assigned'}`}
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/employee' },
+          { label: 'Suppliers', href: '/employee/suppliers' },
+          { label: supplier.name }
+        ]}
+        actions={
           <Link href="/employee/suppliers">
-            <Button variant="ghost" className="mb-4">
+            <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+              Back to Suppliers
             </Button>
           </Link>
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-gray-900">{supplier.name}</h1>
-                {getStatusBadge(supplier.status)}
-              </div>
-              <p className="text-gray-600">
-                Supplier Code: <span className="font-semibold">{supplier.suppCode || <span className="italic text-gray-400">Not assigned</span>}</span>
-              </p>
-            </div>
-          </div>
+        }
+      >
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          {getStatusBadge(supplier.status)}
+          {supplier.engagements.length > 0 && (
+            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+              {supplier.engagements.length} engagement{supplier.engagements.length !== 1 ? 's' : ''}
+            </Badge>
+          )}
         </div>
+      </PageHeader>
+
+      <PageContent>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* Company Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                Company Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-gray-500">Category</p>
-                <p className="font-medium">{supplier.category}</p>
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                <Building2 className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-gray-500">Establishment Year</p>
-                <p className="font-medium">{supplier.establishmentYear || 'N/A'}</p>
+                <h2 className="font-semibold text-slate-900">Company Information</h2>
+                <p className="text-sm text-slate-500">Supplier details and location</p>
               </div>
-              <div className="col-span-2">
-                <p className="text-gray-500">Address</p>
-                <p className="font-medium">{supplier.address || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">City</p>
-                <p className="font-medium">{supplier.city || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Country</p>
-                <p className="font-medium">{supplier.country || 'N/A'}</p>
-              </div>
-              {supplier.website && (
-                <div className="col-span-2">
-                  <p className="text-gray-500 flex items-center gap-1">
-                    <Globe className="h-4 w-4" /> Website
-                  </p>
-                  <a
-                    href={supplier.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-blue-600 hover:underline"
-                  >
-                    {supplier.website}
-                  </a>
+            </div>
+            <div className="p-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Category</p>
+                  <p className="font-semibold text-slate-900">{supplier.category}</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Establishment Year</p>
+                  <p className="font-semibold text-slate-900">{supplier.establishmentYear || 'N/A'}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl col-span-2">
+                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Address</p>
+                  <p className="font-semibold text-slate-900">{supplier.address || 'N/A'}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">City</p>
+                  <p className="font-semibold text-slate-900">{supplier.city || 'N/A'}</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Country</p>
+                  <p className="font-semibold text-slate-900">{supplier.country || 'N/A'}</p>
+                </div>
+                {supplier.website && (
+                  <div className="p-4 bg-slate-50 rounded-xl col-span-2">
+                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <Globe className="h-3 w-3" /> Website
+                    </p>
+                    <a
+                      href={supplier.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-blue-600 hover:underline"
+                    >
+                      {supplier.website}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Contact Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
+                <User className="h-5 w-5 text-rose-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Contact Information</h2>
+                <p className="text-sm text-slate-500">Primary and secondary contacts</p>
+              </div>
+            </div>
+            <div className="p-5 space-y-6">
               {/* Primary Contact */}
               {supplier.primaryContactName && (
-                <div className="pb-4 border-b">
-                  <p className="text-sm font-semibold text-gray-700 mb-2">Primary Contact</p>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <p className="text-gray-500">Name</p>
-                      <p className="font-medium">{supplier.primaryContactName}</p>
+                <div className="pb-6 border-b border-slate-200">
+                  <p className="text-sm font-semibold text-rose-700 mb-3">Primary Contact</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-slate-50 rounded-xl">
+                      <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Name</p>
+                      <p className="font-semibold text-slate-900">{supplier.primaryContactName}</p>
                     </div>
-                    <div>
-                      <p className="text-gray-500">Title</p>
-                      <p className="font-medium">{supplier.primaryContactTitle || 'N/A'}</p>
+                    <div className="p-3 bg-slate-50 rounded-xl">
+                      <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Title</p>
+                      <p className="font-semibold text-slate-900">{supplier.primaryContactTitle || 'N/A'}</p>
                     </div>
                     {supplier.primaryContactEmail && (
-                      <div className="col-span-2">
-                        <p className="text-gray-500 flex items-center gap-1">
-                          <Mail className="h-4 w-4" /> Email
+                      <div className="p-3 bg-slate-50 rounded-xl col-span-2">
+                        <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <Mail className="h-3 w-3" /> Email
                         </p>
                         <a
                           href={`mailto:${supplier.primaryContactEmail}`}
-                          className="font-medium text-blue-600 hover:underline"
+                          className="font-semibold text-blue-600 hover:underline"
                         >
                           {supplier.primaryContactEmail}
                         </a>
                       </div>
                     )}
                     {supplier.primaryContactMobile && (
-                      <div className="col-span-2">
-                        <p className="text-gray-500 flex items-center gap-1">
-                          <Phone className="h-4 w-4" /> Mobile
+                      <div className="p-3 bg-slate-50 rounded-xl col-span-2">
+                        <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <Phone className="h-3 w-3" /> Mobile
                         </p>
-                        <p className="font-medium">{supplier.primaryContactMobile}</p>
+                        <p className="font-semibold text-slate-900">{supplier.primaryContactMobile}</p>
                       </div>
                     )}
                   </div>
@@ -201,35 +219,35 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
               {/* Secondary Contact */}
               {supplier.secondaryContactName && (
                 <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-2">Secondary Contact</p>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <p className="text-gray-500">Name</p>
-                      <p className="font-medium">{supplier.secondaryContactName}</p>
+                  <p className="text-sm font-semibold text-rose-700 mb-3">Secondary Contact</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-slate-50 rounded-xl">
+                      <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Name</p>
+                      <p className="font-semibold text-slate-900">{supplier.secondaryContactName}</p>
                     </div>
-                    <div>
-                      <p className="text-gray-500">Title</p>
-                      <p className="font-medium">{supplier.secondaryContactTitle || 'N/A'}</p>
+                    <div className="p-3 bg-slate-50 rounded-xl">
+                      <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Title</p>
+                      <p className="font-semibold text-slate-900">{supplier.secondaryContactTitle || 'N/A'}</p>
                     </div>
                     {supplier.secondaryContactEmail && (
-                      <div className="col-span-2">
-                        <p className="text-gray-500 flex items-center gap-1">
-                          <Mail className="h-4 w-4" /> Email
+                      <div className="p-3 bg-slate-50 rounded-xl col-span-2">
+                        <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <Mail className="h-3 w-3" /> Email
                         </p>
                         <a
                           href={`mailto:${supplier.secondaryContactEmail}`}
-                          className="font-medium text-blue-600 hover:underline"
+                          className="font-semibold text-blue-600 hover:underline"
                         >
                           {supplier.secondaryContactEmail}
                         </a>
                       </div>
                     )}
                     {supplier.secondaryContactMobile && (
-                      <div className="col-span-2">
-                        <p className="text-gray-500 flex items-center gap-1">
-                          <Phone className="h-4 w-4" /> Mobile
+                      <div className="p-3 bg-slate-50 rounded-xl col-span-2">
+                        <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                          <Phone className="h-3 w-3" /> Mobile
                         </p>
-                        <p className="font-medium">{supplier.secondaryContactMobile}</p>
+                        <p className="font-semibold text-slate-900">{supplier.secondaryContactMobile}</p>
                       </div>
                     )}
                   </div>
@@ -237,33 +255,45 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
               )}
 
               {!supplier.primaryContactName && !supplier.secondaryContactName && (
-                <p className="text-sm text-gray-500">No contact information provided</p>
+                <p className="text-sm text-slate-500 text-center py-4">No contact information provided</p>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Payment Terms */}
           {supplier.paymentTerms && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Terms</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-700">{supplier.paymentTerms}</p>
-              </CardContent>
-            </Card>
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-slate-900">Payment Terms</h2>
+                  <p className="text-sm text-slate-500">Contract and payment details</p>
+                </div>
+              </div>
+              <div className="p-5">
+                <p className="text-sm text-slate-700 leading-relaxed">{supplier.paymentTerms}</p>
+              </div>
+            </div>
           )}
 
           {/* Additional Information */}
           {supplier.additionalInfo && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{supplier.additionalInfo}</p>
-              </CardContent>
-            </Card>
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-slate-900">Additional Information</h2>
+                  <p className="text-sm text-slate-500">Notes and remarks</p>
+                </div>
+              </div>
+              <div className="p-5">
+                <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{supplier.additionalInfo}</p>
+              </div>
+            </div>
           )}
         </div>
 
@@ -271,14 +301,20 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
         <div className="space-y-6">
           {/* Approval Information */}
           {supplier.status === 'APPROVED' && supplier.approvedAt && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Approval Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-emerald-600" />
+                </div>
                 <div>
-                  <p className="text-gray-500">Approved On</p>
-                  <p className="font-medium">
+                  <h2 className="font-semibold text-slate-900">Approval Information</h2>
+                  <p className="text-sm text-slate-500">Supplier approval details</p>
+                </div>
+              </div>
+              <div className="p-5 space-y-3">
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Approved On</p>
+                  <p className="font-semibold text-slate-900 text-sm">
                     {new Date(supplier.approvedAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
@@ -287,37 +323,39 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
                   </p>
                 </div>
                 {supplier.approvedBy && (
-                  <div>
-                    <p className="text-gray-500">Approved By</p>
-                    <p className="font-medium">
+                  <div className="p-3 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Approved By</p>
+                    <p className="font-semibold text-slate-900 text-sm">
                       {supplier.approvedBy.name || supplier.approvedBy.email}
                     </p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* Engagement History */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Engagement History
-              </CardTitle>
-              <CardDescription>
-                {supplier.engagements.length} engagement{supplier.engagements.length !== 1 ? 's' : ''}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-slate-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Engagement History</h2>
+                <p className="text-sm text-slate-500">
+                  {supplier.engagements.length} engagement{supplier.engagements.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+            </div>
+            <div className="p-5">
               {supplier.engagements.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-4">No engagements recorded</p>
+                <p className="text-sm text-slate-500 text-center py-4">No engagements recorded</p>
               ) : (
                 <div className="space-y-4">
                   {supplier.engagements.map((engagement) => (
-                    <div key={engagement.id} className="border-l-2 border-blue-500 pl-4 py-2">
+                    <div key={engagement.id} className="border-l-2 border-indigo-500 pl-4 py-2">
                       <div className="flex items-start justify-between mb-1">
-                        <p className="text-sm font-medium">
+                        <p className="text-sm font-semibold text-slate-900">
                           {new Date(engagement.date).toLocaleDateString()}
                         </p>
                         {engagement.rating && (
@@ -327,27 +365,27 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
                                 key={index}
                                 className={`h-3.5 w-3.5 ${
                                   index < engagement.rating!
-                                    ? 'fill-yellow-400 text-yellow-400'
-                                    : 'text-gray-300'
+                                    ? 'fill-amber-400 text-amber-400'
+                                    : 'text-slate-300'
                                 }`}
                               />
                             ))}
                           </div>
                         )}
                       </div>
-                      <p className="text-sm text-gray-700 mb-2">{engagement.notes}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm text-slate-700 mb-2 leading-relaxed">{engagement.notes}</p>
+                      <p className="text-xs text-slate-500">
                         By {engagement.createdBy.name || engagement.createdBy.email}
                       </p>
                     </div>
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }
