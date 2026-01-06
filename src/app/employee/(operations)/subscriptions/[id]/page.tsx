@@ -14,6 +14,8 @@ import { formatDate, formatDateTime } from '@/lib/date-format';
 import { formatBillingCycle } from '@/lib/utils/format-billing-cycle';
 import { HistoryTimeline } from '@/components/domains/operations/subscriptions/history-timeline';
 import { CostBreakdown } from '@/components/domains/operations/subscriptions/cost-breakdown';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { Package, Calendar, DollarSign, User as UserIcon, FileText, Clock, ArrowLeft } from 'lucide-react';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -104,99 +106,132 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
+    <>
+      <PageHeader
+        title={subscription.serviceName}
+        subtitle={`${subscription.category || 'Subscription'} - ${subscription.vendor || 'No vendor'}`}
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/employee' },
+          { label: 'Subscriptions', href: '/employee/subscriptions' },
+          { label: subscription.serviceName }
+        ]}
+        actions={
           <Link href="/employee/subscriptions">
-            <Button variant="ghost" className="mb-4">
-              ← Back
+            <Button variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Subscriptions
             </Button>
           </Link>
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{subscription.serviceName}</h1>
-              <div className="flex items-center gap-2 mb-2">
-                {getStatusBadge(subscription.status)}
-                <Badge variant={getBillingCycleBadgeVariant(subscription.billingCycle)}>
-                  {formatBillingCycle(subscription.billingCycle)}
-                </Badge>
-              </div>
-            </div>
-          </div>
+        }
+      >
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          {getStatusBadge(subscription.status)}
+          <Badge variant={getBillingCycleBadgeVariant(subscription.billingCycle)}>
+            {formatBillingCycle(subscription.billingCycle)}
+          </Badge>
+          {subscription.assignedMemberId === session.user.id && (
+            <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+              Assigned to You
+            </Badge>
+          )}
         </div>
+      </PageHeader>
+
+      <PageContent>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Subscription Details</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-gray-500">Service Name</p>
-                  <p className="font-medium">{subscription.serviceName}</p>
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <Package className="h-5 w-5 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-gray-500">Category</p>
-                  <p className="font-medium">{subscription.category || 'N/A'}</p>
+                  <h2 className="font-semibold text-slate-900">Subscription Details</h2>
+                  <p className="text-sm text-slate-500">Service information and account details</p>
                 </div>
-                <div>
-                  <p className="text-gray-500">Vendor</p>
-                  <p className="font-medium">{subscription.vendor || 'N/A'}</p>
+              </div>
+              <div className="p-5">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Service Name</p>
+                    <p className="font-semibold text-slate-900">{subscription.serviceName}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Category</p>
+                    <p className="font-semibold text-slate-900">{subscription.category || 'N/A'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Vendor</p>
+                    <p className="font-semibold text-slate-900">{subscription.vendor || 'N/A'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Account ID</p>
+                    <p className="font-semibold text-slate-900 font-mono text-sm">{subscription.accountId || 'N/A'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl col-span-2">
+                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Payment Method</p>
+                    <p className="font-semibold text-slate-900">{subscription.paymentMethod || 'N/A'}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-gray-500">Account ID</p>
-                  <p className="font-medium font-mono text-xs">{subscription.accountId || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Payment Method</p>
-                  <p className="font-medium">{subscription.paymentMethod || 'N/A'}</p>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Cost Breakdown */}
             <CostBreakdown subscriptionId={subscription.id} />
 
             {/* Assignment Info */}
             {subscription.assignedMember && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Assignment Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <UserIcon className="h-5 w-5 text-blue-600" />
+                  </div>
                   <div>
-                    <p className="text-gray-500">Assigned To</p>
-                    <p className="font-medium">
-                      {subscription.assignedMember.name || subscription.assignedMember.email}
+                    <h2 className="font-semibold text-slate-900">Assignment Information</h2>
+                    <p className="text-sm text-slate-500">Current subscription assignment</p>
+                  </div>
+                </div>
+                <div className="p-5 space-y-4">
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Assigned To</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-slate-900">
+                        {subscription.assignedMember.name || subscription.assignedMember.email}
+                      </p>
                       {subscription.assignedMemberId === session.user.id && (
-                        <Badge variant="secondary" className="ml-2">You</Badge>
+                        <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">You</Badge>
                       )}
-                    </p>
+                    </div>
                   </div>
                   {currentUserAssignmentDate && (
-                    <div>
-                      <p className="text-gray-500">Assigned On</p>
-                      <p className="font-medium">{formatDate(currentUserAssignmentDate)}</p>
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Assigned On</p>
+                      <p className="font-semibold text-slate-900">{formatDate(currentUserAssignmentDate)}</p>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             {/* Notes */}
             {subscription.notes && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{subscription.notes}</p>
-                </CardContent>
-              </Card>
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-slate-900">Notes</h2>
+                    <p className="text-sm text-slate-500">Additional information</p>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{subscription.notes}</p>
+                </div>
+              </div>
             )}
           </div>
 
@@ -204,58 +239,97 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
           <div className="space-y-6">
             {/* Renewal Info */}
             {subscription.billingCycle !== 'ONE_TIME' && subscription.renewalDate && (
-              <Card className={isRenewalSoon(subscription.renewalDate) ? 'border-orange-300 bg-orange-50' : ''}>
-                <CardHeader>
-                  <CardTitle className={isRenewalSoon(subscription.renewalDate) ? 'text-orange-900' : ''}>
-                    Next Renewal
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+              <div className={`rounded-2xl border overflow-hidden ${
+                isRenewalSoon(subscription.renewalDate)
+                  ? 'bg-amber-50 border-amber-300'
+                  : 'bg-white border-slate-200'
+              }`}>
+                <div className={`px-5 py-4 border-b flex items-center gap-3 ${
+                  isRenewalSoon(subscription.renewalDate)
+                    ? 'border-amber-200 bg-amber-100/50'
+                    : 'border-slate-100'
+                }`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    isRenewalSoon(subscription.renewalDate)
+                      ? 'bg-amber-200'
+                      : 'bg-emerald-100'
+                  }`}>
+                    <Calendar className={`h-5 w-5 ${
+                      isRenewalSoon(subscription.renewalDate)
+                        ? 'text-amber-700'
+                        : 'text-emerald-600'
+                    }`} />
+                  </div>
+                  <div>
+                    <h2 className={`font-semibold ${
+                      isRenewalSoon(subscription.renewalDate)
+                        ? 'text-amber-900'
+                        : 'text-slate-900'
+                    }`}>Next Renewal</h2>
+                    <p className={`text-sm ${
+                      isRenewalSoon(subscription.renewalDate)
+                        ? 'text-amber-700'
+                        : 'text-slate-500'
+                    }`}>Upcoming billing date</p>
+                  </div>
+                </div>
+                <div className="p-5">
                   <SubscriptionRenewalDisplay
                     renewalDate={subscription.renewalDate}
                     billingCycle={subscription.billingCycle}
                     status={subscription.status}
                   />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
             {/* Key Dates */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Key Dates</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div>
-                  <p className="text-gray-500">Purchase Date</p>
-                  <p className="font-medium">{formatDate(subscription.purchaseDate)}</p>
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-gray-500">Created At</p>
-                  <p className="font-medium">{formatDateTime(subscription.createdAt)}</p>
+                  <h2 className="font-semibold text-slate-900">Key Dates</h2>
+                  <p className="text-sm text-slate-500">Important timestamps</p>
                 </div>
-                <div>
-                  <p className="text-gray-500">Last Updated</p>
-                  <p className="font-medium">{formatDateTime(subscription.updatedAt)}</p>
+              </div>
+              <div className="p-5 space-y-3">
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Purchase Date</p>
+                  <p className="font-semibold text-slate-900 text-sm">{formatDate(subscription.purchaseDate)}</p>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Created At</p>
+                  <p className="font-semibold text-slate-900 text-sm">{formatDateTime(subscription.createdAt)}</p>
+                </div>
+                <div className="p-3 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Last Updated</p>
+                  <p className="font-semibold text-slate-900 text-sm">{formatDateTime(subscription.updatedAt)}</p>
+                </div>
+              </div>
+            </div>
 
             {/* History Timeline */}
             {subscription.history.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>History</CardTitle>
-                  <CardDescription>{subscription.history.length} events</CardDescription>
-                </CardHeader>
-                <CardContent>
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-slate-600" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-slate-900">History</h2>
+                    <p className="text-sm text-slate-500">{subscription.history.length} events</p>
+                  </div>
+                </div>
+                <div className="p-5">
                   <HistoryTimeline history={subscription.history} />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

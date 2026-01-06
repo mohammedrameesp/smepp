@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { EmployeeSubscriptionListTable } from '@/components/domains/operations/subscriptions/employee-subscription-list-table';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { Package, CheckCircle, User } from 'lucide-react';
 
 export default async function EmployeeSubscriptionsPage() {
   const session = await getServerSession(authOptions);
@@ -41,95 +43,83 @@ export default async function EmployeeSubscriptionsPage() {
     const myActiveSubscriptions = mySubscriptions.filter(s => s.status === 'ACTIVE');
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">All Subscriptions</h1>
-              <p className="text-gray-600">
-                Browse and search all company subscriptions
-              </p>
+    <>
+      <PageHeader
+        title="All Subscriptions"
+        subtitle="Browse and search all company subscriptions"
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/employee' },
+          { label: 'Subscriptions' }
+        ]}
+      >
+        <div className="flex flex-wrap items-center gap-4 mt-4">
+          <Link href="/employee/my-assets?tab=subscriptions">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg hover:bg-blue-500/30 transition-colors cursor-pointer">
+              <User className="h-4 w-4 text-blue-400" />
+              <span className="text-blue-400 text-sm font-medium">
+                {myActiveSubscriptions.length} my subscriptions
+              </span>
             </div>
-            <Link href="/">
-              <Button variant="outline">Back to Home</Button>
-            </Link>
+          </Link>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
+            <CheckCircle className="h-4 w-4 text-emerald-400" />
+            <span className="text-emerald-400 text-sm font-medium">
+              {activeSubscriptions.length} active
+            </span>
           </div>
-
-          {/* Stats */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <Link href="/employee/my-assets?tab=subscriptions">
-              <Card className="cursor-pointer hover:shadow-lg hover:border-blue-400 transition-all duration-200">
-                <CardHeader className="pb-2 pt-4 px-5">
-                  <CardTitle className="text-sm font-medium text-gray-600">My Subscriptions</CardTitle>
-                </CardHeader>
-                <CardContent className="pb-4 px-5">
-                  <div className="text-3xl font-bold text-blue-600">
-                    {myActiveSubscriptions.length}
-                  </div>
-                  <p className="text-sm text-gray-500">Active & assigned to you</p>
-                  {myActiveSubscriptions.length > 0 && (
-                    <p className="text-xs text-gray-600 mt-2 truncate">
-                      {myActiveSubscriptions.slice(0, 3).map(s => s.serviceName).join(', ')}
-                      {myActiveSubscriptions.length > 3 && '...'}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </Link>
-
-            <Card>
-              <CardHeader className="pb-2 pt-4 px-5">
-                <CardTitle className="text-sm font-medium text-gray-600">Active Subscriptions</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-4 px-5">
-                <div className="text-3xl font-bold text-green-600">
-                  {activeSubscriptions.length}
-                </div>
-                <p className="text-sm text-gray-500">Currently active</p>
-              </CardContent>
-            </Card>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
+            <Package className="h-4 w-4 text-slate-400" />
+            <span className="text-slate-400 text-sm font-medium">
+              {subscriptions.length} total
+            </span>
           </div>
         </div>
+      </PageHeader>
 
-        {/* Subscriptions List with Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Company Subscriptions ({subscriptions.length})</CardTitle>
-            <CardDescription>
-              Search, filter, and browse all subscriptions in the organization
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      <PageContent>
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+              <Package className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-slate-900">Company Subscriptions</h2>
+              <p className="text-sm text-slate-500">Search, filter, and browse all subscriptions in the organization</p>
+            </div>
+          </div>
+          <div className="p-5">
             {subscriptions.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-slate-500">
                 <div className="text-4xl mb-4">📦</div>
                 <p>No subscriptions found</p>
               </div>
             ) : (
               <EmployeeSubscriptionListTable subscriptions={subscriptions} currentUserId={session.user.id} />
             )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+          </div>
+        </div>
+      </PageContent>
+    </>
   );
   } catch (error) {
     console.error('Error in EmployeeSubscriptionsPage:', error);
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-7xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle>Error Loading Subscriptions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-red-600">An error occurred while loading subscriptions. Please try again later.</p>
-              <p className="text-sm text-gray-600 mt-2">{error instanceof Error ? error.message : 'Unknown error'}</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <>
+        <PageHeader
+          title="Error Loading Subscriptions"
+          subtitle="An error occurred while loading subscriptions"
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/employee' },
+            { label: 'Subscriptions' }
+          ]}
+        />
+        <PageContent>
+          <div className="bg-rose-50 rounded-2xl border border-rose-200 p-6">
+            <p className="text-rose-600 font-medium">An error occurred while loading subscriptions. Please try again later.</p>
+            <p className="text-sm text-slate-600 mt-2">{error instanceof Error ? error.message : 'Unknown error'}</p>
+          </div>
+        </PageContent>
+      </>
     );
   }
 }
