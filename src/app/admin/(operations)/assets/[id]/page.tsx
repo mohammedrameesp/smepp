@@ -186,7 +186,6 @@ export default async function AssetDetailPage({ params }: Props) {
         badge={{ text: asset.status.replace('_', ' '), variant: statusBadgeVariant }}
         actions={
           <div className="flex gap-2 flex-wrap">
-            {canAssign && <AssetAssignDialog asset={asset} />}
             <PageHeaderButton href={`/admin/assets/${asset.id}/edit`} variant="primary">
               Edit Asset
             </PageHeaderButton>
