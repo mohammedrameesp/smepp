@@ -121,6 +121,14 @@ export default async function AssetDetailPage({ params }: Props) {
           type: true,
           status: true,
           requestNumber: true,
+          createdAt: true,
+          member: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
         },
       },
       location: {
@@ -154,6 +162,11 @@ export default async function AssetDetailPage({ params }: Props) {
   // Check if admin can assign this asset
   const hasPendingRequest = asset.assetRequests.length > 0;
   const canAssign = asset.status === 'SPARE' && !hasPendingRequest;
+
+  // Find pending acceptance request for display in Assignment Card
+  const pendingAcceptanceRequest = asset.assetRequests.find(
+    req => req.status === 'PENDING_USER_ACCEPTANCE' && req.type === 'ADMIN_ASSIGNMENT'
+  );
 
   const StatusIcon = statusStyles[asset.status]?.icon || Package;
   const statusBadgeVariant = asset.status === 'DISPOSED' ? 'default' :
@@ -401,6 +414,28 @@ export default async function AssetDetailPage({ params }: Props) {
                     </Button>
                   </Link>
                 </>
+              ) : pendingAcceptanceRequest ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                    <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Clock className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-amber-800">Pending Acceptance</p>
+                      <p className="text-sm text-amber-600">
+                        Waiting for {pendingAcceptanceRequest.member?.name || pendingAcceptanceRequest.member?.email || 'user'} to accept
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-xs text-slate-500 text-center">
+                    Request #{pendingAcceptanceRequest.requestNumber}
+                  </div>
+                  <Link href={`/admin/asset-requests/${pendingAcceptanceRequest.id}`} className="block">
+                    <Button variant="outline" size="sm" className="w-full">
+                      View Request
+                    </Button>
+                  </Link>
+                </div>
               ) : (
                 <div className="text-center py-4">
                   <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
