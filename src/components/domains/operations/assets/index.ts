@@ -43,3 +43,5 @@ export { DeleteAssetButton } from './delete-asset-button';
 export { DepreciationCard } from './depreciation-card';
 export { DisposeAssetDialog } from './dispose-asset-dialog';
 export { EmployeeAssetListTable } from './employee-asset-list-table';
+export { CategorySelector } from './category-selector';
+export { AssetTypeCombobox } from './asset-type-combobox';
