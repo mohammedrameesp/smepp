@@ -9,7 +9,7 @@
  * - Filter by status (In Use, Spare, Repair, Disposed)
  * - Filter by asset type
  * - Filter by assignment (All, My Assets, Unassigned, Others)
- * - Sortable columns (Model, Brand, Type, Status, Assigned To, Purchase Date)
+ * - Sortable columns (Model, Brand, Type, Status, Assigned To)
  * - Highlights "You" badge on assets assigned to current user
  * - Status badge with color variants
  *
@@ -136,10 +136,6 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
           aValue = a.assignedMember?.name || a.assignedMember?.email || 'zzz';
           bValue = b.assignedMember?.name || b.assignedMember?.email || 'zzz';
           break;
-        case 'purchaseDate':
-          aValue = a.purchaseDate ? new Date(a.purchaseDate).getTime() : 0;
-          bValue = b.purchaseDate ? new Date(b.purchaseDate).getTime() : 0;
-          break;
         default:
           return 0;
       }
@@ -234,7 +230,6 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
               <SelectItem value="type">Type</SelectItem>
               <SelectItem value="status">Status</SelectItem>
               <SelectItem value="assignedMember">Assigned To</SelectItem>
-              <SelectItem value="purchaseDate">Purchase Date</SelectItem>
             </SelectContent>
           </Select>
           <button
@@ -282,12 +277,6 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
                 >
                   Assigned To {sortBy === 'assignedMember' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </TableHead>
-                <TableHead
-                  className="cursor-pointer hover:bg-gray-100"
-                  onClick={() => toggleSort('purchaseDate')}
-                >
-                  Purchase Date {sortBy === 'purchaseDate' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </TableHead>
                 <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -322,9 +311,6 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
                         </Badge>
                       )}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    {asset.purchaseDate ? formatDate(asset.purchaseDate) : '-'}
                   </TableCell>
                   <TableCell className="text-center">
                     <Link href={`/employee/assets/${asset.id}`}>

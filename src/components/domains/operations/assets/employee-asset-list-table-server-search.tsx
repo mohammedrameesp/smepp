@@ -289,16 +289,6 @@ export function EmployeeAssetListTableServerSearch({ currentUserId }: EmployeeAs
                 Status {sortBy === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead>Assigned To</TableHead>
-              <TableHead
-                className="cursor-pointer hover:bg-gray-100"
-                onClick={() => toggleSort('purchaseDate')}
-                role="button"
-                tabIndex={0}
-                aria-sort={sortBy === 'purchaseDate' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
-                onKeyDown={(e) => e.key === 'Enter' && toggleSort('purchaseDate')}
-              >
-                Purchase Date {sortBy === 'purchaseDate' && (sortOrder === 'asc' ? '↑' : '↓')}
-              </TableHead>
               <TableHead>Configuration</TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
@@ -306,14 +296,14 @@ export function EmployeeAssetListTableServerSearch({ currentUserId }: EmployeeAs
           <TableBody>
             {loading && assets.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
                   <p className="text-gray-500 mt-2">Loading assets...</p>
                 </TableCell>
               </TableRow>
             ) : assets.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                   {assignmentFilter === 'mine'
                     ? 'No assets assigned to you yet'
                     : debouncedSearch || (statusFilter !== 'all' && statusFilter !== 'active') || typeFilter !== 'all' || assignmentFilter !== 'all'
@@ -351,9 +341,6 @@ export function EmployeeAssetListTableServerSearch({ currentUserId }: EmployeeAs
                     ) : (
                       <span className="text-gray-400">Unassigned</span>
                     )}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {asset.purchaseDate ? formatDate(asset.purchaseDate) : '-'}
                   </TableCell>
                   <TableCell className="text-sm max-w-[200px]">
                     {asset.configuration ? (
