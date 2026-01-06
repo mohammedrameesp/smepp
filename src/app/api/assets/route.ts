@@ -213,6 +213,13 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
             name: true,
           },
         },
+        // Include location name for display
+        location: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         // Include pending acceptance request for display
         assetRequests: {
           where: {

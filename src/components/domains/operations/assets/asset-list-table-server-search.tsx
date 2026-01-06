@@ -31,7 +31,7 @@ interface Asset {
   supplier: string | null;
   configuration: string | null;
   isShared: boolean;
-  location: string | null;
+  location: { id: string; name: string } | null;
   assignedMember: {
     id: string;
     name: string | null;
@@ -335,7 +335,7 @@ export function AssetListTableServerSearch() {
                         {asset.location && (
                           <span className="text-gray-500 text-xs flex items-center gap-0.5">
                             <MapPin className="h-3 w-3" />
-                            {asset.location}
+                            {asset.location.name}
                           </span>
                         )}
                       </div>
