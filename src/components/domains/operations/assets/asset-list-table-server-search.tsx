@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { AssetActions } from './asset-actions';
-import { Loader2, Users, MapPin } from 'lucide-react';
+import { Loader2, Users, MapPin, Clock } from 'lucide-react';
 
 interface Asset {
   id: string;
@@ -37,6 +37,15 @@ interface Asset {
     name: string | null;
     email: string;
   } | null;
+  assetRequests?: Array<{
+    id: string;
+    requestNumber: string;
+    member: {
+      id: string;
+      name: string | null;
+      email: string;
+    } | null;
+  }>;
 }
 
 interface PaginationInfo {
@@ -336,6 +345,19 @@ export function AssetListTableServerSearch() {
                         className="text-gray-900 hover:text-gray-700 cursor-pointer font-medium"
                       >
                         {asset.assignedMember.name || asset.assignedMember.email}
+                      </Link>
+                    ) : asset.assetRequests && asset.assetRequests.length > 0 ? (
+                      <Link
+                        href={`/admin/asset-requests/${asset.assetRequests[0].id}`}
+                        className="inline-flex items-center gap-1.5"
+                      >
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Pending
+                        </Badge>
+                        <span className="text-xs text-amber-600 truncate max-w-[100px]">
+                          {asset.assetRequests[0].member?.name || asset.assetRequests[0].member?.email}
+                        </span>
                       </Link>
                     ) : (
                       <span className="text-gray-400">Unassigned</span>

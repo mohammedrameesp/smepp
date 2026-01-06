@@ -22,7 +22,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { AssetStatus, Prisma } from '@prisma/client';
+import { AssetStatus, AssetRequestStatus, Prisma } from '@prisma/client';
 import { createAssetSchema, assetQuerySchema } from '@/lib/validations/operations/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { generateAssetTagByCategory } from '@/lib/domains/operations/assets/asset-utils';
@@ -211,6 +211,25 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
             id: true,
             code: true,
             name: true,
+          },
+        },
+        // Include pending acceptance request for display
+        assetRequests: {
+          where: {
+            status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
+            type: 'ADMIN_ASSIGNMENT',
+          },
+          take: 1,
+          select: {
+            id: true,
+            requestNumber: true,
+            member: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
           },
         },
       },
