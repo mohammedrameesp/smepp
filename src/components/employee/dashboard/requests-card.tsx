@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/date-format';
 
 type RequestType = 'leave' | 'purchase' | 'asset';
-type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+type RequestStatus = string; // Various statuses from different request types
 
 interface UnifiedRequest {
   id: string;
@@ -41,12 +41,20 @@ const typeConfig: Record<RequestType, { icon: typeof ShoppingCart; bgColor: stri
   },
 };
 
-const statusConfig: Record<RequestStatus, { className: string }> = {
+const statusConfig: Record<string, { className: string }> = {
   PENDING: { className: 'bg-yellow-100 text-yellow-700' },
+  PENDING_ADMIN_APPROVAL: { className: 'bg-yellow-100 text-yellow-700' },
+  PENDING_USER_ACCEPTANCE: { className: 'bg-amber-100 text-amber-700' },
+  PENDING_RETURN_APPROVAL: { className: 'bg-yellow-100 text-yellow-700' },
   APPROVED: { className: 'bg-green-100 text-green-700' },
+  ACCEPTED: { className: 'bg-green-100 text-green-700' },
   REJECTED: { className: 'bg-red-100 text-red-700' },
+  REJECTED_BY_USER: { className: 'bg-red-100 text-red-700' },
   CANCELLED: { className: 'bg-gray-100 text-gray-600' },
+  EXPIRED: { className: 'bg-gray-100 text-gray-600' },
 };
+
+const defaultStatusStyle = { className: 'bg-gray-100 text-gray-600' };
 
 function getRelativeTime(date: Date): string {
   const now = new Date();
@@ -86,7 +94,7 @@ export function RequestsCard({ requests, className }: RequestsCardProps) {
           {requests.slice(0, 4).map((request) => {
             const config = typeConfig[request.type];
             const Icon = config.icon;
-            const statusStyle = statusConfig[request.status];
+            const statusStyle = statusConfig[request.status] || defaultStatusStyle;
 
             const href =
               request.type === 'leave'
