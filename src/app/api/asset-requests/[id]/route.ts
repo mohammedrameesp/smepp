@@ -89,8 +89,13 @@ async function getAssetRequestHandler(request: NextRequest, context: APIContext)
             type: true,
             status: true,
             configuration: true,
-            location: true,
             serial: true,
+            location: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
         member: {

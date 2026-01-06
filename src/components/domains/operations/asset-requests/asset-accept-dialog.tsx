@@ -27,7 +27,7 @@ interface Asset {
   brand: string | null;
   type: string;
   configuration?: string | null;
-  location?: string | null;
+  location?: { id: string; name: string } | null;
 }
 
 interface AssignedBy {
@@ -149,7 +149,7 @@ export function AssetAcceptDialog({
               <p><span className="text-gray-500">Type:</span> {asset.type}</p>
               {asset.assetTag && <p><span className="text-gray-500">Asset Tag:</span> {asset.assetTag}</p>}
               {asset.configuration && <p><span className="text-gray-500">Configuration:</span> {asset.configuration}</p>}
-              {asset.location && <p><span className="text-gray-500">Location:</span> {asset.location}</p>}
+              {asset.location && <p><span className="text-gray-500">Location:</span> {asset.location.name}</p>}
             </div>
           </div>
 

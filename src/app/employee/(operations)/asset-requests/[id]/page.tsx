@@ -58,7 +58,7 @@ interface AssetRequest {
     brand: string | null;
     type: string;
     configuration: string | null;
-    location: string | null;
+    location: { id: string; name: string } | null;
   };
   user: {
     id: string;
@@ -283,7 +283,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
                 {request.asset.location && (
                   <div>
                     <label className="text-sm text-gray-500">Location</label>
-                    <p className="font-medium">{request.asset.location}</p>
+                    <p className="font-medium">{request.asset.location.name}</p>
                   </div>
                 )}
               </div>
