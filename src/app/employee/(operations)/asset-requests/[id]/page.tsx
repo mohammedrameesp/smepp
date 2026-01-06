@@ -31,12 +31,12 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { AssetRequestStatusBadge, AssetRequestTypeBadge, AssetAcceptDialog } from '@/components/domains/operations/asset-requests';
 import { formatDate, formatDateTime } from '@/lib/date-format';
-import { ArrowLeft, Package, User, Clock, FileText, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Package, User, Clock, FileText, CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -146,34 +146,47 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
-          </div>
-        </div>
-      </div>
+      <>
+        <PageHeader
+          title="Loading..."
+          subtitle="Please wait while we load the request details"
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/employee' },
+            { label: 'My Assets', href: '/employee/my-assets' },
+            { label: 'Requests', href: '/employee/asset-requests' },
+            { label: 'Details' }
+          ]}
+        />
+        <PageContent className="max-w-4xl">
+          <div className="text-center py-12 text-slate-500">Loading request details...</div>
+        </PageContent>
+      </>
     );
   }
 
   if (error || !request) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          <Card>
-            <CardContent className="py-12 text-center">
-              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <p className="text-lg font-medium text-gray-900">{error || 'Request not found'}</p>
-              <Link href="/employee/asset-requests">
-                <Button variant="outline" className="mt-4">
-                  Back to Requests
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <>
+        <PageHeader
+          title="Error"
+          subtitle="Unable to load asset request"
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/employee' },
+            { label: 'My Assets', href: '/employee/my-assets' },
+            { label: 'Requests', href: '/employee/asset-requests' },
+            { label: 'Details' }
+          ]}
+        />
+        <PageContent className="max-w-4xl">
+          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <p className="text-lg font-medium text-slate-900 mb-4">{error || 'Request not found'}</p>
+            <Link href="/employee/asset-requests">
+              <Button variant="outline">Back to Requests</Button>
+            </Link>
+          </div>
+        </PageContent>
+      </>
     );
   }
 
@@ -181,62 +194,65 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
   const canCancel = request.status === 'PENDING_ADMIN_APPROVAL' || request.status === 'PENDING_RETURN_APPROVAL';
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <Link href="/employee/asset-requests" className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4">
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Requests
-          </Link>
-
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                {request.requestNumber}
-                <AssetRequestTypeBadge type={request.type} />
-                <AssetRequestStatusBadge status={request.status} />
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Submitted on {formatDateTime(request.createdAt)}
-              </p>
-            </div>
-
-            <div className="flex gap-2">
-              {isPendingAcceptance && (
-                <>
-                  <Button variant="outline" onClick={() => setShowAcceptDialog(true)}>
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Decline
-                  </Button>
-                  <Button onClick={() => setShowAcceptDialog(true)}>
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Accept
-                  </Button>
-                </>
-              )}
-              {canCancel && (
-                <Button
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={isCancelling}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  {isCancelling ? 'Cancelling...' : 'Cancel Request'}
+    <>
+      <PageHeader
+        title={request.requestNumber}
+        subtitle={`Submitted on ${formatDateTime(request.createdAt)}`}
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/employee' },
+          { label: 'My Assets', href: '/employee/my-assets' },
+          { label: 'Requests', href: '/employee/asset-requests' },
+          { label: 'Details' }
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
+            {isPendingAcceptance && (
+              <>
+                <Button variant="outline" onClick={() => setShowAcceptDialog(true)}>
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Decline
                 </Button>
-              )}
-            </div>
+                <Button onClick={() => setShowAcceptDialog(true)}>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Accept
+                </Button>
+              </>
+            )}
+            {canCancel && (
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                disabled={isCancelling}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                {isCancelling ? 'Cancelling...' : 'Cancel Request'}
+              </Button>
+            )}
+            <Link href="/employee/asset-requests">
+              <Button variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
+            </Link>
           </div>
+        }
+      >
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          <AssetRequestTypeBadge type={request.type} />
+          <AssetRequestStatusBadge status={request.status} />
         </div>
+      </PageHeader>
+
+      <PageContent className="max-w-4xl">
 
         {/* Alert for pending acceptance */}
         {isPendingAcceptance && (
-          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
               <div>
-                <h3 className="font-medium text-yellow-800">Action Required</h3>
-                <p className="text-sm text-yellow-700 mt-1">
+                <h3 className="font-medium text-amber-800">Action Required</h3>
+                <p className="text-sm text-amber-700 mt-1">
                   This asset has been assigned to you. Please accept or decline the assignment.
                 </p>
               </div>
@@ -244,146 +260,155 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        <div className="grid gap-6">
+        <div className="space-y-6">
           {/* Asset Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Asset Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                <Package className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Asset Details</h2>
+                <p className="text-sm text-slate-500">Information about the requested asset</p>
+              </div>
+            </div>
+            <div className="p-5">
               <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm text-gray-500">Model</label>
-                  <p className="font-medium">{request.asset.model}</p>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Model</p>
+                  <p className="font-semibold text-slate-900">{request.asset.model}</p>
                 </div>
                 {request.asset.brand && (
-                  <div>
-                    <label className="text-sm text-gray-500">Brand</label>
-                    <p className="font-medium">{request.asset.brand}</p>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Brand</p>
+                    <p className="font-semibold text-slate-900">{request.asset.brand}</p>
                   </div>
                 )}
-                <div>
-                  <label className="text-sm text-gray-500">Type</label>
-                  <p className="font-medium">{request.asset.type}</p>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Type</p>
+                  <p className="font-semibold text-slate-900">{request.asset.type}</p>
                 </div>
                 {request.asset.assetTag && (
-                  <div>
-                    <label className="text-sm text-gray-500">Asset Tag</label>
-                    <p className="font-mono">{request.asset.assetTag}</p>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Asset Tag</p>
+                    <p className="font-mono font-semibold text-slate-900">{request.asset.assetTag}</p>
                   </div>
                 )}
                 {request.asset.configuration && (
-                  <div className="md:col-span-2">
-                    <label className="text-sm text-gray-500">Configuration</label>
-                    <p className="font-medium">{request.asset.configuration}</p>
+                  <div className="md:col-span-2 p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Configuration</p>
+                    <p className="font-semibold text-slate-900">{request.asset.configuration}</p>
                   </div>
                 )}
                 {request.asset.location && (
-                  <div>
-                    <label className="text-sm text-gray-500">Location</label>
-                    <p className="font-medium">{request.asset.location.name}</p>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Location</p>
+                    <p className="font-semibold text-slate-900">{request.asset.location.name}</p>
                   </div>
                 )}
               </div>
               <div className="mt-4">
                 <Link href={`/employee/assets/${request.asset.id}`}>
-                  <Button variant="outline" size="sm">View Asset</Button>
+                  <Button variant="outline" size="sm">View Full Asset Details</Button>
                 </Link>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Request Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Request Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                <FileText className="h-5 w-5 text-indigo-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Request Details</h2>
+                <p className="text-sm text-slate-500">Additional information about this request</p>
+              </div>
+            </div>
+            <div className="p-5 space-y-4">
               {request.reason && (
                 <div>
-                  <label className="text-sm text-gray-500">Reason</label>
-                  <p className="mt-1">{request.reason}</p>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Reason</p>
+                  <div className="p-4 bg-slate-50 rounded-xl text-slate-900">{request.reason}</div>
                 </div>
               )}
               {request.notes && (
                 <div>
-                  <label className="text-sm text-gray-500">Notes</label>
-                  <p className="mt-1">{request.notes}</p>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Notes</p>
+                  <div className="p-4 bg-slate-50 rounded-xl text-slate-900">{request.notes}</div>
                 </div>
               )}
               {request.assignedByUser && (
-                <div>
-                  <label className="text-sm text-gray-500">Assigned By</label>
-                  <p className="mt-1 flex items-center gap-2">
-                    <User className="h-4 w-4 text-gray-400" />
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Assigned By</p>
+                  <p className="flex items-center gap-2 font-medium text-slate-900">
+                    <User className="h-4 w-4 text-slate-400" />
                     {request.assignedByUser.name || request.assignedByUser.email}
                   </p>
                 </div>
               )}
               {request.processedAt && request.processedByUser && (
                 <>
-                  <Separator />
-                  <div>
-                    <label className="text-sm text-gray-500">Processed By</label>
-                    <p className="mt-1 flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-400" />
+                  <Separator className="my-4" />
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Processed By</p>
+                    <p className="flex items-center gap-2 font-medium text-slate-900">
+                      <User className="h-4 w-4 text-slate-400" />
                       {request.processedByUser.name || request.processedByUser.email}
-                      <span className="text-gray-400">on {formatDateTime(request.processedAt)}</span>
+                      <span className="text-slate-500 text-sm">on {formatDateTime(request.processedAt)}</span>
                     </p>
                   </div>
                   {request.processorNotes && (
                     <div>
-                      <label className="text-sm text-gray-500">Response Notes</label>
-                      <p className="mt-1">{request.processorNotes}</p>
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Response Notes</p>
+                      <div className="p-4 bg-slate-50 rounded-xl text-slate-900">{request.processorNotes}</div>
                     </div>
                   )}
                 </>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* History */}
           {request.history && request.history.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  History
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-slate-900">History</h2>
+                  <p className="text-sm text-slate-500">Request activity timeline</p>
+                </div>
+              </div>
+              <div className="p-5">
                 <div className="space-y-4">
                   {request.history.map((entry, index) => (
                     <div
                       key={entry.id}
-                      className={`flex gap-4 ${index !== request.history.length - 1 ? 'pb-4 border-b' : ''}`}
+                      className={`flex gap-4 ${index !== request.history.length - 1 ? 'pb-4 border-b border-slate-200' : ''}`}
                     >
-                      <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-gray-400"></div>
+                      <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-blue-400"></div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium">{entry.action}</span>
+                          <span className="font-medium text-slate-900">{entry.action}</span>
                           {entry.newStatus && (
                             <AssetRequestStatusBadge status={entry.newStatus} />
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-slate-500 mt-1">
                           by {entry.performedBy.name || entry.performedBy.email} on {formatDateTime(entry.createdAt)}
                         </p>
                         {entry.notes && (
-                          <p className="text-sm mt-2 text-gray-600">{entry.notes}</p>
+                          <p className="text-sm mt-2 text-slate-600 p-3 bg-slate-50 rounded-lg">{entry.notes}</p>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
 
@@ -399,7 +424,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
             onSuccess={fetchRequest}
           />
         )}
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }
