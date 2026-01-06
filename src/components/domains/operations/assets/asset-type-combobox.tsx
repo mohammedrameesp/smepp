@@ -1,11 +1,35 @@
-'use client';
-
 /**
  * @file asset-type-combobox.tsx
  * @description Combobox for asset types with auto-suggest and auto-category assignment
- *              Fetches suggestions from API (merges defaults + custom tenant mappings)
  * @module components/domains/operations/assets
+ *
+ * Features:
+ * - Debounced API search for asset type suggestions (100ms delay)
+ * - Auto-assigns category when type matches a known suggestion
+ * - Supports custom tenant-specific type mappings (marked with star icon)
+ * - Full keyboard navigation (Arrow keys, Enter, Escape)
+ * - ARIA-compliant combobox with proper roles and labels
+ * - Loading indicator during API fetch
+ * - Aborts pending requests on new input (prevents race conditions)
+ *
+ * Props:
+ * - value: Current type value (controlled)
+ * - onChange: Callback when type changes
+ * - onCategoryMatch: Callback when type matches a category (code, name)
+ * - placeholder: Input placeholder text
+ * - disabled: Disables the input
+ * - className: Additional CSS classes
+ *
+ * API Dependencies:
+ * - GET /api/asset-types/suggestions?q={query}&limit=8 - Fetches type suggestions
+ *
+ * Usage:
+ * - Used in asset create/edit forms for type entry
+ * - Helps standardize asset types and auto-categorize
+ *
+ * Access: Admin only (asset management)
  */
+'use client';
 
 import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { Input } from '@/components/ui/input';

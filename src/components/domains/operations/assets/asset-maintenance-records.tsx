@@ -2,6 +2,28 @@
  * @file asset-maintenance-records.tsx
  * @description Card component for viewing and managing asset maintenance history
  * @module components/domains/operations/assets
+ *
+ * Features:
+ * - Lists all maintenance records for an asset chronologically
+ * - Inline form to add new maintenance records (admin only)
+ * - Read-only mode for employee view
+ * - Shows maintenance date, notes, and when record was added
+ * - Toast notifications for success/error feedback
+ *
+ * Props:
+ * - assetId: ID of the asset to manage maintenance for
+ * - readOnly: If true, hides add form (default: false)
+ *
+ * API Dependencies:
+ * - GET /api/assets/[id]/maintenance - Fetches maintenance records
+ * - POST /api/assets/[id]/maintenance - Creates new maintenance record
+ *
+ * Usage:
+ * - Used on asset detail page (/admin/assets/[id])
+ * - Used on employee asset detail page (/employee/assets/[id]) in read-only mode
+ * - Track service history, repairs, and preventive maintenance
+ *
+ * Access: Admin (read/write), Employee (read-only)
  */
 'use client';
 

@@ -2,6 +2,33 @@
  * @file clone-asset-button.tsx
  * @description Button component with confirmation dialog for cloning assets
  * @module components/domains/operations/assets
+ *
+ * Features:
+ * - Confirmation dialog before cloning to prevent accidental duplicates
+ * - Shows what will be copied vs. reset (new tag, cleared serial, SPARE status)
+ * - Loading state during clone operation
+ * - Redirects to cloned asset's edit page on success
+ * - Toast notifications for success/error feedback
+ *
+ * Props:
+ * - assetId: ID of the asset to clone
+ * - assetModel: Display name shown in confirmation dialog
+ *
+ * Behavior:
+ * - Cloned asset gets new auto-generated asset tag
+ * - Status is reset to SPARE
+ * - Serial number is cleared (must be manually added)
+ * - User assignment is removed
+ * - All other fields are copied from original
+ *
+ * API Dependencies:
+ * - POST /api/assets/[id]/clone - Creates a duplicate of the asset
+ *
+ * Usage:
+ * - Used on asset detail page (/admin/assets/[id])
+ * - Provides quick way to add similar assets
+ *
+ * Access: Admin only
  */
 'use client';
 

@@ -2,6 +2,27 @@
  * @file asset-cost-breakdown.tsx
  * @description Card component displaying asset utilization metrics and statistics
  * @module components/domains/operations/assets
+ *
+ * Features:
+ * - Calculates and displays asset utilization percentage
+ * - Shows total owned days, assigned days, and idle days
+ * - Color-coded progress bar (green >= 70%, yellow >= 40%, red < 40%)
+ * - Automatically hides for shared assets (always available)
+ * - Loading and error states with appropriate UI feedback
+ *
+ * Props:
+ * - assetId: ID of the asset to fetch utilization for
+ * - purchaseDate: Asset purchase date (used for owned days calculation)
+ * - isShared: If true, component renders nothing (shared assets always available)
+ *
+ * API Dependencies:
+ * - GET /api/assets/[id]/utilization - Fetches utilization metrics
+ *
+ * Usage:
+ * - Used on asset detail page (/admin/assets/[id])
+ * - Helps track ROI by showing how much an asset is actually being used
+ *
+ * Access: Admin only
  */
 'use client';
 

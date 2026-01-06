@@ -2,6 +2,34 @@
  * @file depreciation-card.tsx
  * @description Card component displaying asset depreciation details and management controls
  * @module components/domains/operations/assets
+ *
+ * Features:
+ * - Displays depreciation status (active vs fully depreciated)
+ * - Progress bar showing depreciation percentage (color-coded)
+ * - Values grid: acquisition cost, salvage value, accumulated depreciation, net book value
+ * - Admin dialog to assign/change depreciation category
+ * - Parallel fetch of asset depreciation and category options
+ * - Last depreciation date display
+ *
+ * Props:
+ * - assetId: ID of the asset to show depreciation for
+ * - onUpdate: Optional callback when category is assigned/changed
+ *
+ * Progress Bar Colors:
+ * - Green: Fully depreciated (100%)
+ * - Orange: >= 80% depreciated
+ * - Blue: < 80% depreciated
+ *
+ * API Dependencies:
+ * - GET /api/assets/[id]/depreciation - Fetches current depreciation values
+ * - GET /api/depreciation/categories - Fetches available categories
+ * - POST /api/assets/[id]/depreciation - Assigns category to asset
+ *
+ * Usage:
+ * - Used on asset detail page (/admin/assets/[id])
+ * - Admin can configure depreciation; employees see read-only view
+ *
+ * Access: Admin (configure), Employee (view-only)
  */
 'use client';
 

@@ -2,6 +2,31 @@
  * @file delete-asset-button.tsx
  * @description Button component with confirmation dialog for deleting assets
  * @module components/domains/operations/assets
+ *
+ * Features:
+ * - Confirmation dialog with destructive action styling
+ * - Lists all data that will be deleted (history, maintenance, assignments)
+ * - Loading state during delete operation
+ * - Redirects to assets list on success
+ * - Toast notifications for error feedback
+ *
+ * Props:
+ * - assetId: ID of the asset to delete
+ * - assetModel: Display name shown in confirmation dialog
+ *
+ * Behavior:
+ * - Permanently deletes the asset and all related records
+ * - Cascading delete includes: history, maintenance records, assignment history
+ * - Action cannot be undone
+ *
+ * API Dependencies:
+ * - DELETE /api/assets/[id] - Permanently removes the asset
+ *
+ * Usage:
+ * - Used on asset detail page (/admin/assets/[id])
+ * - Typically shown alongside edit/clone actions
+ *
+ * Access: Admin only
  */
 'use client';
 

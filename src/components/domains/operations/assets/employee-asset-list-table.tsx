@@ -2,6 +2,39 @@
  * @file employee-asset-list-table.tsx
  * @description Table component for employee asset view with assignment filtering
  * @module components/domains/operations/assets
+ *
+ * Features:
+ * - Client-side filtering and sorting (data passed from server component)
+ * - Search by model, brand, type, asset tag, or assignee
+ * - Filter by status (In Use, Spare, Repair, Disposed)
+ * - Filter by asset type
+ * - Filter by assignment (All, My Assets, Unassigned, Others)
+ * - Sortable columns (Model, Brand, Type, Status, Assigned To, Purchase Date)
+ * - Highlights "You" badge on assets assigned to current user
+ * - Status badge with color variants
+ *
+ * Props:
+ * - assets: Array of assets to display
+ * - currentUserId: ID of the current logged-in user (for "My Assets" filter)
+ *
+ * Assignment Filter Options:
+ * - all: Show all assets
+ * - mine: Only assets assigned to current user
+ * - unassigned: Assets with no assignee
+ * - others: Assets assigned to other team members
+ *
+ * Status Badge Variants:
+ * - IN_USE: default (primary)
+ * - SPARE: secondary
+ * - REPAIR: destructive
+ * - DISPOSED: outline
+ *
+ * Usage:
+ * - Used on employee assets page (/employee/assets)
+ * - Allows employees to view organization's visible assets
+ * - Links to employee asset detail view
+ *
+ * Access: Employee
  */
 'use client';
 

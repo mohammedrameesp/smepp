@@ -2,6 +2,48 @@
  * @file dispose-asset-dialog.tsx
  * @description Dialog for disposing assets with IFRS-compliant depreciation and gain/loss preview
  * @module components/domains/operations/assets
+ *
+ * Features:
+ * - IFRS-compliant disposal with final depreciation calculation
+ * - Real-time preview showing expected gain/loss
+ * - Multiple disposal methods (Sold, Scrapped, Donated, Written Off, Traded In)
+ * - Proceeds input with validation (required for "Sold" method)
+ * - Date picker for disposal date
+ * - Optional notes field
+ * - Supports controlled (external) and uncontrolled dialog state
+ * - Auto-hides for already disposed assets
+ *
+ * Props:
+ * - assetId: ID of the asset to dispose
+ * - assetTag: Asset tag for display (optional)
+ * - assetModel: Model name for confirmation dialog
+ * - assetStatus: Current status (hides if DISPOSED)
+ * - trigger: Custom trigger element (optional)
+ * - isOpen: External control for dialog open state (optional)
+ * - onOpenChange: External control callback (optional)
+ *
+ * Preview Calculation:
+ * - Current Net Book Value (NBV)
+ * - Final depreciation amount (pro-rata)
+ * - NBV at disposal date
+ * - Expected gain/loss based on proceeds
+ *
+ * Disposal Methods:
+ * - SOLD: Asset sold to third party (requires proceeds > 0)
+ * - SCRAPPED: Physically destroyed/discarded
+ * - DONATED: Given to charity/organization
+ * - WRITTEN_OFF: Theft, loss, or obsolete
+ * - TRADED_IN: Asset traded for new purchase
+ *
+ * API Dependencies:
+ * - GET /api/assets/[id]/dispose?date={date}&proceeds={amount} - Preview calculation
+ * - POST /api/assets/[id]/dispose - Execute disposal
+ *
+ * Usage:
+ * - Used on asset detail page (/admin/assets/[id])
+ * - Triggered from asset actions dropdown or direct button
+ *
+ * Access: Admin only
  */
 'use client';
 

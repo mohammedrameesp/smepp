@@ -2,6 +2,37 @@
  * @file asset-list-table-server-search.tsx
  * @description Table component with server-side search, filtering, and pagination for assets
  * @module components/domains/operations/assets
+ *
+ * Features:
+ * - Server-side pagination (50 items per page)
+ * - Debounced search (300ms) across asset tag, model, brand, type
+ * - Dynamic filter options fetched from API (types and categories with counts)
+ * - Status filter: Active (excludes Disposed), All, or specific status
+ * - Type and Category dropdowns populated from tenant's actual data
+ * - Sortable columns with ARIA attributes for accessibility
+ * - Shows shared asset indicator with location
+ * - Shows pending assignment requests on unassigned assets
+ * - Loading states with spinner
+ *
+ * Filters:
+ * - Search: Full-text search across multiple fields
+ * - Status: active (default), all, IN_USE, SPARE, REPAIR, DISPOSED
+ * - Type: Dynamic from /api/assets/filters
+ * - Category: Dynamic from /api/assets/filters
+ *
+ * Sortable Columns:
+ * - Asset Tag, Type, Model, Brand, Price (QAR), Status
+ * - Keyboard accessible (Enter key triggers sort)
+ *
+ * API Dependencies:
+ * - GET /api/assets?p={page}&ps={pageSize}&sort={col}&order={dir}&q={search}&status={status}&type={type}&categoryId={id}
+ * - GET /api/assets/filters - Fetches available types and categories with counts
+ *
+ * Usage:
+ * - Used on admin assets list page (/admin/assets)
+ * - Primary table for asset inventory management
+ *
+ * Access: Admin only
  */
 'use client';
 

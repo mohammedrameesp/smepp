@@ -1,10 +1,33 @@
-'use client';
-
 /**
  * @file category-selector.tsx
  * @description Asset category dropdown selector component
  * @module components/domains/operations/assets
+ *
+ * Features:
+ * - Fetches asset categories from API on mount
+ * - Displays category code and name in dropdown
+ * - Supports optional/required selection modes
+ * - Shows loading skeleton during fetch
+ * - Handles error states gracefully
+ *
+ * Props:
+ * - value: Currently selected category ID (optional)
+ * - onChange: Callback when selection changes, receives (categoryId, categoryCode)
+ * - disabled: Whether the selector is disabled
+ * - placeholder: Custom placeholder text
+ * - className: Additional CSS classes
+ * - required: If true, "No category" option is hidden
+ *
+ * API Dependencies:
+ * - GET /api/asset-categories - Fetches available categories for the tenant
+ *
+ * Usage:
+ * - Used in asset create/edit forms for category selection
+ * - Used in asset filters for category-based filtering
+ *
+ * Access: Admin only (asset management)
  */
+'use client';
 
 import { useState, useEffect } from 'react';
 import {

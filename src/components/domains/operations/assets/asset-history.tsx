@@ -1,7 +1,34 @@
 /**
- * @file AssetHistory.tsx
- * @description Compact asset history timeline component
- * @module components
+ * @file asset-history.tsx
+ * @description Compact asset history timeline component showing lifecycle events
+ * @module components/domains/operations/assets
+ *
+ * Features:
+ * - Visual timeline with color-coded action icons
+ * - Tracks: CREATED, ASSIGNED, UNASSIGNED, STATUS_CHANGED, LOCATION_CHANGED, UPDATED
+ * - Shows who performed each action and when (relative time)
+ * - Displays detailed notes for UPDATE actions
+ * - Compact card design with vertical timeline connector
+ *
+ * Props:
+ * - assetId: ID of the asset to fetch history for
+ *
+ * Action Colors:
+ * - CREATED: green
+ * - ASSIGNED: blue
+ * - UNASSIGNED: orange
+ * - STATUS_CHANGED: purple
+ * - LOCATION_CHANGED: cyan
+ * - UPDATED: gray
+ *
+ * API Dependencies:
+ * - GET /api/assets/[id]/history - Fetches chronological history entries
+ *
+ * Usage:
+ * - Used on asset detail page (/admin/assets/[id])
+ * - Provides audit trail for asset lifecycle
+ *
+ * Access: Admin and Employee (employees see their assigned assets)
  */
 
 'use client';
