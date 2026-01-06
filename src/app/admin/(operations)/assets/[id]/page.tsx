@@ -245,7 +245,7 @@ export default async function AssetDetailPage({ params }: Props) {
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Category</p>
-                  <p className="font-semibold text-slate-900">{asset.assetCategory?.name || asset.category || 'Not specified'}</p>
+                  <p className="font-semibold text-slate-900">{asset.assetCategory?.name || 'Not specified'}</p>
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Brand / Manufacturer</p>
@@ -296,7 +296,7 @@ export default async function AssetDetailPage({ params }: Props) {
                       </>
                     ) : 'Not specified'}
                   </p>
-                  {asset.priceCurrency === 'USD' && asset.priceQAR && (
+                  {asset.priceCurrency && asset.priceCurrency !== 'QAR' && asset.priceQAR && (
                     <p className="text-xs text-slate-500 mt-1">≈ QAR {Number(asset.priceQAR).toFixed(2)}</p>
                   )}
                 </div>

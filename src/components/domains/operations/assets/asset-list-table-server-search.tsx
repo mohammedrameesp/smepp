@@ -23,9 +23,9 @@ interface Asset {
   category: string | null;
   type: string;
   status: string;
-  price: string | null;
+  price: number | string | null;
   priceCurrency: string | null;
-  priceQAR: number | null;
+  priceQAR: number | string | null;
   warrantyExpiry: Date | null;
   serial: string | null;
   supplier: string | null;
@@ -89,6 +89,7 @@ export function AssetListTableServerSearch() {
   // Dynamic filter options
   const [typeOptions, setTypeOptions] = useState<TypeOption[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+  const [filterError, setFilterError] = useState(false);
 
   // Fetch filter options on mount
   useEffect(() => {
@@ -102,6 +103,7 @@ export function AssetListTableServerSearch() {
         }
       } catch (error) {
         console.error('Error fetching filter options:', error);
+        setFilterError(true);
       }
     }
     fetchFilterOptions();
@@ -248,36 +250,60 @@ export function AssetListTableServerSearch() {
               <TableHead
                 className="cursor-pointer hover:bg-gray-100"
                 onClick={() => toggleSort('assetTag')}
+                role="button"
+                tabIndex={0}
+                aria-sort={sortBy === 'assetTag' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                onKeyDown={(e) => e.key === 'Enter' && toggleSort('assetTag')}
               >
                 Asset Tag {sortBy === 'assetTag' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead
                 className="cursor-pointer hover:bg-gray-100"
                 onClick={() => toggleSort('type')}
+                role="button"
+                tabIndex={0}
+                aria-sort={sortBy === 'type' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                onKeyDown={(e) => e.key === 'Enter' && toggleSort('type')}
               >
                 Type {sortBy === 'type' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead
                 className="cursor-pointer hover:bg-gray-100"
                 onClick={() => toggleSort('model')}
+                role="button"
+                tabIndex={0}
+                aria-sort={sortBy === 'model' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                onKeyDown={(e) => e.key === 'Enter' && toggleSort('model')}
               >
                 Model {sortBy === 'model' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead
                 className="cursor-pointer hover:bg-gray-100"
                 onClick={() => toggleSort('brand')}
+                role="button"
+                tabIndex={0}
+                aria-sort={sortBy === 'brand' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                onKeyDown={(e) => e.key === 'Enter' && toggleSort('brand')}
               >
                 Brand {sortBy === 'brand' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead
                 className="cursor-pointer hover:bg-gray-100"
                 onClick={() => toggleSort('priceQAR')}
+                role="button"
+                tabIndex={0}
+                aria-sort={sortBy === 'priceQAR' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                onKeyDown={(e) => e.key === 'Enter' && toggleSort('priceQAR')}
               >
                 Price (QAR) {sortBy === 'priceQAR' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead
                 className="cursor-pointer hover:bg-gray-100"
                 onClick={() => toggleSort('status')}
+                role="button"
+                tabIndex={0}
+                aria-sort={sortBy === 'status' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                onKeyDown={(e) => e.key === 'Enter' && toggleSort('status')}
               >
                 Status {sortBy === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
