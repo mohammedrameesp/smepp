@@ -165,7 +165,7 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
     }, { status: 400 });
   }
 
-  const { q, status, excludeStatus, type, categoryId, p, ps, sort, order } = validation.data;
+  const { q, status, excludeStatus, type, categoryId, assignedMemberId, assignmentFilter, p, ps, sort, order } = validation.data;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // STEP 2: Build filter object (Prisma-compatible format)
@@ -175,6 +175,42 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
   if (excludeStatus) filters.status = { not: excludeStatus };
   if (type) filters.type = type;
   if (categoryId) filters.categoryId = categoryId;
+
+  // Assignment filtering (for employee view)
+  if (assignedMemberId) {
+    // Direct filter by specific member ID (e.g., "My Assets")
+    filters.assignedMemberId = assignedMemberId;
+  } else if (assignmentFilter) {
+    // Filter by assignment status patterns
+    switch (assignmentFilter) {
+      case 'unassigned':
+        // Show only unassigned assets
+        filters.assignedMemberId = null;
+        break;
+      case 'others':
+        // Show assets assigned to others (exclude current user)
+        // Note: This requires userId from context.tenant
+        const userId = context.tenant?.userId;
+        if (userId) {
+          filters.AND = [
+            { assignedMemberId: { not: null } },
+            { assignedMemberId: { not: userId } }
+          ];
+        }
+        break;
+      case 'mine':
+        // Show only current user's assets
+        const currentUserId = context.tenant?.userId;
+        if (currentUserId) {
+          filters.assignedMemberId = currentUserId;
+        }
+        break;
+      case 'all':
+      default:
+        // No assignment filter - show all assets
+        break;
+    }
+  }
 
   // Build where clause using reusable search filter utility
   // Searches across multiple fields with OR logic

@@ -4,17 +4,18 @@
  * @module app/employee/(operations)/assets
  *
  * Features:
- * - Complete list of all organization assets (not just assigned to user)
- * - Personal asset stats card linking to "My Assets" page
- * - Available/spare assets count for reference
- * - Search and filter functionality via EmployeeAssetListTable component
- * - Read-only view - employees can browse but not directly modify assets
+ * - Modern PageHeader layout matching admin design
+ * - Server-side pagination and search for better performance
+ * - Inline stats badges (My Assets, Available, Pending Requests, Total)
+ * - Assignment filter defaulting to "My Assets"
+ * - Hides sensitive fields (price, serial, supplier)
+ * - "You" badge on assigned assets
  *
  * Use Cases:
  * - Find available assets to request
  * - View asset specifications before requesting
  * - Search for specific equipment types
- * - Track personal assignments via quick stats
+ * - Track personal assignments via stats and filters
  *
  * Access: All authenticated employees (tenant-scoped)
  * Route: /employee/assets
@@ -23,15 +24,16 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
+import { AssetRequestStatus } from '@prisma/client';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { EmployeeAssetListTableServerSearch } from '@/components/domains/operations/assets/employee-asset-list-table-server-search';
+import { Inbox } from 'lucide-react';
 import Link from 'next/link';
-import { EmployeeAssetListTable } from '@/components/domains/operations/assets/employee-asset-list-table';
 
 /**
  * Employee all assets page component
- * Displays browsable list of all company assets with stats
+ * Displays browsable list of all company assets with modern UI
  */
 export default async function EmployeeAllAssetsPage() {
   const session = await getServerSession(authOptions);
@@ -46,106 +48,91 @@ export default async function EmployeeAllAssetsPage() {
   }
 
   const tenantId = session.user.organizationId;
+  const userId = session.user.id;
 
-  // Fetch all assets with related data (tenant-scoped)
-  const assetsRaw = await prisma.asset.findMany({
-    where: { tenantId },
-    include: {
-      assignedMember: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
+  // Fetch stats for badges
+  const [myAssetsCount, availableCount, totalCount, requestedCount] = await Promise.all([
+    // My Assets: assigned to me
+    prisma.asset.count({
+      where: { tenantId, assignedMemberId: userId },
+    }),
+    // Available: SPARE status
+    prisma.asset.count({
+      where: { tenantId, status: 'SPARE' },
+    }),
+    // Total organizational assets (for context)
+    prisma.asset.count({
+      where: { tenantId },
+    }),
+    // My pending requests
+    prisma.assetRequest.count({
+      where: {
+        tenantId,
+        memberId: userId,
+        status: {
+          in: [
+            AssetRequestStatus.PENDING_ADMIN_APPROVAL,
+            AssetRequestStatus.PENDING_USER_ACCEPTANCE,
+          ],
         },
       },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  // Convert Decimal to number for client component
-  const assets = assetsRaw.map(asset => ({
-    ...asset,
-    price: asset.price ? Number(asset.price) : null,
-    priceQAR: asset.priceQAR ? Number(asset.priceQAR) : null,
-  }));
-
-  // Calculate stats
-  const myAssets = assets.filter(a => a.assignedMemberId === session.user.id);
-  const assignedAssets = assets.filter(a => a.assignedMemberId);
-  const availableAssets = assets.filter(a => a.status === 'SPARE');
+    }),
+  ]);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">All Assets</h1>
-              <p className="text-gray-600">
-                Browse and search all company assets
-              </p>
-            </div>
-            <Link href="/">
-              <Button variant="outline">Back to Home</Button>
-            </Link>
+    <>
+      <PageHeader
+        title="Assets"
+        subtitle="Browse and search company assets"
+      >
+        {/* Stats Summary Badges */}
+        <div className="flex flex-wrap items-center gap-4 mt-4">
+          <Link
+            href="/employee/my-assets?tab=assets"
+            className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors"
+          >
+            <span className="text-blue-400 text-sm font-medium">
+              {myAssetsCount} my assets
+            </span>
+          </Link>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
+            <span className="text-emerald-400 text-sm font-medium">
+              {availableCount} available
+            </span>
           </div>
-
-          {/* Stats */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <Link href="/employee/my-assets?tab=assets">
-              <Card className="cursor-pointer hover:shadow-lg hover:border-blue-400 transition-all duration-200">
-                <CardHeader className="pb-2 pt-4 px-5">
-                  <CardTitle className="text-sm font-medium text-gray-600">My Assets</CardTitle>
-                </CardHeader>
-                <CardContent className="pb-4 px-5">
-                  <div className="text-3xl font-bold text-blue-600">
-                    {myAssets.length}
-                  </div>
-                  <p className="text-sm text-gray-500">Assigned to you</p>
-                  {myAssets.length > 0 && (
-                    <p className="text-xs text-gray-600 mt-2 truncate">
-                      {myAssets.slice(0, 3).map(a => a.model).join(', ')}
-                      {myAssets.length > 3 && '...'}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+          {requestedCount > 0 && (
+            <Link
+              href="/employee/asset-requests"
+              className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg transition-colors"
+            >
+              <Inbox className="h-4 w-4 text-amber-400" />
+              <span className="text-amber-400 text-sm font-medium">
+                {requestedCount} pending
+              </span>
             </Link>
-
-            <Card>
-              <CardHeader className="pb-2 pt-4 px-5">
-                <CardTitle className="text-sm font-medium text-gray-600">Available Assets</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-4 px-5">
-                <div className="text-3xl font-bold text-green-600">
-                  {availableAssets.length}
-                </div>
-                <p className="text-sm text-gray-500">Spare assets</p>
-              </CardContent>
-            </Card>
+          )}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
+            <span className="text-slate-400 text-sm font-medium">
+              {totalCount} total
+            </span>
           </div>
         </div>
+      </PageHeader>
 
-        {/* Assets List with Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Company Assets ({assets.length})</CardTitle>
-            <CardDescription>
-              Search, filter, and browse all assets in the organization
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {assets.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <div className="text-4xl mb-4">📦</div>
-                <p>No assets found</p>
-              </div>
-            ) : (
-              <EmployeeAssetListTable assets={assets} currentUserId={session.user.id} />
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+      <PageContent>
+        {/* Assets Table */}
+        <div className="bg-white rounded-xl border border-slate-200">
+          <div className="px-4 py-4 border-b border-slate-100">
+            <h2 className="font-semibold text-slate-900">All Assets</h2>
+            <p className="text-sm text-slate-500">
+              Search and filter company assets. Default view shows your assigned assets.
+            </p>
+          </div>
+          <div className="p-4">
+            <EmployeeAssetListTableServerSearch currentUserId={userId} />
+          </div>
+        </div>
+      </PageContent>
+    </>
   );
 }

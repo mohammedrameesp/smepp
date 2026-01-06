@@ -88,7 +88,6 @@ Complete list of all asset-related files for code review and understanding.
 | File | Description |
 |------|-------------|
 [Done] | [src/components/domains/operations/assets/index.ts](../src/components/domains/operations/assets/index.ts) | Component exports |
-[Done] | [src/components/domains/operations/assets/asset-list-table.tsx](../src/components/domains/operations/assets/asset-list-table.tsx) | Admin asset table |
 [Done] | [src/components/domains/operations/assets/asset-list-table-server-search.tsx](../src/components/domains/operations/assets/asset-list-table-server-search.tsx) | Server-side search |
 [Done] | [src/components/domains/operations/assets/employee-asset-list-table.tsx](../src/components/domains/operations/assets/employee-asset-list-table.tsx) | Employee asset table |
 

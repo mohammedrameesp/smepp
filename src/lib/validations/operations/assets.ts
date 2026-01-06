@@ -285,6 +285,10 @@ export const assetQuerySchema = z.object({
   type: z.string().optional(),
   /** Filter by category ID */
   categoryId: z.string().optional(),
+  /** Filter by specific assigned member ID (for "My Assets" view) */
+  assignedMemberId: z.string().optional(),
+  /** Filter by assignment status (for employee view): all, mine, unassigned, others */
+  assignmentFilter: z.enum(['all', 'mine', 'unassigned', 'others']).optional(),
   /** Page number (1-indexed, default: 1) */
   p: z.coerce.number().min(1).default(1),
   /** Page size (1-100, default: 20) */

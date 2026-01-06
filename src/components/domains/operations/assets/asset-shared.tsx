@@ -77,7 +77,7 @@ export interface AdminAsset extends BaseAsset {
 }
 
 /**
- * Asset interface for employee list table
+ * Asset interface for employee list table (client-side filtering)
  */
 export interface EmployeeAsset extends BaseAsset {
   price: number | null;
@@ -85,6 +85,18 @@ export interface EmployeeAsset extends BaseAsset {
   warrantyExpiry: Date | null;
   purchaseDate: Date | null;
   assignedMemberId: string | null;
+}
+
+/**
+ * Asset interface for employee list table (server-side search)
+ * Excludes sensitive fields: price, priceQAR, priceCurrency, serial, supplier
+ */
+export interface EmployeeAssetServer extends BaseAsset {
+  configuration: string | null;
+  purchaseDate: Date | null;
+  isShared: boolean;
+  location: AssetLocation | null;
+  // Explicitly excludes: price, priceQAR, priceCurrency, serial, supplier, invoiceNumber
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

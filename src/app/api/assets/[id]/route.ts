@@ -345,10 +345,31 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     // ─────────────────────────────────────────────────────────────────────────────
     if (data.locationId !== undefined && data.locationId !== currentAsset.locationId) {
       const { recordAssetLocationChange } = await import('@/lib/domains/operations/assets/asset-history');
+
+      // Fetch location names for history recording
+      let fromLocationName: string | null = null;
+      let toLocationName: string | null = null;
+
+      if (currentAsset.locationId) {
+        const fromLocation = await prisma.location.findUnique({
+          where: { id: currentAsset.locationId },
+          select: { name: true },
+        });
+        fromLocationName = fromLocation?.name || null;
+      }
+
+      if (data.locationId) {
+        const toLocation = await prisma.location.findUnique({
+          where: { id: data.locationId },
+          select: { name: true },
+        });
+        toLocationName = toLocation?.name || null;
+      }
+
       await recordAssetLocationChange(
         id,
-        currentAsset.locationId,
-        data.locationId,
+        fromLocationName,
+        toLocationName,
         session.user.id
       );
     }
@@ -616,10 +637,16 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     }
 
     // Detect changes using helper (handles date/decimal normalization)
+    // Skip fields that have dedicated history entries to avoid duplication:
+    // - assignmentDate: Not stored on asset model (used for history record only)
+    // - assignedMemberId: Has ASSIGNED/UNASSIGNED entries
+    // - status: Has STATUS_CHANGED entries
+    // - locationId: Has LOCATION_CHANGED entries
     const changes = detectAssetChanges(
       data as Record<string, unknown>,
       currentAsset as unknown as Record<string, unknown>,
-      memberMap
+      memberMap,
+      ['assignmentDate', 'assignedMemberId', 'status', 'locationId']
     );
     const changeDetails = getFormattedChanges(changes);
 

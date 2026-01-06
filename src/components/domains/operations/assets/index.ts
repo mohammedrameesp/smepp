@@ -9,7 +9,8 @@
  *
  * Table Components:
  * - AssetListTableServerSearch: Admin asset list with server-side pagination
- * - EmployeeAssetListTable: Employee asset view with assignment filtering
+ * - EmployeeAssetListTable: Employee asset view with client-side filtering
+ * - EmployeeAssetListTableServerSearch: Employee asset view with server-side pagination and assignment filter
  *
  * Detail Page Components:
  * - AssetHistory: Timeline of asset lifecycle events
@@ -43,6 +44,7 @@ export { DeleteAssetButton } from './delete-asset-button';
 export { DepreciationCard } from './depreciation-card';
 export { DisposeAssetDialog } from './dispose-asset-dialog';
 export { EmployeeAssetListTable } from './employee-asset-list-table';
+export { EmployeeAssetListTableServerSearch } from './employee-asset-list-table-server-search';
 export { CategorySelector } from './category-selector';
 export { AssetTypeCombobox } from './asset-type-combobox';
 
@@ -55,6 +57,7 @@ export {
   type BaseAsset,
   type AdminAsset,
   type EmployeeAsset,
+  type EmployeeAssetServer,
   type AssetMember,
   type AssetLocation,
   type AssetPendingRequest,

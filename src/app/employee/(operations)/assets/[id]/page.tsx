@@ -1,24 +1,22 @@
 /**
  * @file page.tsx
- * @description Employee asset detail page - view individual asset with request/return actions
+ * @description Employee asset detail page - modern PageHeader design with card-based layout
  * @module app/employee/(operations)/assets/[id]
  *
  * Features:
- * - Complete asset information (model, brand, type, serial, configuration)
- * - Procurement details (purchase date, warranty expiry, supplier)
- * - Current assignment information with "You" badge if assigned to viewer
- * - Asset status badge with contextual colors
- * - Request asset button (for spare assets without pending requests)
- * - Return asset button (for assets assigned to current user)
- * - Pending request alerts (own requests and requests from others)
- * - Read-only maintenance records history
- * - Notes/remarks section
+ * - Modern PageHeader layout with breadcrumbs and status badge
+ * - Two-column grid (main content + sidebar)
+ * - Colored icon headers for each card
+ * - Complete asset information (excludes sensitive financial data)
+ * - Request/Return action buttons based on status
+ * - Pending request and warranty expiry alerts
+ * - Read-only maintenance records
+ * - Assignment information with "You" badge for current user
  *
- * Available Actions:
- * - Request: Submit request for SPARE assets (no pending requests)
- * - Return: Request to return an asset assigned to you
+ * Security:
+ * - Hides: Price, Serial Number, Supplier, Invoice, Disposal Info, Depreciation
  *
- * Access: All authenticated employees (tenant-scoped via findFirst)
+ * Access: All authenticated employees (tenant-scoped)
  * Route: /employee/assets/[id]
  */
 
@@ -26,22 +24,42 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { AssetRequestStatus } from '@prisma/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { formatDate, formatDateTime } from '@/lib/date-format';
+import { formatDate } from '@/lib/date-format';
 import { AssetMaintenanceRecords } from '@/components/domains/operations/assets/asset-maintenance-records';
 import { AssetRequestDialog, AssetReturnDialog } from '@/components/domains/operations/asset-requests';
+import {
+  Package,
+  DollarSign,
+  User,
+  Users,
+  MapPin,
+  FileText,
+  AlertTriangle,
+  Wrench,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
+/** Status badge styles mapping for visual consistency */
+const statusStyles: Record<string, { bg: string; text: string; icon: typeof CheckCircle; badgeVariant: 'default' | 'info' | 'success' | 'warning' }> = {
+  IN_USE: { bg: 'bg-blue-100', text: 'text-blue-700', icon: CheckCircle, badgeVariant: 'info' },
+  SPARE: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: Package, badgeVariant: 'success' },
+  REPAIR: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Wrench, badgeVariant: 'warning' },
+  DISPOSED: { bg: 'bg-slate-100', text: 'text-slate-700', icon: XCircle, badgeVariant: 'default' },
+};
+
 /**
  * Employee asset detail page component
- * Displays asset details with request/return capabilities based on status
+ * Displays asset details with modern PageHeader design
  */
 export default async function EmployeeAssetDetailPage({ params }: Props) {
   const session = await getServerSession(authOptions);
@@ -65,6 +83,13 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
           id: true,
           name: true,
           email: true,
+        },
+      },
+      assetCategory: {
+        select: {
+          id: true,
+          code: true,
+          name: true,
         },
       },
       maintenanceRecords: true,
@@ -98,21 +123,6 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
     notFound();
   }
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'IN_USE':
-        return 'default';
-      case 'SPARE':
-        return 'secondary';
-      case 'REPAIR':
-        return 'destructive';
-      case 'DISPOSED':
-        return 'outline';
-      default:
-        return 'secondary';
-    }
-  };
-
   const isAssignedToMe = asset.assignedMemberId === session?.user?.id;
 
   // Check if user can request this asset (SPARE and no pending requests)
@@ -126,239 +136,300 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
   );
   const canReturn = isAssignedToMe && asset.status === 'IN_USE' && !hasPendingReturn;
 
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Asset Details</h1>
-              <p className="text-gray-600">
-                {asset.model}
-                {isAssignedToMe && (
-                  <Badge variant="outline" className="ml-3 bg-blue-50 text-blue-700 border-blue-200">
-                    Assigned to you
-                  </Badge>
-                )}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {canRequest && (
-                <AssetRequestDialog asset={asset} />
-              )}
-              {canReturn && (
-                <AssetReturnDialog asset={asset} />
-              )}
-              <Link href="/employee/assets">
-                <Button variant="outline">Back to All Assets</Button>
-              </Link>
-              {isAssignedToMe && (
-                <Link href="/employee/my-assets">
-                  <Button variant="outline">Back to My Assets</Button>
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
+  const statusStyle = statusStyles[asset.status] || statusStyles.IN_USE;
 
-        {/* Pending Request Alert */}
-        {myPendingRequest && (
-          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-1">
-                <h3 className="font-medium text-yellow-800">
+  return (
+    <>
+      <PageHeader
+        title={asset.model}
+        subtitle={[asset.brand, asset.assetTag, asset.isShared ? 'Shared Resource' : null].filter(Boolean).join(' • ')}
+        breadcrumbs={[
+          { label: 'Assets', href: '/employee/assets' },
+          { label: asset.model },
+        ]}
+        badge={{ text: asset.status.replace('_', ' '), variant: statusStyle.badgeVariant }}
+        actions={
+          <div className="flex gap-2 flex-wrap">
+            {canRequest && <AssetRequestDialog asset={asset} />}
+            {canReturn && <AssetReturnDialog asset={asset} />}
+            <Link href="/employee/assets">
+              <Button variant="outline">Back to Assets</Button>
+            </Link>
+            {isAssignedToMe && (
+              <Link href="/employee/my-assets">
+                <Button variant="outline">My Assets</Button>
+              </Link>
+            )}
+          </div>
+        }
+      />
+
+      <PageContent>
+        {/* Alerts Section */}
+        <div className="space-y-4 mb-6">
+          {/* Pending Request Alert */}
+          {myPendingRequest && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+              <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-amber-800">
                   {myPendingRequest.status === 'PENDING_USER_ACCEPTANCE'
                     ? 'This asset has been assigned to you'
                     : myPendingRequest.status === 'PENDING_ADMIN_APPROVAL'
                     ? 'Your request for this asset is pending approval'
                     : 'Your return request is pending approval'}
                 </h3>
-                <p className="text-sm text-yellow-700 mt-1">
-                  <Link href={`/employee/asset-requests/${myPendingRequest.id}`} className="underline hover:text-yellow-900">
+                <p className="text-sm text-amber-700 mt-1">
+                  <Link href={`/employee/asset-requests/${myPendingRequest.id}`} className="underline hover:text-amber-900 font-medium">
                     View request details
                   </Link>
                 </p>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Show if someone else has a pending request */}
-        {hasPendingRequest && !myPendingRequest && asset.status === 'SPARE' && (
-          <div className="mb-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-gray-600">
-              This asset has a pending request from another user.
-            </p>
-          </div>
-        )}
+          {/* Warranty Expiry Alert */}
+          {asset.warrantyExpiry && (() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const expiryDate = new Date(asset.warrantyExpiry);
+            expiryDate.setHours(0, 0, 0, 0);
+            const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            const isExpired = daysUntilExpiry < 0;
+            const isExpiringSoon = daysUntilExpiry >= 0 && daysUntilExpiry <= 30;
 
-        <div className="grid gap-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
-              <CardDescription>
-                Core asset details and identification
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label>Asset ID/Tag</Label>
-                    <div className="font-mono text-lg font-semibold">
-                      {asset.assetTag || 'Not assigned'}
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Asset Type</Label>
-                    <div className="text-lg font-semibold">{asset.type}</div>
-                  </div>
-                  <div>
-                    <Label>Category/Department</Label>
-                    <div>{asset.category || 'Not specified'}</div>
-                  </div>
-                  <div>
-                    <Label>Brand/Manufacturer</Label>
-                    <div>{asset.brand || 'Not specified'}</div>
-                  </div>
+            if (!isExpired && !isExpiringSoon) return null;
+
+            return (
+              <div className={`rounded-2xl p-4 flex items-start gap-3 ${
+                isExpired
+                  ? 'bg-rose-50 border border-rose-200'
+                  : 'bg-amber-50 border border-amber-200'
+              }`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  isExpired ? 'bg-rose-100' : 'bg-amber-100'
+                }`}>
+                  <AlertTriangle className={`h-5 w-5 ${isExpired ? 'text-rose-600' : 'text-amber-600'}`} />
                 </div>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Model/Version</Label>
-                    <div className="text-lg font-semibold">{asset.model}</div>
-                  </div>
-                  <div>
-                    <Label>Serial Number</Label>
-                    <div className="font-mono">{asset.serial || 'Not provided'}</div>
-                  </div>
-                  <div>
-                    <Label>Status/Condition</Label>
-                    <div>
-                      <Badge variant={getStatusBadgeVariant(asset.status)}>
-                        {asset.status.replace('_', ' ')}
-                      </Badge>
-                    </div>
-                  </div>
+                <div>
+                  <h3 className={`font-semibold ${isExpired ? 'text-rose-800' : 'text-amber-800'}`}>
+                    {isExpired ? 'Warranty Expired' : 'Warranty Expiring Soon'}
+                  </h3>
+                  <p className={`text-sm mt-1 ${isExpired ? 'text-rose-700' : 'text-amber-700'}`}>
+                    {isExpired
+                      ? `Warranty expired on ${formatDate(asset.warrantyExpiry)}`
+                      : `Warranty expires on ${formatDate(asset.warrantyExpiry)} (${daysUntilExpiry} day${daysUntilExpiry === 1 ? '' : 's'} remaining)`
+                    }
+                  </p>
                 </div>
               </div>
-              {asset.configuration && (
-                <div className="mt-6 pt-6 border-t">
-                  <Label>Configuration/Specs</Label>
-                  <div className="text-gray-700 whitespace-pre-wrap mt-2">{asset.configuration}</div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            );
+          })()}
+        </div>
 
-          {/* Financial & Procurement Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Procurement Information</CardTitle>
-              <CardDescription>
-                Purchase details and supplier information
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <Label>Purchase Date</Label>
-                    <div>
-                      {formatDate(asset.purchaseDate, 'Not specified')}
-                    </div>
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Basic Information Card */}
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <Package className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-slate-900">Basic Information</h2>
+                  <p className="text-sm text-slate-500">Core asset details</p>
+                </div>
+              </div>
+              <div className="p-5">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Asset Tag</p>
+                    <p className="font-mono font-semibold text-slate-900">{asset.assetTag || 'Not specified'}</p>
                   </div>
-                  <div>
-                    <Label>Warranty Expiry</Label>
-                    <div>
-                      {asset.warrantyExpiry ? (
-                        <div className="flex items-center gap-2">
-                          <span>{formatDate(asset.warrantyExpiry)}</span>
-                          {asset.warrantyExpiry < new Date() && (
-                            <Badge variant="destructive">Expired</Badge>
-                          )}
-                        </div>
-                      ) : (
-                        'Not specified'
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Type</p>
+                    <p className="font-semibold text-slate-900">{asset.type}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Category</p>
+                    <p className="font-semibold text-slate-900">{asset.assetCategory?.name || 'Not specified'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Brand / Manufacturer</p>
+                    <p className="font-semibold text-slate-900">{asset.brand || 'Not specified'}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl sm:col-span-2">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Model / Version</p>
+                    <p className="font-semibold text-slate-900">{asset.model}</p>
+                  </div>
+                </div>
+
+                {asset.configuration && (
+                  <div className="mt-4">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Configuration/Specs</p>
+                    <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">{asset.configuration}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Procurement Card */}
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <DollarSign className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-slate-900">Procurement Information</h2>
+                  <p className="text-sm text-slate-500">Purchase and warranty details</p>
+                </div>
+              </div>
+              <div className="p-5">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Purchase Date</p>
+                    <p className="font-semibold text-slate-900">{formatDate(asset.purchaseDate, 'Not specified')}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Warranty Expiry</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-slate-900">
+                        {asset.warrantyExpiry ? formatDate(asset.warrantyExpiry) : 'Not specified'}
+                      </p>
+                      {asset.warrantyExpiry && asset.warrantyExpiry < new Date() && (
+                        <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-xs font-medium rounded-full">Expired</span>
                       )}
                     </div>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Supplier/Vendor</Label>
-                    <div>{asset.supplier || 'Not specified'}</div>
+              </div>
+            </div>
+
+            {/* Notes */}
+            {asset.notes && (
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <h2 className="font-semibold text-slate-900">Notes</h2>
+                </div>
+                <div className="p-5">
+                  <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">
+                    {asset.notes}
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            )}
 
-          {/* Assignment Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Assignment</CardTitle>
-              <CardDescription>
-                Current user and project assignments
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <Label>Assigned To (User)</Label>
-                  <div>
-                    {asset.assignedMember ? (
+            {/* Maintenance Records */}
+            <AssetMaintenanceRecords assetId={asset.id} readOnly={true} />
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Assignment Card */}
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  asset.isShared ? 'bg-blue-100' : 'bg-indigo-100'
+                }`}>
+                  {asset.isShared ? (
+                    <Users className="h-5 w-5 text-blue-600" />
+                  ) : (
+                    <User className="h-5 w-5 text-indigo-600" />
+                  )}
+                </div>
+                <h2 className="font-semibold text-slate-900">
+                  {asset.isShared ? 'Shared Resource' : 'Assignment'}
+                </h2>
+              </div>
+              <div className="p-5">
+                {asset.isShared ? (
+                  <div className="text-center py-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Users className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <p className="font-semibold text-slate-900 mb-1">Common/Shared Asset</p>
+                    <p className="text-slate-500 text-sm">This asset is shared among team members</p>
+                    {asset.location && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-xl">
+                        <p className="text-xs font-medium text-blue-600 uppercase tracking-wide mb-1">Location</p>
+                        <p className="font-medium text-blue-800">{asset.location.name}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : asset.assignedMember ? (
+                  <>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <span className="text-indigo-600 font-semibold">
+                          {(() => {
+                            const name = asset.assignedMember?.name;
+                            if (!name || !name.trim()) return '??';
+                            const parts = name.trim().split(/\s+/).filter(Boolean);
+                            if (parts.length === 0) return '??';
+                            return parts.map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                          })()}
+                        </span>
+                      </div>
                       <div>
-                        <div className="font-medium">
-                          {asset.assignedMember.name || 'Unknown User'}
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-slate-900">{asset.assignedMember.name || 'Unknown User'}</p>
                           {isAssignedToMe && (
-                            <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700 border-blue-200">
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                               You
                             </Badge>
                           )}
                         </div>
-                        <div className="text-sm text-gray-600">
-                          {asset.assignedMember.email}
-                        </div>
+                        <p className="text-sm text-slate-500">{asset.assignedMember.email}</p>
                       </div>
-                    ) : (
-                      <span className="text-gray-500">Unassigned</span>
+                    </div>
+                    {asset.assignmentDate && (
+                      <div className="p-3 bg-slate-50 rounded-xl">
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Assigned Since</p>
+                        <p className="font-medium text-slate-900">{formatDate(asset.assignmentDate)}</p>
+                      </div>
                     )}
+                    {isAssignedToMe && (
+                      <Link href="/employee/my-assets?tab=assets" className="mt-4 block">
+                        <Button variant="outline" size="sm" className="w-full">
+                          View My Assets
+                        </Button>
+                      </Link>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <User className="h-6 w-6 text-slate-400" />
+                    </div>
+                    <p className="text-slate-500 text-sm">Unassigned</p>
                   </div>
+                )}
+              </div>
+            </div>
+
+            {/* Location Card - Only show for non-shared assets since shared assets show location in the Assignment card */}
+            {asset.location && !asset.isShared && (
+              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
+                    <MapPin className="h-5 w-5 text-rose-600" />
+                  </div>
+                  <h2 className="font-semibold text-slate-900">Location</h2>
                 </div>
-                <div>
-                  <Label>Location</Label>
-                  <div>
-                    {asset.location?.name || <span className="text-gray-500">Not specified</span>}
-                  </div>
+                <div className="p-5">
+                  <p className="text-slate-700">{asset.location.name}</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Notes / Remarks */}
-          {asset.notes && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Notes / Remarks</CardTitle>
-                <CardDescription>
-                  Additional information about this asset
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-gray-700 whitespace-pre-wrap">{asset.notes}</div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Maintenance Records */}
-          <AssetMaintenanceRecords assetId={asset.id} readOnly={true} />
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
-}
-
-function Label({ children }: { children: React.ReactNode }) {
-  return <div className="text-sm font-medium text-gray-700 mb-1">{children}</div>;
 }
