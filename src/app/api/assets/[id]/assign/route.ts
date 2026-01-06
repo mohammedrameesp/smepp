@@ -109,6 +109,7 @@ const assignAssetSchema = z.object({
   notes: z.string().max(1000).optional().nullable(),
   skipAcceptance: z.boolean().optional().default(false),
   createReturnRequest: z.boolean().optional().default(false),
+  assignmentDate: z.string().optional().nullable(),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -402,16 +403,18 @@ async function sendReassignmentUnassignNotification(
  * @param tenantId - Tenant ID for isolation
  * @param adminId - Admin performing the assignment
  * @param notes - Optional notes
+ * @param customAssignmentDate - Custom assignment date (optional)
  */
 async function directAssign(
   asset: AssetData,
   member: MemberData,
   tenantId: string,
   adminId: string,
-  notes: string | null
+  notes: string | null,
+  customAssignmentDate: string | null
 ): Promise<NextResponse> {
   const previousMember = asset.assignedMember;
-  const assignmentDate = new Date().toISOString().split('T')[0];
+  const assignmentDate = customAssignmentDate || new Date().toISOString().split('T')[0];
 
   // Transaction: Update asset + create history (all tenant-scoped)
   const updatedAsset = await prisma.$transaction(async (tx) => {
@@ -479,13 +482,15 @@ async function directAssign(
  * @param tenantId - Tenant ID for isolation
  * @param adminId - Admin creating the assignment
  * @param notes - Optional notes
+ * @param _customAssignmentDate - Reserved for future use (date applied when user accepts)
  */
 async function createPendingAssignment(
   asset: AssetData,
   member: MemberData,
   tenantId: string,
   adminId: string,
-  notes: string | null
+  notes: string | null,
+  _customAssignmentDate: string | null
 ): Promise<NextResponse> {
   // Transaction: Create request + history (all tenant-scoped)
   const assetRequest = await prisma.$transaction(async (tx) => {
@@ -620,6 +625,7 @@ async function unassignForReassignment(
  * @param adminId - Admin performing the assignment
  * @param notes - Optional notes
  * @param skipAcceptance - Force direct assign
+ * @param assignmentDate - Custom assignment date (optional)
  */
 async function handleAssign(
   asset: AssetData,
@@ -627,7 +633,8 @@ async function handleAssign(
   tenantId: string,
   adminId: string,
   notes: string | null,
-  skipAcceptance: boolean
+  skipAcceptance: boolean,
+  assignmentDate: string | null
 ): Promise<NextResponse> {
   // STEP 1: Verify member exists in same tenant
   const member = await prisma.teamMember.findFirst({
@@ -682,9 +689,9 @@ async function handleAssign(
   };
 
   if (requiresAcceptance) {
-    return createPendingAssignment(refreshedAsset, member, tenantId, adminId, notes);
+    return createPendingAssignment(refreshedAsset, member, tenantId, adminId, notes, assignmentDate);
   } else {
-    return directAssign(refreshedAsset, member, tenantId, adminId, notes);
+    return directAssign(refreshedAsset, member, tenantId, adminId, notes, assignmentDate);
   }
 }
 
@@ -932,7 +939,7 @@ async function assignAssetHandler(request: NextRequest, context: APIContext): Pr
     }, { status: 400 });
   }
 
-  const { assignedMemberId, notes, skipAcceptance, createReturnRequest } = validation.data;
+  const { assignedMemberId, notes, skipAcceptance, createReturnRequest, assignmentDate } = validation.data;
 
   // Get current asset state (TENANT-SCOPED - critical for security)
   const currentAsset = await prisma.asset.findFirst({
@@ -952,7 +959,7 @@ async function assignAssetHandler(request: NextRequest, context: APIContext): Pr
     return handleUnassign(currentAsset, tenantId, adminId, notes || null, createReturnRequest);
   } else {
     // CHECK-IN: Assign asset
-    return handleAssign(currentAsset, assignedMemberId, tenantId, adminId, notes || null, skipAcceptance);
+    return handleAssign(currentAsset, assignedMemberId, tenantId, adminId, notes || null, skipAcceptance, assignmentDate || null);
   }
 }
 

@@ -25,13 +25,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { TeamMemberRole, AssetStatus } from '@prisma/client';
+import { TeamMemberRole, AssetStatus, AssetRequestStatus, AssetRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updateAssetSchema } from '@/lib/validations/operations/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { recordAssetUpdate } from '@/lib/domains/operations/assets/asset-history';
 import { sendEmail } from '@/lib/core/email';
-import { assetAssignmentEmail } from '@/lib/email-templates';
+import { assetAssignmentEmail, assetAssignmentPendingEmail } from '@/lib/email-templates';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import {
   calculateAssetPriceQAR,
@@ -39,6 +39,8 @@ import {
   getFormattedChanges,
   transformAssetUpdateData,
 } from '@/lib/domains/operations/assets/asset-update';
+import { generateRequestNumber } from '@/lib/domains/operations/asset-requests/asset-request-utils';
+import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/assets/[id] - Get Single Asset (Most Used)
@@ -258,20 +260,48 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 5: Validate assigned member belongs to same organization
+    // STEP 5: Validate assigned member and check approval requirements
     // Note: We check data.assignedMemberId before transform since transform converts it to relation syntax
     // ─────────────────────────────────────────────────────────────────────────────
+    let newMemberRequiresApproval = false;
+    let newMemberData: { id: string; name: string | null; email: string; canLogin: boolean } | null = null;
+
     if (data.assignedMemberId) {
       const assignedMember = await prisma.teamMember.findFirst({
         where: {
           id: data.assignedMemberId,
           tenantId,
         },
-        select: { id: true },
+        select: { id: true, name: true, email: true, canLogin: true },
       });
 
       if (!assignedMember) {
         return NextResponse.json({ error: 'Assigned member not found in this organization' }, { status: 400 });
+      }
+
+      newMemberData = assignedMember;
+      // Check if this assignment change requires approval
+      const memberChanging = data.assignedMemberId !== currentAsset.assignedMemberId;
+      if (memberChanging && assignedMember.canLogin) {
+        newMemberRequiresApproval = true;
+
+        // Check for existing pending requests
+        const pendingRequest = await prisma.assetRequest.findFirst({
+          where: {
+            assetId: id,
+            tenantId,
+            status: {
+              in: [AssetRequestStatus.PENDING_ADMIN_APPROVAL, AssetRequestStatus.PENDING_USER_ACCEPTANCE],
+            },
+          },
+        });
+
+        if (pendingRequest) {
+          return NextResponse.json({
+            error: 'Asset has a pending assignment request. Please resolve it first.',
+            pendingRequestId: pendingRequest.id
+          }, { status: 400 });
+        }
       }
     }
 
@@ -324,6 +354,19 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 7.5: If approval is required, don't update assignment in this request
+    // Instead, we'll create an AssetRequest after updating other fields
+    // ─────────────────────────────────────────────────────────────────────────────
+    if (newMemberRequiresApproval) {
+      // Remove assignment from update data - it will be handled via AssetRequest
+      delete updateData.assignedMember;
+      // Also don't change status to IN_USE if we're creating a pending assignment
+      if (data.status === AssetStatus.IN_USE && currentAsset.status !== AssetStatus.IN_USE) {
+        delete updateData.status;
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
     // STEP 8: Update asset in database
     // ─────────────────────────────────────────────────────────────────────────────
     const asset = await prisma.asset.update({
@@ -341,7 +384,136 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     });
 
     // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 8.5: If approval is required, create AssetRequest and return early
+    // ─────────────────────────────────────────────────────────────────────────────
+    if (newMemberRequiresApproval && newMemberData) {
+      // If currently assigned to someone else, unassign first
+      if (currentAsset.assignedMemberId && currentAsset.assignedMemberId !== data.assignedMemberId) {
+        const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
+
+        // Unassign from previous member
+        await prisma.asset.update({
+          where: { id },
+          data: {
+            assignedMemberId: null,
+            assignmentDate: null,
+            status: AssetStatus.SPARE,
+          },
+        });
+
+        await recordAssetAssignment(
+          id,
+          currentAsset.assignedMemberId,
+          null,
+          session.user.id,
+          `Reassigned to ${newMemberData.name || newMemberData.email} (pending acceptance)`
+        );
+      }
+
+      // Create pending assignment request
+      const requestNumber = await generateRequestNumber(tenantId);
+      const assetRequest = await prisma.assetRequest.create({
+        data: {
+          tenantId,
+          requestNumber,
+          assetId: id,
+          memberId: newMemberData.id,
+          type: AssetRequestType.ADMIN_ASSIGNMENT,
+          status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
+          reason: data.notes || 'Assigned via asset edit',
+          assignedById: session.user.id,
+        },
+        include: {
+          asset: { select: { id: true, assetTag: true, model: true, brand: true, type: true } },
+          member: { select: { id: true, name: true, email: true } },
+        },
+      });
+
+      // Create history entry for the request
+      await prisma.assetRequestHistory.create({
+        data: {
+          assetRequestId: assetRequest.id,
+          action: 'CREATED',
+          oldStatus: null,
+          newStatus: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
+          notes: data.notes || 'Admin assignment created via asset edit',
+          performedById: session.user.id,
+        },
+      });
+
+      // Log activity
+      await logAction(tenantId, session.user.id, ActivityActions.ASSET_ASSIGNMENT_CREATED, 'AssetRequest', assetRequest.id, {
+        requestNumber: assetRequest.requestNumber,
+        assetTag: asset.assetTag,
+        assetModel: asset.model,
+        memberName: newMemberData.name || newMemberData.email,
+      });
+
+      // Send notification to user (non-blocking)
+      try {
+        const org = await prisma.organization.findUnique({
+          where: { id: tenantId },
+          select: { name: true, slug: true },
+        });
+
+        // Get admin name for notification
+        const admin = await prisma.teamMember.findUnique({
+          where: { id: session.user.id },
+          select: { name: true, email: true },
+        });
+
+        // In-app notification
+        await createNotification(
+          NotificationTemplates.assetAssignmentPending(
+            newMemberData.id,
+            asset.assetTag || asset.model,
+            asset.model,
+            admin?.name || admin?.email || 'Admin',
+            assetRequest.requestNumber,
+            assetRequest.id
+          ),
+          tenantId
+        );
+
+        // Email notification
+        const emailContent = assetAssignmentPendingEmail({
+          requestNumber: assetRequest.requestNumber,
+          assetTag: asset.assetTag || '',
+          assetModel: asset.model,
+          assetBrand: asset.brand || '',
+          assetType: asset.type,
+          userName: newMemberData.name || newMemberData.email,
+          assignerName: admin?.name || admin?.email || 'Admin',
+          orgSlug: org?.slug || '',
+          orgName: org?.name || 'Organization',
+        });
+        await sendEmail({
+          to: newMemberData.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+          text: emailContent.text,
+        });
+      } catch {
+        // Don't fail if notification fails
+      }
+
+      // Return with pending assignment info
+      return NextResponse.json({
+        ...asset,
+        _pendingAssignment: true,
+        pendingRequest: {
+          id: assetRequest.id,
+          requestNumber: assetRequest.requestNumber,
+          memberId: newMemberData.id,
+          memberName: newMemberData.name || newMemberData.email,
+        },
+        message: `Assignment pending acceptance by ${newMemberData.name || newMemberData.email}`,
+      });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
     // STEP 9: Handle assignment changes (with custom date support)
+    // Only for direct assignments (canLogin=false members)
     // ─────────────────────────────────────────────────────────────────────────────
     const memberChanged = data.assignedMemberId !== undefined && data.assignedMemberId !== currentAsset.assignedMemberId;
 

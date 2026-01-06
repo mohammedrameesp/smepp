@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -48,6 +49,7 @@ export function AssetAssignDialog({ asset, trigger }: AssetAssignDialogProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [notes, setNotes] = useState('');
+  const [assignmentDate, setAssignmentDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,26 +86,37 @@ export function AssetAssignDialog({ asset, trigger }: AssetAssignDialogProps) {
     setError(null);
 
     try {
-      const response = await fetch('/api/asset-requests', {
+      // Use the assign endpoint which handles approval workflow properly
+      const response = await fetch(`/api/assets/${asset.id}/assign`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          assetId: asset.id,
-          type: 'ADMIN_ASSIGNMENT',
-          userId: selectedUserId,
+          assignedMemberId: selectedUserId,
           notes: notes.trim() || undefined,
+          assignmentDate: assignmentDate || undefined,
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.error || 'Failed to create assignment');
       }
 
       setOpen(false);
       setSelectedUserId('');
       setNotes('');
-      toast.success('Asset assigned successfully');
+      setAssignmentDate(new Date().toISOString().split('T')[0]);
+
+      // Show appropriate message based on response
+      if (data.type === 'pending_acceptance') {
+        toast.success(`Assignment pending acceptance by ${data.request?.member?.name || data.request?.member?.email || 'user'}`);
+      } else if (data.type === 'direct_assignment') {
+        toast.success('Asset assigned successfully');
+      } else {
+        toast.success(data.message || 'Asset assigned successfully');
+      }
+
       router.refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create assignment';
@@ -161,6 +174,20 @@ export function AssetAssignDialog({ asset, trigger }: AssetAssignDialogProps) {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="assignmentDate">Assignment Date</Label>
+            <Input
+              id="assignmentDate"
+              type="date"
+              value={assignmentDate}
+              onChange={(e) => setAssignmentDate(e.target.value)}
+              disabled={isSubmitting}
+            />
+            <p className="text-xs text-gray-500">
+              The date when the asset is/was assigned to the user.
+            </p>
           </div>
 
           <div className="space-y-2">

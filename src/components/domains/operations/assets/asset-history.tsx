@@ -214,6 +214,16 @@ export default function AssetHistory({ assetId }: AssetHistoryProps) {
                         {formatRelativeTime(entry.createdAt)}
                       </span>
                     </div>
+                    {/* Show detailed changes for UPDATED actions */}
+                    {entry.action === 'UPDATED' && entry.notes && (
+                      <div className="mt-1 text-xs text-gray-600 space-y-0.5">
+                        {entry.notes.split('\n').map((change, i) => (
+                          <div key={i} className="truncate" title={change}>
+                            {change}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {entry.performedBy && (
                       <div className="text-xs text-gray-500">
                         by {formatMemberName(entry.performedBy)}

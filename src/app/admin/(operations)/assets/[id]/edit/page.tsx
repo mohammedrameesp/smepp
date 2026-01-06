@@ -390,15 +390,24 @@ export default function EditAssetPage() {
         }),
       });
 
+      const result = await response.json();
+
       if (response.ok) {
-        setShowSuccessMessage(true);
+        // Check if assignment is pending approval
+        if (result._pendingAssignment && result.pendingRequest) {
+          toast.success(
+            `Asset updated. Assignment pending acceptance by ${result.pendingRequest.memberName}.`,
+            { duration: 5000 }
+          );
+        } else {
+          setShowSuccessMessage(true);
+        }
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setTimeout(() => {
           router.push('/admin/assets');
         }, 2000);
       } else {
-        const errorData = await response.json();
-        toast.error(`Failed to update asset: ${errorData.error || 'Unknown error'}`, { duration: 10000 });
+        toast.error(`Failed to update asset: ${result.error || 'Unknown error'}`, { duration: 10000 });
       }
     } catch (error) {
       console.error('Error updating asset:', error);
