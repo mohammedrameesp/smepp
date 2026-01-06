@@ -395,6 +395,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
             notes={request.notes}
             open={showAcceptDialog}
             onOpenChange={setShowAcceptDialog}
+            onSuccess={fetchRequest}
           />
         )}
       </div>

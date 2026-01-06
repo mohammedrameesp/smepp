@@ -42,6 +42,7 @@ interface AssetAcceptDialogProps {
   notes?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 export function AssetAcceptDialog({
@@ -51,6 +52,7 @@ export function AssetAcceptDialog({
   notes,
   open,
   onOpenChange,
+  onSuccess,
 }: AssetAcceptDialogProps) {
   const router = useRouter();
   const [mode, setMode] = useState<'view' | 'accept' | 'decline'>('view');
@@ -77,6 +79,7 @@ export function AssetAcceptDialog({
 
       onOpenChange(false);
       router.refresh();
+      onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to accept assignment');
     } finally {
@@ -107,6 +110,7 @@ export function AssetAcceptDialog({
 
       onOpenChange(false);
       router.refresh();
+      onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to decline assignment');
     } finally {
