@@ -37,7 +37,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Package, ShoppingCart, MapPin, Info, Wrench, RefreshCw } from 'lucide-react';
 import { DisposeAssetDialog } from '@/components/domains/operations/assets';
-import { toInputDateString } from '@/lib/date-format';
+import { toInputDateString, formatDate } from '@/lib/date-format';
 import { updateAssetSchema, type UpdateAssetRequest } from '@/lib/validations/operations/assets';
 import { AssetStatus } from '@prisma/client';
 import { CategorySelector } from '@/components/domains/operations/assets/category-selector';
@@ -94,6 +94,7 @@ export default function EditAssetPage() {
   const [isTagManuallyEdited, setIsTagManuallyEdited] = useState(false);
   const [hasMultipleLocations, setHasMultipleLocations] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [usingFallbackRates, setUsingFallbackRates] = useState(false);
 
   const {
     register,
@@ -167,7 +168,13 @@ export default function EditAssetPage() {
     try {
       const response = await fetch('/api/organizations/settings');
       if (response.ok) {
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          console.error('Failed to parse org settings response');
+          return;
+        }
         const primary = data.settings?.currency || 'QAR';
         const additional: string[] = data.settings?.additionalCurrencies || [];
         const currencies = [primary, ...additional.filter((c: string) => c !== primary)];
@@ -179,23 +186,33 @@ export default function EditAssetPage() {
         // Fetch exchange rates for all currencies
         const rates: Record<string, number> = { ...DEFAULT_RATES_TO_QAR };
         const allCurrencies = currencies.filter((c: string) => c !== 'QAR');
+        let anyFallback = false;
         await Promise.all(
           allCurrencies.map(async (currency: string) => {
             try {
               const rateRes = await fetch(`/api/settings/exchange-rate?currency=${currency}`);
               if (rateRes.ok) {
                 const rateData = await rateRes.json();
-                if (rateData.rate) rates[currency] = rateData.rate;
+                if (rateData.rate) {
+                  rates[currency] = rateData.rate;
+                } else {
+                  anyFallback = true;
+                }
+              } else {
+                anyFallback = true;
               }
             } catch {
               // Use default rate
+              anyFallback = true;
             }
           })
         );
         setExchangeRates(rates);
+        setUsingFallbackRates(anyFallback);
       }
     } catch (error) {
       console.error('Error fetching org settings:', error);
+      setUsingFallbackRates(true);
     }
   };
 
@@ -209,8 +226,12 @@ export default function EditAssetPage() {
       try {
         const response = await fetch('/api/locations');
         if (response.ok) {
-          const data = await response.json();
-          setLocations(data.locations || []);
+          try {
+            const data = await response.json();
+            setLocations(data.locations || []);
+          } catch {
+            console.error('Failed to parse locations response');
+          }
         }
       } catch (error) {
         console.error('Error fetching locations:', error);
@@ -250,8 +271,12 @@ export default function EditAssetPage() {
     try {
       const response = await fetch('/api/users');
       if (response.ok) {
-        const data = await response.json();
-        setUsers(data);
+        try {
+          const data = await response.json();
+          setUsers(data);
+        } catch {
+          console.error('Failed to parse users response');
+        }
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -262,8 +287,12 @@ export default function EditAssetPage() {
     try {
       const response = await fetch('/api/depreciation/categories');
       if (response.ok) {
-        const data = await response.json();
-        setDepreciationCategories(data.categories || []);
+        try {
+          const data = await response.json();
+          setDepreciationCategories(data.categories || []);
+        } catch {
+          console.error('Failed to parse depreciation categories response');
+        }
       }
     } catch (error) {
       console.error('Error fetching depreciation categories:', error);
@@ -274,7 +303,14 @@ export default function EditAssetPage() {
     try {
       const response = await fetch(`/api/assets/${id}`);
       if (response.ok) {
-        const assetData = await response.json();
+        let assetData;
+        try {
+          assetData = await response.json();
+        } catch {
+          toast.error('Failed to load asset data', { duration: 10000 });
+          router.push('/admin/assets');
+          return;
+        }
         setAsset(assetData);
         reset({
           assetTag: assetData.assetTag || '',
@@ -321,8 +357,12 @@ export default function EditAssetPage() {
     try {
       const response = await fetch(`/api/assets/${assetId}/maintenance`);
       if (response.ok) {
-        const records = await response.json();
-        setMaintenanceRecords(records);
+        try {
+          const records = await response.json();
+          setMaintenanceRecords(records);
+        } catch {
+          console.error('Failed to parse maintenance records');
+        }
       }
     } catch (error) {
       console.error('Error fetching maintenance records:', error);
@@ -359,20 +399,6 @@ export default function EditAssetPage() {
 
   const onSubmit = async (data: UpdateAssetRequest) => {
     try {
-      // Calculate price in QAR based on currency
-      const price = data.price;
-      let priceInQAR = null;
-
-      if (price) {
-        if (data.priceCurrency === 'QAR' || !data.priceCurrency) {
-          priceInQAR = price;
-        } else {
-          // Convert any other currency to QAR using exchange rate
-          const rate = exchangeRates[data.priceCurrency as string] || 1;
-          priceInQAR = price * rate;
-        }
-      }
-
       const response = await fetch(`/api/assets/${params?.id}`, {
         method: 'PUT',
         headers: {
@@ -381,8 +407,9 @@ export default function EditAssetPage() {
         body: JSON.stringify({
           ...data,
           categoryId: data.categoryId || null,
-          price: price,
-          priceQAR: priceInQAR,
+          price: data.price,
+          // Let API calculate priceQAR with authoritative tenant exchange rates
+          priceQAR: undefined,
           assetTag: data.assetTag || null,
           // Clear assignment for shared assets
           assignedMemberId: data.isShared ? null : data.assignedMemberId,
@@ -390,9 +417,13 @@ export default function EditAssetPage() {
         }),
       });
 
-      const result = await response.json();
-
       if (response.ok) {
+        let result;
+        try {
+          result = await response.json();
+        } catch {
+          result = {};
+        }
         // Check if assignment is pending approval
         if (result._pendingAssignment && result.pendingRequest) {
           toast.success(
@@ -407,7 +438,27 @@ export default function EditAssetPage() {
           router.push('/admin/assets');
         }, 2000);
       } else {
-        toast.error(`Failed to update asset: ${result.error || 'Unknown error'}`, { duration: 10000 });
+        // Try to parse error response
+        let errorMessage = 'Failed to update asset';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+          // Parse field-specific validation errors
+          if (errorData.details && Array.isArray(errorData.details)) {
+            const fieldErrors = errorData.details
+              .map((d: { path?: string[]; message?: string }) =>
+                d.path?.length ? `${d.path.join('.')}: ${d.message}` : d.message
+              )
+              .filter(Boolean)
+              .join(', ');
+            if (fieldErrors) {
+              errorMessage = fieldErrors;
+            }
+          }
+        } catch {
+          // Response wasn't valid JSON
+        }
+        toast.error(errorMessage, { duration: 10000 });
       }
     } catch (error) {
       console.error('Error updating asset:', error);
@@ -695,6 +746,9 @@ export default function EditAssetPage() {
                       ) : (
                         <>≈ QAR {(watchedPrice * (exchangeRates[watchedCurrency as string] || 1)).toFixed(2)}</>
                       )}
+                      {usingFallbackRates && watchedCurrency !== 'QAR' && (
+                        <span className="ml-2 text-amber-600" title="Using default exchange rate">⚠</span>
+                      )}
                     </p>
                   )}
                 </div>
@@ -959,11 +1013,7 @@ export default function EditAssetPage() {
                         <div className="flex justify-between items-start">
                           <div>
                             <p className="text-sm font-medium text-gray-900">
-                              {new Date(record.maintenanceDate).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                              })}
+                              {formatDate(record.maintenanceDate)}
                             </p>
                             {record.notes && (
                               <p className="text-sm text-gray-600 mt-1">{record.notes}</p>
