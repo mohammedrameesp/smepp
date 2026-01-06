@@ -3,10 +3,9 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Loader2, Clock, CheckCircle, XCircle, FileCheck, Trash2, Pencil } from 'lucide-react';
+import { ArrowLeft, Loader2, Clock, CheckCircle, XCircle, FileCheck, Trash2, Pencil, FileText, ShoppingCart, DollarSign } from 'lucide-react';
 import { StatusBadge, PriorityBadge } from '@/components/domains/projects/purchase-requests';
 import { getStatusLabel, canDeleteRequest, canEditRequest } from '@/lib/purchase-request-utils';
 import {
@@ -20,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 interface PurchaseRequestItem {
   id: string;
@@ -162,190 +162,267 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
-      </div>
+      <>
+        <PageHeader
+          title="Loading..."
+          subtitle="Please wait while we load the purchase request"
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/employee' },
+            { label: 'Purchase Requests', href: '/employee/purchase-requests' },
+            { label: 'Details' }
+          ]}
+        />
+        <PageContent>
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+          </div>
+        </PageContent>
+      </>
     );
   }
 
   if (error && !request) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="text-center">
-          <p className="text-red-600">{error}</p>
-          <Button onClick={() => router.back()} variant="outline" className="mt-4">
-            Go Back
-          </Button>
-        </div>
-      </div>
+      <>
+        <PageHeader
+          title="Error"
+          subtitle="Failed to load purchase request"
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/employee' },
+            { label: 'Purchase Requests', href: '/employee/purchase-requests' },
+            { label: 'Details' }
+          ]}
+        />
+        <PageContent>
+          <div className="text-center bg-white rounded-2xl border border-slate-200 p-12">
+            <p className="text-rose-600">{error}</p>
+            <Button onClick={() => router.back()} variant="outline" className="mt-4">
+              Go Back
+            </Button>
+          </div>
+        </PageContent>
+      </>
     );
   }
 
   if (!request) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="text-center">
-          <p className="text-gray-600">Purchase request not found</p>
-          <Button onClick={() => router.back()} variant="outline" className="mt-4">
-            Go Back
-          </Button>
-        </div>
-      </div>
+      <>
+        <PageHeader
+          title="Not Found"
+          subtitle="Purchase request not found"
+          breadcrumbs={[
+            { label: 'Dashboard', href: '/employee' },
+            { label: 'Purchase Requests', href: '/employee/purchase-requests' },
+            { label: 'Details' }
+          ]}
+        />
+        <PageContent>
+          <div className="text-center bg-white rounded-2xl border border-slate-200 p-12">
+            <p className="text-slate-600">Purchase request not found</p>
+            <Button onClick={() => router.back()} variant="outline" className="mt-4">
+              Go Back
+            </Button>
+          </div>
+        </PageContent>
+      </>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <Link href="/employee/purchase-requests">
-            <Button variant="ghost" size="sm" className="mb-4">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to My Requests
-            </Button>
-          </Link>
-
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {request.referenceNumber}
-              </h1>
-              <p className="text-gray-600">{request.title}</p>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <div className="flex gap-2">
-                <StatusBadge status={request.status} />
-                <PriorityBadge priority={request.priority} />
-              </div>
-              {canDeleteRequest(request.status) && (
-                <div className="flex gap-2">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm" disabled={deleting}>
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete Purchase Request</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Are you sure you want to delete this purchase request? This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-                          {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              )}
-            </div>
+    <>
+      <PageHeader
+        title={request.referenceNumber}
+        subtitle={request.title}
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/employee' },
+          { label: 'Purchase Requests', href: '/employee/purchase-requests' },
+          { label: 'Details' }
+        ]}
+        actions={
+          <div className="flex items-center gap-2">
+            {canDeleteRequest(request.status) && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" disabled={deleting}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Purchase Request</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete this purchase request? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                      {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            <Link href="/employee/purchase-requests">
+              <Button variant="outline">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Requests
+              </Button>
+            </Link>
           </div>
+        }
+      >
+        <div className="flex flex-wrap items-center gap-3 mt-4">
+          <StatusBadge status={request.status} />
+          <PriorityBadge priority={request.priority} />
         </div>
+      </PageHeader>
 
+      <PageContent className="max-w-4xl">
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-600">
+          <div className="mb-4 p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-600">
             {error}
           </div>
         )}
 
         <div className="space-y-6">
           {/* Request Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Request Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                <FileText className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Request Details</h2>
+                <p className="text-sm text-slate-500">Purchase request information</p>
+              </div>
+            </div>
+            <div className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">Request Date</p>
-                  <p className="font-medium">{formatDate(request.requestDate)}</p>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Request Date</p>
+                  <p className="font-semibold text-slate-900">{formatDate(request.requestDate)}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Needed By</p>
-                  <p className="font-medium">{formatDate(request.neededByDate)}</p>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Needed By</p>
+                  <p className="font-semibold text-slate-900">{formatDate(request.neededByDate)}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Total Amount</p>
-                  <p className="font-medium text-lg">{formatAmount(request.totalAmount, request.currency)}</p>
+                <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
+                  <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide mb-1">Total Amount</p>
+                  <p className="font-semibold text-emerald-700 text-lg">{formatAmount(request.totalAmount, request.currency)}</p>
                   {request.currency !== 'QAR' && request.totalAmountQAR && (
-                    <p className="text-xs text-gray-500">≈ QAR {formatAmount(request.totalAmountQAR, 'QAR').replace(' QAR', '')}</p>
+                    <p className="text-xs text-emerald-600 mt-1">≈ QAR {formatAmount(request.totalAmountQAR, 'QAR').replace(' QAR', '')}</p>
                   )}
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Items</p>
-                  <p className="font-medium">{request.items.length}</p>
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Items</p>
+                  <p className="font-semibold text-slate-900">{request.items.length}</p>
                 </div>
               </div>
 
               {request.description && (
                 <div>
-                  <p className="text-sm text-gray-500">Description</p>
-                  <p className="mt-1 text-gray-700 whitespace-pre-wrap">{request.description}</p>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Description</p>
+                  <p className="text-slate-700 whitespace-pre-wrap">{request.description}</p>
                 </div>
               )}
 
               {request.justification && (
                 <div>
-                  <p className="text-sm text-gray-500">Business Justification</p>
-                  <p className="mt-1 text-gray-700 whitespace-pre-wrap">{request.justification}</p>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Business Justification</p>
+                  <p className="text-slate-700 whitespace-pre-wrap">{request.justification}</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Review Notes (if reviewed) */}
           {request.reviewedBy && (
-            <Card className={
-              request.status === 'APPROVED' ? 'border-green-200 bg-green-50' :
-              request.status === 'REJECTED' ? 'border-red-200 bg-red-50' :
-              ''
-            }>
-              <CardHeader>
-                <CardTitle className="text-sm">
-                  {request.status === 'APPROVED' ? 'Approval Information' :
-                   request.status === 'REJECTED' ? 'Rejection Information' :
-                   'Review Information'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
+            <div className={`rounded-2xl border overflow-hidden ${
+              request.status === 'APPROVED' ? 'bg-emerald-50 border-emerald-200' :
+              request.status === 'REJECTED' ? 'bg-rose-50 border-rose-200' :
+              'bg-white border-slate-200'
+            }`}>
+              <div className={`px-5 py-4 border-b flex items-center gap-3 ${
+                request.status === 'APPROVED' ? 'border-emerald-200 bg-emerald-100/50' :
+                request.status === 'REJECTED' ? 'border-rose-200 bg-rose-100/50' :
+                'border-slate-100'
+              }`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  request.status === 'APPROVED' ? 'bg-emerald-200' :
+                  request.status === 'REJECTED' ? 'bg-rose-200' :
+                  'bg-blue-100'
+                }`}>
+                  {request.status === 'APPROVED' ? <CheckCircle className="h-5 w-5 text-emerald-700" /> :
+                   request.status === 'REJECTED' ? <XCircle className="h-5 w-5 text-rose-700" /> :
+                   <FileCheck className="h-5 w-5 text-blue-600" />}
+                </div>
+                <div>
+                  <h2 className={`font-semibold ${
+                    request.status === 'APPROVED' ? 'text-emerald-900' :
+                    request.status === 'REJECTED' ? 'text-rose-900' :
+                    'text-slate-900'
+                  }`}>
+                    {request.status === 'APPROVED' ? 'Approval Information' :
+                     request.status === 'REJECTED' ? 'Rejection Information' :
+                     'Review Information'}
+                  </h2>
+                  <p className={`text-sm ${
+                    request.status === 'APPROVED' ? 'text-emerald-700' :
+                    request.status === 'REJECTED' ? 'text-rose-700' :
+                    'text-slate-500'
+                  }`}>
+                    Review details and notes
+                  </p>
+                </div>
+              </div>
+              <div className="p-5 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-gray-500">Reviewed By</p>
-                    <p className="font-medium">{request.reviewedBy.name || request.reviewedBy.email}</p>
+                  <div className={`p-4 rounded-xl ${
+                    request.status === 'APPROVED' ? 'bg-emerald-100/50' :
+                    request.status === 'REJECTED' ? 'bg-rose-100/50' :
+                    'bg-slate-50'
+                  }`}>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Reviewed By</p>
+                    <p className="font-semibold text-slate-900">{request.reviewedBy.name || request.reviewedBy.email}</p>
                   </div>
                   {request.reviewedAt && (
-                    <div>
-                      <p className="text-gray-500">Reviewed At</p>
-                      <p className="font-medium">{formatDateTime(request.reviewedAt)}</p>
+                    <div className={`p-4 rounded-xl ${
+                      request.status === 'APPROVED' ? 'bg-emerald-100/50' :
+                      request.status === 'REJECTED' ? 'bg-rose-100/50' :
+                      'bg-slate-50'
+                    }`}>
+                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Reviewed At</p>
+                      <p className="font-semibold text-slate-900">{formatDateTime(request.reviewedAt)}</p>
                     </div>
                   )}
                 </div>
                 {request.reviewNotes && (
                   <div>
-                    <p className="text-gray-500">Notes</p>
-                    <p className="text-gray-700 whitespace-pre-wrap">{request.reviewNotes}</p>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Notes</p>
+                    <p className="text-slate-700 whitespace-pre-wrap">{request.reviewNotes}</p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* Line Items */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Line Items ({request.items.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border">
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                <ShoppingCart className="h-5 w-5 text-indigo-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Line Items ({request.items.length})</h2>
+                <p className="text-sm text-slate-500">Requested items and pricing</p>
+              </div>
+            </div>
+            <div className="p-5">
+              <div className="rounded-xl border border-slate-200 overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -363,16 +440,16 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
                         <TableCell className="font-mono text-sm">{item.itemNumber}</TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-medium">{item.description}</p>
+                            <p className="font-medium text-slate-900">{item.description}</p>
                             {item.supplier && (
-                              <p className="text-xs text-gray-500">Supplier: {item.supplier}</p>
+                              <p className="text-xs text-slate-500">Supplier: {item.supplier}</p>
                             )}
                             {item.notes && (
-                              <p className="text-xs text-gray-500">{item.notes}</p>
+                              <p className="text-xs text-slate-500">{item.notes}</p>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm text-gray-600">{item.category || '-'}</TableCell>
+                        <TableCell className="text-sm text-slate-600">{item.category || '-'}</TableCell>
                         <TableCell className="text-right">{item.quantity}</TableCell>
                         <TableCell className="text-right">{formatAmount(item.unitPrice, item.currency)}</TableCell>
                         <TableCell className="text-right font-medium">{formatAmount(item.totalPrice, item.currency)}</TableCell>
@@ -381,53 +458,59 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
                   </TableBody>
                 </Table>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* History */}
-          <Card>
-            <CardHeader>
-              <CardTitle>History</CardTitle>
-            </CardHeader>
-            <CardContent>
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Clock className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">History</h2>
+                <p className="text-sm text-slate-500">Request activity timeline</p>
+              </div>
+            </div>
+            <div className="p-5">
               <div className="space-y-4">
                 {request.history.map((entry) => (
-                  <div key={entry.id} className="flex gap-4 pb-4 border-b last:border-0">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                      {entry.action === 'CREATED' && <Clock className="h-4 w-4 text-gray-500" />}
-                      {entry.newStatus === 'APPROVED' && <CheckCircle className="h-4 w-4 text-green-500" />}
-                      {entry.newStatus === 'REJECTED' && <XCircle className="h-4 w-4 text-red-500" />}
-                      {entry.newStatus === 'COMPLETED' && <FileCheck className="h-4 w-4 text-gray-500" />}
+                  <div key={entry.id} className="flex gap-4 pb-4 border-b border-slate-200 last:border-0">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                      {entry.action === 'CREATED' && <Clock className="h-4 w-4 text-slate-500" />}
+                      {entry.newStatus === 'APPROVED' && <CheckCircle className="h-4 w-4 text-emerald-500" />}
+                      {entry.newStatus === 'REJECTED' && <XCircle className="h-4 w-4 text-rose-500" />}
+                      {entry.newStatus === 'COMPLETED' && <FileCheck className="h-4 w-4 text-slate-500" />}
                       {entry.action === 'STATUS_CHANGED' && !['APPROVED', 'REJECTED', 'COMPLETED'].includes(entry.newStatus || '') && (
                         <Clock className="h-4 w-4 text-blue-500" />
                       )}
-                      {entry.action === 'UPDATED' && <Pencil className="h-4 w-4 text-gray-500" />}
+                      {entry.action === 'UPDATED' && <Pencil className="h-4 w-4 text-slate-500" />}
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-medium text-sm">
+                          <p className="font-medium text-sm text-slate-900">
                             {entry.action === 'CREATED' && 'Request Created'}
                             {entry.action === 'STATUS_CHANGED' && `Status changed to ${getStatusLabel(entry.newStatus || '')}`}
                             {entry.action === 'UPDATED' && 'Request Updated'}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-slate-500">
                             by {entry.performedBy.name || entry.performedBy.email}
                           </p>
                         </div>
-                        <p className="text-xs text-gray-400">{formatDateTime(entry.createdAt)}</p>
+                        <p className="text-xs text-slate-400">{formatDateTime(entry.createdAt)}</p>
                       </div>
                       {entry.details && (
-                        <p className="mt-1 text-sm text-gray-600">{entry.details}</p>
+                        <p className="mt-1 text-sm text-slate-600">{entry.details}</p>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }

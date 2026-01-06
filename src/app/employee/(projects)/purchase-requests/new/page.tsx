@@ -16,6 +16,7 @@ import {
   COST_TYPES,
   PAYMENT_MODES,
 } from '@/lib/purchase-request-utils';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 // Type configuration for dynamic UI based on purchase type
 const TYPE_CONFIG: Record<string, {
@@ -387,27 +388,28 @@ export default function NewPurchaseRequestPage() {
   const { totalOneTime, totalMonthly, totalContractValue } = calculateTotals();
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
+    <>
+      <PageHeader
+        title="New Purchase Request"
+        subtitle="Fill in the details below to submit a new purchase request"
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/employee' },
+          { label: 'Purchase Requests', href: '/employee/purchase-requests' },
+          { label: 'New Request' }
+        ]}
+        actions={
           <Link href="/employee/purchase-requests">
-            <Button variant="ghost" size="sm" className="mb-4">
+            <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to My Requests
+              Back to Requests
             </Button>
           </Link>
+        }
+      />
 
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            New Purchase Request
-          </h1>
-          <p className="text-gray-600">
-            Fill in the details below to submit a new purchase request
-          </p>
-        </div>
-
+      <PageContent className="max-w-4xl">
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md text-red-600">
+          <div className="mb-4 p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-600">
             {error}
           </div>
         )}
@@ -988,7 +990,7 @@ export default function NewPurchaseRequestPage() {
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </PageContent>
+    </>
   );
 }
