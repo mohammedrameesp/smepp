@@ -27,6 +27,7 @@ import {
   UpcomingCard,
   QuickActions,
 } from '@/components/employee/dashboard';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -363,58 +364,41 @@ export default async function EmployeeDashboard() {
 
     return (
       <>
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-6xl mx-auto px-4 py-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-                  {getGreeting()}, {session.user.name?.split(' ')[0]}!
-                </h1>
-                <div className="flex items-center gap-3 text-sm text-gray-500">
-                  <span>{format(new Date(), 'EEEE, MMMM d, yyyy')}</span>
-                  {tenure && (
-                    <>
-                      <span className="text-gray-300">•</span>
-                      <span className="text-gray-600 font-medium">{tenure} with the company</span>
-                    </>
-                  )}
-                </div>
+        <PageHeader
+          title={`${getGreeting()}, ${session.user.name?.split(' ')[0]}!`}
+          subtitle={tenure ? `${format(new Date(), 'EEEE, MMMM d, yyyy')} • ${tenure} with the company` : format(new Date(), 'EEEE, MMMM d, yyyy')}
+        >
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
+              <Palmtree className="h-4 w-4 text-blue-400" />
+              <span className="text-blue-400 text-sm font-medium">
+                {totalAvailableLeaveDays.toFixed(1)} leave days
+              </span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
+              <Laptop className="h-4 w-4 text-emerald-400" />
+              <span className="text-emerald-400 text-sm font-medium">
+                {activeAssets.length} assets
+              </span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-500/20 rounded-lg">
+              <Clock className="h-4 w-4 text-violet-400" />
+              <span className="text-violet-400 text-sm font-medium">
+                {totalPendingRequests} pending
+              </span>
+            </div>
+            {documentAlerts.length > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
+                <AlertTriangle className="h-4 w-4 text-amber-400" />
+                <span className="text-amber-400 text-sm font-medium">
+                  {documentAlerts.length} {documentAlerts.length === 1 ? 'alert' : 'alerts'}
+                </span>
               </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <StatCard
-                icon={Palmtree}
-                value={totalAvailableLeaveDays.toFixed(1)}
-                label="Leave Days"
-                color="blue"
-              />
-              <StatCard
-                icon={Laptop}
-                value={activeAssets.length}
-                label="Assets"
-                color="emerald"
-              />
-              <StatCard
-                icon={Clock}
-                value={totalPendingRequests}
-                label="Pending"
-                color="violet"
-              />
-              <StatCard
-                icon={AlertTriangle}
-                value={documentAlerts.length}
-                label={documentAlerts.length === 1 ? 'Alert' : 'Alerts'}
-                color="amber"
-              />
-            </div>
+            )}
           </div>
-        </div>
+        </PageHeader>
 
-        {/* Main Content */}
-        <main className="max-w-6xl mx-auto px-4 py-6">
+        <PageContent>
           {/* Alert Banner */}
           <AlertBanner alerts={documentAlerts} className="mb-4" />
 
@@ -444,7 +428,7 @@ export default async function EmployeeDashboard() {
             <UpcomingCard events={upcomingEvents} />
             <QuickActions />
           </div>
-        </main>
+        </PageContent>
 
         {/* Mobile Bottom Navigation */}
         <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
@@ -479,19 +463,18 @@ export default async function EmployeeDashboard() {
   } catch (error) {
     console.error('Error in EmployeeDashboard:', error);
     return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="max-w-6xl mx-auto">
-          <Card>
-            <CardHeader>
-              <h2 className="text-xl font-semibold">Error Loading Dashboard</h2>
-            </CardHeader>
-            <CardContent>
-              <p className="text-red-600">An error occurred while loading your dashboard. Please try again later.</p>
-              <p className="text-sm text-gray-600 mt-2">{error instanceof Error ? error.message : 'Unknown error'}</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <>
+        <PageHeader
+          title="Error Loading Dashboard"
+          subtitle="An error occurred while loading your dashboard"
+        />
+        <PageContent>
+          <div className="bg-rose-50 rounded-2xl border border-rose-200 p-6">
+            <p className="text-rose-600 font-medium">An error occurred while loading your dashboard. Please try again later.</p>
+            <p className="text-sm text-slate-600 mt-2">{error instanceof Error ? error.message : 'Unknown error'}</p>
+          </div>
+        </PageContent>
+      </>
     );
   }
 }
