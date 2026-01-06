@@ -3,11 +3,11 @@ import { authOptions } from '@/lib/core/auth';
 import { redirect, notFound } from 'next/navigation';
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Building, Calendar, CreditCard } from 'lucide-react';
+import { ArrowLeft, Building, Calendar, CreditCard, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { formatCurrency, getMonthName } from '@/lib/payroll/utils';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -65,187 +65,213 @@ export default async function EmployeePayslipDetailPage({ params }: PageProps) {
   const netSalary = Number(payslip.netSalary);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/employee/payroll/payslips">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">
-              {getMonthName(payslip.payrollRun.month)} {payslip.payrollRun.year} Payslip
-            </h1>
-            <Badge variant={payslip.isPaid ? 'default' : 'secondary'}>
-              {payslip.isPaid ? 'Paid' : 'Processing'}
-            </Badge>
-          </div>
-          <p className="text-muted-foreground">
-            Payslip No: {payslip.payslipNumber}
-          </p>
-        </div>
-      </div>
+    <>
+      <PageHeader
+        title={`${getMonthName(payslip.payrollRun.month)} ${payslip.payrollRun.year} Payslip`}
+        subtitle={`Payslip No: ${payslip.payslipNumber}`}
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/employee' },
+          { label: 'Payroll', href: '/employee/payroll' },
+          { label: 'Payslips', href: '/employee/payroll/payslips' },
+          { label: 'Details' }
+        ]}
+        badge={{
+          text: payslip.isPaid ? 'Paid' : 'Processing',
+          variant: payslip.isPaid ? 'success' : 'default'
+        }}
+        actions={
+          <Link href="/employee/payroll/payslips">
+            <Button variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Payslips
+            </Button>
+          </Link>
+        }
+      />
 
-      {/* Employee Details */}
-      <Card>
-        <CardContent className="py-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="flex items-center gap-3">
-              <Building className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <div className="text-sm text-muted-foreground">Employee</div>
-                <div className="font-medium">{payslip.member.name}</div>
-                <div className="text-sm text-muted-foreground">
+      <PageContent>
+        <div className="space-y-6 max-w-4xl mx-auto">
+
+        {/* Employee Details */}
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+              <Building className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-slate-900">Employee Information</h2>
+              <p className="text-sm text-slate-500">Your employment and payment details</p>
+            </div>
+          </div>
+          <div className="p-5">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="p-4 bg-slate-50 rounded-xl">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Employee</p>
+                <p className="font-semibold text-slate-900">{payslip.member.name}</p>
+                <p className="text-sm text-slate-500 mt-1">
                   {payslip.member.employeeCode}
-                </div>
+                </p>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <div className="text-sm text-muted-foreground">Pay Period</div>
-                <div className="font-medium">
+              <div className="p-4 bg-slate-50 rounded-xl">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Pay Period</p>
+                <p className="font-semibold text-slate-900">
                   {getMonthName(payslip.payrollRun.month)} {payslip.payrollRun.year}
-                </div>
+                </p>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <CreditCard className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <div className="text-sm text-muted-foreground">Bank</div>
-                <div className="font-medium">{payslip.bankName || 'Not specified'}</div>
+              <div className="p-4 bg-slate-50 rounded-xl">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Bank Account</p>
+                <p className="font-semibold text-slate-900">{payslip.bankName || 'Not specified'}</p>
                 {payslip.iban && (
-                  <div className="text-sm text-muted-foreground font-mono">
+                  <p className="text-sm text-slate-500 font-mono mt-1">
                     ****{payslip.iban.slice(-4)}
-                  </div>
+                  </p>
                 )}
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Earnings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Earnings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Basic Salary</span>
-                <span className="font-medium">{formatCurrency(basicSalary)}</span>
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Earnings */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-emerald-600" />
               </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Housing Allowance</span>
-                <span className="font-medium">{formatCurrency(housingAllowance)}</span>
+              <div>
+                <h2 className="font-semibold text-slate-900">Earnings</h2>
+                <p className="text-sm text-slate-500">Your salary components</p>
               </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Transport Allowance</span>
-                <span className="font-medium">{formatCurrency(transportAllowance)}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Food Allowance</span>
-                <span className="font-medium">{formatCurrency(foodAllowance)}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b">
-                <span className="text-muted-foreground">Phone Allowance</span>
-                <span className="font-medium">{formatCurrency(phoneAllowance)}</span>
-              </div>
-              {otherAllowances > 0 && (
-                <div className="flex justify-between py-2 border-b">
-                  <span className="text-muted-foreground">Other Allowances</span>
-                  <span className="font-medium">{formatCurrency(otherAllowances)}</span>
+            </div>
+            <div className="p-5">
+              <div className="space-y-3">
+                <div className="flex justify-between py-2 border-b border-slate-200">
+                  <span className="text-slate-600">Basic Salary</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(basicSalary)}</span>
                 </div>
-              )}
-              <div className="flex justify-between py-2 font-semibold">
-                <span>Total Earnings</span>
-                <span className="text-green-600">{formatCurrency(grossSalary)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Deductions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Deductions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {payslip.deductions.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No deductions this month
-                </p>
-              ) : (
-                payslip.deductions.map((deduction) => (
-                  <div key={deduction.id} className="flex justify-between py-2 border-b">
-                    <div>
-                      <span className="text-muted-foreground">
-                        {deduction.type.replace(/_/g, ' ')}
-                      </span>
-                      {deduction.description && (
-                        <div className="text-xs text-muted-foreground">
-                          {deduction.description}
-                        </div>
-                      )}
-                    </div>
-                    <span className="font-medium text-red-600">
-                      -{formatCurrency(Number(deduction.amount))}
-                    </span>
+                <div className="flex justify-between py-2 border-b border-slate-200">
+                  <span className="text-slate-600">Housing Allowance</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(housingAllowance)}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-200">
+                  <span className="text-slate-600">Transport Allowance</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(transportAllowance)}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-200">
+                  <span className="text-slate-600">Food Allowance</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(foodAllowance)}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-slate-200">
+                  <span className="text-slate-600">Phone Allowance</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(phoneAllowance)}</span>
+                </div>
+                {otherAllowances > 0 && (
+                  <div className="flex justify-between py-2 border-b border-slate-200">
+                    <span className="text-slate-600">Other Allowances</span>
+                    <span className="font-semibold text-slate-900">{formatCurrency(otherAllowances)}</span>
                   </div>
-                ))
-              )}
-              <div className="flex justify-between py-2 font-semibold">
-                <span>Total Deductions</span>
-                <span className="text-red-600">-{formatCurrency(totalDeductions)}</span>
+                )}
+                <div className="flex justify-between py-3 pt-4 font-semibold">
+                  <span className="text-slate-900">Total Earnings</span>
+                  <span className="text-emerald-600 text-lg">{formatCurrency(grossSalary)}</span>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Net Pay Summary */}
-      <Card className="bg-green-50 border-green-200">
-        <CardContent className="py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="text-lg font-medium text-green-800">Net Pay</div>
-              <p className="text-sm text-green-600">
-                Your take-home salary for {getMonthName(payslip.payrollRun.month)} {payslip.payrollRun.year}
-              </p>
-            </div>
-            <div className="text-4xl font-bold text-green-700">
-              {formatCurrency(netSalary)}
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Payment Info */}
-      {payslip.isPaid && payslip.paidAt && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Payment Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm">
-              <span className="text-muted-foreground">Payment Date:</span>{' '}
-              <span className="font-medium">
-                {new Date(payslip.paidAt).toLocaleDateString('en-US', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </span>
+          {/* Deductions */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
+                <TrendingDown className="h-5 w-5 text-rose-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Deductions</h2>
+                <p className="text-sm text-slate-500">Amounts deducted from salary</p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="p-5">
+              <div className="space-y-3">
+                {payslip.deductions.length === 0 ? (
+                  <p className="text-sm text-slate-500 text-center py-8">
+                    No deductions this month
+                  </p>
+                ) : (
+                  payslip.deductions.map((deduction) => (
+                    <div key={deduction.id} className="flex justify-between py-2 border-b border-slate-200">
+                      <div>
+                        <span className="text-slate-600">
+                          {deduction.type.replace(/_/g, ' ')}
+                        </span>
+                        {deduction.description && (
+                          <div className="text-xs text-slate-500 mt-1">
+                            {deduction.description}
+                          </div>
+                        )}
+                      </div>
+                      <span className="font-semibold text-rose-600">
+                        -{formatCurrency(Number(deduction.amount))}
+                      </span>
+                    </div>
+                  ))
+                )}
+                <div className="flex justify-between py-3 pt-4 font-semibold">
+                  <span className="text-slate-900">Total Deductions</span>
+                  <span className="text-rose-600 text-lg">-{formatCurrency(totalDeductions)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Net Pay Summary */}
+        <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl overflow-hidden">
+          <div className="p-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <DollarSign className="h-6 w-6 text-emerald-700" />
+                  <h3 className="text-xl font-semibold text-emerald-900">Net Pay</h3>
+                </div>
+                <p className="text-sm text-emerald-700">
+                  Your take-home salary for {getMonthName(payslip.payrollRun.month)} {payslip.payrollRun.year}
+                </p>
+              </div>
+              <div className="text-4xl font-bold text-emerald-700">
+                {formatCurrency(netSalary)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Info */}
+        {payslip.isPaid && payslip.paidAt && (
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <CreditCard className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Payment Information</h2>
+                <p className="text-sm text-slate-500">Salary payment confirmation</p>
+              </div>
+            </div>
+            <div className="p-5">
+              <div className="p-4 bg-slate-50 rounded-xl">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Payment Date</p>
+                <p className="font-semibold text-slate-900">
+                  {new Date(payslip.paidAt).toLocaleDateString('en-US', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </p>
+              </div>
+            </div>
+          </div>
         )}
-      </div>
-    </div>
+        </div>
+      </PageContent>
+    </>
   );
 }

@@ -3,7 +3,6 @@ import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -14,8 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ArrowLeft, Eye } from 'lucide-react';
+import { ArrowLeft, Eye, FileText } from 'lucide-react';
 import { formatCurrency, getMonthName, getPayrollStatusColor } from '@/lib/payroll/utils';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 interface PageProps {
   searchParams: Promise<{
@@ -77,50 +77,60 @@ export default async function EmployeePayslipsPage({ searchParams }: PageProps) 
   const availableYears = [...new Set(years.map((y) => y.payrollRun.year))].sort((a, b) => b - a);
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/employee/payroll">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">My Payslips</h1>
-          <p className="text-muted-foreground">
-            View and download your payslips
-          </p>
-        </div>
-      </div>
-
-      {/* Year Filter */}
-      {availableYears.length > 0 && (
-        <div className="flex gap-2 flex-wrap">
-          <Button
-            asChild
-            variant={!yearFilter ? 'default' : 'outline'}
-            size="sm"
-          >
-            <Link href="/employee/payroll/payslips">All Years</Link>
-          </Button>
-          {availableYears.map((year) => (
+    <>
+      <PageHeader
+        title="My Payslips"
+        subtitle="View and download your payslips"
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/employee' },
+          { label: 'Payroll', href: '/employee/payroll' },
+          { label: 'Payslips' }
+        ]}
+        actions={
+          <Link href="/employee/payroll">
+            <Button variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Payroll
+            </Button>
+          </Link>
+        }
+      >
+        {/* Year Filter */}
+        {availableYears.length > 0 && (
+          <div className="flex gap-2 flex-wrap mt-4">
             <Button
-              key={year}
               asChild
-              variant={yearFilter === year ? 'default' : 'outline'}
+              variant={!yearFilter ? 'default' : 'outline'}
               size="sm"
             >
-              <Link href={`/employee/payroll/payslips?year=${year}`}>{year}</Link>
+              <Link href="/employee/payroll/payslips">All Years</Link>
             </Button>
-          ))}
-        </div>
-      )}
+            {availableYears.map((year) => (
+              <Button
+                key={year}
+                asChild
+                variant={yearFilter === year ? 'default' : 'outline'}
+                size="sm"
+              >
+                <Link href={`/employee/payroll/payslips?year=${year}`}>{year}</Link>
+              </Button>
+            ))}
+          </div>
+        )}
+      </PageHeader>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Payslips ({total})</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <PageContent>
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+          <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+            <FileText className="h-5 w-5 text-indigo-600" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-slate-900">Payslips ({total})</h2>
+            <p className="text-sm text-slate-500">Your payment history</p>
+          </div>
+        </div>
+        <div className="p-5">
           <Table>
             <TableHeader>
               <TableRow>
@@ -191,7 +201,7 @@ export default async function EmployeePayslipsPage({ searchParams }: PageProps) 
                   </Link>
                 </Button>
               )}
-              <span className="py-2 px-3 text-sm">
+              <span className="py-2 px-3 text-sm text-slate-600">
                 Page {page} of {totalPages}
               </span>
               {page < totalPages && (
@@ -205,9 +215,9 @@ export default async function EmployeePayslipsPage({ searchParams }: PageProps) 
               )}
             </div>
           )}
-        </CardContent>
-        </Card>
+        </div>
       </div>
-    </div>
+      </PageContent>
+    </>
   );
 }
