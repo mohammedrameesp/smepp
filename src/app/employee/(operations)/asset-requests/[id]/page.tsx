@@ -2,6 +2,7 @@
  * @file page.tsx
  * @description Employee asset request detail page - view and respond to individual requests
  * @module app/employee/(operations)/asset-requests/[id]
+ * @updated 2026-01-06 - Added onSuccess callback for page refresh after accept/decline
  *
  * Features:
  * - Client-side component fetching request via API for real-time updates
