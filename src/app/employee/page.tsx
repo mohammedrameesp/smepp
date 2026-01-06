@@ -300,10 +300,10 @@ export default async function EmployeeDashboard() {
       ...assetRequests.slice(0, 2).map((ar: any) => ({
         id: ar.id,
         type: 'asset' as const,
-        title: ar.asset?.name || 'Asset Request',
+        title: ar.asset?.model || 'Asset Request',
         referenceNumber: ar.requestNumber || `AR-${ar.id.slice(0, 6)}`,
         status: ar.status,
-        subtitle: ar.asset?.assetCode || '',
+        subtitle: ar.asset?.assetTag || '',
         createdAt: ar.createdAt,
       })),
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -329,7 +329,7 @@ export default async function EmployeeDashboard() {
         };
       });
 
-    const assetsData = activeAssets.slice(0, 3).map((a: any) => ({
+    const assetsData = activeAssets.map((a: any) => ({
       id: a.id,
       name: a.model,
       code: a.assetTag,
