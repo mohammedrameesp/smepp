@@ -61,11 +61,11 @@ interface Props {
 }
 
 /** Status badge styles mapping for visual consistency */
-const statusStyles: Record<string, { bg: string; text: string; icon: typeof CheckCircle }> = {
-  IN_USE: { bg: 'bg-blue-100', text: 'text-blue-700', icon: CheckCircle },
-  SPARE: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: Package },
-  REPAIR: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Wrench },
-  DISPOSED: { bg: 'bg-slate-100', text: 'text-slate-700', icon: XCircle },
+const statusStyles: Record<string, { bg: string; text: string; icon: typeof CheckCircle; badgeVariant: 'default' | 'info' | 'success' | 'warning' }> = {
+  IN_USE: { bg: 'bg-blue-100', text: 'text-blue-700', icon: CheckCircle, badgeVariant: 'info' },
+  SPARE: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: Package, badgeVariant: 'success' },
+  REPAIR: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Wrench, badgeVariant: 'warning' },
+  DISPOSED: { bg: 'bg-slate-100', text: 'text-slate-700', icon: XCircle, badgeVariant: 'default' },
 };
 
 export default async function AssetDetailPage({ params }: Props) {
@@ -144,35 +144,23 @@ export default async function AssetDetailPage({ params }: Props) {
     notFound();
   }
 
-  // Get the assignment date - prefer the direct field on asset, fallback to history
-  let assignmentDate = asset.assignmentDate;
-  if (!assignmentDate && asset.assignedMemberId) {
-    const mostRecentAssignment = await prisma.assetHistory.findFirst({
-      where: {
-        assetId: id,
-        action: 'ASSIGNED',
-        toMemberId: asset.assignedMemberId,
-      },
-      orderBy: { createdAt: 'desc' },
-      select: { assignmentDate: true },
-    });
-    assignmentDate = mostRecentAssignment?.assignmentDate || null;
-  }
+  // Assignment date is stored directly on the asset
+  // Note: Assignment APIs should always set this field
+  const assignmentDate = asset.assignmentDate;
 
   // Check if admin can assign this asset
   const hasPendingRequest = asset.assetRequests.length > 0;
   const canAssign = asset.status === 'SPARE' && !hasPendingRequest;
 
-  // Find pending acceptance request for display in Assignment Card
-  const pendingAcceptanceRequest = asset.assetRequests.find(
-    req => req.status === 'PENDING_USER_ACCEPTANCE' && req.type === 'ADMIN_ASSIGNMENT'
+  // Find pending assignment request for display in Assignment Card
+  // Includes both PENDING_ADMIN_APPROVAL and PENDING_USER_ACCEPTANCE
+  const pendingAssignmentRequest = asset.assetRequests.find(
+    req => (req.status === 'PENDING_USER_ACCEPTANCE' || req.status === 'PENDING_ADMIN_APPROVAL')
+      && req.type === 'ADMIN_ASSIGNMENT'
   );
 
-  const StatusIcon = statusStyles[asset.status]?.icon || Package;
-  const statusBadgeVariant = asset.status === 'DISPOSED' ? 'default' :
-    asset.status === 'IN_USE' ? 'info' :
-    asset.status === 'SPARE' ? 'success' :
-    asset.status === 'REPAIR' ? 'warning' : 'default';
+  const statusStyle = statusStyles[asset.status] || statusStyles.IN_USE;
+  const StatusIcon = statusStyle.icon;
 
   return (
     <>
@@ -183,7 +171,7 @@ export default async function AssetDetailPage({ params }: Props) {
           { label: 'Assets', href: '/admin/assets' },
           { label: asset.model },
         ]}
-        badge={{ text: asset.status.replace('_', ' '), variant: statusBadgeVariant }}
+        badge={{ text: asset.status.replace('_', ' '), variant: statusStyle.badgeVariant }}
         actions={
           <div className="flex gap-2 flex-wrap">
             <PageHeaderButton href={`/admin/assets/${asset.id}/edit`} variant="primary">
@@ -196,28 +184,69 @@ export default async function AssetDetailPage({ params }: Props) {
       />
 
       <PageContent>
-        {/* Pending Requests Alert */}
-        {hasPendingRequest && (
-          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
-            <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-amber-800">Pending Requests</h3>
-              <div className="mt-1 space-y-1">
-                {asset.assetRequests.map((req) => (
-                  <p key={req.id} className="text-sm text-amber-700">
-                    <Link href={`/admin/asset-requests/${req.id}`} className="underline hover:text-amber-900 font-medium">
-                      {req.requestNumber}
-                    </Link>
-                    {' - '}
-                    {req.status.replace(/_/g, ' ')}
-                  </p>
-                ))}
+        {/* Alerts Section */}
+        <div className="space-y-4 mb-6">
+          {/* Pending Requests Alert */}
+          {hasPendingRequest && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+              <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-amber-800">Pending Requests</h3>
+                <div className="mt-1 space-y-1">
+                  {asset.assetRequests.map((req) => (
+                    <p key={req.id} className="text-sm text-amber-700">
+                      <Link href={`/admin/asset-requests/${req.id}`} className="underline hover:text-amber-900 font-medium">
+                        {req.requestNumber}
+                      </Link>
+                      {' - '}
+                      {req.status.replace(/_/g, ' ')}
+                    </p>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Warranty Expiry Alert */}
+          {asset.warrantyExpiry && (() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const expiryDate = new Date(asset.warrantyExpiry);
+            expiryDate.setHours(0, 0, 0, 0);
+            const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+            const isExpired = daysUntilExpiry < 0;
+            const isExpiringSoon = daysUntilExpiry >= 0 && daysUntilExpiry <= 30;
+
+            if (!isExpired && !isExpiringSoon) return null;
+
+            return (
+              <div className={`rounded-2xl p-4 flex items-start gap-3 ${
+                isExpired
+                  ? 'bg-rose-50 border border-rose-200'
+                  : 'bg-amber-50 border border-amber-200'
+              }`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                  isExpired ? 'bg-rose-100' : 'bg-amber-100'
+                }`}>
+                  <AlertTriangle className={`h-5 w-5 ${isExpired ? 'text-rose-600' : 'text-amber-600'}`} />
+                </div>
+                <div>
+                  <h3 className={`font-semibold ${isExpired ? 'text-rose-800' : 'text-amber-800'}`}>
+                    {isExpired ? 'Warranty Expired' : 'Warranty Expiring Soon'}
+                  </h3>
+                  <p className={`text-sm mt-1 ${isExpired ? 'text-rose-700' : 'text-amber-700'}`}>
+                    {isExpired
+                      ? `Warranty expired on ${formatDate(asset.warrantyExpiry)}`
+                      : `Warranty expires on ${formatDate(asset.warrantyExpiry)} (${daysUntilExpiry} day${daysUntilExpiry === 1 ? '' : 's'} remaining)`
+                    }
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
         {/* Main Content */}
@@ -237,7 +266,7 @@ export default async function AssetDetailPage({ params }: Props) {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="p-4 bg-slate-50 rounded-xl">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Asset Tag</p>
-                  <p className="font-mono font-semibold text-slate-900">{asset.assetTag || 'Not assigned'}</p>
+                  <p className="font-mono font-semibold text-slate-900">{asset.assetTag || 'Not specified'}</p>
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Type</p>
@@ -257,7 +286,7 @@ export default async function AssetDetailPage({ params }: Props) {
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Serial Number</p>
-                  <p className="font-mono font-semibold text-slate-900">{asset.serial || 'Not provided'}</p>
+                  <p className="font-mono font-semibold text-slate-900">{asset.serial || 'Not specified'}</p>
                 </div>
               </div>
 
@@ -393,7 +422,13 @@ export default async function AssetDetailPage({ params }: Props) {
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
                       <span className="text-indigo-600 font-semibold">
-                        {asset.assignedMember.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                        {(() => {
+                          const name = asset.assignedMember?.name;
+                          if (!name || !name.trim()) return '??';
+                          const parts = name.trim().split(/\s+/).filter(Boolean);
+                          if (parts.length === 0) return '??';
+                          return parts.map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                        })()}
                       </span>
                     </div>
                     <div>
@@ -413,23 +448,27 @@ export default async function AssetDetailPage({ params }: Props) {
                     </Button>
                   </Link>
                 </>
-              ) : pendingAcceptanceRequest ? (
+              ) : pendingAssignmentRequest ? (
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
                     <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <Clock className="h-5 w-5 text-amber-600" />
                     </div>
                     <div>
-                      <p className="font-semibold text-amber-800">Pending Acceptance</p>
+                      <p className="font-semibold text-amber-800">
+                        {pendingAssignmentRequest.status === 'PENDING_ADMIN_APPROVAL' ? 'Pending Admin Approval' : 'Pending Acceptance'}
+                      </p>
                       <p className="text-sm text-amber-600">
-                        Waiting for {pendingAcceptanceRequest.member?.name || pendingAcceptanceRequest.member?.email || 'user'} to accept
+                        {pendingAssignmentRequest.status === 'PENDING_ADMIN_APPROVAL'
+                          ? `Assignment to ${pendingAssignmentRequest.member?.name || pendingAssignmentRequest.member?.email || 'user'} awaiting approval`
+                          : `Waiting for ${pendingAssignmentRequest.member?.name || pendingAssignmentRequest.member?.email || 'user'} to accept`}
                       </p>
                     </div>
                   </div>
                   <div className="text-xs text-slate-500 text-center">
-                    Request #{pendingAcceptanceRequest.requestNumber}
+                    Request #{pendingAssignmentRequest.requestNumber}
                   </div>
-                  <Link href={`/admin/asset-requests/${pendingAcceptanceRequest.id}`} className="block">
+                  <Link href={`/admin/asset-requests/${pendingAssignmentRequest.id}`} className="block">
                     <Button variant="outline" size="sm" className="w-full">
                       View Request
                     </Button>
