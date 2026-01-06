@@ -331,9 +331,9 @@ export default async function EmployeeDashboard() {
 
     const assetsData = activeAssets.slice(0, 3).map((a: any) => ({
       id: a.id,
-      name: a.name,
-      code: a.assetCode,
-      type: a.assetType?.name,
+      name: a.model,
+      code: a.assetTag,
+      type: a.type,
     }));
 
     const upcomingEvents = [
