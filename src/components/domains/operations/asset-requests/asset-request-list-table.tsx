@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { formatDate } from '@/lib/date-format';
 import { AssetRequestStatusBadge } from './asset-request-status-badge';
 import { AssetRequestTypeBadge } from './asset-request-type-badge';
+import { ClipboardList } from 'lucide-react';
 
 interface Asset {
   id: string;
@@ -209,7 +210,7 @@ export function AssetRequestListTable({
       </div>
 
       {/* Results count */}
-      <div className="mb-4 text-sm text-gray-600">
+      <div className="mb-4 text-sm text-gray-600" aria-live="polite" aria-atomic="true">
         Showing {filteredAndSortedRequests.length} of {requests.length} requests
       </div>
 
@@ -222,18 +223,33 @@ export function AssetRequestListTable({
                 <TableHead
                   className="cursor-pointer hover:bg-gray-100"
                   onClick={() => toggleSort('requestNumber')}
+                  onKeyDown={(e) => e.key === 'Enter' && toggleSort('requestNumber')}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === 'requestNumber' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  aria-label="Sort by request number"
                 >
                   Request # {sortBy === 'requestNumber' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-gray-100"
                   onClick={() => toggleSort('type')}
+                  onKeyDown={(e) => e.key === 'Enter' && toggleSort('type')}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === 'type' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  aria-label="Sort by type"
                 >
                   Type {sortBy === 'type' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-gray-100"
                   onClick={() => toggleSort('asset')}
+                  onKeyDown={(e) => e.key === 'Enter' && toggleSort('asset')}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === 'asset' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  aria-label="Sort by asset"
                 >
                   Asset {sortBy === 'asset' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </TableHead>
@@ -241,12 +257,22 @@ export function AssetRequestListTable({
                 <TableHead
                   className="cursor-pointer hover:bg-gray-100"
                   onClick={() => toggleSort('status')}
+                  onKeyDown={(e) => e.key === 'Enter' && toggleSort('status')}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === 'status' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  aria-label="Sort by status"
                 >
                   Status {sortBy === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </TableHead>
                 <TableHead
                   className="cursor-pointer hover:bg-gray-100"
                   onClick={() => toggleSort('createdAt')}
+                  onKeyDown={(e) => e.key === 'Enter' && toggleSort('createdAt')}
+                  role="button"
+                  tabIndex={0}
+                  aria-sort={sortBy === 'createdAt' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+                  aria-label="Sort by date"
                 >
                   Date {sortBy === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </TableHead>
@@ -297,7 +323,9 @@ export function AssetRequestListTable({
         </div>
       ) : (
         <div className="text-center py-12 text-gray-500 border rounded-lg bg-gray-50">
-          <div className="text-4xl mb-4">📋</div>
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ClipboardList className="h-8 w-8 text-slate-400" />
+          </div>
           <p className="text-lg font-medium">No requests found</p>
           <p className="text-sm">Try adjusting your filters or search terms</p>
         </div>

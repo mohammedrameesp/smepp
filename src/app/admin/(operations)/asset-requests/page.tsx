@@ -25,7 +25,7 @@ import { redirect } from 'next/navigation';
 import { AssetRequestStatus } from '@prisma/client';
 import { AssetRequestListTable } from '@/components/domains/operations/asset-requests';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
-import { Package } from 'lucide-react';
+import { Package, AlertTriangle } from 'lucide-react';
 
 /**
  * Admin asset requests list page component
@@ -49,7 +49,8 @@ export default async function AdminAssetRequestsPage() {
   const tenantId = session.user.organizationId;
 
   // Fetch all asset requests with related data
-  const requests = await prisma.assetRequest.findMany({
+  type RequestWithRelations = Awaited<ReturnType<typeof fetchRequests>>[number];
+  const fetchRequests = () => prisma.assetRequest.findMany({
     where: { tenantId },
     include: {
       asset: {
@@ -78,6 +79,16 @@ export default async function AdminAssetRequestsPage() {
     },
     orderBy: { createdAt: 'desc' },
   });
+
+  let requests: RequestWithRelations[] = [];
+  let fetchError = false;
+
+  try {
+    requests = await fetchRequests();
+  } catch (error) {
+    console.error('Error fetching asset requests:', error);
+    fetchError = true;
+  }
 
   // Calculate stats
   const pendingApproval = requests.filter(r => r.status === AssetRequestStatus.PENDING_ADMIN_APPROVAL);
@@ -122,32 +133,43 @@ export default async function AdminAssetRequestsPage() {
       </PageHeader>
 
       <PageContent>
-
-      {/* Requests Table */}
-      <div className="bg-white rounded-xl border border-slate-200">
-        <div className="px-4 py-4 border-b border-slate-100">
-          <h2 className="font-semibold text-slate-900">All Requests ({requests.length})</h2>
-          <p className="text-sm text-slate-500">Complete list of asset requests, assignments, and returns</p>
-        </div>
-        <div className="p-4">
-          {requests.length === 0 ? (
+        {fetchError ? (
+          <div className="bg-white rounded-xl border border-slate-200">
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Package className="h-8 w-8 text-slate-400" />
+              <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="h-8 w-8 text-rose-500" />
               </div>
-              <h3 className="font-semibold text-slate-900 mb-1">No requests yet</h3>
-              <p className="text-slate-500 text-sm">Asset requests will appear here</p>
+              <h3 className="font-semibold text-slate-900 mb-1">Failed to load requests</h3>
+              <p className="text-slate-500 text-sm">There was an error loading asset requests. Please try refreshing the page.</p>
             </div>
-          ) : (
-            <AssetRequestListTable
-              requests={requests}
-              isAdmin={true}
-              showUser={true}
-              basePath="/admin/asset-requests"
-            />
-          )}
-        </div>
-      </div>
+          </div>
+        ) : (
+          /* Requests Table */
+          <div className="bg-white rounded-xl border border-slate-200">
+            <div className="px-4 py-4 border-b border-slate-100">
+              <h2 className="font-semibold text-slate-900">All Requests ({requests.length})</h2>
+              <p className="text-sm text-slate-500">Complete list of asset requests, assignments, and returns</p>
+            </div>
+            <div className="p-4">
+              {requests.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Package className="h-8 w-8 text-slate-400" />
+                  </div>
+                  <h3 className="font-semibold text-slate-900 mb-1">No requests yet</h3>
+                  <p className="text-slate-500 text-sm">Asset requests will appear here</p>
+                </div>
+              ) : (
+                <AssetRequestListTable
+                  requests={requests}
+                  isAdmin={true}
+                  showUser={true}
+                  basePath="/admin/asset-requests"
+                />
+              )}
+            </div>
+          </div>
+        )}
       </PageContent>
     </>
   );
