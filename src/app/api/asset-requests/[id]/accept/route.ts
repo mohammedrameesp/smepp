@@ -162,12 +162,11 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       });
 
       // Assign the asset to the member
-      const assignmentDate = new Date().toISOString().split('T')[0];
       await tx.asset.update({
         where: { id: assetRequest.assetId },
         data: {
           assignedMemberId: session.user.id,
-          assignmentDate,
+          assignmentDate: new Date(),
           status: AssetStatus.IN_USE,
         },
       });
