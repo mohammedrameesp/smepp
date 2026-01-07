@@ -5,7 +5,6 @@ import Link from 'next/link';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DataExportImport, ExchangeRateSettings, DatabaseStats, PayrollSettings } from '@/components/domains/system/settings';
-import { DocumentTypeSettings } from '@/components/domains/system/settings/DocumentTypeSettings';
 import { prisma } from '@/lib/core/prisma';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Package, ChevronRight } from 'lucide-react';
@@ -71,10 +70,9 @@ export default async function SettingsPage() {
         </Link>
 
         <Tabs defaultValue="export" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="export">Data Export/Import</TabsTrigger>
               <TabsTrigger value="database">Database</TabsTrigger>
-              <TabsTrigger value="doctypes">Document Types</TabsTrigger>
               <TabsTrigger value="system">System Config</TabsTrigger>
             </TabsList>
 
@@ -86,11 +84,6 @@ export default async function SettingsPage() {
             {/* Database Tab */}
             <TabsContent value="database" className="space-y-6">
               <DatabaseStats stats={dbStats} />
-            </TabsContent>
-
-            {/* Document Types Tab */}
-            <TabsContent value="doctypes" className="space-y-6">
-              <DocumentTypeSettings />
             </TabsContent>
 
             {/* System Config Tab */}
