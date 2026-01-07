@@ -216,10 +216,14 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
                   <XCircle className="h-4 w-4 mr-2" />
                   Decline
                 </Button>
-                <Button size="sm" onClick={() => {
-                  setDialogInitialMode('accept');
-                  setShowAcceptDialog(true);
-                }}>
+                <Button
+                  size="sm"
+                  className="border-2 border-primary"
+                  onClick={() => {
+                    setDialogInitialMode('accept');
+                    setShowAcceptDialog(true);
+                  }}
+                >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Accept
                 </Button>
