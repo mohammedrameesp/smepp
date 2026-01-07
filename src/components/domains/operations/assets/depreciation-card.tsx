@@ -210,6 +210,10 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
   if (!asset) return null;
 
   const hasCategory = !!asset.depreciationCategory;
+
+  // Don't show depreciation section if no category is assigned
+  if (!hasCategory) return null;
+
   const percentDepreciated =
     asset.acquisitionCost > 0
       ? Math.min(100, (asset.accumulatedDepreciation / (asset.acquisitionCost - asset.salvageValue)) * 100)
