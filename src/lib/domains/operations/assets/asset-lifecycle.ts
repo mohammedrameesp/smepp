@@ -55,6 +55,74 @@ function calculateDaysBetween(start: Date, end: Date): number {
   return diffDays;
 }
 
+/**
+ * Merge overlapping assignment periods for the same member.
+ * Prevents double-counting when reassignments occur without proper unassignment.
+ *
+ * This function handles edge cases where:
+ * - Asset is reassigned to same member multiple times
+ * - Multiple ASSIGNED events without UNASSIGNED events
+ * - Overlapping or adjacent periods that should be merged
+ *
+ * @param periods - Raw assignment periods to merge
+ * @returns Merged periods with no overlaps
+ */
+function mergeOverlappingPeriods(periods: AssignmentPeriod[]): AssignmentPeriod[] {
+  if (periods.length === 0) return [];
+
+  // Group by memberId
+  const periodsByMember = new Map<string, AssignmentPeriod[]>();
+  for (const period of periods) {
+    const memberPeriods = periodsByMember.get(period.memberId) || [];
+    memberPeriods.push(period);
+    periodsByMember.set(period.memberId, memberPeriods);
+  }
+
+  const merged: AssignmentPeriod[] = [];
+
+  for (const [memberId, memberPeriods] of periodsByMember) {
+    // Sort by start date
+    const sorted = memberPeriods.sort((a, b) =>
+      a.startDate.getTime() - b.startDate.getTime()
+    );
+
+    let current = sorted[0];
+
+    for (let i = 1; i < sorted.length; i++) {
+      const next = sorted[i];
+      const currentEnd = current.endDate || new Date();
+      const nextStart = next.startDate;
+
+      // If overlap or adjacent, merge periods
+      if (nextStart <= currentEnd) {
+        const nextEnd = next.endDate || new Date();
+        // Extend current period if next ends later
+        if (!current.endDate || (next.endDate && nextEnd > currentEnd)) {
+          current.endDate = next.endDate;
+        }
+        // Recalculate days
+        current.days = calculateDaysBetween(
+          current.startDate,
+          current.endDate || new Date()
+        );
+        // Append notes if different
+        if (next.notes && next.notes !== current.notes) {
+          current.notes = (current.notes || '') + '; ' + next.notes;
+        }
+      } else {
+        // No overlap, push current and move to next
+        merged.push(current);
+        current = next;
+      }
+    }
+
+    // Push the last period
+    merged.push(current);
+  }
+
+  return merged;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ASSIGNMENT PERIOD TRACKING
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -136,6 +204,20 @@ export async function getAssignmentPeriods(assetId: string, tenantId: string): P
 
   for (const historyEntry of asset.history) {
     if (historyEntry.action === 'ASSIGNED' && historyEntry.toMember) {
+      // If there's already an open assignment, close it before starting new one
+      if (currentAssignment) {
+        // Auto-close previous assignment with current entry's date
+        const endDate = historyEntry.createdAt;
+        const days = calculateDaysBetween(currentAssignment.startDate, endDate);
+
+        periods.push({
+          ...currentAssignment,
+          endDate,
+          days,
+          notes: (currentAssignment.notes || '') + ' [Auto-closed: reassigned]',
+        });
+      }
+
       // Start new assignment period
       currentAssignment = {
         memberId: historyEntry.toMember.id,
@@ -145,7 +227,7 @@ export async function getAssignmentPeriods(assetId: string, tenantId: string): P
         notes: historyEntry.notes || undefined,
       };
     } else if (historyEntry.action === 'UNASSIGNED' && currentAssignment) {
-      // End current assignment period
+      // End current assignment period (keep existing logic)
       const endDate = historyEntry.returnDate || historyEntry.createdAt;
       const days = calculateDaysBetween(currentAssignment.startDate, endDate);
 
@@ -224,24 +306,11 @@ export async function getAssignmentPeriods(assetId: string, tenantId: string): P
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // STEP 4: Deduplicate periods (same member, same date range)
+  // STEP 4: Merge overlapping periods to prevent double-counting
   // ─────────────────────────────────────────────────────────────────────────────
-  const uniquePeriods: AssignmentPeriod[] = [];
-  const seen = new Set<string>();
+  const mergedPeriods = mergeOverlappingPeriods(periods);
 
-  for (const period of periods) {
-    // Create a key based on userId and dates (rounded to day)
-    const startKey = period.startDate.toISOString().split('T')[0];
-    const endKey = period.endDate ? period.endDate.toISOString().split('T')[0] : 'current';
-    const key = `${period.memberId}-${startKey}-${endKey}`;
-
-    if (!seen.has(key)) {
-      seen.add(key);
-      uniquePeriods.push(period);
-    }
-  }
-
-  return uniquePeriods;
+  return mergedPeriods;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -275,17 +344,43 @@ export async function getAssetUtilization(assetId: string, tenantId: string): Pr
   }
 
   // Calculate total days since purchase/creation
-  const purchaseDate = asset.purchaseDate || asset.createdAt;
-  const totalOwnedDays = calculateDaysBetween(purchaseDate, new Date());
+  const assetBirthDate = asset.purchaseDate || asset.createdAt;
+  const totalOwnedDays = calculateDaysBetween(assetBirthDate, new Date());
 
-  // Sum up all assignment periods
+  // Get all assignment periods
   const periods = await getAssignmentPeriods(assetId, tenantId);
-  const totalAssignedDays = periods.reduce((sum, period) => sum + period.days, 0);
 
-  // Calculate utilization percentage
-  const utilizationPercentage = totalOwnedDays > 0
+  // Validate and adjust periods that start before asset existed
+  const validatedPeriods = periods.map(period => {
+    if (period.startDate < assetBirthDate) {
+      return {
+        ...period,
+        startDate: assetBirthDate,
+        days: calculateDaysBetween(assetBirthDate, period.endDate || new Date()),
+        notes: (period.notes || '') + ' [Start date adjusted to asset creation]',
+      };
+    }
+    return period;
+  });
+
+  // Sum up all validated assignment periods
+  const totalAssignedDays = validatedPeriods.reduce((sum, period) => sum + period.days, 0);
+
+  // Calculate raw utilization percentage
+  const rawUtilization = totalOwnedDays > 0
     ? (totalAssignedDays / totalOwnedDays) * 100
     : 0;
+
+  // Cap at 100% for display, but log if exceeded
+  const utilizationPercentage = Math.min(rawUtilization, 100);
+
+  if (rawUtilization > 100) {
+    console.warn(
+      `[Asset ${assetId}] Utilization exceeds 100%: ${rawUtilization.toFixed(2)}%`,
+      `(${totalAssignedDays} assigned / ${totalOwnedDays} owned days)`,
+      `Asset may have overlapping assignments or data integrity issues.`
+    );
+  }
 
   return {
     totalOwnedDays,

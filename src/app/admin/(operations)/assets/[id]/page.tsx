@@ -33,6 +33,7 @@ import {
   DeleteAssetButton,
   AssetMaintenanceRecords,
   DepreciationCard,
+  AssetStatusCard,
 } from '@/components/domains/operations/assets';
 import { formatDate, formatDateTime } from '@/lib/date-format';
 import { AssetAssignDialog } from '@/components/domains/operations/asset-requests';
@@ -59,14 +60,6 @@ import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-
 interface Props {
   params: Promise<{ id: string }>;
 }
-
-/** Status badge styles mapping for visual consistency */
-const statusStyles: Record<string, { bg: string; text: string; icon: typeof CheckCircle; badgeVariant: 'default' | 'info' | 'success' | 'warning' }> = {
-  IN_USE: { bg: 'bg-blue-100', text: 'text-blue-700', icon: CheckCircle, badgeVariant: 'info' },
-  SPARE: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: Package, badgeVariant: 'success' },
-  REPAIR: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Wrench, badgeVariant: 'warning' },
-  DISPOSED: { bg: 'bg-slate-100', text: 'text-slate-700', icon: XCircle, badgeVariant: 'default' },
-};
 
 export default async function AssetDetailPage({ params }: Props) {
   const session = await getServerSession(authOptions);
@@ -159,9 +152,6 @@ export default async function AssetDetailPage({ params }: Props) {
       && req.type === 'ADMIN_ASSIGNMENT'
   );
 
-  const statusStyle = statusStyles[asset.status] || statusStyles.IN_USE;
-  const StatusIcon = statusStyle.icon;
-
   return (
     <>
       <PageHeader
@@ -171,7 +161,6 @@ export default async function AssetDetailPage({ params }: Props) {
           { label: 'Assets', href: '/admin/assets' },
           { label: asset.model },
         ]}
-        badge={{ text: asset.status.replace('_', ' '), variant: statusStyle.badgeVariant }}
         actions={
           <div className="flex gap-2 flex-wrap">
             <PageHeaderButton href={`/admin/assets/${asset.id}/edit`} variant="primary">
@@ -489,6 +478,9 @@ export default async function AssetDetailPage({ params }: Props) {
               )}
             </div>
           </div>
+
+          {/* Status Card */}
+          <AssetStatusCard status={asset.status} />
 
           {/* Location Card - Only show for non-shared assets since shared assets show location in the Shared Resource card */}
           {asset.location && !asset.isShared && (

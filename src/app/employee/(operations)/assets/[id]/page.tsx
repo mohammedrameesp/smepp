@@ -29,7 +29,7 @@ import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { formatDate } from '@/lib/date-format';
-import { AssetMaintenanceRecords } from '@/components/domains/operations/assets/asset-maintenance-records';
+import { AssetMaintenanceRecords, AssetStatusCard } from '@/components/domains/operations/assets';
 import { AssetRequestDialog, AssetReturnDialog } from '@/components/domains/operations/asset-requests';
 import {
   Package,
@@ -48,14 +48,6 @@ import { PageHeader, PageContent } from '@/components/ui/page-header';
 interface Props {
   params: Promise<{ id: string }>;
 }
-
-/** Status badge styles mapping for visual consistency */
-const statusStyles: Record<string, { bg: string; text: string; icon: typeof CheckCircle; badgeVariant: 'default' | 'info' | 'success' | 'warning' }> = {
-  IN_USE: { bg: 'bg-blue-100', text: 'text-blue-700', icon: CheckCircle, badgeVariant: 'info' },
-  SPARE: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: Package, badgeVariant: 'success' },
-  REPAIR: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Wrench, badgeVariant: 'warning' },
-  DISPOSED: { bg: 'bg-slate-100', text: 'text-slate-700', icon: XCircle, badgeVariant: 'default' },
-};
 
 /**
  * Employee asset detail page component
@@ -136,8 +128,6 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
   );
   const canReturn = isAssignedToMe && asset.status === 'IN_USE' && !hasPendingReturn;
 
-  const statusStyle = statusStyles[asset.status] || statusStyles.IN_USE;
-
   return (
     <>
       <PageHeader
@@ -147,7 +137,6 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
           { label: 'Assets', href: '/employee/assets' },
           { label: asset.model },
         ]}
-        badge={{ text: asset.status.replace('_', ' '), variant: statusStyle.badgeVariant }}
         actions={
           <div className="flex gap-2 flex-wrap">
             {canRequest && <AssetRequestDialog asset={asset} />}
@@ -412,6 +401,9 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
                 )}
               </div>
             </div>
+
+            {/* Status Card */}
+            <AssetStatusCard status={asset.status} />
 
             {/* Location Card - Only show for non-shared assets since shared assets show location in the Assignment card */}
             {asset.location && !asset.isShared && (

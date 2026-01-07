@@ -84,7 +84,7 @@ export function AssetRequestDialog({ asset, trigger }: AssetRequestDialogProps) 
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="default" size="sm">
+          <Button variant="outline" size="sm">
             <Send className="h-4 w-4 mr-2" />
             Request
           </Button>

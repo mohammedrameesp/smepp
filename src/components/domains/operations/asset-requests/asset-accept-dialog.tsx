@@ -219,7 +219,7 @@ export function AssetAcceptDialog({
                 <XCircle className="h-4 w-4 mr-2" />
                 Decline
               </Button>
-              <Button onClick={() => setMode('accept')} disabled={isSubmitting}>
+              <Button variant="outline" onClick={() => setMode('accept')} disabled={isSubmitting}>
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Accept
               </Button>
