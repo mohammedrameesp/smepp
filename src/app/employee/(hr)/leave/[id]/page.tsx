@@ -165,7 +165,7 @@ export default function EmployeeLeaveRequestDetailPage() {
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
             <p className="text-red-600 font-medium mb-4">{error || 'Leave request not found'}</p>
             <Link href="/employee/leave">
-              <Button variant="outline">Back to My Leave</Button>
+              <Button variant="outline" size="sm">Back to My Leave</Button>
             </Link>
           </div>
         </PageContent>
@@ -204,7 +204,7 @@ export default function EmployeeLeaveRequestDetailPage() {
               />
             )}
             <Link href="/employee/leave">
-              <Button variant="outline">
+              <Button variant="outline" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to My Leave
               </Button>

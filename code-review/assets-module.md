@@ -103,7 +103,6 @@ Complete list of all asset-related files for code review and understanding.
 | File | Description |
 |------|-------------|
 [Done] | [src/components/domains/operations/assets/asset-history.tsx](../src/components/domains/operations/assets/asset-history.tsx) | History timeline |
-[Done] | [src/components/domains/operations/assets/assignment-timeline.tsx](../src/components/domains/operations/assets/assignment-timeline.tsx) | Assignment history (unused) |
 [Done] | [src/components/domains/operations/assets/asset-maintenance-records.tsx](../src/components/domains/operations/assets/asset-maintenance-records.tsx) | Maintenance records |
 [Done/Fixed] | [src/components/domains/operations/assets/asset-cost-breakdown.tsx](../src/components/domains/operations/assets/asset-cost-breakdown.tsx) | Cost/utilization breakdown - **Fixed React hooks violation** |
 
@@ -111,7 +110,7 @@ Complete list of all asset-related files for code review and understanding.
 | File | Description |
 |------|-------------|
 [Done] | [src/components/domains/operations/assets/depreciation-card.tsx](../src/components/domains/operations/assets/depreciation-card.tsx) | Depreciation info card |
-[Done] | [src/components/domains/operations/assets/depreciation-schedule-table.tsx](../src/components/domains/operations/assets/depreciation-schedule-table.tsx) | Schedule table |
+
 
 ### Form Components
 | File | Description |

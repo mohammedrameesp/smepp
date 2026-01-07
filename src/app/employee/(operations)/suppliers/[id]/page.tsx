@@ -92,7 +92,7 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
         ]}
         actions={
           <Link href="/employee/suppliers">
-            <Button variant="outline">
+            <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Suppliers
             </Button>

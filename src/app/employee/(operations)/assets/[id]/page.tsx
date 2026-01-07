@@ -153,11 +153,11 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
             {canRequest && <AssetRequestDialog asset={asset} />}
             {canReturn && <AssetReturnDialog asset={asset} />}
             <Link href="/employee/assets">
-              <Button variant="outline">Back to Assets</Button>
+              <Button variant="outline" size="sm">Back to Assets</Button>
             </Link>
             {isAssignedToMe && (
               <Link href="/employee/my-assets">
-                <Button variant="outline">My Assets</Button>
+                <Button variant="outline" size="sm">My Assets</Button>
               </Link>
             )}
           </div>

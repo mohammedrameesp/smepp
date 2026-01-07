@@ -182,7 +182,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
             <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <p className="text-lg font-medium text-slate-900 mb-4">{error || 'Request not found'}</p>
             <Link href="/employee/asset-requests">
-              <Button variant="outline">Back to Requests</Button>
+              <Button variant="outline" size="sm">Back to Requests</Button>
             </Link>
           </div>
         </PageContent>
@@ -208,11 +208,11 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-2">
             {isPendingAcceptance && (
               <>
-                <Button variant="outline" onClick={() => setShowAcceptDialog(true)}>
+                <Button variant="outline" size="sm" onClick={() => setShowAcceptDialog(true)}>
                   <XCircle className="h-4 w-4 mr-2" />
                   Decline
                 </Button>
-                <Button onClick={() => setShowAcceptDialog(true)}>
+                <Button size="sm" onClick={() => setShowAcceptDialog(true)}>
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Accept
                 </Button>
@@ -221,6 +221,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
             {canCancel && (
               <Button
                 variant="outline"
+                size="sm"
                 onClick={handleCancel}
                 disabled={isCancelling}
                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
@@ -229,7 +230,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
               </Button>
             )}
             <Link href="/employee/asset-requests">
-              <Button variant="outline">
+              <Button variant="outline" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
               </Button>

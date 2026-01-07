@@ -117,7 +117,7 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
         ]}
         actions={
           <Link href="/employee/subscriptions">
-            <Button variant="outline">
+            <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Subscriptions
             </Button>

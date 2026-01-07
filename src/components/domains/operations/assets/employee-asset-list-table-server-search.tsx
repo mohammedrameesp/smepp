@@ -8,7 +8,7 @@
  * - Debounced search (300ms) across asset tag, model, brand, type
  * - Dynamic filter options fetched from API (types with counts)
  * - Status filter: Active (excludes Disposed), All, or specific status
- * - **Assignment filter**: All, My Assets, Unassigned, Assigned to Others (employee-specific)
+ * - **Assignment filter**: All (default), My Assets, Unassigned, Assigned to Others (employee-specific)
  * - Type dropdown populated from tenant's actual data
  * - Sortable columns with ARIA attributes for accessibility
  * - Shows "You" badge on user's assigned assets
@@ -19,7 +19,7 @@
  * - Search: Full-text search across multiple fields
  * - Status: active (default), all, IN_USE, SPARE, REPAIR, DISPOSED
  * - Type: Dynamic from /api/assets/filters
- * - Assignment: All, My Assets (default), Unassigned, Others
+ * - Assignment: All (default), My Assets, Unassigned, Others
  *
  * Sortable Columns:
  * - Asset Tag, Type, Model, Brand, Status, Purchase Date
@@ -75,7 +75,7 @@ export function EmployeeAssetListTableServerSearch({ currentUserId }: EmployeeAs
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('active');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [assignmentFilter, setAssignmentFilter] = useState<string>('mine'); // Default to "My Assets"
+  const [assignmentFilter, setAssignmentFilter] = useState<string>('all'); // Default to "All Assets"
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -214,7 +214,7 @@ export function EmployeeAssetListTableServerSearch({ currentUserId }: EmployeeAs
         {/* Assignment filter (employee-specific) */}
         <Select value={assignmentFilter} onValueChange={setAssignmentFilter}>
           <SelectTrigger>
-            <SelectValue placeholder="My Assets" />
+            <SelectValue placeholder="All Assets" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Assets</SelectItem>
@@ -304,10 +304,10 @@ export function EmployeeAssetListTableServerSearch({ currentUserId }: EmployeeAs
             ) : assets.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                  {assignmentFilter === 'mine'
-                    ? 'No assets assigned to you yet'
-                    : debouncedSearch || (statusFilter !== 'all' && statusFilter !== 'active') || typeFilter !== 'all' || assignmentFilter !== 'all'
+                  {debouncedSearch || (statusFilter !== 'all' && statusFilter !== 'active') || typeFilter !== 'all' || assignmentFilter !== 'all'
                     ? 'No assets match your filters'
+                    : assignmentFilter === 'mine'
+                    ? 'No assets assigned to you yet'
                     : 'No assets found'}
                 </TableCell>
               </TableRow>

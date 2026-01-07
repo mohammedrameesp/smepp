@@ -6,8 +6,8 @@
  * Features:
  * - Modern PageHeader layout matching admin design
  * - Server-side pagination and search for better performance
- * - Inline stats badges (My Assets, Available, Pending Requests, Total)
- * - Assignment filter defaulting to "My Assets"
+ * - Inline stats badges (My Assets, Pending Requests, Total)
+ * - Assignment filter defaulting to "All Assets"
  * - Hides sensitive fields (price, serial, supplier)
  * - "You" badge on assigned assets
  *
@@ -51,14 +51,10 @@ export default async function EmployeeAllAssetsPage() {
   const userId = session.user.id;
 
   // Fetch stats for badges
-  const [myAssetsCount, availableCount, totalCount, requestedCount] = await Promise.all([
+  const [myAssetsCount, totalCount, requestedCount] = await Promise.all([
     // My Assets: assigned to me
     prisma.asset.count({
       where: { tenantId, assignedMemberId: userId },
-    }),
-    // Available: SPARE status
-    prisma.asset.count({
-      where: { tenantId, status: 'SPARE' },
     }),
     // Total organizational assets (for context)
     prisma.asset.count({
@@ -95,11 +91,6 @@ export default async function EmployeeAllAssetsPage() {
               {myAssetsCount} my assets
             </span>
           </Link>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-            <span className="text-emerald-400 text-sm font-medium">
-              {availableCount} available
-            </span>
-          </div>
           {requestedCount > 0 && (
             <Link
               href="/employee/asset-requests"
@@ -125,7 +116,7 @@ export default async function EmployeeAllAssetsPage() {
           <div className="px-4 py-4 border-b border-slate-100">
             <h2 className="font-semibold text-slate-900">All Assets</h2>
             <p className="text-sm text-slate-500">
-              Search and filter company assets. Default view shows your assigned assets.
+              Search and filter company assets. Use the assignment filter to view specific groups.
             </p>
           </div>
           <div className="p-4">

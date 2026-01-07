@@ -6,7 +6,7 @@
  * Features:
  * - Debounced API search for asset type suggestions (100ms delay)
  * - Auto-assigns category when type matches a known suggestion
- * - Supports custom tenant-specific type mappings (marked with star icon)
+ * - Supports custom tenant-specific type mappings
  * - Full keyboard navigation (Arrow keys, Enter, Escape)
  * - ARIA-compliant combobox with proper roles and labels
  * - Loading indicator during API fetch
@@ -33,7 +33,7 @@
 
 import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { Input } from '@/components/ui/input';
-import { Star, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AssetTypeSuggestion {
@@ -254,9 +254,6 @@ export function AssetTypeCombobox({
               )}
             >
               <span className="font-medium">{suggestion.type}</span>
-              {suggestion.isCustom && (
-                <Star className="h-3 w-3 text-amber-500 fill-amber-500" />
-              )}
             </button>
           ))}
         </div>
