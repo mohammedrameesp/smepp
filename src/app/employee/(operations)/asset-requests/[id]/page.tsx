@@ -223,7 +223,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
                 </Button>
                 <Button
                   size="default"
-                  className="bg-green-600 hover:bg-green-700 text-white border-2 border-green-700"
+                  className="bg-emerald-700 hover:bg-emerald-800 text-white border-2 border-emerald-800 shadow-sm"
                   onClick={() => {
                     setDialogInitialMode('accept');
                     setShowAcceptDialog(true);
