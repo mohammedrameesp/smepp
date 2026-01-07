@@ -342,11 +342,11 @@ async function sendReassignmentUnassignNotification(
     const admin = await getAdminDetails(adminId, tenantId);
 
     // Send email notification
-    const { assetUnassignedEmail } = await import('@/lib/email-templates');
+    const { assetUnassignedEmail } = await import('@/lib/core/asset-request-emails');
     const emailData = assetUnassignedEmail({
-      assetTag: asset.assetTag || '',
+      assetTag: asset.assetTag || null,
       assetModel: asset.model,
-      assetBrand: asset.brand || '',
+      assetBrand: asset.brand || null,
       assetType: asset.type,
       userName: previousMember.name || previousMember.email,
       adminName: admin.name || admin.email || 'Admin',
