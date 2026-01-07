@@ -9,46 +9,48 @@ Complete list of all asset-related files for code review and understanding.
 ### Core Asset CRUD
 | File | Description |
 |------|-------------|
-[Done] | [src/app/api/assets/route.ts](../src/app/api/assets/route.ts) | List & Create assets |
-[Done] | [src/app/api/assets/[id]/route.ts](../src/app/api/assets/[id]/route.ts) | Get, Update, Delete single asset |
-[Done] | [src/app/api/assets/[id]/clone/route.ts](../src/app/api/assets/[id]/clone/route.ts) | Clone an asset |
-[Done] | [src/app/api/assets/export/route.ts](../src/app/api/assets/export/route.ts) | Export assets to CSV |
-[Done] | [src/app/api/assets/import/route.ts](../src/app/api/assets/import/route.ts) | Import assets from CSV |
+| [src/app/api/assets/route.ts](../src/app/api/assets/route.ts) | List & Create assets |
+| [src/app/api/assets/[id]/route.ts](../src/app/api/assets/[id]/route.ts) | Get, Update, Delete single asset |
+| [src/app/api/assets/[id]/clone/route.ts](../src/app/api/assets/[id]/clone/route.ts) | Clone an asset |
+| [src/app/api/assets/export/route.ts](../src/app/api/assets/export/route.ts) | Export assets to CSV |
+| [src/app/api/assets/import/route.ts](../src/app/api/assets/import/route.ts) | Import assets from CSV |
+| [src/app/api/assets/filters/route.ts](../src/app/api/assets/filters/route.ts) | Get filter options (types, categories) |
 
 ### Asset Assignment
 | File | Description |
 |------|-------------|
-[Done] | [src/app/api/assets/[id]/assign/route.ts](../src/app/api/assets/[id]/assign/route.ts) | Assign asset to member |
+| [src/app/api/assets/[id]/assign/route.ts](../src/app/api/assets/[id]/assign/route.ts) | Assign asset to member |
 
 ### Asset History & Lifecycle
 | File | Description |
 |------|-------------|
-[Done] | [src/app/api/assets/[id]/history/route.ts](../src/app/api/assets/[id]/history/route.ts) | Get asset history timeline |
-[Done] | [src/app/api/assets/[id]/utilization/route.ts](../src/app/api/assets/[id]/utilization/route.ts) | Get utilization stats |
-[Done] | [src/app/api/assets/[id]/maintenance/route.ts](../src/app/api/assets/[id]/maintenance/route.ts) | Maintenance records CRUD |
+| [src/app/api/assets/[id]/history/route.ts](../src/app/api/assets/[id]/history/route.ts) | Get asset history timeline |
+| [src/app/api/assets/[id]/utilization/route.ts](../src/app/api/assets/[id]/utilization/route.ts) | Get utilization stats |
+| [src/app/api/assets/[id]/maintenance/route.ts](../src/app/api/assets/[id]/maintenance/route.ts) | Maintenance records CRUD |
 
 ### Depreciation & Disposal
 | File | Description |
 |------|-------------|
-[Done] | [src/app/api/assets/[id]/depreciation/route.ts](../src/app/api/assets/[id]/depreciation/route.ts) | Depreciation records |
-[Done] | [src/app/api/assets/[id]/dispose/route.ts](../src/app/api/assets/[id]/dispose/route.ts) | Dispose asset with gain/loss |
+| [src/app/api/assets/[id]/depreciation/route.ts](../src/app/api/assets/[id]/depreciation/route.ts) | Depreciation records |
+| [src/app/api/assets/[id]/dispose/route.ts](../src/app/api/assets/[id]/dispose/route.ts) | Dispose asset with gain/loss |
 
 ### Autocomplete & Helpers
 | File | Description |
 |------|-------------|
-[Done] | [src/app/api/assets/next-tag/route.ts](../src/app/api/assets/next-tag/route.ts) | Generate next asset tag |
+| [src/app/api/assets/next-tag/route.ts](../src/app/api/assets/next-tag/route.ts) | Generate next asset tag |
+| [src/app/api/asset-types/suggestions/route.ts](../src/app/api/asset-types/suggestions/route.ts) | Asset type autocomplete suggestions |
 
 ### Asset Requests API
 | File | Description |
 |------|-------------|
-[Done] | [src/app/api/asset-requests/route.ts](../src/app/api/asset-requests/route.ts) | List & Create asset requests |
-[Done] | [src/app/api/asset-requests/[id]/route.ts](../src/app/api/asset-requests/[id]/route.ts) | Get single request |
-[Done] | [src/app/api/asset-requests/[id]/approve/route.ts](../src/app/api/asset-requests/[id]/approve/route.ts) | Admin approves request |
-[Done] | [src/app/api/asset-requests/[id]/reject/route.ts](../src/app/api/asset-requests/[id]/reject/route.ts) | Admin rejects request |
-[Done] | [src/app/api/asset-requests/[id]/accept/route.ts](../src/app/api/asset-requests/[id]/accept/route.ts) | User accepts assignment |
-[Done] | [src/app/api/asset-requests/[id]/decline/route.ts](../src/app/api/asset-requests/[id]/decline/route.ts) | User declines assignment |
-[Done] | [src/app/api/asset-requests/my-pending/route.ts](../src/app/api/asset-requests/my-pending/route.ts) | Get user's pending requests |
-[Done] | [src/app/api/asset-requests/stats/route.ts](../src/app/api/asset-requests/stats/route.ts) | Request statistics |
+| [src/app/api/asset-requests/route.ts](../src/app/api/asset-requests/route.ts) | List & Create asset requests |
+| [src/app/api/asset-requests/[id]/route.ts](../src/app/api/asset-requests/[id]/route.ts) | Get single request |
+| [src/app/api/asset-requests/[id]/approve/route.ts](../src/app/api/asset-requests/[id]/approve/route.ts) | Admin approves request |
+| [src/app/api/asset-requests/[id]/reject/route.ts](../src/app/api/asset-requests/[id]/reject/route.ts) | Admin rejects request |
+| [src/app/api/asset-requests/[id]/accept/route.ts](../src/app/api/asset-requests/[id]/accept/route.ts) | User accepts assignment |
+| [src/app/api/asset-requests/[id]/decline/route.ts](../src/app/api/asset-requests/[id]/decline/route.ts) | User declines assignment |
+| [src/app/api/asset-requests/my-pending/route.ts](../src/app/api/asset-requests/my-pending/route.ts) | Get user's pending requests |
+| [src/app/api/asset-requests/stats/route.ts](../src/app/api/asset-requests/stats/route.ts) | Request statistics |
 
 ---
 
@@ -57,28 +59,46 @@ Complete list of all asset-related files for code review and understanding.
 ### Asset Management
 | File | Description |
 |------|-------------|
-[Done] | [src/app/admin/(operations)/assets/page.tsx](../src/app/admin/(operations)/assets/page.tsx) | Asset list page |
-[Done] | [src/app/admin/(operations)/assets/loading.tsx](../src/app/admin/(operations)/assets/loading.tsx) | Loading skeleton |
-[Done] | [src/app/admin/(operations)/assets/new/page.tsx](../src/app/admin/(operations)/assets/new/page.tsx) | Create new asset form |
-[Done] | [src/app/admin/(operations)/assets/[id]/page.tsx](../src/app/admin/(operations)/assets/[id]/page.tsx) | Asset detail view |
-[Done] | [src/app/admin/(operations)/assets/[id]/edit/page.tsx](../src/app/admin/(operations)/assets/[id]/edit/page.tsx) | Edit asset form |
+| [src/app/admin/(operations)/assets/page.tsx](../src/app/admin/(operations)/assets/page.tsx) | Asset list page |
+| [src/app/admin/(operations)/assets/loading.tsx](../src/app/admin/(operations)/assets/loading.tsx) | Loading skeleton |
+| [src/app/admin/(operations)/assets/new/page.tsx](../src/app/admin/(operations)/assets/new/page.tsx) | Create new asset form |
+| [src/app/admin/(operations)/assets/[id]/page.tsx](../src/app/admin/(operations)/assets/[id]/page.tsx) | Asset detail view |
+| [src/app/admin/(operations)/assets/[id]/loading.tsx](../src/app/admin/(operations)/assets/[id]/loading.tsx) | Asset detail loading |
+| [src/app/admin/(operations)/assets/[id]/edit/page.tsx](../src/app/admin/(operations)/assets/[id]/edit/page.tsx) | Edit asset form |
+| [src/app/admin/(operations)/assets/[id]/edit/loading.tsx](../src/app/admin/(operations)/assets/[id]/edit/loading.tsx) | Edit form loading |
 
 ### Asset Requests Management
 | File | Description |
 |------|-------------|
-[Done] | [src/app/admin/(operations)/asset-requests/page.tsx](../src/app/admin/(operations)/asset-requests/page.tsx) | Asset requests list |
-[Done] | [src/app/admin/(operations)/asset-requests/[id]/page.tsx](../src/app/admin/(operations)/asset-requests/[id]/page.tsx) | Request detail |
+| [src/app/admin/(operations)/asset-requests/page.tsx](../src/app/admin/(operations)/asset-requests/page.tsx) | Asset requests list |
+| [src/app/admin/(operations)/asset-requests/loading.tsx](../src/app/admin/(operations)/asset-requests/loading.tsx) | Requests list loading |
+| [src/app/admin/(operations)/asset-requests/[id]/page.tsx](../src/app/admin/(operations)/asset-requests/[id]/page.tsx) | Request detail |
 
 ---
 
 ## 3. Employee Pages (Views)
 
+### My Assets & Holdings
 | File | Description |
 |------|-------------|
-[Done] | [src/app/employee/(operations)/assets/page.tsx](../src/app/employee/(operations)/assets/page.tsx) | Employee's assigned assets |
-[Done] | [src/app/employee/(operations)/assets/[id]/page.tsx](../src/app/employee/(operations)/assets/[id]/page.tsx) | Asset detail (employee view) |
-[Done] | [src/app/employee/(operations)/asset-requests/page.tsx](../src/app/employee/(operations)/asset-requests/page.tsx) | Employee's asset requests |
-[Done] | [src/app/employee/(operations)/asset-requests/[id]/page.tsx](../src/app/employee/(operations)/asset-requests/[id]/page.tsx) | Request detail |
+| [src/app/employee/(operations)/my-assets/page.tsx](../src/app/employee/(operations)/my-assets/page.tsx) | Employee's asset & subscription holdings |
+| [src/app/employee/(operations)/my-assets/loading.tsx](../src/app/employee/(operations)/my-assets/loading.tsx) | Holdings loading skeleton |
+
+### Asset Browsing
+| File | Description |
+|------|-------------|
+| [src/app/employee/(operations)/assets/page.tsx](../src/app/employee/(operations)/assets/page.tsx) | Browse all company assets |
+| [src/app/employee/(operations)/assets/loading.tsx](../src/app/employee/(operations)/assets/loading.tsx) | Asset list loading |
+| [src/app/employee/(operations)/assets/[id]/page.tsx](../src/app/employee/(operations)/assets/[id]/page.tsx) | Asset detail (employee view) |
+| [src/app/employee/(operations)/assets/[id]/loading.tsx](../src/app/employee/(operations)/assets/[id]/loading.tsx) | Asset detail loading |
+
+### Asset Requests
+| File | Description |
+|------|-------------|
+| [src/app/employee/(operations)/asset-requests/page.tsx](../src/app/employee/(operations)/asset-requests/page.tsx) | Employee's asset requests |
+| [src/app/employee/(operations)/asset-requests/loading.tsx](../src/app/employee/(operations)/asset-requests/loading.tsx) | Requests loading |
+| [src/app/employee/(operations)/asset-requests/[id]/page.tsx](../src/app/employee/(operations)/asset-requests/[id]/page.tsx) | Request detail |
+| [src/app/employee/(operations)/asset-requests/[id]/loading.tsx](../src/app/employee/(operations)/asset-requests/[id]/loading.tsx) | Request detail loading |
 
 ---
 
@@ -87,55 +107,58 @@ Complete list of all asset-related files for code review and understanding.
 ### Asset List & Tables
 | File | Description |
 |------|-------------|
-[Done] | [src/components/domains/operations/assets/index.ts](../src/components/domains/operations/assets/index.ts) | Component exports |
-[Done] | [src/components/domains/operations/assets/asset-list-table-server-search.tsx](../src/components/domains/operations/assets/asset-list-table-server-search.tsx) | Server-side search |
-[Done] | [src/components/domains/operations/assets/employee-asset-list-table.tsx](../src/components/domains/operations/assets/employee-asset-list-table.tsx) | Employee asset table |
+| [src/components/domains/operations/assets/index.ts](../src/components/domains/operations/assets/index.ts) | Component exports |
+| [src/components/domains/operations/assets/asset-list-table-server-search.tsx](../src/components/domains/operations/assets/asset-list-table-server-search.tsx) | Admin asset table with server-side search |
+| [src/components/domains/operations/assets/employee-asset-list-table.tsx](../src/components/domains/operations/assets/employee-asset-list-table.tsx) | Employee asset table (legacy) |
+| [src/components/domains/operations/assets/employee-asset-list-table-server-search.tsx](../src/components/domains/operations/assets/employee-asset-list-table-server-search.tsx) | Employee asset table with server-side search |
+| [src/components/domains/operations/assets/asset-shared.tsx](../src/components/domains/operations/assets/asset-shared.tsx) | Shared types and utilities for asset tables |
 
 ### Asset Actions
 | File | Description |
 |------|-------------|
-[Done] | [src/components/domains/operations/assets/asset-actions.tsx](../src/components/domains/operations/assets/asset-actions.tsx) | Action buttons wrapper |
-[Done] | [src/components/domains/operations/assets/clone-asset-button.tsx](../src/components/domains/operations/assets/clone-asset-button.tsx) | Clone button |
-[Done] | [src/components/domains/operations/assets/delete-asset-button.tsx](../src/components/domains/operations/assets/delete-asset-button.tsx) | Delete button |
-[Done] | [src/components/domains/operations/assets/dispose-asset-dialog.tsx](../src/components/domains/operations/assets/dispose-asset-dialog.tsx) | Dispose dialog |
+| [src/components/domains/operations/assets/asset-actions.tsx](../src/components/domains/operations/assets/asset-actions.tsx) | Action buttons wrapper |
+| [src/components/domains/operations/assets/clone-asset-button.tsx](../src/components/domains/operations/assets/clone-asset-button.tsx) | Clone button |
+| [src/components/domains/operations/assets/delete-asset-button.tsx](../src/components/domains/operations/assets/delete-asset-button.tsx) | Delete button |
+| [src/components/domains/operations/assets/dispose-asset-dialog.tsx](../src/components/domains/operations/assets/dispose-asset-dialog.tsx) | Dispose dialog with gain/loss calculation |
 
 ### Asset Details & History
 | File | Description |
 |------|-------------|
-[Done] | [src/components/domains/operations/assets/asset-history.tsx](../src/components/domains/operations/assets/asset-history.tsx) | History timeline |
-[Done] | [src/components/domains/operations/assets/asset-maintenance-records.tsx](../src/components/domains/operations/assets/asset-maintenance-records.tsx) | Maintenance records |
-[Done/Fixed] | [src/components/domains/operations/assets/asset-cost-breakdown.tsx](../src/components/domains/operations/assets/asset-cost-breakdown.tsx) | Cost/utilization breakdown - **Fixed React hooks violation** |
+| [src/components/domains/operations/assets/asset-history.tsx](../src/components/domains/operations/assets/asset-history.tsx) | History timeline |
+| [src/components/domains/operations/assets/asset-maintenance-records.tsx](../src/components/domains/operations/assets/asset-maintenance-records.tsx) | Maintenance records |
+| [src/components/domains/operations/assets/asset-cost-breakdown.tsx](../src/components/domains/operations/assets/asset-cost-breakdown.tsx) | Cost/utilization breakdown |
 
 ### Depreciation
 | File | Description |
 |------|-------------|
-[Done] | [src/components/domains/operations/assets/depreciation-card.tsx](../src/components/domains/operations/assets/depreciation-card.tsx) | Depreciation info card |
-
+| [src/components/domains/operations/assets/depreciation-card.tsx](../src/components/domains/operations/assets/depreciation-card.tsx) | Depreciation info card |
 
 ### Form Components
 | File | Description |
 |------|-------------|
-[Done] | [src/components/domains/operations/assets/category-selector.tsx](../src/components/domains/operations/assets/category-selector.tsx) | Category dropdown |
-[Done] | [src/components/domains/operations/assets/asset-type-combobox.tsx](../src/components/domains/operations/assets/asset-type-combobox.tsx) | Type autocomplete |
+| [src/components/domains/operations/assets/category-selector.tsx](../src/components/domains/operations/assets/category-selector.tsx) | Category dropdown |
+| [src/components/domains/operations/assets/asset-type-combobox.tsx](../src/components/domains/operations/assets/asset-type-combobox.tsx) | Type autocomplete with auto-category |
 
 ### Asset Request Components
 | File | Description |
 |------|-------------|
-[Done] | [src/components/domains/operations/asset-requests/index.ts](../src/components/domains/operations/asset-requests/index.ts) | Component exports |
-[Done] | [src/components/domains/operations/asset-requests/asset-request-list-table.tsx](../src/components/domains/operations/asset-requests/asset-request-list-table.tsx) | Request table |
-[Done] | [src/components/domains/operations/asset-requests/asset-request-dialog.tsx](../src/components/domains/operations/asset-requests/asset-request-dialog.tsx) | Create request dialog |
-[Done] | [src/components/domains/operations/asset-requests/asset-accept-dialog.tsx](../src/components/domains/operations/asset-requests/asset-accept-dialog.tsx) | Accept dialog |
-[Done] | [src/components/domains/operations/asset-requests/asset-return-dialog.tsx](../src/components/domains/operations/asset-requests/asset-return-dialog.tsx) | Return dialog |
-[Done] | [src/components/domains/operations/asset-requests/asset-assign-dialog.tsx](../src/components/domains/operations/asset-requests/asset-assign-dialog.tsx) | Assign dialog |
-[Done] | [src/components/domains/operations/asset-requests/asset-request-status-badge.tsx](../src/components/domains/operations/asset-requests/asset-request-status-badge.tsx) | Status badge |
-[Done] | [src/components/domains/operations/asset-requests/asset-request-type-badge.tsx](../src/components/domains/operations/asset-requests/asset-request-type-badge.tsx) | Type badge |
+| [src/components/domains/operations/asset-requests/index.ts](../src/components/domains/operations/asset-requests/index.ts) | Component exports |
+| [src/components/domains/operations/asset-requests/asset-request-list-table.tsx](../src/components/domains/operations/asset-requests/asset-request-list-table.tsx) | Request table |
+| [src/components/domains/operations/asset-requests/asset-request-dialog.tsx](../src/components/domains/operations/asset-requests/asset-request-dialog.tsx) | Create request dialog |
+| [src/components/domains/operations/asset-requests/asset-accept-dialog.tsx](../src/components/domains/operations/asset-requests/asset-accept-dialog.tsx) | Accept dialog |
+| [src/components/domains/operations/asset-requests/asset-return-dialog.tsx](../src/components/domains/operations/asset-requests/asset-return-dialog.tsx) | Return dialog |
+| [src/components/domains/operations/asset-requests/asset-assign-dialog.tsx](../src/components/domains/operations/asset-requests/asset-assign-dialog.tsx) | Assign dialog (admin) |
+| [src/components/domains/operations/asset-requests/admin-request-actions.tsx](../src/components/domains/operations/asset-requests/admin-request-actions.tsx) | Admin action buttons for requests |
+| [src/components/domains/operations/asset-requests/pending-assignments-alert.tsx](../src/components/domains/operations/asset-requests/pending-assignments-alert.tsx) | Pending assignments alert banner |
+| [src/components/domains/operations/asset-requests/asset-request-status-badge.tsx](../src/components/domains/operations/asset-requests/asset-request-status-badge.tsx) | Status badge |
+| [src/components/domains/operations/asset-requests/asset-request-type-badge.tsx](../src/components/domains/operations/asset-requests/asset-request-type-badge.tsx) | Type badge |
 
 ### Settings Components
 | File | Description |
 |------|-------------|
-[Done] | [src/components/domains/system/settings/asset-categories-settings.tsx](../src/components/domains/system/settings/asset-categories-settings.tsx) | Category settings |
-[Done] | [src/components/domains/system/settings/asset-type-mappings-settings.tsx](../src/components/domains/system/settings/asset-type-mappings-settings.tsx) | Type mappings |
-[Done] | [src/components/domains/system/users/user-asset-history.tsx](../src/components/domains/system/users/user-asset-history.tsx) | User's asset history |
+| [src/components/domains/system/settings/asset-categories-settings.tsx](../src/components/domains/system/settings/asset-categories-settings.tsx) | Category settings |
+| [src/components/domains/system/settings/asset-type-mappings-settings.tsx](../src/components/domains/system/settings/asset-type-mappings-settings.tsx) | Type mappings |
+| [src/components/domains/system/users/user-asset-history.tsx](../src/components/domains/system/users/user-asset-history.tsx) | User's asset history |
 
 ---
 
@@ -144,29 +167,29 @@ Complete list of all asset-related files for code review and understanding.
 ### Domain Logic
 | File | Description |
 |------|-------------|
-[Done] | [src/lib/domains/operations/assets/asset-utils.ts](../src/lib/domains/operations/assets/asset-utils.ts) | Tag generation, auto-learn |
-[Done] | [src/lib/domains/operations/assets/asset-history.ts](../src/lib/domains/operations/assets/asset-history.ts) | History recording |
-[Done] | [src/lib/domains/operations/assets/asset-lifecycle.ts](../src/lib/domains/operations/assets/asset-lifecycle.ts) | Assignment periods, utilization |
-[Done] | [src/lib/domains/operations/assets/asset-import.ts](../src/lib/domains/operations/assets/asset-import.ts) | CSV import parsing |
-[Done] | [src/lib/domains/operations/assets/asset-export.ts](../src/lib/domains/operations/assets/asset-export.ts) | CSV/Excel export utilities |
-[Done] | [src/lib/domains/operations/assets/asset-update.ts](../src/lib/domains/operations/assets/asset-update.ts) | Update helpers, change detection |
-[Done] | [src/lib/domains/operations/assets/seed-asset-categories.ts](../src/lib/domains/operations/assets/seed-asset-categories.ts) | Category seeding |
+| [src/lib/domains/operations/assets/asset-utils.ts](../src/lib/domains/operations/assets/asset-utils.ts) | Tag generation, auto-learn |
+| [src/lib/domains/operations/assets/asset-history.ts](../src/lib/domains/operations/assets/asset-history.ts) | History recording |
+| [src/lib/domains/operations/assets/asset-lifecycle.ts](../src/lib/domains/operations/assets/asset-lifecycle.ts) | Assignment periods, utilization |
+| [src/lib/domains/operations/assets/asset-import.ts](../src/lib/domains/operations/assets/asset-import.ts) | CSV import parsing |
+| [src/lib/domains/operations/assets/asset-export.ts](../src/lib/domains/operations/assets/asset-export.ts) | CSV/Excel export utilities |
+| [src/lib/domains/operations/assets/asset-update.ts](../src/lib/domains/operations/assets/asset-update.ts) | Update helpers, change detection |
+| [src/lib/domains/operations/assets/seed-asset-categories.ts](../src/lib/domains/operations/assets/seed-asset-categories.ts) | Category seeding |
 
 ### Depreciation System
 | File | Description |
 |------|-------------|
-[Done] | [src/lib/domains/operations/assets/depreciation/index.ts](../src/lib/domains/operations/assets/depreciation/index.ts) | Module exports |
-[Done] | [src/lib/domains/operations/assets/depreciation/constants.ts](../src/lib/domains/operations/assets/depreciation/constants.ts) | IFRS rates, Qatar tax |
-[Done] | [src/lib/domains/operations/assets/depreciation/calculator.ts](../src/lib/domains/operations/assets/depreciation/calculator.ts) | Calculation functions |
-[Done] | [src/lib/domains/operations/assets/depreciation/service.ts](../src/lib/domains/operations/assets/depreciation/service.ts) | Depreciation service |
-[Done] | [src/lib/domains/operations/assets/depreciation/disposal.ts](../src/lib/domains/operations/assets/depreciation/disposal.ts) | Disposal with gain/loss |
+| [src/lib/domains/operations/assets/depreciation/index.ts](../src/lib/domains/operations/assets/depreciation/index.ts) | Module exports |
+| [src/lib/domains/operations/assets/depreciation/constants.ts](../src/lib/domains/operations/assets/depreciation/constants.ts) | IFRS rates, Qatar tax |
+| [src/lib/domains/operations/assets/depreciation/calculator.ts](../src/lib/domains/operations/assets/depreciation/calculator.ts) | Calculation functions |
+| [src/lib/domains/operations/assets/depreciation/service.ts](../src/lib/domains/operations/assets/depreciation/service.ts) | Depreciation service |
+| [src/lib/domains/operations/assets/depreciation/disposal.ts](../src/lib/domains/operations/assets/depreciation/disposal.ts) | Disposal with gain/loss |
 
 ### Asset Requests Logic
 | File | Description |
 |------|-------------|
-[Done] | [src/lib/domains/operations/asset-requests/asset-request-utils.ts](../src/lib/domains/operations/asset-requests/asset-request-utils.ts) | Request utilities |
-[Done] | [src/lib/domains/operations/asset-requests/asset-request-notifications.ts](../src/lib/domains/operations/asset-requests/asset-request-notifications.ts) | Notifications |
-[Done] | [src/lib/core/asset-request-emails.ts](../src/lib/core/asset-request-emails.ts) | Email templates |
+| [src/lib/domains/operations/asset-requests/asset-request-utils.ts](../src/lib/domains/operations/asset-requests/asset-request-utils.ts) | Request utilities |
+| [src/lib/domains/operations/asset-requests/asset-request-notifications.ts](../src/lib/domains/operations/asset-requests/asset-request-notifications.ts) | Notifications |
+| [src/lib/core/asset-request-emails.ts](../src/lib/core/asset-request-emails.ts) | Email templates |
 
 ---
 
@@ -174,11 +197,11 @@ Complete list of all asset-related files for code review and understanding.
 
 | File | Description |
 |------|-------------|
-[Done] | [src/lib/validations/operations/assets.ts](../src/lib/validations/operations/assets.ts) | Operations schemas |
-[Done] | [src/lib/validations/operations/asset-request.ts](../src/lib/validations/operations/asset-request.ts) | Request schemas |
-[Done] | [src/lib/validations/operations/asset-categories.ts](../src/lib/validations/operations/asset-categories.ts) | Category schemas |
-[Done] | [src/lib/validations/operations/asset-type-mappings.ts](../src/lib/validations/operations/asset-type-mappings.ts) | Type mapping schemas |
-[Done] | [src/lib/validations/operations/asset-disposal.ts](../src/lib/validations/operations/asset-disposal.ts) | Disposal schemas |
+| [src/lib/validations/operations/assets.ts](../src/lib/validations/operations/assets.ts) | Asset schemas |
+| [src/lib/validations/operations/asset-request.ts](../src/lib/validations/operations/asset-request.ts) | Request schemas |
+| [src/lib/validations/operations/asset-categories.ts](../src/lib/validations/operations/asset-categories.ts) | Category schemas |
+| [src/lib/validations/operations/asset-type-mappings.ts](../src/lib/validations/operations/asset-type-mappings.ts) | Type mapping schemas |
+| [src/lib/validations/operations/asset-disposal.ts](../src/lib/validations/operations/asset-disposal.ts) | Disposal schemas |
 
 ---
 
@@ -186,8 +209,8 @@ Complete list of all asset-related files for code review and understanding.
 
 | File | Description |
 |------|-------------|
-[Done] | [src/lib/constants/asset-categories.ts](../src/lib/constants/asset-categories.ts) | Default categories |
-[Done] | [src/lib/constants/asset-type-suggestions.ts](../src/lib/constants/asset-type-suggestions.ts) | Type suggestions |
+| [src/lib/constants/asset-categories.ts](../src/lib/constants/asset-categories.ts) | Default categories |
+| [src/lib/constants/asset-type-suggestions.ts](../src/lib/constants/asset-type-suggestions.ts) | Type suggestions |
 
 ---
 
@@ -239,7 +262,7 @@ Employee Request → Admin Approval → User Acceptance → Asset Assigned
 ## Recommended Review Order
 
 1. **Start with schemas**: [prisma/schema.prisma](../prisma/schema.prisma) (Asset models)
-2. **Understand validations**: [src/lib/validations/assets.ts](../src/lib/validations/assets.ts)
+2. **Understand validations**: [src/lib/validations/operations/assets.ts](../src/lib/validations/operations/assets.ts)
 3. **Core API**: [src/app/api/assets/route.ts](../src/app/api/assets/route.ts) and [src/app/api/assets/[id]/route.ts](../src/app/api/assets/[id]/route.ts)
 4. **Business logic**: [src/lib/domains/operations/assets/](../src/lib/domains/operations/assets/)
 5. **UI components**: [src/components/domains/operations/assets/](../src/components/domains/operations/assets/)
