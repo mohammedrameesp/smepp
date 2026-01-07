@@ -5,7 +5,7 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -43,6 +43,7 @@ interface AssetAcceptDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  initialMode?: 'view' | 'accept' | 'decline';
 }
 
 export function AssetAcceptDialog({
@@ -53,13 +54,21 @@ export function AssetAcceptDialog({
   open,
   onOpenChange,
   onSuccess,
+  initialMode = 'view',
 }: AssetAcceptDialogProps) {
   const router = useRouter();
-  const [mode, setMode] = useState<'view' | 'accept' | 'decline'>('view');
+  const [mode, setMode] = useState<'view' | 'accept' | 'decline'>(initialMode);
   const [userNotes, setUserNotes] = useState('');
   const [declineReason, setDeclineReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync mode with initialMode when dialog opens
+  useEffect(() => {
+    if (open) {
+      setMode(initialMode);
+    }
+  }, [open, initialMode]);
 
   const handleAccept = async () => {
     setIsSubmitting(true);
@@ -119,7 +128,7 @@ export function AssetAcceptDialog({
   };
 
   const resetState = () => {
-    setMode('view');
+    setMode(initialMode);
     setUserNotes('');
     setDeclineReason('');
     setError(null);
@@ -212,14 +221,18 @@ export function AssetAcceptDialog({
           {mode === 'view' && (
             <>
               <Button
-                variant="outline"
+                variant={initialMode === 'decline' ? 'destructive' : 'outline'}
                 onClick={() => setMode('decline')}
                 disabled={isSubmitting}
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 Decline
               </Button>
-              <Button variant="outline" onClick={() => setMode('accept')} disabled={isSubmitting}>
+              <Button
+                variant={initialMode === 'accept' ? 'default' : 'outline'}
+                onClick={() => setMode('accept')}
+                disabled={isSubmitting}
+              >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Accept
               </Button>

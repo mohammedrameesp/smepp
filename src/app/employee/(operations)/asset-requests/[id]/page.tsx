@@ -97,6 +97,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAcceptDialog, setShowAcceptDialog] = useState(false);
+  const [dialogInitialMode, setDialogInitialMode] = useState<'view' | 'accept' | 'decline'>('view');
   const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
@@ -208,11 +209,17 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-2">
             {isPendingAcceptance && (
               <>
-                <Button variant="outline" size="sm" onClick={() => setShowAcceptDialog(true)}>
+                <Button variant="outline" size="sm" onClick={() => {
+                  setDialogInitialMode('decline');
+                  setShowAcceptDialog(true);
+                }}>
                   <XCircle className="h-4 w-4 mr-2" />
                   Decline
                 </Button>
-                <Button size="sm" onClick={() => setShowAcceptDialog(true)}>
+                <Button size="sm" onClick={() => {
+                  setDialogInitialMode('accept');
+                  setShowAcceptDialog(true);
+                }}>
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Accept
                 </Button>
@@ -423,6 +430,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
             open={showAcceptDialog}
             onOpenChange={setShowAcceptDialog}
             onSuccess={fetchRequest}
+            initialMode={dialogInitialMode}
           />
         )}
       </PageContent>
