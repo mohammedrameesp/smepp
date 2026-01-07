@@ -759,11 +759,47 @@ async function directUnassign(
     directUnassign: true,
   });
 
-  // Notify previous assignee (non-blocking)
-  createNotification(
-    NotificationTemplates.assetUnassigned(previousMember.id, updatedAsset.assetTag || '', updatedAsset.model, updatedAsset.id),
-    tenantId
-  ).catch(() => {});
+  // Send email and in-app notifications (non-blocking)
+  try {
+    const org = await getOrgDetails(tenantId);
+    const admin = await getAdminDetails(adminId, tenantId);
+
+    // Send email notification
+    const { assetUnassignedEmail } = await import('@/lib/core/asset-request-emails');
+    const emailData = assetUnassignedEmail({
+      assetTag: updatedAsset.assetTag || null,
+      assetModel: updatedAsset.model,
+      assetBrand: updatedAsset.brand || null,
+      assetType: updatedAsset.type,
+      userName: previousMember.name || previousMember.email,
+      adminName: admin.name || admin.email || 'Admin',
+      reason: notes || undefined,
+      orgSlug: org.slug,
+      orgName: org.name,
+    });
+
+    await sendEmail({
+      to: previousMember.email,
+      subject: emailData.subject,
+      html: emailData.html,
+      text: emailData.text,
+    }).catch((emailError) => {
+      notifyAdminsOfEmailFailure(tenantId, {
+        action: 'unassignment',
+        assetTag: updatedAsset.assetTag || updatedAsset.model,
+        memberName: previousMember.name || previousMember.email,
+        error: emailError instanceof Error ? emailError.message : 'Unknown error',
+      });
+    });
+
+    // In-app notification
+    await createNotification(
+      NotificationTemplates.assetUnassigned(previousMember.id, updatedAsset.assetTag || '', updatedAsset.model, updatedAsset.id),
+      tenantId
+    );
+  } catch (error) {
+    console.error('[directUnassign] Notification error:', error);
+  }
 
   return NextResponse.json({
     success: true,

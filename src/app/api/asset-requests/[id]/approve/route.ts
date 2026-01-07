@@ -35,7 +35,7 @@ import { approveAssetRequestSchema } from '@/lib/validations/operations/asset-re
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { canAdminProcess } from '@/lib/domains/operations/asset-requests/asset-request-utils';
 import { sendEmail } from '@/lib/core/email';
-import { assetAssignmentPendingEmail, assetReturnApprovedEmail } from '@/lib/email-templates';
+import { assetRequestApprovedEmail, assetReturnApprovedEmail } from '@/lib/core/asset-request-emails';
 import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { invalidateTokensForEntity } from '@/lib/whatsapp';
@@ -254,16 +254,15 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
 
       if (assetRequest.member?.email) {
         if (assetRequest.type === AssetRequestType.EMPLOYEE_REQUEST) {
-          // Notify user that their request was approved (pending their acceptance)
-          const emailData = assetAssignmentPendingEmail({
+          // Notify user that their request was approved
+          const emailData = assetRequestApprovedEmail({
             requestNumber: assetRequest.requestNumber,
-            assetTag: assetRequest.asset?.assetTag || '',
+            assetTag: assetRequest.asset?.assetTag || null,
             assetModel: assetRequest.asset?.model || '',
-            assetBrand: assetRequest.asset?.brand || '',
+            assetBrand: assetRequest.asset?.brand || null,
             assetType: assetRequest.asset?.type || '',
             userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
-            assignerName: session.user.name || session.user.email || 'Admin',
-            reason: notes || undefined,
+            approverName: session.user.name || session.user.email || 'Admin',
             orgSlug,
             orgName,
           });

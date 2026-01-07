@@ -534,6 +534,102 @@ Review at: ${getTenantPortalUrl(data.orgSlug, '/admin/asset-requests')}
   return { subject, html, text };
 }
 
+// Admin approves employee request -> User notification
+interface AssetRequestApprovedData extends AssetRequestEmailData {
+  userName: string;
+  approverName: string;
+}
+
+export function assetRequestApprovedEmail(data: AssetRequestApprovedData): { subject: string; html: string; text: string } {
+  const subject = `Asset Request Approved: ${data.assetBrand || ''} ${data.assetModel}`;
+
+  const html = emailWrapper(`
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #dcfce7; border-left: 4px solid #22c55e; border-radius: 4px; margin: 0 0 25px 0;">
+      <tr>
+        <td style="padding: 15px 20px;">
+          <p style="color: #15803d; font-size: 14px; margin: 0; font-weight: bold;">Your Asset Request Has Been Approved</p>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Asset Request Approved</h2>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      Dear <strong>${data.userName}</strong>,
+    </p>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      Great news! Your asset request has been approved. The asset will be assigned to you shortly.
+    </p>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
+      <tr>
+        <td style="padding: 25px;">
+          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Request Number:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${data.requestNumber}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Asset:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.assetBrand || ''} ${data.assetModel}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Asset Tag:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.assetTag || 'N/A'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Asset Type:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.assetType}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Approved By:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.approverName}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
+      <tr>
+        <td align="center">
+          <a href="${getTenantPortalUrl(data.orgSlug, '/employee/asset-requests')}" style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+            View My Requests
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
+      You will receive a notification once the asset is ready for collection.<br><br>
+      Best regards,<br><strong>${data.orgName}</strong>
+    </p>
+  `, data.orgName);
+
+  const text = `
+Asset Request Approved
+
+Dear ${data.userName},
+
+Great news! Your asset request has been approved. The asset will be assigned to you shortly.
+
+Request Details:
+- Request Number: ${data.requestNumber}
+- Asset: ${data.assetBrand || ''} ${data.assetModel}
+- Asset Tag: ${data.assetTag || 'N/A'}
+- Asset Type: ${data.assetType}
+- Approved By: ${data.approverName}
+
+You will receive a notification once the asset is ready for collection.
+
+View at: ${getTenantPortalUrl(data.orgSlug, '/employee/asset-requests')}
+`.trim();
+
+  return { subject, html, text };
+}
+
 // Admin rejects employee request -> User notification
 interface AssetRequestRejectedData extends AssetRequestEmailData {
   userName: string;
@@ -787,6 +883,106 @@ Details:
 - Asset: ${data.assetBrand || ''} ${data.assetModel}
 - Asset Tag: ${data.assetTag || 'N/A'}
 - Approved By: ${data.approverName}
+`.trim();
+
+  return { subject, html, text };
+}
+
+// Asset unassigned directly by admin -> User notification
+interface AssetUnassignedData {
+  assetTag: string | null;
+  assetModel: string;
+  assetBrand: string | null;
+  assetType: string;
+  userName: string;
+  adminName: string;
+  reason?: string;
+  orgSlug: string;
+  orgName: string;
+}
+
+export function assetUnassignedEmail(data: AssetUnassignedData): { subject: string; html: string; text: string } {
+  const subject = `Asset Unassigned: ${data.assetBrand || ''} ${data.assetModel}`;
+
+  const html = emailWrapper(`
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-left: 4px solid ${BRAND_COLOR}; border-radius: 4px; margin: 0 0 25px 0;">
+      <tr>
+        <td style="padding: 15px 20px;">
+          <p style="color: #0c5460; font-size: 14px; margin: 0; font-weight: bold;">
+            Asset Removed From Your Custody
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Asset Unassigned</h2>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      Dear <strong>${data.userName}</strong>,
+    </p>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      An asset has been unassigned from you and removed from your custody.
+    </p>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
+      <tr>
+        <td style="padding: 25px;">
+          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Asset Details</h3>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Asset:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.assetBrand || ''} ${data.assetModel}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Asset Tag:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.assetTag || 'N/A'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Asset Type:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.assetType}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Unassigned By:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.adminName}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    ${data.reason ? `
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-radius: 8px; margin: 0 0 25px 0;">
+      <tr>
+        <td style="padding: 20px;">
+          <h4 style="color: ${BRAND_COLOR}; margin: 0 0 10px 0; font-size: 14px;">Reason:</h4>
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${data.reason}</p>
+        </td>
+      </tr>
+    </table>
+    ` : ''}
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
+      You are no longer responsible for this asset. If you have questions, please contact IT support.<br><br>
+      Best regards,<br><strong>${data.orgName}</strong>
+    </p>
+  `, data.orgName);
+
+  const text = `
+Asset Unassigned
+
+Dear ${data.userName},
+
+An asset has been unassigned from you and removed from your custody.
+
+Asset Details:
+- Asset: ${data.assetBrand || ''} ${data.assetModel}
+- Asset Tag: ${data.assetTag || 'N/A'}
+- Asset Type: ${data.assetType}
+- Unassigned By: ${data.adminName}
+${data.reason ? `\nReason: ${data.reason}` : ''}
+
+You are no longer responsible for this asset. If you have questions, please contact IT support.
 `.trim();
 
   return { subject, html, text };
