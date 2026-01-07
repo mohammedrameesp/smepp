@@ -45,9 +45,8 @@ import {
   cancelSubscription,
   getActivePeriods,
   calculateTotalCost,
-  calculateNextRenewalDate,
   getMemberSubscriptionHistory,
-} from '@/lib/domains/operations/subscriptions/subscription-lifecycle';
+} from '@/features/subscriptions';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 
@@ -523,61 +522,6 @@ describe('Subscription Lifecycle Management', () => {
       const result = await calculateTotalCost('sub-1');
 
       expect(result.currency).toBe('QAR');
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // CALCULATE NEXT RENEWAL DATE
-  // ═══════════════════════════════════════════════════════════════════════════════
-
-  describe('calculateNextRenewalDate', () => {
-    it('should add 1 month for MONTHLY billing', () => {
-      const startDate = createDate(2024, 1, 15); // Jan 15
-
-      const result = calculateNextRenewalDate(startDate, BillingCycle.MONTHLY);
-
-      expect(result.getMonth()).toBe(1); // February (0-indexed)
-      expect(result.getDate()).toBe(15);
-      expect(result.getFullYear()).toBe(2024);
-    });
-
-    it('should add 1 year for YEARLY billing', () => {
-      const startDate = createDate(2024, 3, 10); // Mar 10
-
-      const result = calculateNextRenewalDate(startDate, BillingCycle.YEARLY);
-
-      expect(result.getMonth()).toBe(2); // March (0-indexed)
-      expect(result.getDate()).toBe(10);
-      expect(result.getFullYear()).toBe(2025);
-    });
-
-    it('should handle month overflow for MONTHLY billing', () => {
-      const startDate = createDate(2024, 1, 31); // Jan 31
-
-      const result = calculateNextRenewalDate(startDate, BillingCycle.MONTHLY);
-
-      // Feb 31 doesn't exist, so JavaScript rolls to Mar 2 (or similar)
-      expect(result.getMonth()).toBe(2); // March
-    });
-
-    it('should handle leap year for YEARLY billing', () => {
-      const startDate = createDate(2024, 2, 29); // Feb 29, 2024 (leap year)
-
-      const result = calculateNextRenewalDate(startDate, BillingCycle.YEARLY);
-
-      // 2025 is not a leap year, so Feb 29 becomes Mar 1
-      expect(result.getFullYear()).toBe(2025);
-    });
-
-    it('should return same date for ONE_TIME billing', () => {
-      const startDate = createDate(2024, 5, 15);
-
-      const result = calculateNextRenewalDate(startDate, BillingCycle.ONE_TIME);
-
-      // ONE_TIME doesn't change the date
-      expect(result.getFullYear()).toBe(2024);
-      expect(result.getMonth()).toBe(4); // May (0-indexed)
-      expect(result.getDate()).toBe(15);
     });
   });
 

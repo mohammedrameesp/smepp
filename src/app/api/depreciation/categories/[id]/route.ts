@@ -18,8 +18,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   updateDepreciationCategory,
   deleteDepreciationCategory,
-} from '@/lib/domains/operations/assets/depreciation';
-import { updateDepreciationCategorySchema } from '@/lib/validations/operations/depreciation';
+} from '@/features/assets/lib/depreciation';
+import { updateDepreciationCategorySchema } from '@/features/assets';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // ═══════════════════════════════════════════════════════════════════════════════

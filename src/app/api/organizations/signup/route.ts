@@ -7,7 +7,7 @@ import { sendEmail } from '@/lib/core/email';
 import { newOrganizationSignupEmail } from '@/lib/core/email-templates';
 import { seedDefaultPermissions } from '@/lib/access-control';
 import { seedDefaultLeaveTypes } from '@/lib/domains/hr/leave/seed-leave-types';
-import { seedDefaultAssetCategories } from '@/lib/domains/operations/assets/seed-asset-categories';
+import { seedDefaultAssetCategories } from '@/features/assets';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION

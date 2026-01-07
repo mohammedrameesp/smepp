@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { runDepreciationForTenant } from '@/lib/domains/operations/assets/depreciation';
+import { runDepreciationForTenant } from '@/features/assets/lib/depreciation';
 
 /**
  * Verify cron secret for scheduled jobs

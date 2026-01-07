@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
-import { generateAssetTagByCategory } from '@/lib/domains/operations/assets/asset-utils';
+import { generateAssetTagByCategory } from '@/features/assets';
 
 export const GET = withErrorHandler(
   async (request: NextRequest, { tenant }) => {

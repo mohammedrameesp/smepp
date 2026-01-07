@@ -33,8 +33,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { disposeAssetSchema, previewDisposalSchema } from '@/lib/validations/operations/asset-disposal';
-import { processAssetDisposal, previewAssetDisposal } from '@/lib/domains/operations/assets/depreciation';
+import { disposeAssetSchema, previewDisposalSchema } from '@/features/assets';
+import { processAssetDisposal, previewAssetDisposal } from '@/features/assets/lib/depreciation';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { DisposalMethod } from '@prisma/client';

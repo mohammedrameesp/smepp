@@ -42,7 +42,7 @@ import {
   ASSET_EXPORT_COLUMNS,
   transformAssetsForExport,
   getExportFilename,
-} from '@/lib/domains/operations/assets/asset-export';
+} from '@/features/assets';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/assets/export - Export Assets to Excel

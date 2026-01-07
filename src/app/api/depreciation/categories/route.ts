@@ -19,8 +19,8 @@ import {
   getDepreciationCategories,
   seedDepreciationCategories,
   createDepreciationCategory,
-} from '@/lib/domains/operations/assets/depreciation';
-import { createDepreciationCategorySchema } from '@/lib/validations/operations/depreciation';
+} from '@/features/assets/lib/depreciation';
+import { createDepreciationCategorySchema } from '@/features/assets';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // ═══════════════════════════════════════════════════════════════════════════════

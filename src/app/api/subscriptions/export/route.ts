@@ -2,6 +2,26 @@
  * @file route.ts
  * @description Subscription bulk export to Excel endpoint
  * @module operations/subscriptions
+ *
+ * Features:
+ * - Exports all subscriptions to Excel (.xlsx) format
+ * - Multi-sheet export: Subscriptions + History
+ * - Includes all subscription fields and relationships
+ * - Formatted dates (dd/mm/yyyy) and currency values
+ * - Automatic filename with export date
+ * - Rate-limited to prevent abuse
+ *
+ * Endpoint:
+ * - GET /api/subscriptions/export (admin required, rate-limited)
+ *
+ * Excel Structure:
+ * - Sheet 1: Subscriptions - All subscription records with 23 columns
+ * - Sheet 2: Subscription History - Full audit trail of changes
+ *
+ * Security:
+ * - Admin-only access
+ * - Tenant isolation enforced
+ * - Rate limiting enabled
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -9,6 +29,38 @@ import { prisma } from '@/lib/core/prisma';
 import { arrayToCSV, formatDateForCSV, formatCurrencyForCSV } from '@/lib/core/csv-utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
+/**
+ * GET /api/subscriptions/export - Export all subscriptions to Excel
+ *
+ * Generates a comprehensive Excel file containing:
+ * 1. Main subscriptions sheet with all fields
+ * 2. History sheet with complete audit trail
+ *
+ * Export Columns (Subscriptions Sheet):
+ * - Core: ID, Service Name, Category, Account ID, Vendor
+ * - Dates: Purchase Date, Renewal Date, Cancelled At, Reactivated At
+ * - Billing: Billing Cycle, Cost Per Cycle, Cost Currency, Cost QAR
+ * - Status: Status, Auto Renew, Payment Method, Notes
+ * - Assignment: Assigned Member ID/Name/Email
+ * - Audit: Created At, Updated At
+ *
+ * Export Columns (History Sheet):
+ * - Subscription ID, Subscription Name, Action
+ * - Status changes (Old/New Status)
+ * - Date changes (Old/New Renewal Date)
+ * - Assignment/Reactivation dates
+ * - Performed By, Notes, Created At
+ *
+ * Date Format: dd/mm/yyyy for Excel compatibility
+ * Currency Format: Decimal values formatted for Excel
+ *
+ * @returns Excel file (.xlsx) as binary stream
+ * @throws 429 if rate limit exceeded
+ *
+ * @example
+ * GET /api/subscriptions/export
+ * // Downloads: subscriptions_export_2024-06-15.xlsx
+ */
 async function exportSubscriptionsHandler(_request: NextRequest, context: APIContext) {
   const { tenant } = context;
   const tenantId = tenant!.tenantId;

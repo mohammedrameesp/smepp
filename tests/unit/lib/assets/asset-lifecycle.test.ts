@@ -36,7 +36,7 @@ import {
   getAssetUtilization,
   getMemberAssetHistory,
   AssignmentPeriod,
-} from '@/lib/domains/operations/assets/asset-lifecycle';
+} from '@/features/assets';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 

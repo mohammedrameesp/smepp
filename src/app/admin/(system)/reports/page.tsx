@@ -4,7 +4,7 @@ import { prisma } from '@/lib/core/prisma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { redirect } from 'next/navigation';
 
-import { formatBillingCycle } from '@/lib/utils/format-billing-cycle';
+import { formatBillingCycle } from '@/features/subscriptions';
 import Link from 'next/link';
 import {
   Activity,

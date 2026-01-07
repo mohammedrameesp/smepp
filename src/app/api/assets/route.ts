@@ -23,16 +23,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { AssetStatus, AssetRequestStatus, Prisma } from '@prisma/client';
-import { createAssetSchema, assetQuerySchema } from '@/lib/validations/operations/assets';
+import { createAssetSchema, assetQuerySchema } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { generateAssetTagByCategory } from '@/lib/domains/operations/assets/asset-utils';
+import { generateAssetTagByCategory } from '@/features/assets';
 import { convertToQAR } from '@/lib/core/currency';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { updateSetupProgress } from '@/lib/domains/system/setup';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { prisma as globalPrisma } from '@/lib/core/prisma';
-import { ASSET_TYPE_SUGGESTIONS } from '@/lib/constants/asset-type-suggestions';
+import { ASSET_TYPE_SUGGESTIONS } from '@/features/assets';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES

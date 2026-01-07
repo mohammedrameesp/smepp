@@ -1,3 +1,38 @@
+/**
+ * @file page.tsx
+ * @description Edit subscription form page with pre-populated data
+ * @module app/admin/(operations)/subscriptions/[id]/edit
+ *
+ * Features:
+ * - Pre-populated form with existing subscription data
+ * - All fields editable except system fields (ID, created/updated dates)
+ * - Multi-currency support with QAR recalculation
+ * - Member reassignment with history tracking
+ * - Assignment date modification support
+ * - Category autocomplete from existing data
+ * - Form validation via Zod schema
+ * - Success redirection to subscription detail
+ * - Loading state while fetching data
+ *
+ * Page Route: /admin/subscriptions/[id]/edit
+ * Access: Admin-only
+ *
+ * Editable Fields:
+ * - Service name, category, vendor
+ * - Account ID/email
+ * - Purchase date, renewal date
+ * - Cost, currency, billing cycle
+ * - Assigned member, assignment date
+ * - Payment method, auto-renew, notes
+ * - Status (ACTIVE, CANCELLED, EXPIRED)
+ *
+ * Special Handling:
+ * - Cost currency change triggers QAR recalculation
+ * - Member change creates REASSIGNED history entry
+ * - Assignment date change updates existing history
+ *
+ * API: PUT /api/subscriptions/[id]
+ */
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -16,7 +51,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { DatePicker } from '@/components/ui/date-picker';
 import { toInputDateString } from '@/lib/date-format';
-import { updateSubscriptionSchema, type UpdateSubscriptionRequest } from '@/lib/validations/subscriptions';
+import { updateSubscriptionSchema, type UpdateSubscriptionRequest } from '@/features/subscriptions';
 
 // Default exchange rates to QAR (fallback if not set in settings)
 const DEFAULT_RATES: Record<string, number> = {

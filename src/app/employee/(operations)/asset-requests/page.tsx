@@ -28,8 +28,8 @@ import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Package, Clock, FileText, AlertCircle } from 'lucide-react';
-import { AssetRequestListTable } from '@/components/domains/operations/asset-requests';
-import { PendingAssignmentsAlert } from '@/components/domains/operations/asset-requests';
+import { AssetRequestListTable } from '@/features/asset-requests';
+import { PendingAssignmentsAlert } from '@/features/asset-requests';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 /**

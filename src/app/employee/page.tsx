@@ -11,9 +11,8 @@ import {
   AlertTriangle,
   Bell,
 } from 'lucide-react';
-import { getMemberSubscriptionHistory } from '@/lib/subscription-lifecycle';
-import { getMemberAssetHistory } from '@/lib/domains/operations/assets/asset-lifecycle';
-import { getNextRenewalDate, getDaysUntilRenewal } from '@/lib/utils/renewal-date';
+import { getMemberSubscriptionHistory, getNextRenewalDate, getDaysUntilRenewal } from '@/features/subscriptions';
+import { getMemberAssetHistory } from '@/features/assets';
 import { getAnnualLeaveDetails } from '@/lib/leave-utils';
 import { format } from 'date-fns';
 import {

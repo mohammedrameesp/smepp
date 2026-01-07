@@ -1,9 +1,38 @@
+/**
+ * @file page.tsx
+ * @description Admin subscriptions list page with summary statistics
+ * @module app/admin/(operations)/subscriptions
+ *
+ * Features:
+ * - Paginated subscription list with server-side search and filtering
+ * - Summary statistics: active count, cancelled count, monthly/yearly costs
+ * - Multi-currency cost calculations (QAR, USD)
+ * - Monthly renewal alerts (subscriptions renewing this month)
+ * - Quick action: Create new subscription
+ * - Export functionality
+ *
+ * Page Route: /admin/subscriptions
+ *
+ * Access: Admin-only
+ *
+ * Statistics Calculations:
+ * - Active/Cancelled counts from database
+ * - Monthly costs: Sum of MONTHLY subscriptions in QAR and USD
+ * - Yearly costs: Sum of YEARLY subscriptions renewing this month
+ * - Exchange rate conversion for USD amounts
+ *
+ * Components:
+ * - PageHeader with breadcrumbs and actions
+ * - Stat badges for quick overview
+ * - SubscriptionListTableServerSearch for data grid
+ */
+
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 
-import { SubscriptionListTableServerSearch } from '@/components/domains/operations/subscriptions/subscription-list-table-server-search';
+import { SubscriptionListTableServerSearch } from '@/features/subscriptions';
 import { getExchangeRateToQAR } from '@/lib/core/currency';
 import { Plus } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';

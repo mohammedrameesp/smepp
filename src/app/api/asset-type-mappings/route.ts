@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { createAssetTypeMappingSchema } from '@/lib/validations/operations/asset-type-mappings';
+import { createAssetTypeMappingSchema } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 

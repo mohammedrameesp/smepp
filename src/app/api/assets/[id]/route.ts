@@ -27,9 +27,9 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { TeamMemberRole, AssetStatus, AssetRequestStatus, AssetRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
-import { updateAssetSchema } from '@/lib/validations/operations/assets';
+import { updateAssetSchema } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { recordAssetUpdate } from '@/lib/domains/operations/assets/asset-history';
+import { recordAssetUpdate } from '@/features/assets';
 import { sendEmail } from '@/lib/core/email';
 import { assetAssignmentEmail, assetAssignmentPendingEmail } from '@/lib/email-templates';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -38,8 +38,8 @@ import {
   detectAssetChanges,
   getFormattedChanges,
   transformAssetUpdateData,
-} from '@/lib/domains/operations/assets/asset-update';
-import { generateRequestNumber } from '@/lib/domains/operations/asset-requests/asset-request-utils';
+} from '@/features/assets';
+import { generateRequestNumber } from '@/features/asset-requests';
 import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -318,7 +318,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         updateData.assignedMember = { disconnect: true };
 
         // Record unassignment in history
-        const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
+        const { recordAssetAssignment } = await import('@/features/assets');
         await recordAssetAssignment(
           id,
           currentAsset.assignedMemberId,
@@ -329,7 +329,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       }
 
       // Record status change in history with custom date
-      const { recordAssetStatusChange } = await import('@/lib/domains/operations/assets/asset-history');
+      const { recordAssetStatusChange } = await import('@/features/assets');
       const statusChangeDate = data.statusChangeDate ? new Date(data.statusChangeDate) : new Date();
       await recordAssetStatusChange(
         id,
@@ -344,7 +344,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     // STEP 7: Track location changes for audit trail
     // ─────────────────────────────────────────────────────────────────────────────
     if (data.locationId !== undefined && data.locationId !== currentAsset.locationId) {
-      const { recordAssetLocationChange } = await import('@/lib/domains/operations/assets/asset-history');
+      const { recordAssetLocationChange } = await import('@/features/assets');
 
       // Fetch location names for history recording
       let fromLocationName: string | null = null;
@@ -410,7 +410,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     if (newMemberRequiresApproval && newMemberData) {
       // If currently assigned to someone else, unassign first
       if (currentAsset.assignedMemberId && currentAsset.assignedMemberId !== data.assignedMemberId) {
-        const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
+        const { recordAssetAssignment } = await import('@/features/assets');
 
         // Unassign from previous member
         await prisma.asset.update({
@@ -540,7 +540,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
 
     if (memberChanged) {
       // Member assignment changed - create new history record
-      const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
+      const { recordAssetAssignment } = await import('@/features/assets');
       const assignmentDate = data.assignmentDate ? new Date(data.assignmentDate) : new Date();
 
       await recordAssetAssignment(
@@ -606,7 +606,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         }
       } else {
         // No history record exists - create one for the current assignment
-        const { recordAssetAssignment } = await import('@/lib/domains/operations/assets/asset-history');
+        const { recordAssetAssignment } = await import('@/features/assets');
         await recordAssetAssignment(
           id,
           null,

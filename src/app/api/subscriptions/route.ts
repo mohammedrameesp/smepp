@@ -2,11 +2,27 @@
  * @file route.ts
  * @description Subscription list and creation endpoints
  * @module operations/subscriptions
+ *
+ * Features:
+ * - Paginated subscription listing with filtering and search
+ * - Advanced filtering: status, category, billing cycle, renewal window
+ * - Multi-currency support with automatic QAR conversion
+ * - Subscription creation with automatic history tracking
+ * - Activity logging for audit trail
+ *
+ * Endpoints:
+ * - GET /api/subscriptions - List subscriptions with filters (auth required)
+ * - POST /api/subscriptions - Create new subscription (admin required)
+ *
+ * Security:
+ * - Tenant isolation enforced via middleware
+ * - Role-based access control (admin required for creation)
+ * - Input validation via Zod schemas
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { createSubscriptionSchema, subscriptionQuerySchema } from '@/lib/validations/subscriptions';
+import { createSubscriptionSchema, subscriptionQuerySchema } from '@/features/subscriptions';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { getQatarNow, getQatarStartOfDay } from '@/lib/qatar-timezone';
 import { parseInputDateString } from '@/lib/date-format';
@@ -14,6 +30,34 @@ import { convertToQAR } from '@/lib/core/currency';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
+/**
+ * GET /api/subscriptions - Retrieve paginated list of subscriptions with filtering
+ *
+ * This handler provides a flexible subscription listing with:
+ * - Full-text search across service name, account ID, vendor, and category
+ * - Advanced filtering by status, category, billing cycle, project
+ * - Renewal window filtering (e.g., "expiring in next 30 days")
+ * - Pagination with configurable page size
+ * - Sorting by any subscription field
+ *
+ * Query Parameters:
+ * @param q - Search term (searches serviceName, accountId, vendor, category)
+ * @param projectId - Filter by project ID
+ * @param status - Filter by status (ACTIVE, CANCELLED, EXPIRED)
+ * @param category - Filter by category
+ * @param billingCycle - Filter by billing cycle (MONTHLY, YEARLY, etc.)
+ * @param renewalWindowDays - Filter subscriptions renewing within N days
+ * @param p - Page number (default: 1)
+ * @param ps - Page size (default: 50)
+ * @param sort - Sort field (default: serviceName)
+ * @param order - Sort order (asc/desc, default: asc)
+ *
+ * @returns Paginated subscription list with member assignments
+ *
+ * @example
+ * GET /api/subscriptions?q=microsoft&status=ACTIVE&renewalWindowDays=30&p=1&ps=20
+ * // Returns: { subscriptions: [...], pagination: { page: 1, total: 45, ... } }
+ */
 async function getSubscriptionsHandler(request: NextRequest, context: APIContext) {
     const { tenant } = context;
     const tenantId = tenant!.tenantId;
@@ -95,6 +139,53 @@ async function getSubscriptionsHandler(request: NextRequest, context: APIContext
     });
 }
 
+/**
+ * POST /api/subscriptions - Create a new subscription
+ *
+ * This handler creates a subscription with the following features:
+ * - Automatic QAR conversion for multi-currency support
+ * - Currency defaults to QAR if not specified
+ * - Activity logging for audit trail
+ * - Subscription history tracking from creation
+ * - Optional member assignment with assignment date
+ *
+ * IMPORTANT: costQAR is always calculated to prevent data loss. If costPerCycle
+ * and costCurrency are provided but costQAR is missing, automatic conversion
+ * is performed using the latest exchange rates.
+ *
+ * Request Body:
+ * @param serviceName - Name of the service/subscription (required)
+ * @param category - Service category (e.g., "Software", "Cloud")
+ * @param vendor - Service vendor/provider
+ * @param accountId - Account/license identifier
+ * @param costPerCycle - Cost amount in original currency
+ * @param costCurrency - Currency code (defaults to QAR)
+ * @param costQAR - Pre-calculated QAR amount (auto-calculated if missing)
+ * @param billingCycle - Billing frequency (MONTHLY, YEARLY, etc.)
+ * @param purchaseDate - Date of purchase/activation
+ * @param renewalDate - Next renewal date
+ * @param assignedMemberId - Team member ID to assign to
+ * @param assignmentDate - Date of assignment (for history tracking)
+ * @param status - Subscription status (default: ACTIVE)
+ * @param autoRenew - Whether subscription auto-renews
+ * @param paymentMethod - Payment method used
+ * @param notes - Additional notes
+ *
+ * @returns Created subscription with 201 status
+ *
+ * @example
+ * POST /api/subscriptions
+ * Body: {
+ *   serviceName: "Microsoft 365",
+ *   category: "Software",
+ *   vendor: "Microsoft",
+ *   costPerCycle: 50,
+ *   costCurrency: "USD",
+ *   billingCycle: "MONTHLY",
+ *   assignedMemberId: "member-123"
+ * }
+ * // Returns: { id: "sub-xyz", costQAR: 182, ... }
+ */
 async function createSubscriptionHandler(request: NextRequest, context: APIContext) {
     const { tenant } = context;
     const tenantId = tenant!.tenantId;

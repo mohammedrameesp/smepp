@@ -9,8 +9,8 @@ import { formatDate, formatDateTime } from '@/lib/date-format';
 import { Edit, AlertTriangle, Package, CreditCard, FileText, Calendar, Clock, Trash2 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { EmployeeHRViewSection } from '@/components/domains/hr/employees';
-import { getMemberSubscriptionHistory } from '@/lib/subscription-lifecycle';
-import { getMemberAssetHistory } from '@/lib/domains/operations/assets/asset-lifecycle';
+import { getMemberSubscriptionHistory } from '@/features/subscriptions';
+import { getMemberAssetHistory } from '@/features/assets';
 import {
   UserSubscriptionHistory,
   UserAssetHistory,

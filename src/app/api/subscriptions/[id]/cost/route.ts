@@ -2,12 +2,51 @@
  * @file route.ts
  * @description Subscription total cost calculation endpoint
  * @module operations/subscriptions
+ *
+ * Features:
+ * - Calculate total cost across all active periods
+ * - Handles cancellations and reactivations correctly
+ * - Returns cost breakdown by period
+ * - Supports all billing cycles (MONTHLY, YEARLY, ONE_TIME, etc.)
+ *
+ * Endpoint:
+ * - GET /api/subscriptions/[id]/cost (auth required)
+ *
+ * Security:
+ * - Authenticated users only
+ * - Tenant isolation enforced
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { calculateTotalCost } from '@/lib/subscription-lifecycle';
+import { calculateTotalCost } from '@/features/subscriptions';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
+/**
+ * GET /api/subscriptions/[id]/cost - Calculate total subscription cost
+ *
+ * Calculates total cost incurred across all active periods of a subscription,
+ * properly handling cancellations and reactivations.
+ *
+ * Cost Calculation:
+ * - For each active period, calculates cycles passed based on billing frequency
+ * - MONTHLY: calculates months between start and end dates
+ * - YEARLY: calculates years between start and end dates
+ * - ONE_TIME: charges once at purchase
+ * - Sums costs across all active periods
+ *
+ * @param id - Subscription ID from URL path
+ * @returns Cost breakdown with currency, total, and period details
+ * @throws 404 if subscription not found
+ *
+ * @example
+ * GET /api/subscriptions/sub_xyz123/cost
+ * // Returns: {
+ * //   totalCost: 600,
+ * //   currency: "QAR",
+ * //   billingCycle: "MONTHLY",
+ * //   activePeriods: [...]
+ * // }
+ */
 async function getSubscriptionCostHandler(_request: NextRequest, context: APIContext) {
     const { params } = context;
     const id = params?.id;

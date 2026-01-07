@@ -34,9 +34,9 @@ import {
   AssetMaintenanceRecords,
   DepreciationCard,
   AssetStatusCard,
-} from '@/components/domains/operations/assets';
+} from '@/features/assets';
 import { formatDate, formatDateTime } from '@/lib/date-format';
-import { AssetAssignDialog } from '@/components/domains/operations/asset-requests';
+import { AssetAssignDialog } from '@/features/asset-requests';
 import {
   Package,
   DollarSign,

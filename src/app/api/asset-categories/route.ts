@@ -9,10 +9,10 @@ import { prisma } from '@/lib/core/prisma';
 import {
   createAssetCategorySchema,
   assetCategoryQuerySchema,
-} from '@/lib/validations/operations/asset-categories';
+} from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import { ensureAssetCategories } from '@/lib/domains/operations/assets/seed-asset-categories';
+import { ensureAssetCategories } from '@/features/assets';
 
 /**
  * GET /api/asset-categories

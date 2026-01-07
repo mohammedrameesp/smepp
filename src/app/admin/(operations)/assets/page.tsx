@@ -19,7 +19,7 @@ import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { AssetRequestStatus } from '@prisma/client';
 import Link from 'next/link';
-import { AssetListTableServerSearch } from '@/components/domains/operations/assets/asset-list-table-server-search';
+import { AssetListTableServerSearch } from '@/features/assets';
 import { Plus, Inbox } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 

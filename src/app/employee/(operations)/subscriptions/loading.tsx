@@ -1,3 +1,16 @@
+/**
+ * @file loading.tsx
+ * @description Loading skeleton for employee subscriptions list page
+ * @module app/employee/(operations)/subscriptions
+ *
+ * Features:
+ * - Animated skeleton matching the actual page layout
+ * - Header with 3 stat badge skeletons (my/active/total)
+ * - Table with 6 column headers and 8 row skeletons
+ * - Purple icon box with Package icon (non-loading element)
+ *
+ * Shows while employee subscriptions page fetches data from database.
+ */
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Package } from 'lucide-react';

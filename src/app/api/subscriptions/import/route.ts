@@ -31,7 +31,7 @@ import {
   parseHistoryRow,
   parseHistorySheetFromExcel,
   type SubscriptionCreatedInfo,
-} from '@/lib/domains/operations/subscriptions/subscription-import';
+} from '@/features/subscriptions';
 
 async function importSubscriptionsHandler(request: NextRequest, context: APIContext) {
   const { tenant } = context;

@@ -24,7 +24,7 @@ import {
   formatImportMessage,
   type ImportRow,
 } from '@/lib/core/import-utils';
-import { parseAssetRow, buildAssetDbData } from '@/lib/domains/operations/assets/asset-import';
+import { parseAssetRow, buildAssetDbData } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
@@ -127,7 +127,7 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
             results.updated++;
           } else {
             // Record asset creation history
-            const { recordAssetCreation } = await import('@/lib/domains/operations/assets/asset-history');
+            const { recordAssetCreation } = await import('@/features/assets');
             await recordAssetCreation(
               asset.id,
               session.user.id,
@@ -209,7 +209,7 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
         );
 
         // Record asset creation history
-        const { recordAssetCreation } = await import('@/lib/domains/operations/assets/asset-history');
+        const { recordAssetCreation } = await import('@/features/assets');
         await recordAssetCreation(
           asset.id,
           session.user.id,

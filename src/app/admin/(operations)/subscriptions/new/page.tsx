@@ -1,3 +1,31 @@
+/**
+ * @file page.tsx
+ * @description Create new subscription form page
+ * @module app/admin/(operations)/subscriptions/new
+ *
+ * Features:
+ * - Comprehensive subscription creation form with validation
+ * - Multi-currency support with QAR conversion
+ * - Team member assignment with autocomplete
+ * - Category autocomplete from existing data
+ * - Billing cycle selection (all types supported)
+ * - Real-time cost calculation in QAR
+ * - Form validation via Zod schema
+ * - Success redirection to subscription detail
+ *
+ * Page Route: /admin/subscriptions/new
+ * Access: Admin-only
+ *
+ * Form Fields:
+ * - Service name, category, vendor
+ * - Account ID/email
+ * - Purchase date, renewal date
+ * - Cost, currency, billing cycle
+ * - Assigned member, assignment date
+ * - Payment method, auto-renew, notes
+ *
+ * API: POST /api/subscriptions
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,7 +33,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createSubscriptionSchema, type CreateSubscriptionRequest } from '@/lib/validations/subscriptions';
+import { createSubscriptionSchema, type CreateSubscriptionRequest } from '@/features/subscriptions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';

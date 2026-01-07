@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { getAssetUtilization } from '@/lib/domains/operations/assets/asset-lifecycle';
+import { getAssetUtilization } from '@/features/assets';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getUtilizationHandler(request: NextRequest, context: APIContext) {

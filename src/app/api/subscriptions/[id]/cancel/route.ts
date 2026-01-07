@@ -2,12 +2,57 @@
  * @file route.ts
  * @description Subscription cancellation endpoint
  * @module operations/subscriptions
+ *
+ * Features:
+ * - Cancel active subscriptions with custom cancellation date
+ * - Preserves last active renewal date for historical tracking
+ * - Creates audit trail via subscription history
+ * - Validates status transitions (only ACTIVE → CANCELLED)
+ * - Date range validation to prevent invalid dates
+ *
+ * Endpoint:
+ * - POST /api/subscriptions/[id]/cancel (admin required)
+ *
+ * Security:
+ * - Admin-only access
+ * - Tenant isolation enforced
+ * - Date validation prevents future/past abuse
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { cancelSubscription } from '@/lib/subscription-lifecycle';
+import { cancelSubscription } from '@/features/subscriptions';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
+/**
+ * POST /api/subscriptions/[id]/cancel - Cancel an active subscription
+ *
+ * Cancels a subscription while preserving historical data:
+ * - Sets status to CANCELLED
+ * - Stores last active renewal date for cost calculations
+ * - Records cancellation date (custom or current date)
+ * - Creates subscription history entry with notes
+ *
+ * Validation:
+ * - Subscription must exist and be ACTIVE
+ * - Cancellation date must be between 2000-01-01 and +1 year from now
+ * - Cannot be more than 1 year in future
+ *
+ * @param id - Subscription ID from URL path
+ * @param body.cancellationDate - Optional cancellation date (defaults to now)
+ * @param body.notes - Optional cancellation reason/notes
+ *
+ * @returns Cancelled subscription object
+ * @throws 400 if validation fails
+ * @throws 404 if subscription not found
+ *
+ * @example
+ * POST /api/subscriptions/sub_xyz123/cancel
+ * Body: {
+ *   cancellationDate: "2024-06-15",
+ *   notes: "Service no longer needed"
+ * }
+ * // Returns: { id: "sub_xyz123", status: "CANCELLED", cancelledAt: Date(...) }
+ */
 async function cancelSubscriptionHandler(request: NextRequest, context: APIContext) {
     const { tenant, params } = context;
     const currentUserId = tenant!.userId;

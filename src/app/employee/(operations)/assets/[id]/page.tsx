@@ -29,8 +29,8 @@ import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { formatDate } from '@/lib/date-format';
-import { AssetMaintenanceRecords, AssetStatusCard } from '@/components/domains/operations/assets';
-import { AssetRequestDialog, AssetReturnDialog } from '@/components/domains/operations/asset-requests';
+import { AssetMaintenanceRecords, AssetStatusCard } from '@/features/assets';
+import { AssetRequestDialog, AssetReturnDialog } from '@/features/asset-requests';
 import {
   Package,
   DollarSign,

@@ -1,4 +1,4 @@
-import { getNextRenewalDate, getDaysUntilRenewal, isRenewalOverdue } from '@/lib/utils/renewal-date';
+import { getNextRenewalDate, getDaysUntilRenewal, isRenewalOverdue } from '@/features/subscriptions';
 import { BillingCycle } from '@prisma/client';
 
 describe('Renewal Date Utilities', () => {

@@ -35,10 +35,10 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Package, ShoppingCart, MapPin, Info, RefreshCw } from 'lucide-react';
 import { toInputDateString } from '@/lib/date-format';
-import { createAssetSchema, type CreateAssetRequest } from '@/lib/validations/operations/assets';
+import { createAssetSchema, type CreateAssetRequest } from '@/features/assets';
 import { AssetStatus } from '@prisma/client';
-import { CategorySelector } from '@/components/domains/operations/assets/category-selector';
-import { AssetTypeCombobox } from '@/components/domains/operations/assets/asset-type-combobox';
+import { CategorySelector } from '@/features/assets';
+import { AssetTypeCombobox } from '@/features/assets';
 import { DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
 import { getQatarEndOfDay, dateInputToQatarDate } from '@/lib/qatar-timezone';
 

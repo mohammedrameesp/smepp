@@ -1,3 +1,37 @@
+/**
+ * @file page.tsx
+ * @description Employee view of all company subscriptions
+ * @module app/employee/(operations)/subscriptions
+ *
+ * Features:
+ * - Read-only view of all company subscriptions
+ * - Filter to "My Subscriptions" or view all
+ * - Statistics badges (my subscriptions, active, total)
+ * - Client-side filtering and search via EmployeeSubscriptionListTable
+ * - Link to personal assets view with subscriptions tab
+ * - Error boundary with user-friendly error display
+ *
+ * Page Route: /employee/subscriptions
+ * Access: All authenticated employees
+ *
+ * Data Fetched:
+ * - All subscriptions with assigned member details
+ * - Ordered by creation date (newest first)
+ *
+ * Statistics Displayed:
+ * - My active subscriptions count (blue badge)
+ * - Total active subscriptions (green badge)
+ * - Total subscriptions (gray badge)
+ *
+ * Components Used:
+ * - EmployeeSubscriptionListTable: Filterable table with search
+ * - PageHeader with breadcrumbs and stat badges
+ *
+ * User Experience:
+ * - Defaults to "My Subscriptions" filter for quick access
+ * - Can switch to "All Subscriptions" to browse company-wide
+ * - Empty state shown when no subscriptions exist
+ */
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -5,7 +39,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { EmployeeSubscriptionListTable } from '@/components/domains/operations/subscriptions/employee-subscription-list-table';
+import { EmployeeSubscriptionListTable } from '@/features/subscriptions';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Package, CheckCircle, User } from 'lucide-react';
 

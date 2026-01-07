@@ -9,7 +9,7 @@ import {
   getCategoryByCode,
   calculateAnnualRate,
   calculateUsefulLife,
-} from '@/lib/domains/operations/assets/depreciation/constants';
+} from '@/features/assets/lib/depreciation/constants';
 
 describe('Depreciation Constants', () => {
   describe('QATAR_TAX_CATEGORIES', () => {

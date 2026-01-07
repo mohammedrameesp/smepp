@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import { ASSET_TYPE_SUGGESTIONS } from '@/lib/constants/asset-type-suggestions';
+import { ASSET_TYPE_SUGGESTIONS } from '@/features/assets';
 
 export interface AssetTypeSuggestionResponse {
   type: string;

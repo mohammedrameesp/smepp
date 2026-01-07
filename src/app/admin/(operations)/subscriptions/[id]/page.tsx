@@ -1,3 +1,36 @@
+/**
+ * @file page.tsx
+ * @description Subscription detail view page with full information
+ * @module app/admin/(operations)/subscriptions/[id]
+ *
+ * Features:
+ * - Complete subscription details display
+ * - Status badge with color coding
+ * - Assigned member information
+ * - Cost breakdown by active periods
+ * - Full history timeline with all changes
+ * - Lifecycle actions (cancel/reactivate)
+ * - Edit and delete buttons
+ * - Currency-aware cost display
+ *
+ * Page Route: /admin/subscriptions/[id]
+ * Access: Admin-only
+ *
+ * Sections:
+ * 1. Header with service name and status
+ * 2. Basic info (vendor, category, dates, costs)
+ * 3. Assignment info (member, dates)
+ * 4. Cost breakdown card (periods and totals)
+ * 5. History timeline (audit trail)
+ * 6. Action buttons (edit, delete, cancel/reactivate)
+ *
+ * Components Used:
+ * - SubscriptionRenewalDisplay: Renewal date with urgency badge
+ * - CostBreakdown: Period-by-period cost analysis
+ * - HistoryTimeline: Complete audit trail
+ * - SubscriptionLifecycleActions: Cancel/reactivate buttons
+ * - DeleteButton: Subscription deletion with confirmation
+ */
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
@@ -6,13 +39,9 @@ import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 
 import Link from 'next/link';
-import { SubscriptionRenewalDisplay } from '@/components/domains/operations/subscriptions/subscription-renewal-display';
+import { SubscriptionRenewalDisplay, formatBillingCycle, SubscriptionLifecycleActions, HistoryTimeline, CostBreakdown } from '@/features/subscriptions';
 import { formatDate, formatDateTime } from '@/lib/date-format';
 import { DeleteButton } from '@/components/shared/delete-button';
-import { formatBillingCycle } from '@/lib/utils/format-billing-cycle';
-import { SubscriptionLifecycleActions } from '@/components/domains/operations/subscriptions/subscription-lifecycle-actions';
-import { HistoryTimeline } from '@/components/domains/operations/subscriptions/history-timeline';
-import { CostBreakdown } from '@/components/domains/operations/subscriptions/cost-breakdown';
 import {
   CreditCard,
   DollarSign,

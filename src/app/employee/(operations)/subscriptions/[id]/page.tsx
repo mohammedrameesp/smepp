@@ -1,5 +1,61 @@
-// Employee subscription detail page - read-only view
-// Allows all authenticated users to view subscription details
+/**
+ * @file page.tsx
+ * @description Employee view of subscription details - read-only access
+ * @module app/employee/(operations)/subscriptions/[id]
+ *
+ * Features:
+ * - Read-only subscription detail view for all employees
+ * - Comprehensive information display across multiple sections
+ * - Assignment tracking with automatic date calculation from history
+ * - Renewal status with visual indicators (overdue/upcoming)
+ * - Full subscription lifecycle history timeline
+ * - Cost breakdown with period-based calculations
+ *
+ * Page Route: /employee/subscriptions/[id]
+ * Access: All authenticated employees (read-only)
+ *
+ * Data Fetched:
+ * - Subscription details with assigned member info
+ * - Complete subscription history with performer details
+ * - Ordered history (newest first)
+ *
+ * Sections Displayed:
+ * 1. Header: Service name, category, vendor, status badges
+ * 2. Subscription Details: Basic information (name, category, vendor, account ID, payment method)
+ * 3. Cost Breakdown: Billing cycle-based cost calculations (via CostBreakdown component)
+ * 4. Assignment Information: Current assignee with assignment date
+ * 5. Notes: Additional subscription notes (if present)
+ * 6. Next Renewal: Upcoming billing date with visual indicators (sidebar)
+ * 7. Key Dates: Purchase, created, updated timestamps (sidebar)
+ * 8. History Timeline: Full audit trail of subscription changes (sidebar)
+ *
+ * Components Used:
+ * - SubscriptionRenewalDisplay: Shows next renewal with countdown
+ * - CostBreakdown: Calculates and displays cost analysis
+ * - HistoryTimeline: Visual timeline of subscription lifecycle events
+ *
+ * Helper Functions:
+ * - getBillingCycleBadgeVariant(): Returns badge color for billing cycle
+ * - getStatusBadge(): Returns styled badge for subscription status
+ * - isRenewalSoon(): Checks if renewal is within 30 days (triggers amber styling)
+ *
+ * Assignment Date Logic:
+ * - Finds most recent REASSIGNED action matching current assignee
+ * - Falls back to purchase date if user was assigned from start
+ * - Supports historical assignment tracking via subscription.history
+ *
+ * Visual Indicators:
+ * - Renewal within 30 days: Amber background and borders
+ * - "Assigned to You" badge: Shown when viewing own subscription
+ * - Status-based badge colors: Green (Active), Red (Cancelled)
+ * - Billing cycle badges: Default (Monthly), Secondary (Yearly), Outline (One-time)
+ *
+ * User Experience:
+ * - Single-page comprehensive view of subscription
+ * - No edit/delete actions (read-only for employees)
+ * - Clear visual hierarchy with icon-coded sections
+ * - Conditional display (notes, assignment, renewal based on data availability)
+ */
 
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
@@ -9,11 +65,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { SubscriptionRenewalDisplay } from '@/components/domains/operations/subscriptions/subscription-renewal-display';
+import { SubscriptionRenewalDisplay, formatBillingCycle, HistoryTimeline, CostBreakdown } from '@/features/subscriptions';
 import { formatDate, formatDateTime } from '@/lib/date-format';
-import { formatBillingCycle } from '@/lib/utils/format-billing-cycle';
-import { HistoryTimeline } from '@/components/domains/operations/subscriptions/history-timeline';
-import { CostBreakdown } from '@/components/domains/operations/subscriptions/cost-breakdown';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Package, Calendar, DollarSign, User as UserIcon, FileText, Clock, ArrowLeft } from 'lucide-react';
 

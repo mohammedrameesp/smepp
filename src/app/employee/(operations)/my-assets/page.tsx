@@ -18,8 +18,8 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { redirect } from 'next/navigation';
-import { getMemberSubscriptionHistory } from '@/lib/subscription-lifecycle';
-import { getMemberAssetHistory } from '@/lib/domains/operations/assets/asset-lifecycle';
+import { getMemberSubscriptionHistory } from '@/features/subscriptions';
+import { getMemberAssetHistory } from '@/features/assets';
 import { UserSubscriptionHistory, UserAssetHistory } from '@/components/domains/system/users';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 

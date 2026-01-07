@@ -27,7 +27,7 @@ import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { AssetRequestStatus } from '@prisma/client';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
-import { EmployeeAssetListTableServerSearch } from '@/components/domains/operations/assets/employee-asset-list-table-server-search';
+import { EmployeeAssetListTableServerSearch } from '@/features/assets';
 import { Inbox } from 'lucide-react';
 import Link from 'next/link';
 

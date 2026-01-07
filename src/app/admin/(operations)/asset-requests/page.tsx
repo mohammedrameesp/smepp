@@ -23,7 +23,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { AssetRequestStatus } from '@prisma/client';
-import { AssetRequestListTable } from '@/components/domains/operations/asset-requests';
+import { AssetRequestListTable } from '@/features/asset-requests';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Package, AlertTriangle } from 'lucide-react';
 

@@ -18,7 +18,7 @@ import {
   calculateMonthsElapsed,
   isPeriodAlreadyProcessed,
   DepreciationInput,
-} from '@/lib/domains/operations/assets/depreciation/calculator';
+} from '@/features/assets/lib/depreciation/calculator';
 
 describe('Depreciation Calculator', () => {
   // ═══════════════════════════════════════════════════════════════════════════════

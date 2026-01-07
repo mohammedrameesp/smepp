@@ -8,7 +8,7 @@ import {
   depreciationRecordsQuerySchema,
   createDepreciationCategorySchema,
   updateDepreciationCategorySchema,
-} from '@/lib/validations/operations/depreciation';
+} from '@/features/assets';
 
 describe('Depreciation Validation Schemas', () => {
   describe('assignDepreciationCategorySchema', () => {

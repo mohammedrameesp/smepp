@@ -38,11 +38,11 @@ import { prisma } from '@/lib/core/prisma';
 import {
   assignDepreciationCategorySchema,
   depreciationRecordsQuerySchema,
-} from '@/lib/validations/operations/depreciation';
+} from '@/features/assets';
 import {
   getDepreciationRecords,
   assignDepreciationCategory,
-} from '@/lib/domains/operations/assets/depreciation';
+} from '@/features/assets/lib/depreciation';
 import { logAction } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 

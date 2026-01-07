@@ -1,3 +1,26 @@
+/**
+ * @file loading.tsx
+ * @description Loading skeleton for employee subscription detail page
+ * @module app/employee/(operations)/subscriptions/[id]
+ *
+ * Features:
+ * - Animated skeleton matching the detail page layout
+ * - Header with 2 badge skeletons (status, billing cycle)
+ * - Main content area (left): Subscription details (5 fields), cost breakdown (3 rows), assignment info (2 fields)
+ * - Sidebar (right): Renewal card, key dates (3 items), history timeline (3 events)
+ * - Static icon boxes (purple/emerald/blue) to maintain visual structure
+ *
+ * Layout Structure:
+ * - 3-column responsive grid (2 columns main content, 1 column sidebar)
+ * - Matches actual page structure with card-based layout
+ * - Purple icons: Subscription details
+ * - Emerald icons: Cost breakdown, renewal info
+ * - Blue icons: Assignment info, key dates
+ * - Gray icons: History timeline
+ *
+ * Shows while subscription detail page fetches data from database.
+ */
+
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Package, Calendar, UserIcon, FileText, Clock } from 'lucide-react';

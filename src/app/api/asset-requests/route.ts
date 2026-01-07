@@ -39,14 +39,14 @@ import {
   createAssetRequestSchema,
   createReturnRequestSchema,
   assetRequestQuerySchema,
-} from '@/lib/validations/operations/asset-request';
+} from '@/features/asset-requests';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import {
   generateRequestNumber,
   canRequestAsset,
   canReturnAsset,
-} from '@/lib/domains/operations/asset-requests/asset-request-utils';
-import { sendAssetRequestNotifications } from '@/lib/domains/operations/asset-requests/asset-request-notifications';
+} from '@/features/asset-requests';
+import { sendAssetRequestNotifications } from '@/features/asset-requests';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // ═══════════════════════════════════════════════════════════════════════════════

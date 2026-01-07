@@ -1,4 +1,5 @@
 // Operations Domain Components
-export * from './assets';
-export * from './subscriptions';
+// Assets moved to @/features/assets
+// Asset-requests moved to @/features/asset-requests
+// Subscriptions moved to @/features/subscriptions
 export * from './suppliers';

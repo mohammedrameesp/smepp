@@ -2,12 +2,60 @@
  * @file route.ts
  * @description Subscription reactivation endpoint
  * @module operations/subscriptions
+ *
+ * Features:
+ * - Reactivate cancelled subscriptions
+ * - Set custom reactivation and renewal dates
+ * - Validates status transitions (only CANCELLED → ACTIVE)
+ * - Date range validation and logical checks
+ * - Audit trail via subscription history
+ *
+ * Endpoint:
+ * - POST /api/subscriptions/[id]/reactivate (admin required)
+ *
+ * Security:
+ * - Admin-only access
+ * - Tenant isolation enforced
+ * - Comprehensive date validation
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { reactivateSubscription } from '@/lib/subscription-lifecycle';
+import { reactivateSubscription } from '@/features/subscriptions';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
+/**
+ * POST /api/subscriptions/[id]/reactivate - Reactivate a cancelled subscription
+ *
+ * Restores a cancelled subscription to active status with new billing cycle:
+ * - Sets status back to ACTIVE
+ * - Assigns new renewal date for next billing cycle
+ * - Records reactivation date (custom or current date)
+ * - Creates subscription history entry
+ *
+ * Validation Rules:
+ * - Subscription must exist and be CANCELLED
+ * - Renewal date required and must be between 2000-01-01 and +10 years
+ * - Reactivation date must be between 2000-01-01 and +1 year
+ * - Reactivation date cannot be after renewal date (logical check)
+ *
+ * @param id - Subscription ID from URL path
+ * @param body.renewalDate - Next renewal date (required)
+ * @param body.reactivationDate - Optional reactivation date (defaults to now)
+ * @param body.notes - Optional reactivation notes
+ *
+ * @returns Reactivated subscription object
+ * @throws 400 if validation fails
+ * @throws 404 if subscription not found
+ *
+ * @example
+ * POST /api/subscriptions/sub_xyz123/reactivate
+ * Body: {
+ *   renewalDate: "2024-07-01",
+ *   reactivationDate: "2024-06-01",
+ *   notes: "Service needed again"
+ * }
+ * // Returns: { id: "sub_xyz123", status: "ACTIVE", renewalDate: Date(...) }
+ */
 async function reactivateSubscriptionHandler(request: NextRequest, context: APIContext) {
     const { tenant, params } = context;
     const currentUserId = tenant!.userId;

@@ -34,7 +34,7 @@ import {
   AssetRequestStatusBadge,
   AssetRequestTypeBadge,
   AdminRequestActions,
-} from '@/components/domains/operations/asset-requests';
+} from '@/features/asset-requests';
 import {
   Package,
   User,

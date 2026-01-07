@@ -1,6 +1,6 @@
 /**
  * Tests for Renewal Date Utility Functions
- * @see src/lib/utils/renewal-date.ts
+ * @see src/features/subscriptions/utils/renewal-date.ts
  */
 
 import {
@@ -8,7 +8,7 @@ import {
   isRenewalOverdue,
   getDaysUntilRenewal,
   getRenewalStatus,
-} from '@/lib/utils/renewal-date';
+} from '@/features/subscriptions';
 
 describe('Renewal Date Utility Functions', () => {
   // Helper to create dates relative to now

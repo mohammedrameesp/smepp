@@ -8,4 +8,4 @@
 // This index exists for organizational purposes
 
 // Re-export from subdirectories - import directly for full exports
-// e.g., import { generateAssetTag } from '@/lib/domains/operations/assets/asset-utils'
+// e.g., import { generateAssetTag } from '@/features/assets'

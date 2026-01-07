@@ -31,7 +31,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { getAssetHistory } from '@/lib/domains/operations/assets/asset-history';
+import { getAssetHistory } from '@/features/assets';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // ═══════════════════════════════════════════════════════════════════════════════

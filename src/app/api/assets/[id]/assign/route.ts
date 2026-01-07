@@ -65,7 +65,7 @@ import { sendEmail } from '@/lib/core/email';
 import { assetAssignmentEmail, assetAssignmentPendingEmail } from '@/lib/email-templates';
 import { createNotification, createBulkNotifications, NotificationTemplates } from '@/lib/domains/system/notifications';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import { generateRequestNumber } from '@/lib/domains/operations/asset-requests/asset-request-utils';
+import { generateRequestNumber } from '@/features/asset-requests';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES

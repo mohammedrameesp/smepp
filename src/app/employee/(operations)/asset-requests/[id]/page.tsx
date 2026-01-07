@@ -33,7 +33,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { AssetRequestStatusBadge, AssetRequestTypeBadge, AssetAcceptDialog } from '@/components/domains/operations/asset-requests';
+import { AssetRequestStatusBadge, AssetRequestTypeBadge, AssetAcceptDialog } from '@/features/asset-requests';
 import { formatDate, formatDateTime } from '@/lib/date-format';
 import { ArrowLeft, Package, User, Clock, FileText, CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react';
 import { PageHeader, PageContent } from '@/components/ui/page-header';

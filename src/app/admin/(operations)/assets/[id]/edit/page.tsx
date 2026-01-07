@@ -36,12 +36,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Package, ShoppingCart, MapPin, Info, Wrench, RefreshCw } from 'lucide-react';
-import { DisposeAssetDialog } from '@/components/domains/operations/assets';
+import { DisposeAssetDialog } from '@/features/assets';
 import { toInputDateString, formatDate } from '@/lib/date-format';
-import { updateAssetSchema, type UpdateAssetRequest } from '@/lib/validations/operations/assets';
+import { updateAssetSchema, type UpdateAssetRequest } from '@/features/assets';
 import { AssetStatus } from '@prisma/client';
-import { CategorySelector } from '@/components/domains/operations/assets/category-selector';
-import { AssetTypeCombobox } from '@/components/domains/operations/assets/asset-type-combobox';
+import { CategorySelector } from '@/features/assets';
+import { AssetTypeCombobox } from '@/features/assets';
 import { DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
 import { getQatarEndOfDay } from '@/lib/qatar-timezone';
 

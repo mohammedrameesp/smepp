@@ -2,16 +2,57 @@
  * @file route.ts
  * @description Single subscription CRUD operations endpoint
  * @module operations/subscriptions
+ *
+ * Features:
+ * - Retrieve subscription details with history
+ * - Update subscription with multi-currency support
+ * - Delete subscription with cascade handling
+ * - Automatic assignment history tracking
+ * - IDOR protection via tenant validation
+ *
+ * Endpoints:
+ * - GET /api/subscriptions/[id] - Get subscription details (auth required)
+ * - PUT /api/subscriptions/[id] - Update subscription (admin required)
+ * - DELETE /api/subscriptions/[id] - Delete subscription (admin required)
+ *
+ * Security:
+ * - Tenant isolation enforced on all operations
+ * - Role-based access: only admins or assigned member can view
+ * - Activity logging for all mutations
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { updateSubscriptionSchema } from '@/lib/validations/subscriptions';
+import { updateSubscriptionSchema } from '@/features/subscriptions';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { parseInputDateString } from '@/lib/date-format';
 import { convertToQAR } from '@/lib/core/currency';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
+/**
+ * GET /api/subscriptions/[id] - Retrieve subscription details
+ *
+ * Returns complete subscription information including:
+ * - All subscription fields (service, cost, billing, dates)
+ * - Assigned member details (if assigned)
+ * - Recent history (last 10 entries) ordered by most recent
+ *
+ * Authorization:
+ * - Admins can view any subscription in their tenant
+ * - Regular users can only view subscriptions assigned to them
+ *
+ * IDOR Protection:
+ * Uses findFirst with tenantId check to prevent cross-tenant access
+ *
+ * @param id - Subscription ID from URL path
+ * @returns Subscription object with history and member details
+ * @throws 404 if subscription not found in tenant
+ * @throws 403 if user not authorized to view this subscription
+ *
+ * @example
+ * GET /api/subscriptions/sub_xyz123
+ * // Returns: { id: "sub_xyz123", serviceName: "...", history: [...], ... }
+ */
 async function getSubscriptionHandler(request: NextRequest, context: APIContext) {
     const { tenant, params } = context;
     const tenantId = tenant!.tenantId;
@@ -46,6 +87,41 @@ async function getSubscriptionHandler(request: NextRequest, context: APIContext)
     return NextResponse.json(subscription);
 }
 
+/**
+ * PUT /api/subscriptions/[id] - Update subscription
+ *
+ * Handles partial or complete subscription updates with intelligent features:
+ * - Automatic QAR recalculation when cost or currency changes
+ * - Assignment history tracking with custom assignment dates
+ * - Retroactive assignment date updates for existing assignments
+ * - Activity logging for audit trail
+ *
+ * Cost Handling Logic:
+ * 1. If costPerCycle changes: recalculate costQAR using current/new currency
+ * 2. If only currency changes: recalculate costQAR using current costPerCycle
+ * 3. costQAR always calculated to prevent data loss
+ *
+ * Assignment History Tracking:
+ * - Member change: Creates new REASSIGNED history entry with assignment date
+ * - Date-only change: Updates existing assignment history record
+ *
+ * @param id - Subscription ID from URL path
+ * @param body - Partial subscription update (validated by updateSubscriptionSchema)
+ * @param body.assignmentDate - Optional assignment date (for history tracking, not stored on subscription)
+ *
+ * @returns Updated subscription with member details
+ * @throws 404 if subscription not found in tenant
+ *
+ * @example
+ * PUT /api/subscriptions/sub_xyz123
+ * Body: {
+ *   costPerCycle: 100,
+ *   costCurrency: "EUR",
+ *   assignedMemberId: "member-456",
+ *   assignmentDate: "2024-01-15"
+ * }
+ * // Returns: { id: "sub_xyz123", costQAR: 400, assignedMember: {...} }
+ */
 async function updateSubscriptionHandler(request: NextRequest, context: APIContext) {
     const { tenant, params } = context;
     const tenantId = tenant!.tenantId;
@@ -180,6 +256,27 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
     return NextResponse.json(subscription);
 }
 
+/**
+ * DELETE /api/subscriptions/[id] - Delete subscription
+ *
+ * Permanently deletes a subscription from the system.
+ *
+ * IMPORTANT: This is a hard delete operation. All related data including:
+ * - Subscription history entries (via cascade)
+ * - Assignment records (via cascade)
+ * will also be deleted.
+ *
+ * Consider using status updates (CANCELLED, EXPIRED) instead of hard delete
+ * for subscriptions that need historical tracking.
+ *
+ * @param id - Subscription ID from URL path
+ * @returns Success message
+ * @throws 404 if subscription not found in tenant
+ *
+ * @example
+ * DELETE /api/subscriptions/sub_xyz123
+ * // Returns: { message: "Subscription deleted successfully" }
+ */
 async function deleteSubscriptionHandler(request: NextRequest, context: APIContext) {
     const { tenant, params } = context;
     const tenantId = tenant!.tenantId;
