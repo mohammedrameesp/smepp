@@ -304,10 +304,10 @@ export function EmployeeAssetListTableServerSearch({ currentUserId }: EmployeeAs
             ) : assets.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                  {debouncedSearch || (statusFilter !== 'all' && statusFilter !== 'active') || typeFilter !== 'all' || assignmentFilter !== 'all'
-                    ? 'No assets match your filters'
-                    : assignmentFilter === 'mine'
+                  {assignmentFilter === 'mine' && !debouncedSearch && statusFilter === 'active' && typeFilter === 'all'
                     ? 'No assets assigned to you yet'
+                    : (debouncedSearch || (statusFilter !== 'all' && statusFilter !== 'active') || typeFilter !== 'all' || assignmentFilter !== 'all')
+                    ? 'No assets match your filters'
                     : 'No assets found'}
                 </TableCell>
               </TableRow>
