@@ -209,16 +209,21 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-2">
             {isPendingAcceptance && (
               <>
-                <Button variant="outline" size="sm" onClick={() => {
-                  setDialogInitialMode('decline');
-                  setShowAcceptDialog(true);
-                }}>
+                <Button
+                  variant="outline"
+                  size="default"
+                  className="border-2"
+                  onClick={() => {
+                    setDialogInitialMode('decline');
+                    setShowAcceptDialog(true);
+                  }}
+                >
                   <XCircle className="h-4 w-4 mr-2" />
                   Decline
                 </Button>
                 <Button
-                  size="sm"
-                  className="border-2 border-primary"
+                  size="default"
+                  className="bg-green-600 hover:bg-green-700 text-white border-2 border-green-700"
                   onClick={() => {
                     setDialogInitialMode('accept');
                     setShowAcceptDialog(true);
