@@ -94,7 +94,11 @@ export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistor
           {currentAssets.length > 0 ? (
             <div className="space-y-4">
               {currentAssets.map((asset) => (
-                <div key={asset.id} className="border rounded-lg p-4">
+                <Link
+                  key={asset.id}
+                  href={viewMode === 'admin' ? `/admin/assets/${asset.id}` : `/employee/assets/${asset.id}`}
+                  className="block border rounded-lg p-4 hover:border-blue-400 hover:bg-blue-50/50 transition-colors cursor-pointer"
+                >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -106,9 +110,6 @@ export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistor
                         {asset.type}
                       </div>
                     </div>
-                    <Link href={viewMode === 'admin' ? `/admin/assets/${asset.id}` : `/employee/assets/${asset.id}`}>
-                      <Button variant="outline" size="sm">View Details</Button>
-                    </Link>
                   </div>
 
                   {/* Current Assignment Info */}
@@ -138,7 +139,7 @@ export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistor
                       <div className="font-semibold">{asset.memberPeriods.length}</div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (
@@ -161,7 +162,11 @@ export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistor
           <CardContent>
             <div className="space-y-4">
               {pastAssets.map((asset) => (
-                <div key={asset.id} className="border rounded-lg p-4 bg-gray-50">
+                <Link
+                  key={asset.id}
+                  href={viewMode === 'admin' ? `/admin/assets/${asset.id}` : `/employee/assets/${asset.id}`}
+                  className="block border rounded-lg p-4 bg-gray-50 hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer"
+                >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -173,9 +178,6 @@ export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistor
                         {asset.type}
                       </div>
                     </div>
-                    <Link href={viewMode === 'admin' ? `/admin/assets/${asset.id}` : `/employee/assets/${asset.id}`}>
-                      <Button variant="outline" size="sm">View History</Button>
-                    </Link>
                   </div>
 
                   {/* Assignment History Summary */}
@@ -201,7 +203,7 @@ export function UserAssetHistory({ assets, viewMode = 'admin' }: UserAssetHistor
                       <div className="font-semibold">{asset.memberPeriods.length}</div>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </CardContent>

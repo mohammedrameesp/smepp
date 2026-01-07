@@ -66,15 +66,20 @@ export function HoldingsCard({ assets, subscriptionCount, className }: HoldingsC
           {assets.slice(0, 3).map((asset) => {
             const Icon = getAssetIcon(asset.type);
             return (
-              <div key={asset.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+              <Link
+                key={asset.id}
+                href={`/employee/assets/${asset.id}`}
+                className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-sm transition-all cursor-pointer group"
+              >
+                <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center group-hover:bg-gray-300 transition-colors">
                   <Icon className="h-4 w-4 text-gray-500" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{asset.name}</p>
                   <p className="text-xs text-gray-500">{asset.code}</p>
                 </div>
-              </div>
+                <ArrowRight className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
             );
           })}
           {assets.length > 3 && (
