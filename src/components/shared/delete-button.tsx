@@ -8,7 +8,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +26,6 @@ interface DeleteButtonProps {
   entityType: 'asset' | 'subscription' | 'user';
   entityName: string;
   onDeleteSuccess?: () => void;
-  size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
 export function DeleteButton({
@@ -35,7 +33,6 @@ export function DeleteButton({
   entityType,
   entityName,
   onDeleteSuccess,
-  size = 'sm',
 }: DeleteButtonProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -104,19 +101,20 @@ export function DeleteButton({
     }
   };
 
+  // PageHeaderButton-consistent styling
+  const buttonClassName = 'inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed';
+
   return (
     <>
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button
-            variant="outline"
-            size={size}
+          <button
             disabled={isDeleting}
-            className="border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800 hover:border-red-400"
+            className={buttonClassName}
           >
             <Trash2 className="h-4 w-4" />
-            {size !== 'icon' && <span className="ml-1">Delete</span>}
-          </Button>
+            Delete
+          </button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>

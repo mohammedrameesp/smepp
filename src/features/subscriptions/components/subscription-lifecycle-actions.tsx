@@ -48,7 +48,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
+import { PageHeaderButton } from '@/components/ui/page-header';
 import { ReactivateDialog } from './forms/reactivate-dialog';
 import { CancelDialog } from './forms/cancel-dialog';
 import { SubscriptionStatus, BillingCycle } from '@prisma/client';
@@ -124,29 +124,25 @@ export function SubscriptionLifecycleActions({
 
   return (
     <>
-      <div className="flex gap-2">
-        {status === 'ACTIVE' && (
-          <Button
-            variant="outline"
-            onClick={() => setCancelDialogOpen(true)}
-            className="flex items-center gap-2 text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
-          >
-            <Ban className="h-4 w-4" />
-            Cancel
-          </Button>
-        )}
+      {status === 'ACTIVE' && (
+        <PageHeaderButton
+          variant="destructive"
+          onClick={() => setCancelDialogOpen(true)}
+        >
+          <Ban className="h-4 w-4" />
+          Cancel
+        </PageHeaderButton>
+      )}
 
-        {status === 'CANCELLED' && (
-          <Button
-            variant="default"
-            onClick={() => setReactivateDialogOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Play className="h-4 w-4" />
-            Reactivate
-          </Button>
-        )}
-      </div>
+      {status === 'CANCELLED' && (
+        <PageHeaderButton
+          variant="success"
+          onClick={() => setReactivateDialogOpen(true)}
+        >
+          <Play className="h-4 w-4" />
+          Reactivate
+        </PageHeaderButton>
+      )}
 
       <ReactivateDialog
         open={reactivateDialogOpen}

@@ -104,19 +104,25 @@ export function PageHeaderButton({
   variant = 'secondary',
   children,
   className,
+  disabled,
+  type = 'button',
 }: {
   href?: string;
   onClick?: () => void;
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline' | 'destructive' | 'success';
   children: React.ReactNode;
   className?: string;
+  disabled?: boolean;
+  type?: 'button' | 'submit';
 }) {
-  const baseStyles = 'inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800';
+  const baseStyles = 'inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variantStyles = {
     primary: 'bg-white text-slate-900 hover:bg-slate-100 focus-visible:ring-white',
     secondary: 'bg-slate-700 text-white hover:bg-slate-600 border border-slate-600 focus-visible:ring-slate-400',
     outline: 'bg-transparent text-slate-300 hover:text-white border border-slate-500 hover:border-slate-400 focus-visible:ring-slate-400',
+    destructive: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500',
+    success: 'bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-500',
   };
 
   const combinedClassName = cn(baseStyles, variantStyles[variant], className);
@@ -130,7 +136,7 @@ export function PageHeaderButton({
   }
 
   return (
-    <button onClick={onClick} className={combinedClassName}>
+    <button onClick={onClick} className={combinedClassName} disabled={disabled} type={type}>
       {children}
     </button>
   );
