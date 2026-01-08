@@ -34,23 +34,36 @@ const config: Config = {
   ],
 
   // Coverage thresholds for library code (src/app excluded from coverage)
-  // Note: Global thresholds are conservative as some modules (whatsapp, etc.) lack tests
-  // Core business logic in domains/ has much higher coverage
+  // Updated after TEST_COVERAGE_PLAN.md implementation - Phase 1-3 completed
   coverageThreshold: {
     global: {
-      branches: 5,
-      functions: 25,
-      lines: 8,
-      statements: 8,
+      branches: 15,
+      functions: 35,
+      lines: 20,
+      statements: 20,
     },
-    // Higher thresholds for critical business logic (these directories have good coverage)
+    // Higher thresholds for critical business logic
     'src/lib/domains/hr/payroll/': {
-      branches: 40,
-      functions: 45,
+      branches: 50,
+      functions: 55,
+      lines: 60,
+      statements: 60,
+    },
+    'src/lib/domains/hr/leave/': {
+      branches: 45,
+      functions: 50,
       lines: 50,
       statements: 50,
     },
-    'src/lib/domains/hr/leave/': {
+    // Multi-tenant security (critical)
+    'src/lib/multi-tenant/': {
+      branches: 40,
+      functions: 50,
+      lines: 50,
+      statements: 50,
+    },
+    // Security modules (critical)
+    'src/lib/security/': {
       branches: 30,
       functions: 40,
       lines: 40,
