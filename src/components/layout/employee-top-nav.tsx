@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { NotificationBell } from '@/features/notifications/components';
+import { FeedbackTrigger } from '@/components/feedback/feedback-trigger';
 import { cn } from '@/lib/utils';
 
 interface EmployeeTopNavProps {
@@ -88,8 +89,11 @@ export function EmployeeTopNav({ enabledModules = [] }: EmployeeTopNavProps) {
             </nav>
           </div>
 
-          {/* Right: Notifications + User */}
+          {/* Right: Feedback + Notifications + User */}
           <div className="flex items-center gap-3 pl-4 border-l border-slate-600">
+            {/* Feedback */}
+            <FeedbackTrigger />
+
             {/* Notifications */}
             <NotificationBell />
 

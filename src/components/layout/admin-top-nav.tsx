@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { NotificationBell } from '@/features/notifications/components';
+import { FeedbackTrigger } from '@/components/feedback/feedback-trigger';
 import { type BadgeCounts } from '@/components/layout/badge-types';
 import { cn } from '@/lib/utils';
 
@@ -132,6 +133,9 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
                 <span className="hidden sm:inline">Search...</span>
                 <kbd className="hidden md:inline text-xs bg-slate-600 text-slate-400 px-1.5 py-0.5 rounded">⌘K</kbd>
               </button>
+
+              {/* Feedback */}
+              <FeedbackTrigger />
 
               {/* Notifications */}
               <NotificationBell />

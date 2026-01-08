@@ -2345,3 +2345,39 @@ model PlatformWhatsAppConfig {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLATFORM FEEDBACK (Super Admin only - not tenant-scoped)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model Feedback {
+  id               String   @id @default(cuid())
+
+  // Submitter context (captured for reference, not tenant-scoped)
+  organizationId   String? // Which org submitted (for context)
+  organizationName String? // Denormalized for easy display
+  submittedByEmail String // User email
+  submittedByName  String? // User name
+
+  // Feedback content
+  type    String // 'BUG' | 'FEATURE_REQUEST'
+  message String @db.Text
+
+  // Auto-captured context
+  pageUrl   String?
+  userAgent String?
+
+  // Attachment
+  screenshotUrl String?
+
+  // Status (managed by super-admin)
+  status     String  @default("NEW") // NEW, REVIEWED, IN_PROGRESS, DONE, WONT_FIX
+  adminNotes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
