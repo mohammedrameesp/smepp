@@ -19,6 +19,7 @@ import { Progress } from '@/components/ui/progress';
 import { PhoneInput, QatarPhoneInput, DocumentUpload, MultiSelectTags, TagsInput } from '@/components/domains/hr/profile';
 import {
   COUNTRIES,
+  COUNTRY_CODES,
   QATAR_BANKS,
   RELATIONSHIPS,
   QUALIFICATIONS,
@@ -27,6 +28,14 @@ import {
   MARITAL_STATUS,
   LANGUAGES,
 } from '@/lib/data/constants';
+
+// Find phone code by country name (for auto-setting phone codes based on nationality)
+function getPhoneCodeByCountry(countryName: string): string {
+  const match = COUNTRY_CODES.find(
+    (c) => c.country.toLowerCase() === countryName.toLowerCase()
+  );
+  return match?.code || '+91'; // Fallback to India if not found
+}
 import {
   ArrowLeft,
   ArrowRight,
@@ -618,7 +627,13 @@ function PersonalInfoStep({ formData, updateField, errors }: StepProps) {
           <Label htmlFor="nationality">Nationality <span className="text-red-500">*</span></Label>
           <Select
             value={(formData.nationality as string) || ''}
-            onValueChange={(val) => updateField('nationality', val)}
+            onValueChange={(val) => {
+              updateField('nationality', val);
+              // Auto-update phone codes based on nationality
+              const phoneCode = getPhoneCodeByCountry(val);
+              updateField('otherMobileCode', phoneCode);
+              updateField('homeEmergencyCode', phoneCode);
+            }}
           >
             <SelectTrigger id="nationality">
               <SelectValue placeholder="Select country" />
