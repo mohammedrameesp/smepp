@@ -164,7 +164,7 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
       // Get org details for email
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
-        select: { slug: true, name: true },
+        select: { slug: true, name: true, primaryColor: true },
       });
 
       if (currentRequest.requester.email) {
@@ -178,6 +178,7 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
           reviewerName: session.user.name || session.user.email,
           orgSlug: org?.slug || 'app',
           orgName: org?.name || 'Organization',
+          primaryColor: org?.primaryColor || undefined,
         });
 
         await sendEmail({

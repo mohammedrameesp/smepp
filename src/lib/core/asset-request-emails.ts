@@ -1,7 +1,8 @@
 // Asset Request Email Templates
-// Brand color: #73c5d1
+// Default brand color: #73c5d1 (Durj teal)
+// Organization's primaryColor can override this via the primaryColor parameter
 
-const BRAND_COLOR = '#73c5d1';
+const DEFAULT_BRAND_COLOR = '#73c5d1';
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 
 /**
@@ -26,7 +27,8 @@ function formatTimestamp(timezone: string = 'Asia/Qatar'): string {
   });
 }
 
-function emailWrapper(content: string, orgName: string): string {
+function emailWrapper(content: string, orgName: string, brandColor?: string): string {
+  const color = brandColor || DEFAULT_BRAND_COLOR;
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -38,7 +40,7 @@ function emailWrapper(content: string, orgName: string): string {
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <!-- Header -->
     <tr>
-      <td style="background-color: ${BRAND_COLOR}; padding: 30px 40px; text-align: center;">
+      <td style="background-color: ${color}; padding: 30px 40px; text-align: center;">
         <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">${orgName}</h1>
       </td>
     </tr>
@@ -75,6 +77,7 @@ interface AssetRequestEmailData {
   assetType: string;
   orgSlug: string;
   orgName: string;
+  primaryColor?: string;
 }
 
 // Employee submits asset request -> Admin notification
@@ -86,9 +89,10 @@ interface AssetRequestSubmittedData extends AssetRequestEmailData {
 
 export function assetRequestSubmittedEmail(data: AssetRequestSubmittedData): { subject: string; html: string; text: string } {
   const subject = `Asset Request: ${data.requesterName} - ${data.assetBrand || ''} ${data.assetModel}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-left: 4px solid ${BRAND_COLOR}; border-radius: 4px; margin: 0 0 25px 0;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-left: 4px solid ${brandColor}; border-radius: 4px; margin: 0 0 25px 0;">
       <tr>
         <td style="padding: 15px 20px;">
           <p style="color: #0c5460; font-size: 14px; margin: 0; font-weight: bold;">
@@ -107,7 +111,7 @@ export function assetRequestSubmittedEmail(data: AssetRequestSubmittedData): { s
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Request Number:</td>
@@ -137,7 +141,7 @@ export function assetRequestSubmittedEmail(data: AssetRequestSubmittedData): { s
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-radius: 8px; margin: 0 0 25px 0;">
       <tr>
         <td style="padding: 20px;">
-          <h4 style="color: ${BRAND_COLOR}; margin: 0 0 10px 0; font-size: 14px;">Reason for Request:</h4>
+          <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Reason for Request:</h4>
           <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${data.reason}</p>
         </td>
       </tr>
@@ -146,7 +150,7 @@ export function assetRequestSubmittedEmail(data: AssetRequestSubmittedData): { s
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/asset-requests')}" style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/asset-requests')}" style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Request
           </a>
         </td>
@@ -156,7 +160,7 @@ export function assetRequestSubmittedEmail(data: AssetRequestSubmittedData): { s
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 New Asset Request - ${data.requestNumber}
@@ -188,6 +192,7 @@ interface AssetAssignmentPendingData extends AssetRequestEmailData {
 
 export function assetAssignmentPendingEmail(data: AssetAssignmentPendingData): { subject: string; html: string; text: string } {
   const subject = `Asset Assignment Pending: ${data.assetBrand || ''} ${data.assetModel}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; margin: 0 0 25px 0;">
@@ -213,7 +218,7 @@ export function assetAssignmentPendingEmail(data: AssetAssignmentPendingData): {
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Asset Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Asset Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Request Number:</td>
@@ -244,7 +249,7 @@ export function assetAssignmentPendingEmail(data: AssetAssignmentPendingData): {
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-radius: 8px; margin: 0 0 25px 0;">
       <tr>
         <td style="padding: 20px;">
-          <h4 style="color: ${BRAND_COLOR}; margin: 0 0 10px 0; font-size: 14px;">Notes:</h4>
+          <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Notes:</h4>
           <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${data.reason}</p>
         </td>
       </tr>
@@ -254,7 +259,7 @@ export function assetAssignmentPendingEmail(data: AssetAssignmentPendingData): {
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${getTenantPortalUrl(data.orgSlug, '/employee/asset-requests')}" style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+          <a href="${getTenantPortalUrl(data.orgSlug, '/employee/asset-requests')}" style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Assignment
           </a>
         </td>
@@ -264,7 +269,7 @@ export function assetAssignmentPendingEmail(data: AssetAssignmentPendingData): {
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Asset Assignment Pending Your Acceptance
@@ -294,6 +299,7 @@ interface AssetAssignmentAcceptedData extends AssetRequestEmailData {
 
 export function assetAssignmentAcceptedEmail(data: AssetAssignmentAcceptedData): { subject: string; html: string; text: string } {
   const subject = `Asset Accepted: ${data.userName} - ${data.assetBrand || ''} ${data.assetModel}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #dcfce7; border-left: 4px solid #22c55e; border-radius: 4px; margin: 0 0 25px 0;">
@@ -313,7 +319,7 @@ export function assetAssignmentAcceptedEmail(data: AssetAssignmentAcceptedData):
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Request Number:</td>
@@ -339,7 +345,7 @@ export function assetAssignmentAcceptedEmail(data: AssetAssignmentAcceptedData):
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Asset Assignment Accepted
@@ -365,6 +371,7 @@ interface AssetAssignmentDeclinedData extends AssetRequestEmailData {
 
 export function assetAssignmentDeclinedEmail(data: AssetAssignmentDeclinedData): { subject: string; html: string; text: string } {
   const subject = `Asset Declined: ${data.userName} - ${data.assetBrand || ''} ${data.assetModel}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #fee2e2; border-left: 4px solid #dc2626; border-radius: 4px; margin: 0 0 25px 0;">
@@ -384,7 +391,7 @@ export function assetAssignmentDeclinedEmail(data: AssetAssignmentDeclinedData):
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Request Number:</td>
@@ -419,7 +426,7 @@ export function assetAssignmentDeclinedEmail(data: AssetAssignmentDeclinedData):
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Asset Assignment Declined
@@ -447,9 +454,10 @@ interface AssetReturnRequestData extends AssetRequestEmailData {
 
 export function assetReturnRequestEmail(data: AssetReturnRequestData): { subject: string; html: string; text: string } {
   const subject = `Asset Return Request: ${data.userName} - ${data.assetBrand || ''} ${data.assetModel}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-left: 4px solid ${BRAND_COLOR}; border-radius: 4px; margin: 0 0 25px 0;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-left: 4px solid ${brandColor}; border-radius: 4px; margin: 0 0 25px 0;">
       <tr>
         <td style="padding: 15px 20px;">
           <p style="color: #0c5460; font-size: 14px; margin: 0; font-weight: bold;">
@@ -468,7 +476,7 @@ export function assetReturnRequestEmail(data: AssetReturnRequestData): { subject
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Request Number:</td>
@@ -494,7 +502,7 @@ export function assetReturnRequestEmail(data: AssetReturnRequestData): { subject
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-radius: 8px; margin: 0 0 25px 0;">
       <tr>
         <td style="padding: 20px;">
-          <h4 style="color: ${BRAND_COLOR}; margin: 0 0 10px 0; font-size: 14px;">Reason for Return:</h4>
+          <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Reason for Return:</h4>
           <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${data.reason}</p>
         </td>
       </tr>
@@ -503,7 +511,7 @@ export function assetReturnRequestEmail(data: AssetReturnRequestData): { subject
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/asset-requests')}" style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/asset-requests')}" style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Request
           </a>
         </td>
@@ -513,7 +521,7 @@ export function assetReturnRequestEmail(data: AssetReturnRequestData): { subject
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Asset Return Request - ${data.requestNumber}
@@ -542,6 +550,7 @@ interface AssetRequestApprovedData extends AssetRequestEmailData {
 
 export function assetRequestApprovedEmail(data: AssetRequestApprovedData): { subject: string; html: string; text: string } {
   const subject = `Asset Request Approved: ${data.assetBrand || ''} ${data.assetModel}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #dcfce7; border-left: 4px solid #22c55e; border-radius: 4px; margin: 0 0 25px 0;">
@@ -565,7 +574,7 @@ export function assetRequestApprovedEmail(data: AssetRequestApprovedData): { sub
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Request Number:</td>
@@ -595,7 +604,7 @@ export function assetRequestApprovedEmail(data: AssetRequestApprovedData): { sub
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
       <tr>
         <td align="center">
-          <a href="${getTenantPortalUrl(data.orgSlug, '/employee/asset-requests')}" style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+          <a href="${getTenantPortalUrl(data.orgSlug, '/employee/asset-requests')}" style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             View My Requests
           </a>
         </td>
@@ -606,7 +615,7 @@ export function assetRequestApprovedEmail(data: AssetRequestApprovedData): { sub
       You will receive a notification once the asset is ready for collection.<br><br>
       Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Asset Request Approved
@@ -639,6 +648,7 @@ interface AssetRequestRejectedData extends AssetRequestEmailData {
 
 export function assetRequestRejectedEmail(data: AssetRequestRejectedData): { subject: string; html: string; text: string } {
   const subject = `Asset Request Rejected: ${data.assetBrand || ''} ${data.assetModel}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #fee2e2; border-left: 4px solid #dc2626; border-radius: 4px; margin: 0 0 25px 0;">
@@ -662,7 +672,7 @@ export function assetRequestRejectedEmail(data: AssetRequestRejectedData): { sub
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Request Number:</td>
@@ -698,7 +708,7 @@ export function assetRequestRejectedEmail(data: AssetRequestRejectedData): { sub
       If you have questions, please contact IT support.<br><br>
       Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Asset Request Rejected
@@ -730,6 +740,7 @@ interface AssetReturnRejectedData extends AssetRequestEmailData {
 
 export function assetReturnRejectedEmail(data: AssetReturnRejectedData): { subject: string; html: string; text: string } {
   const subject = `Asset Return Rejected: ${data.assetBrand || ''} ${data.assetModel}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #fee2e2; border-left: 4px solid #dc2626; border-radius: 4px; margin: 0 0 25px 0;">
@@ -753,7 +764,7 @@ export function assetReturnRejectedEmail(data: AssetReturnRejectedData): { subje
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Request Number:</td>
@@ -789,7 +800,7 @@ export function assetReturnRejectedEmail(data: AssetReturnRejectedData): { subje
       If you have questions, please contact IT support.<br><br>
       Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Asset Return Request Rejected
@@ -820,6 +831,7 @@ interface AssetReturnApprovedData extends AssetRequestEmailData {
 
 export function assetReturnApprovedEmail(data: AssetReturnApprovedData): { subject: string; html: string; text: string } {
   const subject = `Asset Return Approved: ${data.assetBrand || ''} ${data.assetModel}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #dcfce7; border-left: 4px solid #22c55e; border-radius: 4px; margin: 0 0 25px 0;">
@@ -843,7 +855,7 @@ export function assetReturnApprovedEmail(data: AssetReturnApprovedData): { subje
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Request Number:</td>
@@ -869,7 +881,7 @@ export function assetReturnApprovedEmail(data: AssetReturnApprovedData): { subje
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
       Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Asset Return Approved
@@ -899,13 +911,15 @@ interface AssetUnassignedData {
   reason?: string;
   orgSlug: string;
   orgName: string;
+  primaryColor?: string;
 }
 
 export function assetUnassignedEmail(data: AssetUnassignedData): { subject: string; html: string; text: string } {
   const subject = `Asset Unassigned: ${data.assetBrand || ''} ${data.assetModel}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-left: 4px solid ${BRAND_COLOR}; border-radius: 4px; margin: 0 0 25px 0;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-left: 4px solid ${brandColor}; border-radius: 4px; margin: 0 0 25px 0;">
       <tr>
         <td style="padding: 15px 20px;">
           <p style="color: #0c5460; font-size: 14px; margin: 0; font-weight: bold;">
@@ -928,7 +942,7 @@ export function assetUnassignedEmail(data: AssetUnassignedData): { subject: stri
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Asset Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Asset Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Asset:</td>
@@ -955,7 +969,7 @@ export function assetUnassignedEmail(data: AssetUnassignedData): { subject: stri
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-radius: 8px; margin: 0 0 25px 0;">
       <tr>
         <td style="padding: 20px;">
-          <h4 style="color: ${BRAND_COLOR}; margin: 0 0 10px 0; font-size: 14px;">Reason:</h4>
+          <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Reason:</h4>
           <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${data.reason}</p>
         </td>
       </tr>
@@ -966,7 +980,7 @@ export function assetUnassignedEmail(data: AssetUnassignedData): { subject: stri
       You are no longer responsible for this asset. If you have questions, please contact IT support.<br><br>
       Best regards,<br><strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Asset Unassigned

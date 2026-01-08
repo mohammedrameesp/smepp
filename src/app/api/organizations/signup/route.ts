@@ -276,6 +276,7 @@ If you didn't sign up for Durj, you can safely ignore this email.
         industry,
         companySize,
         signupDate: new Date(),
+        primaryColor: undefined, // New org doesn't have custom color yet
       });
 
       // Fire and forget - don't block the response

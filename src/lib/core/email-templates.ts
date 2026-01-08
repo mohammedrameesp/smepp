@@ -1,7 +1,8 @@
 // Email Templates for Durj
-// Brand color: #3B82F6 (blue-500)
+// Default brand color: #3B82F6 (blue-500)
+// Organization's primaryColor can override this via the primaryColor parameter
 
-const BRAND_COLOR = '#3B82F6';
+const DEFAULT_BRAND_COLOR = '#3B82F6';
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 
 /**
@@ -44,7 +45,8 @@ function formatDate(date: Date | string | null): string {
 // BASE EMAIL WRAPPER
 // ============================================================================
 
-function emailWrapper(content: string, orgName: string, timezone?: string): string {
+function emailWrapper(content: string, orgName: string, brandColor?: string, timezone?: string): string {
+  const color = brandColor || DEFAULT_BRAND_COLOR;
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -56,7 +58,7 @@ function emailWrapper(content: string, orgName: string, timezone?: string): stri
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
     <!-- Header -->
     <tr>
-      <td style="background-color: ${BRAND_COLOR}; padding: 30px 40px; text-align: center;">
+      <td style="background-color: ${color}; padding: 30px 40px; text-align: center;">
         <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">${orgName}</h1>
       </td>
     </tr>
@@ -94,10 +96,12 @@ interface SupplierApprovalData {
   serviceCategory: string;
   approvalDate: Date;
   orgName: string;
+  primaryColor?: string;
 }
 
 export function supplierApprovalEmail(data: SupplierApprovalData): { subject: string; html: string; text: string } {
   const subject = `Supplier Registration Approved - ${data.companyName}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Congratulations! Your Supplier Registration is Approved</h2>
@@ -114,7 +118,7 @@ export function supplierApprovalEmail(data: SupplierApprovalData): { subject: st
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Your Supplier Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Your Supplier Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Company Name:</td>
@@ -151,7 +155,7 @@ export function supplierApprovalEmail(data: SupplierApprovalData): { subject: st
       Best regards,<br>
       <strong>${data.orgName} Procurement Team</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Congratulations! Your Supplier Registration is Approved
@@ -192,10 +196,12 @@ interface AssetAssignmentData {
   serialNumber: string | null;
   assignmentDate: Date;
   orgName: string;
+  primaryColor?: string;
 }
 
 export function assetAssignmentEmail(data: AssetAssignmentData): { subject: string; html: string; text: string } {
   const subject = `Asset Assigned: ${data.assetTag} - ${data.brand} ${data.model}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Asset Assignment Notification</h2>
@@ -212,7 +218,7 @@ export function assetAssignmentEmail(data: AssetAssignmentData): { subject: stri
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Asset Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Asset Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Asset Tag:</td>
@@ -258,7 +264,7 @@ export function assetAssignmentEmail(data: AssetAssignmentData): { subject: stri
       Best regards,<br>
       <strong>${data.orgName} IT Team</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Asset Assignment Notification
@@ -303,10 +309,12 @@ interface ChangeRequestData {
   submittedDate: Date;
   orgSlug: string;
   orgName: string;
+  primaryColor?: string;
 }
 
 export function changeRequestEmail(data: ChangeRequestData): { subject: string; html: string; text: string } {
   const subject = `Profile Change Request: ${data.employeeName} - ${data.fieldName}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
     <!-- Alert Banner -->
@@ -330,7 +338,7 @@ export function changeRequestEmail(data: ChangeRequestData): { subject: string; 
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Employee Name:</td>
@@ -350,7 +358,7 @@ export function changeRequestEmail(data: ChangeRequestData): { subject: string; 
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Requested Value:</td>
-              <td style="padding: 8px 0; color: ${BRAND_COLOR}; font-size: 14px; font-weight: bold;">${data.requestedValue}</td>
+              <td style="padding: 8px 0; color: ${brandColor}; font-size: 14px; font-weight: bold;">${data.requestedValue}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Submitted On:</td>
@@ -365,7 +373,7 @@ export function changeRequestEmail(data: ChangeRequestData): { subject: string; 
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-radius: 8px; margin: 0 0 25px 0;">
       <tr>
         <td style="padding: 20px;">
-          <h4 style="color: ${BRAND_COLOR}; margin: 0 0 10px 0; font-size: 14px;">Reason for Change:</h4>
+          <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Reason for Change:</h4>
           <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">
             ${data.reason || 'No reason provided'}
           </p>
@@ -382,7 +390,7 @@ export function changeRequestEmail(data: ChangeRequestData): { subject: string; 
       <tr>
         <td align="center">
           <a href="${getTenantPortalUrl(data.orgSlug, '/admin/employees')}"
-             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Request
           </a>
         </td>
@@ -393,7 +401,7 @@ export function changeRequestEmail(data: ChangeRequestData): { subject: string; 
       Best regards,<br>
       <strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Profile Change Request - Action Required
@@ -436,10 +444,12 @@ interface WelcomeUserData {
     hasMicrosoft: boolean;
     hasPassword: boolean;
   };
+  primaryColor?: string;
 }
 
 export function welcomeUserEmail(data: WelcomeUserData): { subject: string; html: string; text: string } {
   const subject = `Welcome to ${data.orgName} - ${data.userName}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   // Format role for display
   const roleDisplay = data.userRole.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -481,7 +491,7 @@ export function welcomeUserEmail(data: WelcomeUserData): { subject: string; html
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Your Account Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Your Account Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Name:</td>
@@ -516,7 +526,7 @@ export function welcomeUserEmail(data: WelcomeUserData): { subject: string; html
       <tr>
         <td align="center">
           <a href="${portalUrl}"
-             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Access Portal
           </a>
         </td>
@@ -531,7 +541,7 @@ export function welcomeUserEmail(data: WelcomeUserData): { subject: string; html
       Welcome aboard!<br>
       <strong>${data.orgName} Team</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Welcome to ${data.orgName}!
@@ -574,10 +584,12 @@ interface WelcomeUserWithPasswordSetupData {
   orgSlug: string;
   orgName: string;
   setupToken: string;
+  primaryColor?: string;
 }
 
 export function welcomeUserWithPasswordSetupEmail(data: WelcomeUserWithPasswordSetupData): { subject: string; html: string; text: string } {
   const subject = `Welcome! Set Up Your Password - ${data.orgName}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   // Format role for display
   const roleDisplay = data.userRole.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -600,7 +612,7 @@ export function welcomeUserWithPasswordSetupEmail(data: WelcomeUserWithPasswordS
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Your Account Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Your Account Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Name:</td>
@@ -624,7 +636,7 @@ export function welcomeUserWithPasswordSetupEmail(data: WelcomeUserWithPasswordS
       <tr>
         <td align="center">
           <a href="${setupUrl}"
-             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Set Your Password
           </a>
         </td>
@@ -654,7 +666,7 @@ export function welcomeUserWithPasswordSetupEmail(data: WelcomeUserWithPasswordS
       Welcome aboard!<br>
       <strong>${data.orgName} Team</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Welcome to ${data.orgName}!
@@ -705,10 +717,12 @@ interface OrganizationInvitationEmailData {
   };
   designation?: string | null;
   employeeCode?: string | null;
+  primaryColor?: string;
 }
 
 export function organizationInvitationEmail(data: OrganizationInvitationEmailData): { subject: string; html: string; text: string } {
   const subject = `You're invited to join ${data.orgName}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   // Format role for display
   const roleDisplay = data.userRole.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -738,7 +752,7 @@ export function organizationInvitationEmail(data: OrganizationInvitationEmailDat
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Your Account Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Your Account Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Name:</td>
@@ -774,7 +788,7 @@ export function organizationInvitationEmail(data: OrganizationInvitationEmailDat
       <tr>
         <td align="center">
           <a href="${inviteUrl}"
-             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Accept Invitation
           </a>
         </td>
@@ -793,7 +807,7 @@ export function organizationInvitationEmail(data: OrganizationInvitationEmailDat
       Welcome aboard!<br>
       <strong>${data.orgName} Team</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 You're Invited to Join ${data.orgName}!
@@ -838,9 +852,11 @@ interface DocumentExpiryAlertData {
   documents: ExpiringDocument[];
   orgSlug: string;
   orgName: string;
+  primaryColor?: string;
 }
 
 export function documentExpiryAlertEmail(data: DocumentExpiryAlertData): { subject: string; html: string; text: string } {
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const expiredCount = data.documents.filter((d) => d.status === 'expired').length;
   const expiringCount = data.documents.filter((d) => d.status === 'expiring').length;
 
@@ -953,7 +969,7 @@ export function documentExpiryAlertEmail(data: DocumentExpiryAlertData): { subje
       <tr>
         <td align="center">
           <a href="${getTenantPortalUrl(data.orgSlug, '/profile')}"
-             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Update My Profile
           </a>
         </td>
@@ -964,7 +980,7 @@ export function documentExpiryAlertEmail(data: DocumentExpiryAlertData): { subje
       Best regards,<br>
       <strong>${data.orgName} HR Team</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const documentListText = data.documents
     .map((doc) => {
@@ -1019,9 +1035,11 @@ interface AdminDocumentExpiryAlertData {
   expiringCount: number;
   orgSlug: string;
   orgName: string;
+  primaryColor?: string;
 }
 
 export function adminDocumentExpiryAlertEmail(data: AdminDocumentExpiryAlertData): { subject: string; html: string; text: string } {
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const subject = `Document Expiry Summary: ${data.expiredCount} Expired, ${data.expiringCount} Expiring Soon`;
 
   // Group documents by employee for better readability
@@ -1128,7 +1146,7 @@ export function adminDocumentExpiryAlertEmail(data: AdminDocumentExpiryAlertData
       <tr>
         <td align="center">
           <a href="${getTenantPortalUrl(data.orgSlug, '/admin/employees/document-expiry')}"
-             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             View All Expiring Documents
           </a>
         </td>
@@ -1139,7 +1157,7 @@ export function adminDocumentExpiryAlertEmail(data: AdminDocumentExpiryAlertData
       Best regards,<br>
       <strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const employeeList = Array.from(employeeMap.entries())
     .map(([, docs]) => {
@@ -1187,14 +1205,16 @@ interface NewSupplierRegistrationData {
   registrationDate: Date;
   orgSlug: string;
   orgName: string;
+  primaryColor?: string;
 }
 
 export function newSupplierRegistrationEmail(data: NewSupplierRegistrationData): { subject: string; html: string; text: string } {
   const subject = `New Supplier Registration: ${data.companyName}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const html = emailWrapper(`
     <!-- Alert Banner -->
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-left: 4px solid ${BRAND_COLOR}; border-radius: 4px; margin: 0 0 25px 0;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-left: 4px solid ${brandColor}; border-radius: 4px; margin: 0 0 25px 0;">
       <tr>
         <td style="padding: 15px 20px;">
           <p style="color: #0c5460; font-size: 14px; margin: 0; font-weight: bold;">
@@ -1214,7 +1234,7 @@ export function newSupplierRegistrationEmail(data: NewSupplierRegistrationData):
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Supplier Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Supplier Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Company Name:</td>
@@ -1254,7 +1274,7 @@ export function newSupplierRegistrationEmail(data: NewSupplierRegistrationData):
       <tr>
         <td align="center">
           <a href="${getTenantPortalUrl(data.orgSlug, '/admin/suppliers')}"
-             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Supplier
           </a>
         </td>
@@ -1265,7 +1285,7 @@ export function newSupplierRegistrationEmail(data: NewSupplierRegistrationData):
       Best regards,<br>
       <strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 New Supplier Registration - Pending Review
@@ -1304,10 +1324,12 @@ interface PurchaseRequestSubmittedData {
   priority: string;
   orgSlug: string;
   orgName: string;
+  primaryColor?: string;
 }
 
 export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData): { subject: string; html: string; text: string } {
   const subject = `New Purchase Request: ${data.referenceNumber} - ${data.title}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   // Format priority for display
   const priorityColors: Record<string, { bg: string; text: string }> = {
@@ -1328,7 +1350,7 @@ export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData
 
   const html = emailWrapper(`
     <!-- Alert Banner -->
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-left: 4px solid ${BRAND_COLOR}; border-radius: 4px; margin: 0 0 25px 0;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-left: 4px solid ${brandColor}; border-radius: 4px; margin: 0 0 25px 0;">
       <tr>
         <td style="padding: 15px 20px;">
           <p style="color: #0c5460; font-size: 14px; margin: 0; font-weight: bold;">
@@ -1348,7 +1370,7 @@ export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Reference Number:</td>
@@ -1392,7 +1414,7 @@ export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData
       <tr>
         <td align="center">
           <a href="${getTenantPortalUrl(data.orgSlug, '/admin/purchase-requests')}"
-             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             Review Request
           </a>
         </td>
@@ -1403,7 +1425,7 @@ export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData
       Best regards,<br>
       <strong>${data.orgName}</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 New Purchase Request - ${data.referenceNumber}
@@ -1442,9 +1464,11 @@ interface PurchaseRequestStatusData {
   reviewerName: string;
   orgSlug: string;
   orgName: string;
+  primaryColor?: string;
 }
 
 export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { subject: string; html: string; text: string } {
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const statusColors: Record<string, { bg: string; text: string; border: string }> = {
     'Pending': { bg: '#fef9c3', text: '#a16207', border: '#fde047' },
     'Under Review': { bg: '#dbeafe', text: '#1e40af', border: '#93c5fd' },
@@ -1498,7 +1522,7 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Reference Number:</td>
@@ -1534,7 +1558,7 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-radius: 8px; margin: 0 0 25px 0;">
       <tr>
         <td style="padding: 20px;">
-          <h4 style="color: ${BRAND_COLOR}; margin: 0 0 10px 0; font-size: 14px;">Reviewer Notes:</h4>
+          <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Reviewer Notes:</h4>
           <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">
             ${data.reviewNotes}
           </p>
@@ -1554,7 +1578,7 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
       <tr>
         <td align="center">
           <a href="${getTenantPortalUrl(data.orgSlug, '/employee/purchase-requests')}"
-             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             View My Requests
           </a>
         </td>
@@ -1565,7 +1589,7 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
       Best regards,<br>
       <strong>${data.orgName} Procurement Team</strong>
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const text = `
 Purchase Request Status Update - ${data.referenceNumber}
@@ -1611,9 +1635,11 @@ interface CompanyDocumentExpiryAlertData {
   expiringCount: number;
   orgSlug: string;
   orgName: string;
+  primaryColor?: string;
 }
 
 export function companyDocumentExpiryAlertEmail(data: CompanyDocumentExpiryAlertData): { subject: string; html: string; text: string } {
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
   const subject = `Company Document Alert: ${data.expiredCount} Expired, ${data.expiringCount} Expiring Soon`;
 
   const documentRows = data.documents.map(doc => {
@@ -1673,7 +1699,7 @@ export function companyDocumentExpiryAlertEmail(data: CompanyDocumentExpiryAlert
                 <div style="font-size: 12px; color: #666666;">Expiring Soon</div>
               </td>
               <td style="text-align: center; padding: 10px;">
-                <div style="font-size: 28px; font-weight: bold; color: ${BRAND_COLOR};">${data.documents.length}</div>
+                <div style="font-size: 28px; font-weight: bold; color: ${brandColor};">${data.documents.length}</div>
                 <div style="font-size: 12px; color: #666666;">Total Documents</div>
               </td>
             </tr>
@@ -1692,7 +1718,7 @@ export function companyDocumentExpiryAlertEmail(data: CompanyDocumentExpiryAlert
       <tr>
         <td align="center">
           <a href="${getTenantPortalUrl(data.orgSlug, '/admin/company-documents')}"
-             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             View Company Documents
           </a>
         </td>
@@ -1702,7 +1728,7 @@ export function companyDocumentExpiryAlertEmail(data: CompanyDocumentExpiryAlert
     <p style="color: #888888; font-size: 12px; margin-top: 20px;">
       Please renew these documents before they expire to avoid any compliance issues.
     </p>
-  `, data.orgName);
+  `, data.orgName, brandColor);
 
   const documentsList = data.documents.map(doc => {
     const isExpired = doc.status === 'expired';
@@ -1746,10 +1772,12 @@ interface NewOrganizationSignupData {
   industry?: string | null;
   companySize?: string | null;
   signupDate: Date;
+  primaryColor?: string;
 }
 
 export function newOrganizationSignupEmail(data: NewOrganizationSignupData): { subject: string; html: string; text: string } {
   const subject = `🎉 New Organization Signup: ${data.organizationName}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
 
   const portalUrl = getTenantPortalUrl(data.organizationSlug, '');
   const superAdminUrl = `${process.env.NEXT_PUBLIC_APP_DOMAIN?.includes('localhost') ? 'http' : 'https'}://${process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000'}/super-admin/organizations`;
@@ -1762,10 +1790,10 @@ export function newOrganizationSignupEmail(data: NewOrganizationSignupData): { s
     </p>
 
     <!-- Organization Details Box -->
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f0f9ff; border-radius: 8px; border-left: 4px solid ${BRAND_COLOR}; margin: 25px 0;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f0f9ff; border-radius: 8px; border-left: 4px solid ${brandColor}; margin: 25px 0;">
       <tr>
         <td style="padding: 25px;">
-          <h3 style="color: ${BRAND_COLOR}; margin: 0 0 15px 0; font-size: 16px;">Organization Details</h3>
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Organization Details</h3>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Organization Name:</td>
@@ -1774,7 +1802,7 @@ export function newOrganizationSignupEmail(data: NewOrganizationSignupData): { s
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Subdomain:</td>
               <td style="padding: 8px 0; color: #333333; font-size: 14px;">
-                <a href="${portalUrl}" style="color: ${BRAND_COLOR}; text-decoration: none;">${data.organizationSlug}</a>
+                <a href="${portalUrl}" style="color: ${brandColor}; text-decoration: none;">${data.organizationSlug}</a>
               </td>
             </tr>
             <tr>
@@ -1813,7 +1841,7 @@ export function newOrganizationSignupEmail(data: NewOrganizationSignupData): { s
       <tr>
         <td align="center">
           <a href="${superAdminUrl}"
-             style="display: inline-block; padding: 14px 30px; background-color: ${BRAND_COLOR}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
             View All Organizations
           </a>
         </td>
@@ -1823,7 +1851,7 @@ export function newOrganizationSignupEmail(data: NewOrganizationSignupData): { s
     <p style="color: #888888; font-size: 12px; margin-top: 20px;">
       The organization admin will receive a separate email with setup instructions.
     </p>
-  `, 'Durj Platform');
+  `, 'Durj Platform', brandColor);
 
   const text = `
 New Organization Has Joined Durj

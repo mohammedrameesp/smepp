@@ -201,6 +201,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
         select: {
           slug: true,
           name: true,
+          primaryColor: true,
           customGoogleClientId: true,
           customGoogleClientSecret: true,
           customAzureClientId: true,
@@ -254,6 +255,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
           authMethods: { hasGoogle, hasMicrosoft },
           designation: isEmployee ? designation : null,
           employeeCode: isEmployee ? finalEmployeeId : null,
+          primaryColor: org?.primaryColor || undefined,
         });
         await sendEmail({
           to: user.email,
@@ -280,6 +282,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
           orgSlug: org?.slug || 'app',
           orgName: org?.name || 'Organization',
           setupToken,
+          primaryColor: org?.primaryColor || undefined,
         });
         await sendEmail({
           to: user.email,
@@ -300,6 +303,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
             hasMicrosoft,
             hasPassword,
           },
+          primaryColor: org?.primaryColor || undefined,
         });
         await sendEmail({
           to: user.email,

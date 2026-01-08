@@ -77,7 +77,7 @@ async function approveSupplierHandler(request: NextRequest, context: APIContext)
         // Get org name for email
         const org = await prisma.organization.findUnique({
           where: { id: tenantId },
-          select: { name: true },
+          select: { name: true, primaryColor: true },
         });
 
         const emailContent = supplierApprovalEmail({
@@ -85,6 +85,7 @@ async function approveSupplierHandler(request: NextRequest, context: APIContext)
           serviceCategory: supplier.category || 'General',
           approvalDate: new Date(),
           orgName: org?.name || 'Organization',
+          primaryColor: org?.primaryColor || undefined,
         });
         await sendEmail({
           to: supplier.primaryContactEmail,

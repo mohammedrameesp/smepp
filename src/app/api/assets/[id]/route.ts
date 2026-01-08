@@ -474,7 +474,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       try {
         const org = await prisma.organization.findUnique({
           where: { id: tenantId },
-          select: { name: true, slug: true },
+          select: { name: true, slug: true, primaryColor: true },
         });
 
         // Get admin name for notification
@@ -507,6 +507,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
           assignerName: admin?.name || admin?.email || 'Admin',
           orgSlug: org?.slug || '',
           orgName: org?.name || 'Organization',
+          primaryColor: org?.primaryColor || undefined,
         });
         await sendEmail({
           to: newMemberData.email,
@@ -557,7 +558,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         try {
           const org = await prisma.organization.findUnique({
             where: { id: tenantId },
-            select: { name: true },
+            select: { name: true, primaryColor: true },
           });
 
           const emailContent = assetAssignmentEmail({
@@ -569,6 +570,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
             serialNumber: asset.serial || null,
             assignmentDate: assignmentDate,
             orgName: org?.name || 'Organization',
+            primaryColor: org?.primaryColor || undefined,
           });
           await sendEmail({
             to: asset.assignedMember.email,

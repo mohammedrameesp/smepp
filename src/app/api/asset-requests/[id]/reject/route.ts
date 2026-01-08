@@ -191,10 +191,11 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
     try {
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
-        select: { slug: true, name: true },
+        select: { slug: true, name: true, primaryColor: true },
       });
       const orgSlug = org?.slug || 'app';
       const orgName = org?.name || 'Durj';
+      const primaryColor = org?.primaryColor || undefined;
 
       if (assetRequest.member?.email) {
         if (assetRequest.type === AssetRequestType.EMPLOYEE_REQUEST) {
@@ -209,6 +210,7 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
             reason: reason || 'No reason provided',
             orgSlug,
             orgName,
+            primaryColor,
           });
           await sendEmail({ to: assetRequest.member.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
         } else if (assetRequest.type === AssetRequestType.RETURN_REQUEST) {
@@ -223,6 +225,7 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
             reason: reason || 'No reason provided',
             orgSlug,
             orgName,
+            primaryColor,
           });
           await sendEmail({ to: assetRequest.member.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
         }

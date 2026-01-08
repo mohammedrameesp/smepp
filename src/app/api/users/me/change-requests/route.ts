@@ -110,7 +110,7 @@ async function createChangeRequestHandler(request: NextRequest) {
     // Get org details for email
     const org = await prisma.organization.findUnique({
       where: { id: session.user.organizationId },
-      select: { slug: true, name: true },
+      select: { slug: true, name: true, primaryColor: true },
     });
 
     // Get admin TeamMembers in this organization
@@ -135,6 +135,7 @@ async function createChangeRequestHandler(request: NextRequest) {
         submittedDate: new Date(),
         orgSlug: org?.slug || 'app',
         orgName: org?.name || 'Organization',
+        primaryColor: org?.primaryColor || undefined,
       });
 
       const emailsToSend = admins.map((admin) => ({

@@ -53,6 +53,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       select: {
         slug: true,
         name: true,
+        primaryColor: true,
         customGoogleClientId: true,
         customGoogleClientSecret: true,
         customAzureClientId: true,
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         orgSlug: org.slug,
         orgName: org.name,
         setupToken,
+        primaryColor: org.primaryColor,
       });
 
       await sendEmail({
@@ -137,6 +139,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         authMethods: { hasGoogle, hasMicrosoft },
         designation: member.designation,
         employeeCode: member.employeeCode,
+        primaryColor: org.primaryColor,
       });
 
       await sendEmail({

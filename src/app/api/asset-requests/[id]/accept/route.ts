@@ -227,10 +227,11 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
     try {
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
-        select: { slug: true, name: true },
+        select: { slug: true, name: true, primaryColor: true },
       });
       const orgSlug = org?.slug || 'app';
       const orgName = org?.name || 'Durj';
+      const primaryColor = org?.primaryColor || undefined;
 
       // Get all admins in tenant
       const admins = await prisma.teamMember.findMany({
@@ -252,6 +253,7 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
         userEmail: assetRequest.member?.email || '',
         orgSlug,
         orgName,
+        primaryColor,
       });
       await sendBatchEmails(admins.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
 

@@ -201,10 +201,11 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
     try {
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
-        select: { slug: true, name: true },
+        select: { slug: true, name: true, primaryColor: true },
       });
       const orgSlug = org?.slug || 'app';
       const orgName = org?.name || 'Durj';
+      const primaryColor = org?.primaryColor || undefined;
 
       // Get all admins in tenant
       const admins = await prisma.teamMember.findMany({
@@ -227,6 +228,7 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
         reason: reason || 'No reason provided',
         orgSlug,
         orgName,
+        primaryColor: primaryColor || undefined,
       });
       await sendBatchEmails(admins.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
 

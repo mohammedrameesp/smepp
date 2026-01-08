@@ -156,12 +156,12 @@ async function notifyAdminsOfEmailFailure(
  * Get organization details for email templates.
  * Tenant-scoped query.
  */
-async function getOrgDetails(tenantId: string): Promise<{ slug: string; name: string }> {
+async function getOrgDetails(tenantId: string): Promise<{ slug: string; name: string; primaryColor: string | null }> {
   const org = await prisma.organization.findUnique({
     where: { id: tenantId },
-    select: { slug: true, name: true },
+    select: { slug: true, name: true, primaryColor: true },
   });
-  return { slug: org?.slug || 'app', name: org?.name || 'Durj' };
+  return { slug: org?.slug || 'app', name: org?.name || 'Durj', primaryColor: org?.primaryColor || null };
 }
 
 /**
@@ -213,6 +213,7 @@ async function sendAssignmentNotifications(
         serialNumber: asset.serial || null,
         assignmentDate: new Date(),
         orgName: org.name,
+        primaryColor: org.primaryColor || undefined,
       });
 
       try {
@@ -284,6 +285,7 @@ async function sendPendingAssignmentNotifications(
         assignerName: admin.name || admin.email || 'Admin',
         orgSlug: org.slug,
         orgName: org.name,
+        primaryColor: org.primaryColor || undefined,
       });
 
       try {
@@ -353,6 +355,7 @@ async function sendReassignmentUnassignNotification(
       reason,
       orgSlug: org.slug,
       orgName: org.name,
+      primaryColor: org.primaryColor || undefined,
     });
 
     try {
@@ -776,6 +779,7 @@ async function directUnassign(
       reason: notes || undefined,
       orgSlug: org.slug,
       orgName: org.name,
+      primaryColor: org.primaryColor || undefined,
     });
 
     await sendEmail({
