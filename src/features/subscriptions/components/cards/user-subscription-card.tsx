@@ -39,6 +39,7 @@
 
 import { getNextRenewalDate, getDaysUntilRenewal, formatBillingCycle } from '../../utils';
 import { formatDate } from '@/lib/date-format';
+import { formatCurrency } from '@/lib/core/currency';
 
 interface Subscription {
   id: string;
@@ -75,7 +76,7 @@ export function UserSubscriptionCard({ subscription }: UserSubscriptionCardProps
       <div className="font-medium">{subscription.serviceName}</div>
       <div className="text-sm text-gray-600">
         {formatBillingCycle(subscription.billingCycle)} • {subscription.costPerCycle ? (
-          `${subscription.costCurrency === 'QAR' ? 'QAR' : '$'} ${subscription.costPerCycle.toFixed(2)}`
+          formatCurrency(subscription.costPerCycle, subscription.costCurrency)
         ) : 'N/A'}
       </div>
       {nextRenewal && (

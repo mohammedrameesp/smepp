@@ -53,6 +53,7 @@ import { Button } from '@/components/ui/button';
 import { SubscriptionActions } from '../subscription-actions';
 import { formatDate } from '@/lib/date-format';
 import { formatBillingCycle, getNextRenewalDate, getDaysUntilRenewal } from '@/features/subscriptions';
+import { formatCurrency } from '@/lib/core/currency';
 import { Loader2 } from 'lucide-react';
 
 interface Subscription {
@@ -272,7 +273,7 @@ export function SubscriptionListTableServerSearch() {
                   </TableCell>
                   <TableCell className="text-right text-sm">
                     {subscription.costPerCycle ? (
-                      `${subscription.costCurrency === 'QAR' ? 'QAR' : '$'} ${Number(subscription.costPerCycle).toFixed(2)}`
+                      formatCurrency(Number(subscription.costPerCycle), subscription.costCurrency)
                     ) : 'N/A'}
                   </TableCell>
                   <TableCell>

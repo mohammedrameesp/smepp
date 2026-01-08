@@ -9,10 +9,15 @@
  * - Color-coded progress bar (green >= 70%, yellow >= 40%, red < 40%)
  * - Automatically hides for shared assets (always available)
  * - Loading and error states with appropriate UI feedback
+ * - Memory leak prevention with proper cleanup
+ * - Race condition protection with AbortController
+ * - Type-safe API response validation
+ * - Accessible progress bar with ARIA labels
+ * - Retry functionality on error
+ * - Utilization status indicators for colorblind users
  *
  * Props:
  * - assetId: ID of the asset to fetch utilization for
- * - purchaseDate: Asset purchase date (used for owned days calculation)
  * - isShared: If true, component renders nothing (shared assets always available)
  *
  * API Dependencies:
@@ -26,41 +31,78 @@
  */
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Activity, AlertCircle, RefreshCw, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { z } from 'zod';
 
-interface Utilization {
-  totalOwnedDays: number;
-  totalAssignedDays: number;
-  utilizationPercentage: number;
-}
+// Constants for utilization thresholds
+const UTILIZATION_EXCELLENT = 70; // >= 70% is excellent (green)
+const UTILIZATION_GOOD = 40; // >= 40% is good (yellow)
+// < 40% is poor (red)
+
+// Zod schema for type validation
+const UtilizationSchema = z.object({
+  totalOwnedDays: z.number().min(0),
+  totalAssignedDays: z.number().min(0),
+  utilizationPercentage: z.number().min(0).max(100),
+});
+
+type Utilization = z.infer<typeof UtilizationSchema>;
 
 interface AssetUtilizationProps {
   assetId: string;
-  purchaseDate?: Date | null;
   isShared?: boolean;
 }
 
-export function AssetCostBreakdown({ assetId, purchaseDate, isShared }: AssetUtilizationProps) {
+// Helper to get utilization status
+function getUtilizationStatus(percentage: number): {
+  label: string;
+  color: string;
+  bgColor: string;
+  icon: React.ReactNode;
+} {
+  if (percentage >= UTILIZATION_EXCELLENT) {
+    return {
+      label: 'Excellent',
+      color: 'text-green-700',
+      bgColor: 'bg-green-500',
+      icon: <TrendingUp className="h-4 w-4" aria-hidden="true" />,
+    };
+  } else if (percentage >= UTILIZATION_GOOD) {
+    return {
+      label: 'Good',
+      color: 'text-yellow-700',
+      bgColor: 'bg-yellow-500',
+      icon: <Minus className="h-4 w-4" aria-hidden="true" />,
+    };
+  } else {
+    return {
+      label: 'Poor',
+      color: 'text-red-700',
+      bgColor: 'bg-red-500',
+      icon: <TrendingDown className="h-4 w-4" aria-hidden="true" />,
+    };
+  }
+}
+
+// Format number with locale
+function formatNumber(num: number): string {
+  return new Intl.NumberFormat('en-US').format(num);
+}
+
+export function AssetCostBreakdown({ assetId, isShared }: AssetUtilizationProps) {
   const [utilization, setUtilization] = useState<Utilization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Don't fetch for shared assets - they're always available for use
-    if (isShared) {
-      setIsLoading(false);
-      return;
-    }
-    fetchData();
-  }, [assetId, isShared]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async (signal?: AbortSignal) => {
     try {
       setIsLoading(true);
+      setError(null);
 
-      const utilizationResponse = await fetch(`/api/assets/${assetId}/utilization`);
+      const utilizationResponse = await fetch(`/api/assets/${assetId}/utilization`, { signal });
 
       if (!utilizationResponse.ok) {
         throw new Error('Failed to fetch asset utilization data');
@@ -68,14 +110,37 @@ export function AssetCostBreakdown({ assetId, purchaseDate, isShared }: AssetUti
 
       const utilizationData = await utilizationResponse.json();
 
-      setUtilization(utilizationData);
+      // Validate API response with Zod schema
+      const validatedData = UtilizationSchema.parse(utilizationData);
+
+      setUtilization(validatedData);
     } catch (err) {
+      // Don't set error state if request was aborted
+      if (err instanceof Error && err.name === 'AbortError') {
+        return;
+      }
       console.error('Error fetching asset utilization:', err);
       setError(err instanceof Error ? err.message : 'Failed to load asset utilization');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [assetId]);
+
+  useEffect(() => {
+    // Don't fetch for shared assets - they're always available for use
+    if (isShared) {
+      setIsLoading(false);
+      return;
+    }
+
+    const abortController = new AbortController();
+    fetchData(abortController.signal);
+
+    // Cleanup: abort fetch on unmount or dependency change
+    return () => {
+      abortController.abort();
+    };
+  }, [isShared, fetchData]);
 
   // Don't show utilization for shared assets - they're always available for use
   if (isShared) {
@@ -102,10 +167,24 @@ export function AssetCostBreakdown({ assetId, purchaseDate, isShared }: AssetUti
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Asset Utilization</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-red-500" aria-hidden="true" />
+            Asset Utilization
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-red-600">{error}</div>
+          <div className="flex flex-col items-center gap-4 py-4">
+            <p className="text-red-600 text-center">{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchData()}
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              Retry
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -115,11 +194,14 @@ export function AssetCostBreakdown({ assetId, purchaseDate, isShared }: AssetUti
     return null;
   }
 
+  const status = getUtilizationStatus(utilization.utilizationPercentage);
+  const idleDays = utilization.totalOwnedDays - utilization.totalAssignedDays;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Activity className="h-5 w-5" />
+          <Activity className="h-5 w-5" aria-hidden="true" />
           Asset Utilization
         </CardTitle>
         <CardDescription>
@@ -129,35 +211,41 @@ export function AssetCostBreakdown({ assetId, purchaseDate, isShared }: AssetUti
       <CardContent>
         <div className="space-y-4">
           <div>
-            <div className="flex justify-between mb-2">
+            <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-medium">Utilization Rate</span>
-              <span className="text-sm font-bold">{utilization.utilizationPercentage}%</span>
+              <span className={`text-sm font-bold flex items-center gap-1 ${status.color}`}>
+                {status.icon}
+                {utilization.utilizationPercentage}% ({status.label})
+              </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
+            <div
+              role="progressbar"
+              aria-valuenow={utilization.utilizationPercentage}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Asset utilization: ${utilization.utilizationPercentage}% - ${status.label}`}
+              className="w-full bg-gray-200 rounded-full h-3"
+            >
               <div
-                className={`h-3 rounded-full ${
-                  utilization.utilizationPercentage >= 70 ? 'bg-green-500' :
-                  utilization.utilizationPercentage >= 40 ? 'bg-yellow-500' :
-                  'bg-red-500'
-                }`}
+                className={`h-3 rounded-full transition-all duration-300 ${status.bgColor}`}
                 style={{ width: `${utilization.utilizationPercentage}%` }}
-              ></div>
+              />
             </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-4 mt-4">
             <div className="bg-gray-50 p-3 rounded">
               <div className="text-sm text-gray-600">Total Owned</div>
-              <div className="text-lg font-semibold">{utilization.totalOwnedDays} days</div>
+              <div className="text-lg font-semibold">{formatNumber(utilization.totalOwnedDays)} days</div>
             </div>
             <div className="bg-green-50 p-3 rounded">
               <div className="text-sm text-green-700">Assigned</div>
-              <div className="text-lg font-semibold text-green-900">{utilization.totalAssignedDays} days</div>
+              <div className="text-lg font-semibold text-green-900">{formatNumber(utilization.totalAssignedDays)} days</div>
             </div>
             <div className="bg-red-50 p-3 rounded">
               <div className="text-sm text-red-700">Idle</div>
               <div className="text-lg font-semibold text-red-900">
-                {utilization.totalOwnedDays - utilization.totalAssignedDays} days
+                {formatNumber(idleDays)} days
               </div>
             </div>
           </div>

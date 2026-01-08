@@ -667,7 +667,7 @@ export default function EditSubscriptionPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="costPerCycle">
-                      Cost per Cycle ({watchedCostCurrency === 'USD' ? '$' : 'QAR'})
+                      Cost per Cycle ({watchedCostCurrency || 'QAR'})
                     </Label>
                     <Input
                       id="costPerCycle"

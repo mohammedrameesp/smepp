@@ -34,6 +34,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { formatDate } from '@/lib/date-format';
+import { formatCurrency } from '@/lib/core/currency';
 
 interface ActivePeriod {
   startDate: string;
@@ -116,14 +117,6 @@ export function CostBreakdown({ subscriptionId }: CostBreakdownProps) {
   if (!costData) {
     return null;
   }
-
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency === 'QAR' ? 'QAR' : 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
 
   return (
     <Card>

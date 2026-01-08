@@ -223,3 +223,52 @@ export function convertToQARSync(
 export function clearRateCache(): void {
   rateCache.clear();
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FORMATTING FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Format a currency amount with the correct symbol/code.
+ * Uses Intl.NumberFormat for proper locale-aware formatting.
+ *
+ * @param amount - Amount to format
+ * @param currency - Currency code (e.g., 'USD', 'QAR', 'SAR')
+ * @param options - Optional formatting options
+ * @returns Formatted currency string (e.g., "$100.00", "QAR 100.00", "SAR 100.00")
+ *
+ * @example
+ * formatCurrency(100, 'USD'); // "$100.00"
+ * formatCurrency(100, 'QAR'); // "QAR 100.00"
+ * formatCurrency(100, 'SAR'); // "SAR 100.00"
+ */
+export function formatCurrency(
+  amount: number | null | undefined,
+  currency?: string | null,
+  options?: {
+    minimumFractionDigits?: number;
+    maximumFractionDigits?: number;
+    compact?: boolean;
+  }
+): string {
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    return '—';
+  }
+
+  const currencyCode = currency || 'QAR';
+  const minDigits = options?.minimumFractionDigits ?? 2;
+  const maxDigits = options?.maximumFractionDigits ?? 2;
+
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyCode,
+      minimumFractionDigits: minDigits,
+      maximumFractionDigits: maxDigits,
+      notation: options?.compact ? 'compact' : 'standard',
+    }).format(amount);
+  } catch {
+    // Fallback for unsupported currency codes
+    return `${currencyCode} ${amount.toFixed(minDigits)}`;
+  }
+}

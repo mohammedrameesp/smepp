@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Clock, DollarSign } from 'lucide-react';
 import { formatDate as formatDateUtil } from '@/lib/date-format';
+import { formatCurrency } from '@/lib/core/currency';
 
 interface ActivePeriod {
   startDate: Date;
@@ -50,14 +51,6 @@ export function UserSubscriptionHistory({ subscriptions, viewMode = 'admin' }: U
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
-  };
-
-  const formatCurrency = (amount: number, currency: string = 'QAR') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency === 'QAR' ? 'QAR' : 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
   };
 
   const formatDate = (date: Date) => {

@@ -36,6 +36,7 @@ import {
   AssetStatusCard,
 } from '@/features/assets';
 import { formatDate, formatDateTime } from '@/lib/date-format';
+import { formatCurrency } from '@/lib/core/currency';
 import { AssetAssignDialog } from '@/features/asset-requests';
 import {
   Package,
@@ -308,14 +309,10 @@ export default async function AssetDetailPage({ params }: Props) {
                 <div className="p-4 bg-slate-50 rounded-xl">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Cost/Value</p>
                   <p className="font-semibold text-slate-900">
-                    {asset.price ? (
-                      <>
-                        {asset.priceCurrency === 'USD' ? '$' : 'QAR '}{Number(asset.price).toFixed(2)}
-                      </>
-                    ) : 'Not specified'}
+                    {asset.price ? formatCurrency(Number(asset.price), asset.priceCurrency) : 'Not specified'}
                   </p>
                   {asset.priceCurrency && asset.priceCurrency !== 'QAR' && asset.priceQAR && (
-                    <p className="text-xs text-slate-500 mt-1">≈ QAR {Number(asset.priceQAR).toFixed(2)}</p>
+                    <p className="text-xs text-slate-500 mt-1">≈ {formatCurrency(Number(asset.priceQAR), 'QAR')}</p>
                   )}
                 </div>
                 <div className="p-4 bg-slate-50 rounded-xl">
@@ -361,7 +358,7 @@ export default async function AssetDetailPage({ params }: Props) {
           )}
 
           {/* Asset Utilization */}
-          <AssetCostBreakdown assetId={asset.id} purchaseDate={asset.purchaseDate} isShared={asset.isShared} />
+          <AssetCostBreakdown assetId={asset.id} isShared={asset.isShared} />
 
           {/* Depreciation */}
           <DepreciationCard assetId={asset.id} />

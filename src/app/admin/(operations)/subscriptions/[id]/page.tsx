@@ -41,6 +41,7 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { SubscriptionRenewalDisplay, formatBillingCycle, SubscriptionLifecycleActions, HistoryTimeline, CostBreakdown } from '@/features/subscriptions';
 import { formatDate, formatDateTime } from '@/lib/date-format';
+import { formatCurrency } from '@/lib/core/currency';
 import { DeleteButton } from '@/components/shared/delete-button';
 import {
   CreditCard,
@@ -217,14 +218,13 @@ export default async function SubscriptionDetailPage({ params }: Props) {
                   {subscription.costPerCycle ? (
                     <>
                       <p className="font-bold text-lg text-emerald-700">
-                        {subscription.costCurrency === 'USD' ? '$' : 'QAR '}{Number(subscription.costPerCycle).toFixed(2)}
+                        {formatCurrency(Number(subscription.costPerCycle), subscription.costCurrency)}
                       </p>
-                      <p className="text-xs text-emerald-600">
-                        {subscription.costCurrency === 'USD'
-                          ? `≈ QAR ${(Number(subscription.costPerCycle) * 3.64).toFixed(2)}`
-                          : `≈ USD ${(Number(subscription.costPerCycle) / 3.64).toFixed(2)}`
-                        }
-                      </p>
+                      {subscription.costCurrency !== 'QAR' && subscription.costQAR && (
+                        <p className="text-xs text-emerald-600">
+                          ≈ {formatCurrency(Number(subscription.costQAR), 'QAR')}
+                        </p>
+                      )}
                     </>
                   ) : (
                     <p className="font-semibold text-slate-900">Not specified</p>
