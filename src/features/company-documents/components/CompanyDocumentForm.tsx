@@ -33,7 +33,7 @@ const DOCUMENT_TYPES = [
   'Establishment Card',
   'Commercial License',
   'Tenancy/Lease Contract',
-  'Vehicle Istmara',
+  'Vehicle Istimara',
   'Vehicle Insurance',
 ] as const;
 

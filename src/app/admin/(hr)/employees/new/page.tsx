@@ -343,7 +343,7 @@ export default function NewEmployeePage() {
               {!canLogin && (
                 <Alert className="bg-slate-50 border-slate-200">
                   <AlertDescription className="text-slate-700">
-                    This person won&apos;t have system access. Useful for staff who don&apos;t need to log in (drivers, laborers, etc.)
+                    This person won&apos;t have system access. Useful for staff who don&apos;t need to log in (drivers, labourers, etc.)
                   </AlertDescription>
                 </Alert>
               )}
