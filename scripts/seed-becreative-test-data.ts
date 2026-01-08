@@ -143,7 +143,7 @@ async function main() {
         tenantId,
         email: 'sara.mohamed@becreative.qa',
         name: 'Sara Mohamed',
-        role: TeamMemberRole.MANAGER,
+        role: TeamMemberRole.MEMBER,
         isEmployee: true,
         isOnWps: true,
         employeeCode: 'EMP-002',
@@ -281,7 +281,7 @@ async function main() {
     process.exit(1);
   }
 
-  const admin = allMembers.find(m => m.role === 'ADMIN' || m.role === 'OWNER') || allMembers[0];
+  const admin = allMembers.find(m => m.role === 'ADMIN') || allMembers[0];
   const employee1 = allMembers.find(m => m.email === 'ahmed.hassan@becreative.qa') || allMembers.find(m => m.role === 'MEMBER') || allMembers[1];
   const employee2 = allMembers.find(m => m.email === 'sara.mohamed@becreative.qa') || allMembers.find(m => m.id !== employee1.id && m.role !== 'ADMIN') || employee1;
   const employee3 = allMembers.find(m => m.email === 'khalid.ibrahim@becreative.qa') || employee1;
