@@ -20,23 +20,26 @@ import {
   Loader2,
   Crown,
   Lock,
+  ExternalLink,
+  Info,
+  Database,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 // Icon mapping
 const ICONS: Record<string, React.ElementType> = {
@@ -58,6 +61,18 @@ const CATEGORY_LABELS: Record<string, string> = {
   system: 'System',
 };
 
+// Module route mapping for "Get Started" links
+const MODULE_ROUTES: Record<string, string> = {
+  assets: '/admin/assets',
+  subscriptions: '/admin/subscriptions',
+  suppliers: '/admin/suppliers',
+  employees: '/admin/employees',
+  leave: '/admin/leave',
+  payroll: '/admin/payroll',
+  'purchase-requests': '/admin/purchase-requests',
+  documents: '/admin/company-documents',
+};
+
 interface ModuleInfo {
   id: string;
   name: string;
@@ -76,6 +91,20 @@ interface ModuleInfo {
   uninstallError: string | null;
 }
 
+interface DataCount {
+  entity: string;
+  label: string;
+  count: number;
+}
+
+interface DataCountResponse {
+  moduleId: string;
+  moduleName: string;
+  counts: DataCount[];
+  totalRecords: number;
+  hasData: boolean;
+}
+
 export default function ModulesPage() {
   const { update: updateSession } = useSession();
   const searchParams = useSearchParams();
@@ -87,15 +116,30 @@ export default function ModulesPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // Install dialog state
+  const [installDialog, setInstallDialog] = useState<{
+    open: boolean;
+    module: ModuleInfo | null;
+    success: boolean;
+  }>({
+    open: false,
+    module: null,
+    success: false,
+  });
+
   // Uninstall dialog state
   const [uninstallDialog, setUninstallDialog] = useState<{
     open: boolean;
     module: ModuleInfo | null;
     deleteData: boolean;
+    dataCounts: DataCountResponse | null;
+    loadingCounts: boolean;
   }>({
     open: false,
     module: null,
     deleteData: false,
+    dataCounts: null,
+    loadingCounts: false,
   });
 
   // Fetch modules
@@ -108,7 +152,7 @@ export default function ModulesPage() {
     if (installParam && modules.length > 0) {
       const targetModule = modules.find(m => m.id === installParam);
       if (targetModule && !targetModule.isInstalled && targetModule.canInstall) {
-        handleInstall(targetModule);
+        setInstallDialog({ open: true, module: targetModule, success: false });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,9 +174,25 @@ export default function ModulesPage() {
     }
   }
 
-  async function handleInstall(mod: ModuleInfo) {
-    if (!mod.canInstall) {
-      toast.error(mod.installError || 'Cannot install this module');
+  async function fetchDataCounts(moduleId: string) {
+    try {
+      const response = await fetch(`/api/modules/${moduleId}/data-count`);
+      if (!response.ok) throw new Error('Failed to fetch data counts');
+      return await response.json() as DataCountResponse;
+    } catch (error) {
+      console.error('Error fetching data counts:', error);
+      return null;
+    }
+  }
+
+  async function handleInstallClick(mod: ModuleInfo) {
+    setInstallDialog({ open: true, module: mod, success: false });
+  }
+
+  async function handleInstallConfirm() {
+    const mod = installDialog.module;
+    if (!mod || !mod.canInstall) {
+      toast.error(mod?.installError || 'Cannot install this module');
       return;
     }
 
@@ -151,7 +211,8 @@ export default function ModulesPage() {
         throw new Error(data.error || 'Failed to install module');
       }
 
-      toast.success(data.message);
+      // Show success state in dialog
+      setInstallDialog({ ...installDialog, success: true });
 
       // Refresh modules list
       await fetchModules();
@@ -164,17 +225,35 @@ export default function ModulesPage() {
     } catch (error) {
       console.error('Install error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to install module');
+      setInstallDialog({ open: false, module: null, success: false });
     } finally {
       setActionLoading(null);
     }
   }
 
-  async function handleUninstall() {
+  async function handleUninstallClick(mod: ModuleInfo) {
+    setUninstallDialog({
+      open: true,
+      module: mod,
+      deleteData: false,
+      dataCounts: null,
+      loadingCounts: true,
+    });
+
+    // Fetch data counts
+    const counts = await fetchDataCounts(mod.id);
+    setUninstallDialog(prev => ({
+      ...prev,
+      dataCounts: counts,
+      loadingCounts: false,
+    }));
+  }
+
+  async function handleUninstallConfirm() {
     const modToUninstall = uninstallDialog.module;
     if (!modToUninstall) return;
 
     setActionLoading(modToUninstall.id);
-    setUninstallDialog({ ...uninstallDialog, open: false });
 
     try {
       const response = await fetch('/api/modules', {
@@ -193,6 +272,7 @@ export default function ModulesPage() {
       }
 
       toast.success(data.message);
+      setUninstallDialog({ open: false, module: null, deleteData: false, dataCounts: null, loadingCounts: false });
 
       // Refresh modules list
       await fetchModules();
@@ -207,7 +287,6 @@ export default function ModulesPage() {
       toast.error(error instanceof Error ? error.message : 'Failed to uninstall module');
     } finally {
       setActionLoading(null);
-      setUninstallDialog({ open: false, module: null, deleteData: false });
     }
   }
 
@@ -278,11 +357,7 @@ export default function ModulesPage() {
                         size="sm"
                         className="text-destructive hover:text-destructive hover:bg-destructive/10"
                         disabled={!module.canUninstall || actionLoading === module.id}
-                        onClick={() => setUninstallDialog({
-                          open: true,
-                          module,
-                          deleteData: false,
-                        })}
+                        onClick={() => handleUninstallClick(module)}
                       >
                         {actionLoading === module.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -368,7 +443,7 @@ export default function ModulesPage() {
                           variant="default"
                           size="sm"
                           disabled={!module.canInstall || actionLoading === module.id}
-                          onClick={() => handleInstall(module)}
+                          onClick={() => handleInstallClick(module)}
                         >
                           {actionLoading === module.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -396,57 +471,225 @@ export default function ModulesPage() {
         </section>
       )}
 
-      {/* Uninstall Confirmation Dialog */}
-      <AlertDialog
-        open={uninstallDialog.open}
-        onOpenChange={(open) => setUninstallDialog({ ...uninstallDialog, open })}
+      {/* Install Confirmation Dialog */}
+      <Dialog
+        open={installDialog.open}
+        onOpenChange={(open) => {
+          if (!open) setInstallDialog({ open: false, module: null, success: false });
+        }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Uninstall {uninstallDialog.module?.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will remove the module from your organization. You can reinstall it later.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+        <DialogContent>
+          {installDialog.success ? (
+            // Success state
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-green-600">
+                  <Check className="h-5 w-5" />
+                  {installDialog.module?.name} Installed
+                </DialogTitle>
+                <DialogDescription>
+                  The module has been successfully installed and is ready to use.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    You can now access {installDialog.module?.name} from the navigation menu.
+                  </AlertDescription>
+                </Alert>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setInstallDialog({ open: false, module: null, success: false })}
+                >
+                  Close
+                </Button>
+                {installDialog.module && MODULE_ROUTES[installDialog.module.id] && (
+                  <Button asChild>
+                    <Link href={MODULE_ROUTES[installDialog.module.id]}>
+                      Get Started
+                      <ExternalLink className="h-4 w-4 ml-2" />
+                    </Link>
+                  </Button>
+                )}
+              </DialogFooter>
+            </>
+          ) : (
+            // Confirmation state
+            <>
+              <DialogHeader>
+                <DialogTitle>Install {installDialog.module?.name}?</DialogTitle>
+                <DialogDescription>
+                  {installDialog.module?.description}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4 space-y-4">
+                <div className="rounded-lg border p-4 bg-muted/50">
+                  <h4 className="font-medium mb-2">This will enable:</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li className="flex items-center gap-2">
+                      <Check className="h-3 w-3 text-green-600" />
+                      {installDialog.module?.name} features in admin panel
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-3 w-3 text-green-600" />
+                      Related navigation menu items
+                    </li>
+                    {installDialog.module?.category === 'hr' && (
+                      <li className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-green-600" />
+                        Employee self-service features
+                      </li>
+                    )}
+                  </ul>
+                </div>
+                {installDialog.module?.requires && installDialog.module.requires.length > 0 && (
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      This module requires: {installDialog.module.requires.join(', ')}
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setInstallDialog({ open: false, module: null, success: false })}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleInstallConfirm}
+                  disabled={actionLoading === installDialog.module?.id}
+                >
+                  {actionLoading === installDialog.module?.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  Install
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
-          <div className="py-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="deleteData"
-                checked={uninstallDialog.deleteData}
-                onCheckedChange={(checked) =>
-                  setUninstallDialog({
-                    ...uninstallDialog,
-                    deleteData: checked === true,
-                  })
-                }
-              />
-              <label
-                htmlFor="deleteData"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Also delete all data for this module
-              </label>
-            </div>
-            {uninstallDialog.deleteData && (
-              <p className="text-sm text-destructive mt-2 flex items-center">
-                <AlertTriangle className="h-4 w-4 mr-1" />
-                Warning: This action cannot be undone. All data will be permanently deleted.
-              </p>
+      {/* Uninstall Confirmation Dialog */}
+      <Dialog
+        open={uninstallDialog.open}
+        onOpenChange={(open) => {
+          if (!open) setUninstallDialog({ open: false, module: null, deleteData: false, dataCounts: null, loadingCounts: false });
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Uninstall {uninstallDialog.module?.name}?</DialogTitle>
+            <DialogDescription>
+              This will remove the module from your organization. You can reinstall it later.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-4">
+            {/* Data counts section */}
+            {uninstallDialog.loadingCounts ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Checking existing data...
+              </div>
+            ) : uninstallDialog.dataCounts?.hasData ? (
+              <div className="rounded-lg border p-4 bg-muted/50">
+                <div className="flex items-center gap-2 mb-3">
+                  <Database className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Existing Data</span>
+                  <Badge variant="secondary" className="ml-auto">
+                    {uninstallDialog.dataCounts.totalRecords.toLocaleString()} records
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  {uninstallDialog.dataCounts.counts.filter(c => c.count > 0).map(count => (
+                    <div key={count.entity} className="flex justify-between">
+                      <span className="text-muted-foreground">{count.label}</span>
+                      <span className="font-medium">{count.count.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  No data exists for this module.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Delete data checkbox */}
+            {uninstallDialog.dataCounts?.hasData && (
+              <>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="deleteData"
+                    checked={uninstallDialog.deleteData}
+                    onCheckedChange={(checked) =>
+                      setUninstallDialog({
+                        ...uninstallDialog,
+                        deleteData: checked === true,
+                      })
+                    }
+                  />
+                  <label
+                    htmlFor="deleteData"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Also delete all data for this module
+                  </label>
+                </div>
+
+                {uninstallDialog.deleteData ? (
+                  <Alert variant="error">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Warning:</strong> This will permanently delete {uninstallDialog.dataCounts.totalRecords.toLocaleString()} records. This action cannot be undone.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Data will be preserved.</strong> Your {uninstallDialog.dataCounts.totalRecords.toLocaleString()} records will remain in the database and will be accessible if you reinstall the module.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </>
             )}
           </div>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleUninstall}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setUninstallDialog({ open: false, module: null, deleteData: false, dataCounts: null, loadingCounts: false })}
             >
-              Uninstall
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleUninstallConfirm}
+              disabled={actionLoading === uninstallDialog.module?.id}
+            >
+              {actionLoading === uninstallDialog.module?.id ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Uninstall{uninstallDialog.deleteData ? ' & Delete Data' : ''}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       </PageContent>
     </>
   );

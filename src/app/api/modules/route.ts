@@ -5,6 +5,7 @@ import { prisma } from '@/lib/core/prisma';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { logAction, ActivityActions } from '@/lib/core/activity';
 import {
   MODULE_REGISTRY,
   getSerializableModules,
@@ -131,6 +132,19 @@ export async function POST(request: NextRequest) {
 
     const mod = MODULE_REGISTRY[moduleId];
 
+    // Log the installation action
+    await logAction(
+      org.id,
+      session.user.id,
+      ActivityActions.MODULE_INSTALLED,
+      'module',
+      moduleId,
+      {
+        moduleName: mod.name,
+        moduleCategory: mod.category,
+      }
+    );
+
     // Revalidate admin layout to refresh navigation
     revalidatePath('/admin', 'layout');
 
@@ -235,6 +249,20 @@ export async function DELETE(request: NextRequest) {
         },
       });
     });
+
+    // Log the uninstallation action
+    await logAction(
+      org.id,
+      session.user.id,
+      ActivityActions.MODULE_UNINSTALLED,
+      'module',
+      moduleId,
+      {
+        moduleName: mod.name,
+        moduleCategory: mod.category,
+        dataDeleted: deleteData,
+      }
+    );
 
     // Revalidate admin layout to refresh navigation
     revalidatePath('/admin', 'layout');
