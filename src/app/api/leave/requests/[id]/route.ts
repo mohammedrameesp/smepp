@@ -12,7 +12,7 @@ import {
   calculateWorkingDays,
   canEditLeaveRequest,
 } from '@/lib/leave-utils';
-import { validateNoOverlap } from '@/lib/domains/hr/leave/leave-request-validation';
+import { validateNoOverlap } from '@/features/leave/lib/leave-request-validation';
 import { cleanupStorageFile } from '@/lib/storage/cleanup';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Loader2, Clock, CheckCircle, XCircle, FileCheck, Trash2, Pencil, FileText, ShoppingCart, DollarSign } from 'lucide-react';
-import { StatusBadge, PriorityBadge } from '@/components/domains/projects/purchase-requests';
+import { StatusBadge, PriorityBadge } from '@/features/purchase-requests/components';
 import { getStatusLabel, canDeleteRequest, canEditRequest } from '@/lib/purchase-request-utils';
 import {
   AlertDialog,

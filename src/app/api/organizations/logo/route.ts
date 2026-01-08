@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { sbUpload, sbPublicUrl } from '@/lib/storage/supabase';
-import { updateSetupProgress } from '@/lib/domains/system/setup';
+import { updateSetupProgress } from '@/features/onboarding/lib';
 
 // Maximum file size: 2MB
 const MAX_FILE_SIZE = 2 * 1024 * 1024;

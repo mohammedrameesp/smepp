@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
-import { updateSetupProgressBulk } from '@/lib/domains/system/setup';
+import { updateSetupProgressBulk } from '@/features/onboarding/lib';
 import { clearPrefixCache } from '@/lib/utils/code-prefix';
 
 // Valid module IDs

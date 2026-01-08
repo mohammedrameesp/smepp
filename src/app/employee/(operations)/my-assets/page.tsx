@@ -20,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { redirect } from 'next/navigation';
 import { getMemberSubscriptionHistory } from '@/features/subscriptions';
 import { getMemberAssetHistory } from '@/features/assets';
-import { UserSubscriptionHistory, UserAssetHistory } from '@/components/domains/system/users';
+import { UserSubscriptionHistory, UserAssetHistory } from '@/features/users/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 export default async function MyHoldingsPage() {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { updateDelegationSchema } from '@/lib/validations/system/approvals';
+import { updateDelegationSchema } from '@/features/approvals/validations/approvals';
 import { logAction } from '@/lib/core/activity';
 
 interface RouteParams {

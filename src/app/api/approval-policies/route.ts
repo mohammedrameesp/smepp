@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { createApprovalPolicySchema, listPoliciesQuerySchema } from '@/lib/validations/system/approvals';
+import { createApprovalPolicySchema, listPoliciesQuerySchema } from '@/features/approvals/validations/approvals';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 
 // GET /api/approval-policies - List all policies

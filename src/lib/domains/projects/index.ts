@@ -5,8 +5,7 @@
  * @module domains/projects
  */
 
-// Procurement Domain - import from individual files for specific exports
-// This index exists for organizational purposes
+// Migrated to features:
+// - purchase-requests → @/features/purchase-requests
 
-// Re-export from purchase-requests subdirectory
-export * from './purchase-requests';
+// This domain is now empty (safe to delete)

@@ -16,7 +16,7 @@ import {
   projectGratuity,
   formatGratuityAmount,
   getServiceDurationText,
-} from '@/lib/domains/hr/payroll/gratuity';
+} from '@/features/payroll/lib/gratuity';
 
 describe('Gratuity Calculations', () => {
   // ═══════════════════════════════════════════════════════════════════════════════

@@ -6,7 +6,7 @@ import { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/core/email';
 import { newOrganizationSignupEmail } from '@/lib/core/email-templates';
 import { seedDefaultPermissions } from '@/lib/access-control';
-import { seedDefaultLeaveTypes } from '@/lib/domains/hr/leave/seed-leave-types';
+import { seedDefaultLeaveTypes } from '@/features/leave/lib/seed-leave-types';
 import { seedDefaultAssetCategories } from '@/features/assets';
 
 // ═══════════════════════════════════════════════════════════════════════════════

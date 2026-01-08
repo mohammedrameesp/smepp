@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { PurchaseRequestListTable } from '@/components/domains/projects/purchase-requests';
+import { PurchaseRequestListTable } from '@/features/purchase-requests/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 export default async function EmployeePurchaseRequestsPage() {

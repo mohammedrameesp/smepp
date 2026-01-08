@@ -61,7 +61,7 @@ import {
   getPendingApprovalsForUser,
   ApprovalPolicyWithLevels,
   ApprovalStepWithApprover,
-} from '@/lib/domains/system/approvals/approval-engine';
+} from '@/features/approvals/lib/approval-engine';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 

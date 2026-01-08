@@ -12,11 +12,11 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { hrProfileSchema, hrProfileEmployeeSchema } from '@/lib/validations/hr/hr-profile';
+import { hrProfileSchema, hrProfileEmployeeSchema } from '@/lib/validations/hr-profile';
 import { withErrorHandler } from '@/lib/http/handler';
 import { TeamMemberRole } from '@prisma/client';
 import { sendEmail } from '@/lib/core/email';
-import { initializeMemberLeaveBalances } from '@/lib/domains/hr/leave/leave-balance-init';
+import { initializeMemberLeaveBalances } from '@/features/leave/lib/leave-balance-init';
 
 // GET /api/users/me/hr-profile - Get current user's HR profile (now from TeamMember)
 async function getHRProfileHandler(request: NextRequest) {

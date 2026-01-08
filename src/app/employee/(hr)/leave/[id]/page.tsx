@@ -14,7 +14,7 @@ import {
   canCancelLeaveRequest,
   canEditLeaveRequest,
 } from '@/lib/leave-utils';
-import { LeaveRequestHistory, CancelLeaveDialog } from '@/components/domains/hr/leave';
+import { LeaveRequestHistory, CancelLeaveDialog } from '@/features/leave/components';
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 

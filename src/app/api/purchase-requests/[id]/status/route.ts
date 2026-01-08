@@ -13,7 +13,7 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import { getAllowedStatusTransitions, getStatusLabel } from '@/lib/purchase-request-utils';
 import { sendEmail } from '@/lib/core/email';
 import { purchaseRequestStatusEmail } from '@/lib/core/email-templates';
-import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { invalidateTokensForEntity } from '@/lib/whatsapp';
 

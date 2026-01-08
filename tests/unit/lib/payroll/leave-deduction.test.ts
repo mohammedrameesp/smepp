@@ -28,7 +28,7 @@ import {
   calculateUnpaidLeaveDeductions,
   getUnpaidLeaveDaysInPeriod,
   hasUnpaidLeaveInPeriod,
-} from '@/lib/domains/hr/payroll/leave-deduction';
+} from '@/features/payroll/lib/leave-deduction';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 

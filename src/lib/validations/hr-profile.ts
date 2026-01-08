@@ -5,4 +5,4 @@
  */
 
 // Re-export from new location for backward compatibility
-export * from './hr/hr-profile';
+export * from '@/features/employees/validations/hr-profile';

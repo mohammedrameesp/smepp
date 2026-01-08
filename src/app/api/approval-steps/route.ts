@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { getPendingApprovalsForUser } from '@/lib/domains/system/approvals';
+import { getPendingApprovalsForUser } from '@/features/approvals/lib';
 
 // GET /api/approval-steps - Get pending approvals for current user
 export async function GET(request: NextRequest) {

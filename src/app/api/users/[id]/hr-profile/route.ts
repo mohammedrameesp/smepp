@@ -12,9 +12,9 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { hrProfileSchema } from '@/lib/validations/hr/hr-profile';
+import { hrProfileSchema } from '@/lib/validations/hr-profile';
 import { TeamMemberRole } from '@prisma/client';
-import { reinitializeMemberLeaveBalances } from '@/lib/domains/hr/leave/leave-balance-init';
+import { reinitializeMemberLeaveBalances } from '@/features/leave/lib/leave-balance-init';
 
 // GET /api/users/[id]/hr-profile - Get a team member's HR profile (admin only)
 export async function GET(

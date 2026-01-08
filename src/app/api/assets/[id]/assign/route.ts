@@ -63,7 +63,7 @@ import { z } from 'zod';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { sendEmail } from '@/lib/core/email';
 import { assetAssignmentEmail, assetAssignmentPendingEmail } from '@/lib/email-templates';
-import { createNotification, createBulkNotifications, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { createNotification, createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { generateRequestNumber } from '@/features/asset-requests';
 

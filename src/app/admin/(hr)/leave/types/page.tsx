@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LeaveTypeForm, LeaveTypeCard } from '@/components/domains/hr/leave';
+import { LeaveTypeForm, LeaveTypeCard } from '@/features/leave/components';
 import {
   AlertDialog,
   AlertDialogAction,

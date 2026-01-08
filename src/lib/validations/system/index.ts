@@ -3,9 +3,10 @@
  * @description Barrel export for system validation schemas
  * @module validations/system
  *
- * Note:
- * - Company Documents validations moved to @/features/company-documents
+ * Migrated to features:
+ * - approvals → @/features/approvals/validations
+ * - notifications → @/features/notifications/validations
+ * - company-documents → @/features/company-documents/validations
  */
 
-export * from './approvals';
-export * from './notifications';
+// This file is now empty (safe to delete)

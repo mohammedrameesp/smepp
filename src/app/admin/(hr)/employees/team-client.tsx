@@ -40,7 +40,7 @@ import {
   Briefcase,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
-import { EmployeeListTable } from '@/components/domains/hr/employees';
+import { EmployeeListTable } from '@/features/employees/components';
 import { cn } from '@/lib/utils';
 
 interface PendingStatus {

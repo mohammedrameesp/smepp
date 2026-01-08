@@ -15,7 +15,7 @@ import {
   updateSetupProgressBulk,
   CHECKLIST_ITEMS,
   type SetupProgressField,
-} from '@/lib/domains/system/setup';
+} from '@/features/onboarding/lib';
 
 const VALID_FIELDS: SetupProgressField[] = [
   'profileComplete',

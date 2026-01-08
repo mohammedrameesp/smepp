@@ -9,8 +9,8 @@ import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createLeaveRequestSchema, leaveRequestQuerySchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { createBulkNotifications, createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
-import { findApplicablePolicy, initializeApprovalChain } from '@/lib/domains/system/approvals';
+import { createBulkNotifications, createNotification, NotificationTemplates } from '@/features/notifications/lib';
+import { findApplicablePolicy, initializeApprovalChain } from '@/features/approvals/lib';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 import {
   getServiceBasedEntitlement,
@@ -25,7 +25,7 @@ import {
   validateNoOverlap,
   validateSufficientBalance,
   validateDocumentRequirement,
-} from '@/lib/domains/hr/leave/leave-request-validation';
+} from '@/features/leave/lib/leave-request-validation';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 

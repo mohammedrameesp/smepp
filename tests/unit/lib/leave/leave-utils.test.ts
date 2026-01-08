@@ -41,7 +41,7 @@ import {
   getLeaveStatusColor,
   getLeaveStatusVariant,
   getLeaveStatusText,
-} from '@/lib/domains/hr/leave/leave-utils';
+} from '@/features/leave/lib/leave-utils';
 import { LeaveRequestType, LeaveStatus } from '@prisma/client';
 
 describe('Leave Utilities', () => {

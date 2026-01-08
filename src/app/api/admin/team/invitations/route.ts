@@ -5,7 +5,7 @@ import { prisma } from '@/lib/core/prisma';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/core/email';
-import { updateSetupProgress } from '@/lib/domains/system/setup';
+import { updateSetupProgress } from '@/features/onboarding/lib';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/admin/team/invitations - Get pending invitations

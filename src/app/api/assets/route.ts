@@ -29,7 +29,7 @@ import { generateAssetTagByCategory } from '@/features/assets';
 import { convertToQAR } from '@/lib/core/currency';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import { updateSetupProgress } from '@/lib/domains/system/setup';
+import { updateSetupProgress } from '@/features/onboarding/lib';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { prisma as globalPrisma } from '@/lib/core/prisma';
 import { ASSET_TYPE_SUGGESTIONS } from '@/features/assets';

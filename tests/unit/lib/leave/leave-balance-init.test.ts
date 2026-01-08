@@ -15,7 +15,7 @@ import {
   initializeUserLeaveBalances,
   reinitializeUserLeaveBalances,
   initializeAllUsersLeaveBalances,
-} from '@/lib/domains/hr/leave/leave-balance-init';
+} from '@/features/leave/lib/leave-balance-init';
 
 // Mock Prisma
 jest.mock('@/lib/core/prisma', () => ({

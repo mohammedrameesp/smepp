@@ -15,7 +15,7 @@
 
 import { NextResponse } from 'next/server';
 import { logAction } from '@/lib/core/activity';
-import { createNotification } from '@/lib/domains/system/notifications';
+import { createNotification } from '@/features/notifications/lib';
 import { invalidateTokensForEntity, type ApprovalEntityType } from '@/lib/whatsapp';
 import { PrismaClient } from '@prisma/client';
 

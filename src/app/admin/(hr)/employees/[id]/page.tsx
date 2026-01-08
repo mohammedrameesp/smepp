@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { formatDate, formatDateTime } from '@/lib/date-format';
 import { Edit, AlertTriangle, Package, CreditCard, FileText, Calendar, Clock, Trash2 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
-import { EmployeeHRViewSection } from '@/components/domains/hr/employees';
+import { EmployeeHRViewSection } from '@/features/employees/components';
 import { getMemberSubscriptionHistory } from '@/features/subscriptions';
 import { getMemberAssetHistory } from '@/features/assets';
 import {
@@ -17,8 +17,8 @@ import {
   DeleteUserButton,
   ExportUserPDFButton,
   RestoreUserButton
-} from '@/components/domains/system/users';
-import { EmployeeLeaveSection } from '@/components/domains/hr/employees';
+} from '@/features/users/components';
+import { EmployeeLeaveSection } from '@/features/employees/components';
 
 interface Props {
   params: Promise<{ id: string }>;

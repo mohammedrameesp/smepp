@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
-import { notificationQuerySchema } from '@/lib/validations/system/notifications';
+import { notificationQuerySchema } from '@/features/notifications/validations/notifications';
 
 /**
  * GET /api/notifications

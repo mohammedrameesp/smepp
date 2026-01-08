@@ -16,13 +16,13 @@
 import { AssetRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { sendEmail, sendBatchEmails } from '@/lib/core/email';
-import { createNotification, createBulkNotifications, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { createNotification, createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import {
   assetRequestSubmittedEmail,
   assetAssignmentPendingEmail,
   assetReturnRequestEmail,
 } from '@/lib/email-templates';
-import { findApplicablePolicy, initializeApprovalChain } from '@/lib/domains/system/approvals';
+import { findApplicablePolicy, initializeApprovalChain } from '@/features/approvals/lib';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Clock, FileText, Calendar } from 'lucide-react';
-import { LeaveBalanceCard } from '@/components/domains/hr/leave';
+import { LeaveBalanceCard } from '@/features/leave/components';
 import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays, getAnnualLeaveDetails } from '@/lib/leave-utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 

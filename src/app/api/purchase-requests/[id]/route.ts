@@ -10,7 +10,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { updatePurchaseRequestSchema } from '@/lib/validations/purchase-request';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { calculatePurchaseRequestItems, CalculatedItem } from '@/lib/domains/projects/purchase-requests/purchase-request-creation';
+import { calculatePurchaseRequestItems, CalculatedItem } from '@/features/purchase-requests/lib/purchase-request-creation';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // GET - Get single purchase request

@@ -12,7 +12,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { sendEmail } from '@/lib/core/email';
 import { welcomeUserEmail, welcomeUserWithPasswordSetupEmail, organizationInvitationEmail } from '@/lib/core/email-templates';
 import { randomBytes } from 'crypto';
-import { updateSetupProgress } from '@/lib/domains/system/setup';
+import { updateSetupProgress } from '@/features/onboarding/lib';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 async function getUsersHandler(request: NextRequest, context: APIContext) {

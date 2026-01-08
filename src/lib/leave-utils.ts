@@ -1,2 +1,2 @@
 // Re-export for backward compatibility
-export * from './domains/hr/leave/leave-utils';
+export * from '@/features/leave/lib/leave-utils';

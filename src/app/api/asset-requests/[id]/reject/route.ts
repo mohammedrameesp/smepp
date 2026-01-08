@@ -35,7 +35,7 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import { canAdminProcess } from '@/features/asset-requests';
 import { sendEmail } from '@/lib/core/email';
 import { assetRequestRejectedEmail, assetReturnRejectedEmail } from '@/lib/email-templates';
-import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { invalidateTokensForEntity } from '@/lib/whatsapp';
 

@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 
-import { LeaveRequestsTable } from '@/components/domains/hr/leave';
+import { LeaveRequestsTable } from '@/features/leave/components';
 import { Calendar, Plus } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 

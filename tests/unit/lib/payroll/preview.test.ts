@@ -35,8 +35,8 @@ jest.mock('@/lib/domains/hr/payroll/leave-deduction', () => ({
 }));
 
 import { prisma } from '@/lib/core/prisma';
-import { calculatePayrollPreview } from '@/lib/domains/hr/payroll/preview';
-import { calculateUnpaidLeaveDeductions } from '@/lib/domains/hr/payroll/leave-deduction';
+import { calculatePayrollPreview } from '@/features/payroll/lib/preview';
+import { calculateUnpaidLeaveDeductions } from '@/features/payroll/lib/leave-deduction';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockCalculateUnpaidLeaveDeductions = calculateUnpaidLeaveDeductions as jest.MockedFunction<typeof calculateUnpaidLeaveDeductions>;

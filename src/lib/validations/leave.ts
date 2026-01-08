@@ -5,4 +5,4 @@
  */
 
 // Re-export from new location for backward compatibility
-export * from './hr/leave';
+export * from '@/features/leave/validations/leave';

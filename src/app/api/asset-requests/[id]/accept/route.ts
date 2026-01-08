@@ -38,7 +38,7 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import { canUserRespond } from '@/features/asset-requests';
 import { sendBatchEmails } from '@/lib/core/email';
 import { assetAssignmentAcceptedEmail } from '@/lib/email-templates';
-import { createBulkNotifications, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, FileText } from 'lucide-react';
-import { LeaveRequestsTable } from '@/components/domains/hr/leave';
+import { LeaveRequestsTable } from '@/features/leave/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 export default async function EmployeeLeaveRequestsPage() {

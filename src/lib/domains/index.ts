@@ -11,4 +11,4 @@
 // - projects/tasks, projects/purchase-requests
 //
 // Import directly from specific modules:
-// import { fn } from '@/lib/domains/hr/leave/leave-utils'
+// import { fn } from '@/features/leave/lib/leave-utils'

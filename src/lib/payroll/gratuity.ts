@@ -1,2 +1,2 @@
 // Re-export from canonical location for backward compatibility
-export * from '@/lib/domains/hr/payroll/gratuity';
+export * from '@/features/payroll/lib/gratuity';

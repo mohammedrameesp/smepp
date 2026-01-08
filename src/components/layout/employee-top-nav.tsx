@@ -25,7 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { NotificationBell } from '@/components/domains/system/notifications';
+import { NotificationBell } from '@/features/notifications/components';
 import { cn } from '@/lib/utils';
 
 interface EmployeeTopNavProps {

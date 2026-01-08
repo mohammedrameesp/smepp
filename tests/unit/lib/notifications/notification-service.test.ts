@@ -16,7 +16,7 @@ import {
   createBulkNotifications,
   NotificationTemplates,
   CreateNotificationInput,
-} from '@/lib/domains/system/notifications/notification-service';
+} from '@/features/notifications/lib/notification-service';
 
 // Mock Prisma
 jest.mock('@/lib/core/prisma', () => ({

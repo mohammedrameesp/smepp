@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, FileEdit } from 'lucide-react';
 import Link from 'next/link';
-import { LeaveRequestForm } from '@/components/domains/hr/leave';
+import { LeaveRequestForm } from '@/features/leave/components';
 import { getAnnualLeaveDetails } from '@/lib/leave-utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 

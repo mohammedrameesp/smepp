@@ -16,8 +16,8 @@ import {
   validateWPSRecord,
   generateWPSFileName,
   QATAR_BANK_CODES,
-} from '@/lib/domains/hr/payroll/wps';
-import { WPSEmployeeRecord, WPSFileHeader } from '@/lib/types/payroll';
+} from '@/features/payroll/lib/wps';
+import { WPSEmployeeRecord, WPSFileHeader } from '@/features/payroll/types/payroll';
 
 describe('WPS SIF File Generation', () => {
   // ═══════════════════════════════════════════════════════════════════════════════

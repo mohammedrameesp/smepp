@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { processApprovalSchema } from '@/lib/validations/system/approvals';
-import { processApproval, getCurrentPendingStep } from '@/lib/domains/system/approvals';
+import { processApprovalSchema } from '@/features/approvals/validations/approvals';
+import { processApproval, getCurrentPendingStep } from '@/features/approvals/lib';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 
 interface RouteParams {
   params: Promise<{ id: string }>;

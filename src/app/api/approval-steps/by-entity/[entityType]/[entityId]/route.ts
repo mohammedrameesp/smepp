@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { ApprovalModule } from '@prisma/client';
-import { getApprovalChain, getApprovalChainSummary } from '@/lib/domains/system/approvals';
+import { getApprovalChain, getApprovalChainSummary } from '@/features/approvals/lib';
 
 interface RouteParams {
   params: Promise<{ entityType: string; entityId: string }>;

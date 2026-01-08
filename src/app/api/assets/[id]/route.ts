@@ -40,7 +40,7 @@ import {
   transformAssetUpdateData,
 } from '@/features/assets';
 import { generateRequestNumber } from '@/features/asset-requests';
-import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/assets/[id] - Get Single Asset (Most Used)

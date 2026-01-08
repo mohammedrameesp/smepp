@@ -13,7 +13,7 @@ import { generatePurchaseRequestNumber } from '@/lib/purchase-request-utils';
 import {
   calculatePurchaseRequestItems,
   sendPurchaseRequestNotifications,
-} from '@/lib/domains/projects/purchase-requests/purchase-request-creation';
+} from '@/features/purchase-requests/lib/purchase-request-creation';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // GET - List purchase requests

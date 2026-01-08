@@ -9,7 +9,7 @@ import { prisma } from '@/lib/core/prisma';
 import { cancelLeaveRequestSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { canCancelLeaveRequest } from '@/lib/leave-utils';
-import { createNotification, NotificationTemplates } from '@/lib/domains/system/notifications';
+import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function cancelLeaveRequestHandler(request: NextRequest, context: APIContext) {

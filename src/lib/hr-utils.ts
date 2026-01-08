@@ -1,2 +1,2 @@
 // Re-export for backward compatibility
-export * from './domains/hr/employees/hr-utils';
+export * from '@/features/employees/lib/hr-utils';

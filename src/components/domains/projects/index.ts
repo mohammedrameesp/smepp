@@ -1,2 +1,4 @@
-// Projects Domain Components
-export * from './purchase-requests';
+// Migrated to features:
+// - purchase-requests → @/features/purchase-requests/components
+
+// This domain is now empty (safe to delete)

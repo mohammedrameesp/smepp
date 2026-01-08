@@ -27,7 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { NotificationBell } from '@/components/domains/system/notifications';
+import { NotificationBell } from '@/features/notifications/components';
 import { type BadgeCounts } from '@/components/layout/badge-types';
 import { cn } from '@/lib/utils';
 

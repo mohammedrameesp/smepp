@@ -33,7 +33,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useNotifications } from '@/components/domains/system/notifications';
+import { useNotifications } from '@/features/notifications/components';
 import { formatDate } from '@/lib/date-format';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 

@@ -5,4 +5,4 @@
  */
 
 // Re-export from new location for backward compatibility
-export * from './hr/payroll';
+export * from '@/features/payroll/validations/payroll';

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, User } from 'lucide-react';
 import Link from 'next/link';
-import { LeaveRequestForm } from '@/components/domains/hr/leave';
+import { LeaveRequestForm } from '@/features/leave/components';
 import { getAnnualLeaveDetails } from '@/lib/leave-utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 

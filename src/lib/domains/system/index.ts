@@ -5,5 +5,8 @@
  * @module domains/system
  */
 
-export * from './approvals';
-export * from './notifications';
+// Migrated to features:
+// - approvals → @/features/approvals
+// - notifications → @/features/notifications
+
+// This domain is now empty (safe to delete)

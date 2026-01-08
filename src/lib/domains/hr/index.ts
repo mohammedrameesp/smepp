@@ -4,5 +4,9 @@
  * @module domains/hr
  */
 
-// Re-export from subdirectories - import directly for full exports
-// e.g., import { calculateLeaveBalance } from '@/lib/domains/hr/leave/leave-utils'
+// All HR modules migrated to features:
+// - employees → @/features/employees
+// - leave → @/features/leave
+// - payroll → @/features/payroll
+
+// This domain is now empty (safe to delete)
