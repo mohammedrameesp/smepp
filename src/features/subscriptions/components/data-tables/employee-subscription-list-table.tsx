@@ -88,9 +88,17 @@ export function EmployeeSubscriptionListTable({ subscriptions, currentUserId }: 
   const [sortBy, setSortBy] = useState<string>('purchaseDate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Get unique categories and statuses for filters
-  const uniqueCategories = useMemo(() => {
-    return Array.from(new Set(subscriptions.map(s => s.category).filter(Boolean))).sort() as string[];
+  // Get unique categories with counts, sorted by count descending
+  const categoryOptions = useMemo(() => {
+    const countMap = new Map<string, number>();
+    subscriptions.forEach(s => {
+      if (s.category) {
+        countMap.set(s.category, (countMap.get(s.category) || 0) + 1);
+      }
+    });
+    return Array.from(countMap.entries())
+      .map(([category, count]) => ({ category, count }))
+      .sort((a, b) => b.count - a.count);
   }, [subscriptions]);
 
   const uniqueStatuses = useMemo(() => {
@@ -250,8 +258,10 @@ export function EmployeeSubscriptionListTable({ subscriptions, currentUserId }: 
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {uniqueCategories.map(category => (
-                <SelectItem key={category} value={category}>{category}</SelectItem>
+              {categoryOptions.map(opt => (
+                <SelectItem key={opt.category} value={opt.category}>
+                  {opt.category} ({opt.count})
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>

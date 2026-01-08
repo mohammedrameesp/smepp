@@ -83,6 +83,16 @@ interface PaginationInfo {
   hasMore: boolean;
 }
 
+interface CategoryOption {
+  category: string;
+  count: number;
+}
+
+interface BillingCycleOption {
+  billingCycle: string;
+  count: number;
+}
+
 export function SubscriptionListTableServerSearch() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,6 +110,27 @@ export function SubscriptionListTableServerSearch() {
     totalPages: 0,
     hasMore: false,
   });
+
+  // Dynamic filter options
+  const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+  const [billingCycleOptions, setBillingCycleOptions] = useState<BillingCycleOption[]>([]);
+
+  // Fetch filter options on mount
+  useEffect(() => {
+    async function fetchFilterOptions() {
+      try {
+        const response = await fetch('/api/subscriptions/filters');
+        if (response.ok) {
+          const data = await response.json();
+          setCategoryOptions(data.categories || []);
+          setBillingCycleOptions(data.billingCycles || []);
+        }
+      } catch (error) {
+        console.error('Error fetching filter options:', error);
+      }
+    }
+    fetchFilterOptions();
+  }, []);
 
   // Debounce search input
   useEffect(() => {
@@ -186,7 +217,11 @@ export function SubscriptionListTableServerSearch() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {/* Categories will be dynamic from data */}
+            {categoryOptions.map((opt) => (
+              <SelectItem key={opt.category} value={opt.category}>
+                {opt.category} ({opt.count})
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={billingFilter} onValueChange={setBillingFilter}>
@@ -195,9 +230,11 @@ export function SubscriptionListTableServerSearch() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Billing Cycles</SelectItem>
-            <SelectItem value="MONTHLY">Monthly</SelectItem>
-            <SelectItem value="YEARLY">Yearly</SelectItem>
-            <SelectItem value="ONE_TIME">One-Time</SelectItem>
+            {billingCycleOptions.map((opt) => (
+              <SelectItem key={opt.billingCycle} value={opt.billingCycle}>
+                {formatBillingCycle(opt.billingCycle)} ({opt.count})
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
