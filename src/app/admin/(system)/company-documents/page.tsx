@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, FileCheck, AlertTriangle, Clock, CheckCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/lib/domains/system/company-documents/document-utils';
+import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/features/company-documents';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
 async function getCompanyDocuments(tenantId: string) {

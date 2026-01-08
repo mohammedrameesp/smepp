@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 
-import { SupplierListTableServerSearch } from '@/components/domains/operations/suppliers/supplier-list-table-server-search';
+import { SupplierListTableServerSearch } from '@/features/suppliers';
 import { Plus } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 

@@ -7,8 +7,9 @@
  * - Subscriptions validations moved to @/features/subscriptions
  * - Assets validations moved to @/features/assets
  * - Asset-request validations moved to @/features/asset-requests
+ * - Suppliers validations moved to @/features/suppliers
+ * - Locations validations moved to @/features/locations
  */
 
 // Operations Validations
-export * from './locations';
-export * from './suppliers';
+// (All modules have been migrated to features)

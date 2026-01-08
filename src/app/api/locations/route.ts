@@ -15,7 +15,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import { createLocationSchema, locationQuerySchema } from '@/lib/validations/operations/locations';
+import { createLocationSchema, locationQuerySchema } from '@/features/locations';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/locations - List locations

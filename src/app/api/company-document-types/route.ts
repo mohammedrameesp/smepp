@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import { companyDocumentTypeSchema } from '@/lib/validations/system/company-documents';
+import { companyDocumentTypeSchema } from '@/features/company-documents';
 
 // GET /api/company-document-types - List all document types
 export const GET = withErrorHandler(async (_request: NextRequest, context: APIContext) => {

@@ -1,5 +1,5 @@
 // Domain Components
 export * from './hr';
-export * from './operations';
+// Operations domain: All modules moved to features
 export * from './projects';
 export * from './system';

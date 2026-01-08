@@ -16,7 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import { updateLocationSchema } from '@/lib/validations/operations/locations';
+import { updateLocationSchema } from '@/features/locations';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/locations/[id] - Get single location

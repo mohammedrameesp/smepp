@@ -3,8 +3,8 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import { companyDocumentSchema } from '@/lib/validations/system/company-documents';
-import { getDocumentExpiryInfo } from '@/lib/domains/system/company-documents/document-utils';
+import { companyDocumentSchema } from '@/features/company-documents';
+import { getDocumentExpiryInfo } from '@/features/company-documents';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { cleanupStorageFile } from '@/lib/storage/cleanup';
 

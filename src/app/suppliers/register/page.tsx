@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CheckCircle2 } from 'lucide-react';
-import { createSupplierSchema, type CreateSupplierRequest } from '@/lib/validations/suppliers';
+import { createSupplierSchema, type CreateSupplierRequest } from '@/features/suppliers';
 
 // Country list (commonly used countries in the region)
 const COUNTRIES = [

@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import { companyDocumentTypeSchema } from '@/lib/validations/system/company-documents';
+import { companyDocumentTypeSchema } from '@/features/company-documents';
 
 // GET /api/company-document-types/[id] - Get a single document type
 export const GET = withErrorHandler(async (

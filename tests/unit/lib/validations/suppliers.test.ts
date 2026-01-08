@@ -11,7 +11,7 @@ import {
   rejectSupplierSchema,
   createEngagementSchema,
   supplierQuerySchema,
-} from '@/lib/validations/suppliers';
+} from '@/features/suppliers';
 
 describe('Supplier Validation Schemas', () => {
   describe('createSupplierSchema', () => {

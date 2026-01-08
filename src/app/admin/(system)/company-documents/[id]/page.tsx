@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { format } from 'date-fns';
-import { getDocumentExpiryInfo } from '@/lib/domains/system/company-documents/document-utils';
+import { getDocumentExpiryInfo } from '@/features/company-documents';
 
 interface Props {
   params: Promise<{ id: string }>;

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { EmployeeSupplierListTable } from '@/components/domains/operations/suppliers/employee-supplier-list-table';
+import { EmployeeSupplierListTable } from '@/features/suppliers';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Building2, Users, FolderOpen } from 'lucide-react';
 

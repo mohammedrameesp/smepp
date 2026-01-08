@@ -1,4 +1,4 @@
-import { CompanyDocumentForm } from '@/components/domains/system/company-documents/CompanyDocumentForm';
+import { CompanyDocumentForm } from '@/features/company-documents';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 export default function NewCompanyDocumentPage() {

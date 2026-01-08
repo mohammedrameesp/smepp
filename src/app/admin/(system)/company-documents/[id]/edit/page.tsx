@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/core/prisma';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
-import { CompanyDocumentForm } from '@/components/domains/system/company-documents/CompanyDocumentForm';
+import { CompanyDocumentForm } from '@/features/company-documents';
 
 interface Props {
   params: Promise<{ id: string }>;

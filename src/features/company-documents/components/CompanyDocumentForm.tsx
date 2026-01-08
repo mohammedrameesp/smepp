@@ -23,7 +23,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
-import { companyDocumentSchema, type CompanyDocumentInput } from '@/lib/validations/system/company-documents';
+import { companyDocumentSchema, type CompanyDocumentInput } from '@/features/company-documents';
 import { DatePicker } from '@/components/ui/date-picker';
 import { DocumentUpload } from '@/components/domains/hr/profile/document-upload';
 

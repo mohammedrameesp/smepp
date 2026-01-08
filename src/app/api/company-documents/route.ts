@@ -3,8 +3,8 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler } from '@/lib/http/handler';
-import { companyDocumentSchema, companyDocumentQuerySchema } from '@/lib/validations/system/company-documents';
-import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/lib/domains/system/company-documents/document-utils';
+import { companyDocumentSchema, companyDocumentQuerySchema } from '@/features/company-documents';
+import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/features/company-documents';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { Prisma } from '@prisma/client';
 

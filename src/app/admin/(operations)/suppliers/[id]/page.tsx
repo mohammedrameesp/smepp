@@ -23,7 +23,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
-import { SupplierActions } from '@/components/domains/operations/suppliers/supplier-actions';
+import { SupplierActions } from '@/features/suppliers';
 
 interface Props {
   params: Promise<{ id: string }>;

@@ -4,7 +4,7 @@
  * @module operations/suppliers
  */
 import { NextResponse } from 'next/server';
-import { supplierQuerySchema } from '@/lib/validations/suppliers';
+import { supplierQuerySchema } from '@/features/suppliers';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler } from '@/lib/http/handler';
 
