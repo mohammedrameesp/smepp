@@ -17,7 +17,7 @@ async function getGratuityHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
     }
 
-    const isAdmin = tenant!.orgRole === 'ADMIN';
+    const isAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
 
     // Non-admin users can only view their own gratuity
     // tenant.userId is the TeamMember ID of the current user

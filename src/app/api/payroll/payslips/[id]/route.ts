@@ -53,7 +53,8 @@ async function getPayslipHandler(request: NextRequest, context: APIContext) {
     }
 
     // Non-admin users can only view their own payslips
-    if (tenant!.orgRole !== 'ADMIN' && payslip.memberId !== tenant!.userId) {
+    const isOwnerOrAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    if (!isOwnerOrAdmin && payslip.memberId !== tenant!.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 

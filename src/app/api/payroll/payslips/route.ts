@@ -27,7 +27,7 @@ async function getPayslipsHandler(request: NextRequest, context: APIContext) {
     const { payrollRunId, userId, year, month, p, ps } = validation.data;
     const page = p;
     const pageSize = ps;
-    const isAdmin = tenant!.orgRole === 'ADMIN';
+    const isAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
 
     // Build where clause with tenant filter
     const where: Record<string, unknown> = { tenantId };

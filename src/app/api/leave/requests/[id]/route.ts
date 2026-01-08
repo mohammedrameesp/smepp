@@ -77,7 +77,8 @@ async function getLeaveRequestHandler(request: NextRequest, context: APIContext)
     }
 
     // Non-admin members can only see their own requests
-    if (tenant!.orgRole !== 'ADMIN' && leaveRequest.memberId !== tenant!.userId) {
+    const isOwnerOrAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    if (!isOwnerOrAdmin && leaveRequest.memberId !== tenant!.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -120,7 +121,8 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
     }
 
     // Only owner can edit their request
-    if (existing.memberId !== currentUserId && tenant!.orgRole !== 'ADMIN') {
+    const isOwnerOrAdminRole = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    if (existing.memberId !== currentUserId && !isOwnerOrAdminRole) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -282,7 +284,7 @@ async function deleteLeaveRequestHandler(request: NextRequest, context: APIConte
 
     // Only admin can delete requests (or owner if draft/pending)
     const isOwner = existing.memberId === currentUserId;
-    const isAdmin = tenant!.orgRole === 'ADMIN';
+    const isAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
 
     if (!isAdmin && (!isOwner || existing.status !== 'PENDING')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -79,8 +79,9 @@ async function getSubscriptionHandler(request: NextRequest, context: APIContext)
       return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
     }
 
-    // Authorization check: Only admins or the assigned member can view the subscription
-    if (tenant!.orgRole !== 'ADMIN' && subscription.assignedMemberId !== tenant!.userId) {
+    // Authorization check: Only owners/admins or the assigned member can view the subscription
+    const isOwnerOrAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    if (!isOwnerOrAdmin && subscription.assignedMemberId !== tenant!.userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

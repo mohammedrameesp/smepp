@@ -30,7 +30,8 @@ export const GET = withErrorHandler(
     // EMPLOYEE can only see APPROVED suppliers
     // ADMIN (orgRole) can see all suppliers
     // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole
-    if (tenant!.orgRole !== 'ADMIN') {
+    const isOwnerOrAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    if (!isOwnerOrAdmin) {
       filters.status = 'APPROVED';
     } else if (status) {
       // Admin can filter by status

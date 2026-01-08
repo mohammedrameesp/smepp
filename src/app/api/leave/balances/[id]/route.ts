@@ -45,7 +45,8 @@ async function getLeaveBalanceHandler(request: NextRequest, context: APIContext)
     }
 
     // Non-admin users can only see their own balance
-    if (tenant!.orgRole !== 'ADMIN') {
+    const isOwnerOrAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    if (!isOwnerOrAdmin) {
       const currentMember = await prisma.teamMember.findFirst({
         where: { id: tenant!.userId, tenantId },
         select: { id: true },
