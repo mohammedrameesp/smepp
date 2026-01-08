@@ -30,8 +30,6 @@ Complete list of all subscription-related files for code review and understandin
 | File | Description |
 |------|-------------|
 | [src/app/api/subscriptions/categories/route.ts](../src/app/api/subscriptions/categories/route.ts) | Category autocomplete |
-| [src/app/api/subscriptions/[id]/export/route.ts](../src/app/api/subscriptions/[id]/export/route.ts) | Export single subscription to Excel |
-
 ---
 
 ## 2. Admin Pages (Views)
@@ -83,11 +81,6 @@ Complete list of all subscription-related files for code review and understandin
 | [src/features/subscriptions/components/cards/subscription-renewal-display.tsx](../src/features/subscriptions/components/cards/subscription-renewal-display.tsx) | Renewal status indicator |
 | [src/features/subscriptions/components/cards/user-subscription-card.tsx](../src/features/subscriptions/components/cards/user-subscription-card.tsx) | Subscription summary card |
 | [src/features/subscriptions/components/subscription-actions.tsx](../src/features/subscriptions/components/subscription-actions.tsx) | Action buttons wrapper |
-
-### Export Components
-| File | Description |
-|------|-------------|
-| [src/features/subscriptions/components/export-subscription-button.tsx](../src/features/subscriptions/components/export-subscription-button.tsx) | Export to Excel button |
 
 ---
 
