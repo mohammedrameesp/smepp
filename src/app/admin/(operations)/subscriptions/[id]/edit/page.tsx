@@ -727,12 +727,18 @@ export default function EditSubscriptionPage() {
                         id="assignmentDate"
                         value={watchedAssignmentDate || ''}
                         onChange={(value) => setValue('assignmentDate', value || '')}
+                        minDate={watchedPurchaseDate ? (() => {
+                          const [y, m, d] = watchedPurchaseDate.split('-').map(Number);
+                          return new Date(y, m - 1, d);
+                        })() : undefined}
                       />
                       {errors.assignmentDate && (
                         <p className="text-sm text-red-500">{errors.assignmentDate.message}</p>
                       )}
                       <p className="text-xs text-gray-500">
-                        Required when assigning to a user
+                        {watchedPurchaseDate
+                          ? 'Cannot be before purchase date'
+                          : 'Required when assigning to a user'}
                       </p>
                     </div>
                   )}
