@@ -3,7 +3,7 @@
  * @description API endpoint to get the next suggested asset tag
  * @module api/assets/next-tag
  *
- * Format: ORG-CAT-YYSEQ (e.g., BCE-CP-25001)
+ * Format: ORG-CAT-YYSEQ (e.g., ORG-CP-25001)
  * Requires categoryId parameter.
  */
 

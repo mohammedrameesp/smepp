@@ -81,7 +81,7 @@ import { DisposalMethod } from '@prisma/client';
  * @example Response:
  * {
  *   "success": true,
- *   "message": "Asset BCE-CP-25001 disposed successfully",
+ *   "message": "Asset ORG-CP-25001 disposed successfully",
  *   "disposal": {
  *     "netBookValueAtDisposal": 4500,
  *     "gainLoss": 500,

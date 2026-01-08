@@ -79,7 +79,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  *       "requestNumber": "AR-25-001",
  *       "type": "EMPLOYEE_REQUEST",
  *       "status": "PENDING_ADMIN_APPROVAL",
- *       "asset": { "assetTag": "BCE-CP-25001", "model": "MacBook Pro" },
+ *       "asset": { "assetTag": "ORG-CP-25001", "model": "MacBook Pro" },
  *       "member": { "name": "John Doe", "email": "john@example.com" }
  *     }
  *   ],

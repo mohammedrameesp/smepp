@@ -34,7 +34,7 @@ const createModelMock = () => ({
   groupBy: jest.fn(),
 });
 
-jest.mock('@/lib/prisma', () => ({
+jest.mock('@/lib/core/prisma', () => ({
   prisma: {
     // Core models
     user: createModelMock(),

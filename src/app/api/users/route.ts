@@ -115,7 +115,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
   // Generate employee code if not provided (only for employees)
   let finalEmployeeId = employeeId;
   if (isEmployee && !finalEmployeeId) {
-    // Generate employee code using organization's code prefix: {PREFIX}-YYYY-XXX (e.g., BEC-2026-001)
+    // Generate employee code using organization's code prefix: {PREFIX}-YYYY-XXX (e.g., ORG-2026-001)
     const year = new Date().getFullYear();
     const orgPrefix = await getOrganizationCodePrefix(tenantId);
     const prefix = `${orgPrefix}-${year}`;

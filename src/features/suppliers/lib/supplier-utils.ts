@@ -9,7 +9,7 @@ import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 /**
  * Generates the next unique supplier code in the format {PREFIX}-SUPP-XXXX
- * Example: BCE-SUPP-0001, JAS-SUPP-0002, etc.
+ * Example: ORG-SUPP-0001, JAS-SUPP-0002, etc.
  */
 export async function generateSupplierCode(tenantId: string): Promise<string> {
   // Get organization's code prefix
@@ -35,7 +35,7 @@ export async function generateSupplierCode(tenantId: string): Promise<string> {
   let nextNumber = 1;
 
   if (latestSupplier && latestSupplier.suppCode) {
-    // Extract the number from the latest code (e.g., "BCE-SUPP-0042" -> 42)
+    // Extract the number from the latest code (e.g., "ORG-SUPP-0042" -> 42)
     const match = latestSupplier.suppCode.match(new RegExp(`${codePrefix}-SUPP-(\\d+)`));
     if (match) {
       nextNumber = parseInt(match[1], 10) + 1;

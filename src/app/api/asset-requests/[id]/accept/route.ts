@@ -80,7 +80,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  *   "id": "clx...",
  *   "requestNumber": "AR-25-001",
  *   "status": "ACCEPTED",
- *   "asset": { "assetTag": "BCE-CP-25001", "status": "IN_USE" }
+ *   "asset": { "assetTag": "ORG-CP-25001", "status": "IN_USE" }
  * }
  */
 async function acceptAssetAssignmentHandler(request: NextRequest, context: APIContext) {

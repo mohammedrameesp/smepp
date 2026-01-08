@@ -11,7 +11,7 @@ import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 /**
  * Generate a unique request number
  * Format: {PREFIX}-AR-YYMMDD-XXX
- * Example: BCE-AR-241222-001, JAS-AR-241222-001
+ * Example: ORG-AR-241222-001, JAS-AR-241222-001
  * @param tenantId - Organization tenant ID
  * @param tx - Optional transaction client to use (required when called inside a transaction)
  */

@@ -107,7 +107,7 @@ export const ASSET_EXPORT_COLUMNS: Array<{ key: keyof AssetExportRow; header: st
  *
  * @example
  * const row = transformAssetForExport(asset);
- * // { id: 'clx...', assetTag: 'BCE-CP-25001', ... }
+ * // { id: 'clx...', assetTag: 'ORG-CP-25001', ... }
  */
 export function transformAssetForExport(asset: AssetWithExportRelations): AssetExportRow {
   return {

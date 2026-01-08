@@ -15,7 +15,7 @@ Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP });
 /**
  * Generate payroll run reference number with organization prefix
  * Format: {PREFIX}-PAY-YYYY-MM-XXX
- * Example: BCE-PAY-2024-12-001, JAS-PAY-2024-12-001
+ * Example: ORG-PAY-2024-12-001, JAS-PAY-2024-12-001
  */
 export async function generatePayrollReferenceWithPrefix(
   tenantId: string,
@@ -32,7 +32,7 @@ export async function generatePayrollReferenceWithPrefix(
 /**
  * Generate payslip number with organization prefix
  * Format: {PREFIX}-PS-YYYY-MM-XXXXX
- * Example: BCE-PS-2024-12-00001, JAS-PS-2024-12-00001
+ * Example: ORG-PS-2024-12-00001, JAS-PS-2024-12-00001
  */
 export async function generatePayslipNumberWithPrefix(
   tenantId: string,
@@ -49,7 +49,7 @@ export async function generatePayslipNumberWithPrefix(
 /**
  * Generate loan number with organization prefix
  * Format: {PREFIX}-LOAN-XXXXX
- * Example: BCE-LOAN-00001, JAS-LOAN-00001
+ * Example: ORG-LOAN-00001, JAS-LOAN-00001
  */
 export async function generateLoanNumberWithPrefix(
   tenantId: string,

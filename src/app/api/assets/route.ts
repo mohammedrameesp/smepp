@@ -133,7 +133,7 @@ async function autoLearnTypeMapping(tenantId: string, typeName: string, category
  *   "assets": [
  *     {
  *       "id": "clx...",
- *       "assetTag": "BCE-CP-25001",
+ *       "assetTag": "ORG-CP-25001",
  *       "model": "MacBook Pro 14",
  *       "assignedMember": { "id": "...", "name": "John", "email": "john@..." },
  *       "assetCategory": { "id": "...", "code": "CP", "name": "Computing" }
@@ -402,7 +402,7 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
 
   // ─────────────────────────────────────────────────────────────────────────────
   // STEP 2: Generate asset tag if not provided
-  // Format: ORG-CAT-YYSEQ (e.g., BCE-CP-25001)
+  // Format: ORG-CAT-YYSEQ (e.g., ORG-CP-25001)
   // Requires categoryId to generate tag
   // ─────────────────────────────────────────────────────────────────────────────
   let assetTag = data.assetTag;

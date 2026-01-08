@@ -12,13 +12,13 @@ import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 /**
  * Generate a unique Purchase Request reference number.
  * Format: {PREFIX}-PR-YYMM-XXX
- * - {PREFIX}: Organization code prefix (e.g., BCE, JAS, INC)
+ * - {PREFIX}: Organization code prefix (e.g., ORG, JAS, INC)
  * - PR: Purchase Request
  * - YY: Year (2 digits)
  * - MM: Month (2 digits)
  * - XXX: Sequential number per month (padded to 3 digits)
  *
- * Example: BCE-PR-2412-001 (first request in December 2024 for BeCreative)
+ * Example: ORG-PR-2412-001 (first request in December 2024 for BeCreative)
  * Example: JAS-PR-2412-001 (first request in December 2024 for Jasira)
  */
 export async function generatePurchaseRequestNumber(

@@ -22,13 +22,14 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { createSubscriptionSchema, subscriptionQuerySchema } from '@/features/subscriptions';
+import { createSubscriptionSchema, subscriptionQuerySchema, generateSubscriptionTag } from '@/features/subscriptions';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { getQatarNow, getQatarStartOfDay } from '@/lib/qatar-timezone';
 import { parseInputDateString } from '@/lib/date-format';
 import { convertToQAR } from '@/lib/core/currency';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 /**
  * GET /api/subscriptions - Retrieve paginated list of subscriptions with filtering
@@ -204,6 +205,10 @@ async function createSubscriptionHandler(request: NextRequest, context: APIConte
 
     const data = validation.data;
 
+    // Generate subscription tag
+    const orgPrefix = await getOrganizationCodePrefix(tenantId);
+    const subscriptionTag = await generateSubscriptionTag(tenantId, orgPrefix);
+
     // SAFEGUARD: Always calculate costQAR to prevent data loss
     let costQAR = data.costQAR;
 
@@ -218,6 +223,7 @@ async function createSubscriptionHandler(request: NextRequest, context: APIConte
     // Convert date strings to Date objects
     const subscriptionData: any = {
       ...data,
+      subscriptionTag, // Auto-generated subscription tag
       costCurrency: currency, // Use the calculated currency with default
       costQAR: costQAR || null, // Ensure costQAR is always set, use null instead of undefined
       purchaseDate: data.purchaseDate ? parseInputDateString(data.purchaseDate) : null,
@@ -252,7 +258,7 @@ async function createSubscriptionHandler(request: NextRequest, context: APIConte
       ActivityActions.SUBSCRIPTION_CREATED,
       'Subscription',
       subscription.id,
-      { serviceName: subscription.serviceName, billingCycle: subscription.billingCycle }
+      { serviceName: subscription.serviceName, subscriptionTag: subscription.subscriptionTag, billingCycle: subscription.billingCycle }
     );
 
     // Create subscription history entry for creation

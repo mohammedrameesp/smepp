@@ -10,7 +10,7 @@
  *
  * TAG FORMAT:
  * - {ORG_PREFIX}-{CATEGORY_CODE}-{YY}{SEQUENCE}
- * - Example: BCE-CP-25001 (BeCreative, Computing, 2025, sequence 001)
+ * - Example: ORG-CP-25001 (BeCreative, Computing, 2025, sequence 001)
  * - Sequence resets each year per category
  *
  * USAGE:
@@ -31,7 +31,7 @@ import { prisma } from '@/lib/core/prisma';
  * Generate a unique asset tag based on category code.
  *
  * Format: {ORG_PREFIX}-{CATEGORY_CODE}-{YY}{SEQUENCE}
- * Example: BCE-CP-25001 (BeCreative, Computing, 2025, sequence 001)
+ * Example: ORG-CP-25001 (BeCreative, Computing, 2025, sequence 001)
  *
  * The sequence number:
  * - Is 3 digits with leading zeros (001, 002, etc.)
@@ -40,16 +40,16 @@ import { prisma } from '@/lib/core/prisma';
  *
  * @param categoryCode - 2-letter category code (e.g., "CP" for Computing, "MO" for Monitor)
  * @param tenantId - Organization ID for tenant isolation
- * @param orgPrefix - Organization code prefix (e.g., "BCE" for BeCreative)
+ * @param orgPrefix - Organization code prefix (e.g., "ORG" for BeCreative)
  * @returns Promise resolving to unique asset tag string
  *
  * @example
- * const tag = await generateAssetTagByCategory('CP', 'tenant-123', 'BCE');
- * // Returns: 'BCE-CP-25001' (first computing asset in 2025)
+ * const tag = await generateAssetTagByCategory('CP', 'tenant-123', 'ORG');
+ * // Returns: 'ORG-CP-25001' (first computing asset in 2025)
  *
  * @example
- * const tag = await generateAssetTagByCategory('MO', 'tenant-123', 'BCE');
- * // Returns: 'BCE-MO-25001' (first monitor asset in 2025)
+ * const tag = await generateAssetTagByCategory('MO', 'tenant-123', 'ORG');
+ * // Returns: 'ORG-MO-25001' (first monitor asset in 2025)
  */
 export async function generateAssetTagByCategory(
   categoryCode: string,
@@ -86,7 +86,7 @@ export async function generateAssetTagByCategory(
   if (existingAssets.length > 0) {
     const latestTag = existingAssets[0].assetTag;
     if (latestTag) {
-      // Extract sequence number from tag like "BCE-CP-25001"
+      // Extract sequence number from tag like "ORG-CP-25001"
       const seqPart = latestTag.substring(searchPrefix.length);
       const currentSequence = parseInt(seqPart, 10);
       if (!isNaN(currentSequence)) {

@@ -5,7 +5,7 @@
  * @module lib/utils
  *
  * Format tokens:
- * - {PREFIX} - Organization code prefix (e.g., BEC)
+ * - {PREFIX} - Organization code prefix (e.g., ORG)
  * - {YYYY} - 4-digit year (e.g., 2024)
  * - {YY} - 2-digit year (e.g., 24)
  * - {MM} - 2-digit month (e.g., 12)
@@ -31,7 +31,8 @@ export type EntityType =
   | 'asset-requests'
   | 'leave-requests'
   | 'payroll-runs'
-  | 'suppliers';
+  | 'suppliers'
+  | 'subscriptions';
 
 export interface CodeFormatConfig {
   employees?: string;
@@ -42,6 +43,7 @@ export interface CodeFormatConfig {
   'leave-requests'?: string;
   'payroll-runs'?: string;
   suppliers?: string;
+  subscriptions?: string;
 }
 
 // Default format patterns for each entity type
@@ -54,6 +56,7 @@ export const DEFAULT_FORMATS: Required<CodeFormatConfig> = {
   'leave-requests': '{PREFIX}-LR-{YYMM}-{SEQ:3}',
   'payroll-runs': '{PREFIX}-PAY-{YYYYMM}-{SEQ:2}',
   suppliers: '{PREFIX}-SUP-{SEQ:4}',
+  subscriptions: '{PREFIX}-SUB-{YYMM}-{SEQ:3}',
 };
 
 // Human-readable labels for entity types
@@ -66,6 +69,7 @@ export const ENTITY_LABELS: Record<EntityType, string> = {
   'leave-requests': 'Leave Request',
   'payroll-runs': 'Payroll Run',
   suppliers: 'Supplier Code',
+  subscriptions: 'Subscription Tag',
 };
 
 // Map entity types to required module IDs for filtering
@@ -78,11 +82,12 @@ export const ENTITY_TO_MODULE: Record<EntityType, string> = {
   'asset-requests': 'assets',
   loans: 'payroll',
   'payroll-runs': 'payroll',
+  subscriptions: 'subscriptions',
 };
 
 // Example values for preview
 export const EXAMPLE_VALUES: Record<string, string> = {
-  PREFIX: 'BEC',
+  PREFIX: 'ORG',
   TYPE: 'LAP',
   YYYY: '2024',
   YY: '24',
@@ -284,7 +289,7 @@ export function applyFormat(format: string, context: FormatContext): string {
 /**
  * Generate a preview of what a code will look like
  */
-export function generateFormatPreview(format: string, prefix: string = 'BEC'): string {
+export function generateFormatPreview(format: string, prefix: string = 'ORG'): string {
   return applyFormat(format, {
     prefix,
     sequenceNumber: 1,
@@ -435,7 +440,7 @@ export function clearPrefixCache(tenantId?: string): void {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const FORMAT_TOKENS = [
-  { token: '{PREFIX}', description: 'Organization code prefix', example: 'BEC' },
+  { token: '{PREFIX}', description: 'Organization code prefix', example: 'ORG' },
   { token: '{YYYY}', description: '4-digit year', example: '2024' },
   { token: '{YY}', description: '2-digit year', example: '24' },
   { token: '{MM}', description: '2-digit month', example: '12' },

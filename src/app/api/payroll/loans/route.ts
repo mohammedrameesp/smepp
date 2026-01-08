@@ -131,7 +131,7 @@ async function createLoanHandler(request: NextRequest, context: APIContext) {
 
     let sequence = 1;
     if (lastLoan) {
-      // Match pattern like "BCE-LOAN-00001" or legacy "LOAN-00001"
+      // Match pattern like "ORG-LOAN-00001" or legacy "LOAN-00001"
       const prefixedMatch = lastLoan.loanNumber.match(new RegExp(`${codePrefix}-LOAN-(\\d{5})`));
       const legacyMatch = lastLoan.loanNumber.match(/LOAN-(\d{5})/);
       const match = prefixedMatch || legacyMatch;

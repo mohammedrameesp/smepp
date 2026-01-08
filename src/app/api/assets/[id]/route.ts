@@ -64,7 +64,7 @@ import { createNotification, NotificationTemplates } from '@/features/notificati
  * @example Response:
  * {
  *   "id": "clx...",
- *   "assetTag": "BCE-CP-25001",
+ *   "assetTag": "ORG-CP-25001",
  *   "model": "MacBook Pro",
  *   "assignedMember": { "id": "...", "name": "John", "email": "john@..." },
  *   "assignmentDate": "2025-01-15T00:00:00.000Z"

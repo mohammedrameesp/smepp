@@ -18,10 +18,10 @@ async function getNextCodeHandler(request: NextRequest) {
 
     const tenantId = session.user.organizationId;
 
-    // Get organization's code prefix (e.g., "BCE", "JAS", "INC")
+    // Get organization's code prefix (e.g., "ORG", "JAS", "INC")
     const codePrefix = await getOrganizationCodePrefix(tenantId);
 
-    // Generate employee code: {PREFIX}-YYYY-XXX (e.g., BCE-2024-001, JAS-2024-001)
+    // Generate employee code: {PREFIX}-YYYY-XXX (e.g., ORG-2024-001, JAS-2024-001)
     const year = new Date().getFullYear();
     const prefix = `${codePrefix}-${year}`;
 

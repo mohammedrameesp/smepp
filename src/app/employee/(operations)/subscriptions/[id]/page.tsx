@@ -165,7 +165,7 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
     <>
       <PageHeader
         title={subscription.serviceName}
-        subtitle={`${subscription.category || 'Subscription'} - ${subscription.vendor || 'No vendor'}`}
+        subtitle={[subscription.subscriptionTag, subscription.category || 'Subscription', subscription.vendor || 'No vendor'].filter(Boolean).join(' • ')}
         breadcrumbs={[
           { label: 'Dashboard', href: '/employee' },
           { label: 'Subscriptions', href: '/employee/subscriptions' },
@@ -214,6 +214,10 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
                   <div className="p-4 bg-slate-50 rounded-xl">
                     <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Service Name</p>
                     <p className="font-semibold text-slate-900">{subscription.serviceName}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl">
+                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Subscription Tag</p>
+                    <p className="font-mono font-semibold text-slate-900">{subscription.subscriptionTag || 'Not assigned'}</p>
                   </div>
                   <div className="p-4 bg-slate-50 rounded-xl">
                     <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Category</p>

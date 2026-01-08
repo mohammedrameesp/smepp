@@ -72,7 +72,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  * {
  *   "asset": {
  *     "id": "clx...",
- *     "assetTag": "BCE-CP-25001",
+ *     "assetTag": "ORG-CP-25001",
  *     "acquisitionCost": 10000,
  *     "salvageValue": 1000,
  *     "accumulatedDepreciation": 3000,

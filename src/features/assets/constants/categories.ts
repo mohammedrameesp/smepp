@@ -12,7 +12,7 @@
  * {ORG_PREFIX}-{CATEGORY_CODE}-{YY}{SEQUENCE}
  *
  * @example
- * BCE-CP-25001 = BeCreative, Computing, 2025, sequence 001
+ * ORG-CP-25001 = BeCreative, Computing, 2025, sequence 001
  * INN-VH-24003 = Innovation, Vehicles, 2024, sequence 003
  *
  * CATEGORY ORGANIZATION:

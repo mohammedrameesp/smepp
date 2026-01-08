@@ -58,6 +58,7 @@ import { Loader2 } from 'lucide-react';
 
 interface Subscription {
   id: string;
+  subscriptionTag: string | null;
   serviceName: string;
   category: string | null;
   accountId: string | null;
@@ -338,12 +339,18 @@ export function SubscriptionListTableServerSearch() {
 
                 return (
                   <TableRow key={subscription.id}>
-                    {/* Column 1: Service + Category */}
+                    {/* Column 1: Service + Tag + Category */}
                     <TableCell>
                       <div className="font-medium text-sm">{subscription.serviceName}</div>
-                      {subscription.category && (
-                        <div className="text-xs text-gray-500 mt-0.5">{subscription.category}</div>
-                      )}
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {subscription.subscriptionTag && (
+                          <span className="font-mono">{subscription.subscriptionTag}</span>
+                        )}
+                        {subscription.subscriptionTag && subscription.category && (
+                          <span className="mx-1">•</span>
+                        )}
+                        {subscription.category && <span>{subscription.category}</span>}
+                      </div>
                     </TableCell>
 
                     {/* Column 2: Account */}
