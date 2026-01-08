@@ -497,17 +497,18 @@ export default function LandingPage() {
               </ul>
             </div>
             <div>
-              <div className="footer-title">Get Started</div>
+              <div className="footer-title">Legal</div>
               <ul className="footer-links">
-                <li><Link href="/get-started">Create Account</Link></li>
-                <li><a href="#pricing">View Pricing</a></li>
+                <li><Link href="/privacy">Privacy Policy</Link></li>
+                <li><Link href="/terms">Terms of Service</Link></li>
+                <li><Link href="/cookies">Cookie Policy</Link></li>
               </ul>
             </div>
             <div>
               <div className="footer-title">Contact</div>
               <ul className="footer-links">
                 <li><a href="mailto:hello@durj.com">hello@durj.com</a></li>
-                <li><a href="#qatar">Why Qatar</a></li>
+                <li><a href="mailto:support@durj.com">support@durj.com</a></li>
               </ul>
             </div>
           </div>
