@@ -1,6 +1,28 @@
-// Asset Request Email Templates
-// Brand color: #73c5d1
+/**
+ * @file emails.ts
+ * @description Email templates for asset request workflows
+ * @module domains/operations/asset-requests
+ *
+ * TEMPLATES:
+ * - assetRequestSubmittedEmail: Employee submits request → Admin notification
+ * - assetAssignmentPendingEmail: Admin assigns asset → User notification
+ * - assetAssignmentAcceptedEmail: User accepts → Admin notification
+ * - assetAssignmentDeclinedEmail: User declines → Admin notification
+ * - assetReturnRequestEmail: User requests return → Admin notification
+ * - assetRequestApprovedEmail: Admin approves request → User notification
+ * - assetRequestRejectedEmail: Admin rejects request → User notification
+ * - assetReturnApprovedEmail: Admin approves return → User notification
+ * - assetReturnRejectedEmail: Admin rejects return → User notification
+ * - assetUnassignedEmail: Admin unassigns asset → User notification
+ *
+ * DESIGN:
+ * - Brand color: #73c5d1 (Durj teal)
+ * - Responsive HTML email templates
+ * - Plain text fallbacks for all templates
+ * - Tenant-aware portal URLs (subdomain routing)
+ */
 
+/** Durj brand color for email styling */
 const BRAND_COLOR = '#73c5d1';
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 

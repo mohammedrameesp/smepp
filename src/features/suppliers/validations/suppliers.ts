@@ -1,73 +1,174 @@
 /**
  * @file suppliers.ts
- * @description Validation schemas for supplier management including creation, approval workflow, and engagements
- * @module validations/operations
+ * @description Validation schemas for supplier management including creation,
+ *              approval workflow, and engagement tracking
+ * @module domains/operations/suppliers/validations
+ *
+ * SCHEMAS:
+ * - Supplier: Create/update vendor/supplier records
+ * - Approval: Admin approval/rejection of new suppliers
+ * - Engagement: Track interactions and ratings with suppliers
+ * - Query: List filtering and pagination
+ *
+ * WORKFLOW:
+ * 1. New supplier created with PENDING status
+ * 2. Admin reviews and approves/rejects
+ * 3. APPROVED suppliers can be used in purchase requests
+ *
+ * VALIDATION RULES:
+ * - Name and category are required
+ * - Email fields validated with regex
+ * - Website accepts domain with or without protocol
+ * - Establishment year: 1800 to current year
  */
 
 import { z } from 'zod';
 import { SupplierStatus } from '@prisma/client';
 
-// Email validation regex
+// ═══════════════════════════════════════════════════════════════════════════════
+// VALIDATION PATTERNS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Email validation regex */
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Domain validation regex - accepts domain names with or without http/https
+/** Domain validation regex - accepts with or without http/https */
 const domainRegex = /^(https?:\/\/)?([\w-]+(\.[\w-]+)+)(\/.*)?$/;
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUPPLIER SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Schema for creating a new supplier.
+ *
+ * Creates a supplier record with PENDING status for admin review.
+ * Includes company info, contacts, and payment terms.
+ *
+ * @example
+ * {
+ *   name: "Acme Corp",
+ *   category: "IT Equipment",
+ *   primaryContactName: "John Doe",
+ *   primaryContactEmail: "john@acme.com"
+ * }
+ */
 export const createSupplierSchema = z.object({
+  /** Supplier/vendor company name (required) */
   name: z.string().min(1, 'Name is required'),
+  /** Business category (required) */
   category: z.string().min(1, 'Category is required'),
+  /** Street/building address */
   address: z.string().optional().nullable().or(z.literal('')),
+  /** City location */
   city: z.string().optional().nullable().or(z.literal('')),
+  /** Country of operation */
   country: z.string().optional().nullable().or(z.literal('')),
+  /** Company website URL */
   website: z.string().optional().nullable().or(z.literal('')).refine(
     (val) => !val || val === '' || domainRegex.test(val),
     { message: 'Invalid website format (e.g., example.com or https://example.com)' }
   ),
+  /** Year company was established (1800-current) */
   establishmentYear: z.coerce.number().int().min(1800).max(new Date().getFullYear()).optional().nullable(),
+  /** Primary contact person name */
   primaryContactName: z.string().optional().nullable().or(z.literal('')),
+  /** Primary contact job title */
   primaryContactTitle: z.string().optional().nullable().or(z.literal('')),
+  /** Primary contact email address */
   primaryContactEmail: z.string().optional().nullable().or(z.literal('')).refine(
     (val) => !val || val === '' || emailRegex.test(val),
     { message: 'Invalid email format' }
   ),
+  /** Primary contact mobile number */
   primaryContactMobile: z.string().optional().nullable().or(z.literal('')),
+  /** Primary contact country code */
   primaryContactMobileCode: z.string().optional().nullable().or(z.literal('')),
+  /** Secondary contact person name */
   secondaryContactName: z.string().optional().nullable().or(z.literal('')),
+  /** Secondary contact job title */
   secondaryContactTitle: z.string().optional().nullable().or(z.literal('')),
+  /** Secondary contact email address */
   secondaryContactEmail: z.string().optional().nullable().or(z.literal('')).refine(
     (val) => !val || val === '' || emailRegex.test(val),
     { message: 'Invalid email format' }
   ),
+  /** Secondary contact mobile number */
   secondaryContactMobile: z.string().optional().nullable().or(z.literal('')),
+  /** Secondary contact country code */
   secondaryContactMobileCode: z.string().optional().nullable().or(z.literal('')),
+  /** Payment terms description (e.g., "Net 30") */
   paymentTerms: z.string().optional().nullable().or(z.literal('')),
+  /** Additional notes about the supplier */
   additionalInfo: z.string().optional().nullable().or(z.literal('')),
 });
 
+/** Schema for updating supplier. All fields optional. */
 export const updateSupplierSchema = createSupplierSchema.partial();
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// APPROVAL SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Schema for approving a supplier.
+ * Changes status from PENDING to APPROVED.
+ */
 export const approveSupplierSchema = z.object({
+  /** ID of the admin approving */
   approvedById: z.string().min(1, 'Approver ID is required'),
 });
 
+/**
+ * Schema for rejecting a supplier.
+ * Changes status to REJECTED with explanation.
+ */
 export const rejectSupplierSchema = z.object({
+  /** Required reason for rejection */
   rejectionReason: z.string().min(1, 'Rejection reason is required'),
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ENGAGEMENT SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Schema for logging a supplier engagement/interaction.
+ * Tracks meetings, calls, evaluations with optional ratings.
+ */
 export const createEngagementSchema = z.object({
+  /** Date of interaction (ISO string) */
   date: z.string().min(1, 'Date is required'),
+  /** Description of the engagement */
   notes: z.string().min(1, 'Notes are required'),
+  /** Rating 1-5 stars (optional) */
   rating: z.coerce.number().int().min(1).max(5).optional().nullable(),
+  /** User who logged the engagement */
   createdById: z.string().min(1, 'Creator ID is required'),
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// QUERY SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Query parameters for listing suppliers.
+ * Supports search, status/category filtering, and pagination.
+ */
 export const supplierQuerySchema = z.object({
-  q: z.string().optional(), // Search query
+  /** Full-text search across name, category, code */
+  q: z.string().optional(),
+  /** Filter by approval status */
   status: z.nativeEnum(SupplierStatus).optional(),
+  /** Filter by business category */
   category: z.string().optional(),
-  p: z.coerce.number().min(1).default(1), // Page number
-  ps: z.coerce.number().min(1).max(100).default(20), // Page size
+  /** Page number (1-based) */
+  p: z.coerce.number().min(1).default(1),
+  /** Page size (max 100) */
+  ps: z.coerce.number().min(1).max(100).default(20),
+  /** Sort field */
   sort: z.enum(['name', 'category', 'suppCode', 'createdAt']).default('createdAt'),
+  /** Sort direction */
   order: z.enum(['asc', 'desc']).default('desc'),
 });
 

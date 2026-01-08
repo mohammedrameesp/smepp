@@ -1,30 +1,57 @@
 /**
  * @file hr-profile.ts
- * @description Validation schemas for HR employee profiles including Qatar-specific fields (QID, IBAN, mobile)
- * @module validations/hr
+ * @description Validation schemas for HR employee profiles including Qatar-specific fields
+ * @module domains/hr/employees/validations
+ *
+ * QATAR-SPECIFIC VALIDATIONS:
+ * - QID (Qatar ID): Exactly 11 digits
+ * - Qatar Mobile: Exactly 8 digits (without +974 country code)
+ * - IBAN: International format starting with country code (QA for Qatar)
+ * - Passport: 5-20 alphanumeric characters
+ *
+ * PROFILE SECTIONS:
+ * - Personal Information (DOB, gender, nationality)
+ * - Contact Information (phones, addresses)
+ * - Emergency Contacts (local Qatar + home country)
+ * - Identification & Legal (QID, passport, sponsorship)
+ * - Employment (employee ID, designation, joining date)
+ * - Bank & Payroll (bank name, IBAN for WPS)
+ * - Education (qualifications, institution)
+ * - Documents (uploaded file URLs)
+ *
+ * USAGE:
+ * - hrProfileSchema: Full schema for admin updates
+ * - hrProfileEmployeeSchema: Employee self-update (excludes employeeId)
  */
 
 import { z } from 'zod';
 
-// Qatar QID: exactly 11 digits
+// ═══════════════════════════════════════════════════════════════════════════════
+// VALIDATION PATTERNS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Qatar ID: exactly 11 digits */
 const qidRegex = /^\d{11}$/;
 
-// Qatar mobile: exactly 8 digits (without country code)
+/** Qatar mobile: exactly 8 digits (without country code) */
 const qatarMobileRegex = /^\d{8}$/;
 
-// Generic mobile number: 5-15 digits
+/** Generic mobile number: 5-15 digits */
 const mobileRegex = /^\d{5,15}$/;
 
-// Email validation
+/** Email validation pattern */
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Simple IBAN pattern for international
+/** International IBAN pattern */
 const ibanRegex = /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/i;
 
-// Passport number: alphanumeric, 5-20 characters
+/** Passport number: alphanumeric, 5-20 characters */
 const passportRegex = /^[A-Z0-9]{5,20}$/i;
 
-// Helper to strip non-digits from a string
+/**
+ * Strip non-digit characters from a string.
+ * Used for phone/QID normalization before validation.
+ */
 const stripNonDigits = (val: string | null | undefined): string => {
   if (!val) return '';
   return val.replace(/\D/g, '');
@@ -32,10 +59,10 @@ const stripNonDigits = (val: string | null | undefined): string => {
 
 // Note: healthCardNumber and licenseNumber removed - QID serves as unique identifier
 
-// Helper for optional string that can be empty
+/** Helper for optional string that can be empty */
 const optionalString = z.string().optional().nullable().or(z.literal(''));
 
-// Helper for optional date string
+/** Helper for optional date string */
 const optionalDateString = z.string().optional().nullable().or(z.literal(''));
 
 export const hrProfileSchema = z.object({
