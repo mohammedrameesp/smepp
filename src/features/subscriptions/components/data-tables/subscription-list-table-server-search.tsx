@@ -259,7 +259,6 @@ export function SubscriptionListTableServerSearch() {
                 Service {sortBy === 'serviceName' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead className="w-[160px]">Account</TableHead>
-              <TableHead className="w-[140px]">Assigned To</TableHead>
               <TableHead className="w-[100px]">Status</TableHead>
               <TableHead
                 className="cursor-pointer hover:bg-gray-100 w-[110px]"
@@ -273,6 +272,7 @@ export function SubscriptionListTableServerSearch() {
               >
                 Renewal {sortBy === 'renewalDate' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
+              <TableHead className="w-[140px]">Assigned To</TableHead>
               <TableHead className="text-center w-[70px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -353,21 +353,7 @@ export function SubscriptionListTableServerSearch() {
                       </div>
                     </TableCell>
 
-                    {/* Column 3: Assigned To */}
-                    <TableCell>
-                      {subscription.assignedMember ? (
-                        <Link
-                          href={`/admin/users/${subscription.assignedMember.id}`}
-                          className="text-sm hover:text-blue-600"
-                        >
-                          {subscription.assignedMember.name || subscription.assignedMember.email}
-                        </Link>
-                      ) : (
-                        <span className="text-gray-400 text-sm">Unassigned</span>
-                      )}
-                    </TableCell>
-
-                    {/* Column 4: Status + Billing */}
+                    {/* Column 3: Status + Billing */}
                     <TableCell>
                       {getStatusBadge()}
                       <div className="text-xs text-gray-500 mt-1">
@@ -375,7 +361,7 @@ export function SubscriptionListTableServerSearch() {
                       </div>
                     </TableCell>
 
-                    {/* Column 5: Cost + Payment */}
+                    {/* Column 4: Cost + Payment */}
                     <TableCell>
                       <div className="text-sm font-medium">
                         {subscription.costPerCycle ? (
@@ -391,7 +377,7 @@ export function SubscriptionListTableServerSearch() {
                       </div>
                     </TableCell>
 
-                    {/* Column 6: Renewal + Days */}
+                    {/* Column 5: Renewal + Days */}
                     <TableCell>
                       {subscription.status === 'CANCELLED' ? (
                         <span className="text-gray-400 text-xs">-</span>
@@ -404,6 +390,20 @@ export function SubscriptionListTableServerSearch() {
                         </div>
                       ) : (
                         <span className="text-gray-400 text-xs">N/A</span>
+                      )}
+                    </TableCell>
+
+                    {/* Column 6: Assigned To */}
+                    <TableCell>
+                      {subscription.assignedMember ? (
+                        <Link
+                          href={`/admin/users/${subscription.assignedMember.id}`}
+                          className="text-sm hover:text-blue-600"
+                        >
+                          {subscription.assignedMember.name || subscription.assignedMember.email}
+                        </Link>
+                      ) : (
+                        <span className="text-gray-400 text-sm">Unassigned</span>
                       )}
                     </TableCell>
 
