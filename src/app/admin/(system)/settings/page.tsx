@@ -3,8 +3,7 @@ import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DataExportImport, ExchangeRateSettings, PayrollSettings } from '@/features/settings/components';
+import { DataExportImport } from '@/features/settings/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Package, ChevronRight } from 'lucide-react';
 
@@ -22,8 +21,8 @@ export default async function SettingsPage() {
   return (
     <>
       <PageHeader
-        title="System Settings"
-        subtitle="Manage system configuration and data export/import"
+        title="Data Management"
+        subtitle="Export and import your organization's data"
       />
       <PageContent>
         {/* Quick link to Modules */}
@@ -43,23 +42,7 @@ export default async function SettingsPage() {
           <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
         </Link>
 
-        <Tabs defaultValue="export" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="export">Data Export/Import</TabsTrigger>
-              <TabsTrigger value="system">System Config</TabsTrigger>
-            </TabsList>
-
-            {/* Data Export/Import Tab */}
-            <TabsContent value="export" className="space-y-6">
-              <DataExportImport />
-            </TabsContent>
-
-            {/* System Config Tab */}
-            <TabsContent value="system" className="space-y-6">
-              <ExchangeRateSettings />
-              <PayrollSettings />
-            </TabsContent>
-        </Tabs>
+        <DataExportImport />
       </PageContent>
     </>
   );

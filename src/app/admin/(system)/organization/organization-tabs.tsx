@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
-import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings, LocationsSettings } from '@/features/settings/components';
+import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings, LocationsSettings, ExchangeRateSettings, PayrollSettings } from '@/features/settings/components';
 import type { OrgRole } from '@prisma/client';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
 
@@ -672,6 +672,12 @@ export function OrganizationTabs({
               </Alert>
             </CardContent>
           </Card>
+
+          {/* Exchange Rates */}
+          <ExchangeRateSettings />
+
+          {/* Payroll Settings - only show if payroll module is enabled */}
+          {enabledModules.includes('payroll') && <PayrollSettings />}
         </TabsContent>
       </Tabs>
     </div>
