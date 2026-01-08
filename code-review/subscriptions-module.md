@@ -64,31 +64,30 @@ Complete list of all subscription-related files for code review and understandin
 ### Subscription List & Tables
 | File | Description |
 |------|-------------|
-| [src/components/domains/operations/subscriptions/index.ts](../src/components/domains/operations/subscriptions/index.ts) | Component exports |
-| [src/components/domains/operations/subscriptions/subscription-list-table.tsx](../src/components/domains/operations/subscriptions/subscription-list-table.tsx) | Client-side table with filtering |
-| [src/components/domains/operations/subscriptions/subscription-list-table-server-search.tsx](../src/components/domains/operations/subscriptions/subscription-list-table-server-search.tsx) | Server-side table with pagination |
-| [src/components/domains/operations/subscriptions/employee-subscription-list-table.tsx](../src/components/domains/operations/subscriptions/employee-subscription-list-table.tsx) | Employee-specific table |
+| [src/features/subscriptions/components/index.ts](../src/features/subscriptions/components/index.ts) | Component exports |
+| [src/features/subscriptions/components/data-tables/subscription-list-table-server-search.tsx](../src/features/subscriptions/components/data-tables/subscription-list-table-server-search.tsx) | Server-side table with pagination |
+| [src/features/subscriptions/components/data-tables/employee-subscription-list-table.tsx](../src/features/subscriptions/components/data-tables/employee-subscription-list-table.tsx) | Employee-specific table |
 
 ### Lifecycle Actions
 | File | Description |
 |------|-------------|
-| [src/components/domains/operations/subscriptions/subscription-lifecycle-actions.tsx](../src/components/domains/operations/subscriptions/subscription-lifecycle-actions.tsx) | Cancel/Reactivate buttons |
-| [src/components/domains/operations/subscriptions/cancel-dialog.tsx](../src/components/domains/operations/subscriptions/cancel-dialog.tsx) | Cancel subscription dialog |
-| [src/components/domains/operations/subscriptions/reactivate-dialog.tsx](../src/components/domains/operations/subscriptions/reactivate-dialog.tsx) | Reactivate subscription dialog |
+| [src/features/subscriptions/components/subscription-lifecycle-actions.tsx](../src/features/subscriptions/components/subscription-lifecycle-actions.tsx) | Cancel/Reactivate buttons |
+| [src/features/subscriptions/components/forms/cancel-dialog.tsx](../src/features/subscriptions/components/forms/cancel-dialog.tsx) | Cancel subscription dialog |
+| [src/features/subscriptions/components/forms/reactivate-dialog.tsx](../src/features/subscriptions/components/forms/reactivate-dialog.tsx) | Reactivate subscription dialog |
 
 ### Display Components
 | File | Description |
 |------|-------------|
-| [src/components/domains/operations/subscriptions/cost-breakdown.tsx](../src/components/domains/operations/subscriptions/cost-breakdown.tsx) | Cost breakdown card |
-| [src/components/domains/operations/subscriptions/history-timeline.tsx](../src/components/domains/operations/subscriptions/history-timeline.tsx) | History timeline |
-| [src/components/domains/operations/subscriptions/subscription-renewal-display.tsx](../src/components/domains/operations/subscriptions/subscription-renewal-display.tsx) | Renewal status indicator |
-| [src/components/domains/operations/subscriptions/user-subscription-card.tsx](../src/components/domains/operations/subscriptions/user-subscription-card.tsx) | Subscription summary card |
-| [src/components/domains/operations/subscriptions/subscription-actions.tsx](../src/components/domains/operations/subscriptions/subscription-actions.tsx) | Action buttons wrapper |
+| [src/features/subscriptions/components/cards/cost-breakdown.tsx](../src/features/subscriptions/components/cards/cost-breakdown.tsx) | Cost breakdown card |
+| [src/features/subscriptions/components/cards/history-timeline.tsx](../src/features/subscriptions/components/cards/history-timeline.tsx) | History timeline |
+| [src/features/subscriptions/components/cards/subscription-renewal-display.tsx](../src/features/subscriptions/components/cards/subscription-renewal-display.tsx) | Renewal status indicator |
+| [src/features/subscriptions/components/cards/user-subscription-card.tsx](../src/features/subscriptions/components/cards/user-subscription-card.tsx) | Subscription summary card |
+| [src/features/subscriptions/components/subscription-actions.tsx](../src/features/subscriptions/components/subscription-actions.tsx) | Action buttons wrapper |
 
 ### Export Components
 | File | Description |
 |------|-------------|
-| [src/components/domains/operations/subscriptions/export-subscription-button.tsx](../src/components/domains/operations/subscriptions/export-subscription-button.tsx) | Export to Excel button |
+| [src/features/subscriptions/components/export-subscription-button.tsx](../src/features/subscriptions/components/export-subscription-button.tsx) | Export to Excel button |
 
 ---
 
@@ -97,8 +96,14 @@ Complete list of all subscription-related files for code review and understandin
 ### Domain Logic
 | File | Description |
 |------|-------------|
-| [src/lib/domains/operations/subscriptions/subscription-lifecycle.ts](../src/lib/domains/operations/subscriptions/subscription-lifecycle.ts) | Lifecycle management, cost calculation, billing periods |
-| [src/lib/domains/operations/subscriptions/subscription-import.ts](../src/lib/domains/operations/subscriptions/subscription-import.ts) | CSV/Excel import parsing |
+| [src/features/subscriptions/lib/subscription-lifecycle.ts](../src/features/subscriptions/lib/subscription-lifecycle.ts) | Lifecycle management, cost calculation, billing periods |
+| [src/features/subscriptions/lib/subscription-import.ts](../src/features/subscriptions/lib/subscription-import.ts) | CSV/Excel import parsing |
+
+### Utilities
+| File | Description |
+|------|-------------|
+| [src/features/subscriptions/utils/billing-cycle.ts](../src/features/subscriptions/utils/billing-cycle.ts) | Billing cycle utilities |
+| [src/features/subscriptions/utils/renewal-date.ts](../src/features/subscriptions/utils/renewal-date.ts) | Renewal date calculation |
 
 ---
 
@@ -106,7 +111,7 @@ Complete list of all subscription-related files for code review and understandin
 
 | File | Description |
 |------|-------------|
-| [src/lib/validations/operations/subscriptions.ts](../src/lib/validations/operations/subscriptions.ts) | Subscription schemas (create, update, query) |
+| [src/features/subscriptions/validations/subscriptions.ts](../src/features/subscriptions/validations/subscriptions.ts) | Subscription schemas (create, update, query) |
 
 ---
 
@@ -172,8 +177,8 @@ CREATED → ACTIVE → CANCELLED
 ## Recommended Review Order
 
 1. **Start with schemas**: [prisma/schema.prisma](../prisma/schema.prisma) (Subscription models)
-2. **Understand validations**: [src/lib/validations/operations/subscriptions.ts](../src/lib/validations/operations/subscriptions.ts)
+2. **Understand validations**: [src/features/subscriptions/validations/subscriptions.ts](../src/features/subscriptions/validations/subscriptions.ts)
 3. **Core API**: [src/app/api/subscriptions/route.ts](../src/app/api/subscriptions/route.ts) and [src/app/api/subscriptions/[id]/route.ts](../src/app/api/subscriptions/[id]/route.ts)
-4. **Business logic**: [src/lib/domains/operations/subscriptions/subscription-lifecycle.ts](../src/lib/domains/operations/subscriptions/subscription-lifecycle.ts)
-5. **UI components**: [src/components/domains/operations/subscriptions/](../src/components/domains/operations/subscriptions/)
+4. **Business logic**: [src/features/subscriptions/lib/subscription-lifecycle.ts](../src/features/subscriptions/lib/subscription-lifecycle.ts)
+5. **UI components**: [src/features/subscriptions/components/](../src/features/subscriptions/components/)
 6. **Pages**: [src/app/admin/(operations)/subscriptions/](../src/app/admin/(operations)/subscriptions/)
