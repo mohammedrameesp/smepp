@@ -131,9 +131,10 @@ export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleO
         <div>
           {logoUrl ? (
             <img
-              src={logoUrl}
+              src={branding?.logoUrlInverse || logoUrl}
               alt={orgName}
               className="h-16 w-auto object-contain mb-8"
+              style={!branding?.logoUrlInverse ? { filter: 'brightness(0) invert(1)' } : undefined}
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
           ) : (

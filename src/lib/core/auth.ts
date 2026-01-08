@@ -32,6 +32,7 @@ export interface OrganizationInfo {
   name: string;
   slug: string;
   logoUrl: string | null;
+  logoUrlInverse: string | null;
   role: OrgRole;
   tier: SubscriptionTier;
   enabledModules: string[];
@@ -124,6 +125,7 @@ providers.push(
               name: true,
               slug: true,
               logoUrl: true,
+              logoUrlInverse: true,
               subscriptionTier: true,
               enabledModules: true,
             },
@@ -183,6 +185,7 @@ providers.push(
           organizationSlug: teamMember.tenant.slug,
           organizationName: teamMember.tenant.name,
           organizationLogoUrl: teamMember.tenant.logoUrl,
+          organizationLogoUrlInverse: teamMember.tenant.logoUrlInverse,
           subscriptionTier: teamMember.tenant.subscriptionTier,
           enabledModules: teamMember.tenant.enabledModules,
         };
@@ -353,6 +356,7 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
           name: true,
           slug: true,
           logoUrl: true,
+          logoUrlInverse: true,
           subscriptionTier: true,
           enabledModules: true,
         },
@@ -377,6 +381,7 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
       name: member.tenant.name,
       slug: member.tenant.slug,
       logoUrl: member.tenant.logoUrl,
+      logoUrlInverse: member.tenant.logoUrlInverse,
       role: orgRole,
       tier: member.tenant.subscriptionTier,
       enabledModules: member.tenant.enabledModules,
@@ -410,6 +415,7 @@ async function getUserOrganization(userId: string): Promise<OrganizationInfo | n
           name: true,
           slug: true,
           logoUrl: true,
+          logoUrlInverse: true,
           subscriptionTier: true,
           enabledModules: true,
         },
@@ -426,6 +432,7 @@ async function getUserOrganization(userId: string): Promise<OrganizationInfo | n
     name: membership.tenant.name,
     slug: membership.tenant.slug,
     logoUrl: membership.tenant.logoUrl,
+    logoUrlInverse: membership.tenant.logoUrlInverse,
     role: membership.isOwner ? OrgRole.OWNER : membership.role === 'ADMIN' ? OrgRole.ADMIN : OrgRole.MEMBER,
     tier: membership.tenant.subscriptionTier,
     enabledModules: membership.tenant.enabledModules,
@@ -648,6 +655,7 @@ export const authOptions: NextAuthOptions = {
             token.organizationSlug = userData.organizationSlug as string;
             token.organizationName = userData.organizationName as string;
             token.organizationLogoUrl = userData.organizationLogoUrl as string | null;
+            token.organizationLogoUrlInverse = userData.organizationLogoUrlInverse as string | null;
             token.subscriptionTier = userData.subscriptionTier as SubscriptionTier;
             token.enabledModules = userData.enabledModules as string[];
             // Map TeamMemberRole to legacy OrgRole - owners get OWNER role
@@ -694,6 +702,7 @@ export const authOptions: NextAuthOptions = {
                       name: true,
                       slug: true,
                       logoUrl: true,
+                      logoUrlInverse: true,
                       subscriptionTier: true,
                       enabledModules: true,
                     },
@@ -712,6 +721,7 @@ export const authOptions: NextAuthOptions = {
                 token.organizationSlug = teamMember.tenant.slug;
                 token.organizationName = teamMember.tenant.name;
                 token.organizationLogoUrl = teamMember.tenant.logoUrl;
+                token.organizationLogoUrlInverse = teamMember.tenant.logoUrlInverse;
                 token.subscriptionTier = teamMember.tenant.subscriptionTier;
                 token.enabledModules = teamMember.tenant.enabledModules;
                 // Owners get OWNER role, otherwise map from teamMemberRole
@@ -729,6 +739,7 @@ export const authOptions: NextAuthOptions = {
               token.organizationSlug = undefined;
               token.organizationName = undefined;
               token.organizationLogoUrl = undefined;
+              token.organizationLogoUrlInverse = undefined;
               token.orgRole = undefined;
               token.subscriptionTier = undefined;
               token.enabledModules = undefined;
@@ -745,6 +756,7 @@ export const authOptions: NextAuthOptions = {
             token.organizationSlug = memberData.organization.slug;
             token.organizationName = memberData.organization.name;
             token.organizationLogoUrl = memberData.organization.logoUrl;
+            token.organizationLogoUrlInverse = memberData.organization.logoUrlInverse;
             token.orgRole = memberData.organization.role;
             token.subscriptionTier = memberData.organization.tier;
             token.enabledModules = memberData.organization.enabledModules;
@@ -784,6 +796,7 @@ export const authOptions: NextAuthOptions = {
             session.user.organizationSlug = token.organizationSlug as string;
             session.user.organizationName = token.organizationName as string;
             session.user.organizationLogoUrl = token.organizationLogoUrl as string | undefined;
+            session.user.organizationLogoUrlInverse = token.organizationLogoUrlInverse as string | undefined;
             session.user.orgRole = token.orgRole as OrgRole;
             session.user.subscriptionTier = token.subscriptionTier as SubscriptionTier;
             session.user.enabledModules = token.enabledModules as string[] | undefined;
@@ -888,6 +901,7 @@ declare module 'next-auth' {
       organizationSlug?: string;
       organizationName?: string;
       organizationLogoUrl?: string;
+      organizationLogoUrlInverse?: string;
       orgRole?: OrgRole; // Legacy role for backwards compatibility
       subscriptionTier?: SubscriptionTier;
       enabledModules?: string[];
@@ -905,6 +919,7 @@ declare module 'next-auth' {
     organizationSlug?: string;
     organizationName?: string;
     organizationLogoUrl?: string | null;
+    organizationLogoUrlInverse?: string | null;
     subscriptionTier?: SubscriptionTier;
     enabledModules?: string[];
   }
@@ -925,6 +940,7 @@ declare module 'next-auth/jwt' {
     organizationSlug?: string;
     organizationName?: string;
     organizationLogoUrl?: string | null;
+    organizationLogoUrlInverse?: string | null;
     orgRole?: OrgRole;
     subscriptionTier?: SubscriptionTier;
     enabledModules?: string[];

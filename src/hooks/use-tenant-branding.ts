@@ -38,6 +38,7 @@ export function useTenantBranding(subdomain: string | null): TenantBrandingState
           organizationName: 'Durj',
           organizationSlug: '',
           logoUrl: null,
+          logoUrlInverse: null,
           primaryColor: DEFAULT_TENANT_BRANDING.primaryColor!,
           secondaryColor: DEFAULT_TENANT_BRANDING.secondaryColor!,
           loginBackgroundUrl: null,

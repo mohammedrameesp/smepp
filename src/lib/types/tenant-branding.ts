@@ -11,6 +11,7 @@ export interface TenantBranding {
   organizationName: string;
   organizationSlug: string;
   logoUrl: string | null;
+  logoUrlInverse: string | null;
   primaryColor: string;
   secondaryColor: string | null;
   loginBackgroundUrl: string | null;
