@@ -7,7 +7,6 @@ export * from './forms/cancel-dialog';
 export * from './forms/reactivate-dialog';
 
 // Cards & Display
-export * from './cards/user-subscription-card';
 export * from './cards/cost-breakdown';
 export * from './cards/subscription-renewal-display';
 export * from './cards/history-timeline';
