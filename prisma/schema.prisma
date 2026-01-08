@@ -887,6 +887,10 @@ model Asset {
   @@index([categoryId])
   @@index([locationId])
   @@index([tenantId])
+  @@index([tenantId, status]) // For status filtering
+  @@index([tenantId, type]) // For type filtering
+  @@index([tenantId, categoryId]) // For category filtering
+  @@index([tenantId, assignedMemberId]) // For assignment filtering
   @@index([tenantId, status, disposalDate]) // For disposal reporting
 }
 
@@ -2012,6 +2016,7 @@ model AssetRequest {
   @@index([type])
   @@index([createdAt])
   @@index([tenantId])
+  @@index([assetId, status, type]) // For pending request lookups on assets
 }
 
 model AssetRequestHistory {

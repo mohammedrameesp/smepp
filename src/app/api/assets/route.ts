@@ -256,35 +256,74 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
             name: true,
           },
         },
-        // Include pending acceptance request for display
-        assetRequests: {
-          where: {
-            status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
-            type: 'ADMIN_ASSIGNMENT',
-          },
-          take: 1,
-          select: {
-            id: true,
-            requestNumber: true,
-            member: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
-          },
-        },
+        // NOTE: assetRequests removed from main query for performance
+        // Pending requests are fetched separately below (batch query)
       },
     }),
     prisma.asset.count({ where }),
   ]);
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // STEP 4: Return paginated response
+  // STEP 4: Batch fetch pending requests for unassigned assets (PERFORMANCE FIX)
+  // Instead of N correlated subqueries, we do 1 batch query
+  // ─────────────────────────────────────────────────────────────────────────────
+  const unassignedAssetIds = assets
+    .filter(a => !a.assignedMemberId && !a.isShared)
+    .map(a => a.id);
+
+  let pendingRequestsMap: Record<string, {
+    id: string;
+    requestNumber: string;
+    member: { id: string; name: string | null; email: string } | null;
+  }> = {};
+
+  if (unassignedAssetIds.length > 0) {
+    const pendingRequests = await prisma.assetRequest.findMany({
+      where: {
+        assetId: { in: unassignedAssetIds },
+        status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
+        type: 'ADMIN_ASSIGNMENT',
+      },
+      select: {
+        id: true,
+        requestNumber: true,
+        assetId: true,
+        member: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Build lookup map by assetId
+    pendingRequestsMap = pendingRequests.reduce((acc, req) => {
+      if (!acc[req.assetId]) {
+        acc[req.assetId] = {
+          id: req.id,
+          requestNumber: req.requestNumber,
+          member: req.member,
+        };
+      }
+      return acc;
+    }, {} as typeof pendingRequestsMap);
+  }
+
+  // Merge pending requests into assets
+  const assetsWithRequests = assets.map(asset => ({
+    ...asset,
+    assetRequests: pendingRequestsMap[asset.id]
+      ? [pendingRequestsMap[asset.id]]
+      : [],
+  }));
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 5: Return paginated response
   // ─────────────────────────────────────────────────────────────────────────────
   return NextResponse.json({
-    assets,
+    assets: assetsWithRequests,
     pagination: {
       page: p,
       pageSize: ps,
