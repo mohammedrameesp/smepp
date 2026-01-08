@@ -111,6 +111,9 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
     notFound();
   }
 
+  // Check if this subscription is assigned to the current user
+  const isAssignedToMe = subscription.assignedMemberId === session.user.id;
+
   // Find when the current user was assigned
   let currentUserAssignmentDate: Date | null = null;
   if (subscription.assignedMember) {
@@ -220,20 +223,31 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
                     <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Vendor</p>
                     <p className="font-semibold text-slate-900">{subscription.vendor || 'N/A'}</p>
                   </div>
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Account ID</p>
-                    <p className="font-semibold text-slate-900 font-mono text-sm">{subscription.accountId || 'N/A'}</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-xl col-span-2">
-                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Payment Method</p>
-                    <p className="font-semibold text-slate-900">{subscription.paymentMethod || 'N/A'}</p>
-                  </div>
+                  {isAssignedToMe && (
+                    <div className="p-4 bg-slate-50 rounded-xl">
+                      <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Account ID</p>
+                      <p className="font-semibold text-slate-900 font-mono text-sm">{subscription.accountId || 'N/A'}</p>
+                    </div>
+                  )}
+                  {isAssignedToMe && (
+                    <div className={`p-4 bg-slate-50 rounded-xl ${isAssignedToMe ? 'col-span-2' : ''}`}>
+                      <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Payment Method</p>
+                      <p className="font-semibold text-slate-900">{subscription.paymentMethod || 'N/A'}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Cost Breakdown */}
-            <CostBreakdown subscriptionId={subscription.id} />
+            {/* Cost Breakdown - only shown for assigned subscriptions */}
+            {isAssignedToMe ? (
+              <CostBreakdown subscriptionId={subscription.id} />
+            ) : (
+              <div className="bg-slate-50 rounded-2xl border border-slate-200 p-6 text-center">
+                <DollarSign className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                <p className="text-sm text-slate-500">Cost details are only visible for subscriptions assigned to you</p>
+              </div>
+            )}
 
             {/* Assignment Info */}
             {subscription.assignedMember && (
