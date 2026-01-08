@@ -4,8 +4,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DataExportImport, ExchangeRateSettings, DatabaseStats, PayrollSettings } from '@/features/settings/components';
-import { prisma } from '@/lib/core/prisma';
+import { DataExportImport, ExchangeRateSettings, PayrollSettings } from '@/features/settings/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Package, ChevronRight } from 'lucide-react';
 
@@ -20,36 +19,11 @@ export default async function SettingsPage() {
     redirect('/forbidden');
   }
 
-  // Get database statistics
-  const stats = await Promise.all([
-    prisma.user.count(),
-    prisma.asset.count(),
-    prisma.subscription.count(),
-    prisma.supplier.count(),
-    prisma.activityLog.count(),
-  ]);
-
-  const [
-    userCount,
-    assetCount,
-    subscriptionCount,
-    supplierCount,
-    activityLogCount,
-  ] = stats;
-
-  const dbStats = {
-    users: userCount,
-    assets: assetCount,
-    subscriptions: subscriptionCount,
-    suppliers: supplierCount,
-    activityLogs: activityLogCount,
-  };
-
   return (
     <>
       <PageHeader
         title="System Settings"
-        subtitle="Manage system configuration, data export/import, and database utilities"
+        subtitle="Manage system configuration and data export/import"
       />
       <PageContent>
         {/* Quick link to Modules */}
@@ -70,20 +44,14 @@ export default async function SettingsPage() {
         </Link>
 
         <Tabs defaultValue="export" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="export">Data Export/Import</TabsTrigger>
-              <TabsTrigger value="database">Database</TabsTrigger>
               <TabsTrigger value="system">System Config</TabsTrigger>
             </TabsList>
 
             {/* Data Export/Import Tab */}
             <TabsContent value="export" className="space-y-6">
               <DataExportImport />
-            </TabsContent>
-
-            {/* Database Tab */}
-            <TabsContent value="database" className="space-y-6">
-              <DatabaseStats stats={dbStats} />
             </TabsContent>
 
             {/* System Config Tab */}
