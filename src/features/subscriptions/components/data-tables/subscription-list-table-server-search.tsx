@@ -253,39 +253,40 @@ export function SubscriptionListTableServerSearch() {
           <TableHeader>
             <TableRow>
               <TableHead
-                className="cursor-pointer hover:bg-gray-100 w-[200px]"
+                className="cursor-pointer hover:bg-gray-100 w-[180px]"
                 onClick={() => toggleSort('serviceName')}
               >
                 Service {sortBy === 'serviceName' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
-              <TableHead className="w-[180px]">Account</TableHead>
-              <TableHead className="w-[120px]">Status</TableHead>
+              <TableHead className="w-[160px]">Account</TableHead>
+              <TableHead className="w-[140px]">Assigned To</TableHead>
+              <TableHead className="w-[100px]">Status</TableHead>
               <TableHead
-                className="cursor-pointer hover:bg-gray-100 w-[130px]"
+                className="cursor-pointer hover:bg-gray-100 w-[110px]"
                 onClick={() => toggleSort('costPerCycle')}
               >
                 Cost {sortBy === 'costPerCycle' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead
-                className="cursor-pointer hover:bg-gray-100 w-[130px]"
+                className="cursor-pointer hover:bg-gray-100 w-[110px]"
                 onClick={() => toggleSort('renewalDate')}
               >
                 Renewal {sortBy === 'renewalDate' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
-              <TableHead className="text-center w-[80px]">Actions</TableHead>
+              <TableHead className="text-center w-[70px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading && subscriptions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
                   <p className="text-gray-500 mt-2">Loading subscriptions...</p>
                 </TableCell>
               </TableRow>
             ) : subscriptions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                   {debouncedSearch || statusFilter !== 'all' || categoryFilter !== 'all' || billingFilter !== 'all'
                     ? 'No subscriptions match your filters'
                     : 'No subscriptions found. Create your first subscription!'}
@@ -345,26 +346,28 @@ export function SubscriptionListTableServerSearch() {
                       )}
                     </TableCell>
 
-                    {/* Column 2: Account + Assigned */}
+                    {/* Column 2: Account */}
                     <TableCell>
                       <div className="text-sm truncate" title={subscription.accountId || undefined}>
-                        {subscription.accountId || <span className="text-gray-400">No account</span>}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-0.5">
-                        {subscription.assignedMember ? (
-                          <Link
-                            href={`/admin/users/${subscription.assignedMember.id}`}
-                            className="hover:text-gray-700"
-                          >
-                            {subscription.assignedMember.name || subscription.assignedMember.email}
-                          </Link>
-                        ) : (
-                          <span className="text-gray-400">Unassigned</span>
-                        )}
+                        {subscription.accountId || <span className="text-gray-400">-</span>}
                       </div>
                     </TableCell>
 
-                    {/* Column 3: Status + Billing */}
+                    {/* Column 3: Assigned To */}
+                    <TableCell>
+                      {subscription.assignedMember ? (
+                        <Link
+                          href={`/admin/users/${subscription.assignedMember.id}`}
+                          className="text-sm hover:text-blue-600"
+                        >
+                          {subscription.assignedMember.name || subscription.assignedMember.email}
+                        </Link>
+                      ) : (
+                        <span className="text-gray-400 text-sm">Unassigned</span>
+                      )}
+                    </TableCell>
+
+                    {/* Column 4: Status + Billing */}
                     <TableCell>
                       {getStatusBadge()}
                       <div className="text-xs text-gray-500 mt-1">
@@ -372,7 +375,7 @@ export function SubscriptionListTableServerSearch() {
                       </div>
                     </TableCell>
 
-                    {/* Column 4: Cost + Payment */}
+                    {/* Column 5: Cost + Payment */}
                     <TableCell>
                       <div className="text-sm font-medium">
                         {subscription.costPerCycle ? (
@@ -388,7 +391,7 @@ export function SubscriptionListTableServerSearch() {
                       </div>
                     </TableCell>
 
-                    {/* Column 5: Renewal + Days */}
+                    {/* Column 6: Renewal + Days */}
                     <TableCell>
                       {subscription.status === 'CANCELLED' ? (
                         <span className="text-gray-400 text-xs">-</span>
@@ -404,7 +407,7 @@ export function SubscriptionListTableServerSearch() {
                       )}
                     </TableCell>
 
-                    {/* Column 6: Actions */}
+                    {/* Column 7: Actions */}
                     <TableCell>
                       <SubscriptionActions subscriptionId={subscription.id} />
                     </TableCell>
