@@ -216,135 +216,164 @@ export function SubscriptionListTableServerSearch() {
           <TableHeader>
             <TableRow>
               <TableHead
-                className="cursor-pointer hover:bg-gray-100 w-[180px]"
+                className="cursor-pointer hover:bg-gray-100 w-[200px]"
                 onClick={() => toggleSort('serviceName')}
               >
                 Service {sortBy === 'serviceName' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
-              <TableHead className="w-[140px]">Account</TableHead>
-              <TableHead className="w-[90px]">Billing</TableHead>
+              <TableHead className="w-[180px]">Account</TableHead>
+              <TableHead className="w-[120px]">Status</TableHead>
               <TableHead
-                className="cursor-pointer hover:bg-gray-100 text-right w-[100px]"
+                className="cursor-pointer hover:bg-gray-100 w-[130px]"
                 onClick={() => toggleSort('costPerCycle')}
               >
                 Cost {sortBy === 'costPerCycle' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead
-                className="cursor-pointer hover:bg-gray-100 w-[120px]"
+                className="cursor-pointer hover:bg-gray-100 w-[130px]"
                 onClick={() => toggleSort('renewalDate')}
               >
                 Renewal {sortBy === 'renewalDate' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
-              <TableHead className="w-[110px]">Payment</TableHead>
-              <TableHead className="w-[120px]">Assigned</TableHead>
               <TableHead className="text-center w-[80px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading && subscriptions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+                <TableCell colSpan={6} className="text-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
                   <p className="text-gray-500 mt-2">Loading subscriptions...</p>
                 </TableCell>
               </TableRow>
             ) : subscriptions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                   {debouncedSearch || statusFilter !== 'all' || categoryFilter !== 'all' || billingFilter !== 'all'
                     ? 'No subscriptions match your filters'
                     : 'No subscriptions found. Create your first subscription!'}
                 </TableCell>
               </TableRow>
             ) : (
-              subscriptions.map((subscription) => (
-                <TableRow key={subscription.id}>
-                  <TableCell className="font-medium">
-                    <div className="font-medium text-sm">{subscription.serviceName}</div>
-                    {subscription.category && (
-                      <div className="text-xs text-gray-500 mt-0.5">{subscription.category}</div>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-xs text-gray-600 truncate" title={subscription.accountId || undefined}>
-                    {subscription.accountId || <span className="text-gray-400">N/A</span>}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-xs">{formatBillingCycle(subscription.billingCycle)}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right text-sm">
-                    {subscription.costPerCycle ? (
-                      formatCurrency(Number(subscription.costPerCycle), subscription.costCurrency)
-                    ) : 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    {subscription.status === 'CANCELLED' ? (
-                      <span className="text-gray-400 text-xs">Cancelled</span>
-                    ) : subscription.renewalDate && subscription.status !== 'PAUSED' ? (() => {
-                      const nextRenewal = getNextRenewalDate(subscription.renewalDate, subscription.billingCycle);
-                      const daysUntil = getDaysUntilRenewal(nextRenewal);
+              subscriptions.map((subscription) => {
+                // Calculate renewal info
+                let renewalColorClass = 'text-gray-900';
+                let daysText = '';
+                let nextRenewal: Date | null = null;
 
-                      let colorClass = 'text-gray-900';
-                      let daysText = '';
+                if (subscription.status !== 'CANCELLED' && subscription.status !== 'PAUSED' && subscription.renewalDate) {
+                  nextRenewal = getNextRenewalDate(subscription.renewalDate, subscription.billingCycle);
+                  const daysUntil = getDaysUntilRenewal(nextRenewal);
 
-                      if (daysUntil !== null) {
-                        if (daysUntil < 0) {
-                          colorClass = 'text-red-600 font-medium';
-                          daysText = `${Math.abs(daysUntil)} days overdue`;
-                        } else if (daysUntil === 0) {
-                          colorClass = 'text-red-600 font-medium';
-                          daysText = 'Due today';
-                        } else if (daysUntil <= 7) {
-                          colorClass = 'text-orange-600 font-medium';
-                          daysText = `Due in ${daysUntil} days`;
-                        } else if (daysUntil <= 30) {
-                          colorClass = 'text-yellow-600 font-medium';
-                          daysText = `Due in ${daysUntil} days`;
-                        } else {
-                          daysText = `Due in ${daysUntil} days`;
-                        }
-                      }
+                  if (daysUntil !== null) {
+                    if (daysUntil < 0) {
+                      renewalColorClass = 'text-red-600 font-medium';
+                      daysText = `${Math.abs(daysUntil)}d overdue`;
+                    } else if (daysUntil === 0) {
+                      renewalColorClass = 'text-red-600 font-medium';
+                      daysText = 'Due today';
+                    } else if (daysUntil <= 7) {
+                      renewalColorClass = 'text-orange-600 font-medium';
+                      daysText = `${daysUntil}d left`;
+                    } else if (daysUntil <= 30) {
+                      renewalColorClass = 'text-yellow-600 font-medium';
+                      daysText = `${daysUntil}d left`;
+                    } else {
+                      daysText = `${daysUntil}d left`;
+                    }
+                  }
+                }
 
-                      return (
-                        <div className={`text-xs ${colorClass}`}>
+                // Status badge styling
+                const getStatusBadge = () => {
+                  switch (subscription.status) {
+                    case 'ACTIVE':
+                      return <Badge className="bg-green-100 text-green-800 border-green-300 text-xs">Active</Badge>;
+                    case 'CANCELLED':
+                      return <Badge className="bg-red-100 text-red-800 border-red-300 text-xs">Cancelled</Badge>;
+                    case 'PAUSED':
+                      return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">Paused</Badge>;
+                    default:
+                      return <Badge variant="secondary" className="text-xs">{subscription.status}</Badge>;
+                  }
+                };
+
+                return (
+                  <TableRow key={subscription.id}>
+                    {/* Column 1: Service + Category */}
+                    <TableCell>
+                      <div className="font-medium text-sm">{subscription.serviceName}</div>
+                      {subscription.category && (
+                        <div className="text-xs text-gray-500 mt-0.5">{subscription.category}</div>
+                      )}
+                    </TableCell>
+
+                    {/* Column 2: Account + Assigned */}
+                    <TableCell>
+                      <div className="text-sm truncate" title={subscription.accountId || undefined}>
+                        {subscription.accountId || <span className="text-gray-400">No account</span>}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {subscription.assignedMember ? (
+                          <Link
+                            href={`/admin/users/${subscription.assignedMember.id}`}
+                            className="hover:text-gray-700"
+                          >
+                            {subscription.assignedMember.name || subscription.assignedMember.email}
+                          </Link>
+                        ) : (
+                          <span className="text-gray-400">Unassigned</span>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    {/* Column 3: Status + Billing */}
+                    <TableCell>
+                      {getStatusBadge()}
+                      <div className="text-xs text-gray-500 mt-1">
+                        {formatBillingCycle(subscription.billingCycle)}
+                      </div>
+                    </TableCell>
+
+                    {/* Column 4: Cost + Payment */}
+                    <TableCell>
+                      <div className="text-sm font-medium">
+                        {subscription.costPerCycle ? (
+                          formatCurrency(Number(subscription.costPerCycle), subscription.costCurrency)
+                        ) : <span className="text-gray-400">N/A</span>}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {subscription.paymentMethod ? (
+                          <span>•••• {subscription.paymentMethod.slice(-4)}</span>
+                        ) : (
+                          <span className="text-gray-400">No payment</span>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    {/* Column 5: Renewal + Days */}
+                    <TableCell>
+                      {subscription.status === 'CANCELLED' ? (
+                        <span className="text-gray-400 text-xs">-</span>
+                      ) : nextRenewal ? (
+                        <div className={`text-xs ${renewalColorClass}`}>
                           <div>{formatDate(nextRenewal)}</div>
                           {daysText && (
-                            <div className="text-[10px] mt-0.5 opacity-90">
-                              {daysText}
-                            </div>
+                            <div className="text-[10px] mt-0.5 opacity-90">{daysText}</div>
                           )}
                         </div>
-                      );
-                    })() : (
-                      <span className="text-gray-400 text-xs">N/A</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-xs text-gray-600">
-                    {subscription.paymentMethod ? (
-                      <div className="flex items-center gap-1">
-                        <span>💳</span>
-                        <span>•••• {subscription.paymentMethod.slice(-4)}</span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400">N/A</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {subscription.assignedMember ? (
-                      <Link
-                        href={`/admin/users/${subscription.assignedMember.id}`}
-                        className="text-gray-900 hover:text-gray-700 cursor-pointer font-medium"
-                      >
-                        {subscription.assignedMember.name || 'Unknown User'}
-                      </Link>
-                    ) : (
-                      <span className="text-gray-400 text-xs">Unassigned</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <SubscriptionActions subscriptionId={subscription.id} />
-                  </TableCell>
-                </TableRow>
-              ))
+                      ) : (
+                        <span className="text-gray-400 text-xs">N/A</span>
+                      )}
+                    </TableCell>
+
+                    {/* Column 6: Actions */}
+                    <TableCell>
+                      <SubscriptionActions subscriptionId={subscription.id} />
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
