@@ -68,23 +68,22 @@ export default async function AdminSubscriptionsPage() {
     }),
   ]);
 
-  // Calculate this month's charges
+  // Calculate this month's charges with multi-currency support
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  let monthlyQAR = 0;
-  let monthlyUSD = 0;
-  let yearlyRenewingQAR = 0;
-  let yearlyRenewingUSD = 0;
+  // Collect costs grouped by currency
+  const costsByCurrency: Record<string, number> = {};
 
   activeSubscriptions.forEach(sub => {
     const cost = sub.costPerCycle ? Number(sub.costPerCycle) : 0;
+    if (cost <= 0) return;
+
     const currency = sub.costCurrency || 'QAR';
 
     if (sub.billingCycle === 'MONTHLY') {
-      if (currency === 'QAR') monthlyQAR += cost;
-      else monthlyUSD += cost;
+      costsByCurrency[currency] = (costsByCurrency[currency] || 0) + cost;
     } else if (sub.billingCycle === 'YEARLY' && sub.renewalDate) {
       const renewalDate = new Date(sub.renewalDate);
       let nextRenewal = new Date(renewalDate);
@@ -100,18 +99,21 @@ export default async function AdminSubscriptionsPage() {
       const renewalYear = nextRenewal.getFullYear();
 
       if (renewalMonth === currentMonth && renewalYear === currentYear) {
-        if (currency === 'QAR') yearlyRenewingQAR += cost;
-        else yearlyRenewingUSD += cost;
+        costsByCurrency[currency] = (costsByCurrency[currency] || 0) + cost;
       }
     }
   });
 
-  // Get exchange rate for USD to QAR conversion
-  const usdToQarRate = await getExchangeRateToQAR(tenantId, 'USD');
+  // Convert all currencies to QAR
+  const currencies = Object.keys(costsByCurrency);
+  const exchangeRates = await Promise.all(
+    currencies.map(currency => getExchangeRateToQAR(tenantId, currency))
+  );
 
-  const totalQAR = monthlyQAR + yearlyRenewingQAR;
-  const totalUSD = monthlyUSD + yearlyRenewingUSD;
-  const totalInQAR = totalQAR + (totalUSD * usdToQarRate);
+  let totalInQAR = 0;
+  currencies.forEach((currency, index) => {
+    totalInQAR += costsByCurrency[currency] * exchangeRates[index];
+  });
 
   return (
     <>
@@ -135,19 +137,13 @@ export default async function AdminSubscriptionsPage() {
               <span className="text-slate-400 text-sm font-medium">{cancelledCount} cancelled</span>
             </div>
           )}
-          {totalQAR > 0 && (
+          {totalInQAR > 0 && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-              <span className="text-emerald-400 text-sm font-medium">QAR {totalQAR.toLocaleString()} this month</span>
+              <span className="text-emerald-400 text-sm font-medium">
+                QAR {totalInQAR.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} this month
+              </span>
             </div>
           )}
-          {totalUSD > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-              <span className="text-amber-400 text-sm font-medium">USD {totalUSD.toLocaleString()} this month</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 rounded-lg">
-            <span className="text-purple-400 text-sm font-medium">QAR {totalInQAR.toLocaleString()} total</span>
-          </div>
         </div>
       </PageHeader>
 
