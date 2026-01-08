@@ -26,6 +26,7 @@ import {
   Coins,
   LayoutGrid,
   MapPin,
+  Lock,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
@@ -80,6 +81,30 @@ const AVAILABLE_MODULES = [
   { id: 'documents', name: 'Documents', description: 'Company documents' },
 ];
 
+// Placeholder component for disabled modules
+function ModuleRequiredPlaceholder({
+  moduleName,
+  onEnableClick,
+}: {
+  moduleName: string;
+  onEnableClick: () => void;
+}) {
+  return (
+    <Card className="border-dashed">
+      <CardContent className="py-12 text-center">
+        <Lock className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+        <h3 className="text-lg font-medium mb-2">Enable {moduleName} Module</h3>
+        <p className="text-muted-foreground mb-4">
+          These settings require the {moduleName} module to be enabled.
+        </p>
+        <Button variant="outline" onClick={onEnableClick}>
+          Enable in General Settings
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function OrganizationTabs({
   organization: initialOrg,
   currentUserRole,
@@ -90,6 +115,7 @@ export function OrganizationTabs({
 
   // State
   const [org, setOrg] = useState(initialOrg);
+  const [configTab, setConfigTab] = useState('general');
 
   // Form state for auto-save
   const [name, setName] = useState(org.name);
@@ -477,207 +503,238 @@ export function OrganizationTabs({
 
         {/* Configuration Tab */}
         <TabsContent value="config" className="space-y-6">
-          {/* Code Prefix */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings2 className="h-5 w-5" />
-                    Reference Code Prefix
-                  </CardTitle>
-                  <CardDescription>3-letter prefix used for employee IDs, asset tags, and other codes</CardDescription>
-                </div>
-                <AutoSaveIndicator status={codePrefixAutoSave.status} error={codePrefixAutoSave.error} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                <Input
-                  value={codePrefix}
-                  onChange={(e) => setCodePrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3))}
-                  placeholder="ORG"
-                  className="w-24 font-mono text-center text-lg uppercase"
-                  maxLength={3}
-                  disabled={!isAdmin}
-                />
-                <div className="text-sm text-muted-foreground">
-                  <p>Example: <code className="px-2 py-1 bg-muted rounded">{codePrefix}-2024-001</code></p>
-                  {codePrefix.length !== 3 && (
-                    <p className="text-amber-600 mt-1">Must be exactly 3 characters</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <Tabs value={configTab} onValueChange={setConfigTab}>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="general">General</TabsTrigger>
+              <TabsTrigger value="assets">Assets</TabsTrigger>
+              <TabsTrigger value="financial">Financial</TabsTrigger>
+              <TabsTrigger value="hr">HR</TabsTrigger>
+            </TabsList>
 
-          {/* Code Formats */}
-          <CodeFormatSettings
-            organizationId={org.id}
-            codePrefix={codePrefix}
-            initialFormats={org.codeFormats || {}}
-            enabledModules={enabledModules}
-          />
-
-          {/* Asset Categories - only show if assets module is enabled */}
-          {enabledModules.includes('assets') && (
-            <>
-              <AssetCategoriesSettings
-                organizationId={org.id}
-                codePrefix={codePrefix}
-                isAdmin={isAdmin}
-              />
-              <AssetTypeMappingsSettings
-                organizationId={org.id}
-                isAdmin={isAdmin}
-              />
-              <DepreciationCategoriesSettings
-                organizationId={org.id}
-                isAdmin={isAdmin}
-              />
-
-              {/* Multiple Locations Toggle */}
+            {/* General Sub-Tab */}
+            <TabsContent value="general" className="space-y-6 mt-6">
+              {/* Code Prefix */}
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="flex items-center gap-2">
-                        <MapPin className="h-5 w-5" />
-                        Multiple Locations
+                        <Settings2 className="h-5 w-5" />
+                        Reference Code Prefix
                       </CardTitle>
-                      <CardDescription>
-                        Enable this if your organization has assets in multiple locations
-                      </CardDescription>
+                      <CardDescription>3-letter prefix used for employee IDs, asset tags, and other codes</CardDescription>
                     </div>
-                    <AutoSaveIndicator status={locationsAutoSave.status} error={locationsAutoSave.error} />
+                    <AutoSaveIndicator status={codePrefixAutoSave.status} error={codePrefixAutoSave.error} />
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        When enabled, you can define locations and assign assets to specific locations.
-                      </p>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      value={codePrefix}
+                      onChange={(e) => setCodePrefix(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3))}
+                      placeholder="ORG"
+                      className="w-24 font-mono text-center text-lg uppercase"
+                      maxLength={3}
+                      disabled={!isAdmin}
+                    />
+                    <div className="text-sm text-muted-foreground">
+                      <p>Example: <code className="px-2 py-1 bg-muted rounded">{codePrefix}-2024-001</code></p>
+                      {codePrefix.length !== 3 && (
+                        <p className="text-amber-600 mt-1">Must be exactly 3 characters</p>
+                      )}
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={hasMultipleLocations}
-                        onChange={() => setHasMultipleLocations(!hasMultipleLocations)}
-                        disabled={!isAdmin}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Locations - only show when multiple locations is enabled */}
-              {hasMultipleLocations && (
-                <LocationsSettings
-                  organizationId={org.id}
-                  isAdmin={isAdmin}
+              {/* Code Formats */}
+              <CodeFormatSettings
+                organizationId={org.id}
+                codePrefix={codePrefix}
+                initialFormats={org.codeFormats || {}}
+                enabledModules={enabledModules}
+              />
+
+              {/* Modules */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <LayoutGrid className="h-5 w-5" />
+                        Enabled Modules
+                      </CardTitle>
+                      <CardDescription>Select which features are available in your organization</CardDescription>
+                    </div>
+                    <AutoSaveIndicator status={modulesAutoSave.status} error={modulesAutoSave.error} />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {AVAILABLE_MODULES.map((module) => (
+                      <label
+                        key={module.id}
+                        className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                          enabledModules.includes(module.id)
+                            ? 'border-green-500 bg-green-50'
+                            : 'hover:bg-muted'
+                        } ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={enabledModules.includes(module.id)}
+                          onChange={() => toggleModule(module.id)}
+                          disabled={!isAdmin}
+                          className="h-4 w-4 rounded border-gray-300 mt-0.5"
+                        />
+                        <div>
+                          <p className="font-medium">{module.name}</p>
+                          <p className="text-xs text-muted-foreground">{module.description}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Disabling a module will hide it from navigation, but existing data is preserved.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Assets Sub-Tab */}
+            <TabsContent value="assets" className="space-y-6 mt-6">
+              {enabledModules.includes('assets') ? (
+                <>
+                  <AssetCategoriesSettings
+                    organizationId={org.id}
+                    codePrefix={codePrefix}
+                    isAdmin={isAdmin}
+                  />
+                  <AssetTypeMappingsSettings
+                    organizationId={org.id}
+                    isAdmin={isAdmin}
+                  />
+                  <DepreciationCategoriesSettings
+                    organizationId={org.id}
+                    isAdmin={isAdmin}
+                  />
+
+                  {/* Multiple Locations Toggle */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <MapPin className="h-5 w-5" />
+                            Multiple Locations
+                          </CardTitle>
+                          <CardDescription>
+                            Enable this if your organization has assets in multiple locations
+                          </CardDescription>
+                        </div>
+                        <AutoSaveIndicator status={locationsAutoSave.status} error={locationsAutoSave.error} />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            When enabled, you can define locations and assign assets to specific locations.
+                          </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={hasMultipleLocations}
+                            onChange={() => setHasMultipleLocations(!hasMultipleLocations)}
+                            disabled={!isAdmin}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Locations - only show when multiple locations is enabled */}
+                  {hasMultipleLocations && (
+                    <LocationsSettings
+                      organizationId={org.id}
+                      isAdmin={isAdmin}
+                    />
+                  )}
+                </>
+              ) : (
+                <ModuleRequiredPlaceholder
+                  moduleName="Assets"
+                  onEnableClick={() => setConfigTab('general')}
                 />
               )}
-            </>
-          )}
+            </TabsContent>
 
-          {/* Currencies */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Coins className="h-5 w-5" />
-                    Additional Currencies
-                  </CardTitle>
-                  <CardDescription>Select currencies your organization works with (besides QAR)</CardDescription>
-                </div>
-                <AutoSaveIndicator status={currenciesAutoSave.status} error={currenciesAutoSave.error} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {AVAILABLE_CURRENCIES.map((currency) => (
-                  <label
-                    key={currency.code}
-                    className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
-                      additionalCurrencies.includes(currency.code)
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'hover:bg-muted'
-                    } ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={additionalCurrencies.includes(currency.code)}
-                      onChange={() => toggleCurrency(currency.code)}
-                      disabled={!isAdmin}
-                      className="h-4 w-4 rounded border-gray-300"
-                    />
+            {/* Financial Sub-Tab */}
+            <TabsContent value="financial" className="space-y-6 mt-6">
+              {/* Currencies */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{currency.code}</p>
-                      <p className="text-xs text-muted-foreground">{currency.name}</p>
+                      <CardTitle className="flex items-center gap-2">
+                        <Coins className="h-5 w-5" />
+                        Additional Currencies
+                      </CardTitle>
+                      <CardDescription>Select currencies your organization works with (besides QAR)</CardDescription>
                     </div>
-                  </label>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                    <AutoSaveIndicator status={currenciesAutoSave.status} error={currenciesAutoSave.error} />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {AVAILABLE_CURRENCIES.map((currency) => (
+                      <label
+                        key={currency.code}
+                        className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
+                          additionalCurrencies.includes(currency.code)
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'hover:bg-muted'
+                        } ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={additionalCurrencies.includes(currency.code)}
+                          onChange={() => toggleCurrency(currency.code)}
+                          disabled={!isAdmin}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                        <div>
+                          <p className="font-medium">{currency.code}</p>
+                          <p className="text-xs text-muted-foreground">{currency.name}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Modules */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <LayoutGrid className="h-5 w-5" />
-                    Enabled Modules
-                  </CardTitle>
-                  <CardDescription>Select which features are available in your organization</CardDescription>
-                </div>
-                <AutoSaveIndicator status={modulesAutoSave.status} error={modulesAutoSave.error} />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {AVAILABLE_MODULES.map((module) => (
-                  <label
-                    key={module.id}
-                    className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-                      enabledModules.includes(module.id)
-                        ? 'border-green-500 bg-green-50'
-                        : 'hover:bg-muted'
-                    } ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={enabledModules.includes(module.id)}
-                      onChange={() => toggleModule(module.id)}
-                      disabled={!isAdmin}
-                      className="h-4 w-4 rounded border-gray-300 mt-0.5"
-                    />
-                    <div>
-                      <p className="font-medium">{module.name}</p>
-                      <p className="text-xs text-muted-foreground">{module.description}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Disabling a module will hide it from navigation, but existing data is preserved.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
+              {/* Exchange Rates */}
+              <ExchangeRateSettings />
+            </TabsContent>
 
-          {/* Exchange Rates */}
-          <ExchangeRateSettings />
-
-          {/* Payroll Settings - only show if payroll module is enabled */}
-          {enabledModules.includes('payroll') && <PayrollSettings />}
+            {/* HR Sub-Tab */}
+            <TabsContent value="hr" className="space-y-6 mt-6">
+              {enabledModules.includes('payroll') ? (
+                <PayrollSettings />
+              ) : (
+                <ModuleRequiredPlaceholder
+                  moduleName="Payroll"
+                  onEnableClick={() => setConfigTab('general')}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
     </div>
