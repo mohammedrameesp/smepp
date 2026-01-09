@@ -16,8 +16,9 @@
  * 3. APPROVED suppliers can be used in purchase requests
  *
  * VALIDATION RULES:
- * - Name and category are required
- * - Email fields validated with regex
+ * - Name, category, and primary contact name are required
+ * - Primary contact: either email OR phone is required
+ * - Email fields validated with regex when provided
  * - Website accepts domain with or without protocol
  * - Establishment year: 1800 to current year
  */
@@ -65,9 +66,9 @@ const supplierBaseSchema = z.object({
   primaryContactName: z.string().min(1, 'Contact name is required'),
   /** Primary contact job title */
   primaryContactTitle: z.string().optional().nullable().or(z.literal('')),
-  /** Primary contact email address (required) */
-  primaryContactEmail: z.string().min(1, 'Contact email is required').refine(
-    (val) => emailRegex.test(val),
+  /** Primary contact email address (optional - either email or phone required) */
+  primaryContactEmail: z.string().optional().nullable().or(z.literal('')).refine(
+    (val) => !val || val === '' || emailRegex.test(val),
     { message: 'Invalid email format' }
   ),
   /** Primary contact mobile number */
@@ -99,7 +100,7 @@ const supplierBaseSchema = z.object({
  * Creates a supplier record with PENDING status for admin review.
  * Includes company info, contacts, and payment terms.
  *
- * Required fields: name, category, primaryContactName, primaryContactEmail
+ * Required fields: name, category, primaryContactName, and either email OR phone
  *
  * @example
  * {
@@ -109,26 +110,49 @@ const supplierBaseSchema = z.object({
  *   primaryContactEmail: "john@acme.com"
  * }
  */
-export const createSupplierSchema = supplierBaseSchema.refine(
-  (data) => {
-    // If mobile number provided, country code must also be provided
-    const primaryMobile = data.primaryContactMobile?.trim();
-    const primaryCode = data.primaryContactMobileCode?.trim();
-    if (primaryMobile && !primaryCode) {
-      return false;
+export const createSupplierSchema = supplierBaseSchema
+  .refine(
+    (data) => {
+      // Either email or phone must be provided for primary contact
+      const hasEmail = data.primaryContactEmail?.trim();
+      const hasPhone = data.primaryContactMobile?.trim();
+      return hasEmail || hasPhone;
+    },
+    {
+      message: 'Please provide either email or phone number for primary contact',
+      path: ['primaryContactEmail'],
     }
-    const secondaryMobile = data.secondaryContactMobile?.trim();
-    const secondaryCode = data.secondaryContactMobileCode?.trim();
-    if (secondaryMobile && !secondaryCode) {
-      return false;
+  )
+  .refine(
+    (data) => {
+      // If mobile number provided, country code must also be provided
+      const primaryMobile = data.primaryContactMobile?.trim();
+      const primaryCode = data.primaryContactMobileCode?.trim();
+      if (primaryMobile && !primaryCode) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Please select a country code for the mobile number',
+      path: ['primaryContactMobileCode'],
     }
-    return true;
-  },
-  {
-    message: 'Please select a country code for the mobile number',
-    path: ['primaryContactMobileCode'],
-  }
-);
+  )
+  .refine(
+    (data) => {
+      // If secondary mobile provided, country code must also be provided
+      const secondaryMobile = data.secondaryContactMobile?.trim();
+      const secondaryCode = data.secondaryContactMobileCode?.trim();
+      if (secondaryMobile && !secondaryCode) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Please select a country code for the mobile number',
+      path: ['secondaryContactMobileCode'],
+    }
+  );
 
 /** Schema for updating supplier. All fields optional. */
 export const updateSupplierSchema = supplierBaseSchema.partial();

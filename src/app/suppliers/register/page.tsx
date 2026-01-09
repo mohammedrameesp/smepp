@@ -403,7 +403,7 @@ export default function SupplierRegistrationPage() {
               <CardHeader>
                 <CardTitle>Primary Contact</CardTitle>
                 <CardDescription>
-                  Main point of contact for business inquiries (required)
+                  Main point of contact for business inquiries. Either email or phone is required.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -434,7 +434,7 @@ export default function SupplierRegistrationPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="primaryContactEmail">Email *</Label>
+                    <Label htmlFor="primaryContactEmail">Email</Label>
                     <Input
                       id="primaryContactEmail"
                       type="email"
