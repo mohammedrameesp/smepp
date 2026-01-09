@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { UserActions } from './user-actions';
 import { formatDate } from '@/lib/date-format';
+import { Users } from 'lucide-react';
 
 interface User {
   id: string;
@@ -136,7 +137,8 @@ export function UserListClient({ users, currentUserId }: UserListClientProps) {
         renderUserTable(users)
       ) : (
         <div className="text-center py-8">
-          <p className="text-gray-600">No users found</p>
+          <Users className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+          <p className="text-gray-500">No users found</p>
         </div>
       )}
     </div>

@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Loader2, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
 import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays, getRequestTypeText } from '@/lib/leave-utils';
 import { LeaveStatus } from '@prisma/client';
@@ -187,18 +187,26 @@ export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/adm
             {loading ? (
               <TableRow>
                 <TableCell colSpan={showUser ? 8 : 7} className="text-center py-8">
-                  Loading...
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                  <p className="text-gray-500 mt-2">Loading leave requests...</p>
                 </TableCell>
               </TableRow>
             ) : requests.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={showUser ? 8 : 7} className="text-center py-8 text-gray-500">
-                  No leave requests found
+                <TableCell colSpan={showUser ? 8 : 7} className="text-center py-8">
+                  <CalendarDays className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+                  <p className="text-gray-500">No leave requests found</p>
                 </TableCell>
               </TableRow>
             ) : (
               requests.map((request) => (
-                <TableRow key={request.id}>
+                <TableRow
+                  key={request.id}
+                  className={
+                    request.status === 'PENDING' ? 'bg-amber-50/50 hover:bg-amber-100/50' :
+                    request.status === 'REJECTED' || request.status === 'CANCELLED' ? 'bg-red-50/50 hover:bg-red-100/50' : ''
+                  }
+                >
                   <TableCell className="font-mono text-sm">
                     {request.requestNumber}
                   </TableCell>
@@ -245,11 +253,11 @@ export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/adm
                     })}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link href={`${basePath}/${request.id}`}>
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`${basePath}/${request.id}`}>
+                        View
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))

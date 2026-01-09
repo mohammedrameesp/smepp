@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 
 interface Supplier {
   id: string;
@@ -194,7 +194,10 @@ export function SupplierListTable({ suppliers }: SupplierListTableProps) {
             {filteredAndSortedSuppliers.map((supplier) => (
               <TableRow
                 key={supplier.id}
-                className={supplier.status === 'PENDING' ? 'bg-yellow-50 hover:bg-yellow-100' : ''}
+                className={
+                  supplier.status === 'PENDING' ? 'bg-amber-50/50 hover:bg-amber-100/50' :
+                  supplier.status === 'REJECTED' ? 'bg-red-50/50 hover:bg-red-100/50' : ''
+                }
               >
                 <TableCell className="font-mono text-sm">
                   {supplier.suppCode || <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">Pending</Badge>}
@@ -236,11 +239,11 @@ export function SupplierListTable({ suppliers }: SupplierListTableProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1 justify-end">
-                    <Link href={`/admin/suppliers/${supplier.id}`}>
-                      <Button size="sm" variant="ghost">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/admin/suppliers/${supplier.id}`}>
+                        View
+                      </Link>
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -248,8 +251,9 @@ export function SupplierListTable({ suppliers }: SupplierListTableProps) {
           </TableBody>
         </Table>
       ) : (
-        <div className="text-center py-8 text-gray-500">
-          No suppliers found matching your filters
+        <div className="text-center py-8">
+          <Building2 className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+          <p className="text-gray-500">No suppliers found matching your filters</p>
         </div>
       )}
     </div>

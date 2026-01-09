@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Eye, Loader2 } from 'lucide-react';
+import { Loader2, Building2 } from 'lucide-react';
 
 interface Supplier {
   id: string;
@@ -218,17 +218,23 @@ export function SupplierListTableServerSearch() {
               </TableRow>
             ) : suppliers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                  {debouncedSearch || categoryFilter !== 'all' || statusFilter !== 'all'
-                    ? 'No suppliers match your filters'
-                    : 'No suppliers found. Register your first supplier!'}
+                <TableCell colSpan={7} className="text-center py-8">
+                  <Building2 className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+                  <p className="text-gray-500">
+                    {debouncedSearch || categoryFilter !== 'all' || statusFilter !== 'all'
+                      ? 'No suppliers match your filters'
+                      : 'No suppliers found. Register your first supplier!'}
+                  </p>
                 </TableCell>
               </TableRow>
             ) : (
               suppliers.map((supplier) => (
                 <TableRow
                   key={supplier.id}
-                  className={supplier.status === 'PENDING' ? 'bg-yellow-50 hover:bg-yellow-100' : supplier.status === 'REJECTED' ? 'bg-red-50 hover:bg-red-100' : ''}
+                  className={
+                    supplier.status === 'PENDING' ? 'bg-amber-50/50 hover:bg-amber-100/50' :
+                    supplier.status === 'REJECTED' ? 'bg-red-50/50 hover:bg-red-100/50' : ''
+                  }
                 >
                   <TableCell className="font-mono text-sm">
                     {supplier.suppCode || <span className="text-gray-400">—</span>}
@@ -280,11 +286,11 @@ export function SupplierListTableServerSearch() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1 justify-end">
-                      <Link href={`/admin/suppliers/${supplier.id}`}>
-                        <Button size="sm" variant="ghost">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/admin/suppliers/${supplier.id}`}>
+                          View
+                        </Link>
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

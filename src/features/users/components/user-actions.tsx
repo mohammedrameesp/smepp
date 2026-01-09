@@ -21,11 +21,11 @@ export function UserActions({
 }: UserActionsProps) {
   return (
     <div className="flex gap-2">
-      <Link href={`/admin/users/${userId}`}>
-        <Button variant="outline" size="sm">
-          View Details
-        </Button>
-      </Link>
+      <Button variant="outline" size="sm" asChild>
+        <Link href={`/admin/users/${userId}`}>
+          View
+        </Link>
+      </Button>
     </div>
   );
 }
