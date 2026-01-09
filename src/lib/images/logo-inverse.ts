@@ -2,11 +2,12 @@
  * @file logo-inverse.ts
  * @description Generates inverse (white) versions of logos for dark backgrounds
  * @module lib/images
+ *
+ * NOTE: SVG inverse generation is disabled due to jsdom ESM/CommonJS
+ * compatibility issues in serverless environments. PNG/WebP work fine.
  */
 
 import sharp from 'sharp';
-import DOMPurify from 'dompurify';
-import { JSDOM } from 'jsdom';
 
 /**
  * Result of inverse logo generation
@@ -46,7 +47,7 @@ export function getExtensionForMimeType(mimeType: string): string {
 /**
  * Generate an inverse (white) version of a logo
  * - For PNG/WebP: Converts all non-transparent pixels to white (255,255,255)
- * - For SVG: Sanitizes and converts all fills/strokes to white
+ * - For SVG: Returns failure (not supported due to jsdom ESM issues)
  *
  * @param buffer - The original image buffer
  * @param mimeType - The MIME type of the image
@@ -57,8 +58,14 @@ export async function generateInverseLogo(
   mimeType: string
 ): Promise<InverseLogoResult> {
   try {
+    // SVG inverse generation is disabled due to jsdom ESM compatibility issues
+    // in serverless environments. Users can manually create inverse SVGs.
     if (mimeType === 'image/svg+xml') {
-      return processSvgToWhite(buffer.toString('utf-8'));
+      return {
+        success: false,
+        buffer: null,
+        error: 'SVG inverse generation not supported - please upload PNG or WebP for automatic inverse generation',
+      };
     }
     const format = mimeType === 'image/webp' ? 'webp' : 'png';
     return processRasterToWhite(buffer, format);
@@ -126,109 +133,3 @@ async function processRasterToWhite(
   }
 }
 
-/**
- * Process SVG to white
- * Sanitizes for security and converts all fills/strokes to white
- */
-function processSvgToWhite(svgString: string): InverseLogoResult {
-  try {
-    // Create DOM environment for DOMPurify
-    const window = new JSDOM('').window;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const purify = DOMPurify(window as any);
-
-    // Sanitize - remove scripts, event handlers, external refs
-    const cleanSvg = purify.sanitize(svgString, {
-      USE_PROFILES: { svg: true, svgFilters: true },
-      ADD_TAGS: ['use'],
-      FORBID_TAGS: ['script', 'foreignObject', 'iframe', 'embed', 'object'],
-      FORBID_ATTR: [
-        'onload',
-        'onerror',
-        'onclick',
-        'onmouseover',
-        'onmouseout',
-        'onfocus',
-        'onblur',
-      ],
-    });
-
-    // Parse sanitized SVG
-    const doc = new JSDOM(cleanSvg, { contentType: 'image/svg+xml' }).window
-      .document;
-    const svg = doc.querySelector('svg');
-
-    if (!svg) {
-      return {
-        success: false,
-        buffer: null,
-        error: 'No SVG element found after sanitization',
-      };
-    }
-
-    // Convert fills and strokes to white on all elements
-    const elements = svg.querySelectorAll('*');
-    elements.forEach((el) => {
-      // Handle fill attribute
-      const fill = el.getAttribute('fill');
-      if (fill && fill !== 'none' && fill !== 'transparent') {
-        el.setAttribute('fill', '#FFFFFF');
-      }
-
-      // Handle stroke attribute
-      const stroke = el.getAttribute('stroke');
-      if (stroke && stroke !== 'none' && stroke !== 'transparent') {
-        el.setAttribute('stroke', '#FFFFFF');
-      }
-
-      // Handle inline style attribute
-      const style = el.getAttribute('style');
-      if (style) {
-        const newStyle = style
-          .replace(/fill:\s*(?!none|transparent)[^;]+/gi, 'fill:#FFFFFF')
-          .replace(/stroke:\s*(?!none|transparent)[^;]+/gi, 'stroke:#FFFFFF');
-        el.setAttribute('style', newStyle);
-      }
-    });
-
-    // Handle <style> blocks
-    const styleElements = svg.querySelectorAll('style');
-    styleElements.forEach((styleEl) => {
-      if (styleEl.textContent) {
-        styleEl.textContent = styleEl.textContent
-          .replace(/fill:\s*(?!none|transparent)[^;]+/gi, 'fill:#FFFFFF')
-          .replace(/stroke:\s*(?!none|transparent)[^;]+/gi, 'stroke:#FFFFFF');
-      }
-    });
-
-    // Handle gradients and patterns - remove defs and replace references
-    const defs = svg.querySelector('defs');
-    if (defs) {
-      const gradients = defs.querySelectorAll(
-        'linearGradient, radialGradient, pattern'
-      );
-      gradients.forEach((g) => g.remove());
-    }
-
-    // Elements referencing removed gradients/patterns get solid white
-    elements.forEach((el) => {
-      const fill = el.getAttribute('fill');
-      if (fill?.startsWith('url(')) {
-        el.setAttribute('fill', '#FFFFFF');
-      }
-      const stroke = el.getAttribute('stroke');
-      if (stroke?.startsWith('url(')) {
-        el.setAttribute('stroke', '#FFFFFF');
-      }
-    });
-
-    const outputSvg = svg.outerHTML;
-    return { success: true, buffer: Buffer.from(outputSvg, 'utf-8') };
-  } catch (error) {
-    return {
-      success: false,
-      buffer: null,
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
-}
