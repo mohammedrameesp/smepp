@@ -250,7 +250,16 @@ export function OrganizationTabs({
         body: formData,
       });
 
-      const data = await response.json();
+      // Handle empty or non-JSON responses
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        console.error('Logo upload response:', text);
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
+
       if (!response.ok) throw new Error(data.error || 'Failed to upload');
 
       setLogoPreview(data.logoUrl);
