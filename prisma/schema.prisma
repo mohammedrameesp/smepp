@@ -978,23 +978,23 @@ enum AssetHistoryAction {
 }
 
 model AssetHistory {
-  id             String             @id @default(cuid())
-  tenantId       String
-  tenant         Organization       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  assetId        String
-  asset          Asset              @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  action         AssetHistoryAction
-  fromMemberId   String?
-  fromMember     TeamMember?        @relation("AssetHistoryFromMember", fields: [fromMemberId], references: [id])
-  toMemberId     String?
-  toMember       TeamMember?        @relation("AssetHistoryToMember", fields: [toMemberId], references: [id])
-  fromStatus     AssetStatus?
-  toStatus       AssetStatus?
-  fromLocation   String?
-  toLocation     String?
-  notes          String?
-  performedById  String?
-  performedBy    TeamMember?        @relation("AssetHistoryPerformer", fields: [performedById], references: [id])
+  id               String             @id @default(cuid())
+  tenantId         String
+  tenant           Organization       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assetId          String
+  asset            Asset              @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  action           AssetHistoryAction
+  fromMemberId     String?
+  fromMember       TeamMember?        @relation("AssetHistoryFromMember", fields: [fromMemberId], references: [id])
+  toMemberId       String?
+  toMember         TeamMember?        @relation("AssetHistoryToMember", fields: [toMemberId], references: [id])
+  fromStatus       AssetStatus?
+  toStatus         AssetStatus?
+  fromLocation     String?
+  toLocation       String?
+  notes            String?
+  performedById    String?
+  performedBy      TeamMember?        @relation("AssetHistoryPerformer", fields: [performedById], references: [id])
   assignmentDate   DateTime? // When asset was assigned (for ASSIGNED action)
   returnDate       DateTime? // When asset was returned (for UNASSIGNED action)
   statusChangeDate DateTime? // When status changed (for STATUS_CHANGED action)
@@ -1010,7 +1010,7 @@ model Subscription {
   id                    String                @id @default(cuid())
   tenantId              String
   tenant                Organization          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  subscriptionTag       String?               // Auto-generated tag like BEC-SUB-2501-001
+  subscriptionTag       String? // Auto-generated tag like BEC-SUB-2501-001
   serviceName           String
   category              String?
   accountId             String?
@@ -1043,6 +1043,7 @@ model Subscription {
   @@index([accountId])
   @@index([subscriptionTag])
   @@index([tenantId])
+  @@index([tenantId, status, renewalDate]) // Composite for "active subscriptions expiring soon" queries
 }
 
 enum SubscriptionHistoryAction {
@@ -1123,6 +1124,7 @@ model Notification {
   @@index([recipientId, isRead])
   @@index([createdAt])
   @@index([tenantId])
+  @@index([tenantId, recipientId, isRead]) // Composite for unread notifications per user per tenant
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2351,7 +2353,7 @@ model PlatformWhatsAppConfig {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model Feedback {
-  id               String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // Submitter context (captured for reference, not tenant-scoped)
   organizationId   String? // Which org submitted (for context)

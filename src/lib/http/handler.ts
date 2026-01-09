@@ -122,6 +122,19 @@ export function withErrorHandler(
       return cachedSession;
     };
 
+    // Organization cache - fetched once, reused for existence check, module check, and permission check
+    // This prevents 3 separate org queries per authenticated request
+    let cachedOrg: { id: string; enabledModules: string[] } | null | undefined;
+    const getOrganization = async (tenantId: string) => {
+      if (cachedOrg === undefined) {
+        cachedOrg = await prisma.organization.findUnique({
+          where: { id: tenantId },
+          select: { id: true, enabledModules: true },
+        });
+      }
+      return cachedOrg;
+    };
+
     try {
       const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method);
 
@@ -315,13 +328,11 @@ export function withErrorHandler(
       }
 
       // Verify organization still exists (handles deleted org case)
+      // Uses cached org lookup to avoid redundant queries
       if (requireTenant && tenantContext?.tenantId) {
-        const orgExists = await prisma.organization.findUnique({
-          where: { id: tenantContext.tenantId },
-          select: { id: true },
-        });
+        const org = await getOrganization(tenantContext.tenantId);
 
-        if (!orgExists) {
+        if (!org) {
           const response = errorResponse('Forbidden', 403, {
             message: 'Organization no longer exists',
             code: ErrorCodes.TENANT_REQUIRED,
@@ -352,13 +363,11 @@ export function withErrorHandler(
         }
 
         // Fetch fresh enabledModules from database (not session which may be stale)
+        // Uses cached org lookup to avoid redundant queries
         let enabledModules: string[] = [];
 
         if (tenantContext?.tenantId) {
-          const org = await prisma.organization.findUnique({
-            where: { id: tenantContext.tenantId },
-            select: { enabledModules: true },
-          });
+          const org = await getOrganization(tenantContext.tenantId);
           if (org) {
             enabledModules = org.enabledModules || [];
           }
@@ -426,11 +435,9 @@ export function withErrorHandler(
         }
 
         // Fetch enabledModules for permission check
+        // Uses cached org lookup to avoid redundant queries
         let enabledModules: string[] = [];
-        const org = await prisma.organization.findUnique({
-          where: { id: tenantContext.tenantId },
-          select: { enabledModules: true },
-        });
+        const org = await getOrganization(tenantContext.tenantId);
         if (org) {
           enabledModules = org.enabledModules || [];
         }
