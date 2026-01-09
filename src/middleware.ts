@@ -157,6 +157,7 @@ const PUBLIC_ROUTES = [
   '/api/organizations/signup', // Public organization signup
   '/api/subdomains', // Subdomain availability check
   '/api/suppliers/register', // Public supplier registration API
+  '/api/suppliers/categories', // Public categories for supplier registration autocomplete
   '/verify',
   '/invite',
   '/pricing',

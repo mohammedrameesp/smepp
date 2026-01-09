@@ -1,6 +1,7 @@
 /**
  * @file route.ts
  * @description Get distinct supplier categories for autocomplete
+ * Supports both authenticated and public (subdomain) requests
  * @module operations/suppliers
  */
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,12 +11,29 @@ import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getCategoriesHandler(request: NextRequest, _context: APIContext) {
+    let tenantId: string | null = null;
+
+    // Try to get tenant from session (authenticated users)
     const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    if (session?.user?.organizationId) {
+      tenantId = session.user.organizationId;
+    } else {
+      // For public access, get tenant from subdomain
+      const subdomain = request.headers.get('x-subdomain');
+      if (subdomain) {
+        const organization = await prisma.organization.findUnique({
+          where: { slug: subdomain.toLowerCase() },
+          select: { id: true },
+        });
+        if (organization) {
+          tenantId = organization.id;
+        }
+      }
     }
 
-    const tenantId = session.user.organizationId;
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
 
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q') || '';
@@ -47,4 +65,5 @@ async function getCategoriesHandler(request: NextRequest, _context: APIContext) 
     });
 }
 
-export const GET = withErrorHandler(getCategoriesHandler, { requireAuth: true, requireModule: 'suppliers' });
+// Public route - auth handled internally to support both authenticated and subdomain access
+export const GET = withErrorHandler(getCategoriesHandler, { rateLimit: true });

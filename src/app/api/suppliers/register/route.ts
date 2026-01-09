@@ -1,6 +1,6 @@
 /**
  * @file route.ts
- * @description Public supplier registration endpoint
+ * @description Public supplier registration endpoint (tenant-aware via subdomain)
  * @module operations/suppliers
  */
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,6 +10,29 @@ import { logAction } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function registerSupplierHandler(request: NextRequest, _context: APIContext) {
+    // Get tenant from subdomain (set by middleware)
+    const subdomain = request.headers.get('x-subdomain');
+
+    if (!subdomain) {
+      return NextResponse.json(
+        { error: 'Supplier registration requires accessing via organization subdomain' },
+        { status: 400 }
+      );
+    }
+
+    // Look up organization by subdomain slug
+    const organization = await prisma.organization.findUnique({
+      where: { slug: subdomain.toLowerCase() },
+      select: { id: true, name: true },
+    });
+
+    if (!organization) {
+      return NextResponse.json(
+        { error: 'Organization not found' },
+        { status: 404 }
+      );
+    }
+
     // Parse and validate request body
     const body = await request.json();
     const validation = createSupplierSchema.safeParse(body);
@@ -35,10 +58,7 @@ async function registerSupplierHandler(request: NextRequest, _context: APIContex
       ? `${data.secondaryContactMobileCode || ''} ${data.secondaryContactMobile}`.trim()
       : null;
 
-    // Create supplier with PENDING status (suppCode will be assigned on approval)
-    // NOTE: This is a public registration route - tenantId should come from the registration context
-    // For now, we'll use a default system tenant or handle this differently
-    // This route may need special handling as it's for new supplier registration (public)
+    // Create supplier with PENDING status, associated with the organization
     const supplier = await prisma.supplier.create({
       data: {
         suppCode: null, // Will be assigned when approved
@@ -60,14 +80,14 @@ async function registerSupplierHandler(request: NextRequest, _context: APIContex
         paymentTerms: data.paymentTerms || null,
         additionalInfo: data.additionalInfo || null,
         status: 'PENDING',
-        tenantId: 'SYSTEM', // Public registration - will be associated with tenant on approval
+        tenantId: organization.id,
       },
     });
 
-    // Log the registration activity (no user since it's public)
+    // Log the registration activity
     await logAction(
-      'SYSTEM', // Public registration - no tenant context
-      null,
+      organization.id,
+      null, // No user - public registration
       'SUPPLIER_REGISTERED',
       'supplier',
       supplier.id,
