@@ -74,7 +74,8 @@ const leaveCategorySchema = z.nativeEnum(LeaveCategory);
  *   serviceBasedEntitlement: { "12": 21, "60": 28 }
  * }
  */
-export const createLeaveTypeSchema = z.object({
+/** Base schema for leave type fields (without refinements) */
+const leaveTypeBaseSchema = z.object({
   /** Leave type display name */
   name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
   /** Optional description */
@@ -114,7 +115,9 @@ export const createLeaveTypeSchema = z.object({
   genderRestriction: z.enum(['MALE', 'FEMALE']).optional().nullable(),
   /** Whether leave accrues monthly (vs fixed annual entitlement) */
   accrualBased: z.boolean().default(false),
-}).refine(
+});
+
+export const createLeaveTypeSchema = leaveTypeBaseSchema.refine(
   (data) => {
     // If allowCarryForward is true, maxCarryForwardDays should be specified
     if (data.allowCarryForward && !data.maxCarryForwardDays) {
@@ -132,7 +135,7 @@ export const createLeaveTypeSchema = z.object({
  * Schema for updating an existing leave type.
  * All fields are optional.
  */
-export const updateLeaveTypeSchema = createLeaveTypeSchema.partial();
+export const updateLeaveTypeSchema = leaveTypeBaseSchema.partial();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // LEAVE REQUEST SCHEMAS
