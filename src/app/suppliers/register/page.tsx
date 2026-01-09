@@ -10,8 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 import { createSupplierSchema, type CreateSupplierRequest } from '@/features/suppliers';
+import { useSubdomain } from '@/hooks/use-subdomain';
+import { useTenantBranding } from '@/hooks/use-tenant-branding';
+import { SupplierRegistrationPanel } from '@/components/suppliers/SupplierRegistrationPanel';
 
 // Country list (commonly used countries in the region)
 const COUNTRIES = [
@@ -56,10 +59,17 @@ const COUNTRY_CODES = [
 ];
 
 export default function SupplierRegistrationPage() {
+  const { subdomain, isLoading: subdomainLoading } = useSubdomain();
+  const { branding, isLoading: brandingLoading } = useTenantBranding(subdomain);
+
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
   const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
+
+  const isLoading = subdomainLoading || brandingLoading;
+  const primaryColor = branding?.primaryColor || '#0f172a';
+  const orgName = branding?.organizationName || 'Our Organization';
 
   const {
     register,
@@ -147,413 +157,459 @@ export default function SupplierRegistrationPage() {
     }
   };
 
+  // Success state with branding
   if (success) {
     return (
-      <div className="container mx-auto py-16 px-4">
-        <div className="max-w-2xl mx-auto">
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center space-y-4">
-                <CheckCircle2 className="h-16 w-16 text-green-600" />
-                <h2 className="text-2xl font-bold text-green-900">
-                  Registration Submitted Successfully!
-                </h2>
-                <p className="text-green-800">
-                  Thank you! Your supplier registration is pending approval.
-                  Our team will review your information and get back to you soon.
-                </p>
-                <Button
-                  onClick={() => window.location.href = 'https://durj.com'}
-                  className="mt-4"
-                >
-                  Visit our website
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="min-h-screen flex">
+        {/* Left branded panel */}
+        <SupplierRegistrationPanel branding={branding} isLoading={isLoading} />
+
+        {/* Right success content */}
+        <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
+          <div className="max-w-md w-full">
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <CheckCircle2 className="h-16 w-16 text-green-600" />
+                  <h2 className="text-2xl font-bold text-green-900">
+                    Registration Submitted!
+                  </h2>
+                  <p className="text-green-800">
+                    Thank you for registering as a supplier with {orgName}.
+                    Our team will review your information and get back to you soon.
+                  </p>
+                  <Button
+                    onClick={() => setSuccess(false)}
+                    style={{ backgroundColor: primaryColor }}
+                    className="mt-4 hover:opacity-90"
+                  >
+                    Register Another Supplier
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Supplier Registration</h1>
-          <p className="text-gray-600">
-            Register your company as a supplier. All submissions are subject to approval.
-          </p>
+    <div className="min-h-screen flex">
+      {/* Left branded panel */}
+      <SupplierRegistrationPanel branding={branding} isLoading={isLoading} />
+
+      {/* Right form section */}
+      <div className="flex-1 overflow-y-auto bg-gray-50">
+        {/* Mobile header with branding */}
+        <div className="lg:hidden p-6 text-white" style={{ backgroundColor: primaryColor }}>
+          {branding?.logoUrl ? (
+            <img
+              src={branding.logoUrlInverse || branding.logoUrl}
+              alt={orgName}
+              className="h-10 w-auto object-contain mb-4"
+              style={!branding.logoUrlInverse ? { filter: 'brightness(0) invert(1)' } : undefined}
+            />
+          ) : (
+            <h1 className="text-2xl font-bold mb-2">{orgName}</h1>
+          )}
+          <p className="text-white/80">Supplier Registration</p>
         </div>
 
-        {error && (
-          <Alert variant="error" className="mb-6">
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
-          {/* Company Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Company Information</CardTitle>
-              <CardDescription>
-                Basic information about your company
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Company Name *</Label>
-                  <Input
-                    id="name"
-                    {...register('name')}
-                    placeholder="ABC Corporation"
-                  />
-                  {errors.name && (
-                    <p className="text-sm text-red-600">{errors.name.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2 relative">
-                  <Label htmlFor="category">Material Category *</Label>
-                  <Input
-                    id="category"
-                    {...register('category')}
-                    onFocus={() => setShowCategorySuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
-                    placeholder="Electronics, Hardware, Software, etc."
-                    autoComplete="off"
-                  />
-                  {errors.category && (
-                    <p className="text-sm text-red-600">{errors.category.message}</p>
-                  )}
-                  {showCategorySuggestions && categorySuggestions.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
-                      {categorySuggestions.map((category, index) => (
-                        <div
-                          key={index}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                          onClick={() => {
-                            setValue('category', category);
-                            setShowCategorySuggestions(false);
-                          }}
-                        >
-                          {category}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  {...register('address')}
-                  placeholder="Street address"
-                />
-                {errors.address && (
-                  <p className="text-sm text-red-600">{errors.address.message}</p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    {...register('city')}
-                    placeholder="City"
-                  />
-                  {errors.city && (
-                    <p className="text-sm text-red-600">{errors.city.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="country">Country</Label>
-                  <Select
-                    value={countryValue || ''}
-                    onValueChange={(value) => setValue('country', value)}
-                  >
-                    <SelectTrigger id="country">
-                      <SelectValue placeholder="Select country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COUNTRIES.map((country) => (
-                        <SelectItem key={country} value={country}>
-                          {country}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.country && (
-                    <p className="text-sm text-red-600">{errors.country.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    type="text"
-                    {...register('website')}
-                    placeholder="example.com or example.qa"
-                  />
-                  {errors.website && (
-                    <p className="text-sm text-red-600">{errors.website.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="establishmentYear">Establishment Year</Label>
-                  <Input
-                    id="establishmentYear"
-                    type="number"
-                    min="1800"
-                    max={new Date().getFullYear()}
-                    {...register('establishmentYear', {
-                      setValueAs: (v) => v === '' ? undefined : parseInt(v, 10)
-                    })}
-                    placeholder="2020"
-                  />
-                  {errors.establishmentYear && (
-                    <p className="text-sm text-red-600">{errors.establishmentYear.message}</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Primary Contact */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Primary Contact</CardTitle>
-              <CardDescription>
-                Main point of contact for business inquiries
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="primaryContactName">Contact Name</Label>
-                  <Input
-                    id="primaryContactName"
-                    {...register('primaryContactName')}
-                    placeholder="John Doe"
-                  />
-                  {errors.primaryContactName && (
-                    <p className="text-sm text-red-600">{errors.primaryContactName.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="primaryContactTitle">Title/Position</Label>
-                  <Input
-                    id="primaryContactTitle"
-                    {...register('primaryContactTitle')}
-                    placeholder="Sales Manager"
-                  />
-                  {errors.primaryContactTitle && (
-                    <p className="text-sm text-red-600">{errors.primaryContactTitle.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="primaryContactEmail">Email</Label>
-                  <Input
-                    id="primaryContactEmail"
-                    type="email"
-                    {...register('primaryContactEmail')}
-                    placeholder="contact@example.com"
-                  />
-                  {errors.primaryContactEmail && (
-                    <p className="text-sm text-red-600">{errors.primaryContactEmail.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="primaryContactMobile">Mobile</Label>
-                  <div className="flex gap-2">
-                    <Select
-                      value={primaryContactMobileCodeValue || ''}
-                      onValueChange={(value) => setValue('primaryContactMobileCode', value)}
-                    >
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {COUNTRY_CODES.map((item) => (
-                          <SelectItem key={item.code} value={item.code}>
-                            {item.flag} {item.code}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      id="primaryContactMobile"
-                      type="tel"
-                      {...register('primaryContactMobile')}
-                      placeholder="1234 5678"
-                      className="flex-1"
-                    />
-                  </div>
-                  {errors.primaryContactMobile && (
-                    <p className="text-sm text-red-600">{errors.primaryContactMobile.message}</p>
-                  )}
-                  {errors.primaryContactMobileCode && (
-                    <p className="text-sm text-red-600">{errors.primaryContactMobileCode.message}</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Secondary Contact */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Secondary Contact (Optional)</CardTitle>
-              <CardDescription>
-                Alternative contact person
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="secondaryContactName">Contact Name</Label>
-                  <Input
-                    id="secondaryContactName"
-                    {...register('secondaryContactName')}
-                    placeholder="Jane Smith"
-                  />
-                  {errors.secondaryContactName && (
-                    <p className="text-sm text-red-600">{errors.secondaryContactName.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="secondaryContactTitle">Title/Position</Label>
-                  <Input
-                    id="secondaryContactTitle"
-                    {...register('secondaryContactTitle')}
-                    placeholder="Account Manager"
-                  />
-                  {errors.secondaryContactTitle && (
-                    <p className="text-sm text-red-600">{errors.secondaryContactTitle.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="secondaryContactEmail">Email</Label>
-                  <Input
-                    id="secondaryContactEmail"
-                    type="email"
-                    {...register('secondaryContactEmail')}
-                    placeholder="secondary@example.com"
-                  />
-                  {errors.secondaryContactEmail && (
-                    <p className="text-sm text-red-600">{errors.secondaryContactEmail.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="secondaryContactMobile">Mobile</Label>
-                  <div className="flex gap-2">
-                    <Select
-                      value={secondaryContactMobileCodeValue || ''}
-                      onValueChange={(value) => setValue('secondaryContactMobileCode', value)}
-                    >
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {COUNTRY_CODES.map((item) => (
-                          <SelectItem key={item.code} value={item.code}>
-                            {item.flag} {item.code}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      id="secondaryContactMobile"
-                      type="tel"
-                      {...register('secondaryContactMobile')}
-                      placeholder="1234 5678"
-                      className="flex-1"
-                    />
-                  </div>
-                  {errors.secondaryContactMobile && (
-                    <p className="text-sm text-red-600">{errors.secondaryContactMobile.message}</p>
-                  )}
-                  {errors.secondaryContactMobileCode && (
-                    <p className="text-sm text-red-600">{errors.secondaryContactMobileCode.message}</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Payment Terms */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Terms</CardTitle>
-              <CardDescription>
-                Your standard payment terms and conditions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="paymentTerms">Payment Terms</Label>
-                <Input
-                  id="paymentTerms"
-                  {...register('paymentTerms')}
-                  placeholder="Net 30, Net 60, etc."
-                />
-                {errors.paymentTerms && (
-                  <p className="text-sm text-red-600">{errors.paymentTerms.message}</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Additional Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional Information</CardTitle>
-              <CardDescription>
-                Share any additional details about your company (portfolio, certifications, specializations, etc.)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="additionalInfo">Additional Information</Label>
-                <Textarea
-                  id="additionalInfo"
-                  {...register('additionalInfo')}
-                  placeholder="e.g., Portfolio links, certifications (ISO 9001, etc.), areas of specialization, major clients, awards, or any other relevant information..."
-                  rows={6}
-                  className="resize-y"
-                />
-                {errors.additionalInfo && (
-                  <p className="text-sm text-red-600">{errors.additionalInfo.message}</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Submit Button */}
-          <div className="flex justify-end gap-4">
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              size="lg"
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Registration'}
-            </Button>
+        <div className="p-6 lg:p-12 max-w-3xl mx-auto">
+          {/* Header - visible on desktop only */}
+          <div className="hidden lg:block mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Supplier Registration</h1>
+            <p className="text-gray-600">
+              Register your company as a supplier for {orgName}. All submissions are subject to approval.
+            </p>
           </div>
-        </form>
+
+          {/* Mobile subtitle */}
+          <div className="lg:hidden mb-6">
+            <p className="text-gray-600">
+              Register your company as a supplier. All submissions are subject to approval.
+            </p>
+          </div>
+
+          {error && (
+            <Alert variant="error" className="mb-6">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
+            {/* Company Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Company Information</CardTitle>
+                <CardDescription>
+                  Basic information about your company
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Company Name *</Label>
+                    <Input
+                      id="name"
+                      {...register('name')}
+                      placeholder="ABC Corporation"
+                    />
+                    {errors.name && (
+                      <p className="text-sm text-red-600">{errors.name.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2 relative">
+                    <Label htmlFor="category">Material Category *</Label>
+                    <Input
+                      id="category"
+                      {...register('category')}
+                      onFocus={() => setShowCategorySuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
+                      placeholder="Electronics, Hardware, Software, etc."
+                      autoComplete="off"
+                    />
+                    {errors.category && (
+                      <p className="text-sm text-red-600">{errors.category.message}</p>
+                    )}
+                    {showCategorySuggestions && categorySuggestions.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
+                        {categorySuggestions.map((category, index) => (
+                          <div
+                            key={index}
+                            className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                            onClick={() => {
+                              setValue('category', category);
+                              setShowCategorySuggestions(false);
+                            }}
+                          >
+                            {category}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Input
+                    id="address"
+                    {...register('address')}
+                    placeholder="Street address"
+                  />
+                  {errors.address && (
+                    <p className="text-sm text-red-600">{errors.address.message}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      {...register('city')}
+                      placeholder="City"
+                    />
+                    {errors.city && (
+                      <p className="text-sm text-red-600">{errors.city.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Select
+                      value={countryValue || ''}
+                      onValueChange={(value) => setValue('country', value)}
+                    >
+                      <SelectTrigger id="country">
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {COUNTRIES.map((country) => (
+                          <SelectItem key={country} value={country}>
+                            {country}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.country && (
+                      <p className="text-sm text-red-600">{errors.country.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      type="text"
+                      {...register('website')}
+                      placeholder="example.com or example.qa"
+                    />
+                    {errors.website && (
+                      <p className="text-sm text-red-600">{errors.website.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="establishmentYear">Establishment Year</Label>
+                    <Input
+                      id="establishmentYear"
+                      type="number"
+                      min="1800"
+                      max={new Date().getFullYear()}
+                      {...register('establishmentYear', {
+                        setValueAs: (v) => v === '' ? undefined : parseInt(v, 10)
+                      })}
+                      placeholder="2020"
+                    />
+                    {errors.establishmentYear && (
+                      <p className="text-sm text-red-600">{errors.establishmentYear.message}</p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Primary Contact */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Primary Contact</CardTitle>
+                <CardDescription>
+                  Main point of contact for business inquiries
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="primaryContactName">Contact Name</Label>
+                    <Input
+                      id="primaryContactName"
+                      {...register('primaryContactName')}
+                      placeholder="John Doe"
+                    />
+                    {errors.primaryContactName && (
+                      <p className="text-sm text-red-600">{errors.primaryContactName.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="primaryContactTitle">Title/Position</Label>
+                    <Input
+                      id="primaryContactTitle"
+                      {...register('primaryContactTitle')}
+                      placeholder="Sales Manager"
+                    />
+                    {errors.primaryContactTitle && (
+                      <p className="text-sm text-red-600">{errors.primaryContactTitle.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="primaryContactEmail">Email</Label>
+                    <Input
+                      id="primaryContactEmail"
+                      type="email"
+                      {...register('primaryContactEmail')}
+                      placeholder="contact@example.com"
+                    />
+                    {errors.primaryContactEmail && (
+                      <p className="text-sm text-red-600">{errors.primaryContactEmail.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="primaryContactMobile">Mobile</Label>
+                    <div className="flex gap-2">
+                      <Select
+                        value={primaryContactMobileCodeValue || ''}
+                        onValueChange={(value) => setValue('primaryContactMobileCode', value)}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {COUNTRY_CODES.map((item) => (
+                            <SelectItem key={item.code} value={item.code}>
+                              {item.flag} {item.code}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        id="primaryContactMobile"
+                        type="tel"
+                        {...register('primaryContactMobile')}
+                        placeholder="1234 5678"
+                        className="flex-1"
+                      />
+                    </div>
+                    {errors.primaryContactMobile && (
+                      <p className="text-sm text-red-600">{errors.primaryContactMobile.message}</p>
+                    )}
+                    {errors.primaryContactMobileCode && (
+                      <p className="text-sm text-red-600">{errors.primaryContactMobileCode.message}</p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Secondary Contact */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Secondary Contact (Optional)</CardTitle>
+                <CardDescription>
+                  Alternative contact person
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="secondaryContactName">Contact Name</Label>
+                    <Input
+                      id="secondaryContactName"
+                      {...register('secondaryContactName')}
+                      placeholder="Jane Smith"
+                    />
+                    {errors.secondaryContactName && (
+                      <p className="text-sm text-red-600">{errors.secondaryContactName.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="secondaryContactTitle">Title/Position</Label>
+                    <Input
+                      id="secondaryContactTitle"
+                      {...register('secondaryContactTitle')}
+                      placeholder="Account Manager"
+                    />
+                    {errors.secondaryContactTitle && (
+                      <p className="text-sm text-red-600">{errors.secondaryContactTitle.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="secondaryContactEmail">Email</Label>
+                    <Input
+                      id="secondaryContactEmail"
+                      type="email"
+                      {...register('secondaryContactEmail')}
+                      placeholder="secondary@example.com"
+                    />
+                    {errors.secondaryContactEmail && (
+                      <p className="text-sm text-red-600">{errors.secondaryContactEmail.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="secondaryContactMobile">Mobile</Label>
+                    <div className="flex gap-2">
+                      <Select
+                        value={secondaryContactMobileCodeValue || ''}
+                        onValueChange={(value) => setValue('secondaryContactMobileCode', value)}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {COUNTRY_CODES.map((item) => (
+                            <SelectItem key={item.code} value={item.code}>
+                              {item.flag} {item.code}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        id="secondaryContactMobile"
+                        type="tel"
+                        {...register('secondaryContactMobile')}
+                        placeholder="1234 5678"
+                        className="flex-1"
+                      />
+                    </div>
+                    {errors.secondaryContactMobile && (
+                      <p className="text-sm text-red-600">{errors.secondaryContactMobile.message}</p>
+                    )}
+                    {errors.secondaryContactMobileCode && (
+                      <p className="text-sm text-red-600">{errors.secondaryContactMobileCode.message}</p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Payment Terms */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Terms</CardTitle>
+                <CardDescription>
+                  Your standard payment terms and conditions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Label htmlFor="paymentTerms">Payment Terms</Label>
+                  <Input
+                    id="paymentTerms"
+                    {...register('paymentTerms')}
+                    placeholder="Net 30, Net 60, etc."
+                  />
+                  {errors.paymentTerms && (
+                    <p className="text-sm text-red-600">{errors.paymentTerms.message}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Additional Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Additional Information</CardTitle>
+                <CardDescription>
+                  Share any additional details about your company (portfolio, certifications, specializations, etc.)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Label htmlFor="additionalInfo">Additional Information</Label>
+                  <Textarea
+                    id="additionalInfo"
+                    {...register('additionalInfo')}
+                    placeholder="e.g., Portfolio links, certifications (ISO 9001, etc.), areas of specialization, major clients, awards, or any other relevant information..."
+                    rows={6}
+                    className="resize-y"
+                  />
+                  {errors.additionalInfo && (
+                    <p className="text-sm text-red-600">{errors.additionalInfo.message}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Submit Button */}
+            <div className="flex justify-end gap-4 pb-8">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                size="lg"
+                style={{ backgroundColor: primaryColor }}
+                className="hover:opacity-90"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit Registration'
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
