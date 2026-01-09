@@ -10,11 +10,29 @@ import {
   getExtensionForMimeType,
 } from '@/lib/images';
 
+// Force Node.js runtime (required for Buffer operations)
+export const runtime = 'nodejs';
+
 // Maximum file size: 2MB
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
 // Allowed image types (no JPEG - doesn't support transparency well)
 const ALLOWED_TYPES = ['image/png', 'image/webp', 'image/svg+xml'];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// OPTIONS /api/organizations/logo - Handle CORS preflight
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/organizations/logo - Upload organization logo
