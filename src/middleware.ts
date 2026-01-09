@@ -144,6 +144,7 @@ const PUBLIC_ROUTES = [
   '/reset-password',
   '/set-password', // Initial password setup for new employees
   '/get-started', // Public signup page
+  '/suppliers/register', // Public supplier registration form
   '/api/auth',
   '/api/health', // Health check endpoint for monitoring
   '/api/webhooks',
@@ -155,6 +156,7 @@ const PUBLIC_ROUTES = [
   '/api/super-admin/set-password', // Password reset endpoint (temporary)
   '/api/organizations/signup', // Public organization signup
   '/api/subdomains', // Subdomain availability check
+  '/api/suppliers/register', // Public supplier registration API
   '/verify',
   '/invite',
   '/pricing',
