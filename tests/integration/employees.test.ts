@@ -8,7 +8,7 @@ import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 
 jest.mock('next-auth/next');
-jest.mock('@/lib/prisma');
+jest.mock('@/lib/core/prisma');
 
 describe('Employees API Tests', () => {
   beforeEach(() => {

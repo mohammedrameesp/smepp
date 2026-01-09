@@ -14,7 +14,7 @@ import {
 } from '../helpers/factories';
 
 jest.mock('next-auth/next');
-jest.mock('@/lib/prisma');
+jest.mock('@/lib/core/prisma');
 
 describe('Leave Management API Tests', () => {
   beforeEach(() => {

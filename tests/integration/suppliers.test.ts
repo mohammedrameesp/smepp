@@ -25,7 +25,7 @@ const engagementMocks = {
   create: jest.fn(),
 };
 
-jest.mock('@/lib/prisma', () => ({
+jest.mock('@/lib/core/prisma', () => ({
   prisma: {
     supplier: supplierMocks,
     supplierEngagement: engagementMocks,

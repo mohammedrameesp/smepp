@@ -51,7 +51,7 @@ jest.mock('@/lib/http/errors', () => ({
   },
 }));
 
-jest.mock('@/lib/log', () => ({
+jest.mock('@/lib/core/log', () => ({
   logRequest: jest.fn(),
   generateRequestId: jest.fn().mockReturnValue('req-123'),
 }));

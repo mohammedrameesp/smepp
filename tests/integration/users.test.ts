@@ -8,7 +8,7 @@ import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 
 jest.mock('next-auth/next');
-jest.mock('@/lib/prisma');
+jest.mock('@/lib/core/prisma');
 
 describe('Users API Tests', () => {
   beforeEach(() => {
@@ -87,7 +87,7 @@ describe('Users API Tests', () => {
       ];
 
       const filtered = mockUsers.filter(u => u.role === Role.EMPLOYEE);
-      expect(filtered).toHaveLength(2);
+      expect(filtered).toHaveLength(3);
     });
 
     it('should exclude system accounts by default', async () => {

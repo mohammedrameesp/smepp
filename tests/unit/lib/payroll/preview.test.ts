@@ -30,7 +30,7 @@ jest.mock('@/lib/core/prisma', () => ({
 }));
 
 // Mock the leave-deduction module
-jest.mock('@/lib/domains/hr/payroll/leave-deduction', () => ({
+jest.mock('@/features/payroll/lib/leave-deduction', () => ({
   calculateUnpaidLeaveDeductions: jest.fn(),
 }));
 

@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth/next';
 import { Role } from '@prisma/client';
 
 jest.mock('next-auth/next');
-jest.mock('@/lib/prisma');
+jest.mock('@/lib/core/prisma');
 
 describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
   beforeEach(() => {
