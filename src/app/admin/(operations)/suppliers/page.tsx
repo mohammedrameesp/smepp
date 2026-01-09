@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 
-import { SupplierListTableServerSearch } from '@/features/suppliers';
+import { SupplierListTableServerSearch, ShareSupplierLinkButton } from '@/features/suppliers';
 import { Plus } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 
@@ -18,11 +18,12 @@ export default async function AdminSuppliersPage() {
     redirect('/forbidden');
   }
 
-  if (!session.user.organizationId) {
+  if (!session.user.organizationId || !session.user.organizationSlug) {
     redirect('/login');
   }
 
   const tenantId = session.user.organizationId;
+  const organizationSlug = session.user.organizationSlug;
 
   let totalSuppliers = 0;
   let approvedSuppliers = 0;
@@ -57,10 +58,13 @@ export default async function AdminSuppliersPage() {
         title="Suppliers"
         subtitle="Manage vendor registrations and engagements"
         actions={
-          <PageHeaderButton href="/suppliers/register" variant="primary">
-            <Plus className="h-4 w-4" />
-            Register Supplier
-          </PageHeaderButton>
+          <>
+            <ShareSupplierLinkButton organizationSlug={organizationSlug} />
+            <PageHeaderButton href="/suppliers/register" variant="primary">
+              <Plus className="h-4 w-4" />
+              Register Supplier
+            </PageHeaderButton>
+          </>
         }
       >
         {/* Stats Summary */}
