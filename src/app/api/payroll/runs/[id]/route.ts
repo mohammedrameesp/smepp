@@ -6,19 +6,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { parseDecimal } from '@/lib/payroll/utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getPayrollRunHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     // Use findFirst with tenantId to prevent cross-tenant access
-    const payrollRun = await prisma.payrollRun.findFirst({
+    const payrollRun = await db.payrollRun.findFirst({
       where: { id, tenantId },
       include: {
         createdBy: { select: { id: true, name: true } },
@@ -83,15 +88,19 @@ async function getPayrollRunHandler(request: NextRequest, context: APIContext) {
 export const GET = withErrorHandler(getPayrollRunHandler, { requireAdmin: true, requireModule: 'payroll' });
 
 async function deletePayrollRunHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     // Use findFirst with tenantId to prevent cross-tenant access
-    const payrollRun = await prisma.payrollRun.findFirst({
+    const payrollRun = await db.payrollRun.findFirst({
       where: { id, tenantId },
     });
 
@@ -107,7 +116,7 @@ async function deletePayrollRunHandler(request: NextRequest, context: APIContext
     }
 
     // Delete payroll run (cascade will delete payslips and history)
-    await prisma.payrollRun.delete({
+    await db.payrollRun.delete({
       where: { id },
     });
 

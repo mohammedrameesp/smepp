@@ -12,9 +12,8 @@
  * - Activity logging and asset history tracking
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import {
   parseImportFile,
   parseImportRows,
@@ -28,13 +27,15 @@ import { parseAssetRow, buildAssetDbData } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-async function importAssetsHandler(request: NextRequest, _context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+async function importAssetsHandler(request: NextRequest, context: APIContext) {
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    const tenantId = session.user.organizationId;
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
 
     // ─────────────────────────────────────────────────────────────────────────
     // STEP 1: Parse and validate the uploaded file
@@ -77,13 +78,13 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
         // If ID is provided, use upsert to preserve relationships
         if (id) {
           // Check if asset with this ID exists IN THIS TENANT
-          const existingAssetById = await prisma.asset.findFirst({
+          const existingAssetById = await db.asset.findFirst({
             where: { id, tenantId },
           });
 
           // Check if asset tag is provided and conflicts IN THIS TENANT
           if (assetTag) {
-            const existingByTag = await prisma.asset.findFirst({
+            const existingByTag = await db.asset.findFirst({
               where: { assetTag, tenantId },
             });
 
@@ -98,8 +99,8 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
           // If no assetTag provided and asset is new, leave it undefined (can be set later via UI)
 
           // Use upsert with ID to preserve relationships
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const asset = await prisma.asset.upsert({
+           
+          const asset = await db.asset.upsert({
             where: { id },
             create: {
               id,
@@ -111,7 +112,7 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
           // Log activity
           await logAction(
             tenantId,
-            session.user.id,
+            tenant.userId,
             existingAssetById ? ActivityActions.ASSET_UPDATED : ActivityActions.ASSET_CREATED,
             'Asset',
             asset.id,
@@ -130,7 +131,7 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
             const { recordAssetCreation } = await import('@/features/assets');
             await recordAssetCreation(
               asset.id,
-              session.user.id,
+              tenant.userId,
               null,
               null
             );
@@ -150,7 +151,7 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
 
         // Check if asset tag already exists IN THIS TENANT
         if (finalAssetTag) {
-          const existingAsset = await prisma.asset.findFirst({
+          const existingAsset = await db.asset.findFirst({
             where: { assetTag: finalAssetTag, tenantId },
           });
 
@@ -160,14 +161,14 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
               continue;
             } else if (duplicateStrategy === 'update') {
               // Update existing asset
-              const asset = await prisma.asset.update({
+              const asset = await db.asset.update({
                 where: { id: existingAsset.id },
                 data: assetData,
               });
 
               await logAction(
                 tenantId,
-                session.user.id,
+                tenant.userId,
                 ActivityActions.ASSET_UPDATED,
                 'Asset',
                 asset.id,
@@ -188,15 +189,15 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
         assetData.assetTag = finalAssetTag || undefined;
 
         // Create new asset
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const asset = await prisma.asset.create({
+         
+        const asset = await db.asset.create({
           data: assetData as any,
         });
 
         // Log activity
         await logAction(
           tenantId,
-          session.user.id,
+          tenant.userId,
           ActivityActions.ASSET_CREATED,
           'Asset',
           asset.id,
@@ -212,7 +213,7 @@ async function importAssetsHandler(request: NextRequest, _context: APIContext) {
         const { recordAssetCreation } = await import('@/features/assets');
         await recordAssetCreation(
           asset.id,
-          session.user.id,
+          tenant.userId,
           null,
           null
         );

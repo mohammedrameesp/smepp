@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 /**
  * GET /api/notifications/unread-count
@@ -8,16 +8,17 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  */
 export const GET = withErrorHandler(
   async (request: NextRequest, context: APIContext) => {
-    const { tenant } = context;
+    const { tenant, prisma: tenantPrisma } = context;
 
     // If no tenant context (e.g., super admin), return 0
     if (!tenant?.tenantId || !tenant?.userId) {
       return NextResponse.json({ count: 0 });
     }
 
-    const count = await prisma.notification.count({
+    const db = tenantPrisma as TenantPrismaClient;
+
+    const count = await db.notification.count({
       where: {
-        tenantId: tenant.tenantId,
         recipientId: tenant.userId,
         isRead: false,
       },

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { z } from 'zod';
 
 const resolveSchema = z.object({
@@ -13,20 +11,15 @@ const resolveSchema = z.object({
 // PATCH /api/admin/change-requests/[id] - Resolve a change request
 async function resolveChangeRequestHandler(
   request: NextRequest,
-  context: { params?: Record<string, string> }
+  context: APIContext
 ) {
-  const session = await getServerSession(authOptions);
+  const { tenant, prisma: tenantPrisma } = context;
 
-  if (!session?.user || session.user.teamMemberRole !== 'ADMIN') {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
 
-  // Require organization context for tenant isolation
-  if (!session.user.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-  }
-
-  const tenantId = session.user.organizationId;
+  const db = tenantPrisma as TenantPrismaClient;
   const id = context.params?.id;
   const body = await request.json();
   const validation = resolveSchema.safeParse(body);
@@ -38,9 +31,9 @@ async function resolveChangeRequestHandler(
     );
   }
 
-  // Find the change request within tenant
-  const changeRequest = await prisma.profileChangeRequest.findFirst({
-    where: { id, tenantId },
+  // Find the change request - tenantId is auto-filtered by tenant-scoped prisma client
+  const changeRequest = await db.profileChangeRequest.findFirst({
+    where: { id },
     include: {
       member: {
         select: { id: true, name: true, email: true },
@@ -60,11 +53,11 @@ async function resolveChangeRequestHandler(
   }
 
   // Update the change request
-  const updated = await prisma.profileChangeRequest.update({
+  const updated = await db.profileChangeRequest.update({
     where: { id },
     data: {
       status: validation.data.status,
-      resolvedById: session.user.id,
+      resolvedById: tenant.userId,
       resolvedAt: new Date(),
       resolverNotes: validation.data.notes || null,
     },
@@ -81,24 +74,20 @@ export const PATCH = withErrorHandler(resolveChangeRequestHandler, { requireAuth
 // GET /api/admin/change-requests/[id] - Get a single change request
 async function getChangeRequestHandler(
   request: NextRequest,
-  context: { params?: Record<string, string> }
+  context: APIContext
 ) {
-  const session = await getServerSession(authOptions);
+  const { tenant, prisma: tenantPrisma } = context;
 
-  if (!session?.user || session.user.teamMemberRole !== 'ADMIN') {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
 
-  // Require organization context for tenant isolation
-  if (!session.user.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-  }
-
-  const tenantId = session.user.organizationId;
+  const db = tenantPrisma as TenantPrismaClient;
   const id = context.params?.id;
 
-  const changeRequest = await prisma.profileChangeRequest.findFirst({
-    where: { id, tenantId },
+  // tenantId is auto-filtered by tenant-scoped prisma client
+  const changeRequest = await db.profileChangeRequest.findFirst({
+    where: { id },
     include: {
       member: {
         select: {

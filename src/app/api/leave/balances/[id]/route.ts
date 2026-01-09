@@ -5,22 +5,25 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { updateLeaveBalanceSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getLeaveBalanceHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Use findFirst with tenantId to prevent IDOR attacks
-    const balance = await prisma.leaveBalance.findFirst({
-      where: { id, tenantId },
+    // Use findFirst (tenant filtering is automatic via db)
+    const balance = await db.leaveBalance.findFirst({
+      where: { id },
       include: {
         member: {
           select: {
@@ -45,10 +48,10 @@ async function getLeaveBalanceHandler(request: NextRequest, context: APIContext)
     }
 
     // Non-admin users can only see their own balance
-    const isOwnerOrAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
     if (!isOwnerOrAdmin) {
-      const currentMember = await prisma.teamMember.findFirst({
-        where: { id: tenant!.userId, tenantId },
+      const currentMember = await db.teamMember.findFirst({
+        where: { id: tenant.userId },
         select: { id: true },
       });
       if (balance.memberId !== currentMember?.id) {
@@ -62,9 +65,13 @@ async function getLeaveBalanceHandler(request: NextRequest, context: APIContext)
 export const GET = withErrorHandler(getLeaveBalanceHandler, { requireAuth: true, requireModule: 'leave' });
 
 async function updateLeaveBalanceHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -83,8 +90,8 @@ async function updateLeaveBalanceHandler(request: NextRequest, context: APIConte
     const { adjustment, adjustmentNotes } = validation.data;
 
     // Check if balance exists within tenant
-    const existing = await prisma.leaveBalance.findFirst({
-      where: { id, tenantId },
+    const existing = await db.leaveBalance.findFirst({
+      where: { id },
       include: {
         member: {
           select: { name: true },
@@ -115,7 +122,7 @@ async function updateLeaveBalanceHandler(request: NextRequest, context: APIConte
       }, { status: 400 });
     }
 
-    const balance = await prisma.leaveBalance.update({
+    const balance = await db.leaveBalance.update({
       where: { id },
       data: {
         adjustment: newAdjustment,

@@ -7,10 +7,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { z } from 'zod';
 import { sendBatchEmails } from '@/lib/core/email';
 import { changeRequestEmail } from '@/lib/core/email-templates';
@@ -21,23 +20,18 @@ const createRequestSchema = z.object({
 });
 
 // GET /api/users/me/change-requests - Get current user's change requests
-async function getChangeRequestsHandler(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+async function getChangeRequestsHandler(request: NextRequest, context: APIContext) {
+  const { tenant, prisma: tenantPrisma } = context;
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-
-  // Require organization context for tenant isolation
-  if (!session.user.organizationId) {
+  if (!tenant?.tenantId) {
     return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
   }
 
-  const tenantId = session.user.organizationId;
+  const db = tenantPrisma as TenantPrismaClient;
 
-  // Get change requests for this TeamMember
-  const requests = await prisma.profileChangeRequest.findMany({
-    where: { memberId: session.user.id, tenantId },
+  // Get change requests for this TeamMember (tenant-scoped via extension)
+  const requests = await db.profileChangeRequest.findMany({
+    where: { memberId: tenant.userId },
     orderBy: { createdAt: 'desc' },
   });
 
@@ -47,12 +41,14 @@ async function getChangeRequestsHandler(request: NextRequest) {
 export const GET = withErrorHandler(getChangeRequestsHandler, { requireAuth: true });
 
 // POST /api/users/me/change-requests - Create a new change request
-async function createChangeRequestHandler(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+async function createChangeRequestHandler(request: NextRequest, context: APIContext) {
+  const { tenant, prisma: tenantPrisma } = context;
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
   }
+
+  const db = tenantPrisma as TenantPrismaClient;
 
   const body = await request.json();
   const validation = createRequestSchema.safeParse(body);
@@ -64,16 +60,11 @@ async function createChangeRequestHandler(request: NextRequest) {
     );
   }
 
-  // Require organization context for tenant isolation
-  if (!session.user.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-  }
-
-  const tenantId = session.user.organizationId;
-
-  // Verify TeamMember exists
-  const member = await prisma.teamMember.findUnique({
-    where: { id: session.user.id },
+  // Verify TeamMember exists in this tenant (tenant-scoped via extension)
+  const member = await db.teamMember.findFirst({
+    where: {
+      id: tenant.userId,
+    },
     select: { id: true, name: true, email: true },
   });
 
@@ -81,10 +72,10 @@ async function createChangeRequestHandler(request: NextRequest) {
     return NextResponse.json({ error: 'Team member not found' }, { status: 404 });
   }
 
-  // Check for existing pending request
-  const existingPending = await prisma.profileChangeRequest.findFirst({
+  // Check for existing pending request (tenant-scoped via extension)
+  const existingPending = await db.profileChangeRequest.findFirst({
     where: {
-      memberId: session.user.id,
+      memberId: tenant.userId,
       status: 'PENDING',
     },
   });
@@ -97,11 +88,13 @@ async function createChangeRequestHandler(request: NextRequest) {
   }
 
   // Create the change request (using memberId, not hrProfileId)
-  const changeRequest = await prisma.profileChangeRequest.create({
+  // Note: tenantId is included explicitly for type safety; the tenant prisma
+  // extension also auto-injects it but TypeScript requires it at compile time
+  const changeRequest = await db.profileChangeRequest.create({
     data: {
-      memberId: session.user.id,
+      tenantId: tenant.tenantId,
+      memberId: tenant.userId,
       description: validation.data.description,
-      tenantId,
     },
   });
 
@@ -109,17 +102,16 @@ async function createChangeRequestHandler(request: NextRequest) {
   try {
     // Get org details for email
     const org = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
+      where: { id: tenant.tenantId },
       select: { slug: true, name: true, primaryColor: true },
     });
 
-    // Get admin TeamMembers in this organization
-    const admins = await prisma.teamMember.findMany({
+    // Get admin TeamMembers in this organization (tenant-scoped via extension)
+    const admins = await db.teamMember.findMany({
       where: {
-        tenantId: session.user.organizationId!,
         role: TeamMemberRole.ADMIN,
         isDeleted: false,
-        id: { not: session.user.id }, // Don't notify the user themselves
+        id: { not: tenant.userId }, // Don't notify the user themselves
       },
       select: { email: true },
     });

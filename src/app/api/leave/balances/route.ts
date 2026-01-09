@@ -5,15 +5,18 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { leaveBalanceQuerySchema, initializeLeaveBalanceSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { getCurrentYear } from '@/lib/leave-utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getLeaveBalancesHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -29,20 +32,20 @@ async function getLeaveBalancesHandler(request: NextRequest, context: APIContext
     const { memberId, leaveTypeId, year, p, ps } = validation.data;
 
     // Non-admin users can only see their own balances
-    const isAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
 
     // For non-admin users, we need to look up their TeamMember ID
     let effectiveMemberId = memberId;
     if (!isAdmin) {
-      const currentMember = await prisma.teamMember.findFirst({
-        where: { id: tenant!.userId, tenantId },
+      const currentMember = await db.teamMember.findFirst({
+        where: { id: tenant.userId },
         select: { id: true },
       });
       effectiveMemberId = currentMember?.id;
     }
 
-    // Build where clause with tenant filter
-    const where: Record<string, unknown> = { tenantId };
+    // Build where clause (tenant filtering is automatic via db)
+    const where: Record<string, unknown> = {};
 
     if (effectiveMemberId) {
       where.memberId = effectiveMemberId;
@@ -60,7 +63,7 @@ async function getLeaveBalancesHandler(request: NextRequest, context: APIContext
     const skip = (p - 1) * ps;
 
     const [balances, total] = await Promise.all([
-      prisma.leaveBalance.findMany({
+      db.leaveBalance.findMany({
         where,
         include: {
           member: {
@@ -87,7 +90,7 @@ async function getLeaveBalancesHandler(request: NextRequest, context: APIContext
         take: ps,
         skip,
       }),
-      prisma.leaveBalance.count({ where }),
+      db.leaveBalance.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -105,9 +108,13 @@ async function getLeaveBalancesHandler(request: NextRequest, context: APIContext
 export const GET = withErrorHandler(getLeaveBalancesHandler, { requireAuth: true, requireModule: 'leave' });
 
 async function createLeaveBalanceHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
 
     const body = await request.json();
     const validation = initializeLeaveBalanceSchema.safeParse(body);
@@ -122,10 +129,9 @@ async function createLeaveBalanceHandler(request: NextRequest, context: APIConte
     const { memberId, leaveTypeId, year, entitlement, carriedForward } = validation.data;
 
     // Check if team member exists and belongs to this tenant
-    const teamMember = await prisma.teamMember.findFirst({
+    const teamMember = await db.teamMember.findFirst({
       where: {
         id: memberId,
-        tenantId,
       },
     });
 
@@ -134,8 +140,8 @@ async function createLeaveBalanceHandler(request: NextRequest, context: APIConte
     }
 
     // Check if leave type exists and belongs to this tenant
-    const leaveType = await prisma.leaveType.findFirst({
-      where: { id: leaveTypeId, tenantId },
+    const leaveType = await db.leaveType.findFirst({
+      where: { id: leaveTypeId },
     });
 
     if (!leaveType) {
@@ -143,14 +149,11 @@ async function createLeaveBalanceHandler(request: NextRequest, context: APIConte
     }
 
     // Check if balance already exists for this member/type/year
-    const existing = await prisma.leaveBalance.findUnique({
+    const existing = await db.leaveBalance.findFirst({
       where: {
-        tenantId_memberId_leaveTypeId_year: {
-          tenantId,
-          memberId,
-          leaveTypeId,
-          year,
-        },
+        memberId,
+        leaveTypeId,
+        year,
       },
     });
 
@@ -160,14 +163,16 @@ async function createLeaveBalanceHandler(request: NextRequest, context: APIConte
       }, { status: 400 });
     }
 
-    const balance = await prisma.leaveBalance.create({
+    // Note: tenantId is included explicitly for type safety; the tenant prisma
+    // extension also auto-injects it but TypeScript requires it at compile time
+    const balance = await db.leaveBalance.create({
       data: {
+        tenantId,
         memberId,
         leaveTypeId,
         year,
         entitlement: entitlement ?? leaveType.defaultDays,
         carriedForward: carriedForward ?? 0,
-        tenantId,
       },
       include: {
         member: {

@@ -1,6 +1,7 @@
-import { NextResponse } from 'next/server';
-import { withErrorHandler } from '@/lib/http/handler';
+import { NextRequest, NextResponse } from 'next/server';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { getLimitsForTier } from '@/lib/ai/rate-limiter';
 import { getAuditSummary, getFlaggedQueries } from '@/lib/ai/audit-logger';
 
@@ -22,11 +23,14 @@ interface DailyUsage {
 /**
  * GET /api/admin/ai-usage - Get AI usage statistics for the organization
  */
-export const GET = withErrorHandler(async (request, { tenant }) => {
-  if (!tenant) {
+export const GET = withErrorHandler(async (request: NextRequest, context: APIContext) => {
+  const { tenant, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
     return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
 
+  const db = tenantPrisma as TenantPrismaClient;
   const { searchParams } = new URL(request.url);
   const days = parseInt(searchParams.get('days') || '30', 10);
 
@@ -36,7 +40,7 @@ export const GET = withErrorHandler(async (request, { tenant }) => {
   startDate.setDate(startDate.getDate() - days);
   const monthStart = new Date(endDate.getUTCFullYear(), endDate.getUTCMonth(), 1);
 
-  // Get organization details
+  // Get organization details (non-tenant model, use raw prisma)
   const org = await prisma.organization.findUnique({
     where: { id: tenant.tenantId },
     select: {
@@ -53,10 +57,9 @@ export const GET = withErrorHandler(async (request, { tenant }) => {
   const limits = getLimitsForTier(org.subscriptionTier);
   const monthlyLimit = org.aiTokenBudgetMonthly || limits.monthlyTokens;
 
-  // Get monthly token usage
-  const monthlyUsage = await prisma.aIChatUsage.aggregate({
+  // Get monthly token usage (tenant-scoped)
+  const monthlyUsage = await db.aIChatUsage.aggregate({
     where: {
-      tenantId: tenant.tenantId,
       createdAt: { gte: monthStart },
     },
     _sum: { totalTokens: true },
@@ -66,11 +69,10 @@ export const GET = withErrorHandler(async (request, { tenant }) => {
   const monthlyTokensUsed = monthlyUsage._sum.totalTokens || 0;
   const monthlyRequestCount = monthlyUsage._count || 0;
 
-  // Get usage by member
-  const memberUsageData = await prisma.aIChatUsage.groupBy({
+  // Get usage by member (tenant-scoped)
+  const memberUsageData = await db.aIChatUsage.groupBy({
     by: ['memberId'],
     where: {
-      tenantId: tenant.tenantId,
       createdAt: { gte: startDate },
     },
     _sum: { totalTokens: true },
@@ -78,9 +80,9 @@ export const GET = withErrorHandler(async (request, { tenant }) => {
     _max: { createdAt: true },
   });
 
-  // Get member details
+  // Get member details (tenant-scoped)
   const memberIds = memberUsageData.map(u => u.memberId);
-  const members = await prisma.teamMember.findMany({
+  const members = await db.teamMember.findMany({
     where: { id: { in: memberIds } },
     select: { id: true, name: true, email: true },
   });
@@ -99,7 +101,7 @@ export const GET = withErrorHandler(async (request, { tenant }) => {
     };
   }).sort((a, b) => b.totalTokens - a.totalTokens);
 
-  // Get daily usage for trend chart
+  // Get daily usage for trend chart (use raw query with tenant filter)
   const dailyUsageData = await prisma.$queryRaw<Array<{ date: Date; tokens: bigint; requests: bigint }>>`
     SELECT
       DATE(created_at) as date,

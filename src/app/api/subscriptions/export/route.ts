@@ -25,9 +25,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
 import { arrayToCSV, formatDateForCSV, formatCurrencyForCSV } from '@/lib/core/csv-utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 /**
  * GET /api/subscriptions/export - Export all subscriptions to Excel
@@ -62,12 +62,17 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  * // Downloads: subscriptions_export_2024-06-15.xlsx
  */
 async function exportSubscriptionsHandler(_request: NextRequest, context: APIContext) {
-  const { tenant } = context;
-  const tenantId = tenant!.tenantId;
+  const { tenant, prisma: tenantPrisma } = context;
+
+  // Defensive check for tenant context
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+  }
+
+  const db = tenantPrisma as TenantPrismaClient;
 
   // Fetch subscriptions for current tenant only with related data including history
-  const subscriptions = await prisma.subscription.findMany({
-    where: { tenantId },
+  const subscriptions = await db.subscription.findMany({
     include: {
       assignedMember: {
         select: { name: true, email: true },

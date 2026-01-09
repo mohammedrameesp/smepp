@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { companyDocumentTypeSchema } from '@/features/company-documents';
 
 // GET /api/company-document-types/[id] - Get a single document type
@@ -10,19 +8,20 @@ export const GET = withErrorHandler(async (
   _request: NextRequest,
   context: APIContext
 ) => {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  const { tenant, prisma: tenantPrisma } = context;
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+  const db = tenantPrisma as TenantPrismaClient;
 
-  const tenantId = session.user.organizationId;
+  const tenantId = tenant.tenantId;
   const id = context.params?.id;
   if (!id) {
     return NextResponse.json({ error: 'ID is required' }, { status: 400 });
   }
 
   // Use findFirst with tenantId to prevent cross-tenant access
-  const documentType = await prisma.companyDocumentType.findFirst({
+  const documentType = await db.companyDocumentType.findFirst({
     where: { id, tenantId },
   });
 
@@ -41,12 +40,13 @@ export const PUT = withErrorHandler(async (
   request: NextRequest,
   context: APIContext
 ) => {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  const { tenant, prisma: tenantPrisma } = context;
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+  const db = tenantPrisma as TenantPrismaClient;
 
-  const tenantId = session.user.organizationId;
+  const tenantId = tenant.tenantId;
   const id = context.params?.id;
   if (!id) {
     return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -55,7 +55,7 @@ export const PUT = withErrorHandler(async (
   const validatedData = companyDocumentTypeSchema.partial().parse(body);
 
   // Use findFirst with tenantId to prevent cross-tenant access
-  const existing = await prisma.companyDocumentType.findFirst({
+  const existing = await db.companyDocumentType.findFirst({
     where: { id, tenantId },
   });
 
@@ -68,7 +68,7 @@ export const PUT = withErrorHandler(async (
 
   // If code is being changed, check it doesn't conflict within tenant
   if (validatedData.code && validatedData.code !== existing.code) {
-    const codeExists = await prisma.companyDocumentType.findFirst({
+    const codeExists = await db.companyDocumentType.findFirst({
       where: { code: validatedData.code, tenantId },
     });
 
@@ -80,7 +80,7 @@ export const PUT = withErrorHandler(async (
     }
   }
 
-  const documentType = await prisma.companyDocumentType.update({
+  const documentType = await db.companyDocumentType.update({
     where: { id },
     data: validatedData,
   });
@@ -93,19 +93,20 @@ export const DELETE = withErrorHandler(async (
   _request: NextRequest,
   context: APIContext
 ) => {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  const { tenant, prisma: tenantPrisma } = context;
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+  const db = tenantPrisma as TenantPrismaClient;
 
-  const tenantId = session.user.organizationId;
+  const tenantId = tenant.tenantId;
   const id = context.params?.id;
   if (!id) {
     return NextResponse.json({ error: 'ID is required' }, { status: 400 });
   }
 
   // Use findFirst with tenantId to prevent cross-tenant access
-  const existing = await prisma.companyDocumentType.findFirst({
+  const existing = await db.companyDocumentType.findFirst({
     where: { id, tenantId },
   });
 
@@ -116,7 +117,7 @@ export const DELETE = withErrorHandler(async (
     );
   }
 
-  await prisma.companyDocumentType.delete({
+  await db.companyDocumentType.delete({
     where: { id },
   });
 

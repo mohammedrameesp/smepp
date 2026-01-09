@@ -8,147 +8,132 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { hrProfileSchema, hrProfileEmployeeSchema } from '@/lib/validations/hr-profile';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { TeamMemberRole } from '@prisma/client';
 import { sendEmail } from '@/lib/core/email';
 import { initializeMemberLeaveBalances } from '@/features/leave/lib/leave-balance-init';
 
 // GET /api/users/me/hr-profile - Get current user's HR profile (now from TeamMember)
-async function getHRProfileHandler(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+async function getHRProfileHandler(request: NextRequest, context: APIContext) {
+  const { tenant, prisma: tenantPrisma } = context;
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-
-  // Ensure user has an organization
-  if (!session.user.organizationId) {
+  if (!tenant?.tenantId) {
     return NextResponse.json(
       { error: 'Organization context required. Please ensure you are logged in with an organization.' },
       { status: 400 }
     );
   }
 
-  try {
-    // Get TeamMember (which now contains all HR data)
-    const member = await prisma.teamMember.findUnique({
-      where: { id: session.user.id },
-    });
+  const db = tenantPrisma as TenantPrismaClient;
 
-    if (!member) {
-      return NextResponse.json({ error: 'Team member not found' }, { status: 404 });
-    }
+  // Get TeamMember (which now contains all HR data) - tenant-scoped via extension
+  const member = await db.teamMember.findFirst({
+    where: {
+      id: tenant.userId,
+    },
+  });
 
-    // Return data in format compatible with old HRProfile responses
-    return NextResponse.json({
-      id: member.id,
-      userId: member.id, // For backwards compatibility
-      tenantId: member.tenantId,
-      // Personal info
-      dateOfBirth: member.dateOfBirth,
-      gender: member.gender,
-      maritalStatus: member.maritalStatus,
-      nationality: member.nationality,
-      religion: member.religion,
-      // Contact
-      qatarMobile: member.qatarMobile,
-      otherMobileCode: member.otherMobileCode,
-      otherMobileNumber: member.otherMobileNumber,
-      personalEmail: member.personalEmail,
-      // Address
-      qatarZone: member.qatarZone,
-      qatarStreet: member.qatarStreet,
-      qatarBuilding: member.qatarBuilding,
-      qatarUnit: member.qatarUnit,
-      homeCountryAddress: member.homeCountryAddress,
-      // Emergency contacts - Local
-      localEmergencyName: member.localEmergencyName,
-      localEmergencyRelation: member.localEmergencyRelation,
-      localEmergencyPhoneCode: member.localEmergencyPhoneCode,
-      localEmergencyPhone: member.localEmergencyPhone,
-      // Emergency contacts - Home
-      homeEmergencyName: member.homeEmergencyName,
-      homeEmergencyRelation: member.homeEmergencyRelation,
-      homeEmergencyPhoneCode: member.homeEmergencyPhoneCode,
-      homeEmergencyPhone: member.homeEmergencyPhone,
-      // Identity documents
-      qidNumber: member.qidNumber,
-      qidExpiry: member.qidExpiry,
-      passportNumber: member.passportNumber,
-      passportExpiry: member.passportExpiry,
-      healthCardExpiry: member.healthCardExpiry,
-      sponsorshipType: member.sponsorshipType,
-      // Employment
-      employeeId: member.employeeCode, // Map to old field name
-      designation: member.designation,
-      dateOfJoining: member.dateOfJoining,
-      status: member.status, // TeamMemberStatus: ACTIVE, INACTIVE, TERMINATED
-      hajjLeaveTaken: member.hajjLeaveTaken,
-      bypassNoticeRequirement: member.bypassNoticeRequirement,
-      // Banking
-      bankName: member.bankName,
-      iban: member.iban,
-      // Education
-      highestQualification: member.highestQualification,
-      specialization: member.specialization,
-      institutionName: member.institutionName,
-      graduationYear: member.graduationYear,
-      // Documents
-      qidUrl: member.qidUrl,
-      passportCopyUrl: member.passportCopyUrl,
-      photoUrl: member.photoUrl,
-      contractCopyUrl: member.contractCopyUrl,
-      contractExpiry: member.contractExpiry,
-      // Driving
-      hasDrivingLicense: member.hasDrivingLicense,
-      licenseExpiry: member.licenseExpiry,
-      // Skills
-      languagesKnown: member.languagesKnown,
-      skillsCertifications: member.skillsCertifications,
-      // Onboarding
-      onboardingStep: member.onboardingStep,
-      onboardingComplete: member.onboardingComplete,
-      // Metadata
-      createdAt: member.createdAt,
-      updatedAt: member.updatedAt,
-      // Computed fields
-      workEmail: member.email,
-      isAdmin: member.role === TeamMemberRole.ADMIN,
-    });
-  } catch (dbError) {
-    console.error('[HR Profile GET] Database error:', dbError);
-    return NextResponse.json(
-      {
-        error: 'Failed to load HR profile',
-        message: dbError instanceof Error ? dbError.message : 'Database operation failed',
-      },
-      { status: 500 }
-    );
+  if (!member) {
+    return NextResponse.json({ error: 'Team member not found' }, { status: 404 });
   }
+
+  // Return data in format compatible with old HRProfile responses
+  return NextResponse.json({
+    id: member.id,
+    userId: member.id, // For backwards compatibility
+    tenantId: member.tenantId,
+    // Personal info
+    dateOfBirth: member.dateOfBirth,
+    gender: member.gender,
+    maritalStatus: member.maritalStatus,
+    nationality: member.nationality,
+    religion: member.religion,
+    // Contact
+    qatarMobile: member.qatarMobile,
+    otherMobileCode: member.otherMobileCode,
+    otherMobileNumber: member.otherMobileNumber,
+    personalEmail: member.personalEmail,
+    // Address
+    qatarZone: member.qatarZone,
+    qatarStreet: member.qatarStreet,
+    qatarBuilding: member.qatarBuilding,
+    qatarUnit: member.qatarUnit,
+    homeCountryAddress: member.homeCountryAddress,
+    // Emergency contacts - Local
+    localEmergencyName: member.localEmergencyName,
+    localEmergencyRelation: member.localEmergencyRelation,
+    localEmergencyPhoneCode: member.localEmergencyPhoneCode,
+    localEmergencyPhone: member.localEmergencyPhone,
+    // Emergency contacts - Home
+    homeEmergencyName: member.homeEmergencyName,
+    homeEmergencyRelation: member.homeEmergencyRelation,
+    homeEmergencyPhoneCode: member.homeEmergencyPhoneCode,
+    homeEmergencyPhone: member.homeEmergencyPhone,
+    // Identity documents
+    qidNumber: member.qidNumber,
+    qidExpiry: member.qidExpiry,
+    passportNumber: member.passportNumber,
+    passportExpiry: member.passportExpiry,
+    healthCardExpiry: member.healthCardExpiry,
+    sponsorshipType: member.sponsorshipType,
+    // Employment
+    employeeId: member.employeeCode, // Map to old field name
+    designation: member.designation,
+    dateOfJoining: member.dateOfJoining,
+    status: member.status, // TeamMemberStatus: ACTIVE, INACTIVE, TERMINATED
+    hajjLeaveTaken: member.hajjLeaveTaken,
+    bypassNoticeRequirement: member.bypassNoticeRequirement,
+    // Banking
+    bankName: member.bankName,
+    iban: member.iban,
+    // Education
+    highestQualification: member.highestQualification,
+    specialization: member.specialization,
+    institutionName: member.institutionName,
+    graduationYear: member.graduationYear,
+    // Documents
+    qidUrl: member.qidUrl,
+    passportCopyUrl: member.passportCopyUrl,
+    photoUrl: member.photoUrl,
+    contractCopyUrl: member.contractCopyUrl,
+    contractExpiry: member.contractExpiry,
+    // Driving
+    hasDrivingLicense: member.hasDrivingLicense,
+    licenseExpiry: member.licenseExpiry,
+    // Skills
+    languagesKnown: member.languagesKnown,
+    skillsCertifications: member.skillsCertifications,
+    // Onboarding
+    onboardingStep: member.onboardingStep,
+    onboardingComplete: member.onboardingComplete,
+    // Metadata
+    createdAt: member.createdAt,
+    updatedAt: member.updatedAt,
+    // Computed fields
+    workEmail: member.email,
+    isAdmin: member.role === TeamMemberRole.ADMIN,
+  });
 }
 
 export const GET = withErrorHandler(getHRProfileHandler, { requireAuth: true, rateLimit: true });
 
 // PATCH /api/users/me/hr-profile - Update current user's HR profile (now updates TeamMember)
-async function updateHRProfileHandler(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+async function updateHRProfileHandler(request: NextRequest, context: APIContext) {
+  const { tenant, prisma: tenantPrisma } = context;
 
-  if (!session?.user) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-
-  // Ensure user has an organization
-  if (!session.user.organizationId) {
+  if (!tenant?.tenantId) {
     return NextResponse.json(
       { error: 'Organization context required. Please ensure you are logged in with an organization.' },
       { status: 400 }
     );
   }
+
+  const { tenantId } = tenant;
+  const db = tenantPrisma as TenantPrismaClient;
 
   let body;
   try {
@@ -157,9 +142,11 @@ async function updateHRProfileHandler(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 });
   }
 
-  // Get member to check role
-  const member = await prisma.teamMember.findUnique({
-    where: { id: session.user.id },
+  // Get member to check role (tenant-scoped via extension)
+  const member = await db.teamMember.findFirst({
+    where: {
+      id: tenant.userId,
+    },
     select: { role: true, onboardingComplete: true, dateOfJoining: true },
   });
 
@@ -245,11 +232,11 @@ async function updateHRProfileHandler(request: NextRequest) {
   const isNowOnboardingComplete = processedData.onboardingComplete === true;
   const justCompletedOnboarding = !wasOnboardingComplete && isNowOnboardingComplete;
 
-  // Update TeamMember
+  // Update TeamMember (tenant-scoped via extension)
   let updatedMember;
   try {
-    updatedMember = await prisma.teamMember.update({
-      where: { id: session.user.id },
+    updatedMember = await db.teamMember.update({
+      where: { id: tenant.userId },
       data: processedData,
     });
   } catch (dbError) {
@@ -266,8 +253,8 @@ async function updateHRProfileHandler(request: NextRequest) {
 
   // Log activity
   await logAction(
-    session.user.organizationId!,
-    session.user.id,
+    tenantId,
+    tenant.userId,
     ActivityActions.USER_UPDATED,
     'TeamMember',
     updatedMember.id,
@@ -277,20 +264,19 @@ async function updateHRProfileHandler(request: NextRequest) {
   // Send email notification to admins when onboarding is completed
   if (justCompletedOnboarding) {
     try {
-      // Get organization name
+      // Get organization name (global model)
       const org = await prisma.organization.findUnique({
-        where: { id: session.user.organizationId! },
+        where: { id: tenantId },
         select: { name: true },
       });
       const orgName = org?.name || 'Durj';
 
-      // Get all admin members (tenant-scoped)
-      const admins = await prisma.teamMember.findMany({
+      // Get all admin members (tenant-scoped via extension)
+      const admins = await db.teamMember.findMany({
         where: {
-          tenantId: session.user.organizationId!,
           role: TeamMemberRole.ADMIN,
           isDeleted: false,
-          id: { not: session.user.id }, // Don't notify the user themselves
+          id: { not: tenant.userId }, // Don't notify the user themselves
         },
         select: { email: true, name: true },
       });
@@ -313,7 +299,7 @@ async function updateHRProfileHandler(request: NextRequest) {
                 You can view their profile in the Employee Management section of the portal.
               </p>
               <div style="margin-top: 24px;">
-                <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin/employees/${session.user.id}"
+                <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin/employees/${tenant.userId}"
                    style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
                   View Profile
                 </a>
@@ -323,7 +309,7 @@ async function updateHRProfileHandler(request: NextRequest) {
               </p>
             </div>
           `,
-          text: `${employeeName} (${employeeEmail}) has completed their HR profile onboarding. View their profile at ${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin/employees/${session.user.id}`,
+          text: `${employeeName} (${employeeEmail}) has completed their HR profile onboarding. View their profile at ${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin/employees/${tenant.userId}`,
         });
       }
     } catch (emailError) {
@@ -334,7 +320,7 @@ async function updateHRProfileHandler(request: NextRequest) {
     // Initialize leave balances when onboarding is completed with dateOfJoining
     if (updatedMember.dateOfJoining) {
       try {
-        await initializeMemberLeaveBalances(session.user.id, new Date().getFullYear(), session.user.organizationId!);
+        await initializeMemberLeaveBalances(tenant.userId, new Date().getFullYear(), tenant.tenantId);
       } catch (leaveError) {
         console.error('[Leave] Failed to initialize leave balances on onboarding completion:', leaveError);
         // Don't fail the request if leave balance initialization fails

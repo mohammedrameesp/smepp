@@ -5,21 +5,26 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { updateSalaryStructureSchema } from '@/lib/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { calculateGrossSalary, parseDecimal } from '@/lib/payroll/utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getSalaryStructureHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     // Use findFirst with tenantId to prevent cross-tenant access
-    const salaryStructure = await prisma.salaryStructure.findFirst({
+    const salaryStructure = await db.salaryStructure.findFirst({
       where: { id, tenantId },
       include: {
         member: {
@@ -50,8 +55,8 @@ async function getSalaryStructureHandler(request: NextRequest, context: APIConte
     }
 
     // Non-admin users can only view their own salary structure
-    const isOwnerOrAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
-    if (!isOwnerOrAdmin && salaryStructure.memberId !== tenant!.userId) {
+    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    if (!isOwnerOrAdmin && salaryStructure.memberId !== tenant.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
@@ -73,9 +78,13 @@ async function getSalaryStructureHandler(request: NextRequest, context: APIConte
 export const GET = withErrorHandler(getSalaryStructureHandler, { requireAuth: true, requireModule: 'payroll' });
 
 async function updateSalaryStructureHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -94,7 +103,7 @@ async function updateSalaryStructureHandler(request: NextRequest, context: APICo
     const data = validation.data;
 
     // Use findFirst with tenantId to prevent cross-tenant access
-    const existing = await prisma.salaryStructure.findFirst({
+    const existing = await db.salaryStructure.findFirst({
       where: { id, tenantId },
       include: {
         member: { select: { id: true, name: true } },
@@ -221,16 +230,20 @@ async function updateSalaryStructureHandler(request: NextRequest, context: APICo
 export const PUT = withErrorHandler(updateSalaryStructureHandler, { requireAdmin: true, requireModule: 'payroll' });
 
 async function deleteSalaryStructureHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     // Use findFirst with tenantId to prevent cross-tenant access
-    const existing = await prisma.salaryStructure.findFirst({
+    const existing = await db.salaryStructure.findFirst({
       where: { id, tenantId },
       include: {
         member: { select: { id: true, name: true } },
@@ -242,7 +255,7 @@ async function deleteSalaryStructureHandler(request: NextRequest, context: APICo
     }
 
     // Check if there are any payslips associated with this member
-    const payslipCount = await prisma.payslip.count({
+    const payslipCount = await db.payslip.count({
       where: { memberId: existing.memberId },
     });
 
@@ -253,7 +266,7 @@ async function deleteSalaryStructureHandler(request: NextRequest, context: APICo
     }
 
     // Delete salary structure (cascade will delete history)
-    await prisma.salaryStructure.delete({
+    await db.salaryStructure.delete({
       where: { id },
     });
 

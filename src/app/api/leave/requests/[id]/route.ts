@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { updateLeaveRequestSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import {
@@ -17,16 +17,19 @@ import { cleanupStorageFile } from '@/lib/storage/cleanup';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getLeaveRequestHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Use findFirst with tenantId to prevent IDOR attacks
-    const leaveRequest = await prisma.leaveRequest.findFirst({
-      where: { id, tenantId },
+    // Use findFirst (tenant filtering is automatic via db)
+    const leaveRequest = await db.leaveRequest.findFirst({
+      where: { id },
       include: {
         member: {
           select: {
@@ -77,8 +80,8 @@ async function getLeaveRequestHandler(request: NextRequest, context: APIContext)
     }
 
     // Non-admin members can only see their own requests
-    const isOwnerOrAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
-    if (!isOwnerOrAdmin && leaveRequest.memberId !== tenant!.userId) {
+    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    if (!isOwnerOrAdmin && leaveRequest.memberId !== tenant.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -88,9 +91,13 @@ async function getLeaveRequestHandler(request: NextRequest, context: APIContext)
 export const GET = withErrorHandler(getLeaveRequestHandler, { requireAuth: true, requireModule: 'leave' });
 
 async function updateLeaveRequestHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -109,8 +116,8 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
     const data = validation.data;
 
     // Get existing request within tenant
-    const existing = await prisma.leaveRequest.findFirst({
-      where: { id, tenantId },
+    const existing = await db.leaveRequest.findFirst({
+      where: { id },
       include: {
         leaveType: true,
       },
@@ -121,7 +128,7 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
     }
 
     // Only owner can edit their request
-    const isOwnerOrAdminRole = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    const isOwnerOrAdminRole = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
     if (existing.memberId !== currentUserId && !isOwnerOrAdminRole) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -155,11 +162,10 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
     }
 
     // Check for overlapping requests (excluding current request) within tenant
-    const overlappingRequests = await prisma.leaveRequest.findMany({
+    const overlappingRequests = await db.leaveRequest.findMany({
       where: {
         id: { not: id },
         memberId: existing.memberId,
-        tenantId,
         status: { in: ['PENDING', 'APPROVED'] },
       },
       select: { startDate: true, endDate: true },
@@ -183,7 +189,7 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
     }
 
     // Update in transaction
-    const leaveRequest = await prisma.$transaction(async (tx) => {
+    const leaveRequest = await db.$transaction(async (tx) => {
       // Update the request
       const request = await tx.leaveRequest.update({
         where: { id },
@@ -265,17 +271,21 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
 export const PUT = withErrorHandler(updateLeaveRequestHandler, { requireAuth: true, requireModule: 'leave' });
 
 async function deleteLeaveRequestHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     // Get existing request within tenant
-    const existing = await prisma.leaveRequest.findFirst({
-      where: { id, tenantId },
+    const existing = await db.leaveRequest.findFirst({
+      where: { id },
     });
 
     if (!existing) {
@@ -284,14 +294,14 @@ async function deleteLeaveRequestHandler(request: NextRequest, context: APIConte
 
     // Only admin can delete requests (or owner if draft/pending)
     const isOwner = existing.memberId === currentUserId;
-    const isAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
 
     if (!isAdmin && (!isOwner || existing.status !== 'PENDING')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Delete in transaction
-    await prisma.$transaction(async (tx) => {
+    await db.$transaction(async (tx) => {
       // If pending, restore balance
       if (existing.status === 'PENDING') {
         const year = existing.startDate.getFullYear();

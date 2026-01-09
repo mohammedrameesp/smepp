@@ -6,14 +6,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { submitPayrollSchema } from '@/lib/validations/payroll';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function submitPayrollHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -25,7 +30,7 @@ async function submitPayrollHandler(request: NextRequest, context: APIContext) {
     const notes = validation.success ? validation.data.notes : undefined;
 
     // Use findFirst with tenantId to prevent cross-tenant access
-    const payrollRun = await prisma.payrollRun.findFirst({
+    const payrollRun = await db.payrollRun.findFirst({
       where: { id, tenantId },
     });
 

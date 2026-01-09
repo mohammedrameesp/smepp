@@ -4,25 +4,25 @@
  * @module operations/suppliers
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { rejectSupplierSchema } from '@/features/suppliers';
 import { logAction } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 async function rejectSupplierHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId || !tenant?.userId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
+
+    const db = tenantPrisma as TenantPrismaClient;
+    const { tenantId, userId } = tenant;
 
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
-
-    const tenantId = session.user.organizationId;
 
     // Parse and validate request body
     const body = await request.json();
@@ -40,9 +40,9 @@ async function rejectSupplierHandler(request: NextRequest, context: APIContext) 
 
     const { rejectionReason } = validation.data;
 
-    // Check if supplier exists within tenant and is PENDING
-    const existingSupplier = await prisma.supplier.findFirst({
-      where: { id, tenantId },
+    // Check if supplier exists and is PENDING - tenant filtering handled automatically
+    const existingSupplier = await db.supplier.findFirst({
+      where: { id },
     });
 
     if (!existingSupplier) {
@@ -59,20 +59,19 @@ async function rejectSupplierHandler(request: NextRequest, context: APIContext) 
     // Log the rejection activity before deleting
     await logAction(
       tenantId,
-      session.user.id,
+      userId,
       'SUPPLIER_REJECTED',
       'supplier',
       existingSupplier.id,
       {
         suppCode: existingSupplier.suppCode,
         name: existingSupplier.name,
-        rejectedBy: session.user.name || session.user.email,
         rejectionReason,
       }
     );
 
-    // Delete supplier instead of marking as rejected
-    await prisma.supplier.delete({
+    // Delete supplier instead of marking as rejected - tenant filtering handled automatically
+    await db.supplier.delete({
       where: { id },
     });
 

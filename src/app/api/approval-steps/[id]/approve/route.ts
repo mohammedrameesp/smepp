@@ -1,77 +1,81 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { processApprovalSchema } from '@/features/approvals/validations/approvals';
 import { processApproval, getCurrentPendingStep } from '@/features/approvals/lib';
-import { logAction, ActivityActions } from '@/lib/core/activity';
+import { logAction } from '@/lib/core/activity';
 import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
-
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 // POST /api/approval-steps/[id]/approve - Approve a step
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+async function approveStepHandler(request: NextRequest, context: APIContext) {
+  const { tenant, prisma: tenantPrisma, params } = context;
 
-    const { id } = await params;
-    const body = await request.json();
-    const validation = processApprovalSchema.safeParse({ ...body, action: 'APPROVE' });
-
-    if (!validation.success) {
-      return NextResponse.json({
-        error: 'Invalid request body',
-        details: validation.error.issues,
-      }, { status: 400 });
-    }
-
-    const result = await processApproval(id, session.user.id, 'APPROVE', validation.data.notes);
-
-    const tenantId = session.user.organizationId!;
-
-    // Log the action
-    await logAction(
-      tenantId,
-      session.user.id,
-      'APPROVAL_STEP_APPROVED',
-      'ApprovalStep',
-      id,
-      {
-        entityType: result.step.entityType,
-        entityId: result.step.entityId,
-        levelOrder: result.step.levelOrder,
-        notes: validation.data.notes,
-      }
-    );
-
-    // If chain is complete and all approved, update the original entity and notify requester
-    if (result.isChainComplete && result.allApproved) {
-      await handleFinalApproval(result.step.entityType, result.step.entityId, session.user.id, tenantId);
-    } else if (!result.isChainComplete) {
-      // Notify next approver (tenant-scoped)
-      const nextStep = await getCurrentPendingStep(result.step.entityType, result.step.entityId);
-      if (nextStep) {
-        await notifyNextApprover(result.step.entityType, result.step.entityId, nextStep.requiredRole, tenantId);
-      }
-    }
-
-    return NextResponse.json(result);
-  } catch (error) {
-    console.error('Approve step error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to approve step';
-    return NextResponse.json({ error: message }, { status: 500 });
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
+  const userId = tenant.userId;
+  const id = params?.id;
+
+  if (!id) {
+    return NextResponse.json({ error: 'Approval step ID required' }, { status: 400 });
+  }
+
+  const body = await request.json();
+  const validation = processApprovalSchema.safeParse({ ...body, action: 'APPROVE' });
+
+  if (!validation.success) {
+    return NextResponse.json({
+      error: 'Invalid request body',
+      details: validation.error.issues,
+    }, { status: 400 });
+  }
+
+  const result = await processApproval(id, userId, 'APPROVE', validation.data.notes);
+
+  // Log the action
+  await logAction(
+    tenantId,
+    userId,
+    'APPROVAL_STEP_APPROVED',
+    'ApprovalStep',
+    id,
+    {
+      entityType: result.step.entityType,
+      entityId: result.step.entityId,
+      levelOrder: result.step.levelOrder,
+      notes: validation.data.notes,
+    }
+  );
+
+  // If chain is complete and all approved, update the original entity and notify requester
+  if (result.isChainComplete && result.allApproved) {
+    await handleFinalApproval(db, result.step.entityType, result.step.entityId, userId, tenantId);
+  } else if (!result.isChainComplete) {
+    // Notify next approver (tenant-scoped)
+    const nextStep = await getCurrentPendingStep(result.step.entityType, result.step.entityId);
+    if (nextStep) {
+      await notifyNextApprover(db, result.step.entityType, result.step.entityId, nextStep.requiredRole, tenantId);
+    }
+  }
+
+  return NextResponse.json(result);
 }
 
-async function handleFinalApproval(entityType: string, entityId: string, approverId: string, tenantId: string) {
+export const POST = withErrorHandler(approveStepHandler, { requireAuth: true });
+
+async function handleFinalApproval(
+  db: TenantPrismaClient,
+  entityType: string,
+  entityId: string,
+  approverId: string,
+  tenantId: string
+) {
   // Update the original entity status and notify requester
   if (entityType === 'LEAVE_REQUEST') {
-    const leaveRequest = await prisma.leaveRequest.update({
+    const leaveRequest = await db.leaveRequest.update({
       where: { id: entityId },
       data: {
         status: 'APPROVED',
@@ -86,7 +90,7 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
 
     // Update balance: move from pending to used
     const year = leaveRequest.startDate.getFullYear();
-    await prisma.leaveBalance.update({
+    await db.leaveBalance.update({
       where: {
         tenantId_memberId_leaveTypeId_year: {
           tenantId: leaveRequest.tenantId,
@@ -112,7 +116,7 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
       tenantId
     );
   } else if (entityType === 'PURCHASE_REQUEST') {
-    const purchaseRequest = await prisma.purchaseRequest.update({
+    const purchaseRequest = await db.purchaseRequest.update({
       where: { id: entityId },
       data: {
         status: 'APPROVED',
@@ -133,7 +137,7 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
       tenantId
     );
   } else if (entityType === 'ASSET_REQUEST') {
-    const assetRequest = await prisma.assetRequest.update({
+    const assetRequest = await db.assetRequest.update({
       where: { id: entityId },
       data: {
         status: 'APPROVED',
@@ -158,11 +162,16 @@ async function handleFinalApproval(entityType: string, entityId: string, approve
   }
 }
 
-async function notifyNextApprover(entityType: string, entityId: string, requiredRole: string, tenantId: string) {
+async function notifyNextApprover(
+  db: TenantPrismaClient,
+  entityType: string,
+  entityId: string,
+  requiredRole: string,
+  tenantId: string
+) {
   // Find team members with the required role to notify (tenant-scoped)
-  const approvers = await prisma.teamMember.findMany({
+  const approvers = await db.teamMember.findMany({
     where: {
-      tenantId,
       role: requiredRole as never,
     },
     select: { id: true },
@@ -176,7 +185,7 @@ async function notifyNextApprover(entityType: string, entityId: string, required
   };
 
   if (entityType === 'LEAVE_REQUEST') {
-    const request = await prisma.leaveRequest.findUnique({
+    const request = await db.leaveRequest.findUnique({
       where: { id: entityId },
       include: {
         member: { select: { name: true, email: true } },
@@ -191,7 +200,7 @@ async function notifyNextApprover(entityType: string, entityId: string, required
       };
     }
   } else if (entityType === 'PURCHASE_REQUEST') {
-    const request = await prisma.purchaseRequest.findUnique({
+    const request = await db.purchaseRequest.findUnique({
       where: { id: entityId },
       include: {
         requester: { select: { name: true, email: true } },
@@ -205,7 +214,7 @@ async function notifyNextApprover(entityType: string, entityId: string, required
       };
     }
   } else if (entityType === 'ASSET_REQUEST') {
-    const request = await prisma.assetRequest.findUnique({
+    const request = await db.assetRequest.findUnique({
       where: { id: entityId },
       include: {
         member: { select: { name: true, email: true } },

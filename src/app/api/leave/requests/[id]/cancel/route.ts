@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { cancelLeaveRequestSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { canCancelLeaveRequest } from '@/lib/leave-utils';
@@ -13,9 +13,13 @@ import { createNotification, NotificationTemplates } from '@/features/notificati
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function cancelLeaveRequestHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -33,9 +37,9 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
 
     const { reason } = validation.data;
 
-    // Get existing request within tenant
-    const existing = await prisma.leaveRequest.findFirst({
-      where: { id, tenantId },
+    // Get existing request within tenant (tenant filtering is automatic via db)
+    const existing = await db.leaveRequest.findFirst({
+      where: { id },
       include: {
         member: {
           select: { name: true },
@@ -52,7 +56,7 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
 
     // Only owner or admin can cancel
     const isOwner = existing.memberId === currentUserId;
-    const isAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
 
     if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -70,7 +74,7 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
     const wasApproved = existing.status === 'APPROVED';
 
     // Cancel in transaction
-    const leaveRequest = await prisma.$transaction(async (tx) => {
+    const leaveRequest = await db.$transaction(async (tx) => {
       // Update the request
       const request = await tx.leaveRequest.update({
         where: { id },

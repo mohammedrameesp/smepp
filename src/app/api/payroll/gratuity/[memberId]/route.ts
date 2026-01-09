@@ -5,28 +5,33 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { calculateGratuity, projectGratuity, getServiceDurationText } from '@/lib/payroll/gratuity';
 import { parseDecimal } from '@/lib/payroll/utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getGratuityHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
     const memberId = params?.memberId;
     if (!memberId) {
       return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
     }
 
-    const isAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
 
     // Non-admin users can only view their own gratuity
     // tenant.userId is the TeamMember ID of the current user
-    if (!isAdmin && memberId !== tenant!.userId) {
+    if (!isAdmin && memberId !== tenant.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     // Get member's salary structure and HR fields - verify member belongs to same org
-    const member = await prisma.teamMember.findFirst({
+    const member = await db.teamMember.findFirst({
       where: {
         id: memberId,
         tenantId: tenantId,

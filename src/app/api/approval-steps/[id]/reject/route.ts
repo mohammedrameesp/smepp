@@ -1,72 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { processApprovalSchema } from '@/features/approvals/validations/approvals';
 import { processApproval } from '@/features/approvals/lib';
 import { logAction } from '@/lib/core/activity';
 import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
-
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 // POST /api/approval-steps/[id]/reject - Reject a step
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+async function rejectStepHandler(request: NextRequest, context: APIContext) {
+  const { tenant, prisma: tenantPrisma, params } = context;
 
-    const { id } = await params;
-    const body = await request.json();
-    const validation = processApprovalSchema.safeParse({ ...body, action: 'REJECT' });
-
-    if (!validation.success) {
-      return NextResponse.json({
-        error: 'Invalid request body',
-        details: validation.error.issues,
-      }, { status: 400 });
-    }
-
-    const result = await processApproval(id, session.user.id, 'REJECT', validation.data.notes);
-
-    const tenantId = session.user.organizationId!;
-
-    // Log the action
-    await logAction(
-      tenantId,
-      session.user.id,
-      'APPROVAL_STEP_REJECTED',
-      'ApprovalStep',
-      id,
-      {
-        entityType: result.step.entityType,
-        entityId: result.step.entityId,
-        levelOrder: result.step.levelOrder,
-        notes: validation.data.notes,
-      }
-    );
-
-    // Handle rejection - update original entity and notify requester
-    await handleRejection(
-      result.step.entityType,
-      result.step.entityId,
-      session.user.id,
-      validation.data.notes,
-      tenantId
-    );
-
-    return NextResponse.json(result);
-  } catch (error) {
-    console.error('Reject step error:', error);
-    const message = error instanceof Error ? error.message : 'Failed to reject step';
-    return NextResponse.json({ error: message }, { status: 500 });
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
+  const userId = tenant.userId;
+  const id = params?.id;
+
+  if (!id) {
+    return NextResponse.json({ error: 'Approval step ID required' }, { status: 400 });
+  }
+
+  const body = await request.json();
+  const validation = processApprovalSchema.safeParse({ ...body, action: 'REJECT' });
+
+  if (!validation.success) {
+    return NextResponse.json({
+      error: 'Invalid request body',
+      details: validation.error.issues,
+    }, { status: 400 });
+  }
+
+  const result = await processApproval(id, userId, 'REJECT', validation.data.notes);
+
+  // Log the action
+  await logAction(
+    tenantId,
+    userId,
+    'APPROVAL_STEP_REJECTED',
+    'ApprovalStep',
+    id,
+    {
+      entityType: result.step.entityType,
+      entityId: result.step.entityId,
+      levelOrder: result.step.levelOrder,
+      notes: validation.data.notes,
+    }
+  );
+
+  // Handle rejection - update original entity and notify requester
+  await handleRejection(
+    db,
+    result.step.entityType,
+    result.step.entityId,
+    userId,
+    validation.data.notes,
+    tenantId
+  );
+
+  return NextResponse.json(result);
 }
 
+export const POST = withErrorHandler(rejectStepHandler, { requireAuth: true });
+
 async function handleRejection(
+  db: TenantPrismaClient,
   entityType: string,
   entityId: string,
   approverId: string,
@@ -74,7 +74,7 @@ async function handleRejection(
   tenantId: string
 ) {
   if (entityType === 'LEAVE_REQUEST') {
-    const leaveRequest = await prisma.leaveRequest.update({
+    const leaveRequest = await db.leaveRequest.update({
       where: { id: entityId },
       data: {
         status: 'REJECTED',
@@ -90,7 +90,7 @@ async function handleRejection(
 
     // Update balance: remove from pending
     const year = leaveRequest.startDate.getFullYear();
-    await prisma.leaveBalance.update({
+    await db.leaveBalance.update({
       where: {
         tenantId_memberId_leaveTypeId_year: {
           tenantId: leaveRequest.tenantId,
@@ -116,7 +116,7 @@ async function handleRejection(
       tenantId
     );
   } else if (entityType === 'PURCHASE_REQUEST') {
-    const purchaseRequest = await prisma.purchaseRequest.update({
+    const purchaseRequest = await db.purchaseRequest.update({
       where: { id: entityId },
       data: {
         status: 'REJECTED',
@@ -139,7 +139,7 @@ async function handleRejection(
       tenantId
     );
   } else if (entityType === 'ASSET_REQUEST') {
-    const assetRequest = await prisma.assetRequest.update({
+    const assetRequest = await db.assetRequest.update({
       where: { id: entityId },
       data: {
         status: 'REJECTED',

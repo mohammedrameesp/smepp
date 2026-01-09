@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { companyDocumentTypeSchema } from '@/features/company-documents';
 
 // GET /api/company-document-types - List all document types
 export const GET = withErrorHandler(async (_request: NextRequest, context: APIContext) => {
-  if (!context.tenant?.tenantId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  const { tenant, prisma: tenantPrisma } = context;
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+  const db = tenantPrisma as TenantPrismaClient;
 
-  const documentTypes = await prisma.companyDocumentType.findMany({
+  const documentTypes = await db.companyDocumentType.findMany({
     where: {
-      tenantId: context.tenant.tenantId,
+      tenantId: tenant.tenantId,
     },
     orderBy: [
       { sortOrder: 'asc' },
@@ -26,16 +28,18 @@ export const GET = withErrorHandler(async (_request: NextRequest, context: APICo
 
 // POST /api/company-document-types - Create a new document type
 export const POST = withErrorHandler(async (request: NextRequest, context: APIContext) => {
-  if (!context.tenant?.tenantId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  const { tenant, prisma: tenantPrisma } = context;
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+  const db = tenantPrisma as TenantPrismaClient;
 
   const body = await request.json();
   const validatedData = companyDocumentTypeSchema.parse(body);
 
-  // Check if code already exists
-  const existing = await prisma.companyDocumentType.findFirst({
-    where: { code: validatedData.code },
+  // Check if code already exists within tenant
+  const existing = await db.companyDocumentType.findFirst({
+    where: { code: validatedData.code, tenantId: tenant.tenantId },
   });
 
   if (existing) {
@@ -45,10 +49,10 @@ export const POST = withErrorHandler(async (request: NextRequest, context: APICo
     );
   }
 
-  const documentType = await prisma.companyDocumentType.create({
+  const documentType = await db.companyDocumentType.create({
     data: {
       ...validatedData,
-      tenantId: context.tenant.tenantId,
+      tenantId: tenant.tenantId,
     },
   });
 

@@ -5,10 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
-import { APIContext } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 interface CelebrationEvent {
   employeeId: string;
@@ -22,115 +20,118 @@ interface CelebrationEvent {
 }
 
 // GET /api/employees/celebrations - Get upcoming birthdays and work anniversaries
-async function getCelebrationsHandler(request: NextRequest, _context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
+async function getCelebrationsHandler(request: NextRequest, context: APIContext) {
+  const { tenant, prisma: tenantPrisma } = context;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  }
 
-    // Get all employees with HR data (tenant-scoped) from TeamMember
-    const employees = await prisma.teamMember.findMany({
-      where: {
-        tenantId: session.user.organizationId,
-        isEmployee: true,
-        isDeleted: false,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        dateOfBirth: true,
-        dateOfJoining: true,
-        photoUrl: true,
-      },
-    });
+  const db = tenantPrisma as TenantPrismaClient;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-    const celebrations: CelebrationEvent[] = [];
-    const lookAheadDays = 30; // Look 30 days ahead
+  // Get all employees with HR data (tenant-scoped via extension) from TeamMember
+  const employees = await db.teamMember.findMany({
+    where: {
+      isEmployee: true,
+      isDeleted: false,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      dateOfBirth: true,
+      dateOfJoining: true,
+      photoUrl: true,
+    },
+  });
 
-    for (const emp of employees) {
+  const celebrations: CelebrationEvent[] = [];
+  const lookAheadDays = 30; // Look 30 days ahead
 
-      // Check birthday
-      if (emp.dateOfBirth) {
-        const dob = new Date(emp.dateOfBirth);
-        // Create this year's birthday
-        const thisYearBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
+  for (const emp of employees) {
 
-        // If birthday has passed this year, check next year
-        if (thisYearBirthday < today) {
-          thisYearBirthday.setFullYear(thisYearBirthday.getFullYear() + 1);
-        }
+    // Check birthday
+    if (emp.dateOfBirth) {
+      const dob = new Date(emp.dateOfBirth);
+      // Create this year's birthday
+      const thisYearBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
 
-        const daysUntilBirthday = Math.ceil(
-          (thisYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-        );
-
-        if (daysUntilBirthday <= lookAheadDays) {
-          celebrations.push({
-            employeeId: emp.id,
-            employeeName: emp.name || emp.email,
-            employeeEmail: emp.email,
-            photoUrl: emp.photoUrl,
-            type: 'birthday',
-            date: thisYearBirthday.toISOString(),
-            daysUntil: daysUntilBirthday,
-          });
-        }
+      // If birthday has passed this year, check next year
+      if (thisYearBirthday < today) {
+        thisYearBirthday.setFullYear(thisYearBirthday.getFullYear() + 1);
       }
 
-      // Check work anniversary
-      if (emp.dateOfJoining) {
-        const doj = new Date(emp.dateOfJoining);
-        // Create this year's anniversary
-        const thisYearAnniversary = new Date(today.getFullYear(), doj.getMonth(), doj.getDate());
+      const daysUntilBirthday = Math.ceil(
+        (thisYearBirthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
-        // If anniversary has passed this year, check next year
-        if (thisYearAnniversary < today) {
-          thisYearAnniversary.setFullYear(thisYearAnniversary.getFullYear() + 1);
-        }
-
-        const daysUntilAnniversary = Math.ceil(
-          (thisYearAnniversary.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-        );
-
-        // Calculate years completing
-        const yearsCompleting = thisYearAnniversary.getFullYear() - doj.getFullYear();
-
-        if (daysUntilAnniversary <= lookAheadDays && yearsCompleting > 0) {
-          celebrations.push({
-            employeeId: emp.id,
-            employeeName: emp.name || emp.email,
-            employeeEmail: emp.email,
-            photoUrl: emp.photoUrl,
-            type: 'work_anniversary',
-            date: thisYearAnniversary.toISOString(),
-            daysUntil: daysUntilAnniversary,
-            yearsCompleting,
-          });
-        }
+      if (daysUntilBirthday <= lookAheadDays) {
+        celebrations.push({
+          employeeId: emp.id,
+          employeeName: emp.name || emp.email,
+          employeeEmail: emp.email,
+          photoUrl: emp.photoUrl,
+          type: 'birthday',
+          date: thisYearBirthday.toISOString(),
+          daysUntil: daysUntilBirthday,
+        });
       }
     }
 
-    // Sort by days until (soonest first)
-    celebrations.sort((a, b) => a.daysUntil - b.daysUntil);
+    // Check work anniversary
+    if (emp.dateOfJoining) {
+      const doj = new Date(emp.dateOfJoining);
+      // Create this year's anniversary
+      const thisYearAnniversary = new Date(today.getFullYear(), doj.getMonth(), doj.getDate());
 
-    // Calculate summary
-    const todayBirthdays = celebrations.filter(c => c.type === 'birthday' && c.daysUntil === 0).length;
-    const todayAnniversaries = celebrations.filter(c => c.type === 'work_anniversary' && c.daysUntil === 0).length;
-    const upcomingBirthdays = celebrations.filter(c => c.type === 'birthday' && c.daysUntil > 0).length;
-    const upcomingAnniversaries = celebrations.filter(c => c.type === 'work_anniversary' && c.daysUntil > 0).length;
+      // If anniversary has passed this year, check next year
+      if (thisYearAnniversary < today) {
+        thisYearAnniversary.setFullYear(thisYearAnniversary.getFullYear() + 1);
+      }
 
-    return NextResponse.json({
-      celebrations,
-      summary: {
-        total: celebrations.length,
-        todayBirthdays,
-        todayAnniversaries,
-        upcomingBirthdays,
-        upcomingAnniversaries,
-      },
-    });
+      const daysUntilAnniversary = Math.ceil(
+        (thisYearAnniversary.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      // Calculate years completing
+      const yearsCompleting = thisYearAnniversary.getFullYear() - doj.getFullYear();
+
+      if (daysUntilAnniversary <= lookAheadDays && yearsCompleting > 0) {
+        celebrations.push({
+          employeeId: emp.id,
+          employeeName: emp.name || emp.email,
+          employeeEmail: emp.email,
+          photoUrl: emp.photoUrl,
+          type: 'work_anniversary',
+          date: thisYearAnniversary.toISOString(),
+          daysUntil: daysUntilAnniversary,
+          yearsCompleting,
+        });
+      }
+    }
+  }
+
+  // Sort by days until (soonest first)
+  celebrations.sort((a, b) => a.daysUntil - b.daysUntil);
+
+  // Calculate summary
+  const todayBirthdays = celebrations.filter(c => c.type === 'birthday' && c.daysUntil === 0).length;
+  const todayAnniversaries = celebrations.filter(c => c.type === 'work_anniversary' && c.daysUntil === 0).length;
+  const upcomingBirthdays = celebrations.filter(c => c.type === 'birthday' && c.daysUntil > 0).length;
+  const upcomingAnniversaries = celebrations.filter(c => c.type === 'work_anniversary' && c.daysUntil > 0).length;
+
+  return NextResponse.json({
+    celebrations,
+    summary: {
+      total: celebrations.length,
+      todayBirthdays,
+      todayAnniversaries,
+      upcomingBirthdays,
+      upcomingAnniversaries,
+    },
+  });
 }
+
+export const GET = withErrorHandler(getCelebrationsHandler, { requireAuth: true });

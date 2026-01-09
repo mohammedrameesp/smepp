@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { notificationQuerySchema } from '@/features/notifications/validations/notifications';
 
 /**
@@ -10,18 +8,14 @@ import { notificationQuerySchema } from '@/features/notifications/validations/no
  * List user's notifications with pagination and optional filtering
  */
 export const GET = withErrorHandler(
-  async (request: NextRequest) => {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  async (request: NextRequest, context: APIContext) => {
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
+    const db = tenantPrisma as TenantPrismaClient;
     const { searchParams } = new URL(request.url);
     const query = notificationQuerySchema.parse({
       isRead: searchParams.get('isRead') || undefined,
@@ -29,10 +23,10 @@ export const GET = withErrorHandler(
       ps: searchParams.get('ps') || '20',
     });
 
-    // Include tenantId to ensure user only sees notifications for current org
-    const where: { recipientId: string; tenantId: string; isRead?: boolean } = {
-      recipientId: session.user.id,
-      tenantId,
+    // Include recipientId to ensure user only sees their own notifications
+    // tenantId is auto-filtered by the tenant-scoped prisma client
+    const where: { recipientId: string; isRead?: boolean } = {
+      recipientId: tenant.userId,
     };
 
     if (query.isRead !== undefined) {
@@ -40,13 +34,13 @@ export const GET = withErrorHandler(
     }
 
     const [notifications, total] = await Promise.all([
-      prisma.notification.findMany({
+      db.notification.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip: (query.p - 1) * query.ps,
         take: query.ps,
       }),
-      prisma.notification.count({ where }),
+      db.notification.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -68,23 +62,18 @@ export const GET = withErrorHandler(
  * Mark all notifications as read for the current user
  */
 export const POST = withErrorHandler(
-  async () => {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  async (request: NextRequest, context: APIContext) => {
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
+    const db = tenantPrisma as TenantPrismaClient;
 
-    const tenantId = session.user.organizationId;
-
-    const result = await prisma.notification.updateMany({
+    const result = await db.notification.updateMany({
       where: {
-        recipientId: session.user.id,
-        tenantId,
+        recipientId: tenant.userId,
         isRead: false,
       },
       data: {

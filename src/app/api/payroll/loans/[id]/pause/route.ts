@@ -6,19 +6,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LoanStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function pauseLoanHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     // Use findFirst with tenantId to prevent cross-tenant access
-    const loan = await prisma.employeeLoan.findFirst({
+    const loan = await db.employeeLoan.findFirst({
       where: { id, tenantId },
       include: {
         member: { select: { name: true } },
@@ -36,14 +41,14 @@ async function pauseLoanHandler(request: NextRequest, context: APIContext) {
       }, { status: 400 });
     }
 
-    const updatedLoan = await prisma.employeeLoan.update({
+    const updatedLoan = await db.employeeLoan.update({
       where: { id },
       data: { status: LoanStatus.PAUSED },
     });
 
     await logAction(
       tenantId,
-      tenant!.userId,
+      tenant.userId,
       ActivityActions.LOAN_PAUSED,
       'EmployeeLoan',
       id,

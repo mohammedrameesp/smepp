@@ -33,6 +33,7 @@ import { updateSetupProgress } from '@/features/onboarding/lib';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { prisma as globalPrisma } from '@/lib/core/prisma';
 import { ASSET_TYPE_SUGGESTIONS } from '@/features/assets';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -149,7 +150,13 @@ async function autoLearnTypeMapping(tenantId: string, typeName: string, category
  * }
  */
 async function getAssetsHandler(request: NextRequest, context: APIContext) {
-  const { prisma } = context;
+  const { tenant, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+  }
+
+  const db = tenantPrisma as TenantPrismaClient;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // STEP 1: Parse and validate query parameters
@@ -189,8 +196,8 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
         break;
       case 'others':
         // Show assets assigned to others (exclude current user)
-        // Note: This requires userId from context.tenant
-        const userId = context.tenant?.userId;
+        // Note: This requires userId from tenant context
+        const userId = tenant.userId;
         if (userId) {
           filters.AND = [
             { assignedMemberId: { not: null } },
@@ -200,9 +207,8 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
         break;
       case 'mine':
         // Show only current user's assets
-        const currentUserId = context.tenant?.userId;
-        if (currentUserId) {
-          filters.assignedMemberId = currentUserId;
+        if (tenant.userId) {
+          filters.assignedMemberId = tenant.userId;
         }
         break;
       case 'all':
@@ -227,7 +233,7 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
   const skip = (p - 1) * ps;
 
   const [assets, total] = await Promise.all([
-    prisma.asset.findMany({
+    db.asset.findMany({
       where,
       orderBy: { [sort]: order },
       take: ps,
@@ -260,7 +266,7 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
         // Pending requests are fetched separately below (batch query)
       },
     }),
-    prisma.asset.count({ where }),
+    db.asset.count({ where }),
   ]);
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -278,7 +284,7 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
   }> = {};
 
   if (unassignedAssetIds.length > 0) {
-    const pendingRequests = await prisma.assetRequest.findMany({
+    const pendingRequests = await db.assetRequest.findMany({
       where: {
         assetId: { in: unassignedAssetIds },
         status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
@@ -381,9 +387,15 @@ export const GET = withErrorHandler(getAssetsHandler, { requireAuth: true, rateL
  * }
  */
 async function createAssetHandler(request: NextRequest, context: APIContext) {
-  const { prisma, tenant } = context;
-  const tenantId = tenant!.tenantId;
-  const userId = tenant!.userId;
+  const { tenant, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+  }
+
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
+  const userId = tenant.userId;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // STEP 1: Parse and validate request body
@@ -441,8 +453,9 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
   // Note: tenantId is explicitly set (not auto-injected) for clarity
   // ─────────────────────────────────────────────────────────────────────────────
   try {
-    const asset = await prisma.asset.create({
+    const asset = await db.asset.create({
       data: {
+        tenantId,
         assetTag,
         type: data.type,
         categoryId: data.categoryId || null,
@@ -462,7 +475,6 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
         locationId: data.locationId || null,
         isShared: data.isShared || false,
         depreciationCategoryId: data.depreciationCategoryId || null,
-        tenantId,
         assignedMemberId: data.assignedMemberId || null,
       },
       include: {

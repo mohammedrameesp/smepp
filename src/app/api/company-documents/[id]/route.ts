@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { companyDocumentSchema } from '@/features/company-documents';
 import { getDocumentExpiryInfo } from '@/features/company-documents';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -13,19 +11,20 @@ export const GET = withErrorHandler(async (
   _request: NextRequest,
   context: APIContext
 ) => {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  const { tenant, prisma: tenantPrisma } = context;
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+  const db = tenantPrisma as TenantPrismaClient;
 
-  const tenantId = session.user.organizationId;
+  const tenantId = tenant.tenantId;
   const id = context.params?.id;
   if (!id) {
     return NextResponse.json({ error: 'ID is required' }, { status: 400 });
   }
 
   // Use findFirst with tenantId to prevent IDOR attacks
-  const document = await prisma.companyDocument.findFirst({
+  const document = await db.companyDocument.findFirst({
     where: { id, tenantId },
     include: {
       asset: {
@@ -67,16 +66,13 @@ export const PUT = withErrorHandler(async (
   request: NextRequest,
   context: APIContext
 ) => {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { tenant, prisma: tenantPrisma } = context;
+  if (!tenant?.tenantId || !tenant?.userId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+  const db = tenantPrisma as TenantPrismaClient;
 
-  if (!session.user.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-  }
-
-  const tenantId = session.user.organizationId;
+  const tenantId = tenant.tenantId;
   const id = context.params?.id;
   if (!id) {
     return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -85,7 +81,7 @@ export const PUT = withErrorHandler(async (
   const validatedData = companyDocumentSchema.partial().parse(body);
 
   // Check if document exists within tenant
-  const existing = await prisma.companyDocument.findFirst({
+  const existing = await db.companyDocument.findFirst({
     where: { id, tenantId },
   });
 
@@ -98,7 +94,7 @@ export const PUT = withErrorHandler(async (
 
   // If asset is being changed, validate it exists within tenant
   if (validatedData.assetId && validatedData.assetId !== existing.assetId) {
-    const asset = await prisma.asset.findFirst({
+    const asset = await db.asset.findFirst({
       where: { id: validatedData.assetId, tenantId },
     });
 
@@ -120,7 +116,7 @@ export const PUT = withErrorHandler(async (
   if (validatedData.renewalCost !== undefined) updateData.renewalCost = validatedData.renewalCost || null;
   if (validatedData.notes !== undefined) updateData.notes = validatedData.notes || null;
 
-  const document = await prisma.companyDocument.update({
+  const document = await db.companyDocument.update({
     where: { id },
     data: updateData,
     include: {
@@ -137,7 +133,7 @@ export const PUT = withErrorHandler(async (
   // Log activity
   await logAction(
     tenantId,
-    session.user.id,
+    tenant.userId,
     ActivityActions.COMPANY_DOCUMENT_UPDATED,
     'CompanyDocument',
     document.id,
@@ -157,26 +153,23 @@ export const PUT = withErrorHandler(async (
 
 // DELETE /api/company-documents/[id] - Delete a document
 export const DELETE = withErrorHandler(async (
-  request: NextRequest,
+  _request: NextRequest,
   context: APIContext
 ) => {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { tenant, prisma: tenantPrisma } = context;
+  if (!tenant?.tenantId || !tenant?.userId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+  const db = tenantPrisma as TenantPrismaClient;
 
-  if (!session.user.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-  }
-
-  const tenantId = session.user.organizationId;
+  const tenantId = tenant.tenantId;
   const id = context.params?.id;
   if (!id) {
     return NextResponse.json({ error: 'ID is required' }, { status: 400 });
   }
 
   // Check if document exists within tenant
-  const existing = await prisma.companyDocument.findFirst({
+  const existing = await db.companyDocument.findFirst({
     where: { id, tenantId },
   });
 
@@ -187,7 +180,7 @@ export const DELETE = withErrorHandler(async (
     );
   }
 
-  await prisma.companyDocument.delete({
+  await db.companyDocument.delete({
     where: { id },
   });
 
@@ -199,7 +192,7 @@ export const DELETE = withErrorHandler(async (
   // Log activity
   await logAction(
     tenantId,
-    session.user.id,
+    tenant.userId,
     ActivityActions.COMPANY_DOCUMENT_DELETED,
     'CompanyDocument',
     id,

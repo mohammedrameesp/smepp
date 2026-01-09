@@ -5,13 +5,16 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { teamCalendarQuerySchema } from '@/lib/validations/leave';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getCalendarHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -26,9 +29,8 @@ async function getCalendarHandler(request: NextRequest, context: APIContext) {
 
     const { startDate, endDate, status, leaveTypeId } = validation.data;
 
-    // Build where clause with tenant filter
+    // Build where clause (tenant filtering is automatic via db)
     const where: Record<string, unknown> = {
-      tenantId,
       OR: [
         {
           // Request starts within date range
@@ -65,7 +67,7 @@ async function getCalendarHandler(request: NextRequest, context: APIContext) {
       where.leaveTypeId = leaveTypeId;
     }
 
-    const leaveRequests = await prisma.leaveRequest.findMany({
+    const leaveRequests = await db.leaveRequest.findMany({
       where,
       include: {
         member: {

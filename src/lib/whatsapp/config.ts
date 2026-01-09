@@ -203,7 +203,7 @@ export async function verifyMemberWhatsAppPhone(memberId: string): Promise<void>
  */
 function normalizePhoneNumber(phone: string): string {
   // Remove all non-digit characters except leading +
-  let cleaned = phone.replace(/[^\d+]/g, '');
+  const cleaned = phone.replace(/[^\d+]/g, '');
 
   // If starts with +, keep as is
   if (cleaned.startsWith('+')) {

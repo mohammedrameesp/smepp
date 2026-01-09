@@ -32,9 +32,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import {
   assignDepreciationCategorySchema,
   depreciationRecordsQuerySchema,
@@ -88,14 +87,16 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  */
 async function getDepreciationHandler(request: NextRequest, context: APIContext) {
   // ─────────────────────────────────────────────────────────────────────────────
-  // STEP 1: Extract tenant context from session
+  // STEP 1: Extract tenant context from context (provided by withErrorHandler)
   // ─────────────────────────────────────────────────────────────────────────────
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  const { tenant, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
 
-  const tenantId = session.user.organizationId;
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
   const assetId = context.params?.id;
   if (!assetId) {
     return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -104,8 +105,8 @@ async function getDepreciationHandler(request: NextRequest, context: APIContext)
   // ─────────────────────────────────────────────────────────────────────────────
   // STEP 2: Fetch asset with depreciation info (tenant-scoped)
   // ─────────────────────────────────────────────────────────────────────────────
-  const asset = await prisma.asset.findFirst({
-    where: { id: assetId, tenantId },
+  const asset = await db.asset.findFirst({
+    where: { id: assetId },
     select: {
       id: true,
       assetTag: true,
@@ -232,14 +233,16 @@ async function getDepreciationHandler(request: NextRequest, context: APIContext)
  */
 async function assignDepreciationHandler(request: NextRequest, context: APIContext) {
   // ─────────────────────────────────────────────────────────────────────────────
-  // STEP 1: Extract tenant context from session
+  // STEP 1: Extract tenant context from context (provided by withErrorHandler)
   // ─────────────────────────────────────────────────────────────────────────────
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  const { tenant, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
 
-  const tenantId = session.user.organizationId;
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
   const assetId = context.params?.id;
   if (!assetId) {
     return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -268,8 +271,8 @@ async function assignDepreciationHandler(request: NextRequest, context: APIConte
   // ─────────────────────────────────────────────────────────────────────────────
   // STEP 3: Verify asset exists and belongs to tenant (IDOR prevention)
   // ─────────────────────────────────────────────────────────────────────────────
-  const asset = await prisma.asset.findFirst({
-    where: { id: assetId, tenantId },
+  const asset = await db.asset.findFirst({
+    where: { id: assetId },
     select: { id: true, assetTag: true, model: true },
   });
 
@@ -293,7 +296,7 @@ async function assignDepreciationHandler(request: NextRequest, context: APIConte
   // ─────────────────────────────────────────────────────────────────────────────
   // STEP 5: Log action for audit trail
   // ─────────────────────────────────────────────────────────────────────────────
-  await logAction(tenantId, session.user.id, 'DEPRECIATION_CATEGORY_ASSIGNED', 'Asset', assetId, {
+  await logAction(tenantId, tenant.userId, 'DEPRECIATION_CATEGORY_ASSIGNED', 'Asset', assetId, {
     assetTag: asset.assetTag,
     model: asset.model,
     categoryId: validation.data.depreciationCategoryId,

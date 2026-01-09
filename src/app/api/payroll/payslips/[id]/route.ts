@@ -5,19 +5,24 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { parseDecimal } from '@/lib/payroll/utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getPayslipHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     // Use findFirst with tenantId to prevent IDOR attacks
-    const payslip = await prisma.payslip.findFirst({
+    const payslip = await db.payslip.findFirst({
       where: { id, tenantId },
       include: {
         member: {
@@ -53,8 +58,8 @@ async function getPayslipHandler(request: NextRequest, context: APIContext) {
     }
 
     // Non-admin users can only view their own payslips
-    const isOwnerOrAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
-    if (!isOwnerOrAdmin && payslip.memberId !== tenant!.userId) {
+    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    if (!isOwnerOrAdmin && payslip.memberId !== tenant.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 

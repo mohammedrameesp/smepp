@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { prisma } from '@/lib/core/prisma';
 import {
   getPermissionsForRole,
@@ -19,12 +19,14 @@ import { z } from 'zod';
  * Returns permissions for MANAGER and MEMBER roles
  */
 export const GET = withErrorHandler(
-  async (request, { tenant }) => {
+  async (request: NextRequest, context: APIContext) => {
+    const { tenant } = context;
+
     if (!tenant?.tenantId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    // Fetch enabled modules for the org
+    // Organization is a non-tenant model, use raw prisma
     const org = await prisma.organization.findUnique({
       where: { id: tenant.tenantId },
       select: { enabledModules: true },
@@ -62,9 +64,11 @@ const updatePermissionsSchema = z.object({
  * Update permissions for a specific role
  */
 export const PUT = withErrorHandler(
-  async (request, { tenant }) => {
+  async (request: NextRequest, context: APIContext) => {
+    const { tenant } = context;
+
     if (!tenant?.tenantId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -110,9 +114,11 @@ const resetPermissionsSchema = z.object({
  * Reset permissions to defaults
  */
 export const POST = withErrorHandler(
-  async (request, { tenant }) => {
+  async (request: NextRequest, context: APIContext) => {
+    const { tenant } = context;
+
     if (!tenant?.tenantId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
     const body = await request.json();

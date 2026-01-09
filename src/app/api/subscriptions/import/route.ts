@@ -16,6 +16,7 @@ import { prisma } from '@/lib/core/prisma';
 import { ActivityActions } from '@/lib/core/activity';
 import { SubscriptionHistoryAction } from '@prisma/client';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import {
   parseImportFile,
   parseImportRows,
@@ -34,9 +35,16 @@ import {
 } from '@/features/subscriptions';
 
 async function importSubscriptionsHandler(request: NextRequest, context: APIContext) {
-  const { tenant } = context;
-  const tenantId = tenant!.tenantId;
-  const currentUserId = tenant!.userId;
+  const { tenant, prisma: tenantPrisma } = context;
+
+  // Defensive check for tenant context
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+  }
+
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
+  const currentUserId = tenant.userId;
 
   // ─────────────────────────────────────────────────────────────────────────
   // STEP 1: Parse and validate the uploaded file
@@ -82,18 +90,16 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
       let assignedMemberId = parsedData.assignedMemberId;
       if (assignedMemberId) {
         // Verify the member belongs to this organization
-        const member = await prisma.teamMember.findFirst({
+        const member = await db.teamMember.findFirst({
           where: {
             id: assignedMemberId,
-            tenantId: tenantId,
           },
         });
         assignedMemberId = member?.id || null;
       } else if (assignedMemberEmail) {
-        const member = await prisma.teamMember.findFirst({
+        const member = await db.teamMember.findFirst({
           where: {
             email: assignedMemberEmail,
-            tenantId: tenantId,
           },
         });
         assignedMemberId = member?.id || null;
@@ -110,11 +116,11 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
       // ID-BASED UPSERT (preserves relationships when ID provided)
       // ─────────────────────────────────────────────────────────────────────
       if (id) {
-        const existingById = await prisma.subscription.findFirst({
-          where: { id, tenantId },
+        const existingById = await db.subscription.findFirst({
+          where: { id },
         });
 
-        const subscription = await prisma.$transaction(async (tx) => {
+        const subscription = await db.$transaction(async (tx) => {
           const sub = await tx.subscription.upsert({
             where: { id },
             create: { id, ...subscriptionData, tenantId },
@@ -155,11 +161,10 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
       // ─────────────────────────────────────────────────────────────────────
       // NAME-BASED DUPLICATE CHECK (when no ID provided)
       // ─────────────────────────────────────────────────────────────────────
-      const existingByName = await prisma.subscription.findFirst({
+      const existingByName = await db.subscription.findFirst({
         where: {
           serviceName: row['Service Name'],
           accountId: row['Account ID/Email'] || null,
-          tenantId,
         },
       });
 
@@ -170,7 +175,7 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
         }
 
         // Update existing subscription
-        const subscription = await prisma.$transaction(async (tx) => {
+        const subscription = await db.$transaction(async (tx) => {
           const sub = await tx.subscription.update({
             where: { id: existingByName.id },
             data: subscriptionData,
@@ -201,7 +206,7 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
       // ─────────────────────────────────────────────────────────────────────
       // CREATE NEW SUBSCRIPTION
       // ─────────────────────────────────────────────────────────────────────
-      const subscription = await prisma.$transaction(async (tx) => {
+      const subscription = await db.$transaction(async (tx) => {
         const sub = await tx.subscription.create({
           data: { ...subscriptionData, tenantId },
         });
@@ -248,8 +253,8 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
         const subscriptionId = parsedHistory.subscriptionId;
 
         // Check if subscription exists within tenant
-        const subscription = await prisma.subscription.findFirst({
-          where: { id: subscriptionId, tenantId },
+        const subscription = await db.subscription.findFirst({
+          where: { id: subscriptionId },
         });
 
         if (!subscription) {
@@ -260,13 +265,12 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
         // Find performer by name or email
         let performerId = currentUserId;
         if (parsedHistory.performedByName && parsedHistory.performedByName !== 'System') {
-          const performer = await prisma.teamMember.findFirst({
+          const performer = await db.teamMember.findFirst({
             where: {
               OR: [
                 { name: parsedHistory.performedByName },
                 { email: parsedHistory.performedByName },
               ],
-              tenantId: tenantId,
             },
           });
           if (performer) {
@@ -274,7 +278,7 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
           }
         }
 
-        // Create history entry
+        // Create history entry (SubscriptionHistory is not tenant-scoped)
         await prisma.subscriptionHistory.create({
           data: {
             subscriptionId,

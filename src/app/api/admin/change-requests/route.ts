@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 // GET /api/admin/change-requests - Get all change requests (admin only)
-async function getChangeRequestsHandler(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+async function getChangeRequestsHandler(request: NextRequest, context: APIContext) {
+  const { tenant, prisma: tenantPrisma } = context;
 
-  if (!session?.user || session.user.teamMemberRole !== 'ADMIN') {
-    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
 
+  const db = tenantPrisma as TenantPrismaClient;
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status') || 'all';
 
@@ -20,7 +19,7 @@ async function getChangeRequestsHandler(request: NextRequest) {
     where.status = status.toUpperCase();
   }
 
-  const requests = await prisma.profileChangeRequest.findMany({
+  const requests = await db.profileChangeRequest.findMany({
     where,
     include: {
       member: {
@@ -36,10 +35,10 @@ async function getChangeRequestsHandler(request: NextRequest) {
   });
 
   const stats = {
-    total: await prisma.profileChangeRequest.count(),
-    pending: await prisma.profileChangeRequest.count({ where: { status: 'PENDING' } }),
-    approved: await prisma.profileChangeRequest.count({ where: { status: 'APPROVED' } }),
-    rejected: await prisma.profileChangeRequest.count({ where: { status: 'REJECTED' } }),
+    total: await db.profileChangeRequest.count(),
+    pending: await db.profileChangeRequest.count({ where: { status: 'PENDING' } }),
+    approved: await db.profileChangeRequest.count({ where: { status: 'APPROVED' } }),
+    rejected: await db.profileChangeRequest.count({ where: { status: 'REJECTED' } }),
   };
 
   return NextResponse.json({ requests, stats });

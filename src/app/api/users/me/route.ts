@@ -5,10 +5,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/core/activity';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { z } from 'zod';
 
 const updateProfileSchema = z.object({
@@ -17,17 +17,18 @@ const updateProfileSchema = z.object({
 });
 
 // GET /api/users/me - Get current user profile
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
+async function getCurrentUserHandler(request: NextRequest, context: APIContext) {
+  const { tenant, prisma: tenantPrisma } = context;
 
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
-    // First try to get TeamMember (for org users)
-    const member = await prisma.teamMember.findUnique({
-      where: { id: session.user.id },
+  // For /me endpoint, we allow access without tenant (for super admins)
+  // but users with tenant context get their TeamMember data
+  if (tenant?.tenantId) {
+    const db = tenantPrisma as TenantPrismaClient;
+    // First try to get TeamMember (for org users) - tenant-scoped via extension
+    const member = await db.teamMember.findFirst({
+      where: {
+        id: tenant.userId,
+      },
       select: {
         id: true,
         name: true,
@@ -55,78 +56,73 @@ export async function GET(request: NextRequest) {
         hrProfile: member.dateOfJoining ? { dateOfJoining: member.dateOfJoining } : null,
       });
     }
-
-    // Fall back to User model for super admins
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        role: true,
-        isSystemAccount: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      ...user,
-      isEmployee: false,
-      isOnWps: false,
-      hrProfile: null,
-      _count: { assets: 0, subscriptions: 0 }, // Super admins don't have assigned assets
-    });
-  } catch (error) {
-    console.error('Get current user error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch user profile' },
-      { status: 500 }
-    );
   }
+
+  // Fall back to User model for super admins or users without tenant context
+  const user = await prisma.user.findUnique({
+    where: { id: tenant?.userId || '' },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      role: true,
+      isSystemAccount: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  if (!user) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    ...user,
+    isEmployee: false,
+    isOnWps: false,
+    hrProfile: null,
+    _count: { assets: 0, subscriptions: 0 }, // Super admins don't have assigned assets
+  });
 }
 
+export const GET = withErrorHandler(getCurrentUserHandler, { requireAuth: true, requireTenant: false });
+
 // PATCH /api/users/me - Update current user profile
-export async function PATCH(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
+async function updateCurrentUserHandler(request: NextRequest, context: APIContext) {
+  const { tenant, prisma: tenantPrisma } = context;
 
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
+  const body = await request.json();
+  const validation = updateProfileSchema.safeParse(body);
 
-    const body = await request.json();
-    const validation = updateProfileSchema.safeParse(body);
+  if (!validation.success) {
+    return NextResponse.json(
+      {
+        error: 'Invalid request body',
+        details: validation.error.issues,
+      },
+      { status: 400 }
+    );
+  }
 
-    if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: 'Invalid request body',
-          details: validation.error.issues,
-        },
-        { status: 400 }
-      );
-    }
+  const data = validation.data;
 
-    const data = validation.data;
+  let updatedUser;
 
-    // Check if user is a TeamMember (org user) or User (super admin)
-    const existingMember = await prisma.teamMember.findUnique({
-      where: { id: session.user.id },
+  // Check if user is a TeamMember (org user) or User (super admin)
+  if (tenant?.tenantId) {
+    const db = tenantPrisma as TenantPrismaClient;
+    const existingMember = await db.teamMember.findFirst({
+      where: {
+        id: tenant.userId,
+      },
       select: { id: true },
     });
 
-    let updatedUser;
-
     if (existingMember) {
-      // Update TeamMember profile
-      const member = await prisma.teamMember.update({
-        where: { id: session.user.id },
+      // Update TeamMember profile (tenant-scoped via extension)
+      const member = await db.teamMember.update({
+        where: { id: tenant.userId },
         data: {
           ...(data.name !== undefined && { name: data.name }),
           ...(data.image !== undefined && { image: data.image }),
@@ -142,49 +138,48 @@ export async function PATCH(request: NextRequest) {
         },
       });
       updatedUser = { ...member, isSystemAccount: false };
-    } else {
-      // Fall back to User model (for super admins)
-      const user = await prisma.user.update({
-        where: { id: session.user.id },
-        data: {
-          ...(data.name !== undefined && { name: data.name }),
-          ...(data.image !== undefined && { image: data.image }),
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-          role: true,
-          isSystemAccount: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      });
-      updatedUser = user;
-    }
 
-    // Log activity (only if user has an organization)
-    if (session.user.organizationId) {
+      // Log activity
       await logAction(
-        session.user.organizationId,
-        session.user.id,
+        tenant.tenantId,
+        tenant.userId,
         ActivityActions.USER_UPDATED,
-        'User',
+        'TeamMember',
         updatedUser.id,
         { changes: data }
       );
-    }
 
-    return NextResponse.json({
-      user: updatedUser,
-      message: 'Profile updated successfully',
-    });
-  } catch (error) {
-    console.error('Update profile error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update profile' },
-      { status: 500 }
-    );
+      return NextResponse.json({
+        user: updatedUser,
+        message: 'Profile updated successfully',
+      });
+    }
   }
+
+  // Fall back to User model (for super admins)
+  const user = await prisma.user.update({
+    where: { id: tenant?.userId || '' },
+    data: {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.image !== undefined && { image: data.image }),
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      role: true,
+      isSystemAccount: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+  updatedUser = user;
+
+  return NextResponse.json({
+    user: updatedUser,
+    message: 'Profile updated successfully',
+  });
 }
+
+export const PATCH = withErrorHandler(updateCurrentUserHandler, { requireAuth: true, requireTenant: false });

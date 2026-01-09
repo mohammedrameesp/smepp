@@ -5,14 +5,18 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { createLeaveTypeSchema, leaveTypeQuerySchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getLeaveTypesHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -26,10 +30,10 @@ async function getLeaveTypesHandler(request: NextRequest, context: APIContext) {
     }
 
     const { isActive, includeInactive } = validation.data;
-    const isAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
 
-    // Build where clause with tenant filter
-    const where: Record<string, unknown> = { tenantId };
+    // Build where clause (tenant filtering is automatic via db)
+    const where: Record<string, unknown> = {};
 
     if (isActive !== undefined) {
       where.isActive = isActive === 'true';
@@ -38,7 +42,7 @@ async function getLeaveTypesHandler(request: NextRequest, context: APIContext) {
       where.isActive = true;
     }
 
-    let leaveTypes = await prisma.leaveType.findMany({
+    let leaveTypes = await db.leaveType.findMany({
       where,
       orderBy: { name: 'asc' },
     });
@@ -49,13 +53,13 @@ async function getLeaveTypesHandler(request: NextRequest, context: APIContext) {
       const currentYear = new Date().getFullYear();
 
       // Look up the current user's TeamMember ID
-      const currentMember = await prisma.teamMember.findFirst({
-        where: { id: tenant!.userId, tenantId },
+      const currentMember = await db.teamMember.findFirst({
+        where: { id: tenant.userId },
         select: { id: true },
       });
 
       // Get member's assigned balances for special leave types
-      const assignedSpecialBalances = currentMember ? await prisma.leaveBalance.findMany({
+      const assignedSpecialBalances = currentMember ? await db.leaveBalance.findMany({
         where: {
           memberId: currentMember.id,
           year: currentYear,
@@ -69,7 +73,7 @@ async function getLeaveTypesHandler(request: NextRequest, context: APIContext) {
       const assignedSpecialLeaveTypeIds = new Set(assignedSpecialBalances.map(b => b.leaveTypeId));
 
       // Get member's gender from TeamMember for additional filtering
-      const memberWithGender = currentMember ? await prisma.teamMember.findUnique({
+      const memberWithGender = currentMember ? await db.teamMember.findUnique({
         where: { id: currentMember.id },
         select: { gender: true },
       }) : null;
@@ -107,9 +111,13 @@ async function getLeaveTypesHandler(request: NextRequest, context: APIContext) {
 export const GET = withErrorHandler(getLeaveTypesHandler, { requireAuth: true, requireModule: 'leave' });
 
 async function createLeaveTypeHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
 
     const body = await request.json();
     const validation = createLeaveTypeSchema.safeParse(body);
@@ -124,8 +132,8 @@ async function createLeaveTypeHandler(request: NextRequest, context: APIContext)
     const data = validation.data;
 
     // Check if leave type with same name already exists in this tenant
-    const existing = await prisma.leaveType.findFirst({
-      where: { name: data.name, tenantId },
+    const existing = await db.leaveType.findFirst({
+      where: { name: data.name },
     });
 
     if (existing) {
@@ -135,17 +143,17 @@ async function createLeaveTypeHandler(request: NextRequest, context: APIContext)
     }
 
     // Handle JSON fields properly - convert null to undefined for Prisma
+    // Note: tenantId is included explicitly for type safety; the tenant prisma
+    // extension also auto-injects it but TypeScript requires it at compile time
     const createData = {
+      tenantId,
       ...data,
       serviceBasedEntitlement: data.serviceBasedEntitlement ?? undefined,
       payTiers: data.payTiers ?? undefined,
     };
 
-    const leaveType = await prisma.leaveType.create({
-      data: {
-        ...createData,
-        tenantId,
-      },
+    const leaveType = await db.leaveType.create({
+      data: createData,
     });
 
     await logAction(

@@ -22,7 +22,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { createSubscriptionSchema, subscriptionQuerySchema, generateSubscriptionTag } from '@/features/subscriptions';
+import { createSubscriptionSchema, subscriptionQuerySchema, generateSubscriptionTag, isUniqueConstraintError, MAX_TAG_GENERATION_RETRIES } from '@/features/subscriptions';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { getQatarNow, getQatarStartOfDay } from '@/lib/qatar-timezone';
 import { parseInputDateString } from '@/lib/date-format';
@@ -30,6 +30,7 @@ import { convertToQAR } from '@/lib/core/currency';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 /**
  * GET /api/subscriptions - Retrieve paginated list of subscriptions with filtering
@@ -60,8 +61,17 @@ import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
  * // Returns: { subscriptions: [...], pagination: { page: 1, total: 45, ... } }
  */
 async function getSubscriptionsHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, prisma: tenantPrisma } = context;
+
+    // Defensive check for tenant context (should always be present due to requireAuth)
+    if (!tenant?.tenantId) {
+      return NextResponse.json({
+        error: 'Tenant context required',
+      }, { status: 403 });
+    }
+
+    // Cast to tenant-scoped prisma client for type safety
+    const db = tenantPrisma as TenantPrismaClient;
 
     // Parse query parameters
     const { searchParams } = new URL(request.url);
@@ -78,7 +88,8 @@ async function getSubscriptionsHandler(request: NextRequest, context: APIContext
     const { q, projectId, status, category, billingCycle, renewalWindowDays, p, ps, sort, order } = validation.data;
 
     // Build where clause using reusable search filter
-    const filters: Record<string, any> = {};
+    // Note: tenantId filtering is handled automatically by tenant-scoped prisma client
+    const filters: Record<string, unknown> = {};
 
     if (projectId) filters.projectId = projectId;
     if (status) filters.status = status;
@@ -96,9 +107,6 @@ async function getSubscriptionsHandler(request: NextRequest, context: APIContext
       };
     }
 
-    // Add tenant filtering to filters
-    filters.tenantId = tenantId;
-
     const where = buildFilterWithSearch({
       searchTerm: q,
       searchFields: ['serviceName', 'accountId', 'vendor', 'category'],
@@ -108,9 +116,9 @@ async function getSubscriptionsHandler(request: NextRequest, context: APIContext
     // Calculate pagination
     const skip = (p - 1) * ps;
 
-    // Fetch subscriptions
+    // Fetch subscriptions using tenant-scoped prisma (auto-filters by tenantId)
     const [subscriptions, total] = await Promise.all([
-      prisma.subscription.findMany({
+      db.subscription.findMany({
         where,
         orderBy: { [sort]: order },
         take: ps,
@@ -125,7 +133,7 @@ async function getSubscriptionsHandler(request: NextRequest, context: APIContext
           },
         },
       }),
-      prisma.subscription.count({ where }),
+      db.subscription.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -188,9 +196,19 @@ async function getSubscriptionsHandler(request: NextRequest, context: APIContext
  * // Returns: { id: "sub-xyz", costQAR: 182, ... }
  */
 async function createSubscriptionHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, prisma: tenantPrisma } = context;
+
+    // Defensive check for tenant context (should always be present due to requireAdmin)
+    if (!tenant?.tenantId || !tenant?.userId) {
+      return NextResponse.json({
+        error: 'Tenant context required',
+      }, { status: 403 });
+    }
+
+    const { tenantId, userId: currentUserId } = tenant;
+
+    // Cast to tenant-scoped prisma client for type safety
+    const db = tenantPrisma as TenantPrismaClient;
 
     // Parse and validate request body
     const body = await request.json();
@@ -205,9 +223,8 @@ async function createSubscriptionHandler(request: NextRequest, context: APIConte
 
     const data = validation.data;
 
-    // Generate subscription tag
+    // Get organization prefix for tag generation
     const orgPrefix = await getOrganizationCodePrefix(tenantId);
-    const subscriptionTag = await generateSubscriptionTag(tenantId, orgPrefix);
 
     // SAFEGUARD: Always calculate costQAR to prevent data loss
     let costQAR = data.costQAR;
@@ -220,36 +237,76 @@ async function createSubscriptionHandler(request: NextRequest, context: APIConte
       costQAR = await convertToQAR(data.costPerCycle, currency, tenantId);
     }
 
-    // Convert date strings to Date objects
-    const subscriptionData: any = {
-      ...data,
-      subscriptionTag, // Auto-generated subscription tag
-      costCurrency: currency, // Use the calculated currency with default
-      costQAR: costQAR || null, // Ensure costQAR is always set, use null instead of undefined
-      purchaseDate: data.purchaseDate ? parseInputDateString(data.purchaseDate) : null,
-      renewalDate: data.renewalDate ? parseInputDateString(data.renewalDate) : null,
-    };
-
-    // Remove assignmentDate - it's only used for history tracking, not stored on subscription
+    // Extract assignmentDate - only used for history tracking, not stored on subscription
     const assignmentDate = data.assignmentDate ? new Date(data.assignmentDate) : null;
-    delete subscriptionData.assignmentDate;
 
-    // Create subscription
-    const subscription = await prisma.subscription.create({
-      data: {
-        ...subscriptionData,
-        tenantId,
-      },
-      include: {
-        assignedMember: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    // Create subscription with retry logic for tag collision handling
+    // The unique constraint [tenantId, subscriptionTag] prevents duplicates
+    let subscription;
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt <= MAX_TAG_GENERATION_RETRIES; attempt++) {
+      try {
+        // Generate subscription tag with offset for retry attempts
+        const subscriptionTag = await generateSubscriptionTag(tenantId, orgPrefix, attempt);
+
+        // Build subscription data with proper typing
+        // Note: tenantId is included explicitly for type safety, the tenant prisma
+        // extension also auto-injects it but TypeScript requires it at compile time
+        const subscriptionData = {
+          tenantId,
+          serviceName: data.serviceName,
+          subscriptionTag,
+          category: data.category ?? null,
+          accountId: data.accountId ?? null,
+          vendor: data.vendor ?? null,
+          costPerCycle: data.costPerCycle ?? null,
+          costCurrency: currency,
+          costQAR: costQAR ?? null,
+          billingCycle: data.billingCycle,
+          purchaseDate: data.purchaseDate ? parseInputDateString(data.purchaseDate) : null,
+          renewalDate: data.renewalDate ? parseInputDateString(data.renewalDate) : null,
+          status: data.status,
+          autoRenew: data.autoRenew,
+          paymentMethod: data.paymentMethod ?? null,
+          notes: data.notes ?? null,
+          projectId: data.projectId ?? null,
+          assignedMemberId: data.assignedMemberId,
+        };
+
+        // Create subscription using tenant-scoped prisma
+        subscription = await db.subscription.create({
+          data: subscriptionData,
+          include: {
+            assignedMember: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
           },
-        },
-      },
-    });
+        });
+
+        // Success - break out of retry loop
+        break;
+      } catch (error) {
+        lastError = error;
+
+        // If it's a unique constraint violation on subscriptionTag, retry with new tag
+        if (isUniqueConstraintError(error) && attempt < MAX_TAG_GENERATION_RETRIES) {
+          continue;
+        }
+
+        // For other errors or max retries exceeded, throw
+        throw error;
+      }
+    }
+
+    // This should never happen due to throw above, but TypeScript needs it
+    if (!subscription) {
+      throw lastError || new Error('Failed to create subscription after retries');
+    }
 
     // Log activity
     await logAction(
@@ -262,6 +319,7 @@ async function createSubscriptionHandler(request: NextRequest, context: APIConte
     );
 
     // Create subscription history entry for creation
+    // Note: SubscriptionHistory doesn't have tenantId field, isolation is via subscriptionId FK
     await prisma.subscriptionHistory.create({
       data: {
         subscriptionId: subscription.id,

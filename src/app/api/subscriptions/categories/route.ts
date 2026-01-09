@@ -24,8 +24,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 /**
  * GET /api/subscriptions/categories - Get distinct category suggestions
@@ -47,17 +47,22 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  * // Returns: ["Cloud", "Entertainment", "Infrastructure", ...]
  */
 async function getCategoriesHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, prisma: tenantPrisma } = context;
+
+    // Defensive check for tenant context
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+
+    const db = tenantPrisma as TenantPrismaClient;
 
     // Get search query parameter
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q') || '';
 
     // Get distinct categories from database
-    const subscriptions = await prisma.subscription.findMany({
+    const subscriptions = await db.subscription.findMany({
       where: {
-        tenantId,
         category: {
           not: null,
           contains: query,

@@ -4,9 +4,10 @@
  * @module features/subscriptions/lib
  *
  * FEATURES:
- * - Unique subscription tag generation
+ * - Unique subscription tag generation with collision handling
  * - Tenant-specific sequential numbering
  * - Year-month based tag formatting (ORG-SUB-YYMM-SEQ)
+ * - Retry logic for concurrent creation scenarios
  *
  * TAG FORMAT:
  * - {ORG_PREFIX}-SUB-{YYMM}-{SEQUENCE}
@@ -15,9 +16,18 @@
  *
  * USAGE:
  * Called when creating new subscriptions to auto-generate unique tags
+ *
+ * CONCURRENCY:
+ * Uses optimistic locking - if a collision occurs during creation,
+ * the database unique constraint [tenantId, subscriptionTag] will
+ * prevent duplicates. The calling code should handle P2002 errors
+ * by regenerating the tag.
  */
 
 import { prisma } from '@/lib/core/prisma';
+
+/** Maximum retries for tag generation on collision */
+const MAX_TAG_GENERATION_RETRIES = 3;
 
 /**
  * Generate a unique subscription tag.
@@ -30,8 +40,15 @@ import { prisma } from '@/lib/core/prisma';
  * - Resets each month
  * - Is tenant-isolated (won't conflict across organizations)
  *
+ * CONCURRENCY HANDLING:
+ * Under concurrent requests, the find-then-increment pattern could produce
+ * duplicates. The database unique constraint [tenantId, subscriptionTag]
+ * ensures no actual duplicates. If a collision occurs during insert,
+ * Prisma throws P2002 error which should trigger a retry with a new tag.
+ *
  * @param tenantId - Organization ID for tenant isolation
  * @param orgPrefix - Organization code prefix (e.g., "ORG" for BeCreative)
+ * @param retryOffset - Offset to add to sequence on retry (default: 0)
  * @returns Promise resolving to unique subscription tag string
  *
  * @example
@@ -40,7 +57,8 @@ import { prisma } from '@/lib/core/prisma';
  */
 export async function generateSubscriptionTag(
   tenantId: string,
-  orgPrefix: string
+  orgPrefix: string,
+  retryOffset: number = 0
 ): Promise<string> {
   // Build search prefix with year-month suffix
   const now = new Date();
@@ -76,7 +94,31 @@ export async function generateSubscriptionTag(
     }
   }
 
+  // Add retry offset for collision handling
+  nextSequence += retryOffset;
+
   // Format and return the complete subscription tag
   const sequence = nextSequence.toString().padStart(3, '0');
   return `${searchPrefix}${sequence}`;
 }
+
+/**
+ * Check if an error is a Prisma unique constraint violation.
+ *
+ * @param error - Error to check
+ * @returns True if this is a unique constraint violation (P2002)
+ */
+export function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    error !== null &&
+    typeof error === 'object' &&
+    'code' in error &&
+    error.code === 'P2002'
+  );
+}
+
+/**
+ * Get the maximum number of retries for tag generation.
+ * Exported for use in API routes that need retry logic.
+ */
+export { MAX_TAG_GENERATION_RETRIES };

@@ -5,9 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import ExcelJS from 'exceljs';
 import {
   getStatusLabel,
@@ -19,25 +18,26 @@ import {
 } from '@/lib/purchase-request-utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
-async function exportPurchaseRequestsHandler(request: NextRequest, _context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+async function exportPurchaseRequestsHandler(request: NextRequest, context: APIContext) {
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
 
-    const tenantId = session.user.organizationId;
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'xlsx';
     const status = searchParams.get('status');
 
-    // Build where clause with tenant filtering
-    const where: any = { tenantId };
+    // Build where clause (tenant filtering is handled by db extension)
+    const where: any = {};
     if (status && status !== 'all') {
       where.status = status;
     }
 
     // Fetch all purchase requests with items
-    const requests = await prisma.purchaseRequest.findMany({
+    const requests = await db.purchaseRequest.findMany({
       where,
       include: {
         requester: {
@@ -65,7 +65,7 @@ async function exportPurchaseRequestsHandler(request: NextRequest, _context: API
       return NextResponse.json(requests);
     }
 
-    // Fetch organization name for workbook metadata
+    // Fetch organization name for workbook metadata (use raw prisma for non-tenant model)
     const org = await prisma.organization.findUnique({
       where: { id: tenantId },
       select: { name: true },

@@ -20,6 +20,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { calculateTotalCost } from '@/features/subscriptions';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 /**
  * GET /api/subscriptions/[id]/cost - Calculate total subscription cost
@@ -48,10 +49,27 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  * // }
  */
 async function getSubscriptionCostHandler(_request: NextRequest, context: APIContext) {
-    const { params } = context;
+    const { tenant, prisma: tenantPrisma, params } = context;
+
+    // Defensive check for tenant context
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+
+    const db = tenantPrisma as TenantPrismaClient;
+
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    // Verify subscription belongs to tenant before calculating cost
+    const subscription = await db.subscription.findFirst({
+      where: { id },
+    });
+
+    if (!subscription) {
+      return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
     }
 
     const costBreakdown = await calculateTotalCost(id);

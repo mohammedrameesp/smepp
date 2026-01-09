@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { createLeaveRequestSchema, leaveRequestQuerySchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { createBulkNotifications, createNotification, NotificationTemplates } from '@/features/notifications/lib';
@@ -30,8 +31,11 @@ import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getLeaveRequestsHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -48,15 +52,13 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
 
     // Non-admin users can only see their own requests
     // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole, NOT the approval role
-    const isAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
     // Support both memberId and legacy userId parameter
     const filterMemberId = memberId || userId;
-    const effectiveMemberId = isAdmin ? filterMemberId : tenant!.userId;
+    const effectiveMemberId = isAdmin ? filterMemberId : tenant.userId;
 
-    // Build where clause with tenant filtering
-    const where: Record<string, unknown> = {
-      tenantId,
-    };
+    // Build where clause (tenant filtering is automatic via db)
+    const where: Record<string, unknown> = {};
 
     if (effectiveMemberId) {
       where.memberId = effectiveMemberId;
@@ -96,7 +98,7 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
     const skip = (p - 1) * ps;
 
     const [requests, total] = await Promise.all([
-      prisma.leaveRequest.findMany({
+      db.leaveRequest.findMany({
         where,
         include: {
           member: {
@@ -125,7 +127,7 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
         take: ps,
         skip,
       }),
-      prisma.leaveRequest.count({ where }),
+      db.leaveRequest.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -143,10 +145,14 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
 export const GET = withErrorHandler(getLeaveRequestsHandler, { requireAuth: true, requireModule: 'leave' });
 
 async function createLeaveRequestHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
-    const sessionMemberId = tenant!.userId; // Now refers to TeamMember.id
-    const isAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const sessionMemberId = tenant.userId; // Now refers to TeamMember.id
+    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
 
     const body = await request.json();
     const validation = createLeaveRequestSchema.safeParse(body);
@@ -174,10 +180,9 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       }
 
       // Verify the target employee exists and belongs to this tenant
-      const targetEmployee = await prisma.teamMember.findFirst({
+      const targetEmployee = await db.teamMember.findFirst({
         where: {
           id: data.employeeId,
-          tenantId,
           isEmployee: true,
         },
       });
@@ -201,8 +206,8 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
     const endDate = new Date(data.endDate);
 
     // Validate leave type exists, is active, and belongs to this tenant
-    const leaveType = await prisma.leaveType.findFirst({
-      where: { id: data.leaveTypeId, tenantId },
+    const leaveType = await db.leaveType.findFirst({
+      where: { id: data.leaveTypeId },
     });
 
     if (!leaveType) {
@@ -215,7 +220,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
 
     // Get target member's data for service duration and gender checks
     // TeamMember now contains all HR profile data
-    const memberData = await prisma.teamMember.findUnique({
+    const memberData = await db.teamMember.findUnique({
       where: { id: memberId },
       select: {
         dateOfJoining: true,
@@ -229,14 +234,11 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
     const hrProfile = memberData;
 
     // Check if member has existing balance for admin-assigned leave types
-    const existingBalance = await prisma.leaveBalance.findUnique({
+    const existingBalance = await db.leaveBalance.findFirst({
       where: {
-        tenantId_memberId_leaveTypeId_year: {
-          tenantId,
-          memberId,
-          leaveTypeId: data.leaveTypeId,
-          year: startDate.getFullYear(),
-        },
+        memberId,
+        leaveTypeId: data.leaveTypeId,
+        year: startDate.getFullYear(),
       },
     });
 
@@ -253,7 +255,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
 
     // Check if this is a "once in employment" leave type (e.g., Hajj leave)
     if (leaveType.isOnceInEmployment) {
-      const existingOnceLeave = await prisma.leaveRequest.findFirst({
+      const existingOnceLeave = await db.leaveRequest.findFirst({
         where: {
           memberId,
           leaveTypeId: leaveType.id,
@@ -291,10 +293,9 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
     }
 
     // Check for overlapping requests within tenant (pre-check before transaction)
-    const overlappingRequests = await prisma.leaveRequest.findMany({
+    const overlappingRequests = await db.leaveRequest.findMany({
       where: {
         memberId,
-        tenantId,
         status: { in: ['PENDING', 'APPROVED'] },
         OR: [
           {
@@ -487,9 +488,8 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
         // Notify users with the first level's required role
         const firstStep = steps[0];
         if (firstStep) {
-          const approvers = await prisma.teamMember.findMany({
+          const approvers = await db.teamMember.findMany({
             where: {
-              tenantId: tenantId!,
               approvalRole: firstStep.requiredRole,
               isDeleted: false,
             },
@@ -510,9 +510,8 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
         }
       } else {
         // No policy - fall back to notifying all admins in the same organization
-        const admins = await prisma.teamMember.findMany({
+        const admins = await db.teamMember.findMany({
           where: {
-            tenantId: tenantId!,
             role: 'ADMIN',
             isDeleted: false,
           },

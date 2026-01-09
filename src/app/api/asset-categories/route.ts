@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import {
   createAssetCategorySchema,
   assetCategoryQuerySchema,
@@ -19,8 +20,14 @@ import { ensureAssetCategories } from '@/features/assets';
  * List all asset categories for the current tenant
  */
 async function getAssetCategoriesHandler(request: NextRequest, context: APIContext) {
-  const { tenant } = context;
-  const tenantId = tenant!.tenantId;
+  const { tenant, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+  }
+
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
 
   // Ensure categories exist for this tenant (handles legacy orgs)
   await ensureAssetCategories(tenantId);
@@ -42,12 +49,12 @@ async function getAssetCategoriesHandler(request: NextRequest, context: APIConte
   const { includeInactive } = validation.data;
 
   // Build where clause
-  const where: Record<string, unknown> = { tenantId };
+  const where: Record<string, unknown> = {};
   if (!includeInactive) {
     where.isActive = true;
   }
 
-  const categories = await prisma.assetCategory.findMany({
+  const categories = await db.assetCategory.findMany({
     where,
     orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     include: {
@@ -70,9 +77,15 @@ export const GET = withErrorHandler(getAssetCategoriesHandler, {
  * Create a new asset category (admin only)
  */
 async function createAssetCategoryHandler(request: NextRequest, context: APIContext) {
-  const { tenant } = context;
-  const tenantId = tenant!.tenantId;
-  const currentUserId = tenant!.userId;
+  const { tenant, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+  }
+
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
+  const currentUserId = tenant.userId;
 
   const body = await request.json();
   const validation = createAssetCategorySchema.safeParse(body);
@@ -90,8 +103,8 @@ async function createAssetCategoryHandler(request: NextRequest, context: APICont
   const data = validation.data;
 
   // Check if category code already exists in this tenant
-  const existing = await prisma.assetCategory.findFirst({
-    where: { tenantId, code: data.code },
+  const existing = await db.assetCategory.findFirst({
+    where: { code: data.code },
   });
 
   if (existing) {
@@ -104,12 +117,11 @@ async function createAssetCategoryHandler(request: NextRequest, context: APICont
   }
 
   // Get max sort order for new category
-  const maxSortOrder = await prisma.assetCategory.aggregate({
-    where: { tenantId },
+  const maxSortOrder = await db.assetCategory.aggregate({
     _max: { sortOrder: true },
   });
 
-  const category = await prisma.assetCategory.create({
+  const category = await db.assetCategory.create({
     data: {
       tenantId,
       code: data.code,

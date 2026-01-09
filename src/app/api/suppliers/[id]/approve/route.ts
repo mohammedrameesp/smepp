@@ -4,31 +4,32 @@
  * @module operations/suppliers
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { logAction } from '@/lib/core/activity';
 import { generateUniqueSupplierCode } from '@/features/suppliers';
 import { sendEmail } from '@/lib/core/email';
 import { supplierApprovalEmail } from '@/lib/email-templates';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 async function approveSupplierHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId || !tenant?.userId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
+
+    const db = tenantPrisma as TenantPrismaClient;
+    const { tenantId, userId } = tenant;
 
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const tenantId = session.user.organizationId;
-
-    // Check if supplier exists within tenant and is PENDING
-    const existingSupplier = await prisma.supplier.findFirst({
-      where: { id, tenantId },
+    // Check if supplier exists and is PENDING - tenant filtering handled automatically
+    const existingSupplier = await db.supplier.findFirst({
+      where: { id },
     });
 
     if (!existingSupplier) {
@@ -45,14 +46,14 @@ async function approveSupplierHandler(request: NextRequest, context: APIContext)
     // Generate unique supplier code
     const suppCode = await generateUniqueSupplierCode(tenantId);
 
-    // Approve supplier and assign supplier code
-    const supplier = await prisma.supplier.update({
+    // Approve supplier and assign supplier code - tenant filtering handled automatically
+    const supplier = await db.supplier.update({
       where: { id },
       data: {
         suppCode, // Assign supplier code on approval
         status: 'APPROVED',
         approvedAt: new Date(),
-        approvedById: session.user.id,
+        approvedById: userId,
         rejectionReason: null, // Clear any previous rejection reason
       },
     });
@@ -60,21 +61,20 @@ async function approveSupplierHandler(request: NextRequest, context: APIContext)
     // Log the approval activity
     await logAction(
       tenantId,
-      session.user.id,
+      userId,
       'SUPPLIER_APPROVED',
       'supplier',
       supplier.id,
       {
         suppCode: supplier.suppCode,
         name: supplier.name,
-        approvedBy: session.user.name || session.user.email,
       }
     );
 
     // Send approval email to supplier (non-blocking)
     if (supplier.primaryContactEmail) {
       try {
-        // Get org name for email
+        // Get org name for email (Organization is not a tenant model, use raw prisma)
         const org = await prisma.organization.findUnique({
           where: { id: tenantId },
           select: { name: true, primaryColor: true },

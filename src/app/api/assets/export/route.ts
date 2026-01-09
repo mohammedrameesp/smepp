@@ -33,11 +33,10 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { arrayToCSV } from '@/lib/core/csv-utils';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import {
   ASSET_EXPORT_COLUMNS,
   transformAssetsForExport,
@@ -63,26 +62,22 @@ import {
  * // In browser, this will trigger a download:
  * window.location.href = '/api/assets/export';
  */
-async function exportAssetsHandler(_request: NextRequest) {
+async function exportAssetsHandler(_request: NextRequest, context: APIContext) {
   // ─────────────────────────────────────────────────────────────────────────────
-  // STEP 1: Check authentication and authorization
+  // STEP 1: Get tenant context from context (provided by withErrorHandler)
   // ─────────────────────────────────────────────────────────────────────────────
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.teamMemberRole !== 'ADMIN') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const { tenant, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
 
-  if (!session.user.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-  }
-
-  const tenantId = session.user.organizationId;
+  const db = tenantPrisma as TenantPrismaClient;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // STEP 2: Fetch all assets for this tenant
   // ─────────────────────────────────────────────────────────────────────────────
-  const assets = await prisma.asset.findMany({
-    where: { tenantId },
+  const assets = await db.asset.findMany({
     include: {
       assignedMember: {
         select: { name: true, email: true },

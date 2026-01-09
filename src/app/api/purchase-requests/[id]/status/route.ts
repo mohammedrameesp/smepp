@@ -5,9 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { updatePurchaseRequestStatusSchema } from '@/lib/validations/purchase-request';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { getAllowedStatusTransitions, getStatusLabel } from '@/lib/purchase-request-utils';
@@ -19,20 +18,22 @@ import { invalidateTokensForEntity } from '@/lib/whatsapp';
 
 // PATCH - Update purchase request status (admin only)
 async function updateStatusHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const userId = tenant.userId;
 
-    const tenantId = session.user.organizationId;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     // Get current request within tenant
-    const currentRequest = await prisma.purchaseRequest.findFirst({
-      where: { id, tenantId },
+    const currentRequest = await db.purchaseRequest.findFirst({
+      where: { id },
       include: {
         requester: {
           select: {
@@ -73,7 +74,7 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
     // Build update data
     const updateData: any = {
       status,
-      reviewedById: session.user.id,
+      reviewedById: userId,
       reviewedAt: new Date(),
     };
 
@@ -121,7 +122,7 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
           action: 'STATUS_CHANGED',
           previousStatus: currentRequest.status,
           newStatus: status,
-          performedById: session.user.id,
+          performedById: userId,
           details: reviewNotes || `Status changed to ${getStatusLabel(status)}`,
         },
       });
@@ -142,7 +143,7 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
     // Log activity
     await logAction(
       tenantId,
-      session.user.id,
+      userId,
       activityAction,
       'PurchaseRequest',
       purchaseRequest.id,
@@ -161,10 +162,16 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
 
     // Send email notification to requester
     try {
-      // Get org details for email
+      // Get org details for email (use raw prisma for non-tenant model)
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
         select: { slug: true, name: true, primaryColor: true },
+      });
+
+      // Get user info for reviewer name
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true, email: true },
       });
 
       if (currentRequest.requester.email) {
@@ -175,7 +182,7 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
           previousStatus: getStatusLabel(currentRequest.status),
           newStatus: getStatusLabel(status),
           reviewNotes: reviewNotes || undefined,
-          reviewerName: session.user.name || session.user.email,
+          reviewerName: user?.name || user?.email || 'Admin',
           orgSlug: org?.slug || 'app',
           orgName: org?.name || 'Organization',
           primaryColor: org?.primaryColor || undefined,

@@ -4,29 +4,28 @@
  * @module operations/suppliers
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { createEngagementSchema } from '@/features/suppliers';
 import { logAction } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 async function getEngagementsHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
+
+    const db = tenantPrisma as TenantPrismaClient;
 
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const tenantId = session.user.organizationId;
-
-    // Check if supplier exists within tenant
-    const supplier = await prisma.supplier.findFirst({
-      where: { id, tenantId },
+    // Check if supplier exists - tenant filtering handled automatically
+    const supplier = await db.supplier.findFirst({
+      where: { id },
     });
 
     if (!supplier) {
@@ -34,12 +33,12 @@ async function getEngagementsHandler(request: NextRequest, context: APIContext) 
     }
 
     // Non-admin users can only view engagements for APPROVED suppliers
-    if (session.user.teamMemberRole !== 'ADMIN' && supplier.status !== 'APPROVED') {
+    if (tenant.orgRole !== 'ADMIN' && tenant.orgRole !== 'OWNER' && supplier.status !== 'APPROVED') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Fetch engagements
-    const engagements = await prisma.supplierEngagement.findMany({
+    // Fetch engagements - tenant filtering handled automatically
+    const engagements = await db.supplierEngagement.findMany({
       where: { supplierId: id },
       orderBy: { date: 'desc' },
       include: {
@@ -57,21 +56,23 @@ async function getEngagementsHandler(request: NextRequest, context: APIContext) 
 }
 
 async function createEngagementHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId || !tenant?.userId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
+
+    const db = tenantPrisma as TenantPrismaClient;
+    const { tenantId, userId } = tenant;
 
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const tenantId = session.user.organizationId;
-
-    // Check if supplier exists within tenant
-    const supplier = await prisma.supplier.findFirst({
-      where: { id, tenantId },
+    // Check if supplier exists - tenant filtering handled automatically
+    const supplier = await db.supplier.findFirst({
+      where: { id },
     });
 
     if (!supplier) {
@@ -79,17 +80,17 @@ async function createEngagementHandler(request: NextRequest, context: APIContext
     }
 
     // Non-admin users can only add engagements for APPROVED suppliers
-    if (session.user.teamMemberRole !== 'ADMIN' && supplier.status !== 'APPROVED') {
+    if (tenant.orgRole !== 'ADMIN' && tenant.orgRole !== 'OWNER' && supplier.status !== 'APPROVED') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Parse and validate request body
     const body = await request.json();
 
-    // Add createdById from session
+    // Add createdById from tenant context
     const dataWithCreator = {
       ...body,
-      createdById: session.user.id,
+      createdById: userId,
     };
 
     const validation = createEngagementSchema.safeParse(dataWithCreator);
@@ -107,14 +108,16 @@ async function createEngagementHandler(request: NextRequest, context: APIContext
     const data = validation.data;
 
     // Create engagement
-    const engagement = await prisma.supplierEngagement.create({
+    // Note: tenantId is included explicitly for type safety, the tenant prisma
+    // extension also auto-injects it but TypeScript requires it at compile time
+    const engagement = await db.supplierEngagement.create({
       data: {
+        tenantId,
         supplierId: id,
         date: new Date(data.date),
         notes: data.notes,
         rating: data.rating,
         createdById: data.createdById,
-        tenantId: session.user.organizationId!,
       },
       include: {
         createdBy: {
@@ -130,7 +133,7 @@ async function createEngagementHandler(request: NextRequest, context: APIContext
     // Log the engagement activity
     await logAction(
       tenantId,
-      session.user.id,
+      userId,
       'SUPPLIER_ENGAGEMENT_ADDED',
       'supplier',
       supplier.id,
@@ -139,7 +142,6 @@ async function createEngagementHandler(request: NextRequest, context: APIContext
         supplierName: supplier.name,
         engagementId: engagement.id,
         date: engagement.date,
-        addedBy: session.user.name || session.user.email,
       }
     );
 

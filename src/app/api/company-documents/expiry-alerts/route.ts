@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/features/company-documents';
 
 // GET /api/company-documents/expiry-alerts - Get documents expiring soon or expired
-export const GET = withErrorHandler(async (_request: NextRequest) => {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+export const GET = withErrorHandler(async (_request: NextRequest, context: APIContext) => {
+  const { tenant, prisma: tenantPrisma } = context;
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+  const db = tenantPrisma as TenantPrismaClient;
 
-  const tenantId = session.user.organizationId;
+  const tenantId = tenant.tenantId;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const warningDate = new Date(today);
   warningDate.setDate(warningDate.getDate() + DOCUMENT_EXPIRY_WARNING_DAYS);
 
   // Get documents expiring within warning period or already expired (within tenant)
-  const documents = await prisma.companyDocument.findMany({
+  const documents = await db.companyDocument.findMany({
     where: {
       tenantId,
       expiryDate: { lte: warningDate },

@@ -5,13 +5,18 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { payslipQuerySchema } from '@/lib/validations/payroll';
 import { parseDecimal } from '@/lib/payroll/utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getPayslipsHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -27,14 +32,14 @@ async function getPayslipsHandler(request: NextRequest, context: APIContext) {
     const { payrollRunId, userId, year, month, p, ps } = validation.data;
     const page = p;
     const pageSize = ps;
-    const isAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
 
     // Build where clause with tenant filter
     const where: Record<string, unknown> = { tenantId };
 
     // Non-admin users can only see their own payslips
     if (!isAdmin) {
-      where.memberId = tenant!.userId;
+      where.memberId = tenant.userId;
     } else if (userId) {
       where.memberId = userId;
     }
@@ -54,7 +59,7 @@ async function getPayslipsHandler(request: NextRequest, context: APIContext) {
     }
 
     const [payslips, total] = await Promise.all([
-      prisma.payslip.findMany({
+      db.payslip.findMany({
         where,
         include: {
           member: {
@@ -85,7 +90,7 @@ async function getPayslipsHandler(request: NextRequest, context: APIContext) {
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      prisma.payslip.count({ where }),
+      db.payslip.count({ where }),
     ]);
 
     // Transform decimals

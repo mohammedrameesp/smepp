@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { createAssetTypeMappingSchema } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -15,11 +16,15 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  * List all custom asset type mappings for the current tenant
  */
 async function getAssetTypeMappingsHandler(request: NextRequest, context: APIContext) {
-  const { tenant } = context;
-  const tenantId = tenant!.tenantId;
+  const { tenant, prisma: tenantPrisma } = context;
 
-  const mappings = await prisma.assetTypeMapping.findMany({
-    where: { tenantId },
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+  }
+
+  const db = tenantPrisma as TenantPrismaClient;
+
+  const mappings = await db.assetTypeMapping.findMany({
     include: {
       category: {
         select: {
@@ -45,9 +50,15 @@ export const GET = withErrorHandler(getAssetTypeMappingsHandler, {
  * Create a new custom asset type mapping (admin only)
  */
 async function createAssetTypeMappingHandler(request: NextRequest, context: APIContext) {
-  const { tenant } = context;
-  const tenantId = tenant!.tenantId;
-  const currentUserId = tenant!.userId;
+  const { tenant, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+  }
+
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
+  const currentUserId = tenant.userId;
 
   const body = await request.json();
   const validation = createAssetTypeMappingSchema.safeParse(body);
@@ -65,9 +76,8 @@ async function createAssetTypeMappingHandler(request: NextRequest, context: APIC
   const data = validation.data;
 
   // Check if type name already exists in this tenant (case-insensitive)
-  const existing = await prisma.assetTypeMapping.findFirst({
+  const existing = await db.assetTypeMapping.findFirst({
     where: {
-      tenantId,
       typeName: { equals: data.typeName, mode: 'insensitive' },
     },
   });
@@ -82,8 +92,8 @@ async function createAssetTypeMappingHandler(request: NextRequest, context: APIC
   }
 
   // Verify category belongs to this tenant
-  const category = await prisma.assetCategory.findFirst({
-    where: { id: data.categoryId, tenantId },
+  const category = await db.assetCategory.findFirst({
+    where: { id: data.categoryId },
   });
 
   if (!category) {
@@ -95,7 +105,7 @@ async function createAssetTypeMappingHandler(request: NextRequest, context: APIC
     );
   }
 
-  const mapping = await prisma.assetTypeMapping.create({
+  const mapping = await db.assetTypeMapping.create({
     data: {
       tenantId,
       typeName: data.typeName,

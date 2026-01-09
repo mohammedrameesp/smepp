@@ -4,22 +4,20 @@
  * @module operations/suppliers
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
-async function exportSuppliersHandler(request: NextRequest, _context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+async function exportSuppliersHandler(request: NextRequest, context: APIContext) {
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    const tenantId = session.user.organizationId;
+    const db = tenantPrisma as TenantPrismaClient;
 
-    // Fetch all suppliers with related data - filter by tenant
-    const suppliers = await prisma.supplier.findMany({
-      where: { tenantId },
+    // Fetch all suppliers with related data - tenant filtering handled automatically
+    const suppliers = await db.supplier.findMany({
       include: {
         engagements: true,
         approvedBy: {

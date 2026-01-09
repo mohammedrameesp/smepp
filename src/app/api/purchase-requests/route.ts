@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Prisma, PurchaseRequestStatus, PurchaseRequestPriority } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { createPurchaseRequestSchema } from '@/lib/validations/purchase-request';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { generatePurchaseRequestNumber } from '@/lib/purchase-request-utils';
@@ -18,9 +19,13 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // GET - List purchase requests
 async function getPurchaseRequestsHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
-    const userId = tenant!.userId;
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const userId = tenant.userId;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -29,12 +34,12 @@ async function getPurchaseRequestsHandler(request: NextRequest, context: APICont
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
 
-    // Build where clause with tenant filtering
-    const where: Prisma.PurchaseRequestWhereInput = { tenantId };
+    // Build where clause (tenant filtering is handled by db extension)
+    const where: Prisma.PurchaseRequestWhereInput = {};
 
     // Non-admin users can only see their own requests
     // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole
-    const isOwnerOrAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
     if (!isOwnerOrAdmin) {
       where.requesterId = userId;
     }
@@ -57,8 +62,8 @@ async function getPurchaseRequestsHandler(request: NextRequest, context: APICont
 
     // Get total count and requests
     const [total, requests] = await Promise.all([
-      prisma.purchaseRequest.count({ where }),
-      prisma.purchaseRequest.findMany({
+      db.purchaseRequest.count({ where }),
+      db.purchaseRequest.findMany({
         where,
         include: {
           requester: {
@@ -101,9 +106,13 @@ async function getPurchaseRequestsHandler(request: NextRequest, context: APICont
 
 // POST - Create new purchase request
 async function createPurchaseRequestHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
-    const userId = tenant!.userId;
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const userId = tenant.userId;
 
     // Parse and validate request body
     const body = await request.json();
@@ -136,7 +145,7 @@ async function createPurchaseRequestHandler(request: NextRequest, context: APICo
     } = await calculatePurchaseRequestItems(data.items, formCurrency, isSubscriptionType, tenantId);
 
     // Create purchase request with items
-    const purchaseRequest = await prisma.purchaseRequest.create({
+    const purchaseRequest = await db.purchaseRequest.create({
       data: {
         referenceNumber,
         requesterId: userId,

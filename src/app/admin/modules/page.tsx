@@ -155,7 +155,7 @@ export default function ModulesPage() {
         setInstallDialog({ open: true, module: targetModule, success: false });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [installParam, modules]);
 
   async function fetchModules() {

@@ -1,215 +1,197 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { updateDelegationSchema } from '@/features/approvals/validations/approvals';
 import { logAction } from '@/lib/core/activity';
-
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 // GET /api/delegations/[id] - Get a single delegation
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+async function getDelegationHandler(request: NextRequest, context: APIContext) {
+  const { tenant, prisma: tenantPrisma, params } = context;
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
-
-    // Use findFirst with tenantId to prevent cross-tenant access
-    const delegation = await prisma.approverDelegation.findFirst({
-      where: { id, tenantId },
-      include: {
-        delegator: {
-          select: { id: true, name: true, email: true, role: true },
-        },
-        delegatee: {
-          select: { id: true, name: true, email: true, role: true },
-        },
-      },
-    });
-
-    if (!delegation) {
-      return NextResponse.json({ error: 'Delegation not found' }, { status: 404 });
-    }
-
-    // Only admin or involved parties can view
-    const isAdmin = session.user.teamMemberRole === 'ADMIN';
-    const isInvolved =
-      delegation.delegatorId === session.user.id ||
-      delegation.delegateeId === session.user.id;
-
-    if (!isAdmin && !isInvolved) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    return NextResponse.json(delegation);
-  } catch (error) {
-    console.error('Get delegation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to get delegation' },
-      { status: 500 }
-    );
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+
+  const db = tenantPrisma as TenantPrismaClient;
+  const userId = tenant.userId;
+  const isAdmin = tenant.userRole === 'ADMIN';
+  const id = params?.id;
+
+  if (!id) {
+    return NextResponse.json({ error: 'Delegation ID required' }, { status: 400 });
+  }
+
+  const delegation = await db.approverDelegation.findFirst({
+    where: { id },
+    include: {
+      delegator: {
+        select: { id: true, name: true, email: true, role: true },
+      },
+      delegatee: {
+        select: { id: true, name: true, email: true, role: true },
+      },
+    },
+  });
+
+  if (!delegation) {
+    return NextResponse.json({ error: 'Delegation not found' }, { status: 404 });
+  }
+
+  // Only admin or involved parties can view
+  const isInvolved =
+    delegation.delegatorId === userId ||
+    delegation.delegateeId === userId;
+
+  if (!isAdmin && !isInvolved) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  return NextResponse.json(delegation);
 }
+
+export const GET = withErrorHandler(getDelegationHandler, { requireAuth: true });
 
 // PATCH /api/delegations/[id] - Update a delegation
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+async function updateDelegationHandler(request: NextRequest, context: APIContext) {
+  const { tenant, prisma: tenantPrisma, params } = context;
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
-    const body = await request.json();
-    const validation = updateDelegationSchema.safeParse(body);
-
-    if (!validation.success) {
-      return NextResponse.json({
-        error: 'Invalid request body',
-        details: validation.error.issues,
-      }, { status: 400 });
-    }
-
-    // Use findFirst with tenantId to prevent cross-tenant access
-    const existing = await prisma.approverDelegation.findFirst({
-      where: { id, tenantId },
-    });
-
-    if (!existing) {
-      return NextResponse.json({ error: 'Delegation not found' }, { status: 404 });
-    }
-
-    // Only delegator or admin can update
-    const isAdmin = session.user.teamMemberRole === 'ADMIN';
-    if (!isAdmin && existing.delegatorId !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { startDate, endDate, isActive, reason } = validation.data;
-
-    // Validate dates if being updated
-    if (startDate || endDate) {
-      const newStart = startDate ? new Date(startDate) : existing.startDate;
-      const newEnd = endDate ? new Date(endDate) : existing.endDate;
-      if (newEnd <= newStart) {
-        return NextResponse.json(
-          { error: 'End date must be after start date' },
-          { status: 400 }
-        );
-      }
-    }
-
-    const delegation = await prisma.approverDelegation.update({
-      where: { id },
-      data: {
-        ...(startDate && { startDate: new Date(startDate) }),
-        ...(endDate && { endDate: new Date(endDate) }),
-        ...(isActive !== undefined && { isActive }),
-        ...(reason !== undefined && { reason }),
-      },
-      include: {
-        delegator: {
-          select: { id: true, name: true, email: true, role: true },
-        },
-        delegatee: {
-          select: { id: true, name: true, email: true, role: true },
-        },
-      },
-    });
-
-    await logAction(
-      tenantId,
-      session.user.id,
-      'DELEGATION_UPDATED',
-      'ApproverDelegation',
-      delegation.id,
-      {
-        changes: validation.data,
-      }
-    );
-
-    return NextResponse.json(delegation);
-  } catch (error) {
-    console.error('Update delegation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update delegation' },
-      { status: 500 }
-    );
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
+  const userId = tenant.userId;
+  const isAdmin = tenant.userRole === 'ADMIN';
+  const id = params?.id;
+
+  if (!id) {
+    return NextResponse.json({ error: 'Delegation ID required' }, { status: 400 });
+  }
+
+  const body = await request.json();
+  const validation = updateDelegationSchema.safeParse(body);
+
+  if (!validation.success) {
+    return NextResponse.json({
+      error: 'Invalid request body',
+      details: validation.error.issues,
+    }, { status: 400 });
+  }
+
+  // Verify delegation exists and belongs to tenant
+  const existing = await db.approverDelegation.findFirst({
+    where: { id },
+  });
+
+  if (!existing) {
+    return NextResponse.json({ error: 'Delegation not found' }, { status: 404 });
+  }
+
+  // Only delegator or admin can update
+  if (!isAdmin && existing.delegatorId !== userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { startDate, endDate, isActive, reason } = validation.data;
+
+  // Validate dates if being updated
+  if (startDate || endDate) {
+    const newStart = startDate ? new Date(startDate) : existing.startDate;
+    const newEnd = endDate ? new Date(endDate) : existing.endDate;
+    if (newEnd <= newStart) {
+      return NextResponse.json(
+        { error: 'End date must be after start date' },
+        { status: 400 }
+      );
+    }
+  }
+
+  const delegation = await db.approverDelegation.update({
+    where: { id },
+    data: {
+      ...(startDate && { startDate: new Date(startDate) }),
+      ...(endDate && { endDate: new Date(endDate) }),
+      ...(isActive !== undefined && { isActive }),
+      ...(reason !== undefined && { reason }),
+    },
+    include: {
+      delegator: {
+        select: { id: true, name: true, email: true, role: true },
+      },
+      delegatee: {
+        select: { id: true, name: true, email: true, role: true },
+      },
+    },
+  });
+
+  await logAction(
+    tenantId,
+    userId,
+    'DELEGATION_UPDATED',
+    'ApproverDelegation',
+    delegation.id,
+    {
+      changes: validation.data,
+    }
+  );
+
+  return NextResponse.json(delegation);
 }
+
+export const PATCH = withErrorHandler(updateDelegationHandler, { requireAuth: true });
 
 // DELETE /api/delegations/[id] - Delete a delegation
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+async function deleteDelegationHandler(request: NextRequest, context: APIContext) {
+  const { tenant, prisma: tenantPrisma, params } = context;
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
-    const { id } = await params;
-
-    // Use findFirst with tenantId to prevent cross-tenant access
-    const existing = await prisma.approverDelegation.findFirst({
-      where: { id, tenantId },
-      include: {
-        delegatee: { select: { name: true } },
-      },
-    });
-
-    if (!existing) {
-      return NextResponse.json({ error: 'Delegation not found' }, { status: 404 });
-    }
-
-    // Only delegator or admin can delete
-    const isAdmin = session.user.teamMemberRole === 'ADMIN';
-    if (!isAdmin && existing.delegatorId !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    await prisma.approverDelegation.delete({
-      where: { id },
-    });
-
-    await logAction(
-      tenantId,
-      session.user.id,
-      'DELEGATION_DELETED',
-      'ApproverDelegation',
-      id,
-      {
-        delegateeName: existing.delegatee?.name,
-      }
-    );
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Delete delegation error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete delegation' },
-      { status: 500 }
-    );
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
+  const userId = tenant.userId;
+  const isAdmin = tenant.userRole === 'ADMIN';
+  const id = params?.id;
+
+  if (!id) {
+    return NextResponse.json({ error: 'Delegation ID required' }, { status: 400 });
+  }
+
+  // Verify delegation exists and belongs to tenant
+  const existing = await db.approverDelegation.findFirst({
+    where: { id },
+    include: {
+      delegatee: { select: { name: true } },
+    },
+  });
+
+  if (!existing) {
+    return NextResponse.json({ error: 'Delegation not found' }, { status: 404 });
+  }
+
+  // Only delegator or admin can delete
+  if (!isAdmin && existing.delegatorId !== userId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  await db.approverDelegation.delete({
+    where: { id },
+  });
+
+  await logAction(
+    tenantId,
+    userId,
+    'DELEGATION_DELETED',
+    'ApproverDelegation',
+    id,
+    {
+      delegateeName: existing.delegatee?.name,
+    }
+  );
+
+  return NextResponse.json({ success: true });
 }
+
+export const DELETE = withErrorHandler(deleteDelegationHandler, { requireAuth: true });

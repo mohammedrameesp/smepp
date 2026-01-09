@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
-import { withErrorHandler } from '@/lib/http/handler';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { companyDocumentSchema, companyDocumentQuerySchema } from '@/features/company-documents';
 import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/features/company-documents';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { Prisma } from '@prisma/client';
 
 // GET /api/company-documents - List documents with filtering
-export const GET = withErrorHandler(async (request: NextRequest) => {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+export const GET = withErrorHandler(async (request: NextRequest, context: APIContext) => {
+  const { tenant, prisma: tenantPrisma } = context;
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+  const db = tenantPrisma as TenantPrismaClient;
 
-  const tenantId = session.user.organizationId;
+  const tenantId = tenant.tenantId;
   const { searchParams } = new URL(request.url);
 
   const query = companyDocumentQuerySchema.parse({
@@ -75,7 +74,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const skip = (query.page - 1) * query.limit;
 
   const [documents, total] = await Promise.all([
-    prisma.companyDocument.findMany({
+    db.companyDocument.findMany({
       where,
       orderBy,
       skip,
@@ -97,7 +96,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
         },
       },
     }),
-    prisma.companyDocument.count({ where }),
+    db.companyDocument.count({ where }),
   ]);
 
   // Add expiry info to each document
@@ -118,23 +117,20 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 }, { requireAuth: true, requireModule: 'documents' });
 
 // POST /api/company-documents - Create a new document
-export const POST = withErrorHandler(async (request: NextRequest) => {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export const POST = withErrorHandler(async (request: NextRequest, context: APIContext) => {
+  const { tenant, prisma: tenantPrisma } = context;
+  if (!tenant?.tenantId || !tenant?.userId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
+  const db = tenantPrisma as TenantPrismaClient;
 
-  if (!session.user.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-  }
-
-  const tenantId = session.user.organizationId;
+  const tenantId = tenant.tenantId;
   const body = await request.json();
   const validatedData = companyDocumentSchema.parse(body);
 
   // If asset is specified, validate it exists within tenant
   if (validatedData.assetId) {
-    const asset = await prisma.asset.findFirst({
+    const asset = await db.asset.findFirst({
       where: { id: validatedData.assetId, tenantId },
     });
 
@@ -146,7 +142,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     }
   }
 
-  const document = await prisma.companyDocument.create({
+  const document = await db.companyDocument.create({
     data: {
       documentTypeName: validatedData.documentTypeName,
       referenceNumber: validatedData.referenceNumber || null,
@@ -155,8 +151,8 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       assetId: validatedData.assetId || null,
       renewalCost: validatedData.renewalCost || null,
       notes: validatedData.notes || null,
-      createdById: session.user.id,
-      tenantId: session.user.organizationId,
+      createdById: tenant.userId,
+      tenantId: tenant.tenantId,
     },
     include: {
       asset: {
@@ -172,7 +168,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   // Log activity
   await logAction(
     tenantId,
-    session.user.id,
+    tenant.userId,
     ActivityActions.COMPANY_DOCUMENT_CREATED,
     'CompanyDocument',
     document.id,

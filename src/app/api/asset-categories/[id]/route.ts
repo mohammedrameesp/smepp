@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { updateAssetCategorySchema } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -15,16 +16,21 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  * Get a single asset category by ID
  */
 async function getAssetCategoryHandler(request: NextRequest, context: APIContext) {
-  const { tenant, params } = context;
-  const tenantId = tenant!.tenantId;
+  const { tenant, params, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+  }
+
+  const db = tenantPrisma as TenantPrismaClient;
   const id = params?.id;
 
   if (!id) {
     return NextResponse.json({ error: 'ID is required' }, { status: 400 });
   }
 
-  const category = await prisma.assetCategory.findFirst({
-    where: { id, tenantId },
+  const category = await db.assetCategory.findFirst({
+    where: { id },
     include: {
       _count: {
         select: { assets: true },
@@ -49,9 +55,15 @@ export const GET = withErrorHandler(getAssetCategoryHandler, {
  * Update an asset category (admin only)
  */
 async function updateAssetCategoryHandler(request: NextRequest, context: APIContext) {
-  const { tenant, params } = context;
-  const tenantId = tenant!.tenantId;
-  const currentUserId = tenant!.userId;
+  const { tenant, params, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+  }
+
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
+  const currentUserId = tenant.userId;
   const id = params?.id;
 
   if (!id) {
@@ -59,8 +71,8 @@ async function updateAssetCategoryHandler(request: NextRequest, context: APICont
   }
 
   // Check if category exists
-  const existing = await prisma.assetCategory.findFirst({
-    where: { id, tenantId },
+  const existing = await db.assetCategory.findFirst({
+    where: { id },
   });
 
   if (!existing) {
@@ -84,8 +96,8 @@ async function updateAssetCategoryHandler(request: NextRequest, context: APICont
 
   // If changing code, check it doesn't conflict with another category
   if (data.code && data.code !== existing.code) {
-    const codeConflict = await prisma.assetCategory.findFirst({
-      where: { tenantId, code: data.code, NOT: { id } },
+    const codeConflict = await db.assetCategory.findFirst({
+      where: { code: data.code, NOT: { id } },
     });
 
     if (codeConflict) {
@@ -98,7 +110,7 @@ async function updateAssetCategoryHandler(request: NextRequest, context: APICont
     }
   }
 
-  const category = await prisma.assetCategory.update({
+  const category = await db.assetCategory.update({
     where: { id },
     data: {
       ...(data.code !== undefined && { code: data.code }),
@@ -132,9 +144,15 @@ export const PUT = withErrorHandler(updateAssetCategoryHandler, {
  * Delete an asset category (admin only, only if no assets use it)
  */
 async function deleteAssetCategoryHandler(request: NextRequest, context: APIContext) {
-  const { tenant, params } = context;
-  const tenantId = tenant!.tenantId;
-  const currentUserId = tenant!.userId;
+  const { tenant, params, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+  }
+
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
+  const currentUserId = tenant.userId;
   const id = params?.id;
 
   if (!id) {
@@ -142,8 +160,8 @@ async function deleteAssetCategoryHandler(request: NextRequest, context: APICont
   }
 
   // Check if category exists
-  const existing = await prisma.assetCategory.findFirst({
-    where: { id, tenantId },
+  const existing = await db.assetCategory.findFirst({
+    where: { id },
     include: {
       _count: {
         select: { assets: true },
@@ -165,7 +183,7 @@ async function deleteAssetCategoryHandler(request: NextRequest, context: APICont
     );
   }
 
-  await prisma.assetCategory.delete({
+  await db.assetCategory.delete({
     where: { id },
   });
 

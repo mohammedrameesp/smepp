@@ -23,8 +23,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { TeamMemberRole, AssetStatus, AssetRequestStatus, AssetRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updateAssetSchema } from '@/features/assets';
@@ -41,6 +39,7 @@ import {
 } from '@/features/assets';
 import { generateRequestNumber } from '@/features/asset-requests';
 import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/assets/[id] - Get Single Asset (Most Used)
@@ -71,12 +70,13 @@ import { createNotification, NotificationTemplates } from '@/features/notificati
  * }
  */
 async function getAssetHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    const tenantId = session.user.organizationId;
+    const db = tenantPrisma as TenantPrismaClient;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -85,8 +85,8 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 1: Fetch asset with tenant isolation (prevents IDOR attacks)
     // ─────────────────────────────────────────────────────────────────────────────
-    const asset = await prisma.asset.findFirst({
-      where: { id, tenantId },
+    const asset = await db.asset.findFirst({
+      where: { id },
       include: {
         assignedMember: {
           select: {
@@ -112,7 +112,8 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
     // STEP 2: Authorization check
     // Admins can view any asset, members can only view their assigned assets
     // ─────────────────────────────────────────────────────────────────────────────
-    if (session.user.teamMemberRole !== TeamMemberRole.ADMIN && asset.assignedMemberId !== session.user.id) {
+    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    if (!isAdmin && asset.assignedMemberId !== tenant.userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -122,7 +123,7 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
     // ─────────────────────────────────────────────────────────────────────────────
     let assignmentDate = null;
     if (asset.assignedMemberId) {
-      const mostRecentAssignment = await prisma.assetHistory.findFirst({
+      const mostRecentAssignment = await db.assetHistory.findFirst({
         where: {
           assetId: id,
           action: 'ASSIGNED',
@@ -179,12 +180,14 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
  * - Records location changes in history
  */
 async function updateAssetHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    const tenantId = session.user.organizationId;
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -213,8 +216,8 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 2: Get current asset state for change detection
     // ─────────────────────────────────────────────────────────────────────────────
-    const currentAsset = await prisma.asset.findFirst({
-      where: { id, tenantId },
+    const currentAsset = await db.asset.findFirst({
+      where: { id },
       include: {
         assignedMember: {
           select: { id: true, name: true, email: true },
@@ -230,10 +233,9 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     // STEP 3: Validate asset tag uniqueness (if changing)
     // ─────────────────────────────────────────────────────────────────────────────
     if (data.assetTag && data.assetTag !== currentAsset.assetTag) {
-      const existingAsset = await prisma.asset.findFirst({
+      const existingAsset = await db.asset.findFirst({
         where: {
           assetTag: data.assetTag,
-          tenantId,
           id: { not: id }, // Exclude current asset
         },
       });
@@ -270,7 +272,6 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       const assignedMember = await prisma.teamMember.findFirst({
         where: {
           id: data.assignedMemberId,
-          tenantId,
         },
         select: { id: true, name: true, email: true, canLogin: true },
       });
@@ -286,10 +287,9 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         newMemberRequiresApproval = true;
 
         // Check for existing pending requests
-        const pendingRequest = await prisma.assetRequest.findFirst({
+        const pendingRequest = await db.assetRequest.findFirst({
           where: {
             assetId: id,
-            tenantId,
             status: {
               in: [AssetRequestStatus.PENDING_ADMIN_APPROVAL, AssetRequestStatus.PENDING_USER_ACCEPTANCE],
             },
@@ -323,7 +323,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
           id,
           currentAsset.assignedMemberId,
           null,
-          session.user.id,
+          tenant.userId,
           `Asset automatically unassigned due to status change to ${data.status}`
         );
       }
@@ -335,7 +335,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         id,
         currentAsset.status,
         data.status as AssetStatus,
-        session.user.id,
+        tenant.userId,
         statusChangeDate
       );
     }
@@ -370,7 +370,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         id,
         fromLocationName,
         toLocationName,
-        session.user.id
+        tenant.userId
       );
     }
 
@@ -390,7 +390,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 8: Update asset in database
     // ─────────────────────────────────────────────────────────────────────────────
-    const asset = await prisma.asset.update({
+    const asset = await db.asset.update({
       where: { id },
       data: updateData,
       include: {
@@ -413,7 +413,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         const { recordAssetAssignment } = await import('@/features/assets');
 
         // Unassign from previous member
-        await prisma.asset.update({
+        await db.asset.update({
           where: { id },
           data: {
             assignedMemberId: null,
@@ -426,14 +426,14 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
           id,
           currentAsset.assignedMemberId,
           null,
-          session.user.id,
+          tenant.userId,
           `Reassigned to ${newMemberData.name || newMemberData.email} (pending acceptance)`
         );
       }
 
       // Create pending assignment request
       const requestNumber = await generateRequestNumber(tenantId);
-      const assetRequest = await prisma.assetRequest.create({
+      const assetRequest = await db.assetRequest.create({
         data: {
           tenantId,
           requestNumber,
@@ -442,7 +442,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
           type: AssetRequestType.ADMIN_ASSIGNMENT,
           status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
           reason: data.notes || 'Assigned via asset edit',
-          assignedById: session.user.id,
+          assignedById: tenant.userId,
         },
         include: {
           asset: { select: { id: true, assetTag: true, model: true, brand: true, type: true } },
@@ -458,12 +458,12 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
           oldStatus: null,
           newStatus: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
           notes: data.notes || 'Admin assignment created via asset edit',
-          performedById: session.user.id,
+          performedById: tenant.userId,
         },
       });
 
       // Log activity
-      await logAction(tenantId, session.user.id, ActivityActions.ASSET_ASSIGNMENT_CREATED, 'AssetRequest', assetRequest.id, {
+      await logAction(tenantId, tenant.userId, ActivityActions.ASSET_ASSIGNMENT_CREATED, 'AssetRequest', assetRequest.id, {
         requestNumber: assetRequest.requestNumber,
         assetTag: asset.assetTag,
         assetModel: asset.model,
@@ -479,7 +479,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
 
         // Get admin name for notification
         const admin = await prisma.teamMember.findUnique({
-          where: { id: session.user.id },
+          where: { id: tenant.userId },
           select: { name: true, email: true },
         });
 
@@ -548,7 +548,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         id,
         currentAsset.assignedMemberId,
         data.assignedMemberId ?? null,
-        session.user.id,
+        tenant.userId,
         undefined,
         assignmentDate
       );
@@ -584,7 +584,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       }
     } else if (data.assignmentDate && currentAsset.assignedMemberId && !memberChanged) {
       // Assignment date changed but member stayed the same - update existing history
-      const mostRecentAssignment = await prisma.assetHistory.findFirst({
+      const mostRecentAssignment = await db.assetHistory.findFirst({
         where: {
           assetId: id,
           action: 'ASSIGNED',
@@ -601,7 +601,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
           newDate.toISOString().split('T')[0] !== currentDate.toISOString().split('T')[0];
 
         if (datesDiffer) {
-          await prisma.assetHistory.update({
+          await db.assetHistory.update({
             where: { id: mostRecentAssignment.id },
             data: { assignmentDate: newDate }
           });
@@ -613,7 +613,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
           id,
           null,
           currentAsset.assignedMemberId,
-          session.user.id,
+          tenant.userId,
           'Historical assignment record created during date update',
           newDate
         );
@@ -632,7 +632,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     const memberMap = new Map<string, { name: string | null; email: string }>();
     if (memberIdsToFetch.size > 0) {
       const members = await prisma.teamMember.findMany({
-        where: { id: { in: Array.from(memberIdsToFetch) } },
+        where: { id: { in: Array.from(memberIdsToFetch) }, tenantId },
         select: { id: true, name: true, email: true },
       });
       members.forEach(m => memberMap.set(m.id, { name: m.name, email: m.email }));
@@ -655,7 +655,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     // Log activity for audit
     await logAction(
       tenantId,
-      session.user.id,
+      tenant.userId,
       ActivityActions.ASSET_UPDATED,
       'Asset',
       asset.id,
@@ -667,7 +667,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
       const updatedFieldsMessage = changeDetails.join('\n');
       await recordAssetUpdate(
         asset.id,
-        session.user.id,
+        tenant.userId,
         updatedFieldsMessage
       );
     }
@@ -699,12 +699,13 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
  * - Logs deletion activity for audit
  */
 async function deleteAssetHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    const tenantId = session.user.organizationId;
+    const db = tenantPrisma as TenantPrismaClient;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -713,8 +714,8 @@ async function deleteAssetHandler(request: NextRequest, context: APIContext) {
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 1: Get asset details for logging before deletion
     // ─────────────────────────────────────────────────────────────────────────────
-    const asset = await prisma.asset.findFirst({
-      where: { id, tenantId },
+    const asset = await db.asset.findFirst({
+      where: { id },
       select: { id: true, model: true, brand: true, type: true, assetTag: true },
     });
 
@@ -725,7 +726,7 @@ async function deleteAssetHandler(request: NextRequest, context: APIContext) {
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 2: Delete asset (cascades to related records)
     // ─────────────────────────────────────────────────────────────────────────────
-    await prisma.asset.delete({
+    await db.asset.delete({
       where: { id },
     });
 
@@ -733,8 +734,8 @@ async function deleteAssetHandler(request: NextRequest, context: APIContext) {
     // STEP 3: Log deletion for audit trail
     // ─────────────────────────────────────────────────────────────────────────────
     await logAction(
-      tenantId,
-      session.user.id,
+      tenant.tenantId,
+      tenant.userId,
       ActivityActions.ASSET_DELETED,
       'Asset',
       asset.id,

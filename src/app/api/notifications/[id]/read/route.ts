@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 /**
  * PATCH /api/notifications/[id]/read
@@ -10,25 +8,21 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  */
 export const PATCH = withErrorHandler(
   async (request: NextRequest, context: APIContext) => {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    // Require organization context for tenant isolation
-    if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    const tenantId = session.user.organizationId;
+    const db = tenantPrisma as TenantPrismaClient;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Use findFirst with tenantId to prevent cross-tenant access
-    const notification = await prisma.notification.findFirst({
-      where: { id, tenantId },
+    // Use findFirst - tenantId is auto-filtered by tenant-scoped prisma client
+    const notification = await db.notification.findFirst({
+      where: { id },
     });
 
     if (!notification) {
@@ -38,7 +32,7 @@ export const PATCH = withErrorHandler(
       );
     }
 
-    if (notification.recipientId !== session.user.id) {
+    if (notification.recipientId !== tenant.userId) {
       return NextResponse.json(
         { error: 'You do not have permission to access this notification' },
         { status: 403 }
@@ -46,7 +40,7 @@ export const PATCH = withErrorHandler(
     }
 
     // Update the notification
-    const updated = await prisma.notification.update({
+    const updated = await db.notification.update({
       where: { id },
       data: {
         isRead: true,

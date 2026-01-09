@@ -4,29 +4,28 @@
  * @module operations/suppliers
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { updateSupplierSchema } from '@/features/suppliers';
 import { logAction } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 async function getSupplierHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
+
+    const db = tenantPrisma as TenantPrismaClient;
 
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const tenantId = session.user.organizationId;
-
-    // Use findFirst with tenantId to prevent IDOR attacks
-    const supplier = await prisma.supplier.findFirst({
-      where: { id, tenantId },
+    // Use findFirst - tenant filtering handled automatically by tenant-scoped prisma
+    const supplier = await db.supplier.findFirst({
+      where: { id },
       include: {
         approvedBy: {
           select: {
@@ -55,7 +54,7 @@ async function getSupplierHandler(request: NextRequest, context: APIContext) {
     }
 
     // Non-admin users can only view APPROVED suppliers
-    if (session.user.teamMemberRole !== 'ADMIN' && supplier.status !== 'APPROVED') {
+    if (tenant.orgRole !== 'ADMIN' && tenant.orgRole !== 'OWNER' && supplier.status !== 'APPROVED') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -63,21 +62,23 @@ async function getSupplierHandler(request: NextRequest, context: APIContext) {
 }
 
 async function updateSupplierHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId || !tenant?.userId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
+
+    const db = tenantPrisma as TenantPrismaClient;
+    const { tenantId, userId } = tenant;
 
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const tenantId = session.user.organizationId;
-
-    // Check if supplier exists within tenant
-    const existingSupplier = await prisma.supplier.findFirst({
-      where: { id, tenantId },
+    // Check if supplier exists - tenant filtering handled automatically
+    const existingSupplier = await db.supplier.findFirst({
+      where: { id },
     });
 
     if (!existingSupplier) {
@@ -105,8 +106,8 @@ async function updateSupplierHandler(request: NextRequest, context: APIContext) 
 
     const data = validation.data;
 
-    // Update supplier
-    const supplier = await prisma.supplier.update({
+    // Update supplier - tenant filtering handled automatically
+    const supplier = await db.supplier.update({
       where: { id },
       data: {
         name: data.name,
@@ -132,7 +133,7 @@ async function updateSupplierHandler(request: NextRequest, context: APIContext) 
     // Log the update activity
     await logAction(
       tenantId,
-      session.user.id,
+      userId,
       'SUPPLIER_UPDATED',
       'supplier',
       supplier.id,
@@ -147,36 +148,38 @@ async function updateSupplierHandler(request: NextRequest, context: APIContext) 
 }
 
 async function deleteSupplierHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId || !tenant?.userId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
+
+    const db = tenantPrisma as TenantPrismaClient;
+    const { tenantId, userId } = tenant;
 
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const tenantId = session.user.organizationId;
-
-    // Check if supplier exists within tenant
-    const supplier = await prisma.supplier.findFirst({
-      where: { id, tenantId },
+    // Check if supplier exists - tenant filtering handled automatically
+    const supplier = await db.supplier.findFirst({
+      where: { id },
     });
 
     if (!supplier) {
       return NextResponse.json({ error: 'Supplier not found' }, { status: 404 });
     }
 
-    // Delete supplier (cascades to engagements)
-    await prisma.supplier.delete({
+    // Delete supplier (cascades to engagements) - tenant filtering handled automatically
+    await db.supplier.delete({
       where: { id },
     });
 
     // Log the deletion activity
     await logAction(
       tenantId,
-      session.user.id,
+      userId,
       'SUPPLIER_DELETED',
       'supplier',
       id,

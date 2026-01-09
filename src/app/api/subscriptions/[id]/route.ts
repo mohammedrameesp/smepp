@@ -28,6 +28,7 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import { parseInputDateString } from '@/lib/date-format';
 import { convertToQAR } from '@/lib/core/currency';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 /**
  * GET /api/subscriptions/[id] - Retrieve subscription details
@@ -54,16 +55,21 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  * // Returns: { id: "sub_xyz123", serviceName: "...", history: [...], ... }
  */
 async function getSubscriptionHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+
+    const db = tenantPrisma as TenantPrismaClient;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Use findFirst with tenantId to prevent IDOR attacks
-    const subscription = await prisma.subscription.findFirst({
-      where: { id, tenantId },
+    // Use tenant-scoped prisma (auto-filters by tenantId) to prevent IDOR attacks
+    const subscription = await db.subscription.findFirst({
+      where: { id },
       include: {
         assignedMember: {
           select: { id: true, name: true, email: true },
@@ -80,8 +86,8 @@ async function getSubscriptionHandler(request: NextRequest, context: APIContext)
     }
 
     // Authorization check: Only owners/admins or the assigned member can view the subscription
-    const isOwnerOrAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
-    if (!isOwnerOrAdmin && subscription.assignedMemberId !== tenant!.userId) {
+    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    if (!isOwnerOrAdmin && subscription.assignedMemberId !== tenant.userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -124,9 +130,14 @@ async function getSubscriptionHandler(request: NextRequest, context: APIContext)
  * // Returns: { id: "sub_xyz123", costQAR: 400, assignedMember: {...} }
  */
 async function updateSubscriptionHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId || !tenant?.userId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+
+    const { tenantId, userId: currentUserId } = tenant;
+    const db = tenantPrisma as TenantPrismaClient;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -144,9 +155,9 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
 
     const data = validation.data;
 
-    // Get current subscription within tenant
-    const currentSubscription = await prisma.subscription.findFirst({
-      where: { id, tenantId },
+    // Get current subscription using tenant-scoped prisma
+    const currentSubscription = await db.subscription.findFirst({
+      where: { id },
       include: {
         assignedMember: { select: { id: true, name: true, email: true } },
       },
@@ -196,7 +207,8 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
       updateData.renewalDate = data.renewalDate ? parseInputDateString(data.renewalDate) : null;
     }
 
-    const subscription = await prisma.subscription.update({
+    // Update subscription using tenant-scoped prisma
+    const subscription = await db.subscription.update({
       where: { id },
       data: updateData,
       include: {
@@ -205,6 +217,7 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
     });
 
     // Track member assignment changes in history with custom date
+    // Note: SubscriptionHistory doesn't have tenantId, isolation is via subscriptionId FK
     if (data.assignedMemberId !== undefined && data.assignedMemberId !== currentSubscription.assignedMemberId) {
       const oldMemberName = currentSubscription.assignedMember?.name || currentSubscription.assignedMember?.email || 'Unassigned';
       const newMemberName = subscription.assignedMember?.name || subscription.assignedMember?.email || 'Unassigned';
@@ -279,17 +292,22 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
  * // Returns: { message: "Subscription deleted successfully" }
  */
 async function deleteSubscriptionHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId || !tenant?.userId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+
+    const { tenantId, userId: currentUserId } = tenant;
+    const db = tenantPrisma as TenantPrismaClient;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Get subscription within tenant
-    const subscription = await prisma.subscription.findFirst({
-      where: { id, tenantId },
+    // Get subscription using tenant-scoped prisma
+    const subscription = await db.subscription.findFirst({
+      where: { id },
       select: { id: true, serviceName: true },
     });
 
@@ -297,7 +315,8 @@ async function deleteSubscriptionHandler(request: NextRequest, context: APIConte
       return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
     }
 
-    await prisma.subscription.delete({ where: { id } });
+    // Delete using tenant-scoped prisma (ensures tenant ownership)
+    await db.subscription.delete({ where: { id } });
 
     await logAction(
       tenantId,

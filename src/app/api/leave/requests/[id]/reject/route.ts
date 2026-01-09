@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Role } from '@prisma/client';
-import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { rejectLeaveRequestSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
@@ -14,9 +14,13 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { invalidateTokensForEntity } from '@/lib/whatsapp';
 
 async function rejectLeaveRequestHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -34,9 +38,9 @@ async function rejectLeaveRequestHandler(request: NextRequest, context: APIConte
 
     const { reason } = validation.data;
 
-    // Get existing request within tenant
-    const existing = await prisma.leaveRequest.findFirst({
-      where: { id, tenantId },
+    // Get existing request within tenant (tenant filtering is automatic via db)
+    const existing = await db.leaveRequest.findFirst({
+      where: { id },
       include: {
         member: {
           select: { name: true },
@@ -61,7 +65,7 @@ async function rejectLeaveRequestHandler(request: NextRequest, context: APIConte
     const year = existing.startDate.getFullYear();
 
     // Reject in transaction
-    const leaveRequest = await prisma.$transaction(async (tx) => {
+    const leaveRequest = await db.$transaction(async (tx) => {
       // Update the request
       const request = await tx.leaveRequest.update({
         where: { id },

@@ -5,22 +5,25 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { updateLeaveTypeSchema } from '@/lib/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getLeaveTypeHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // Use findFirst with tenantId to prevent IDOR attacks
-    const leaveType = await prisma.leaveType.findFirst({
-      where: { id, tenantId },
+    // Use findFirst (tenant filtering is automatic via db)
+    const leaveType = await db.leaveType.findFirst({
+      where: { id },
       include: {
         _count: {
           select: {
@@ -41,9 +44,13 @@ async function getLeaveTypeHandler(request: NextRequest, context: APIContext) {
 export const GET = withErrorHandler(getLeaveTypeHandler, { requireAuth: true, requireModule: 'leave' });
 
 async function updateLeaveTypeHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -62,8 +69,8 @@ async function updateLeaveTypeHandler(request: NextRequest, context: APIContext)
     const data = validation.data;
 
     // Check if leave type exists within tenant
-    const existing = await prisma.leaveType.findFirst({
-      where: { id, tenantId },
+    const existing = await db.leaveType.findFirst({
+      where: { id },
     });
 
     if (!existing) {
@@ -72,8 +79,8 @@ async function updateLeaveTypeHandler(request: NextRequest, context: APIContext)
 
     // If name is being changed, check for duplicates within tenant
     if (data.name && data.name !== existing.name) {
-      const duplicate = await prisma.leaveType.findFirst({
-        where: { name: data.name, tenantId },
+      const duplicate = await db.leaveType.findFirst({
+        where: { name: data.name },
       });
 
       if (duplicate) {
@@ -90,7 +97,7 @@ async function updateLeaveTypeHandler(request: NextRequest, context: APIContext)
       payTiers: data.payTiers === null ? undefined : data.payTiers,
     };
 
-    const leaveType = await prisma.leaveType.update({
+    const leaveType = await db.leaveType.update({
       where: { id },
       data: updateData,
     });
@@ -110,17 +117,21 @@ async function updateLeaveTypeHandler(request: NextRequest, context: APIContext)
 export const PUT = withErrorHandler(updateLeaveTypeHandler, { requireAdmin: true, requireModule: 'leave' });
 
 async function deleteLeaveTypeHandler(request: NextRequest, context: APIContext) {
-    const { tenant, params } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, params, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
     const id = params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     // Check if leave type exists within tenant and has no associated requests
-    const leaveType = await prisma.leaveType.findFirst({
-      where: { id, tenantId },
+    const leaveType = await db.leaveType.findFirst({
+      where: { id },
       include: {
         _count: {
           select: {
@@ -140,7 +151,7 @@ async function deleteLeaveTypeHandler(request: NextRequest, context: APIContext)
       }, { status: 400 });
     }
 
-    await prisma.leaveType.delete({
+    await db.leaveType.delete({
       where: { id },
     });
 

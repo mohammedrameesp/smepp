@@ -5,14 +5,19 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { createSalaryStructureSchema, salaryStructureQuerySchema } from '@/lib/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { calculateGrossSalary, parseDecimal } from '@/lib/payroll/utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getSalaryStructuresHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -50,7 +55,7 @@ async function getSalaryStructuresHandler(request: NextRequest, context: APICont
     }
 
     const [salaryStructures, total] = await Promise.all([
-      prisma.salaryStructure.findMany({
+      db.salaryStructure.findMany({
         where,
         include: {
           member: {
@@ -68,7 +73,7 @@ async function getSalaryStructuresHandler(request: NextRequest, context: APICont
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      prisma.salaryStructure.count({ where }),
+      db.salaryStructure.count({ where }),
     ]);
 
     // Transform decimals
@@ -98,9 +103,13 @@ async function getSalaryStructuresHandler(request: NextRequest, context: APICont
 export const GET = withErrorHandler(getSalaryStructuresHandler, { requireAdmin: true, requireModule: 'payroll' });
 
 async function createSalaryStructureHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
 
     const body = await request.json();
     const validation = createSalaryStructureSchema.safeParse(body);
@@ -115,7 +124,7 @@ async function createSalaryStructureHandler(request: NextRequest, context: APICo
     const data = validation.data;
 
     // Check if team member exists and belongs to the same organization
-    const member = await prisma.teamMember.findFirst({
+    const member = await db.teamMember.findFirst({
       where: {
         id: data.userId,
         tenantId,
@@ -128,7 +137,7 @@ async function createSalaryStructureHandler(request: NextRequest, context: APICo
     }
 
     // Check if team member already has an active salary structure within the same tenant
-    const existingSalary = await prisma.salaryStructure.findFirst({
+    const existingSalary = await db.salaryStructure.findFirst({
       where: { memberId: data.userId, tenantId },
     });
 

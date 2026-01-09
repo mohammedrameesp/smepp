@@ -5,9 +5,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { updatePurchaseRequestSchema } from '@/lib/validations/purchase-request';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { calculatePurchaseRequestItems, CalculatedItem } from '@/features/purchase-requests/lib/purchase-request-creation';
@@ -15,19 +14,21 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 // GET - Get single purchase request
 async function getPurchaseRequestHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const userId = tenant.userId;
 
-    const tenantId = session.user.organizationId;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const purchaseRequest = await prisma.purchaseRequest.findFirst({
-      where: { id, tenantId },
+    const purchaseRequest = await db.purchaseRequest.findFirst({
+      where: { id },
       include: {
         requester: {
           select: {
@@ -66,7 +67,8 @@ async function getPurchaseRequestHandler(request: NextRequest, context: APIConte
     }
 
     // Non-admin users can only view their own requests
-    if (session.user.teamMemberRole !== 'ADMIN' && purchaseRequest.requesterId !== session.user.id) {
+    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    if (!isOwnerOrAdmin && purchaseRequest.requesterId !== userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -75,20 +77,22 @@ async function getPurchaseRequestHandler(request: NextRequest, context: APIConte
 
 // PUT - Update purchase request (only when PENDING)
 async function updatePurchaseRequestHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const userId = tenant.userId;
 
-    const tenantId = session.user.organizationId;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     // Get current request within tenant
-    const currentRequest = await prisma.purchaseRequest.findFirst({
-      where: { id, tenantId },
+    const currentRequest = await db.purchaseRequest.findFirst({
+      where: { id },
       include: { items: true },
     });
 
@@ -97,7 +101,8 @@ async function updatePurchaseRequestHandler(request: NextRequest, context: APICo
     }
 
     // Only requester can update (or admin)
-    if (session.user.teamMemberRole !== 'ADMIN' && currentRequest.requesterId !== session.user.id) {
+    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    if (!isOwnerOrAdmin && currentRequest.requesterId !== userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -216,7 +221,7 @@ async function updatePurchaseRequestHandler(request: NextRequest, context: APICo
         data: {
           purchaseRequestId: id,
           action: 'UPDATED',
-          performedById: session.user.id,
+          performedById: userId,
           details: 'Request updated',
         },
       });
@@ -227,7 +232,7 @@ async function updatePurchaseRequestHandler(request: NextRequest, context: APICo
     // Log activity
     await logAction(
       tenantId,
-      session.user.id,
+      userId,
       ActivityActions.PURCHASE_REQUEST_UPDATED,
       'PurchaseRequest',
       purchaseRequest.id,
@@ -242,20 +247,22 @@ async function updatePurchaseRequestHandler(request: NextRequest, context: APICo
 
 // DELETE - Delete purchase request (only when PENDING)
 async function deletePurchaseRequestHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const userId = tenant.userId;
 
-    const tenantId = session.user.organizationId;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
     // Get current request within tenant
-    const currentRequest = await prisma.purchaseRequest.findFirst({
-      where: { id, tenantId },
+    const currentRequest = await db.purchaseRequest.findFirst({
+      where: { id },
     });
 
     if (!currentRequest) {
@@ -263,7 +270,8 @@ async function deletePurchaseRequestHandler(request: NextRequest, context: APICo
     }
 
     // Only requester or admin can delete
-    if (session.user.teamMemberRole !== 'ADMIN' && currentRequest.requesterId !== session.user.id) {
+    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    if (!isOwnerOrAdmin && currentRequest.requesterId !== userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -276,14 +284,14 @@ async function deletePurchaseRequestHandler(request: NextRequest, context: APICo
     }
 
     // Delete the request (cascades to items and history)
-    await prisma.purchaseRequest.delete({
+    await db.purchaseRequest.delete({
       where: { id },
     });
 
     // Log activity
     await logAction(
       tenantId,
-      session.user.id,
+      userId,
       ActivityActions.PURCHASE_REQUEST_DELETED,
       'PurchaseRequest',
       id,

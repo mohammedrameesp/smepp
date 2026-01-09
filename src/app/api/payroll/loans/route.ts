@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LoanStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { createLoanSchema, loanQuerySchema } from '@/lib/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { generateLoanNumberWithPrefix, calculateLoanEndDate, parseDecimal } from '@/lib/payroll/utils';
@@ -13,8 +14,12 @@ import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getLoansHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
@@ -37,7 +42,7 @@ async function getLoansHandler(request: NextRequest, context: APIContext) {
 
     // Non-admin users can only see their own loans
     if (!isAdmin) {
-      where.memberId = tenant!.userId;
+      where.memberId = tenant.userId;
     } else if (userId) {
       where.memberId = userId;
     }
@@ -51,7 +56,7 @@ async function getLoansHandler(request: NextRequest, context: APIContext) {
     }
 
     const [loans, total] = await Promise.all([
-      prisma.employeeLoan.findMany({
+      db.employeeLoan.findMany({
         where,
         include: {
           member: { select: { id: true, name: true, email: true } },
@@ -63,7 +68,7 @@ async function getLoansHandler(request: NextRequest, context: APIContext) {
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      prisma.employeeLoan.count({ where }),
+      db.employeeLoan.count({ where }),
     ]);
 
     // Transform decimals
@@ -91,9 +96,13 @@ async function getLoansHandler(request: NextRequest, context: APIContext) {
 export const GET = withErrorHandler(getLoansHandler, { requireAuth: true, requireModule: 'payroll' });
 
 async function createLoanHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, prisma: tenantPrisma } = context;
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
 
     const body = await request.json();
     const validation = createLoanSchema.safeParse(body);
@@ -108,7 +117,7 @@ async function createLoanHandler(request: NextRequest, context: APIContext) {
     const data = validation.data;
 
     // Check if team member exists and belongs to same organization
-    const member = await prisma.teamMember.findFirst({
+    const member = await db.teamMember.findFirst({
       where: {
         id: data.userId,
         tenantId,
@@ -124,7 +133,7 @@ async function createLoanHandler(request: NextRequest, context: APIContext) {
     const codePrefix = await getOrganizationCodePrefix(tenantId);
 
     // Generate loan number with tenant-scoped sequence
-    const lastLoan = await prisma.employeeLoan.findFirst({
+    const lastLoan = await db.employeeLoan.findFirst({
       where: { tenantId },
       orderBy: { loanNumber: 'desc' },
     });
@@ -144,7 +153,7 @@ async function createLoanHandler(request: NextRequest, context: APIContext) {
     const startDate = new Date(data.startDate);
     const endDate = calculateLoanEndDate(startDate, data.installments);
 
-    const loan = await prisma.employeeLoan.create({
+    const loan = await db.employeeLoan.create({
       data: {
         loanNumber,
         memberId: data.userId,

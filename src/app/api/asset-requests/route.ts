@@ -35,6 +35,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AssetRequestStatus, AssetRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import {
   createAssetRequestSchema,
   createReturnRequestSchema,
@@ -87,9 +88,15 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  * }
  */
 async function getAssetRequestsHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 1: Parse and validate query parameters
@@ -111,14 +118,14 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
     // STEP 2: Apply role-based access control
     // Non-admin users can only see their own requests
     // ─────────────────────────────────────────────────────────────────────────────
-    const isAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
     const effectiveMemberId = isAdmin ? filterMemberId : currentUserId;
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 3: Build where clause with filters
     // ─────────────────────────────────────────────────────────────────────────────
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: Record<string, any> = { tenantId };
+    const where: Record<string, any> = {};
 
     if (effectiveMemberId) {
       where.memberId = effectiveMemberId;
@@ -149,7 +156,7 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
     const skip = (p - 1) * ps;
 
     const [requests, total] = await Promise.all([
-      prisma.assetRequest.findMany({
+      db.assetRequest.findMany({
         where,
         include: {
           asset: {
@@ -186,7 +193,7 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
         take: ps,
         skip,
       }),
-      prisma.assetRequest.count({ where }),
+      db.assetRequest.count({ where }),
     ]);
 
     return NextResponse.json({
@@ -238,9 +245,15 @@ export const GET = withErrorHandler(getAssetRequestsHandler, { requireAuth: true
  * { "type": "RETURN_REQUEST", "assetId": "clx...", "reason": "Project completed" }
  */
 async function createAssetRequestHandler(request: NextRequest, context: APIContext) {
-    const { tenant } = context;
-    const tenantId = tenant!.tenantId;
-    const currentUserId = tenant!.userId;
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+    }
+
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
+    const currentUserId = tenant.userId;
 
     const body = await request.json();
     const requestType = body.type as AssetRequestType | undefined;
@@ -324,8 +337,8 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 2: Verify asset exists and belongs to tenant
     // ─────────────────────────────────────────────────────────────────────────────
-    const asset = await prisma.asset.findFirst({
-      where: { id: assetId, tenantId },
+    const asset = await db.asset.findFirst({
+      where: { id: assetId },
       select: { assetTag: true, model: true, brand: true },
     });
 

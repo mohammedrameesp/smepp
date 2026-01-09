@@ -9,6 +9,7 @@ import { prisma } from '@/lib/core/prisma';
 import { createUserSchema } from '@/lib/validations/users';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { sendEmail } from '@/lib/core/email';
 import { welcomeUserEmail, welcomeUserWithPasswordSetupEmail, organizationInvitationEmail } from '@/lib/core/email-templates';
 import { randomBytes } from 'crypto';
@@ -16,8 +17,13 @@ import { updateSetupProgress } from '@/features/onboarding/lib';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 async function getUsersHandler(request: NextRequest, context: APIContext) {
-  const { tenant } = context;
-  const tenantId = tenant!.tenantId;
+  const { tenant, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+  }
+
+  const db = tenantPrisma as TenantPrismaClient;
 
   // Parse query parameters
   const { searchParams } = new URL(request.url);
@@ -27,7 +33,8 @@ async function getUsersHandler(request: NextRequest, context: APIContext) {
   const includeDeleted = searchParams.get('includeDeleted') === 'true';
 
   // Query TeamMember instead of User (all HR data is now on TeamMember)
-  const where: any = { tenantId };
+  // Note: tenantId filtering is handled automatically by tenant-scoped prisma client
+  const where: any = {};
   if (role) where.role = role;
 
   // By default, exclude soft-deleted users unless explicitly requested
@@ -35,8 +42,8 @@ async function getUsersHandler(request: NextRequest, context: APIContext) {
     where.isDeleted = false;
   }
 
-  // Fetch team members
-  const members = await prisma.teamMember.findMany({
+  // Fetch team members (tenant-scoped via extension)
+  const members = await db.teamMember.findMany({
     where,
     orderBy: { createdAt: 'desc' },
   });
@@ -70,9 +77,14 @@ async function getUsersHandler(request: NextRequest, context: APIContext) {
 export const GET = withErrorHandler(getUsersHandler, { requireAdmin: true });
 
 async function createUserHandler(request: NextRequest, context: APIContext) {
-  const { tenant } = context;
-  const tenantId = tenant!.tenantId;
-  const currentUserId = tenant!.userId;
+  const { tenant, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
+  }
+
+  const { tenantId, userId: currentUserId } = tenant;
+  const db = tenantPrisma as TenantPrismaClient;
 
   // Parse and validate request body
   const body = await request.json();
@@ -119,9 +131,8 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     const year = new Date().getFullYear();
     const orgPrefix = await getOrganizationCodePrefix(tenantId);
     const prefix = `${orgPrefix}-${year}`;
-    const count = await prisma.teamMember.count({
+    const count = await db.teamMember.count({
       where: {
-        tenantId,
         employeeCode: { startsWith: prefix }
       }
     });
@@ -141,8 +152,11 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
   // Create TeamMember directly (replaces User + OrganizationUser + HRProfile)
   // Note: TeamMemberRole (ADMIN/MEMBER) controls dashboard access
   //       approvalRole controls who can approve requests
-  const member = await prisma.teamMember.create({
+  // Note: tenantId is included explicitly for type safety; the tenant prisma
+  // extension also auto-injects it but TypeScript requires it at compile time
+  const member = await db.teamMember.create({
     data: {
+      tenantId,
       name,
       email: finalEmail,
       role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER', // Dashboard access: ADMIN → /admin, MEMBER → /employee
@@ -152,7 +166,6 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
       isOnWps: isEmployee ? isOnWps : false, // Only set WPS for employees
       image: userImage, // Set to org logo for non-employees, null for employees
       emailVerified: null,
-      tenantId,
       isOwner: false,
       // HR profile fields (embedded in TeamMember)
       employeeCode: isEmployee ? finalEmployeeId : null,
@@ -268,8 +281,8 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
         const setupToken = randomBytes(32).toString('hex');
         const setupTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-        // Update TeamMember with setup token
-        await prisma.teamMember.update({
+        // Update TeamMember with setup token (tenant-scoped via extension)
+        await db.teamMember.update({
           where: { id: member.id },
           data: { setupToken, setupTokenExpiry },
         });

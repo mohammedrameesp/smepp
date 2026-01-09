@@ -24,9 +24,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { recordAssetCreation } from '@/features/assets';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -73,12 +72,14 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  * }
  */
 async function cloneAssetHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    const tenantId = session.user.organizationId;
+    const db = tenantPrisma as TenantPrismaClient;
+    const tenantId = tenant.tenantId;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -87,8 +88,8 @@ async function cloneAssetHandler(request: NextRequest, context: APIContext) {
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 1: Get the original asset (with tenant isolation)
     // ─────────────────────────────────────────────────────────────────────────────
-    const originalAsset = await prisma.asset.findFirst({
-      where: { id, tenantId },
+    const originalAsset = await db.asset.findFirst({
+      where: { id },
     });
 
     if (!originalAsset) {
@@ -99,9 +100,8 @@ async function cloneAssetHandler(request: NextRequest, context: APIContext) {
     // STEP 2: Generate a new asset tag
     // Strategy: Find latest tag, extract number, increment
     // ─────────────────────────────────────────────────────────────────────────────
-    const latestAsset = await prisma.asset.findFirst({
+    const latestAsset = await db.asset.findFirst({
       where: {
-        tenantId,
         assetTag: {
           not: null,
         },
@@ -135,8 +135,9 @@ async function cloneAssetHandler(request: NextRequest, context: APIContext) {
     // STEP 3: Create cloned asset
     // Note: Serial and assignment are cleared, status is SPARE
     // ─────────────────────────────────────────────────────────────────────────────
-    const clonedAsset = await prisma.asset.create({
+    const clonedAsset = await db.asset.create({
       data: {
+        tenantId,
         assetTag: newAssetTag,
         type: originalAsset.type,
         brand: originalAsset.brand,
@@ -154,7 +155,6 @@ async function cloneAssetHandler(request: NextRequest, context: APIContext) {
         assignedMemberId: null,          // Clear assignment
         notes: originalAsset.notes,
         locationId: originalAsset.locationId,
-        tenantId: session.user.organizationId,
       },
       include: {
         assignedMember: {
@@ -172,7 +172,7 @@ async function cloneAssetHandler(request: NextRequest, context: APIContext) {
     // ─────────────────────────────────────────────────────────────────────────────
     await logAction(
       tenantId,
-      session.user.id,
+      tenant.userId,
       ActivityActions.ASSET_CREATED,
       'Asset',
       clonedAsset.id,
@@ -187,7 +187,7 @@ async function cloneAssetHandler(request: NextRequest, context: APIContext) {
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 5: Record asset creation in history
     // ─────────────────────────────────────────────────────────────────────────────
-    await recordAssetCreation(clonedAsset.id, session.user.id);
+    await recordAssetCreation(clonedAsset.id, tenant.userId);
 
     return NextResponse.json(clonedAsset, { status: 201 });
 }

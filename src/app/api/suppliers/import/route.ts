@@ -4,25 +4,25 @@
  * @module operations/suppliers
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
 import { csvToArray } from '@/lib/core/csv-utils';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { SupplierStatus } from '@prisma/client';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 interface ImportRow {
   [key: string]: string | undefined;
 }
 
-async function importSuppliersHandler(request: NextRequest, _context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+async function importSuppliersHandler(request: NextRequest, context: APIContext) {
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId || !tenant?.userId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    const tenantId = session.user.organizationId;
+    const db = tenantPrisma as TenantPrismaClient;
+    const { tenantId, userId } = tenant;
 
     // Get file from request
     const formData = await request.formData();
@@ -147,24 +147,23 @@ async function importSuppliersHandler(request: NextRequest, _context: APIContext
           paymentTerms: paymentTerms || null,
           additionalInfo: additionalInfo || null,
           status,
-          approvedById: status === SupplierStatus.APPROVED ? session.user.id : null,
+          approvedById: status === SupplierStatus.APPROVED ? userId : null,
           approvedAt: status === SupplierStatus.APPROVED ? new Date() : null,
         };
 
         // If ID is provided, use upsert to preserve relationships
         if (id) {
-          // Check if supplier with this ID exists within tenant
-          const existingById = await prisma.supplier.findFirst({
-            where: { id, tenantId },
+          // Check if supplier with this ID exists - tenant filtering handled automatically
+          const existingById = await db.supplier.findFirst({
+            where: { id },
           });
 
-          // Use upsert with ID to preserve relationships
-          const supplier = await prisma.supplier.upsert({
+          // Use upsert with ID to preserve relationships - tenant filtering handled automatically
+          const supplier = await db.supplier.upsert({
             where: { id },
             create: {
               id,
               ...supplierData,
-              tenantId,
             },
             update: supplierData,
           });
@@ -172,7 +171,7 @@ async function importSuppliersHandler(request: NextRequest, _context: APIContext
           // Log activity
           await logAction(
             tenantId,
-            session.user.id,
+            userId,
             existingById ? ActivityActions.SUPPLIER_UPDATED : ActivityActions.SUPPLIER_CREATED,
             'Supplier',
             supplier.id,
@@ -192,19 +191,18 @@ async function importSuppliersHandler(request: NextRequest, _context: APIContext
           continue;
         }
 
-        // No ID provided - check for duplicate by suppCode or name within tenant
+        // No ID provided - check for duplicate by suppCode or name - tenant filtering handled automatically
         let existingSupplier = null;
         if (suppCode) {
-          existingSupplier = await prisma.supplier.findFirst({
-            where: { suppCode, tenantId },
+          existingSupplier = await db.supplier.findFirst({
+            where: { suppCode },
           });
         }
 
         if (!existingSupplier) {
-          // Check by name (case-insensitive) within tenant
-          const suppliers = await prisma.supplier.findMany({
+          // Check by name (case-insensitive) - tenant filtering handled automatically
+          const suppliers = await db.supplier.findMany({
             where: {
-              tenantId,
               name: {
                 equals: name,
                 mode: 'insensitive',
@@ -219,15 +217,15 @@ async function importSuppliersHandler(request: NextRequest, _context: APIContext
             results.skipped++;
             continue;
           } else if (duplicateStrategy === 'update') {
-            // Update existing supplier
-            await prisma.supplier.update({
+            // Update existing supplier - tenant filtering handled automatically
+            await db.supplier.update({
               where: { id: existingSupplier.id },
               data: supplierData,
             });
 
             await logAction(
               tenantId,
-              session.user.id,
+              userId,
               ActivityActions.SUPPLIER_UPDATED,
               'Supplier',
               existingSupplier.id,
@@ -239,15 +237,15 @@ async function importSuppliersHandler(request: NextRequest, _context: APIContext
           }
         }
 
-        // Create new supplier with tenant
-        const supplier = await prisma.supplier.create({
-          data: { ...supplierData, tenantId },
+        // Create new supplier - tenantId auto-injected by tenant-scoped prisma
+        const supplier = await db.supplier.create({
+          data: supplierData,
         });
 
         // Log activity
         await logAction(
           tenantId,
-          session.user.id,
+          userId,
           'SUPPLIER_CREATED',
           'Supplier',
           supplier.id,

@@ -48,9 +48,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import {
   AssetStatus,
   AssetRequestStatus,
@@ -953,14 +952,16 @@ async function handleUnassign(
  * { "assignedMemberId": null, "createReturnRequest": true }
  */
 async function assignAssetHandler(request: NextRequest, context: APIContext): Promise<NextResponse> {
-  // Get tenant context from session
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.organizationId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+  // Get tenant context from context (provided by withErrorHandler)
+  const { tenant, prisma: tenantPrisma } = context;
+
+  if (!tenant?.tenantId) {
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
 
-  const tenantId = session.user.organizationId;
-  const adminId = session.user.id;
+  const db = tenantPrisma as TenantPrismaClient;
+  const tenantId = tenant.tenantId;
+  const adminId = tenant.userId;
 
   // Validate path parameter
   const assetId = context.params?.id;
@@ -982,8 +983,8 @@ async function assignAssetHandler(request: NextRequest, context: APIContext): Pr
   const { assignedMemberId, notes, skipAcceptance, createReturnRequest, assignmentDate } = validation.data;
 
   // Get current asset state (TENANT-SCOPED - critical for security)
-  const currentAsset = await prisma.asset.findFirst({
-    where: { id: assetId, tenantId },
+  const currentAsset = await db.asset.findFirst({
+    where: { id: assetId },
     include: {
       assignedMember: { select: { id: true, name: true, email: true, canLogin: true } },
     },

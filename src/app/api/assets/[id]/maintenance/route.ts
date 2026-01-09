@@ -25,9 +25,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { z } from 'zod';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
@@ -76,12 +75,13 @@ const createMaintenanceSchema = z.object({
  * ]
  */
 async function getMaintenanceHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    const tenantId = session.user.organizationId;
+    const db = tenantPrisma as TenantPrismaClient;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -90,8 +90,8 @@ async function getMaintenanceHandler(request: NextRequest, context: APIContext) 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 1: Verify asset belongs to this tenant (prevents IDOR)
     // ─────────────────────────────────────────────────────────────────────────────
-    const asset = await prisma.asset.findFirst({
-      where: { id, tenantId },
+    const asset = await db.asset.findFirst({
+      where: { id },
       select: { id: true },
     });
 
@@ -102,8 +102,8 @@ async function getMaintenanceHandler(request: NextRequest, context: APIContext) 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 2: Fetch maintenance records (sorted by date, newest first)
     // ─────────────────────────────────────────────────────────────────────────────
-    const records = await prisma.maintenanceRecord.findMany({
-      where: { assetId: id, tenantId },
+    const records = await db.maintenanceRecord.findMany({
+      where: { assetId: id },
       orderBy: { maintenanceDate: 'desc' },
     });
 
@@ -139,12 +139,13 @@ async function getMaintenanceHandler(request: NextRequest, context: APIContext) 
  * }
  */
 async function createMaintenanceHandler(request: NextRequest, context: APIContext) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    const { tenant, prisma: tenantPrisma } = context;
+
+    if (!tenant?.tenantId) {
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    const tenantId = session.user.organizationId;
+    const db = tenantPrisma as TenantPrismaClient;
     const id = context.params?.id;
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
@@ -153,8 +154,8 @@ async function createMaintenanceHandler(request: NextRequest, context: APIContex
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 1: Verify asset belongs to this tenant
     // ─────────────────────────────────────────────────────────────────────────────
-    const asset = await prisma.asset.findFirst({
-      where: { id, tenantId },
+    const asset = await db.asset.findFirst({
+      where: { id },
       select: { id: true },
     });
 
@@ -180,13 +181,13 @@ async function createMaintenanceHandler(request: NextRequest, context: APIContex
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 3: Create maintenance record
     // ─────────────────────────────────────────────────────────────────────────────
-    const record = await prisma.maintenanceRecord.create({
+    const record = await db.maintenanceRecord.create({
       data: {
+        tenantId: tenant.tenantId,
         assetId: id,
         maintenanceDate: new Date(maintenanceDate),
         notes: notes || null,
-        performedBy: session.user.id,
-        tenantId,
+        performedBy: tenant.userId,
       },
     });
 

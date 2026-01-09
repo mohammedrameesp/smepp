@@ -46,7 +46,10 @@ export interface TenantContext {
 // Models that have tenantId field and need tenant isolation
 const TENANT_MODELS = [
   'Asset',
+  'AssetCategory',
   'AssetHistory',
+  'AssetRequest',
+  'AssetTypeMapping',
   'Subscription',
   'ActivityLog',
   'Notification',
@@ -68,9 +71,9 @@ const TENANT_MODELS = [
   'Payslip',
   'EmployeeLoan',
   'Project',
-  'AssetRequest',
   'CompanyDocumentType',
   'CompanyDocument',
+  'Location',
 ] as const;
 
 type TenantModel = (typeof TENANT_MODELS)[number];
