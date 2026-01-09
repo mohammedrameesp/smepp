@@ -13,11 +13,14 @@ export function ShareSupplierLinkButton({ organizationSlug }: ShareSupplierLinkB
   const [copied, setCopied] = useState(false);
 
   const handleCopyLink = async () => {
-    const baseUrl = process.env.NODE_ENV === 'production'
-      ? `https://${organizationSlug}.durj.com`
-      : `http://${organizationSlug}.localhost:3000`;
+    // Get the base domain from the current hostname
+    // e.g., "becreative.example.com" → "example.com"
+    const hostname = window.location.hostname;
+    const parts = hostname.split('.');
+    const baseDomain = parts.length > 2 ? parts.slice(1).join('.') : hostname;
+    const protocol = window.location.protocol;
 
-    const registrationLink = `${baseUrl}/suppliers/register`;
+    const registrationLink = `${protocol}//${organizationSlug}.${baseDomain}/suppliers/register`;
 
     await navigator.clipboard.writeText(registrationLink);
     setCopied(true);
