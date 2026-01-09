@@ -10,11 +10,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, Building2 } from 'lucide-react';
 import { createSupplierSchema, type CreateSupplierRequest } from '@/features/suppliers';
 import { useSubdomain } from '@/hooks/use-subdomain';
 import { useTenantBranding } from '@/hooks/use-tenant-branding';
-import { SupplierRegistrationPanel } from '@/components/suppliers/SupplierRegistrationPanel';
 
 // Country list (commonly used countries in the region)
 const COUNTRIES = [
@@ -69,7 +68,17 @@ export default function SupplierRegistrationPage() {
 
   const isLoading = subdomainLoading || brandingLoading;
   const primaryColor = branding?.primaryColor || '#0f172a';
+  const secondaryColor = branding?.secondaryColor;
   const orgName = branding?.organizationName || 'Our Organization';
+  const logoUrl = branding?.logoUrl;
+
+  // Background gradient for header
+  const isDefaultColor = primaryColor === '#0f172a' && !secondaryColor;
+  const headerBackground = isDefaultColor
+    ? 'linear-gradient(to right, #0f172a, #1e293b)'
+    : secondaryColor
+      ? `linear-gradient(to right, ${primaryColor}, ${secondaryColor})`
+      : primaryColor;
 
   const {
     register,
@@ -157,15 +166,40 @@ export default function SupplierRegistrationPage() {
     }
   };
 
-  // Success state with branding
+  // Branded header component
+  const BrandedHeader = () => (
+    <header
+      className="w-full py-6 px-6 md:px-12"
+      style={{ background: headerBackground }}
+    >
+      <div className="max-w-4xl mx-auto flex items-center gap-4">
+        {isLoading ? (
+          <div className="h-10 w-32 bg-white/20 animate-pulse rounded" />
+        ) : logoUrl ? (
+          <img
+            src={branding?.logoUrlInverse || logoUrl}
+            alt={orgName}
+            className="h-10 w-auto object-contain"
+            style={!branding?.logoUrlInverse ? { filter: 'brightness(0) invert(1)' } : undefined}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+        ) : (
+          <div className="flex items-center gap-2">
+            <Building2 className="h-8 w-8 text-white" />
+            <span className="text-xl font-bold text-white">{orgName}</span>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+
+  // Success state
   if (success) {
     return (
-      <div className="min-h-screen flex">
-        {/* Left branded panel */}
-        <SupplierRegistrationPanel branding={branding} isLoading={isLoading} />
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <BrandedHeader />
 
-        {/* Right success content */}
-        <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
+        <div className="flex-1 flex items-center justify-center p-6">
           <div className="max-w-md w-full">
             <Card className="border-green-200 bg-green-50">
               <CardContent className="pt-6">
@@ -195,40 +229,18 @@ export default function SupplierRegistrationPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left branded panel */}
-      <SupplierRegistrationPanel branding={branding} isLoading={isLoading} />
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* Branded Header */}
+      <BrandedHeader />
 
-      {/* Right form section */}
-      <div className="flex-1 overflow-y-auto bg-gray-50">
-        {/* Mobile header with branding */}
-        <div className="lg:hidden p-6 text-white" style={{ backgroundColor: primaryColor }}>
-          {branding?.logoUrl ? (
-            <img
-              src={branding.logoUrlInverse || branding.logoUrl}
-              alt={orgName}
-              className="h-10 w-auto object-contain mb-4"
-              style={!branding.logoUrlInverse ? { filter: 'brightness(0) invert(1)' } : undefined}
-            />
-          ) : (
-            <h1 className="text-2xl font-bold mb-2">{orgName}</h1>
-          )}
-          <p className="text-white/80">Supplier Registration</p>
-        </div>
-
-        <div className="p-6 lg:p-12 max-w-3xl mx-auto">
-          {/* Header - visible on desktop only */}
-          <div className="hidden lg:block mb-8">
+      {/* Main content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-6 md:p-12 max-w-4xl mx-auto">
+          {/* Page title */}
+          <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Supplier Registration</h1>
             <p className="text-gray-600">
               Register your company as a supplier for {orgName}. All submissions are subject to approval.
-            </p>
-          </div>
-
-          {/* Mobile subtitle */}
-          <div className="lg:hidden mb-6">
-            <p className="text-gray-600">
-              Register your company as a supplier. All submissions are subject to approval.
             </p>
           </div>
 
