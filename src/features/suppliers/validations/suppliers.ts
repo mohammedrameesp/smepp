@@ -40,22 +40,12 @@ const domainRegex = /^(https?:\/\/)?([\w-]+(\.[\w-]+)+)(\/.*)?$/;
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Schema for creating a new supplier.
- *
- * Creates a supplier record with PENDING status for admin review.
- * Includes company info, contacts, and payment terms.
- *
- * @example
- * {
- *   name: "Acme Corp",
- *   category: "IT Equipment",
- *   primaryContactName: "John Doe",
- *   primaryContactEmail: "john@acme.com"
- * }
+ * Base schema for supplier fields.
+ * Used as foundation for create and update schemas.
  */
-export const createSupplierSchema = z.object({
+const supplierBaseSchema = z.object({
   /** Supplier/vendor company name (required) */
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().min(1, 'Company name is required'),
   /** Business category (required) */
   category: z.string().min(1, 'Category is required'),
   /** Street/building address */
@@ -71,13 +61,13 @@ export const createSupplierSchema = z.object({
   ),
   /** Year company was established (1800-current) */
   establishmentYear: z.coerce.number().int().min(1800).max(new Date().getFullYear()).optional().nullable(),
-  /** Primary contact person name */
-  primaryContactName: z.string().optional().nullable().or(z.literal('')),
+  /** Primary contact person name (required) */
+  primaryContactName: z.string().min(1, 'Contact name is required'),
   /** Primary contact job title */
   primaryContactTitle: z.string().optional().nullable().or(z.literal('')),
-  /** Primary contact email address */
-  primaryContactEmail: z.string().optional().nullable().or(z.literal('')).refine(
-    (val) => !val || val === '' || emailRegex.test(val),
+  /** Primary contact email address (required) */
+  primaryContactEmail: z.string().min(1, 'Contact email is required').refine(
+    (val) => emailRegex.test(val),
     { message: 'Invalid email format' }
   ),
   /** Primary contact mobile number */
@@ -103,8 +93,45 @@ export const createSupplierSchema = z.object({
   additionalInfo: z.string().optional().nullable().or(z.literal('')),
 });
 
+/**
+ * Schema for creating a new supplier.
+ *
+ * Creates a supplier record with PENDING status for admin review.
+ * Includes company info, contacts, and payment terms.
+ *
+ * Required fields: name, category, primaryContactName, primaryContactEmail
+ *
+ * @example
+ * {
+ *   name: "Acme Corp",
+ *   category: "IT Equipment",
+ *   primaryContactName: "John Doe",
+ *   primaryContactEmail: "john@acme.com"
+ * }
+ */
+export const createSupplierSchema = supplierBaseSchema.refine(
+  (data) => {
+    // If mobile number provided, country code must also be provided
+    const primaryMobile = data.primaryContactMobile?.trim();
+    const primaryCode = data.primaryContactMobileCode?.trim();
+    if (primaryMobile && !primaryCode) {
+      return false;
+    }
+    const secondaryMobile = data.secondaryContactMobile?.trim();
+    const secondaryCode = data.secondaryContactMobileCode?.trim();
+    if (secondaryMobile && !secondaryCode) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: 'Please select a country code for the mobile number',
+    path: ['primaryContactMobileCode'],
+  }
+);
+
 /** Schema for updating supplier. All fields optional. */
-export const updateSupplierSchema = createSupplierSchema.partial();
+export const updateSupplierSchema = supplierBaseSchema.partial();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // APPROVAL SCHEMAS

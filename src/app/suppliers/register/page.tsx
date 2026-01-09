@@ -210,8 +210,18 @@ export default function SupplierRegistrationPage() {
                   </h2>
                   <p className="text-green-800">
                     Thank you for registering as a supplier with {orgName}.
-                    Our team will review your information and get back to you soon.
                   </p>
+
+                  {/* What happens next */}
+                  <div className="text-left bg-white/50 rounded-lg p-4 w-full">
+                    <p className="font-medium text-green-900 mb-2">What happens next:</p>
+                    <ol className="list-decimal list-inside text-green-800 text-sm space-y-1">
+                      <li>Our team will review your submission</li>
+                      <li>You&apos;ll receive an email with the outcome</li>
+                      <li>If approved, you&apos;ll be added to our vendor database</li>
+                    </ol>
+                  </div>
+
                   <Button
                     onClick={() => setSuccess(false)}
                     style={{ backgroundColor: primaryColor }}
@@ -274,15 +284,18 @@ export default function SupplierRegistrationPage() {
                     )}
                   </div>
                   <div className="space-y-2 relative">
-                    <Label htmlFor="category">Material Category *</Label>
+                    <Label htmlFor="category">Category *</Label>
                     <Input
                       id="category"
                       {...register('category')}
                       onFocus={() => setShowCategorySuggestions(true)}
                       onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
-                      placeholder="Electronics, Hardware, Software, etc."
+                      placeholder="e.g., IT Equipment, Office Supplies"
                       autoComplete="off"
                     />
+                    <p className="text-xs text-gray-500">
+                      e.g., IT Equipment, Office Supplies, Construction, Catering, Consulting
+                    </p>
                     {errors.category && (
                       <p className="text-sm text-red-600">{errors.category.message}</p>
                     )}
@@ -390,13 +403,13 @@ export default function SupplierRegistrationPage() {
               <CardHeader>
                 <CardTitle>Primary Contact</CardTitle>
                 <CardDescription>
-                  Main point of contact for business inquiries
+                  Main point of contact for business inquiries (required)
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="primaryContactName">Contact Name</Label>
+                    <Label htmlFor="primaryContactName">Contact Name *</Label>
                     <Input
                       id="primaryContactName"
                       {...register('primaryContactName')}
@@ -421,7 +434,7 @@ export default function SupplierRegistrationPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="primaryContactEmail">Email</Label>
+                    <Label htmlFor="primaryContactEmail">Email *</Label>
                     <Input
                       id="primaryContactEmail"
                       type="email"
