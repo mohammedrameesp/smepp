@@ -86,7 +86,8 @@ const pastOrPresentDateSchema = z.string().refine(
  * 2. Assignment date required when assignedMemberId provided
  * 3. Assignment date must not be in future (Qatar timezone)
  */
-export const createSubscriptionSchema = z.object({
+/** Base schema for subscription fields (without refinements) */
+const subscriptionBaseSchema = z.object({
   serviceName: z.string().min(1, 'Service name is required').max(255, 'Service name is too long'),
   category: z.string().max(100, 'Category is too long').optional().nullable(),
   accountId: z.string().max(100, 'Account ID is too long').optional().nullable(),
@@ -104,7 +105,9 @@ export const createSubscriptionSchema = z.object({
   autoRenew: z.boolean().default(true),
   paymentMethod: z.string().max(100, 'Payment method is too long').optional().nullable(),
   notes: z.string().max(1000, 'Notes are too long').optional().nullable(),
-}).refine(
+});
+
+export const createSubscriptionSchema = subscriptionBaseSchema.refine(
   (data) => {
     // If both dates are provided, purchase date should be before or equal to renewal date (Qatar timezone)
     if (data.purchaseDate && data.renewalDate) {
@@ -133,7 +136,7 @@ export const createSubscriptionSchema = z.object({
   }
 );
 
-export const updateSubscriptionSchema = createSubscriptionSchema
+export const updateSubscriptionSchema = subscriptionBaseSchema
   .partial()
   .omit({ assignmentDate: true })
   .extend({
