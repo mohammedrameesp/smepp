@@ -580,8 +580,8 @@ export const authOptions: NextAuthOptions = {
       try {
         // SECURITY: Check if password was changed after token was issued
         // This invalidates all existing sessions when password is reset
-        // OPTIMIZATION: Only check every 5 minutes to reduce database queries and prevent connection pool exhaustion
-        const SECURITY_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+        // OPTIMIZATION: Check every 2 minutes to balance security (deactivated user access window) vs performance
+        const SECURITY_CHECK_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes (reduced from 5 for tighter security)
         const now = Date.now();
         const lastSecurityCheck = (token.lastSecurityCheck as number) || 0;
         const shouldCheckSecurity = !user && token.id && token.iat && (now - lastSecurityCheck > SECURITY_CHECK_INTERVAL_MS);
@@ -830,8 +830,8 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: 'jwt',
-    // SEC-006: Reduced from 30 to 14 days for security
-    maxAge: 14 * 24 * 60 * 60, // 14 days
+    // SEC-006: Reduced from 30 to 7 days for security (further reduced from 14 days)
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   },
 
   // Share cookies across subdomains for multi-tenant support

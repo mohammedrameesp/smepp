@@ -3,6 +3,61 @@ import { getToken } from 'next-auth/jwt';
 import * as jose from 'jose';
 import { checkModuleAccess } from '@/lib/modules/routes';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// AUTH RATE LIMITING (Edge-compatible)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Simple in-memory rate limiter for auth endpoints
+// In production with multiple instances, use Upstash Redis
+const authAttempts = new Map<string, { count: number; resetAt: number }>();
+const AUTH_RATE_LIMIT = 10; // 10 attempts
+const AUTH_RATE_WINDOW = 15 * 60 * 1000; // 15 minutes
+
+// Paths that should be rate limited for auth
+const AUTH_RATE_LIMITED_PATHS = [
+  '/api/auth/callback/credentials',
+  '/api/auth/signin',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/auth/oauth',
+];
+
+function checkAuthRateLimit(request: NextRequest): { allowed: boolean; retryAfter: number } {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim()
+    || request.headers.get('x-real-ip')
+    || 'unknown';
+
+  const now = Date.now();
+  const key = `auth:${ip}`;
+  const record = authAttempts.get(key);
+
+  // Clean up expired entries periodically (simple approach)
+  if (authAttempts.size > 10000) {
+    for (const [k, v] of authAttempts.entries()) {
+      if (v.resetAt < now) authAttempts.delete(k);
+    }
+  }
+
+  if (!record || record.resetAt < now) {
+    // First attempt or window expired
+    authAttempts.set(key, { count: 1, resetAt: now + AUTH_RATE_WINDOW });
+    return { allowed: true, retryAfter: 0 };
+  }
+
+  if (record.count >= AUTH_RATE_LIMIT) {
+    // Rate limited
+    return { allowed: false, retryAfter: Math.ceil((record.resetAt - now) / 1000) };
+  }
+
+  // Increment counter
+  record.count++;
+  return { allowed: true, retryAfter: 0 };
+}
+
+function isAuthRateLimitedPath(pathname: string): boolean {
+  return AUTH_RATE_LIMITED_PATHS.some(path => pathname.startsWith(path));
+}
+
 // Impersonation cookie name (must match the one in verify route)
 const IMPERSONATION_COOKIE = 'durj-impersonation';
 
@@ -19,6 +74,7 @@ function getJwtSecret(): Uint8Array | null {
 // Interface for impersonation data
 interface ImpersonationData {
   jti: string | null; // JWT ID for revocation
+  iat: number | null; // JWT issued-at timestamp for bulk revocation checking
   superAdminId: string;
   superAdminEmail: string;
   superAdminName: string | null;
@@ -55,6 +111,7 @@ async function getImpersonationData(request: NextRequest): Promise<Impersonation
     // Map the API token structure to ImpersonationData
     return {
       jti: (payload.jti as string) || null, // JWT ID for revocation
+      iat: (payload.iat as number) || null, // JWT issued-at timestamp for bulk revocation
       superAdminId: payload.superAdminId as string,
       superAdminEmail: payload.superAdminEmail as string,
       superAdminName: (payload.superAdminName as string) || null,
@@ -77,6 +134,7 @@ async function getImpersonationData(request: NextRequest): Promise<Impersonation
  */
 async function verifyImpersonationToken(token: string): Promise<{
   jti: string | null;
+  iat: number | null; // JWT issued-at timestamp for bulk revocation checking
   superAdminId: string;
   superAdminEmail: string;
   superAdminName: string | null;
@@ -101,6 +159,7 @@ async function verifyImpersonationToken(token: string): Promise<{
 
     return {
       jti: (payload.jti as string) || null,
+      iat: (payload.iat as number) || null,
       superAdminId: payload.superAdminId as string,
       superAdminEmail: payload.superAdminEmail as string,
       superAdminName: (payload.superAdminName as string) || null,
@@ -247,6 +306,29 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = request.headers.get('host') || APP_DOMAIN;
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // AUTH RATE LIMITING (Applied first, before any other checks)
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (request.method === 'POST' && isAuthRateLimitedPath(pathname)) {
+    const { allowed, retryAfter } = checkAuthRateLimit(request);
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error: 'Too many authentication attempts',
+          message: `Please try again in ${Math.ceil(retryAfter / 60)} minutes.`,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(retryAfter),
+            'X-RateLimit-Limit': String(AUTH_RATE_LIMIT),
+            'X-RateLimit-Remaining': '0',
+          },
+        }
+      );
+    }
+  }
+
   // Extract subdomain info
   const { subdomain, isMainDomain, isReserved } = extractSubdomain(host);
 
@@ -299,29 +381,22 @@ export async function middleware(request: NextRequest) {
     if (impersonateToken) {
       const tokenData = await verifyImpersonationToken(impersonateToken);
 
-      // If valid token and matches this subdomain, set cookie and allow access
+      // If valid token and matches this subdomain, set cookie and redirect to strip token from URL
       if (tokenData && tokenData.organizationSlug.toLowerCase() === subdomain.toLowerCase()) {
-        // Allow access with impersonation headers (don't redirect, just continue)
-        const response = NextResponse.next();
-        response.headers.set('x-subdomain', subdomain);
-        response.headers.set('x-tenant-id', tokenData.organizationId);
-        response.headers.set('x-tenant-slug', tokenData.organizationSlug);
-        response.headers.set('x-user-id', tokenData.superAdminId);
-        response.headers.set('x-user-role', 'ADMIN');
-        response.headers.set('x-org-role', 'OWNER');
-        response.headers.set('x-subscription-tier', tokenData.subscriptionTier);
-        response.headers.set('x-impersonating', 'true');
-        response.headers.set('x-impersonator-email', tokenData.superAdminEmail);
-        if (tokenData.jti) {
-          response.headers.set('x-impersonation-jti', tokenData.jti);
-        }
+        // SECURITY: Strip the impersonation token from URL to prevent log exposure
+        // Create a clean URL without the impersonate parameter
+        const cleanUrl = new URL(request.url);
+        cleanUrl.searchParams.delete('impersonate');
+
+        // Redirect to the clean URL with the cookie set
+        const response = NextResponse.redirect(cleanUrl);
 
         // Store the ORIGINAL token as the cookie (already signed by the API)
         // SECURITY: Short TTL (15 minutes) to limit exposure if token is compromised
         response.cookies.set(IMPERSONATION_COOKIE, impersonateToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict', // Changed from 'lax' for additional CSRF protection
+          sameSite: 'strict', // Strict for CSRF protection
           path: '/',
           maxAge: 15 * 60, // 15 minutes (reduced from 4 hours)
         });
@@ -357,9 +432,13 @@ export async function middleware(request: NextRequest) {
       response.headers.set('x-org-role', 'OWNER'); // Full access when impersonating
       response.headers.set('x-subscription-tier', subscriptionTier);
       response.headers.set('x-impersonating', 'true'); // Flag for impersonation
+      response.headers.set('x-impersonator-id', impersonation.superAdminId);
       response.headers.set('x-impersonator-email', impersonation.superAdminEmail);
       if (impersonation.jti) {
         response.headers.set('x-impersonation-jti', impersonation.jti);
+      }
+      if (impersonation.iat) {
+        response.headers.set('x-impersonation-iat', impersonation.iat.toString());
       }
       return response;
     }

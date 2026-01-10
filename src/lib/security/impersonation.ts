@@ -24,17 +24,39 @@ export function generateJti(): string {
 /**
  * Check if an impersonation token has been revoked
  * @param jti - The JWT ID to check
+ * @param superAdminId - Optional super admin ID to check bulk revocations
+ * @param issuedAt - Optional token issue time to check against bulk revocations
  * @returns true if revoked, false otherwise
  */
-export async function isTokenRevoked(jti: string): Promise<boolean> {
+export async function isTokenRevoked(
+  jti: string,
+  superAdminId?: string,
+  issuedAt?: Date
+): Promise<boolean> {
   if (!jti) return false;
 
   try {
+    // Check for direct token revocation
     const revoked = await prisma.revokedImpersonationToken.findUnique({
       where: { jti },
       select: { id: true },
     });
-    return !!revoked;
+    if (revoked) return true;
+
+    // Check for bulk revocation (if superAdminId provided)
+    if (superAdminId && issuedAt) {
+      const bulkRevoke = await prisma.revokedImpersonationToken.findFirst({
+        where: {
+          superAdminId,
+          organizationSlug: 'BULK_REVOKE',
+          revokedAt: { gt: issuedAt }, // Bulk revoke happened after token was issued
+        },
+        select: { id: true },
+      });
+      if (bulkRevoke) return true;
+    }
+
+    return false;
   } catch (error) {
     // On database error, fail safe - treat as revoked
     console.error('[SECURITY] Error checking token revocation:', error);
@@ -78,6 +100,9 @@ export async function revokeToken(params: {
 /**
  * Revoke all active impersonation tokens for a super admin
  * Use this when a super admin's session is compromised
+ *
+ * Implementation: Creates a "bulk revocation" entry with a special JTI pattern.
+ * The isTokenRevoked function checks for bulk revocations by superAdminId.
  */
 export async function revokeAllTokensForSuperAdmin(
   superAdminId: string,
@@ -85,12 +110,32 @@ export async function revokeAllTokensForSuperAdmin(
   reason?: string,
   organizationId?: string
 ): Promise<number> {
-  // We can't revoke tokens we don't know about, but we can mark a timestamp
-  // Any token issued before this time will be treated as revoked
-  // For now, we'll rely on short expiry times (15 minutes)
-  // This function is a placeholder for future enhancement
+  const now = new Date();
+  const bulkRevokeJti = `bulk_revoke_${superAdminId}_${now.getTime()}`;
 
-  // Log to audit trail if organizationId is provided
+  // Create a bulk revocation entry
+  // Any token for this super admin issued before this timestamp is considered revoked
+  await prisma.revokedImpersonationToken.create({
+    data: {
+      jti: bulkRevokeJti,
+      revokedBy,
+      reason: reason || 'Bulk revocation - all tokens invalidated',
+      superAdminId,
+      organizationId: organizationId || 'ALL',
+      organizationSlug: 'BULK_REVOKE',
+      issuedAt: new Date(0), // Epoch - covers all tokens
+      expiresAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), // 24 hours from now
+    },
+  });
+
+  // Also update the User's passwordChangedAt to invalidate session tokens
+  // This provides defense-in-depth
+  await prisma.user.update({
+    where: { id: superAdminId },
+    data: { passwordChangedAt: now },
+  });
+
+  // Log to audit trail
   if (organizationId) {
     await logAction(
       organizationId,
@@ -103,12 +148,13 @@ export async function revokeAllTokensForSuperAdmin(
         revokedBy,
         reason,
         action: 'REVOKE_ALL_TOKENS',
-        timestamp: new Date().toISOString(),
+        bulkRevokeJti,
+        timestamp: now.toISOString(),
       }
     );
   }
 
-  return 0; // No active tokens database yet
+  return 1; // Bulk revocation created
 }
 
 /**

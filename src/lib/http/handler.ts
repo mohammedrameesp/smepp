@@ -265,11 +265,16 @@ export function withErrorHandler(
       // IMPERSONATION TOKEN REVOCATION CHECK (SEC-009)
       // ───────────────────────────────────────────────────────────────────────────
       // Check if this is an impersonation request and if the token has been revoked
+      // Supports both individual token revocation and bulk revocation by super admin
       const isImpersonating = enhancedRequest.headers.get('x-impersonating') === 'true';
       const impersonationJti = enhancedRequest.headers.get('x-impersonation-jti');
+      const impersonatorId = enhancedRequest.headers.get('x-impersonator-id');
+      const impersonationIat = enhancedRequest.headers.get('x-impersonation-iat');
 
       if (isImpersonating && impersonationJti) {
-        const revoked = await isTokenRevoked(impersonationJti);
+        // Pass superAdminId and issuedAt for bulk revocation checking
+        const issuedAt = impersonationIat ? new Date(parseInt(impersonationIat, 10) * 1000) : undefined;
+        const revoked = await isTokenRevoked(impersonationJti, impersonatorId || undefined, issuedAt);
         if (revoked) {
           // Log to audit trail instead of console (SEC-010)
           if (tenantContext?.tenantId) {
@@ -532,4 +537,37 @@ export function withErrorHandler(
 // Utility to extract request ID from request
 export function getRequestId(request: NextRequest): string {
   return request.headers.get('x-request-id') || generateRequestId();
+}
+
+/**
+ * Extract and validate tenant context from API context.
+ * Throws an error if tenant context is missing (caught by withErrorHandler).
+ *
+ * @example
+ * export const GET = withErrorHandler(async (request, context) => {
+ *   const { db, tenantId, userId, orgRole } = extractTenantContext(context);
+ *   const assets = await db.asset.findMany();
+ *   return NextResponse.json(assets);
+ * }, { requireAuth: true });
+ */
+export function extractTenantContext(context: APIContext): {
+  db: TenantPrismaClient;
+  tenantId: string;
+  userId: string;
+  orgRole: string;
+  tenant: TenantContext;
+} {
+  const { tenant, prisma } = context;
+
+  if (!tenant?.tenantId) {
+    throw new Error('Tenant context required');
+  }
+
+  return {
+    db: prisma as TenantPrismaClient,
+    tenantId: tenant.tenantId,
+    userId: tenant.userId,
+    orgRole: tenant.orgRole || 'MEMBER',
+    tenant,
+  };
 }
