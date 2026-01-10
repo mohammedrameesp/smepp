@@ -187,7 +187,7 @@ async function createMaintenanceHandler(request: NextRequest, context: APIContex
         assetId: id,
         maintenanceDate: new Date(maintenanceDate),
         notes: notes || null,
-        performedBy: tenant.userId,
+        performedById: tenant.userId,
       },
     });
 
