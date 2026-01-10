@@ -10,8 +10,8 @@ import {
   subscriptionQuerySchema,
 } from '@/features/subscriptions/validations/subscriptions';
 
-// Mock the qatar-timezone module
-jest.mock('@/lib/qatar-timezone', () => ({
+// Mock the datetime module
+jest.mock('@/lib/core/datetime', () => ({
   getQatarNow: () => new Date('2025-06-15T12:00:00Z'),
   getQatarEndOfDay: (date: Date) => {
     const endOfDay = new Date(date);

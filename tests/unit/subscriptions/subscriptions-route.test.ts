@@ -9,8 +9,8 @@ import { BillingCycle, SubscriptionStatus } from '@prisma/client';
 import { subscriptionQuerySchema, createSubscriptionSchema } from '@/features/subscriptions/validations';
 import { isUniqueConstraintError, MAX_TAG_GENERATION_RETRIES } from '@/features/subscriptions/lib/subscription-utils';
 
-// Mock qatar-timezone for consistent test dates
-jest.mock('@/lib/qatar-timezone', () => ({
+// Mock datetime for consistent test dates
+jest.mock('@/lib/core/datetime', () => ({
   getQatarNow: () => new Date('2025-06-15T12:00:00+03:00'),
   getQatarStartOfDay: (date: Date) => {
     const d = new Date(date);

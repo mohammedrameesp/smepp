@@ -1,20 +1,61 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
 
+// Polyfill Request/Response for Jest (Next.js server APIs)
+import { TextEncoder, TextDecoder } from 'util';
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder as typeof global.TextDecoder;
+
+// Mock Request if not available (for server-side code tests)
+if (typeof Request === 'undefined') {
+  global.Request = class Request {
+    url: string;
+    method: string;
+    headers: Map<string, string>;
+    body: unknown;
+    constructor(input: string, init?: RequestInit) {
+      this.url = input;
+      this.method = init?.method || 'GET';
+      this.headers = new Map(Object.entries(init?.headers || {}));
+      this.body = init?.body;
+    }
+    json() { return Promise.resolve({}); }
+    text() { return Promise.resolve(''); }
+  } as unknown as typeof Request;
+}
+
+if (typeof Response === 'undefined') {
+  global.Response = class Response {
+    body: unknown;
+    status: number;
+    headers: Map<string, string>;
+    constructor(body?: unknown, init?: ResponseInit) {
+      this.body = body;
+      this.status = init?.status || 200;
+      this.headers = new Map(Object.entries(init?.headers || {}));
+    }
+    json() { return Promise.resolve(this.body); }
+    text() { return Promise.resolve(String(this.body)); }
+  } as unknown as typeof Response;
+}
+
 // Mock environment variables for testing
 // Note: NODE_ENV is typically set by Jest automatically to 'test'
 process.env.DATABASE_URL = process.env.TEST_DATABASE_URL || 'postgresql://test:test@localhost:5432/damp_test';
 process.env.NEXTAUTH_SECRET = 'test-secret-key-for-testing-only';
 process.env.NEXTAUTH_URL = 'http://localhost:3000';
 
-// Mock NextAuth
+// Mock NextAuth - both imports
+const mockGetServerSession = jest.fn();
+
 jest.mock('next-auth', () => ({
   __esModule: true,
   default: jest.fn(),
+  getServerSession: mockGetServerSession,
 }));
 
 jest.mock('next-auth/next', () => ({
-  getServerSession: jest.fn(),
+  getServerSession: mockGetServerSession,
 }));
 
 // Mock Prisma Client for unit tests

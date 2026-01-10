@@ -8,8 +8,8 @@
 import { BillingCycle, SubscriptionStatus, OrgRole } from '@prisma/client';
 import { updateSubscriptionSchema } from '@/features/subscriptions/validations';
 
-// Mock qatar-timezone for consistent test dates
-jest.mock('@/lib/qatar-timezone', () => ({
+// Mock datetime for consistent test dates
+jest.mock('@/lib/core/datetime', () => ({
   getQatarNow: () => new Date('2025-06-15T12:00:00+03:00'),
   getQatarEndOfDay: (date: Date) => {
     const d = new Date(date);

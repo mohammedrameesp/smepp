@@ -27,7 +27,7 @@ jest.mock('@/lib/core/prisma', () => ({
 }));
 
 // Mock leave-utils
-jest.mock('@/lib/leave-utils', () => ({
+jest.mock('@/features/leave/lib/leave-utils', () => ({
   calculateServiceMonths: jest.fn((joinDate: Date, refDate: Date) => {
     const years = refDate.getFullYear() - joinDate.getFullYear();
     const months = refDate.getMonth() - joinDate.getMonth();
