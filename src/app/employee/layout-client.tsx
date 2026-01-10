@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { EmployeeTopNav } from '@/components/layout/employee-top-nav';
+import { EmployeeViewBanner } from '@/components/layout/employee-view-banner';
 import { ChatWidget } from '@/components/chat/chat-widget';
 import { AlertCircle, ArrowRight } from 'lucide-react';
 
@@ -10,18 +11,23 @@ interface EmployeeLayoutClientProps {
   enabledModules: string[];
   aiChatEnabled: boolean;
   onboardingComplete?: boolean;
+  isAdminInEmployeeView?: boolean;
 }
 
 export function EmployeeLayoutClient({
   children,
   enabledModules,
   aiChatEnabled,
-  onboardingComplete = true
+  onboardingComplete = true,
+  isAdminInEmployeeView = false
 }: EmployeeLayoutClientProps) {
   return (
     <>
       {/* Top Navigation Header */}
-      <EmployeeTopNav enabledModules={enabledModules} />
+      <EmployeeTopNav enabledModules={enabledModules} isAdminInEmployeeView={isAdminInEmployeeView} />
+
+      {/* Admin in Employee View Banner */}
+      <EmployeeViewBanner isVisible={isAdminInEmployeeView} />
 
       {/* Onboarding incomplete banner */}
       {!onboardingComplete && (

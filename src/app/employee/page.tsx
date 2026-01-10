@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import {
   Palmtree,
@@ -76,9 +77,15 @@ export default async function EmployeeDashboard() {
     redirect('/login');
   }
 
-  // Redirect admins to the admin dashboard
+  // Redirect admins to the admin dashboard (unless they're in employee view mode)
   if (session.user.teamMemberRole === 'ADMIN') {
-    redirect('/admin');
+    const cookieStore = await cookies();
+    const viewModeCookie = cookieStore.get('durj-view-mode');
+    const isEmployeeViewMode = viewModeCookie?.value === 'employee';
+
+    if (!isEmployeeViewMode) {
+      redirect('/admin');
+    }
   }
 
   try {

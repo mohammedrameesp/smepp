@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { EmployeeLayoutClient } from './layout-client';
@@ -70,11 +71,17 @@ export default async function EmployeeLayout({
     orgSettings = fetchedOrgSettings;
   }
 
+  // Check if admin is in employee view mode
+  const cookieStore = await cookies();
+  const viewModeCookie = cookieStore.get('durj-view-mode');
+  const isAdminInEmployeeView = isAdmin && viewModeCookie?.value === 'employee';
+
   return (
     <EmployeeLayoutClient
       enabledModules={orgSettings.enabledModules}
       aiChatEnabled={orgSettings.aiChatEnabled}
       onboardingComplete={onboardingComplete}
+      isAdminInEmployeeView={isAdminInEmployeeView}
     >
       {children}
     </EmployeeLayoutClient>

@@ -19,6 +19,7 @@ import {
   BarChart3,
   Building2,
   Activity,
+  Users,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -31,6 +32,7 @@ import { NotificationBell } from '@/features/notifications/components';
 import { FeedbackTrigger } from '@/components/feedback/feedback-trigger';
 import { type BadgeCounts } from '@/components/layout/badge-types';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface AdminTopNavProps {
   badgeCounts?: BadgeCounts;
@@ -44,6 +46,18 @@ const APPROVER_ROLES = ['ADMIN', 'MANAGER', 'HR_MANAGER', 'FINANCE_MANAGER', 'DI
 export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenCommandPalette }: AdminTopNavProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const [isSwitching, setIsSwitching] = React.useState(false);
+
+  const handleSwitchToEmployeeView = async () => {
+    setIsSwitching(true);
+    try {
+      await fetch('/api/view-mode', { method: 'POST' });
+      window.location.href = '/employee';
+    } catch (error) {
+      console.error('Failed to switch to employee view:', error);
+      setIsSwitching(false);
+    }
+  };
 
   const isModuleEnabled = (moduleId: string) => enabledModules.includes(moduleId);
   const isApprover = session?.user?.role && APPROVER_ROLES.includes(session.user.role as string);
@@ -133,6 +147,18 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
                 <span className="hidden sm:inline">Search...</span>
                 <kbd className="hidden md:inline text-xs bg-slate-600 text-slate-400 px-1.5 py-0.5 rounded">⌘K</kbd>
               </button>
+
+              {/* Switch to Employee View */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSwitchToEmployeeView}
+                disabled={isSwitching}
+                className="text-emerald-400 hover:text-emerald-300 hover:bg-slate-700"
+              >
+                <Users className="h-4 w-4 mr-1.5" />
+                <span className="hidden sm:inline">{isSwitching ? 'Switching...' : 'My Portal'}</span>
+              </Button>
 
               {/* Feedback */}
               <FeedbackTrigger />

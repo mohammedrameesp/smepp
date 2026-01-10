@@ -17,6 +17,7 @@ import {
   PalmtreeIcon,
   ShoppingCart,
   Package,
+  Shield,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,16 +29,30 @@ import {
 import { NotificationBell } from '@/features/notifications/components';
 import { FeedbackTrigger } from '@/components/feedback/feedback-trigger';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface EmployeeTopNavProps {
   enabledModules?: string[];
+  isAdminInEmployeeView?: boolean;
 }
 
-export function EmployeeTopNav({ enabledModules = [] }: EmployeeTopNavProps) {
+export function EmployeeTopNav({ enabledModules = [], isAdminInEmployeeView = false }: EmployeeTopNavProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const [isSwitching, setIsSwitching] = React.useState(false);
 
   const isModuleEnabled = (moduleId: string) => enabledModules.includes(moduleId);
+
+  const handleReturnToAdmin = async () => {
+    setIsSwitching(true);
+    try {
+      await fetch('/api/view-mode', { method: 'DELETE' });
+      window.location.href = '/admin';
+    } catch (error) {
+      console.error('Failed to return to admin view:', error);
+      setIsSwitching(false);
+    }
+  };
 
   // Navigation items for employees
   const navItems = [
@@ -91,6 +106,20 @@ export function EmployeeTopNav({ enabledModules = [] }: EmployeeTopNavProps) {
 
           {/* Right: Feedback + Notifications + User */}
           <div className="flex items-center gap-3 pl-4 border-l border-slate-600">
+            {/* Return to Admin (only for admins in employee view) */}
+            {isAdminInEmployeeView && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReturnToAdmin}
+                disabled={isSwitching}
+                className="text-amber-400 hover:text-amber-300 hover:bg-slate-700"
+              >
+                <Shield className="h-4 w-4 mr-1.5" />
+                <span className="hidden sm:inline">{isSwitching ? 'Switching...' : 'Admin'}</span>
+              </Button>
+            )}
+
             {/* Feedback */}
             <FeedbackTrigger />
 
