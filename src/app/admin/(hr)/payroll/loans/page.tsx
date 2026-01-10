@@ -15,8 +15,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Plus, Eye, ChevronRight } from 'lucide-react';
-import { formatCurrency } from '@/lib/payroll/utils';
+import { formatCurrency } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 interface PageProps {
   searchParams: Promise<{
@@ -126,23 +127,12 @@ export default async function LoansPage({ searchParams }: PageProps) {
           </PageHeaderButton>
         }
       >
-        {/* Summary Chips */}
-        <div className="flex flex-wrap items-center gap-3 mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-            <span className="text-blue-400 text-sm font-medium">{activeLoansCount} active ({formatCurrency(activeLoansValue)})</span>
-          </div>
-          {pausedCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-              <span className="text-amber-400 text-sm font-medium">{pausedCount} paused</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-            <span className="text-emerald-400 text-sm font-medium">{completedCount} completed</span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-            <span className="text-slate-300 text-sm font-medium">{total} total</span>
-          </div>
-        </div>
+        <StatChipGroup>
+          <StatChip value={`${activeLoansCount} (${formatCurrency(activeLoansValue)})`} label="active" color="blue" />
+          <StatChip value={pausedCount} label="paused" color="amber" hideWhenZero />
+          <StatChip value={completedCount} label="completed" color="emerald" />
+          <StatChip value={total} label="total" color="slate" />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

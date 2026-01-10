@@ -4,10 +4,16 @@
  */
 
 describe('CSRF Protection Tests', () => {
+  const originalNodeEnv = process.env.NODE_ENV;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.NODE_ENV = 'test';
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'test', writable: true });
     process.env.NEXTAUTH_SECRET = 'test-csrf-secret';
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process.env, 'NODE_ENV', { value: originalNodeEnv, writable: true });
   });
 
   describe('generateCSRFToken logic', () => {
@@ -117,14 +123,14 @@ describe('CSRF Protection Tests', () => {
     });
 
     it('should set secure flag in production', () => {
-      process.env.NODE_ENV = 'production';
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true });
       const secure = process.env.NODE_ENV === 'production';
 
       expect(secure).toBe(true);
     });
 
     it('should not set secure flag in development', () => {
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
       const secure = process.env.NODE_ENV === 'production';
 
       expect(secure).toBe(false);
@@ -162,7 +168,7 @@ describe('CSRF Protection Tests', () => {
     });
 
     it('should return true for localhost in development', () => {
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
       const origin = 'http://localhost:3000';
 
       const originUrl = new URL(origin);

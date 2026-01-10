@@ -11,13 +11,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Mail, Shield, Calendar, Image as ImageIcon, FileText, Loader2, AlertTriangle } from 'lucide-react';
-import { formatDate } from '@/lib/date-format';
+import { formatDate } from '@/lib/core/datetime';
 import { HRProfileForm } from '@/components/domains/hr/profile';
 import { EmployeeProfileViewOnly } from '@/features/employees/components';
 import { OnboardingWizard } from '@/features/onboarding/components';
 import { ExpiryAlertsWidget } from '@/components/dashboard';
 import { Progress } from '@/components/ui/progress';
-import { calculateProfileCompletion, HR_REQUIRED_FIELDS } from '@/lib/hr-utils';
+import { calculateProfileCompletion, HR_REQUIRED_FIELDS } from '@/features/employees/lib/hr-utils';
 import { toast } from 'sonner';
 
 interface UserProfile {

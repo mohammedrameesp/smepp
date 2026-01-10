@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { FileText, User, Calendar, Clock, Phone, Mail, ExternalLink, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { DetailCard } from '@/components/ui/detail-card';
+import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 import Link from 'next/link';
 import {
   getLeaveStatusVariant,
@@ -14,7 +16,7 @@ import {
   getRequestTypeText,
   canCancelLeaveRequest,
   getAnnualLeaveDetails,
-} from '@/lib/leave-utils';
+} from '@/features/leave/lib/leave-utils';
 import { LeaveApprovalActions, LeaveRequestHistory, CancelLeaveDialog } from '@/features/leave/components';
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 
@@ -252,17 +254,8 @@ export default function AdminLeaveRequestDetailPage() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Leave Details Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Leave Details</h2>
-                <p className="text-sm text-slate-500">Request information</p>
-              </div>
-            </div>
-            <div className="p-5 space-y-5">
+          <DetailCard icon={Calendar} iconColor="blue" title="Leave Details" subtitle="Request information">
+            <div className="space-y-5">
               {/* Leave Type */}
               <div className="flex items-center gap-3">
                 <div
@@ -273,34 +266,24 @@ export default function AdminLeaveRequestDetailPage() {
               </div>
 
               {/* Details Grid */}
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Date Range</p>
-                  <p className="font-semibold text-slate-900">
-                    {getDateRangeText(new Date(request.startDate), new Date(request.endDate))}
-                  </p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Duration</p>
-                  <p className="font-semibold text-slate-900">{formatLeaveDays(request.totalDays)}</p>
-                </div>
+              <InfoFieldGrid columns={2}>
+                <InfoField
+                  label="Date Range"
+                  value={getDateRangeText(new Date(request.startDate), new Date(request.endDate))}
+                />
+                <InfoField label="Duration" value={formatLeaveDays(request.totalDays)} />
                 {!request.leaveType.accrualBased && (
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Request Type</p>
-                    <p className="font-semibold text-slate-900">{getRequestTypeText(request.requestType)}</p>
-                  </div>
+                  <InfoField label="Request Type" value={getRequestTypeText(request.requestType)} />
                 )}
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Submitted</p>
-                  <p className="font-semibold text-slate-900">
-                    {new Date(request.createdAt).toLocaleDateString('en-GB', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </p>
-                </div>
-              </div>
+                <InfoField
+                  label="Submitted"
+                  value={new Date(request.createdAt).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                />
+              </InfoFieldGrid>
 
               {/* Reason */}
               {request.reason && (
@@ -327,7 +310,7 @@ export default function AdminLeaveRequestDetailPage() {
                 </div>
               )}
             </div>
-          </div>
+          </DetailCard>
 
           {/* Status Details Card */}
           {(request.approverNotes || request.rejectionReason || request.cancellationReason) && (
@@ -366,54 +349,35 @@ export default function AdminLeaveRequestDetailPage() {
           )}
 
           {/* History Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Clock className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">History</h2>
-                <p className="text-sm text-slate-500">Activity timeline</p>
-              </div>
-            </div>
-            <div className="p-5">
-              <LeaveRequestHistory history={request.history} />
-            </div>
-          </div>
+          <DetailCard icon={Clock} iconColor="purple" title="History" subtitle="Activity timeline">
+            <LeaveRequestHistory history={request.history} />
+          </DetailCard>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Employee Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                <User className="h-5 w-5 text-indigo-600" />
+          <DetailCard icon={User} iconColor="indigo" title="Employee">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                <span className="text-indigo-600 font-semibold">
+                  {request.member.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                </span>
               </div>
-              <h2 className="font-semibold text-slate-900">Employee</h2>
-            </div>
-            <div className="p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <span className="text-indigo-600 font-semibold">
-                    {request.member.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
-                  </span>
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900">{request.member.name}</p>
-                  <p className="text-sm text-slate-500 flex items-center gap-1">
-                    <Mail className="h-3 w-3" />
-                    {request.member.email}
-                  </p>
-                </div>
+              <div>
+                <p className="font-semibold text-slate-900">{request.member.name}</p>
+                <p className="text-sm text-slate-500 flex items-center gap-1">
+                  <Mail className="h-3 w-3" />
+                  {request.member.email}
+                </p>
               </div>
-              <Link href={`/admin/users/${request.member.id}`}>
-                <Button variant="outline" size="sm" className="w-full">
-                  View Profile
-                </Button>
-              </Link>
             </div>
-          </div>
+            <Link href={`/admin/users/${request.member.id}`}>
+              <Button variant="outline" size="sm" className="w-full">
+                View Profile
+              </Button>
+            </Link>
+          </DetailCard>
 
           {/* Balance Summary Card */}
           {balance && (
@@ -478,25 +442,17 @@ export default function AdminLeaveRequestDetailPage() {
 
           {/* Emergency Contact Card */}
           {(request.emergencyContact || request.emergencyPhone) && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
-                  <Phone className="h-5 w-5 text-rose-600" />
-                </div>
-                <h2 className="font-semibold text-slate-900">Emergency Contact</h2>
-              </div>
-              <div className="p-5">
-                {request.emergencyContact && (
-                  <p className="font-medium text-slate-900">{request.emergencyContact}</p>
-                )}
-                {request.emergencyPhone && (
-                  <p className="text-sm text-slate-500 flex items-center gap-2 mt-1">
-                    <Phone className="h-3.5 w-3.5" />
-                    {request.emergencyPhone}
-                  </p>
-                )}
-              </div>
-            </div>
+            <DetailCard icon={Phone} iconColor="rose" title="Emergency Contact">
+              {request.emergencyContact && (
+                <p className="font-medium text-slate-900">{request.emergencyContact}</p>
+              )}
+              {request.emergencyPhone && (
+                <p className="text-sm text-slate-500 flex items-center gap-2 mt-1">
+                  <Phone className="h-3.5 w-3.5" />
+                  {request.emergencyPhone}
+                </p>
+              )}
+            </DetailCard>
           )}
         </div>
       </div>

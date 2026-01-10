@@ -1,4 +1,4 @@
 // Asset Request Business Logic
 export * from './utils';
 export * from './notifications';
-export * from './emails';
+// Email templates are in @/lib/core/asset-request-emails

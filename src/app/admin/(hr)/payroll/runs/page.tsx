@@ -16,8 +16,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Plus, Eye } from 'lucide-react';
-import { formatCurrency, getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/lib/payroll/utils';
+import { formatCurrency, getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 interface PageProps {
   searchParams: Promise<{
@@ -81,11 +82,9 @@ export default async function PayrollRunsPage({ searchParams }: PageProps) {
           </PageHeaderButton>
         }
       >
-        <div className="flex flex-wrap items-center gap-3 mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-            <span className="text-slate-300 text-sm font-medium">{total} payroll runs</span>
-          </div>
-        </div>
+        <StatChipGroup>
+          <StatChip value={total} label="payroll runs" color="slate" />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent className="space-y-6">

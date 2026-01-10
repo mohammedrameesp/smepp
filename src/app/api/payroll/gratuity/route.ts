@@ -7,9 +7,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { calculateGratuity, projectGratuity } from '@/lib/payroll/gratuity';
-import { parseDecimal } from '@/lib/payroll/utils';
-import { gratuityQuerySchema } from '@/lib/validations/payroll';
+import { calculateGratuity, projectGratuity } from '@/features/payroll/lib/gratuity';
+import { parseDecimal } from '@/features/payroll/lib/utils';
+import { gratuityQuerySchema } from '@/features/payroll/validations/payroll';
 import logger from '@/lib/core/log';
 
 export async function GET(request: NextRequest) {

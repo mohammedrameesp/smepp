@@ -8,6 +8,7 @@ import { CheckCircle } from 'lucide-react';
 import { MyApprovalsClient } from './client';
 import Link from 'next/link';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 // Approval roles that can approve requests (uses approvalRole field exposed as session.user.role)
 const APPROVER_ROLES: Role[] = [Role.ADMIN, Role.MANAGER, Role.HR_MANAGER, Role.FINANCE_MANAGER, Role.DIRECTOR];
@@ -146,27 +147,12 @@ export default async function MyApprovalsPage() {
         title="My Approvals"
         subtitle="Review and process pending approval requests"
       >
-        {/* Stats Summary */}
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-            <span className="text-amber-400 text-sm font-medium">{approvals.counts.total} total pending</span>
-          </div>
-          {approvals.counts.LEAVE_REQUEST > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-              <span className="text-blue-400 text-sm font-medium">{approvals.counts.LEAVE_REQUEST} leave</span>
-            </div>
-          )}
-          {approvals.counts.PURCHASE_REQUEST > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-              <span className="text-emerald-400 text-sm font-medium">{approvals.counts.PURCHASE_REQUEST} purchase</span>
-            </div>
-          )}
-          {approvals.counts.ASSET_REQUEST > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 rounded-lg">
-              <span className="text-purple-400 text-sm font-medium">{approvals.counts.ASSET_REQUEST} asset</span>
-            </div>
-          )}
-        </div>
+        <StatChipGroup>
+          <StatChip value={approvals.counts.total} label="total pending" color="amber" />
+          <StatChip value={approvals.counts.LEAVE_REQUEST} label="leave" color="blue" hideWhenZero />
+          <StatChip value={approvals.counts.PURCHASE_REQUEST} label="purchase" color="emerald" hideWhenZero />
+          <StatChip value={approvals.counts.ASSET_REQUEST} label="asset" color="purple" hideWhenZero />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

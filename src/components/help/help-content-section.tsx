@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import * as Icons from 'lucide-react';
 import { ChevronDown, HelpCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 interface HelpContentSectionProps {
   id?: string;

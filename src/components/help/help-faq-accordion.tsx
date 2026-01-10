@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import type { FAQItem, UserRole } from '@/lib/help/help-types';
 import { filterByRole } from '@/lib/help/help-types';
 

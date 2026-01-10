@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { AssetListTableServerSearch } from '@/features/assets';
 import { Plus, Inbox } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 /**
  * Admin assets list page component
@@ -88,26 +89,18 @@ export default async function AdminAssetsPage() {
           </>
         }
       >
-        {/* Stats Summary */}
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-            <span className="text-blue-400 text-sm font-medium">{totalAssets} total assets</span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-            <span className="text-emerald-400 text-sm font-medium">{assignedCount} assigned</span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 rounded-lg">
-            <span className="text-purple-400 text-sm font-medium">QAR {totalValueQAR.toLocaleString()} value</span>
-          </div>
-          {totalPendingRequests > 0 && (
-            <Link
-              href="/admin/asset-requests"
-              className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg transition-colors"
-            >
-              <span className="text-amber-400 text-sm font-medium">{totalPendingRequests} pending requests</span>
-            </Link>
-          )}
-        </div>
+        <StatChipGroup>
+          <StatChip value={totalAssets} label="total assets" color="blue" />
+          <StatChip value={assignedCount} label="assigned" color="emerald" />
+          <StatChip value={`QAR ${totalValueQAR.toLocaleString()}`} label="value" color="purple" />
+          <StatChip
+            value={totalPendingRequests}
+            label="pending requests"
+            color="amber"
+            href="/admin/asset-requests"
+            hideWhenZero
+          />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

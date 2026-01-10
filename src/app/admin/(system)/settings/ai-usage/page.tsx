@@ -18,7 +18,7 @@ import {
   BarChart3,
   Shield,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 interface UsageData {
   overview: {

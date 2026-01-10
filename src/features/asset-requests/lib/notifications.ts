@@ -21,7 +21,7 @@ import {
   assetRequestSubmittedEmail,
   assetAssignmentPendingEmail,
   assetReturnRequestEmail,
-} from '@/lib/email-templates';
+} from '@/lib/core/asset-request-emails';
 import { findApplicablePolicy, initializeApprovalChain } from '@/features/approvals/lib';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 

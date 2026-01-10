@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { SupplierListTableServerSearch, ShareSupplierLinkButton } from '@/features/suppliers';
 import { Plus } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function AdminSuppliersPage() {
   const session = await getServerSession(authOptions);
@@ -67,26 +68,13 @@ export default async function AdminSuppliersPage() {
           </>
         }
       >
-        {/* Stats Summary */}
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-            <span className="text-blue-400 text-sm font-medium">{totalSuppliers} total</span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-            <span className="text-emerald-400 text-sm font-medium">{approvedSuppliers} approved</span>
-          </div>
-          {pendingSuppliers > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-              <span className="text-amber-400 text-sm font-medium">{pendingSuppliers} pending</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 rounded-lg">
-            <span className="text-purple-400 text-sm font-medium">{uniqueCategories} categories</span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-            <span className="text-slate-400 text-sm font-medium">{totalEngagements} engagements</span>
-          </div>
-        </div>
+        <StatChipGroup>
+          <StatChip value={totalSuppliers} label="total" color="blue" />
+          <StatChip value={approvedSuppliers} label="approved" color="emerald" />
+          <StatChip value={pendingSuppliers} label="pending" color="amber" hideWhenZero />
+          <StatChip value={uniqueCategories} label="categories" color="purple" />
+          <StatChip value={totalEngagements} label="engagements" color="slate" />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

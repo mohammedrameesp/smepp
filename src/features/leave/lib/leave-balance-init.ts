@@ -5,7 +5,7 @@
  */
 
 import { prisma } from '@/lib/core/prisma';
-import { calculateServiceMonths } from '@/lib/leave-utils';
+import { calculateServiceMonths } from '@/features/leave/lib/leave-utils';
 
 /**
  * Calculate months of service from join date

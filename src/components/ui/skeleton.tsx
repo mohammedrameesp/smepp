@@ -4,7 +4,7 @@
  * @module components/ui
  */
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/core/utils"
 
 function Skeleton({
   className,

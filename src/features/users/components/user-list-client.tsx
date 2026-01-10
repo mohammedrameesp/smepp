@@ -8,7 +8,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { UserActions } from './user-actions';
-import { formatDate } from '@/lib/date-format';
+import { formatDate } from '@/lib/core/datetime';
 import { Users } from 'lucide-react';
 
 interface User {

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
-import { getLeaveStatusVariant, formatLeaveDays } from '@/lib/leave-utils';
+import { getLeaveStatusVariant, formatLeaveDays } from '@/features/leave/lib/leave-utils';
 import Link from 'next/link';
 
 interface CalendarEvent {

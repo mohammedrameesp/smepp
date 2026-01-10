@@ -17,7 +17,7 @@ import {
   getQatarEndOfDay,
   formatQatarDate,
   getDaysUntilQatar,
-} from '@/lib/qatar-timezone';
+} from '@/lib/core/datetime';
 
 describe('Qatar Timezone Utilities', () => {
   // ===== Constants =====

@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { randomBytes, createHmac } from 'crypto';
+import { randomBytes, createHmac, timingSafeEqual } from 'crypto';
 
 const CSRF_SECRET = process.env.NEXTAUTH_SECRET || 'dev-csrf-secret';
 const CSRF_COOKIE_NAME = '__Host-csrf-token';
@@ -32,7 +32,9 @@ export function verifyCSRFToken(signedToken: string): boolean {
     .update(token)
     .digest('hex');
 
-  return signature === expectedSignature;
+  // Use timing-safe comparison to prevent timing attacks
+  if (signature.length !== expectedSignature.length) return false;
+  return timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
 }
 
 export function setCSRFCookie(response: NextResponse): string {
@@ -80,8 +82,14 @@ export function validateOriginForJSON(request: NextRequest): boolean {
         return false;
       }
     }
-    // No origin and no valid referer - allow for same-origin requests
-    // (browsers always send origin for cross-origin, so missing origin = same-origin)
+    // SECURITY FIX: In production, require at least one of Origin or Referer
+    // to prevent non-browser clients from bypassing CSRF protection.
+    // In development, allow for easier testing (e.g., curl, Postman).
+    if (process.env.NODE_ENV === 'production') {
+      // No origin and no valid referer in production - block the request
+      return false;
+    }
+    // Development: allow for same-origin assumption
     return true;
   }
 

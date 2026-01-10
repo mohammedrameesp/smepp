@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import * as Icons from 'lucide-react';
 import { HelpCircle, ArrowRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import type { QuickLink, GettingStartedStep, PopularTopic, UserRole } from '@/lib/help/help-types';
 import { filterByRole } from '@/lib/help/help-types';
 

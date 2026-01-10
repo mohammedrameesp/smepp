@@ -40,7 +40,7 @@ import { redirect, notFound } from 'next/navigation';
 
 import Link from 'next/link';
 import { SubscriptionRenewalDisplay, formatBillingCycle, SubscriptionLifecycleActions, HistoryTimeline, CostBreakdown } from '@/features/subscriptions';
-import { formatDate, formatDateTime } from '@/lib/date-format';
+import { formatDate, formatDateTime } from '@/lib/core/datetime';
 import { formatCurrency } from '@/lib/core/currency';
 import { DeleteButton } from '@/components/shared/delete-button';
 import {
@@ -54,6 +54,8 @@ import {
   FileText,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { DetailCard } from '@/components/ui/detail-card';
+import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -168,139 +170,82 @@ export default async function SubscriptionDetailPage({ params }: Props) {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Service Information */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                <CreditCard className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Service Information</h2>
-                <p className="text-sm text-slate-500">Subscription details</p>
-              </div>
-            </div>
-            <div className="p-5">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Service Name</p>
-                  <p className="font-semibold text-slate-900">{subscription.serviceName}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Subscription Tag</p>
-                  <p className="font-mono font-semibold text-slate-900">{subscription.subscriptionTag || 'Not assigned'}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Vendor</p>
-                  <p className="font-semibold text-slate-900">{subscription.vendor || 'Not specified'}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Category</p>
-                  <p className="font-semibold text-slate-900">{subscription.category || 'Not specified'}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Account ID</p>
-                  <p className="font-mono font-semibold text-slate-900">{subscription.accountId || 'Not provided'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <DetailCard icon={CreditCard} iconColor="blue" title="Service Information" subtitle="Subscription details">
+            <InfoFieldGrid columns={2}>
+              <InfoField label="Service Name" value={subscription.serviceName} />
+              <InfoField label="Subscription Tag" value={subscription.subscriptionTag} mono />
+              <InfoField label="Vendor" value={subscription.vendor} />
+              <InfoField label="Category" value={subscription.category} />
+              <InfoField label="Account ID" value={subscription.accountId} mono />
+            </InfoFieldGrid>
+          </DetailCard>
 
           {/* Billing Information */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <DollarSign className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Billing Information</h2>
-                <p className="text-sm text-slate-500">Cost and payment details</p>
-              </div>
-            </div>
-            <div className="p-5">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-emerald-50 rounded-xl">
-                  <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide mb-1">Cost per Cycle</p>
-                  {subscription.costPerCycle ? (
-                    <>
-                      <p className="font-bold text-lg text-emerald-700">
-                        {formatCurrency(Number(subscription.costPerCycle), subscription.costCurrency)}
+          <DetailCard icon={DollarSign} iconColor="emerald" title="Billing Information" subtitle="Cost and payment details">
+            <InfoFieldGrid columns={2}>
+              <div className="p-4 bg-emerald-50 rounded-xl">
+                <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide mb-1">Cost per Cycle</p>
+                {subscription.costPerCycle ? (
+                  <>
+                    <p className="font-bold text-lg text-emerald-700">
+                      {formatCurrency(Number(subscription.costPerCycle), subscription.costCurrency)}
+                    </p>
+                    {subscription.costCurrency !== 'QAR' && subscription.costQAR && (
+                      <p className="text-xs text-emerald-600">
+                        ≈ {formatCurrency(Number(subscription.costQAR), 'QAR')}
                       </p>
-                      {subscription.costCurrency !== 'QAR' && subscription.costQAR && (
-                        <p className="text-xs text-emerald-600">
-                          ≈ {formatCurrency(Number(subscription.costQAR), 'QAR')}
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="font-semibold text-slate-900">Not specified</p>
-                  )}
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Billing Cycle</p>
-                  <p className="font-semibold text-slate-900">{formatBillingCycle(subscription.billingCycle)}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Payment Method</p>
-                  <p className="font-semibold text-slate-900">
-                    {subscription.paymentMethod ? `•••• ${subscription.paymentMethod.slice(-4)}` : 'Not specified'}
-                  </p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Auto Renew</p>
+                    )}
+                  </>
+                ) : (
+                  <p className="font-semibold text-slate-900">Not specified</p>
+                )}
+              </div>
+              <InfoField label="Billing Cycle" value={formatBillingCycle(subscription.billingCycle)} />
+              <InfoField
+                label="Payment Method"
+                value={subscription.paymentMethod ? `•••• ${subscription.paymentMethod.slice(-4)}` : null}
+              />
+              <InfoField
+                label="Auto Renew"
+                value={
                   <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     subscription.autoRenew ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'
                   }`}>
                     {subscription.autoRenew ? 'Enabled' : 'Disabled'}
                   </span>
-                </div>
-              </div>
-            </div>
-          </div>
+                }
+              />
+            </InfoFieldGrid>
+          </DetailCard>
 
           {/* Dates */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-purple-600" />
-              </div>
-              <h2 className="font-semibold text-slate-900">
-                {subscription.billingCycle === 'ONE_TIME' ? 'Purchase Date' : 'Dates & Renewal'}
-              </h2>
-            </div>
-            <div className="p-5">
-              <div className={`grid ${subscription.billingCycle === 'ONE_TIME' ? 'sm:grid-cols-1' : 'sm:grid-cols-2'} gap-4`}>
+          <DetailCard
+            icon={Calendar}
+            iconColor="purple"
+            title={subscription.billingCycle === 'ONE_TIME' ? 'Purchase Date' : 'Dates & Renewal'}
+          >
+            <InfoFieldGrid columns={subscription.billingCycle === 'ONE_TIME' ? 1 : 2}>
+              <InfoField label="Purchase Date" value={formatDate(subscription.purchaseDate, 'Not specified')} />
+              {subscription.billingCycle !== 'ONE_TIME' && (
                 <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Purchase Date</p>
-                  <p className="font-semibold text-slate-900">{formatDate(subscription.purchaseDate, 'Not specified')}</p>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Next Renewal</p>
+                  <SubscriptionRenewalDisplay
+                    renewalDate={subscription.renewalDate}
+                    billingCycle={subscription.billingCycle}
+                    status={subscription.status}
+                  />
                 </div>
-                {subscription.billingCycle !== 'ONE_TIME' && (
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Next Renewal</p>
-                    <SubscriptionRenewalDisplay
-                      renewalDate={subscription.renewalDate}
-                      billingCycle={subscription.billingCycle}
-                      status={subscription.status}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+              )}
+            </InfoFieldGrid>
+          </DetailCard>
 
           {/* Notes */}
           {subscription.notes && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-amber-600" />
-                </div>
-                <h2 className="font-semibold text-slate-900">Notes</h2>
+            <DetailCard icon={FileText} iconColor="amber" title="Notes">
+              <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">
+                {subscription.notes}
               </div>
-              <div className="p-5">
-                <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">
-                  {subscription.notes}
-                </div>
-              </div>
-            </div>
+            </DetailCard>
           )}
 
           {/* Cost Breakdown */}
@@ -318,49 +263,41 @@ export default async function SubscriptionDetailPage({ params }: Props) {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Assignment */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                <User className="h-5 w-5 text-indigo-600" />
-              </div>
-              <h2 className="font-semibold text-slate-900">Assignment</h2>
-            </div>
-            <div className="p-5">
-              {subscription.assignedMember ? (
-                <>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                      <span className="text-indigo-600 font-semibold">
-                        {subscription.assignedMember.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-slate-900">{subscription.assignedMember.name || 'Unknown User'}</p>
-                      <p className="text-sm text-slate-500">{subscription.assignedMember.email}</p>
-                    </div>
+          <DetailCard icon={User} iconColor="indigo" title="Assignment">
+            {subscription.assignedMember ? (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <span className="text-indigo-600 font-semibold">
+                      {subscription.assignedMember.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                    </span>
                   </div>
-                  {currentMemberAssignmentDate && (
-                    <div className="p-3 bg-slate-50 rounded-xl mb-4">
-                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Assigned Since</p>
-                      <p className="font-medium text-slate-900">{formatDate(currentMemberAssignmentDate)}</p>
-                    </div>
-                  )}
-                  <Link href={`/admin/employees/${subscription.assignedMember.id}`}>
-                    <Button variant="outline" size="sm" className="w-full">
-                      View Profile
-                    </Button>
-                  </Link>
-                </>
-              ) : (
-                <div className="text-center py-4">
-                  <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <User className="h-6 w-6 text-slate-400" />
+                  <div>
+                    <p className="font-semibold text-slate-900">{subscription.assignedMember.name || 'Unknown User'}</p>
+                    <p className="text-sm text-slate-500">{subscription.assignedMember.email}</p>
                   </div>
-                  <p className="text-slate-500 text-sm">Unassigned</p>
                 </div>
-              )}
-            </div>
-          </div>
+                {currentMemberAssignmentDate && (
+                  <div className="p-3 bg-slate-50 rounded-xl mb-4">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Assigned Since</p>
+                    <p className="font-medium text-slate-900">{formatDate(currentMemberAssignmentDate)}</p>
+                  </div>
+                )}
+                <Link href={`/admin/employees/${subscription.assignedMember.id}`}>
+                  <Button variant="outline" size="sm" className="w-full">
+                    View Profile
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <div className="text-center py-4">
+                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <User className="h-6 w-6 text-slate-400" />
+                </div>
+                <p className="text-slate-500 text-sm">Unassigned</p>
+              </div>
+            )}
+          </DetailCard>
 
           {/* Quick Stats */}
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
@@ -386,14 +323,8 @@ export default async function SubscriptionDetailPage({ params }: Props) {
           </div>
 
           {/* System Information */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
-                <Clock className="h-5 w-5 text-slate-600" />
-              </div>
-              <h2 className="font-semibold text-slate-900">System Info</h2>
-            </div>
-            <div className="p-5 space-y-3">
+          <DetailCard icon={Clock} iconColor="slate" title="System Info">
+            <div className="space-y-3">
               <div>
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Created</p>
                 <p className="text-sm text-slate-700">{formatDateTime(subscription.createdAt)}</p>
@@ -403,7 +334,7 @@ export default async function SubscriptionDetailPage({ params }: Props) {
                 <p className="text-sm text-slate-700">{formatDateTime(subscription.updatedAt)}</p>
               </div>
             </div>
-          </div>
+          </DetailCard>
         </div>
         </div>
       </PageContent>

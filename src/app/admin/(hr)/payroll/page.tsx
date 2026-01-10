@@ -16,8 +16,9 @@ import {
   Plus,
   ArrowRight,
 } from 'lucide-react';
-import { formatCurrency, getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/lib/payroll/utils';
+import { formatCurrency, getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function PayrollDashboardPage() {
   const session = await getServerSession(authOptions);
@@ -90,34 +91,24 @@ export default async function PayrollDashboardPage() {
           </div>
         }
       >
-        {/* Summary Chips */}
-        <div className="flex flex-wrap items-center gap-3 mt-4">
-          <Link
-            href="/admin/payroll/salary-structures"
-            className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors"
-          >
-            <span className="text-blue-400 text-sm font-medium">{employeesWithSalary} with salary</span>
-          </Link>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-            <span className="text-emerald-400 text-sm font-medium">{formatCurrency(totalMonthlyPayroll)} monthly</span>
-          </div>
-          {pendingPayrolls > 0 && (
-            <Link
-              href="/admin/payroll/runs?status=PENDING_APPROVAL"
-              className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg transition-colors"
-            >
-              <span className="text-amber-400 text-sm font-medium">{pendingPayrolls} pending approval</span>
-            </Link>
-          )}
-          {activeLoans.length > 0 && (
-            <Link
-              href="/admin/payroll/loans"
-              className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg transition-colors"
-            >
-              <span className="text-purple-400 text-sm font-medium">{activeLoans.length} active loans</span>
-            </Link>
-          )}
-        </div>
+        <StatChipGroup>
+          <StatChip value={employeesWithSalary} label="with salary" color="blue" href="/admin/payroll/salary-structures" />
+          <StatChip value={formatCurrency(totalMonthlyPayroll)} label="monthly" color="emerald" />
+          <StatChip
+            value={pendingPayrolls}
+            label="pending approval"
+            color="amber"
+            href="/admin/payroll/runs?status=PENDING_APPROVAL"
+            hideWhenZero
+          />
+          <StatChip
+            value={activeLoans.length}
+            label="active loans"
+            color="purple"
+            href="/admin/payroll/loans"
+            hideWhenZero
+          />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent className="space-y-6">

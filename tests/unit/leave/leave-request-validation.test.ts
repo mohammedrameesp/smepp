@@ -35,7 +35,7 @@ describe('Leave Request Validation Tests', () => {
       join.setHours(0, 0, 0, 0);
       const ref = new Date(startDate);
       ref.setHours(0, 0, 0, 0);
-      if (ref < join) return 0;
+      if (ref < join) return false;
       const years = ref.getFullYear() - join.getFullYear();
       const months = ref.getMonth() - join.getMonth();
       const days = ref.getDate() - join.getDate();

@@ -12,6 +12,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { z } from 'zod';
 import { sendBatchEmails } from '@/lib/core/email';
+import { handleEmailFailure } from '@/lib/core/email-failure-handler';
 import { changeRequestEmail } from '@/lib/core/email-templates';
 import { TeamMemberRole } from '@prisma/client';
 import logger from '@/lib/core/log';
@@ -100,49 +101,90 @@ async function createChangeRequestHandler(request: NextRequest, context: APICont
   });
 
   // Send email notification to all admins in the same organization (non-blocking)
-  try {
-    // Get org details for email
-    const org = await prisma.organization.findUnique({
-      where: { id: tenant.tenantId },
-      select: { slug: true, name: true, primaryColor: true },
+  // Get org details for email
+  const org = await prisma.organization.findUnique({
+    where: { id: tenant.tenantId },
+    select: { slug: true, name: true, primaryColor: true },
+  });
+  const orgSlug = org?.slug || 'app';
+  const orgName = org?.name || 'Organization';
+
+  // Get admin TeamMembers in this organization (tenant-scoped via extension)
+  const admins = await db.teamMember.findMany({
+    where: {
+      role: TeamMemberRole.ADMIN,
+      isDeleted: false,
+      id: { not: tenant.userId }, // Don't notify the user themselves
+    },
+    select: { id: true, email: true, name: true },
+  });
+
+  if (admins.length > 0) {
+    const emailContent = changeRequestEmail({
+      employeeName: member.name || 'Employee',
+      employeeEmail: member.email,
+      fieldName: 'Profile Information',
+      currentValue: '',
+      requestedValue: 'See description',
+      reason: validation.data.description,
+      submittedDate: new Date(),
+      orgSlug,
+      orgName,
+      primaryColor: org?.primaryColor || undefined,
     });
 
-    // Get admin TeamMembers in this organization (tenant-scoped via extension)
-    const admins = await db.teamMember.findMany({
-      where: {
-        role: TeamMemberRole.ADMIN,
-        isDeleted: false,
-        id: { not: tenant.userId }, // Don't notify the user themselves
-      },
-      select: { email: true },
-    });
+    const emailsToSend = admins.map((admin) => ({
+      to: admin.email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+      text: emailContent.text,
+    }));
 
-    if (admins.length > 0) {
-      const emailContent = changeRequestEmail({
-        employeeName: member.name || 'Employee',
-        employeeEmail: member.email,
-        fieldName: 'Profile Information',
-        currentValue: '',
-        requestedValue: 'See description',
-        reason: validation.data.description,
-        submittedDate: new Date(),
-        orgSlug: org?.slug || 'app',
-        orgName: org?.name || 'Organization',
-        primaryColor: org?.primaryColor || undefined,
-      });
+    try {
+      const result = await sendBatchEmails(emailsToSend);
 
-      const emailsToSend = admins.map((admin) => ({
-        to: admin.email,
-        subject: emailContent.subject,
-        html: emailContent.html,
-        text: emailContent.text,
-      }));
+      // Check if any emails failed and notify super admin
+      if (!result.success && result.results.some(r => 'success' in r && !r.success)) {
+        const failedAdmins = admins.filter((_, i) => 'success' in result.results[i] && !result.results[i].success);
+        for (const admin of failedAdmins) {
+          await handleEmailFailure({
+            module: 'hr',
+            action: 'change-request-notification',
+            tenantId: tenant.tenantId,
+            organizationName: orgName,
+            organizationSlug: orgSlug,
+            recipientEmail: admin.email,
+            recipientName: admin.name || admin.email,
+            emailSubject: emailContent.subject,
+            error: 'Batch email failed',
+            metadata: {
+              changeRequestId: changeRequest.id,
+              employeeName: member.name,
+            },
+          }).catch(() => {}); // Non-blocking
+        }
+      }
+    } catch (emailError) {
+      logger.error({ error: String(emailError), userId: tenant.userId }, 'Failed to send change request notification');
 
-      await sendBatchEmails(emailsToSend);
+      // Notify super admin about the failure
+      await handleEmailFailure({
+        module: 'hr',
+        action: 'change-request-notification',
+        tenantId: tenant.tenantId,
+        organizationName: orgName,
+        organizationSlug: orgSlug,
+        recipientEmail: 'admins@' + orgSlug,
+        recipientName: 'Organization Admins',
+        emailSubject: emailContent.subject,
+        error: emailError instanceof Error ? emailError.message : String(emailError),
+        metadata: {
+          changeRequestId: changeRequest.id,
+          employeeName: member.name,
+          adminCount: admins.length,
+        },
+      }).catch(() => {}); // Non-blocking
     }
-  } catch (emailError) {
-    logger.error({ error: String(emailError), userId: tenant.userId }, 'Failed to send change request notification');
-    // Don't fail the request if email fails
   }
 
   return NextResponse.json({

@@ -29,7 +29,7 @@ import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 
 import Link from 'next/link';
-import { formatDateTime } from '@/lib/date-format';
+import { formatDateTime } from '@/lib/core/datetime';
 import {
   AssetRequestStatusBadge,
   AssetRequestTypeBadge,
@@ -45,6 +45,8 @@ import {
   Tag,
 } from 'lucide-react';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { DetailCard } from '@/components/ui/detail-card';
+import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -158,111 +160,49 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
         {/* Main Content - 2/3 */}
         <div className="lg:col-span-2 space-y-6">
           {/* Requestor Information */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                <User className="h-5 w-5 text-blue-600" />
+          <DetailCard icon={User} iconColor="blue" title="Requestor" subtitle="Who submitted this request">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                <User className="h-6 w-6 text-slate-500" />
               </div>
               <div>
-                <h2 className="font-semibold text-slate-900">Requestor</h2>
-                <p className="text-sm text-slate-500">Who submitted this request</p>
+                <p className="font-semibold text-slate-900">{request.member.name || 'Unknown'}</p>
+                <p className="text-sm text-slate-500">{request.member.email}</p>
               </div>
             </div>
-            <div className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
-                  <User className="h-6 w-6 text-slate-500" />
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900">{request.member.name || 'Unknown'}</p>
-                  <p className="text-sm text-slate-500">{request.member.email}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          </DetailCard>
 
           {/* Asset Details */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
-                <Package className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Asset Details</h2>
-                <p className="text-sm text-slate-500">Information about the requested asset</p>
-              </div>
+          <DetailCard icon={Package} iconColor="purple" title="Asset Details" subtitle="Information about the requested asset">
+            <InfoFieldGrid columns={2}>
+              <InfoField label="Model" value={request.asset.model} />
+              {request.asset.brand && <InfoField label="Brand" value={request.asset.brand} />}
+              <InfoField label="Type" value={request.asset.type} />
+              {request.asset.assetTag && <InfoField label="Asset Tag" value={request.asset.assetTag} mono />}
+              <InfoField
+                label="Current Status"
+                value={<Badge variant="outline">{request.asset.status}</Badge>}
+              />
+              {request.asset.location && <InfoField label="Location" value={request.asset.location.name} />}
+              {request.asset.configuration && (
+                <div className="sm:col-span-2">
+                  <InfoField label="Configuration" value={request.asset.configuration} />
+                </div>
+              )}
+            </InfoFieldGrid>
+            <div className="mt-4">
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/admin/assets/${request.asset.id}`}>
+                  <Package className="mr-2 h-4 w-4" />
+                  View Asset
+                </Link>
+              </Button>
             </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Model</p>
-                  <p className="text-sm font-semibold text-slate-900">{request.asset.model}</p>
-                </div>
-                {request.asset.brand && (
-                  <div className="bg-slate-50 rounded-xl p-4">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Brand</p>
-                    <p className="text-sm font-semibold text-slate-900">{request.asset.brand}</p>
-                  </div>
-                )}
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Settings className="h-4 w-4 text-slate-400" />
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Type</p>
-                  </div>
-                  <p className="text-sm font-semibold text-slate-900">{request.asset.type}</p>
-                </div>
-                {request.asset.assetTag && (
-                  <div className="bg-slate-50 rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Tag className="h-4 w-4 text-slate-400" />
-                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Asset Tag</p>
-                    </div>
-                    <p className="text-sm font-semibold text-slate-900 font-mono">{request.asset.assetTag}</p>
-                  </div>
-                )}
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Current Status</p>
-                  <Badge variant="outline">{request.asset.status}</Badge>
-                </div>
-                {request.asset.location && (
-                  <div className="bg-slate-50 rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <MapPin className="h-4 w-4 text-slate-400" />
-                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Location</p>
-                    </div>
-                    <p className="text-sm font-semibold text-slate-900">{request.asset.location.name}</p>
-                  </div>
-                )}
-                {request.asset.configuration && (
-                  <div className="sm:col-span-2 bg-slate-50 rounded-xl p-4">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Configuration</p>
-                    <p className="text-sm font-semibold text-slate-900">{request.asset.configuration}</p>
-                  </div>
-                )}
-              </div>
-              <div className="mt-4">
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`/admin/assets/${request.asset.id}`}>
-                    <Package className="mr-2 h-4 w-4" />
-                    View Asset
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
+          </DetailCard>
 
           {/* Request Details */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-                <FileText className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Request Details</h2>
-                <p className="text-sm text-slate-500">Reason and notes</p>
-              </div>
-            </div>
-            <div className="p-6 space-y-4">
+          <DetailCard icon={FileText} iconColor="amber" title="Request Details" subtitle="Reason and notes">
+            <div className="space-y-4">
               {request.reason && (
                 <div className="bg-slate-50 rounded-xl p-4">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Reason</p>
@@ -276,12 +216,7 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
                 </div>
               )}
               {request.assignedByMember && (
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Assigned By</p>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {request.assignedByMember.name || request.assignedByMember.email}
-                  </p>
-                </div>
+                <InfoField label="Assigned By" value={request.assignedByMember.name || request.assignedByMember.email} />
               )}
               {request.processedAt && request.processedByMember && (
                 <>
@@ -309,61 +244,55 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
                 </div>
               )}
             </div>
-          </div>
+          </DetailCard>
         </div>
 
         {/* Sidebar - 1/3 */}
         <div className="space-y-6">
           {/* History */}
           {request.history && request.history.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-indigo-600" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-slate-900">History</h2>
-                  <p className="text-sm text-slate-500">{request.history.length} event{request.history.length !== 1 ? 's' : ''}</p>
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  {request.history.map((entry, index) => (
-                    <div
-                      key={entry.id}
-                      className={`relative pl-6 ${index !== request.history.length - 1 ? 'pb-4' : ''}`}
-                    >
-                      {/* Timeline line */}
-                      {index !== request.history.length - 1 && (
-                        <div className="absolute left-[7px] top-3 bottom-0 w-0.5 bg-slate-200" />
-                      )}
-                      {/* Timeline dot */}
-                      <div className="absolute left-0 top-1 w-3.5 h-3.5 rounded-full bg-slate-300 border-2 border-white" />
+            <DetailCard
+              icon={Clock}
+              iconColor="indigo"
+              title="History"
+              subtitle={`${request.history.length} event${request.history.length !== 1 ? 's' : ''}`}
+            >
+              <div className="space-y-4">
+                {request.history.map((entry, index) => (
+                  <div
+                    key={entry.id}
+                    className={`relative pl-6 ${index !== request.history.length - 1 ? 'pb-4' : ''}`}
+                  >
+                    {/* Timeline line */}
+                    {index !== request.history.length - 1 && (
+                      <div className="absolute left-[7px] top-3 bottom-0 w-0.5 bg-slate-200" />
+                    )}
+                    {/* Timeline dot */}
+                    <div className="absolute left-0 top-1 w-3.5 h-3.5 rounded-full bg-slate-300 border-2 border-white" />
 
-                      <div className="bg-slate-50 rounded-xl p-3">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-sm font-semibold text-slate-900">{entry.action}</span>
-                          {entry.newStatus && (
-                            <AssetRequestStatusBadge status={entry.newStatus} />
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-500">
-                          by {entry.performedBy.name || entry.performedBy.email}
-                        </p>
-                        <p className="text-xs text-slate-400 mt-1">
-                          {formatDateTime(entry.createdAt)}
-                        </p>
-                        {entry.notes && (
-                          <p className="text-sm text-slate-600 mt-2 bg-white p-2 rounded-lg border border-slate-100">
-                            {entry.notes}
-                          </p>
+                    <div className="bg-slate-50 rounded-xl p-3">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="text-sm font-semibold text-slate-900">{entry.action}</span>
+                        {entry.newStatus && (
+                          <AssetRequestStatusBadge status={entry.newStatus} />
                         )}
                       </div>
+                      <p className="text-xs text-slate-500">
+                        by {entry.performedBy.name || entry.performedBy.email}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {formatDateTime(entry.createdAt)}
+                      </p>
+                      {entry.notes && (
+                        <p className="text-sm text-slate-600 mt-2 bg-white p-2 rounded-lg border border-slate-100">
+                          {entry.notes}
+                        </p>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            </DetailCard>
           )}
 
           {/* Quick Actions */}

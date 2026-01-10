@@ -6,7 +6,7 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
-import { getStatusLabel, getStatusColor, getPriorityLabel, getPriorityColor } from '@/lib/purchase-request-utils';
+import { getStatusLabel, getStatusColor, getPriorityLabel, getPriorityColor } from '@/features/purchase-requests/lib/purchase-request-utils';
 
 interface StatusBadgeProps {
   status: string;

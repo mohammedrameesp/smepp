@@ -46,7 +46,7 @@
 import { SubscriptionHistory, SubscriptionHistoryAction, SubscriptionStatus } from '@prisma/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { formatDate, formatDateTime } from '@/lib/date-format';
+import { formatDate, formatDateTime } from '@/lib/core/datetime';
 
 interface HistoryTimelineProps {
   history: (SubscriptionHistory & {

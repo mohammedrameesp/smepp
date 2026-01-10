@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { ShoppingCart, Palmtree, Laptop, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { formatDate } from '@/lib/date-format';
+import { cn } from '@/lib/core/utils';
+import { formatDate } from '@/lib/core/datetime';
 
 type RequestType = 'leave' | 'purchase' | 'asset';
 type RequestStatus = string; // Various statuses from different request types

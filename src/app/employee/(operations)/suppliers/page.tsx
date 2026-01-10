@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { EmployeeSupplierListTable } from '@/features/suppliers';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Building2, Users, FolderOpen } from 'lucide-react';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { DetailCard } from '@/components/ui/detail-card';
 
 export default async function EmployeeSuppliersPage() {
   const session = await getServerSession(authOptions);
@@ -45,50 +47,39 @@ export default async function EmployeeSuppliersPage() {
           { label: 'Suppliers' }
         ]}
       >
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-            <Building2 className="h-4 w-4 text-blue-400" />
-            <span className="text-blue-400 text-sm font-medium">
-              {suppliers.length} approved suppliers
-            </span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-            <Users className="h-4 w-4 text-emerald-400" />
-            <span className="text-emerald-400 text-sm font-medium">
-              {totalEngagements} engagements
-            </span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 rounded-lg">
-            <FolderOpen className="h-4 w-4 text-purple-400" />
-            <span className="text-purple-400 text-sm font-medium">
-              {uniqueCategories} categories
-            </span>
-          </div>
-        </div>
+        <StatChipGroup>
+          <StatChip
+            value={suppliers.length}
+            label="approved suppliers"
+            color="blue"
+            icon={<Building2 className="h-4 w-4" />}
+          />
+          <StatChip
+            value={totalEngagements}
+            label="engagements"
+            color="emerald"
+            icon={<Users className="h-4 w-4" />}
+          />
+          <StatChip
+            value={uniqueCategories}
+            label="categories"
+            color="purple"
+            icon={<FolderOpen className="h-4 w-4" />}
+          />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-indigo-600" />
+        <DetailCard icon={Building2} iconColor="indigo" title="Company Suppliers" subtitle="Search, filter, and browse all approved suppliers">
+          {suppliers.length === 0 ? (
+            <div className="text-center py-12 text-slate-500">
+              <div className="text-4xl mb-4">📦</div>
+              <p>No suppliers found</p>
             </div>
-            <div>
-              <h2 className="font-semibold text-slate-900">Company Suppliers</h2>
-              <p className="text-sm text-slate-500">Search, filter, and browse all approved suppliers</p>
-            </div>
-          </div>
-          <div className="p-5">
-            {suppliers.length === 0 ? (
-              <div className="text-center py-12 text-slate-500">
-                <div className="text-4xl mb-4">📦</div>
-                <p>No suppliers found</p>
-              </div>
-            ) : (
-              <EmployeeSupplierListTable suppliers={suppliers} />
-            )}
-          </div>
-        </div>
+          ) : (
+            <EmployeeSupplierListTable suppliers={suppliers} />
+          )}
+        </DetailCard>
       </PageContent>
     </>
   );

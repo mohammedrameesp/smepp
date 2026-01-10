@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Building, Calendar, CreditCard, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
-import { formatCurrency, getMonthName } from '@/lib/payroll/utils';
+import { formatCurrency, getMonthName } from '@/features/payroll/lib/utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { DetailCard } from '@/components/ui/detail-card';
+import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -93,135 +95,97 @@ export default async function EmployeePayslipDetailPage({ params }: PageProps) {
         <div className="space-y-6 max-w-4xl mx-auto">
 
         {/* Employee Details */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-              <Building className="h-5 w-5 text-indigo-600" />
+        <DetailCard icon={Building} iconColor="indigo" title="Employee Information" subtitle="Your employment and payment details">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="p-4 bg-slate-50 rounded-xl">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Employee</p>
+              <p className="font-semibold text-slate-900">{payslip.member.name}</p>
+              <p className="text-sm text-slate-500 mt-1">
+                {payslip.member.employeeCode}
+              </p>
             </div>
-            <div>
-              <h2 className="font-semibold text-slate-900">Employee Information</h2>
-              <p className="text-sm text-slate-500">Your employment and payment details</p>
+            <InfoField label="Pay Period" value={`${getMonthName(payslip.payrollRun.month)} ${payslip.payrollRun.year}`} />
+            <div className="p-4 bg-slate-50 rounded-xl">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Bank Account</p>
+              <p className="font-semibold text-slate-900">{payslip.bankName || 'Not specified'}</p>
+              {payslip.iban && (
+                <p className="text-sm text-slate-500 font-mono mt-1">
+                  ****{payslip.iban.slice(-4)}
+                </p>
+              )}
             </div>
           </div>
-          <div className="p-5">
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="p-4 bg-slate-50 rounded-xl">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Employee</p>
-                <p className="font-semibold text-slate-900">{payslip.member.name}</p>
-                <p className="text-sm text-slate-500 mt-1">
-                  {payslip.member.employeeCode}
-                </p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-xl">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Pay Period</p>
-                <p className="font-semibold text-slate-900">
-                  {getMonthName(payslip.payrollRun.month)} {payslip.payrollRun.year}
-                </p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-xl">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Bank Account</p>
-                <p className="font-semibold text-slate-900">{payslip.bankName || 'Not specified'}</p>
-                {payslip.iban && (
-                  <p className="text-sm text-slate-500 font-mono mt-1">
-                    ****{payslip.iban.slice(-4)}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        </DetailCard>
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Earnings */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-emerald-600" />
+          <DetailCard icon={TrendingUp} iconColor="emerald" title="Earnings" subtitle="Your salary components">
+            <div className="space-y-3">
+              <div className="flex justify-between py-2 border-b border-slate-200">
+                <span className="text-slate-600">Basic Salary</span>
+                <span className="font-semibold text-slate-900">{formatCurrency(basicSalary)}</span>
               </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Earnings</h2>
-                <p className="text-sm text-slate-500">Your salary components</p>
+              <div className="flex justify-between py-2 border-b border-slate-200">
+                <span className="text-slate-600">Housing Allowance</span>
+                <span className="font-semibold text-slate-900">{formatCurrency(housingAllowance)}</span>
               </div>
-            </div>
-            <div className="p-5">
-              <div className="space-y-3">
+              <div className="flex justify-between py-2 border-b border-slate-200">
+                <span className="text-slate-600">Transport Allowance</span>
+                <span className="font-semibold text-slate-900">{formatCurrency(transportAllowance)}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-slate-200">
+                <span className="text-slate-600">Food Allowance</span>
+                <span className="font-semibold text-slate-900">{formatCurrency(foodAllowance)}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-slate-200">
+                <span className="text-slate-600">Phone Allowance</span>
+                <span className="font-semibold text-slate-900">{formatCurrency(phoneAllowance)}</span>
+              </div>
+              {otherAllowances > 0 && (
                 <div className="flex justify-between py-2 border-b border-slate-200">
-                  <span className="text-slate-600">Basic Salary</span>
-                  <span className="font-semibold text-slate-900">{formatCurrency(basicSalary)}</span>
+                  <span className="text-slate-600">Other Allowances</span>
+                  <span className="font-semibold text-slate-900">{formatCurrency(otherAllowances)}</span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-slate-200">
-                  <span className="text-slate-600">Housing Allowance</span>
-                  <span className="font-semibold text-slate-900">{formatCurrency(housingAllowance)}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-200">
-                  <span className="text-slate-600">Transport Allowance</span>
-                  <span className="font-semibold text-slate-900">{formatCurrency(transportAllowance)}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-200">
-                  <span className="text-slate-600">Food Allowance</span>
-                  <span className="font-semibold text-slate-900">{formatCurrency(foodAllowance)}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-200">
-                  <span className="text-slate-600">Phone Allowance</span>
-                  <span className="font-semibold text-slate-900">{formatCurrency(phoneAllowance)}</span>
-                </div>
-                {otherAllowances > 0 && (
-                  <div className="flex justify-between py-2 border-b border-slate-200">
-                    <span className="text-slate-600">Other Allowances</span>
-                    <span className="font-semibold text-slate-900">{formatCurrency(otherAllowances)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between py-3 pt-4 font-semibold">
-                  <span className="text-slate-900">Total Earnings</span>
-                  <span className="text-emerald-600 text-lg">{formatCurrency(grossSalary)}</span>
-                </div>
+              )}
+              <div className="flex justify-between py-3 pt-4 font-semibold">
+                <span className="text-slate-900">Total Earnings</span>
+                <span className="text-emerald-600 text-lg">{formatCurrency(grossSalary)}</span>
               </div>
             </div>
-          </div>
+          </DetailCard>
 
           {/* Deductions */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
-                <TrendingDown className="h-5 w-5 text-rose-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Deductions</h2>
-                <p className="text-sm text-slate-500">Amounts deducted from salary</p>
-              </div>
-            </div>
-            <div className="p-5">
-              <div className="space-y-3">
-                {payslip.deductions.length === 0 ? (
-                  <p className="text-sm text-slate-500 text-center py-8">
-                    No deductions this month
-                  </p>
-                ) : (
-                  payslip.deductions.map((deduction) => (
-                    <div key={deduction.id} className="flex justify-between py-2 border-b border-slate-200">
-                      <div>
-                        <span className="text-slate-600">
-                          {deduction.type.replace(/_/g, ' ')}
-                        </span>
-                        {deduction.description && (
-                          <div className="text-xs text-slate-500 mt-1">
-                            {deduction.description}
-                          </div>
-                        )}
-                      </div>
-                      <span className="font-semibold text-rose-600">
-                        -{formatCurrency(Number(deduction.amount))}
+          <DetailCard icon={TrendingDown} iconColor="rose" title="Deductions" subtitle="Amounts deducted from salary">
+            <div className="space-y-3">
+              {payslip.deductions.length === 0 ? (
+                <p className="text-sm text-slate-500 text-center py-8">
+                  No deductions this month
+                </p>
+              ) : (
+                payslip.deductions.map((deduction) => (
+                  <div key={deduction.id} className="flex justify-between py-2 border-b border-slate-200">
+                    <div>
+                      <span className="text-slate-600">
+                        {deduction.type.replace(/_/g, ' ')}
                       </span>
+                      {deduction.description && (
+                        <div className="text-xs text-slate-500 mt-1">
+                          {deduction.description}
+                        </div>
+                      )}
                     </div>
-                  ))
-                )}
-                <div className="flex justify-between py-3 pt-4 font-semibold">
-                  <span className="text-slate-900">Total Deductions</span>
-                  <span className="text-rose-600 text-lg">-{formatCurrency(totalDeductions)}</span>
-                </div>
+                    <span className="font-semibold text-rose-600">
+                      -{formatCurrency(Number(deduction.amount))}
+                    </span>
+                  </div>
+                ))
+              )}
+              <div className="flex justify-between py-3 pt-4 font-semibold">
+                <span className="text-slate-900">Total Deductions</span>
+                <span className="text-rose-600 text-lg">-{formatCurrency(totalDeductions)}</span>
               </div>
             </div>
-          </div>
+          </DetailCard>
         </div>
 
         {/* Net Pay Summary */}
@@ -246,29 +210,16 @@ export default async function EmployeePayslipDetailPage({ params }: PageProps) {
 
         {/* Payment Info */}
         {payslip.isPaid && payslip.paidAt && (
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                <CreditCard className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Payment Information</h2>
-                <p className="text-sm text-slate-500">Salary payment confirmation</p>
-              </div>
-            </div>
-            <div className="p-5">
-              <div className="p-4 bg-slate-50 rounded-xl">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Payment Date</p>
-                <p className="font-semibold text-slate-900">
-                  {new Date(payslip.paidAt).toLocaleDateString('en-US', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </p>
-              </div>
-            </div>
-          </div>
+          <DetailCard icon={CreditCard} iconColor="blue" title="Payment Information" subtitle="Salary payment confirmation">
+            <InfoField
+              label="Payment Date"
+              value={new Date(payslip.paidAt).toLocaleDateString('en-US', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
+            />
+          </DetailCard>
         )}
         </div>
       </PageContent>

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Clock, Calendar } from 'lucide-react';
-import { formatDate as formatDateUtil } from '@/lib/date-format';
+import { formatDate as formatDateUtil } from '@/lib/core/datetime';
 
 interface AssignmentPeriod {
   userId: string;

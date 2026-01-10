@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { createLeaveRequestSchema, leaveRequestQuerySchema } from '@/lib/validations/leave';
+import { createLeaveRequestSchema, leaveRequestQuerySchema } from '@/features/leave/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { createBulkNotifications, createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { findApplicablePolicy, initializeApprovalChain } from '@/features/approvals/lib';
@@ -18,7 +18,7 @@ import {
   ServiceBasedEntitlement,
   getAnnualLeaveDetails,
   calculateAvailableBalance,
-} from '@/lib/leave-utils';
+} from '@/features/leave/lib/leave-utils';
 import {
   validateLeaveTypeEligibility,
   validateOnceInEmploymentLeave,

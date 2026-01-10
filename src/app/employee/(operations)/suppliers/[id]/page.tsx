@@ -21,6 +21,8 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { DetailCard } from '@/components/ui/detail-card';
+import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -115,56 +117,32 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
         {/* Main Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* Company Information */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-purple-600" />
+          <DetailCard icon={Building2} iconColor="purple" title="Company Information" subtitle="Supplier details and location">
+            <InfoFieldGrid columns={2}>
+              <InfoField label="Category" value={supplier.category} />
+              <InfoField label="Establishment Year" value={supplier.establishmentYear || 'N/A'} />
+              <div className="col-span-2">
+                <InfoField label="Address" value={supplier.address || 'N/A'} />
               </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Company Information</h2>
-                <p className="text-sm text-slate-500">Supplier details and location</p>
-              </div>
-            </div>
-            <div className="p-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Category</p>
-                  <p className="font-semibold text-slate-900">{supplier.category}</p>
+              <InfoField label="City" value={supplier.city || 'N/A'} />
+              <InfoField label="Country" value={supplier.country || 'N/A'} />
+              {supplier.website && (
+                <div className="col-span-2 p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-1">
+                    <Globe className="h-3 w-3" /> Website
+                  </p>
+                  <a
+                    href={supplier.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-blue-600 hover:underline"
+                  >
+                    {supplier.website}
+                  </a>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Establishment Year</p>
-                  <p className="font-semibold text-slate-900">{supplier.establishmentYear || 'N/A'}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl col-span-2">
-                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Address</p>
-                  <p className="font-semibold text-slate-900">{supplier.address || 'N/A'}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">City</p>
-                  <p className="font-semibold text-slate-900">{supplier.city || 'N/A'}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Country</p>
-                  <p className="font-semibold text-slate-900">{supplier.country || 'N/A'}</p>
-                </div>
-                {supplier.website && (
-                  <div className="p-4 bg-slate-50 rounded-xl col-span-2">
-                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-1">
-                      <Globe className="h-3 w-3" /> Website
-                    </p>
-                    <a
-                      href={supplier.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-semibold text-blue-600 hover:underline"
-                    >
-                      {supplier.website}
-                    </a>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+              )}
+            </InfoFieldGrid>
+          </DetailCard>
 
           {/* Contact Information */}
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
@@ -262,38 +240,16 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
 
           {/* Payment Terms */}
           {supplier.paymentTerms && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-slate-900">Payment Terms</h2>
-                  <p className="text-sm text-slate-500">Contract and payment details</p>
-                </div>
-              </div>
-              <div className="p-5">
-                <p className="text-sm text-slate-700 leading-relaxed">{supplier.paymentTerms}</p>
-              </div>
-            </div>
+            <DetailCard icon={FileText} iconColor="emerald" title="Payment Terms" subtitle="Contract and payment details">
+              <p className="text-sm text-slate-700 leading-relaxed">{supplier.paymentTerms}</p>
+            </DetailCard>
           )}
 
           {/* Additional Information */}
           {supplier.additionalInfo && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-slate-900">Additional Information</h2>
-                  <p className="text-sm text-slate-500">Notes and remarks</p>
-                </div>
-              </div>
-              <div className="p-5">
-                <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{supplier.additionalInfo}</p>
-              </div>
-            </div>
+            <DetailCard icon={FileText} iconColor="blue" title="Additional Information" subtitle="Notes and remarks">
+              <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{supplier.additionalInfo}</p>
+            </DetailCard>
           )}
         </div>
 
@@ -301,88 +257,60 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
         <div className="space-y-6">
           {/* Approval Information */}
           {supplier.status === 'APPROVED' && supplier.approvedAt && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                  <CheckCircle className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-slate-900">Approval Information</h2>
-                  <p className="text-sm text-slate-500">Supplier approval details</p>
-                </div>
-              </div>
-              <div className="p-5 space-y-3">
-                <div className="p-3 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Approved On</p>
-                  <p className="font-semibold text-slate-900 text-sm">
-                    {new Date(supplier.approvedAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
-                </div>
+            <DetailCard icon={CheckCircle} iconColor="emerald" title="Approval Information" subtitle="Supplier approval details">
+              <InfoFieldGrid columns={1}>
+                <InfoField
+                  label="Approved On"
+                  value={new Date(supplier.approvedAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                  size="sm"
+                />
                 {supplier.approvedBy && (
-                  <div className="p-3 bg-slate-50 rounded-xl">
-                    <p className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-1">Approved By</p>
-                    <p className="font-semibold text-slate-900 text-sm">
-                      {supplier.approvedBy.name || supplier.approvedBy.email}
-                    </p>
-                  </div>
+                  <InfoField label="Approved By" value={supplier.approvedBy.name || supplier.approvedBy.email} size="sm" />
                 )}
-              </div>
-            </div>
+              </InfoFieldGrid>
+            </DetailCard>
           )}
 
           {/* Engagement History */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-slate-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Engagement History</h2>
-                <p className="text-sm text-slate-500">
-                  {supplier.engagements.length} engagement{supplier.engagements.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-            </div>
-            <div className="p-5">
-              {supplier.engagements.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-4">No engagements recorded</p>
-              ) : (
-                <div className="space-y-4">
-                  {supplier.engagements.map((engagement) => (
-                    <div key={engagement.id} className="border-l-2 border-indigo-500 pl-4 py-2">
-                      <div className="flex items-start justify-between mb-1">
-                        <p className="text-sm font-semibold text-slate-900">
-                          {new Date(engagement.date).toLocaleDateString()}
-                        </p>
-                        {engagement.rating && (
-                          <div className="flex items-center gap-0.5">
-                            {[...Array(5)].map((_, index) => (
-                              <Star
-                                key={index}
-                                className={`h-3.5 w-3.5 ${
-                                  index < engagement.rating!
-                                    ? 'fill-amber-400 text-amber-400'
-                                    : 'text-slate-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-sm text-slate-700 mb-2 leading-relaxed">{engagement.notes}</p>
-                      <p className="text-xs text-slate-500">
-                        By {engagement.createdBy.name || engagement.createdBy.email}
+          <DetailCard icon={Calendar} iconColor="slate" title="Engagement History" subtitle={`${supplier.engagements.length} engagement${supplier.engagements.length !== 1 ? 's' : ''}`}>
+            {supplier.engagements.length === 0 ? (
+              <p className="text-sm text-slate-500 text-center py-4">No engagements recorded</p>
+            ) : (
+              <div className="space-y-4">
+                {supplier.engagements.map((engagement) => (
+                  <div key={engagement.id} className="border-l-2 border-indigo-500 pl-4 py-2">
+                    <div className="flex items-start justify-between mb-1">
+                      <p className="text-sm font-semibold text-slate-900">
+                        {new Date(engagement.date).toLocaleDateString()}
                       </p>
+                      {engagement.rating && (
+                        <div className="flex items-center gap-0.5">
+                          {[...Array(5)].map((_, index) => (
+                            <Star
+                              key={index}
+                              className={`h-3.5 w-3.5 ${
+                                index < engagement.rating!
+                                  ? 'fill-amber-400 text-amber-400'
+                                  : 'text-slate-300'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+                    <p className="text-sm text-slate-700 mb-2 leading-relaxed">{engagement.notes}</p>
+                    <p className="text-xs text-slate-500">
+                      By {engagement.createdBy.name || engagement.createdBy.email}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </DetailCard>
         </div>
       </div>
       </PageContent>

@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { BillingCycle } from '@prisma/client';
 import { getNextRenewalDate } from '../../utils/renewal-date';
 import { DatePicker } from '@/components/ui/date-picker';
-import { toInputDateString } from '@/lib/date-format';
+import { toInputDateString } from '@/lib/core/datetime';
 
 interface ReactivateDialogProps {
   open: boolean;

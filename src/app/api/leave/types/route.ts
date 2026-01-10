@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { createLeaveTypeSchema, leaveTypeQuerySchema } from '@/lib/validations/leave';
+import { createLeaveTypeSchema, leaveTypeQuerySchema } from '@/features/leave/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 

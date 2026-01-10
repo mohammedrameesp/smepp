@@ -35,7 +35,7 @@ import {
   DepreciationCard,
   AssetStatusCard,
 } from '@/features/assets';
-import { formatDate, formatDateTime } from '@/lib/date-format';
+import { formatDate, formatDateTime } from '@/lib/core/datetime';
 import { formatCurrency } from '@/lib/core/currency';
 import { AssetAssignDialog } from '@/features/asset-requests';
 import {
@@ -57,6 +57,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { DetailCard } from '@/components/ui/detail-card';
+import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -242,119 +244,62 @@ export default async function AssetDetailPage({ params }: Props) {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Basic Information Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Package className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Basic Information</h2>
-                <p className="text-sm text-slate-500">Core asset details</p>
-              </div>
-            </div>
-            <div className="p-5">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Asset Tag</p>
-                  <p className="font-mono font-semibold text-slate-900">{asset.assetTag || 'Not specified'}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Type</p>
-                  <p className="font-semibold text-slate-900">{asset.type}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Category</p>
-                  <p className="font-semibold text-slate-900">{asset.assetCategory?.name || 'Not specified'}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Brand / Manufacturer</p>
-                  <p className="font-semibold text-slate-900">{asset.brand || 'Not specified'}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Model / Version</p>
-                  <p className="font-semibold text-slate-900">{asset.model}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Serial Number</p>
-                  <p className="font-mono font-semibold text-slate-900">{asset.serial || 'Not specified'}</p>
-                </div>
-              </div>
+          <DetailCard icon={Package} iconColor="purple" title="Basic Information" subtitle="Core asset details">
+            <InfoFieldGrid columns={2}>
+              <InfoField label="Asset Tag" value={asset.assetTag} mono />
+              <InfoField label="Type" value={asset.type} />
+              <InfoField label="Category" value={asset.assetCategory?.name} />
+              <InfoField label="Brand / Manufacturer" value={asset.brand} />
+              <InfoField label="Model / Version" value={asset.model} />
+              <InfoField label="Serial Number" value={asset.serial} mono />
+            </InfoFieldGrid>
 
-              {asset.configuration && (
-                <div className="mt-4">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Configuration/Specs</p>
-                  <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">{asset.configuration}</div>
-                </div>
-              )}
-            </div>
-          </div>
+            {asset.configuration && (
+              <div className="mt-4">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Configuration/Specs</p>
+                <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">{asset.configuration}</div>
+              </div>
+            )}
+          </DetailCard>
 
           {/* Financial & Procurement Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <DollarSign className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Financial & Procurement</h2>
-                <p className="text-sm text-slate-500">Purchase and cost details</p>
-              </div>
-            </div>
-            <div className="p-5">
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Purchase Date</p>
-                  <p className="font-semibold text-slate-900">{formatDate(asset.purchaseDate, 'Not specified')}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Cost/Value</p>
-                  <p className="font-semibold text-slate-900">
-                    {asset.price ? formatCurrency(Number(asset.price), asset.priceCurrency) : 'Not specified'}
-                  </p>
-                  {asset.priceCurrency && asset.priceCurrency !== 'QAR' && asset.priceQAR && (
-                    <p className="text-xs text-slate-500 mt-1">≈ {formatCurrency(Number(asset.priceQAR), 'QAR')}</p>
-                  )}
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Warranty Expiry</p>
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-slate-900">
-                      {asset.warrantyExpiry ? formatDate(asset.warrantyExpiry) : 'Not specified'}
-                    </p>
-                    {asset.warrantyExpiry && asset.warrantyExpiry < new Date() && (
-                      <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-xs font-medium rounded-full">Expired</span>
-                    )}
-                  </div>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Supplier</p>
-                  <p className="font-semibold text-slate-900">{asset.supplier || 'Not specified'}</p>
-                </div>
-                {asset.invoiceNumber && (
-                  <div className="p-4 bg-slate-50 rounded-xl sm:col-span-2">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Invoice/PO Number</p>
-                    <p className="font-mono font-semibold text-slate-900">{asset.invoiceNumber}</p>
-                  </div>
+          <DetailCard icon={DollarSign} iconColor="emerald" title="Financial & Procurement" subtitle="Purchase and cost details">
+            <InfoFieldGrid columns={2}>
+              <InfoField label="Purchase Date" value={formatDate(asset.purchaseDate, 'Not specified')} />
+              <div className="p-4 bg-slate-50 rounded-xl">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Cost/Value</p>
+                <p className="font-semibold text-slate-900">
+                  {asset.price ? formatCurrency(Number(asset.price), asset.priceCurrency) : 'Not specified'}
+                </p>
+                {asset.priceCurrency && asset.priceCurrency !== 'QAR' && asset.priceQAR && (
+                  <p className="text-xs text-slate-500 mt-1">≈ {formatCurrency(Number(asset.priceQAR), 'QAR')}</p>
                 )}
               </div>
-            </div>
-          </div>
+              <div className="p-4 bg-slate-50 rounded-xl">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Warranty Expiry</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-slate-900">
+                    {asset.warrantyExpiry ? formatDate(asset.warrantyExpiry) : 'Not specified'}
+                  </p>
+                  {asset.warrantyExpiry && asset.warrantyExpiry < new Date() && (
+                    <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-xs font-medium rounded-full">Expired</span>
+                  )}
+                </div>
+              </div>
+              <InfoField label="Supplier" value={asset.supplier} />
+              {asset.invoiceNumber && (
+                <InfoField label="Invoice/PO Number" value={asset.invoiceNumber} mono className="sm:col-span-2" />
+              )}
+            </InfoFieldGrid>
+          </DetailCard>
 
           {/* Notes */}
           {asset.notes && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-blue-600" />
-                </div>
-                <h2 className="font-semibold text-slate-900">Notes</h2>
+            <DetailCard icon={FileText} iconColor="blue" title="Notes">
+              <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">
+                {asset.notes}
               </div>
-              <div className="p-5">
-                <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">
-                  {asset.notes}
-                </div>
-              </div>
-            </div>
+            </DetailCard>
           )}
 
           {/* Asset Utilization */}
@@ -481,17 +426,9 @@ export default async function AssetDetailPage({ params }: Props) {
 
           {/* Location Card - Only show for non-shared assets since shared assets show location in the Shared Resource card */}
           {asset.location && !asset.isShared && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
-                  <MapPin className="h-5 w-5 text-rose-600" />
-                </div>
-                <h2 className="font-semibold text-slate-900">Location</h2>
-              </div>
-              <div className="p-5">
-                <p className="text-slate-700">{asset.location.name}</p>
-              </div>
-            </div>
+            <DetailCard icon={MapPin} iconColor="rose" title="Location">
+              <p className="text-slate-700">{asset.location.name}</p>
+            </DetailCard>
           )}
 
           {/* Disposal Info Card - Only show for disposed assets */}
@@ -558,14 +495,8 @@ export default async function AssetDetailPage({ params }: Props) {
           )}
 
           {/* System Info Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
-                <Clock className="h-5 w-5 text-slate-600" />
-              </div>
-              <h2 className="font-semibold text-slate-900">System Info</h2>
-            </div>
-            <div className="p-5 space-y-3">
+          <DetailCard icon={Clock} iconColor="slate" title="System Info">
+            <div className="space-y-3">
               <div>
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Created</p>
                 <p className="text-sm text-slate-700">{formatDateTime(asset.createdAt)}</p>
@@ -575,7 +506,7 @@ export default async function AssetDetailPage({ params }: Props) {
                 <p className="text-sm text-slate-700">{formatDateTime(asset.updatedAt)}</p>
               </div>
             </div>
-          </div>
+          </DetailCard>
         </div>
         </div>
       </PageContent>

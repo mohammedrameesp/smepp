@@ -16,8 +16,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Plus, Pencil } from 'lucide-react';
-import { formatCurrency } from '@/lib/payroll/utils';
+import { formatCurrency } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 interface PageProps {
   searchParams: Promise<{
@@ -94,11 +95,9 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
           </PageHeaderButton>
         }
       >
-        <div className="flex flex-wrap items-center gap-3 mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-            <span className="text-slate-300 text-sm font-medium">{total} salary structures</span>
-          </div>
-        </div>
+        <StatChipGroup>
+          <StatChip value={total} label="salary structures" color="slate" />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

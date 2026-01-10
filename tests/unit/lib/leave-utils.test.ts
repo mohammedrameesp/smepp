@@ -25,7 +25,7 @@ import {
   exceedsMaxConsecutiveDays,
   DEFAULT_LEAVE_TYPES,
   getLeaveTypeBadgeStyle,
-} from '@/lib/leave-utils';
+} from '@/features/leave/lib/leave-utils';
 
 describe('Leave Utilities', () => {
   describe('isWeekend', () => {

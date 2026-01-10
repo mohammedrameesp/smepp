@@ -16,8 +16,8 @@ import {
   calculateDailySalary,
   subtractMoney,
   addMoney
-} from '@/lib/payroll/utils';
-import { calculateUnpaidLeaveDeductions } from '@/lib/payroll/leave-deduction';
+} from '@/features/payroll/lib/utils';
+import { calculateUnpaidLeaveDeductions } from '@/features/payroll/lib/leave-deduction';
 
 interface RouteParams {
   params: Promise<{ id: string }>;

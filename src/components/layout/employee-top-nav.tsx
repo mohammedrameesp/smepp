@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { NotificationBell } from '@/features/notifications/components';
 import { FeedbackTrigger } from '@/components/feedback/feedback-trigger';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import { Button } from '@/components/ui/button';
 
 interface EmployeeTopNavProps {

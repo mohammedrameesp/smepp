@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { hrProfileSchema } from '@/lib/validations/hr-profile';
+import { hrProfileSchema } from '@/features/employees/validations/hr-profile';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { reinitializeMemberLeaveBalances } from '@/features/leave/lib/leave-balance-init';

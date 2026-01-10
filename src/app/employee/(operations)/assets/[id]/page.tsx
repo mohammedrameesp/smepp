@@ -28,7 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { formatDate } from '@/lib/date-format';
+import { formatDate } from '@/lib/core/datetime';
 import { AssetMaintenanceRecords, AssetStatusCard } from '@/features/assets';
 import { AssetRequestDialog, AssetReturnDialog } from '@/features/asset-requests';
 import {
@@ -44,6 +44,8 @@ import {
   XCircle,
 } from 'lucide-react';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { DetailCard } from '@/components/ui/detail-card';
+import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -222,96 +224,50 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Basic Information Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <Package className="h-5 w-5 text-purple-600" />
+            <DetailCard icon={Package} iconColor="purple" title="Basic Information" subtitle="Core asset details">
+              <InfoFieldGrid columns={2}>
+                <InfoField label="Asset Tag" value={asset.assetTag || 'Not specified'} mono />
+                <InfoField label="Type" value={asset.type} />
+                <InfoField label="Category" value={asset.assetCategory?.name || 'Not specified'} />
+                <InfoField label="Brand / Manufacturer" value={asset.brand || 'Not specified'} />
+                <div className="sm:col-span-2">
+                  <InfoField label="Model / Version" value={asset.model} />
                 </div>
-                <div>
-                  <h2 className="font-semibold text-slate-900">Basic Information</h2>
-                  <p className="text-sm text-slate-500">Core asset details</p>
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Asset Tag</p>
-                    <p className="font-mono font-semibold text-slate-900">{asset.assetTag || 'Not specified'}</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Type</p>
-                    <p className="font-semibold text-slate-900">{asset.type}</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Category</p>
-                    <p className="font-semibold text-slate-900">{asset.assetCategory?.name || 'Not specified'}</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Brand / Manufacturer</p>
-                    <p className="font-semibold text-slate-900">{asset.brand || 'Not specified'}</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-xl sm:col-span-2">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Model / Version</p>
-                    <p className="font-semibold text-slate-900">{asset.model}</p>
-                  </div>
-                </div>
+              </InfoFieldGrid>
 
-                {asset.configuration && (
-                  <div className="mt-4">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Configuration/Specs</p>
-                    <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">{asset.configuration}</div>
-                  </div>
-                )}
-              </div>
-            </div>
+              {asset.configuration && (
+                <div className="mt-4">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Configuration/Specs</p>
+                  <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">{asset.configuration}</div>
+                </div>
+              )}
+            </DetailCard>
 
             {/* Procurement Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                  <DollarSign className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-slate-900">Procurement Information</h2>
-                  <p className="text-sm text-slate-500">Purchase and warranty details</p>
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Purchase Date</p>
-                    <p className="font-semibold text-slate-900">{formatDate(asset.purchaseDate, 'Not specified')}</p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-xl">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Warranty Expiry</p>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-slate-900">
-                        {asset.warrantyExpiry ? formatDate(asset.warrantyExpiry) : 'Not specified'}
-                      </p>
-                      {asset.warrantyExpiry && asset.warrantyExpiry < new Date() && (
-                        <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-xs font-medium rounded-full">Expired</span>
-                      )}
-                    </div>
+            <DetailCard icon={DollarSign} iconColor="emerald" title="Procurement Information" subtitle="Purchase and warranty details">
+              <InfoFieldGrid columns={2}>
+                <InfoField label="Purchase Date" value={formatDate(asset.purchaseDate, 'Not specified')} />
+                <div className="p-4 bg-slate-50 rounded-xl">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Warranty Expiry</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-slate-900">
+                      {asset.warrantyExpiry ? formatDate(asset.warrantyExpiry) : 'Not specified'}
+                    </p>
+                    {asset.warrantyExpiry && asset.warrantyExpiry < new Date() && (
+                      <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-xs font-medium rounded-full">Expired</span>
+                    )}
                   </div>
                 </div>
-              </div>
-            </div>
+              </InfoFieldGrid>
+            </DetailCard>
 
             {/* Notes */}
             {asset.notes && (
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <FileText className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <h2 className="font-semibold text-slate-900">Notes</h2>
+              <DetailCard icon={FileText} iconColor="blue" title="Notes">
+                <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">
+                  {asset.notes}
                 </div>
-                <div className="p-5">
-                  <div className="p-4 bg-slate-50 rounded-xl text-slate-700 whitespace-pre-wrap">
-                    {asset.notes}
-                  </div>
-                </div>
-              </div>
+              </DetailCard>
             )}
 
             {/* Maintenance Records */}
@@ -407,17 +363,9 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
 
             {/* Location Card - Only show for non-shared assets since shared assets show location in the Assignment card */}
             {asset.location && !asset.isShared && (
-              <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                  <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
-                    <MapPin className="h-5 w-5 text-rose-600" />
-                  </div>
-                  <h2 className="font-semibold text-slate-900">Location</h2>
-                </div>
-                <div className="p-5">
-                  <p className="text-slate-700">{asset.location.name}</p>
-                </div>
-              </div>
+              <DetailCard icon={MapPin} iconColor="rose" title="Location">
+                <p className="text-slate-700">{asset.location.name}</p>
+              </DetailCard>
             )}
           </div>
         </div>

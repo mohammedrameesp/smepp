@@ -29,7 +29,8 @@ import { updateAssetSchema } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { recordAssetUpdate } from '@/features/assets';
 import { sendEmail } from '@/lib/core/email';
-import { assetAssignmentEmail, assetAssignmentPendingEmail } from '@/lib/email-templates';
+import { assetAssignmentEmail } from '@/lib/core/email-templates';
+import { assetAssignmentPendingEmail } from '@/lib/core/asset-request-emails';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import {
   calculateAssetPriceQAR,
@@ -269,7 +270,9 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     let newMemberData: { id: string; name: string | null; email: string; canLogin: boolean } | null = null;
 
     if (data.assignedMemberId) {
-      const assignedMember = await prisma.teamMember.findFirst({
+      // SECURITY: Use tenant-scoped prisma to prevent IDOR attacks
+      // An attacker could try to assign an asset to a member from another tenant
+      const assignedMember = await db.teamMember.findFirst({
         where: {
           id: data.assignedMemberId,
         },

@@ -6,8 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { calculateGratuity, projectGratuity, getServiceDurationText } from '@/lib/payroll/gratuity';
-import { parseDecimal } from '@/lib/payroll/utils';
+import { calculateGratuity, projectGratuity, getServiceDurationText } from '@/features/payroll/lib/gratuity';
+import { parseDecimal } from '@/features/payroll/lib/utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getGratuityHandler(request: NextRequest, context: APIContext) {

@@ -1,4 +1,4 @@
-import { formatDate, formatDateTime } from '@/lib/date-format';
+import { formatDate, formatDateTime } from '@/lib/core/datetime';
 
 describe('Date Formatting Utilities', () => {
   describe('formatDate', () => {

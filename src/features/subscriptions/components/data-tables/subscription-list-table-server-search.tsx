@@ -51,7 +51,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { SubscriptionActions } from '../subscription-actions';
-import { formatDate } from '@/lib/date-format';
+import { formatDate } from '@/lib/core/datetime';
 import { formatBillingCycle, getNextRenewalDate, getDaysUntilRenewal } from '@/features/subscriptions';
 import { formatCurrency } from '@/lib/core/currency';
 import { Loader2 } from 'lucide-react';

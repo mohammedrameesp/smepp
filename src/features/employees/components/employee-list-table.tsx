@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertTriangle, Download, User, Package, CreditCard, Clock, RefreshCw, CheckCircle2, Circle } from 'lucide-react';
 import { EmployeeActions } from './employee-actions';
 import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
-import { calculateTenure } from '@/lib/hr-utils';
+import { calculateTenure } from '@/features/employees/lib/hr-utils';
 
 interface Employee {
   id: string;

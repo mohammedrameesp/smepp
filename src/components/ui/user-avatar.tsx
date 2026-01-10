@@ -8,7 +8,7 @@
 
 import * as React from 'react';
 import { User } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 interface UserAvatarProps {
   /** User's name for generating initials */

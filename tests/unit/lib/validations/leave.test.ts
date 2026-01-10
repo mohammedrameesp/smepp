@@ -18,7 +18,7 @@ import {
   leaveBalanceQuerySchema,
   teamCalendarQuerySchema,
   leaveTypeQuerySchema,
-} from '@/lib/validations/leave';
+} from '@/features/leave/validations/leave';
 
 describe('Leave Validation Schemas', () => {
   describe('createLeaveTypeSchema', () => {

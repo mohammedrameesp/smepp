@@ -8,7 +8,8 @@ import { prisma } from '@/lib/core/prisma';
 import { logAction } from '@/lib/core/activity';
 import { generateUniqueSupplierCode } from '@/features/suppliers';
 import { sendEmail } from '@/lib/core/email';
-import { supplierApprovalEmail } from '@/lib/email-templates';
+import { handleEmailFailure } from '@/lib/core/email-failure-handler';
+import { supplierApprovalEmail } from '@/lib/core/email-templates';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import logger from '@/lib/core/log';
@@ -74,20 +75,23 @@ async function approveSupplierHandler(request: NextRequest, context: APIContext)
 
     // Send approval email to supplier (non-blocking)
     if (supplier.primaryContactEmail) {
-      try {
-        // Get org name for email (Organization is not a tenant model, use raw prisma)
-        const org = await prisma.organization.findUnique({
-          where: { id: tenantId },
-          select: { name: true, primaryColor: true },
-        });
+      // Get org name for email (Organization is not a tenant model, use raw prisma)
+      const org = await prisma.organization.findUnique({
+        where: { id: tenantId },
+        select: { name: true, slug: true, primaryColor: true },
+      });
+      const orgName = org?.name || 'Organization';
+      const orgSlug = org?.slug || 'app';
 
-        const emailContent = supplierApprovalEmail({
-          companyName: supplier.name,
-          serviceCategory: supplier.category || 'General',
-          approvalDate: new Date(),
-          orgName: org?.name || 'Organization',
-          primaryColor: org?.primaryColor || undefined,
-        });
+      const emailContent = supplierApprovalEmail({
+        companyName: supplier.name,
+        serviceCategory: supplier.category || 'General',
+        approvalDate: new Date(),
+        orgName,
+        primaryColor: org?.primaryColor || undefined,
+      });
+
+      try {
         await sendEmail({
           to: supplier.primaryContactEmail,
           subject: emailContent.subject,
@@ -96,7 +100,24 @@ async function approveSupplierHandler(request: NextRequest, context: APIContext)
         });
       } catch (emailError) {
         logger.error({ error: emailError instanceof Error ? emailError.message : 'Unknown error', supplierId: supplier.id }, 'Failed to send supplier approval email');
-        // Don't fail the request if email fails
+
+        // Notify admins and super admin about email failure
+        await handleEmailFailure({
+          module: 'suppliers',
+          action: 'approval',
+          tenantId,
+          organizationName: orgName,
+          organizationSlug: orgSlug,
+          recipientEmail: supplier.primaryContactEmail,
+          recipientName: supplier.primaryContactName || supplier.name,
+          emailSubject: emailContent.subject,
+          error: emailError instanceof Error ? emailError.message : 'Unknown error',
+          metadata: {
+            supplierId: supplier.id,
+            suppCode: supplier.suppCode,
+            supplierName: supplier.name,
+          },
+        }).catch(() => {}); // Non-blocking
       }
     }
 

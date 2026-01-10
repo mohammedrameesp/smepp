@@ -9,6 +9,7 @@ import crypto from 'crypto';
 import { prisma } from '@/lib/core/prisma';
 import { encode } from 'next-auth/jwt';
 import { isAccountLocked, clearFailedLogins, isTeamMemberLocked, clearTeamMemberFailedLogins } from '@/lib/security/account-lockout';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENCRYPTION CONFIGURATION
@@ -32,10 +33,7 @@ function getOAuthEncryptionKey(): string {
     if (!fallback) {
       throw new Error('CRITICAL: OAUTH_ENCRYPTION_KEY or NEXTAUTH_SECRET environment variable is required');
     }
-    console.warn(
-      'WARNING: OAUTH_ENCRYPTION_KEY not set. Using NEXTAUTH_SECRET as fallback. ' +
-      'Set OAUTH_ENCRYPTION_KEY in production for better security.'
-    );
+    logger.warn('OAUTH_ENCRYPTION_KEY not set, using NEXTAUTH_SECRET as fallback');
     return fallback;
   }
 
@@ -82,7 +80,7 @@ export function decrypt(encryptedText: string): string {
     decrypted += decipher.final('utf8');
     return decrypted;
   } catch (error) {
-    console.error('Failed to decrypt OAuth secret:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to decrypt OAuth secret');
     return '';
   }
 }
@@ -100,6 +98,51 @@ interface OAuthState {
   inviteToken?: string; // For invite signup flow
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// NONCE TRACKING (Replay Attack Prevention)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// In-memory store for used nonces (prevents replay attacks)
+// In production, consider using Redis for distributed deployments
+const usedNonces = new Map<string, number>();
+
+// Clean up expired nonces every 5 minutes
+const NONCE_CLEANUP_INTERVAL = 5 * 60 * 1000;
+const NONCE_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes (matches state expiry)
+
+let cleanupIntervalId: NodeJS.Timeout | null = null;
+
+function startNonceCleanup() {
+  if (cleanupIntervalId) return;
+  cleanupIntervalId = setInterval(() => {
+    const now = Date.now();
+    for (const [nonce, timestamp] of usedNonces.entries()) {
+      if (now - timestamp > NONCE_EXPIRY_MS) {
+        usedNonces.delete(nonce);
+      }
+    }
+  }, NONCE_CLEANUP_INTERVAL);
+  // Don't prevent Node.js from exiting
+  if (cleanupIntervalId.unref) {
+    cleanupIntervalId.unref();
+  }
+}
+
+// Start cleanup on module load
+startNonceCleanup();
+
+/**
+ * Check if a nonce has been used (and mark it as used if not)
+ * Returns true if the nonce is valid (not previously used), false if it's a replay
+ */
+function consumeNonce(nonce: string): boolean {
+  if (usedNonces.has(nonce)) {
+    return false; // Replay detected
+  }
+  usedNonces.set(nonce, Date.now());
+  return true;
+}
+
 /**
  * Encrypt OAuth state for the state parameter
  */
@@ -115,8 +158,10 @@ export function encryptState(data: Omit<OAuthState, 'timestamp' | 'nonce'>): str
 
 /**
  * Decrypt and validate OAuth state
+ * @param encrypted - The encrypted state string
+ * @param consumeOnSuccess - If true, marks the nonce as used (default: true for callbacks)
  */
-export function decryptState(encrypted: string): OAuthState | null {
+export function decryptState(encrypted: string, consumeOnSuccess: boolean = true): OAuthState | null {
   try {
     const json = decrypt(encrypted);
     if (!json) return null;
@@ -126,13 +171,20 @@ export function decryptState(encrypted: string): OAuthState | null {
     // Validate timestamp (state expires after 10 minutes)
     const TEN_MINUTES = 10 * 60 * 1000;
     if (Date.now() - state.timestamp > TEN_MINUTES) {
-      console.error('OAuth state expired');
+      logger.warn('OAuth state expired');
+      return null;
+    }
+
+    // SECURITY FIX: Prevent replay attacks by tracking used nonces
+    // Each OAuth state can only be used once
+    if (consumeOnSuccess && !consumeNonce(state.nonce)) {
+      logger.warn('OAuth state replay detected - nonce already used');
       return null;
     }
 
     return state;
   } catch (error) {
-    console.error('Failed to decrypt OAuth state:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to decrypt OAuth state');
     return null;
   }
 }
@@ -309,7 +361,29 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | n
           canLogin: true,
         },
       });
+
+      // AUDIT: Log new OAuth account creation
+      logger.info({
+        event: 'OAUTH_ACCOUNT_CREATED',
+        teamMemberId: teamMember.id,
+        email: normalizedEmail,
+        orgId,
+        provider: userInfo.image?.includes('google') ? 'google' : 'azure',
+      }, 'New OAuth account created for TeamMember');
     } else {
+      // SECURITY AUDIT: Log OAuth login to existing account
+      // This helps detect potential account takeover attempts
+      const isFirstOAuthLogin = !teamMember.image && userInfo.image;
+      if (isFirstOAuthLogin) {
+        logger.info({
+          event: 'OAUTH_ACCOUNT_LINKED',
+          teamMemberId: teamMember.id,
+          email: normalizedEmail,
+          orgId,
+          provider: userInfo.image?.includes('google') ? 'google' : 'azure',
+        }, 'OAuth linked to existing TeamMember account');
+      }
+
       // Update TeamMember info if changed
       teamMember = await prisma.teamMember.update({
         where: { id: teamMember.id },
@@ -332,6 +406,14 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | n
   // ═══════════════════════════════════════════════════════════════════════════════
   let user = await prisma.user.findUnique({
     where: { email: normalizedEmail },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      image: true,
+      emailVerified: true,
+      passwordHash: true,
+    },
   });
 
   if (!user) {
@@ -343,7 +425,27 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | n
         emailVerified: userInfo.emailVerified ? new Date() : null,
       },
     });
+
+    // AUDIT: Log new OAuth user creation
+    logger.info({
+      event: 'OAUTH_USER_CREATED',
+      userId: user.id,
+      email: normalizedEmail,
+      provider: userInfo.image?.includes('google') ? 'google' : 'azure',
+    }, 'New OAuth user account created');
   } else {
+    // SECURITY AUDIT: Log OAuth login to existing account
+    const isFirstOAuthLogin = !user.image && userInfo.image;
+    if (isFirstOAuthLogin) {
+      logger.info({
+        event: 'OAUTH_USER_LINKED',
+        userId: user.id,
+        email: normalizedEmail,
+        hasPassword: !!user.passwordHash,
+        provider: userInfo.image?.includes('google') ? 'google' : 'azure',
+      }, 'OAuth linked to existing user account');
+    }
+
     // Update user info if changed
     user = await prisma.user.update({
       where: { id: user.id },
@@ -518,4 +620,20 @@ export function getTenantUrl(subdomain: string, path: string = '/admin'): string
   const domain = getAppDomain();
   const protocol = domain.includes('localhost') ? 'http' : 'https';
   return `${protocol}://${subdomain}.${domain}${path}`;
+}
+
+/**
+ * Validate that the user's email domain is allowed for the organization
+ */
+export function validateEmailDomain(
+  email: string,
+  allowedDomains: string[],
+  enforceDomainRestriction: boolean
+): boolean {
+  if (!enforceDomainRestriction || allowedDomains.length === 0) {
+    return true;
+  }
+
+  const emailDomain = email.split('@')[1]?.toLowerCase();
+  return allowedDomains.some(d => d.toLowerCase() === emailDomain);
 }

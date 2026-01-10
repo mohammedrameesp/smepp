@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Role } from '@prisma/client';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { approveLeaveRequestSchema } from '@/lib/validations/leave';
+import { approveLeaveRequestSchema } from '@/features/leave/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';

@@ -1,87 +1,15 @@
 // Asset Request Email Templates
-// Default brand color: #73c5d1 (Durj teal)
+// Default brand color: #73c5d1 (Durj teal) - overrides the standard blue
 // Organization's primaryColor can override this via the primaryColor parameter
 
+import {
+  escapeHtml,
+  getTenantPortalUrl,
+  emailWrapper,
+} from './email-utils';
+
+// Local brand color for asset request emails (teal instead of blue)
 const DEFAULT_BRAND_COLOR = '#73c5d1';
-const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
-
-/**
- * Escape HTML special characters to prevent XSS attacks
- * Use this for any user-provided content interpolated into email HTML
- */
-function escapeHtml(text: string | null | undefined): string {
-  if (!text) return '';
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-/**
- * Get tenant-specific portal URL
- * @param orgSlug - Organization slug for subdomain
- * @param path - Optional path to append (e.g., '/admin', '/employee')
- */
-function getTenantPortalUrl(orgSlug: string, path: string = ''): string {
-  const isLocalhost = APP_DOMAIN.includes('localhost');
-  const protocol = isLocalhost ? 'http' : 'https';
-  return `${protocol}://${orgSlug}.${APP_DOMAIN}${path}`;
-}
-
-function formatTimestamp(timezone: string = 'Asia/Qatar'): string {
-  return new Date().toLocaleString('en-GB', {
-    timeZone: timezone,
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function emailWrapper(content: string, orgName: string, brandColor?: string): string {
-  const color = brandColor || DEFAULT_BRAND_COLOR;
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-    <!-- Header -->
-    <tr>
-      <td style="background-color: ${color}; padding: 30px 40px; text-align: center;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold;">${orgName}</h1>
-      </td>
-    </tr>
-
-    <!-- Main Content -->
-    <tr>
-      <td style="padding: 40px;">
-        ${content}
-      </td>
-    </tr>
-
-    <!-- Footer -->
-    <tr>
-      <td style="background-color: #f8f9fa; padding: 25px 40px; text-align: center; border-top: 1px solid #eeeeee;">
-        <p style="color: #888888; font-size: 12px; margin: 0 0 10px 0;">
-          This is an automated message from ${orgName}.
-        </p>
-        <p style="color: #888888; font-size: 12px; margin: 0;">
-          Generated on ${formatTimestamp()}
-        </p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-`.trim();
-}
 
 interface AssetRequestEmailData {
   requestNumber: string;

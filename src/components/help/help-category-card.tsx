@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import * as Icons from 'lucide-react';
 import { HelpCircle, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import type { CategoryInfo } from '@/lib/help/help-categories';
 
 interface HelpCategoryCardProps {

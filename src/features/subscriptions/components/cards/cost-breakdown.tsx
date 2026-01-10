@@ -33,7 +33,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { formatDate } from '@/lib/date-format';
+import { formatDate } from '@/lib/core/datetime';
 import { formatCurrency } from '@/lib/core/currency';
 
 interface ActivePeriod {

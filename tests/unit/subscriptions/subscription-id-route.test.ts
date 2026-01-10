@@ -217,23 +217,23 @@ describe('Subscription [id] Route Tests', () => {
 
       it('should document that ADMIN can view any subscription', () => {
         // From route: tenant.orgRole === 'ADMIN' allows access
-        const orgRole: OrgRole = 'ADMIN';
-        const isOwnerOrAdmin = orgRole === 'OWNER' || orgRole === 'ADMIN';
+        const orgRole = 'ADMIN' as OrgRole;
+        const isOwnerOrAdmin = ['OWNER', 'ADMIN'].includes(orgRole);
         expect(isOwnerOrAdmin).toBe(true);
       });
 
       it('should document that MEMBER can only view assigned subscriptions', () => {
         // From route: non-admin users need assignedMemberId === userId
-        const orgRole: OrgRole = 'MEMBER';
-        const isOwnerOrAdmin = orgRole === 'OWNER' || orgRole === 'ADMIN';
+        const orgRole = 'MEMBER' as OrgRole;
+        const isOwnerOrAdmin = ['OWNER', 'ADMIN'].includes(orgRole);
         expect(isOwnerOrAdmin).toBe(false);
         // MEMBER must be the assigned member to view
       });
 
       it('should document that MANAGER can only view assigned subscriptions', () => {
         // Note: MANAGER is NOT included in admin check (may be intentional)
-        const orgRole: OrgRole = 'MANAGER';
-        const isOwnerOrAdmin = orgRole === 'OWNER' || orgRole === 'ADMIN';
+        const orgRole = 'MANAGER' as OrgRole;
+        const isOwnerOrAdmin = ['OWNER', 'ADMIN'].includes(orgRole);
         expect(isOwnerOrAdmin).toBe(false);
         // MANAGER must be the assigned member to view (per current implementation)
       });
@@ -290,8 +290,8 @@ describe('Subscription [id] Route Tests', () => {
       // Logic from route:
       // if (data.assignedMemberId !== currentSubscription.assignedMemberId)
       //   prisma.subscriptionHistory.create({ action: 'REASSIGNED' })
-      const currentMemberId = 'member-123';
-      const newMemberId = 'member-456';
+      const currentMemberId: string | null = 'member-123';
+      const newMemberId: string | null = 'member-456';
       const shouldCreateHistory = newMemberId !== currentMemberId;
       expect(shouldCreateHistory).toBe(true);
     });
@@ -308,7 +308,7 @@ describe('Subscription [id] Route Tests', () => {
 
     it('should not create history when member stays same and no date change', () => {
       const currentMemberId = 'member-123';
-      const data = { serviceName: 'New Name' }; // No assignment changes
+      const data: { serviceName: string; assignedMemberId?: string } = { serviceName: 'New Name' }; // No assignment changes
       const hasAssignmentChange = data.assignedMemberId !== undefined;
       expect(hasAssignmentChange).toBe(false);
     });

@@ -484,7 +484,7 @@ describe('Payroll API Tests', () => {
 
     it('should only generate WPS for APPROVED or PAID payroll', () => {
       const canGenerateWps = (status: PayrollStatus) =>
-        [PayrollStatus.APPROVED, PayrollStatus.PAID].includes(status);
+        ([PayrollStatus.APPROVED, PayrollStatus.PAID] as PayrollStatus[]).includes(status);
 
       expect(canGenerateWps(PayrollStatus.APPROVED)).toBe(true);
       expect(canGenerateWps(PayrollStatus.PAID)).toBe(true);

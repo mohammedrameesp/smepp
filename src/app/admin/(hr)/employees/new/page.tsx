@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RefreshCw, AlertTriangle, User, Briefcase, Shield, Mail, Building2, Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { createUserSchema, type CreateUserInput } from '@/lib/validations/users';
+import { createUserSchema, type CreateUserInput } from '@/features/users/validations/users';
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {

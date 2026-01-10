@@ -1,7 +1,7 @@
 'use client';
 
 import { Check, Lightbulb, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import type { WorkflowStep } from '@/lib/help/help-types';
 
 interface HelpStepByStepProps {

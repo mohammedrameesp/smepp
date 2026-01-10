@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Loader2, Clock, CheckCircle, XCircle, FileCheck, Trash2, Pencil, FileText, ShoppingCart, DollarSign } from 'lucide-react';
 import { StatusBadge, PriorityBadge } from '@/features/purchase-requests/components';
-import { getStatusLabel, canDeleteRequest, canEditRequest } from '@/lib/purchase-request-utils';
+import { DetailCard } from '@/components/ui/detail-card';
+import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
+import { getStatusLabel, canDeleteRequest, canEditRequest } from '@/features/purchase-requests/lib/purchase-request-utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -290,26 +292,11 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
 
         <div className="space-y-6">
           {/* Request Details */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                <FileText className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Request Details</h2>
-                <p className="text-sm text-slate-500">Purchase request information</p>
-              </div>
-            </div>
-            <div className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Request Date</p>
-                  <p className="font-semibold text-slate-900">{formatDate(request.requestDate)}</p>
-                </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Needed By</p>
-                  <p className="font-semibold text-slate-900">{formatDate(request.neededByDate)}</p>
-                </div>
+          <DetailCard icon={FileText} iconColor="purple" title="Request Details" subtitle="Purchase request information">
+            <div className="space-y-4">
+              <InfoFieldGrid columns={2}>
+                <InfoField label="Request Date" value={formatDate(request.requestDate)} />
+                <InfoField label="Needed By" value={formatDate(request.neededByDate)} />
                 <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200">
                   <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide mb-1">Total Amount</p>
                   <p className="font-semibold text-emerald-700 text-lg">{formatAmount(request.totalAmount, request.currency)}</p>
@@ -317,11 +304,8 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
                     <p className="text-xs text-emerald-600 mt-1">≈ QAR {formatAmount(request.totalAmountQAR, 'QAR').replace(' QAR', '')}</p>
                   )}
                 </div>
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Items</p>
-                  <p className="font-semibold text-slate-900">{request.items.length}</p>
-                </div>
-              </div>
+                <InfoField label="Items" value={request.items.length.toString()} />
+              </InfoFieldGrid>
 
               {request.description && (
                 <div>
@@ -337,7 +321,7 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
                 </div>
               )}
             </div>
-          </div>
+          </DetailCard>
 
           {/* Review Notes (if reviewed) */}
           {request.reviewedBy && (
@@ -411,104 +395,82 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
           )}
 
           {/* Line Items */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                <ShoppingCart className="h-5 w-5 text-indigo-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Line Items ({request.items.length})</h2>
-                <p className="text-sm text-slate-500">Requested items and pricing</p>
-              </div>
-            </div>
-            <div className="p-5">
-              <div className="rounded-xl border border-slate-200 overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">#</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead className="text-right">Qty</TableHead>
-                      <TableHead className="text-right">Unit Price</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
+          <DetailCard icon={ShoppingCart} iconColor="indigo" title={`Line Items (${request.items.length})`} subtitle="Requested items and pricing">
+            <div className="rounded-xl border border-slate-200 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="text-right">Qty</TableHead>
+                    <TableHead className="text-right">Unit Price</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {request.items.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-mono text-sm">{item.itemNumber}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-slate-900">{item.description}</p>
+                          {item.supplier && (
+                            <p className="text-xs text-slate-500">Supplier: {item.supplier}</p>
+                          )}
+                          {item.notes && (
+                            <p className="text-xs text-slate-500">{item.notes}</p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-600">{item.category || '-'}</TableCell>
+                      <TableCell className="text-right">{item.quantity}</TableCell>
+                      <TableCell className="text-right">{formatAmount(item.unitPrice, item.currency)}</TableCell>
+                      <TableCell className="text-right font-medium">{formatAmount(item.totalPrice, item.currency)}</TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {request.items.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-mono text-sm">{item.itemNumber}</TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium text-slate-900">{item.description}</p>
-                            {item.supplier && (
-                              <p className="text-xs text-slate-500">Supplier: {item.supplier}</p>
-                            )}
-                            {item.notes && (
-                              <p className="text-xs text-slate-500">{item.notes}</p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-slate-600">{item.category || '-'}</TableCell>
-                        <TableCell className="text-right">{item.quantity}</TableCell>
-                        <TableCell className="text-right">{formatAmount(item.unitPrice, item.currency)}</TableCell>
-                        <TableCell className="text-right font-medium">{formatAmount(item.totalPrice, item.currency)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          </div>
+          </DetailCard>
 
           {/* History */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Clock className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">History</h2>
-                <p className="text-sm text-slate-500">Request activity timeline</p>
-              </div>
-            </div>
-            <div className="p-5">
-              <div className="space-y-4">
-                {request.history.map((entry) => (
-                  <div key={entry.id} className="flex gap-4 pb-4 border-b border-slate-200 last:border-0">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
-                      {entry.action === 'CREATED' && <Clock className="h-4 w-4 text-slate-500" />}
-                      {entry.newStatus === 'APPROVED' && <CheckCircle className="h-4 w-4 text-emerald-500" />}
-                      {entry.newStatus === 'REJECTED' && <XCircle className="h-4 w-4 text-rose-500" />}
-                      {entry.newStatus === 'COMPLETED' && <FileCheck className="h-4 w-4 text-slate-500" />}
-                      {entry.action === 'STATUS_CHANGED' && !['APPROVED', 'REJECTED', 'COMPLETED'].includes(entry.newStatus || '') && (
-                        <Clock className="h-4 w-4 text-blue-500" />
-                      )}
-                      {entry.action === 'UPDATED' && <Pencil className="h-4 w-4 text-slate-500" />}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-sm text-slate-900">
-                            {entry.action === 'CREATED' && 'Request Created'}
-                            {entry.action === 'STATUS_CHANGED' && `Status changed to ${getStatusLabel(entry.newStatus || '')}`}
-                            {entry.action === 'UPDATED' && 'Request Updated'}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            by {entry.performedBy.name || entry.performedBy.email}
-                          </p>
-                        </div>
-                        <p className="text-xs text-slate-400">{formatDateTime(entry.createdAt)}</p>
-                      </div>
-                      {entry.details && (
-                        <p className="mt-1 text-sm text-slate-600">{entry.details}</p>
-                      )}
-                    </div>
+          <DetailCard icon={Clock} iconColor="blue" title="History" subtitle="Request activity timeline">
+            <div className="space-y-4">
+              {request.history.map((entry) => (
+                <div key={entry.id} className="flex gap-4 pb-4 border-b border-slate-200 last:border-0">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                    {entry.action === 'CREATED' && <Clock className="h-4 w-4 text-slate-500" />}
+                    {entry.newStatus === 'APPROVED' && <CheckCircle className="h-4 w-4 text-emerald-500" />}
+                    {entry.newStatus === 'REJECTED' && <XCircle className="h-4 w-4 text-rose-500" />}
+                    {entry.newStatus === 'COMPLETED' && <FileCheck className="h-4 w-4 text-slate-500" />}
+                    {entry.action === 'STATUS_CHANGED' && !['APPROVED', 'REJECTED', 'COMPLETED'].includes(entry.newStatus || '') && (
+                      <Clock className="h-4 w-4 text-blue-500" />
+                    )}
+                    {entry.action === 'UPDATED' && <Pencil className="h-4 w-4 text-slate-500" />}
                   </div>
-                ))}
-              </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium text-sm text-slate-900">
+                          {entry.action === 'CREATED' && 'Request Created'}
+                          {entry.action === 'STATUS_CHANGED' && `Status changed to ${getStatusLabel(entry.newStatus || '')}`}
+                          {entry.action === 'UPDATED' && 'Request Updated'}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          by {entry.performedBy.name || entry.performedBy.email}
+                        </p>
+                      </div>
+                      <p className="text-xs text-slate-400">{formatDateTime(entry.createdAt)}</p>
+                    </div>
+                    {entry.details && (
+                      <p className="mt-1 text-sm text-slate-600">{entry.details}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          </DetailCard>
         </div>
       </PageContent>
     </>

@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { parseDecimal } from '@/lib/payroll/utils';
+import { parseDecimal } from '@/features/payroll/lib/utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getPayslipHandler(request: NextRequest, context: APIContext) {

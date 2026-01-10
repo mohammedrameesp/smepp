@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Plus, FileText } from 'lucide-react';
 import { LeaveRequestsTable } from '@/features/leave/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { DetailCard } from '@/components/ui/detail-card';
 
 export default async function EmployeeLeaveRequestsPage() {
   const session = await getServerSession(authOptions);
@@ -35,24 +36,13 @@ export default async function EmployeeLeaveRequestsPage() {
       />
 
       <PageContent>
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-              <FileText className="h-5 w-5 text-indigo-600" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-slate-900">All Requests</h2>
-              <p className="text-sm text-slate-500">Filter and search through your leave requests</p>
-            </div>
-          </div>
-          <div className="p-5">
-            <LeaveRequestsTable
-              showUser={false}
-              memberId={session.user.id}
-              basePath="/employee/leave"
-            />
-          </div>
-        </div>
+        <DetailCard icon={FileText} iconColor="indigo" title="All Requests" subtitle="Filter and search through your leave requests">
+          <LeaveRequestsTable
+            showUser={false}
+            memberId={session.user.id}
+            basePath="/employee/leave"
+          />
+        </DetailCard>
       </PageContent>
     </>
   );

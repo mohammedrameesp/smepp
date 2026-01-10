@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { getMemberSubscriptionHistory, getNextRenewalDate, getDaysUntilRenewal } from '@/features/subscriptions';
 import { getMemberAssetHistory } from '@/features/assets';
-import { getAnnualLeaveDetails } from '@/lib/leave-utils';
+import { getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
 import { format } from 'date-fns';
 import {
   StatCard,
@@ -28,6 +28,7 @@ import {
   QuickActions,
 } from '@/components/employee/dashboard';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -374,34 +375,33 @@ export default async function EmployeeDashboard() {
           title={`${getGreeting()}, ${session.user.name?.split(' ')[0]}!`}
           subtitle={tenure ? `${format(new Date(), 'EEEE, MMMM d, yyyy')} • ${tenure} with the company` : format(new Date(), 'EEEE, MMMM d, yyyy')}
         >
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-              <Palmtree className="h-4 w-4 text-blue-400" />
-              <span className="text-blue-400 text-sm font-medium">
-                {totalAvailableLeaveDays.toFixed(1)} leave days
-              </span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-              <Laptop className="h-4 w-4 text-emerald-400" />
-              <span className="text-emerald-400 text-sm font-medium">
-                {activeAssets.length} assets
-              </span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-500/20 rounded-lg">
-              <Clock className="h-4 w-4 text-violet-400" />
-              <span className="text-violet-400 text-sm font-medium">
-                {totalPendingRequests} pending
-              </span>
-            </div>
-            {documentAlerts.length > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-                <AlertTriangle className="h-4 w-4 text-amber-400" />
-                <span className="text-amber-400 text-sm font-medium">
-                  {documentAlerts.length} {documentAlerts.length === 1 ? 'alert' : 'alerts'}
-                </span>
-              </div>
-            )}
-          </div>
+          <StatChipGroup className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+            <StatChip
+              value={totalAvailableLeaveDays.toFixed(1)}
+              label="leave days"
+              color="blue"
+              icon={<Palmtree className="h-4 w-4" />}
+            />
+            <StatChip
+              value={activeAssets.length}
+              label="assets"
+              color="emerald"
+              icon={<Laptop className="h-4 w-4" />}
+            />
+            <StatChip
+              value={totalPendingRequests}
+              label="pending"
+              color="purple"
+              icon={<Clock className="h-4 w-4" />}
+            />
+            <StatChip
+              value={documentAlerts.length}
+              label={documentAlerts.length === 1 ? 'alert' : 'alerts'}
+              color="amber"
+              icon={<AlertTriangle className="h-4 w-4" />}
+              hideWhenZero
+            />
+          </StatChipGroup>
         </PageHeader>
 
         <PageContent>

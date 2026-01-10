@@ -27,6 +27,7 @@ import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { AssetRequestStatus } from '@prisma/client';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { EmployeeAssetListTableServerSearch } from '@/features/assets';
 import { Inbox } from 'lucide-react';
 import Link from 'next/link';
@@ -81,33 +82,18 @@ export default async function EmployeeAllAssetsPage() {
         title="Assets"
         subtitle="Browse and search company assets"
       >
-        {/* Stats Summary Badges */}
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          <Link
-            href="/employee/my-assets?tab=assets"
-            className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors"
-          >
-            <span className="text-blue-400 text-sm font-medium">
-              {myAssetsCount} my assets
-            </span>
-          </Link>
-          {requestedCount > 0 && (
-            <Link
-              href="/employee/asset-requests"
-              className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg transition-colors"
-            >
-              <Inbox className="h-4 w-4 text-amber-400" />
-              <span className="text-amber-400 text-sm font-medium">
-                {requestedCount} pending
-              </span>
-            </Link>
-          )}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-            <span className="text-slate-400 text-sm font-medium">
-              {totalCount} total
-            </span>
-          </div>
-        </div>
+        <StatChipGroup>
+          <StatChip value={myAssetsCount} label="my assets" color="blue" href="/employee/my-assets?tab=assets" />
+          <StatChip
+            value={requestedCount}
+            label="pending"
+            color="amber"
+            icon={<Inbox className="h-4 w-4" />}
+            href="/employee/asset-requests"
+            hideWhenZero
+          />
+          <StatChip value={totalCount} label="total" color="slate" />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

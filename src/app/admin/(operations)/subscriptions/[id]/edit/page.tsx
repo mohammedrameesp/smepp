@@ -50,7 +50,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { DatePicker } from '@/components/ui/date-picker';
-import { toInputDateString } from '@/lib/date-format';
+import { toInputDateString } from '@/lib/core/datetime';
 import { updateSubscriptionSchema, type UpdateSubscriptionRequest } from '@/features/subscriptions';
 
 // Default exchange rates to QAR (fallback if not set in settings)

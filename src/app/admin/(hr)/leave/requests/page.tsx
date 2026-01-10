@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { LeaveRequestsTable } from '@/features/leave/components';
 import { Calendar, Plus } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function AdminLeaveRequestsPage() {
   const session = await getServerSession(authOptions);
@@ -57,27 +58,12 @@ export default async function AdminLeaveRequestsPage() {
           </>
         }
       >
-        {/* Stats Summary */}
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          {pendingCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-              <span className="text-amber-400 text-sm font-medium">{pendingCount} pending</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-            <span className="text-emerald-400 text-sm font-medium">{approvedCount} approved</span>
-          </div>
-          {rejectedCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/20 rounded-lg">
-              <span className="text-rose-400 text-sm font-medium">{rejectedCount} rejected</span>
-            </div>
-          )}
-          {onLeaveToday > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-              <span className="text-blue-400 text-sm font-medium">{onLeaveToday} on leave today</span>
-            </div>
-          )}
-        </div>
+        <StatChipGroup>
+          <StatChip value={pendingCount} label="pending" color="amber" hideWhenZero />
+          <StatChip value={approvedCount} label="approved" color="emerald" />
+          <StatChip value={rejectedCount} label="rejected" color="rose" hideWhenZero />
+          <StatChip value={onLeaveToday} label="on leave today" color="blue" hideWhenZero />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

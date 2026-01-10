@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { COUNTRY_CODES } from '@/lib/data/constants';
 import { ChevronDown, Search } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 interface PhoneInputProps {
   codeValue: string;

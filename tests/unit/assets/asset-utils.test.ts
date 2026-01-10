@@ -92,7 +92,7 @@ describe('Asset Utils Tests', () => {
         });
 
         expect(assets.length).toBe(1);
-        const latestTag = assets[0].assetTag;
+        const latestTag = assets[0].assetTag!;
         const searchPrefix = 'BCE-CP-25';
         const seqPart = latestTag.substring(searchPrefix.length);
         const currentSequence = parseInt(seqPart, 10);
@@ -178,8 +178,8 @@ describe('Asset Utils Tests', () => {
           take: 1,
         });
 
-        const cpNext = parseInt(cpAssets[0].assetTag.slice(-3)) + 1;
-        const moNext = parseInt(moAssets[0].assetTag.slice(-3)) + 1;
+        const cpNext = parseInt(cpAssets[0].assetTag!.slice(-3)) + 1;
+        const moNext = parseInt(moAssets[0].assetTag!.slice(-3)) + 1;
 
         expect(cpNext).toBe(11);
         expect(moNext).toBe(6);

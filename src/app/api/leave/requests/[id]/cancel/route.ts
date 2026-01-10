@@ -6,9 +6,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { cancelLeaveRequestSchema } from '@/lib/validations/leave';
+import { cancelLeaveRequestSchema } from '@/features/leave/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { canCancelLeaveRequest } from '@/lib/leave-utils';
+import { canCancelLeaveRequest } from '@/features/leave/lib/leave-utils';
 import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 

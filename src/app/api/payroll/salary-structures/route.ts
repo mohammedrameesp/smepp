@@ -6,9 +6,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { createSalaryStructureSchema, salaryStructureQuerySchema } from '@/lib/validations/payroll';
+import { createSalaryStructureSchema, salaryStructureQuerySchema } from '@/features/payroll/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { calculateGrossSalary, parseDecimal } from '@/lib/payroll/utils';
+import { calculateGrossSalary, parseDecimal } from '@/features/payroll/lib/utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getSalaryStructuresHandler(request: NextRequest, context: APIContext) {

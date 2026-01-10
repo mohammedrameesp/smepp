@@ -22,6 +22,7 @@ import { getMemberSubscriptionHistory } from '@/features/subscriptions';
 import { getMemberAssetHistory } from '@/features/assets';
 import { UserSubscriptionHistory, UserAssetHistory } from '@/features/users/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function MyHoldingsPage() {
   const session = await getServerSession(authOptions);
@@ -55,29 +56,12 @@ export default async function MyHoldingsPage() {
             { label: 'My Holdings' },
           ]}
         >
-          {/* Stats Summary Badges */}
-          <div className="flex flex-wrap items-center gap-4 mt-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-              <span className="text-blue-400 text-sm font-medium">
-                {activeAssets.length} active assets
-              </span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-              <span className="text-emerald-400 text-sm font-medium">
-                {activeSubscriptions.length} active subscriptions
-              </span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-              <span className="text-slate-400 text-sm font-medium">
-                {totalAssets} total assets
-              </span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-              <span className="text-slate-400 text-sm font-medium">
-                {totalSubscriptions} total subscriptions
-              </span>
-            </div>
-          </div>
+          <StatChipGroup>
+            <StatChip value={activeAssets.length} label="active assets" color="blue" />
+            <StatChip value={activeSubscriptions.length} label="active subscriptions" color="emerald" />
+            <StatChip value={totalAssets} label="total assets" color="slate" />
+            <StatChip value={totalSubscriptions} label="total subscriptions" color="slate" />
+          </StatChipGroup>
         </PageHeader>
 
         <PageContent>

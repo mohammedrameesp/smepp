@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AdjustBalanceDialog } from '@/features/leave/components';
 import { Search, ChevronLeft, ChevronRight, Plus, User, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
-import { calculateRemainingBalance, getAnnualLeaveDetails } from '@/lib/leave-utils';
+import { calculateRemainingBalance, getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
 import Link from 'next/link';
 import { toast } from 'sonner';
 

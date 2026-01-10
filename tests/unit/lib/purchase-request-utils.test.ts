@@ -21,7 +21,7 @@ import {
   canEditRequest,
   canDeleteRequest,
   getAllowedStatusTransitions,
-} from '@/lib/purchase-request-utils';
+} from '@/features/purchase-requests/lib/purchase-request-utils';
 
 describe('Purchase Request Utilities', () => {
   // ===== Constants =====

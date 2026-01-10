@@ -34,7 +34,8 @@ import { rejectAssetRequestSchema } from '@/features/asset-requests';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { canAdminProcess } from '@/features/asset-requests';
 import { sendEmail } from '@/lib/core/email';
-import { assetRequestRejectedEmail, assetReturnRejectedEmail } from '@/lib/email-templates';
+import { handleEmailFailure } from '@/lib/core/email-failure-handler';
+import { assetRequestRejectedEmail, assetReturnRejectedEmail } from '@/lib/core/asset-request-emails';
 import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { invalidateTokensForEntity } from '@/lib/whatsapp';
@@ -189,16 +190,16 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 7: Send email notification to user
     // ─────────────────────────────────────────────────────────────────────────────
-    try {
-      const org = await prisma.organization.findUnique({
-        where: { id: tenantId },
-        select: { slug: true, name: true, primaryColor: true },
-      });
-      const orgSlug = org?.slug || 'app';
-      const orgName = org?.name || 'Durj';
-      const primaryColor = org?.primaryColor || undefined;
+    const org = await prisma.organization.findUnique({
+      where: { id: tenantId },
+      select: { slug: true, name: true, primaryColor: true },
+    });
+    const orgSlug = org?.slug || 'app';
+    const orgName = org?.name || 'Durj';
+    const primaryColor = org?.primaryColor || undefined;
 
-      if (assetRequest.member?.email) {
+    if (assetRequest.member?.email) {
+      try {
         if (assetRequest.type === AssetRequestType.EMPLOYEE_REQUEST) {
           const emailData = assetRequestRejectedEmail({
             requestNumber: assetRequest.requestNumber,
@@ -230,13 +231,32 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
           });
           await sendEmail({ to: assetRequest.member.email, subject: emailData.subject, html: emailData.html, text: emailData.text });
         }
+      } catch (emailError) {
+        logger.error({
+          error: emailError instanceof Error ? emailError.message : 'Unknown error',
+          requestId: id,
+          requestNumber: assetRequest.requestNumber,
+        }, 'Failed to send email notification for asset request rejection');
+
+        // Notify admins and super admin about email failure
+        await handleEmailFailure({
+          module: 'asset-requests',
+          action: assetRequest.type === AssetRequestType.RETURN_REQUEST ? 'return-rejection' : 'request-rejection',
+          tenantId,
+          organizationName: orgName,
+          organizationSlug: orgSlug,
+          recipientEmail: assetRequest.member.email,
+          recipientName: assetRequest.member.name || assetRequest.member.email,
+          emailSubject: `Asset ${assetRequest.type === AssetRequestType.RETURN_REQUEST ? 'Return' : 'Request'} Rejected`,
+          error: emailError instanceof Error ? emailError.message : 'Unknown error',
+          metadata: {
+            requestId: id,
+            requestNumber: assetRequest.requestNumber,
+            assetTag: assetRequest.asset.assetTag,
+            rejectionReason: reason,
+          },
+        }).catch(() => {}); // Non-blocking
       }
-    } catch (emailError) {
-      logger.error({
-        error: emailError instanceof Error ? emailError.message : 'Unknown error',
-        requestId: id,
-        requestNumber: assetRequest.requestNumber,
-      }, 'Failed to send email notification for asset request rejection');
     }
 
     // ─────────────────────────────────────────────────────────────────────────────

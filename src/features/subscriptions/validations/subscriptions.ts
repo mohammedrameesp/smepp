@@ -31,7 +31,7 @@
 
 import { z } from 'zod';
 import { BillingCycle, SubscriptionStatus } from '@prisma/client';
-import { getQatarNow, getQatarEndOfDay, dateInputToQatarDate } from '@/lib/qatar-timezone';
+import { getQatarNow, getQatarEndOfDay, dateInputToQatarDate } from '@/lib/core/datetime';
 
 /**
  * Helper schema to validate date string format

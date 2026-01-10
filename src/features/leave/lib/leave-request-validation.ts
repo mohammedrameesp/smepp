@@ -25,7 +25,7 @@ import {
   calculateAvailableBalance,
   meetsServiceRequirement,
   formatServiceDuration,
-} from '@/lib/leave-utils';
+} from '@/features/leave/lib/leave-utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES

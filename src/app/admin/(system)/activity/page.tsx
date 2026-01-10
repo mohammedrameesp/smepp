@@ -6,8 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { redirect } from 'next/navigation';
 
-import { formatDate } from '@/lib/date-format';
+import { formatDate } from '@/lib/core/datetime';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function ActivityLogPage() {
   const session = await getServerSession(authOptions);
@@ -56,11 +57,9 @@ export default async function ActivityLogPage() {
         title="Activity Log"
         subtitle="System activity and audit trail"
       >
-        <div className="flex flex-wrap items-center gap-3 mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-            <span className="text-slate-300 text-sm font-medium">{activities.length} recent activities</span>
-          </div>
-        </div>
+        <StatChipGroup>
+          <StatChip value={activities.length} label="recent activities" color="slate" />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

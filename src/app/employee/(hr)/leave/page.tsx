@@ -7,8 +7,10 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Clock, FileText, Calendar } from 'lucide-react';
 import { LeaveBalanceCard } from '@/features/leave/components';
-import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays, getAnnualLeaveDetails } from '@/lib/leave-utils';
+import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays, getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { DetailCard } from '@/components/ui/detail-card';
 
 export default async function EmployeeLeavePage() {
   const session = await getServerSession(authOptions);
@@ -126,22 +128,21 @@ export default async function EmployeeLeavePage() {
           </Link>
         }
       >
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-            <Calendar className="h-4 w-4 text-emerald-400" />
-            <span className="text-emerald-400 text-sm font-medium">
-              {totalAvailable.toFixed(1)} days available
-            </span>
-          </div>
-          {pendingRequests > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-              <Clock className="h-4 w-4 text-amber-400" />
-              <span className="text-amber-400 text-sm font-medium">
-                {pendingRequests} pending {pendingRequests === 1 ? 'request' : 'requests'}
-              </span>
-            </div>
-          )}
-        </div>
+        <StatChipGroup>
+          <StatChip
+            value={totalAvailable.toFixed(1)}
+            label="days available"
+            color="emerald"
+            icon={<Calendar className="h-4 w-4" />}
+          />
+          <StatChip
+            value={pendingRequests}
+            label={pendingRequests === 1 ? 'pending request' : 'pending requests'}
+            color="amber"
+            icon={<Clock className="h-4 w-4" />}
+            hideWhenZero
+          />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>
@@ -190,96 +191,79 @@ export default async function EmployeeLeavePage() {
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Recent Requests */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-indigo-600" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-slate-900">Recent Requests</h2>
-                  <p className="text-sm text-slate-500">Your latest leave requests</p>
-                </div>
-              </div>
+          <DetailCard
+            icon={FileText}
+            iconColor="indigo"
+            title="Recent Requests"
+            subtitle="Your latest leave requests"
+            actions={
               <Link href="/employee/leave/requests">
                 <Button variant="ghost" size="sm">View All</Button>
               </Link>
-            </div>
-            <div className="p-5">
-              {recentRequests.length === 0 ? (
-                <p className="text-slate-500 text-center py-8">No leave requests yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {recentRequests.map((request) => (
-                    <Link
-                      key={request.id}
-                      href={`/employee/leave/${request.id}`}
-                      className="block p-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
-                    >
-                      <div className="flex justify-between items-start mb-1">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: request.leaveType.color }}
-                          />
-                          <span className="font-medium text-slate-900">{request.leaveType.name}</span>
-                        </div>
-                        <Badge variant={getLeaveStatusVariant(request.status)}>
-                          {request.status}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-slate-500">
-                        {getDateRangeText(new Date(request.startDate), new Date(request.endDate))}
-                        <span className="mx-2">|</span>
-                        {formatLeaveDays(request.totalDays)}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Upcoming Leaves */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <Clock className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Upcoming Leaves</h2>
-                <p className="text-sm text-slate-500">Your approved leaves in the next 7 days</p>
-              </div>
-            </div>
-            <div className="p-5">
-              {upcomingLeaves.length === 0 ? (
-                <p className="text-slate-500 text-center py-8">No upcoming leaves</p>
-              ) : (
-                <div className="space-y-3">
-                  {upcomingLeaves.map((request) => (
-                    <Link
-                      key={request.id}
-                      href={`/employee/leave/${request.id}`}
-                      className="block p-3 rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-2 mb-1">
+            }
+          >
+            {recentRequests.length === 0 ? (
+              <p className="text-slate-500 text-center py-8">No leave requests yet</p>
+            ) : (
+              <div className="space-y-3">
+                {recentRequests.map((request) => (
+                  <Link
+                    key={request.id}
+                    href={`/employee/leave/${request.id}`}
+                    className="block p-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <div className="flex items-center gap-2">
                         <div
                           className="w-2 h-2 rounded-full"
                           style={{ backgroundColor: request.leaveType.color }}
                         />
                         <span className="font-medium text-slate-900">{request.leaveType.name}</span>
                       </div>
-                      <div className="text-sm text-slate-600">
-                        {getDateRangeText(new Date(request.startDate), new Date(request.endDate))}
-                        <span className="mx-2">|</span>
-                        {formatLeaveDays(request.totalDays)}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+                      <Badge variant={getLeaveStatusVariant(request.status)}>
+                        {request.status}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-slate-500">
+                      {getDateRangeText(new Date(request.startDate), new Date(request.endDate))}
+                      <span className="mx-2">|</span>
+                      {formatLeaveDays(request.totalDays)}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </DetailCard>
+
+          {/* Upcoming Leaves */}
+          <DetailCard icon={Clock} iconColor="emerald" title="Upcoming Leaves" subtitle="Your approved leaves in the next 7 days">
+            {upcomingLeaves.length === 0 ? (
+              <p className="text-slate-500 text-center py-8">No upcoming leaves</p>
+            ) : (
+              <div className="space-y-3">
+                {upcomingLeaves.map((request) => (
+                  <Link
+                    key={request.id}
+                    href={`/employee/leave/${request.id}`}
+                    className="block p-3 rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: request.leaveType.color }}
+                      />
+                      <span className="font-medium text-slate-900">{request.leaveType.name}</span>
+                    </div>
+                    <div className="text-sm text-slate-600">
+                      {getDateRangeText(new Date(request.startDate), new Date(request.endDate))}
+                      <span className="mx-2">|</span>
+                      {formatLeaveDays(request.totalDays)}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </DetailCard>
         </div>
       </PageContent>
     </>

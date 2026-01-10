@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/core/prisma';
 import { ClipboardList, AlertTriangle, Calendar } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { TeamClient } from './team-client';
 
 export default async function AdminTeamPage() {
@@ -95,35 +96,31 @@ export default async function AdminTeamPage() {
           </PageHeaderButton>
         }
       >
-        {/* Stats Summary */}
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-            <span className="text-blue-400 text-sm font-medium">{totalEmployees + totalNonEmployees} members</span>
-          </div>
-          {onLeaveToday > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-              <Calendar className="h-3.5 w-3.5 text-amber-400" />
-              <span className="text-amber-400 text-sm font-medium">{onLeaveToday} on leave today</span>
-            </div>
-          )}
-          {expiringDocumentsCount > 0 && (
-            <Link
-              href="/admin/employees/document-expiry"
-              className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 rounded-lg transition-colors"
-            >
-              <AlertTriangle className="h-3.5 w-3.5 text-rose-400" />
-              <span className="text-rose-400 text-sm font-medium">{expiringDocumentsCount} expiring documents</span>
-            </Link>
-          )}
-          {pendingChangeRequests > 0 && (
-            <Link
-              href="/admin/employees/change-requests"
-              className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg transition-colors"
-            >
-              <span className="text-purple-400 text-sm font-medium">{pendingChangeRequests} change requests</span>
-            </Link>
-          )}
-        </div>
+        <StatChipGroup>
+          <StatChip value={totalEmployees + totalNonEmployees} label="members" color="blue" />
+          <StatChip
+            value={onLeaveToday}
+            label="on leave today"
+            color="amber"
+            icon={<Calendar className="h-3.5 w-3.5" />}
+            hideWhenZero
+          />
+          <StatChip
+            value={expiringDocumentsCount}
+            label="expiring documents"
+            color="rose"
+            icon={<AlertTriangle className="h-3.5 w-3.5" />}
+            href="/admin/employees/document-expiry"
+            hideWhenZero
+          />
+          <StatChip
+            value={pendingChangeRequests}
+            label="change requests"
+            color="purple"
+            href="/admin/employees/change-requests"
+            hideWhenZero
+          />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

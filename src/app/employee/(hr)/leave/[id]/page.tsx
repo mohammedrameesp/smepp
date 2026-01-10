@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, FileText, Calendar, Clock, Phone, ExternalLink, Info } from 'lucide-react';
 import Link from 'next/link';
+import { DetailCard } from '@/components/ui/detail-card';
+import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 import {
   getLeaveStatusVariant,
   getDateRangeText,
@@ -13,7 +15,7 @@ import {
   getRequestTypeText,
   canCancelLeaveRequest,
   canEditLeaveRequest,
-} from '@/lib/leave-utils';
+} from '@/features/leave/lib/leave-utils';
 import { LeaveRequestHistory, CancelLeaveDialog } from '@/features/leave/components';
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
@@ -215,101 +217,75 @@ export default function EmployeeLeaveRequestDetailPage() {
 
       <PageContent className="max-w-3xl">
         {/* Leave Details */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-              <Calendar className="h-5 w-5 text-purple-600" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-slate-900">Leave Details</h2>
-              <p className="text-sm text-slate-500">Request information and dates</p>
-            </div>
-          </div>
-          <div className="p-5 space-y-4">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: request.leaveType.color }}
-              />
-              <span className="font-medium text-lg text-slate-900">{request.leaveType.name}</span>
-            </div>
+        <div className="mb-6">
+          <DetailCard icon={Calendar} iconColor="purple" title="Leave Details" subtitle="Request information and dates">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-4 h-4 rounded-full"
+                  style={{ backgroundColor: request.leaveType.color }}
+                />
+                <span className="font-medium text-lg text-slate-900">{request.leaveType.name}</span>
+              </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-slate-50 rounded-xl">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Date Range</p>
-                <p className="font-semibold text-slate-900">
-                  {getDateRangeText(new Date(request.startDate), new Date(request.endDate))}
-                </p>
-              </div>
-              <div className="p-4 bg-slate-50 rounded-xl">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Duration</p>
-                <p className="font-semibold text-slate-900">{formatLeaveDays(request.totalDays)}</p>
-              </div>
-              {!request.leaveType.accrualBased && (
-                <div className="p-4 bg-slate-50 rounded-xl">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Request Type</p>
-                  <p className="font-semibold text-slate-900">{getRequestTypeText(request.requestType)}</p>
+              <InfoFieldGrid columns={2}>
+                <InfoField
+                  label="Date Range"
+                  value={getDateRangeText(new Date(request.startDate), new Date(request.endDate))}
+                />
+                <InfoField label="Duration" value={formatLeaveDays(request.totalDays)} />
+                {!request.leaveType.accrualBased && (
+                  <InfoField label="Request Type" value={getRequestTypeText(request.requestType)} />
+                )}
+              </InfoFieldGrid>
+
+              {request.reason && (
+                <div>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Reason</p>
+                  <div className="p-4 bg-slate-50 rounded-xl text-slate-900">{request.reason}</div>
+                </div>
+              )}
+
+              {request.documentUrl && (
+                <div>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Supporting Document</p>
+                  <a
+                    href={request.documentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-blue-600 hover:underline"
+                  >
+                    <FileText className="h-4 w-4" />
+                    View Document
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              )}
+
+              {(request.emergencyContact || request.emergencyPhone) && (
+                <div className="border-t border-slate-200 pt-4">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    Emergency Contact
+                  </p>
+                  <div>
+                    {request.emergencyContact && (
+                      <p className="font-medium text-slate-900">{request.emergencyContact}</p>
+                    )}
+                    {request.emergencyPhone && (
+                      <p className="text-slate-600">{request.emergencyPhone}</p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
-
-            {request.reason && (
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Reason</p>
-                <div className="p-4 bg-slate-50 rounded-xl text-slate-900">{request.reason}</div>
-              </div>
-            )}
-
-            {request.documentUrl && (
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Supporting Document</p>
-                <a
-                  href={request.documentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-blue-600 hover:underline"
-                >
-                  <FileText className="h-4 w-4" />
-                  View Document
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
-            )}
-
-            {(request.emergencyContact || request.emergencyPhone) && (
-              <div className="border-t border-slate-200 pt-4">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  Emergency Contact
-                </p>
-                <div>
-                  {request.emergencyContact && (
-                    <p className="font-medium text-slate-900">{request.emergencyContact}</p>
-                  )}
-                  {request.emergencyPhone && (
-                    <p className="text-slate-600">{request.emergencyPhone}</p>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+          </DetailCard>
         </div>
 
         {/* Balance Summary */}
         {balance && (
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <Info className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Balance Summary</h2>
-                <p className="text-sm text-slate-500">
-                  {request.leaveType.name} - {new Date(request.startDate).getFullYear()}
-                </p>
-              </div>
-            </div>
-            <div className="p-5">
+          <div className="mb-6">
+            <DetailCard icon={Info} iconColor="emerald" title="Balance Summary" subtitle={`${request.leaveType.name} - ${new Date(request.startDate).getFullYear()}`}>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-slate-50 rounded-xl">
                   <div className="text-2xl font-bold text-slate-900">
@@ -341,7 +317,7 @@ export default function EmployeeLeaveRequestDetailPage() {
                   Includes {Number(balance.carriedForward)} days carried forward from previous year
                 </div>
               )}
-            </div>
+            </DetailCard>
           </div>
         )}
 
@@ -394,20 +370,9 @@ export default function EmployeeLeaveRequestDetailPage() {
         )}
 
         {/* History */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Clock className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-slate-900">History</h2>
-              <p className="text-sm text-slate-500">Request activity timeline</p>
-            </div>
-          </div>
-          <div className="p-5">
-            <LeaveRequestHistory history={request.history} />
-          </div>
-        </div>
+        <DetailCard icon={Clock} iconColor="blue" title="History" subtitle="Request activity timeline">
+          <LeaveRequestHistory history={request.history} />
+        </DetailCard>
       </PageContent>
     </>
   );

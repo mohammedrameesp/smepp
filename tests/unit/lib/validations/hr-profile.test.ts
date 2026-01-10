@@ -11,7 +11,7 @@ import {
   validateQatarMobile,
   validateIBAN,
   validatePassportNumber,
-} from '@/lib/validations/hr-profile';
+} from '@/features/employees/validations/hr-profile';
 
 describe('HR Profile Validation Schemas', () => {
   // ===== Individual Field Validators =====

@@ -15,8 +15,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ArrowLeft } from 'lucide-react';
-import { calculateGratuity, getServiceDurationText } from '@/lib/payroll/gratuity';
-import { formatCurrency } from '@/lib/payroll/utils';
+import { calculateGratuity, getServiceDurationText } from '@/features/payroll/lib/gratuity';
+import { formatCurrency } from '@/features/payroll/lib/utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 export default async function GratuityReportPage() {

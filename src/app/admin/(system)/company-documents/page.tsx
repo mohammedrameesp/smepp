@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { getDocumentExpiryInfo, DOCUMENT_EXPIRY_WARNING_DAYS } from '@/features/company-documents';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 async function getCompanyDocuments(tenantId: string) {
   const documents = await prisma.companyDocument.findMany({
@@ -169,27 +170,29 @@ async function DocumentStats({ tenantId }: { tenantId: string }) {
   const stats = await getDocumentStats(tenantId);
 
   return (
-    <div className="flex flex-wrap items-center gap-4 mt-4">
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-        <span className="text-blue-400 text-sm font-medium">{stats.total} total</span>
-      </div>
-      {stats.expired > 0 && (
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/20 rounded-lg">
-          <AlertTriangle className="h-3.5 w-3.5 text-rose-400" />
-          <span className="text-rose-400 text-sm font-medium">{stats.expired} expired</span>
-        </div>
-      )}
-      {stats.expiring > 0 && (
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-          <Clock className="h-3.5 w-3.5 text-amber-400" />
-          <span className="text-amber-400 text-sm font-medium">{stats.expiring} expiring soon</span>
-        </div>
-      )}
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-        <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
-        <span className="text-emerald-400 text-sm font-medium">{stats.valid} valid</span>
-      </div>
-    </div>
+    <StatChipGroup>
+      <StatChip value={stats.total} label="total" color="blue" />
+      <StatChip
+        value={stats.expired}
+        label="expired"
+        color="rose"
+        icon={<AlertTriangle className="h-3.5 w-3.5" />}
+        hideWhenZero
+      />
+      <StatChip
+        value={stats.expiring}
+        label="expiring soon"
+        color="amber"
+        icon={<Clock className="h-3.5 w-3.5" />}
+        hideWhenZero
+      />
+      <StatChip
+        value={stats.valid}
+        label="valid"
+        color="emerald"
+        icon={<CheckCircle className="h-3.5 w-3.5" />}
+      />
+    </StatChipGroup>
   );
 }
 

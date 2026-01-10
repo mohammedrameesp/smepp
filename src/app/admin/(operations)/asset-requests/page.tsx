@@ -25,6 +25,7 @@ import { redirect } from 'next/navigation';
 import { AssetRequestStatus } from '@prisma/client';
 import { AssetRequestListTable } from '@/features/asset-requests';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { Package, AlertTriangle } from 'lucide-react';
 
 /**
@@ -101,35 +102,12 @@ export default async function AdminAssetRequestsPage() {
         title="Asset Requests"
         subtitle="Manage asset requests, assignments, and returns"
       >
-        {/* Summary Chips */}
-        <div className="flex flex-wrap items-center gap-3 mt-4">
-          {pendingApproval.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-              <span className="text-amber-400 text-sm font-medium">
-                {pendingApproval.length} pending approval
-              </span>
-            </div>
-          )}
-          {pendingReturn.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/20 rounded-lg">
-              <span className="text-rose-400 text-sm font-medium">
-                {pendingReturn.length} pending return
-              </span>
-            </div>
-          )}
-          {pendingAcceptance.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-              <span className="text-blue-400 text-sm font-medium">
-                {pendingAcceptance.length} awaiting acceptance
-              </span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-            <span className="text-slate-300 text-sm font-medium">
-              {requests.length} total requests
-            </span>
-          </div>
-        </div>
+        <StatChipGroup>
+          <StatChip value={pendingApproval.length} label="pending approval" color="amber" hideWhenZero />
+          <StatChip value={pendingReturn.length} label="pending return" color="rose" hideWhenZero />
+          <StatChip value={pendingAcceptance.length} label="awaiting acceptance" color="blue" hideWhenZero />
+          <StatChip value={requests.length} label="total requests" color="slate" />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

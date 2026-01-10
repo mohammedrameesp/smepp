@@ -7,9 +7,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LoanStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { createLoanSchema, loanQuerySchema } from '@/lib/validations/payroll';
+import { createLoanSchema, loanQuerySchema } from '@/features/payroll/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { generateLoanNumberWithPrefix, calculateLoanEndDate, parseDecimal } from '@/lib/payroll/utils';
+import { generateLoanNumberWithPrefix, calculateLoanEndDate, parseDecimal } from '@/features/payroll/lib/utils';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 

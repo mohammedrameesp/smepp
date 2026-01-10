@@ -6,9 +6,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { leaveBalanceQuerySchema, initializeLeaveBalanceSchema } from '@/lib/validations/leave';
+import { leaveBalanceQuerySchema, initializeLeaveBalanceSchema } from '@/features/leave/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { getCurrentYear } from '@/lib/leave-utils';
+import { getCurrentYear } from '@/features/leave/lib/leave-utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getLeaveBalancesHandler(request: NextRequest, context: APIContext) {

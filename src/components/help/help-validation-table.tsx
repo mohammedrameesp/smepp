@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, Check, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import type { ValidationRule } from '@/lib/help/help-types';
 
 interface HelpValidationTableProps {

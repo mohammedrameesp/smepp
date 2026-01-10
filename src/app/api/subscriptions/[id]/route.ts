@@ -25,7 +25,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { updateSubscriptionSchema } from '@/features/subscriptions';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { parseInputDateString } from '@/lib/date-format';
+import { parseInputDateString } from '@/lib/core/datetime';
 import { convertToQAR } from '@/lib/core/currency';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';

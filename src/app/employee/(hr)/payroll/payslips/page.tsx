@@ -14,8 +14,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ArrowLeft, Eye, FileText } from 'lucide-react';
-import { formatCurrency, getMonthName, getPayrollStatusColor } from '@/lib/payroll/utils';
+import { formatCurrency, getMonthName, getPayrollStatusColor } from '@/features/payroll/lib/utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { DetailCard } from '@/components/ui/detail-card';
 
 interface PageProps {
   searchParams: Promise<{
@@ -120,17 +121,7 @@ export default async function EmployeePayslipsPage({ searchParams }: PageProps) 
       </PageHeader>
 
       <PageContent>
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-            <FileText className="h-5 w-5 text-indigo-600" />
-          </div>
-          <div>
-            <h2 className="font-semibold text-slate-900">Payslips ({total})</h2>
-            <p className="text-sm text-slate-500">Your payment history</p>
-          </div>
-        </div>
-        <div className="p-5">
+        <DetailCard icon={FileText} iconColor="indigo" title={`Payslips (${total})`} subtitle="Your payment history">
           <Table>
             <TableHeader>
               <TableRow>
@@ -215,8 +206,7 @@ export default async function EmployeePayslipsPage({ searchParams }: PageProps) 
               )}
             </div>
           )}
-        </div>
-      </div>
+        </DetailCard>
       </PageContent>
     </>
   );

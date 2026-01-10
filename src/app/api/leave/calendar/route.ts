@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { teamCalendarQuerySchema } from '@/lib/validations/leave';
+import { teamCalendarQuerySchema } from '@/features/leave/validations/leave';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function getCalendarHandler(request: NextRequest, context: APIContext) {

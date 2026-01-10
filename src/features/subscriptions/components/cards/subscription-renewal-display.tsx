@@ -45,7 +45,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { getNextRenewalDate, getDaysUntilRenewal } from '../../utils/renewal-date';
-import { formatDate } from '@/lib/date-format';
+import { formatDate } from '@/lib/core/datetime';
 
 interface SubscriptionRenewalDisplayProps {
   renewalDate: Date | null;

@@ -34,7 +34,7 @@
 import { useState, useEffect, useRef, useCallback, useId } from 'react';
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 interface AssetTypeSuggestion {
   type: string;

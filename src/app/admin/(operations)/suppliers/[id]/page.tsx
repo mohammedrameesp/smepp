@@ -2,7 +2,6 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { redirect, notFound } from 'next/navigation';
 
 import Link from 'next/link';
@@ -24,6 +23,8 @@ import {
 } from 'lucide-react';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { SupplierActions } from '@/features/suppliers';
+import { DetailCard } from '@/components/ui/detail-card';
+import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -144,76 +145,48 @@ export default async function SupplierDetailPage({ params }: Props) {
         {/* Main Content - 2/3 */}
         <div className="lg:col-span-2 space-y-6">
           {/* Company Information */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Company Information</h2>
-                <p className="text-sm text-slate-500">Business details and location</p>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Category</p>
-                  <p className="text-sm font-semibold text-slate-900">{supplier.category}</p>
-                </div>
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Established</p>
+          <DetailCard icon={Building2} iconColor="blue" title="Company Information" subtitle="Business details and location">
+            <InfoFieldGrid columns={2}>
+              <InfoField label="Category" value={supplier.category} />
+              <InfoField label="Established" value={supplier.establishmentYear} />
+            </InfoFieldGrid>
+            <div className="mt-4 p-4 bg-slate-50 rounded-xl">
+              <div className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Address</p>
                   <p className="text-sm font-semibold text-slate-900">
-                    {supplier.establishmentYear || 'Not specified'}
+                    {supplier.address || 'No address provided'}
                   </p>
+                  {(supplier.city || supplier.country) && (
+                    <p className="text-sm text-slate-600 mt-1">
+                      {[supplier.city, supplier.country].filter(Boolean).join(', ')}
+                    </p>
+                  )}
                 </div>
-                <div className="sm:col-span-2 bg-slate-50 rounded-xl p-4">
-                  <div className="flex items-start gap-2">
-                    <MapPin className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Address</p>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {supplier.address || 'No address provided'}
-                      </p>
-                      {(supplier.city || supplier.country) && (
-                        <p className="text-sm text-slate-600 mt-1">
-                          {[supplier.city, supplier.country].filter(Boolean).join(', ')}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                {supplier.website && (
-                  <div className="sm:col-span-2 bg-slate-50 rounded-xl p-4">
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-slate-400" />
-                      <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Website</p>
-                    </div>
-                    <a
-                      href={supplier.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline mt-1 block"
-                    >
-                      {supplier.website}
-                    </a>
-                  </div>
-                )}
               </div>
             </div>
-          </div>
+            {supplier.website && (
+              <div className="mt-4 p-4 bg-slate-50 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-slate-400" />
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Website</p>
+                </div>
+                <a
+                  href={supplier.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline mt-1 block"
+                >
+                  {supplier.website}
+                </a>
+              </div>
+            )}
+          </DetailCard>
 
           {/* Contact Information */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
-                <User className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Contact Information</h2>
-                <p className="text-sm text-slate-500">Primary and secondary contacts</p>
-              </div>
-            </div>
-            <div className="p-6 space-y-6">
+          <DetailCard icon={User} iconColor="purple" title="Contact Information" subtitle="Primary and secondary contacts">
+            <div className="space-y-6">
               {/* Primary Contact */}
               {supplier.primaryContactName ? (
                 <div className="bg-slate-50 rounded-xl p-4">
@@ -285,48 +258,26 @@ export default async function SupplierDetailPage({ params }: Props) {
                 </div>
               )}
             </div>
-          </div>
+          </DetailCard>
 
           {/* Payment Terms */}
           {supplier.paymentTerms && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
-                  <CreditCard className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-slate-900">Payment Terms</h2>
-                  <p className="text-sm text-slate-500">Agreed payment conditions</p>
-                </div>
+            <DetailCard icon={CreditCard} iconColor="emerald" title="Payment Terms" subtitle="Agreed payment conditions">
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-sm text-slate-700 leading-relaxed">{supplier.paymentTerms}</p>
               </div>
-              <div className="p-6">
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-sm text-slate-700 leading-relaxed">{supplier.paymentTerms}</p>
-                </div>
-              </div>
-            </div>
+            </DetailCard>
           )}
 
           {/* Additional Information */}
           {supplier.additionalInfo && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-slate-900">Additional Information</h2>
-                  <p className="text-sm text-slate-500">Notes and remarks</p>
-                </div>
+            <DetailCard icon={FileText} iconColor="amber" title="Additional Information" subtitle="Notes and remarks">
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                  {supplier.additionalInfo}
+                </p>
               </div>
-              <div className="p-6">
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                    {supplier.additionalInfo}
-                  </p>
-                </div>
-              </div>
-            </div>
+            </DetailCard>
           )}
         </div>
 
@@ -334,122 +285,88 @@ export default async function SupplierDetailPage({ params }: Props) {
         <div className="space-y-6">
           {/* Approval Information */}
           {supplier.status === 'APPROVED' && supplier.approvedAt && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
-                  <CheckCircle className="h-5 w-5 text-emerald-600" />
-                </div>
-                <h2 className="font-semibold text-slate-900">Approval Details</h2>
-              </div>
-              <div className="p-6 space-y-4">
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Approved On</p>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {new Date(supplier.approvedAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </p>
-                </div>
+            <DetailCard icon={CheckCircle} iconColor="emerald" title="Approval Details">
+              <InfoFieldGrid columns={1}>
+                <InfoField
+                  label="Approved On"
+                  value={new Date(supplier.approvedAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                />
                 {supplier.approvedBy && (
-                  <div className="bg-slate-50 rounded-xl p-4">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Approved By</p>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {supplier.approvedBy.name || supplier.approvedBy.email}
-                    </p>
-                  </div>
+                  <InfoField label="Approved By" value={supplier.approvedBy.name || supplier.approvedBy.email} />
                 )}
-              </div>
-            </div>
+              </InfoFieldGrid>
+            </DetailCard>
           )}
 
           {/* Rejection Information */}
           {supplier.status === 'REJECTED' && supplier.rejectionReason && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
-                  <XCircle className="h-5 w-5 text-rose-600" />
-                </div>
-                <h2 className="font-semibold text-slate-900">Rejection Details</h2>
+            <DetailCard icon={XCircle} iconColor="rose" title="Rejection Details">
+              <div className="bg-rose-50 border border-rose-100 rounded-xl p-4">
+                <p className="text-xs font-medium text-rose-600 uppercase tracking-wide mb-2">Reason</p>
+                <p className="text-sm text-rose-700">{supplier.rejectionReason}</p>
               </div>
-              <div className="p-6">
-                <div className="bg-rose-50 border border-rose-100 rounded-xl p-4">
-                  <p className="text-xs font-medium text-rose-600 uppercase tracking-wide mb-2">Reason</p>
-                  <p className="text-sm text-rose-700">{supplier.rejectionReason}</p>
-                </div>
-              </div>
-            </div>
+            </DetailCard>
           )}
 
           {/* Engagement History */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                  <MessageSquare className="h-5 w-5 text-indigo-600" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-slate-900">Engagements</h2>
-                  <p className="text-sm text-slate-500">
-                    {supplier.engagements.length} record{supplier.engagements.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
+          <DetailCard
+            icon={MessageSquare}
+            iconColor="indigo"
+            title="Engagements"
+            subtitle={`${supplier.engagements.length} record${supplier.engagements.length !== 1 ? 's' : ''}`}
+          >
+            {supplier.engagements.length === 0 ? (
+              <div className="text-center py-8 text-slate-400">
+                <Calendar className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No engagements recorded</p>
               </div>
-            </div>
-            <div className="p-6">
-              {supplier.engagements.length === 0 ? (
-                <div className="text-center py-8 text-slate-400">
-                  <Calendar className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No engagements recorded</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {supplier.engagements.map((engagement) => (
-                    <div
-                      key={engagement.id}
-                      className="bg-slate-50 rounded-xl p-4 border-l-4 border-indigo-400"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <p className="text-xs font-medium text-slate-500">
-                          {new Date(engagement.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </p>
-                        {engagement.rating && (
-                          <div className="flex items-center gap-0.5">
-                            {[...Array(5)].map((_, index) => (
-                              <Star
-                                key={index}
-                                className={`h-3.5 w-3.5 ${
-                                  index < engagement.rating!
-                                    ? 'fill-amber-400 text-amber-400'
-                                    : 'text-slate-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-sm text-slate-700 mb-2">{engagement.notes}</p>
-                      <p className="text-xs text-slate-500">
-                        By {engagement.createdBy.name || engagement.createdBy.email}
+            ) : (
+              <div className="space-y-4">
+                {supplier.engagements.map((engagement) => (
+                  <div
+                    key={engagement.id}
+                    className="bg-slate-50 rounded-xl p-4 border-l-4 border-indigo-400"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="text-xs font-medium text-slate-500">
+                        {new Date(engagement.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
                       </p>
+                      {engagement.rating && (
+                        <div className="flex items-center gap-0.5">
+                          {[...Array(5)].map((_, index) => (
+                            <Star
+                              key={index}
+                              className={`h-3.5 w-3.5 ${
+                                index < engagement.rating!
+                                  ? 'fill-amber-400 text-amber-400'
+                                  : 'text-slate-300'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+                    <p className="text-sm text-slate-700 mb-2">{engagement.notes}</p>
+                    <p className="text-xs text-slate-500">
+                      By {engagement.createdBy.name || engagement.createdBy.email}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </DetailCard>
 
           {/* Record Information */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100">
-              <h2 className="font-semibold text-slate-900">Record Information</h2>
-            </div>
-            <div className="p-6 space-y-3">
+          <DetailCard icon={Clock} iconColor="slate" title="Record Information">
+            <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-500">Created</span>
                 <span className="text-slate-900">
@@ -477,7 +394,7 @@ export default async function SupplierDetailPage({ params }: Props) {
                 </span>
               </div>
             </div>
-          </div>
+          </DetailCard>
         </div>
         </div>
       </PageContent>

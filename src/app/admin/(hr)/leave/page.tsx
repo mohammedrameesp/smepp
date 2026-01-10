@@ -7,8 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, FileText, Users, Settings } from 'lucide-react';
-import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays } from '@/lib/leave-utils';
+import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays } from '@/features/leave/lib/leave-utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function AdminLeavePage() {
   const session = await getServerSession(authOptions);
@@ -108,23 +109,17 @@ export default async function AdminLeavePage() {
         title="Leave Management"
         subtitle="Manage employee leave requests, balances, and types"
       >
-        {/* Summary Chips */}
-        <div className="flex flex-wrap items-center gap-3 mt-4">
-          {pendingCount > 0 && (
-            <Link
-              href="/admin/leave/requests?status=PENDING"
-              className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg transition-colors"
-            >
-              <span className="text-amber-400 text-sm font-medium">{pendingCount} pending approval</span>
-            </Link>
-          )}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-            <span className="text-emerald-400 text-sm font-medium">{approvedThisYear} approved this year</span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-            <span className="text-slate-300 text-sm font-medium">{activeLeaveTypes} leave types</span>
-          </div>
-        </div>
+        <StatChipGroup>
+          <StatChip
+            value={pendingCount}
+            label="pending approval"
+            color="amber"
+            href="/admin/leave/requests?status=PENDING"
+            hideWhenZero
+          />
+          <StatChip value={approvedThisYear} label="approved this year" color="emerald" />
+          <StatChip value={activeLeaveTypes} label="leave types" color="slate" />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

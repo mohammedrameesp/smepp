@@ -157,10 +157,11 @@ export async function GET(request: NextRequest) {
     logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Google OAuth callback error');
 
     // Try to get subdomain from state for error redirect
+    // Use consumeOnSuccess=false since we're only reading for error redirect
     const stateParam = request.nextUrl.searchParams.get('state');
     let subdomain = 'www';
     if (stateParam) {
-      const state = decryptState(stateParam);
+      const state = decryptState(stateParam, false);
       if (state) subdomain = state.subdomain;
     }
 

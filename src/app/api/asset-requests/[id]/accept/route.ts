@@ -37,7 +37,8 @@ import { acceptAssetAssignmentSchema } from '@/features/asset-requests';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { canUserRespond } from '@/features/asset-requests';
 import { sendBatchEmails } from '@/lib/core/email';
-import { assetAssignmentAcceptedEmail } from '@/lib/email-templates';
+import { handleEmailFailure } from '@/lib/core/email-failure-handler';
+import { assetAssignmentAcceptedEmail } from '@/lib/core/asset-request-emails';
 import { createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import logger from '@/lib/core/log';
@@ -225,40 +226,91 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 7: Notify all admins via email and in-app
     // ─────────────────────────────────────────────────────────────────────────────
+    const org = await prisma.organization.findUnique({
+      where: { id: tenantId },
+      select: { slug: true, name: true, primaryColor: true },
+    });
+    const orgSlug = org?.slug || 'app';
+    const orgName = org?.name || 'Durj';
+    const primaryColor = org?.primaryColor || undefined;
+
+    // Get all admins in tenant
+    const admins = await prisma.teamMember.findMany({
+      where: {
+        tenantId,
+        role: TeamMemberRole.ADMIN,
+      },
+      select: { id: true, email: true, name: true },
+    });
+
+    // Send batch email to all admins
+    const emailData = assetAssignmentAcceptedEmail({
+      requestNumber: assetRequest.requestNumber,
+      assetTag: assetRequest.asset.assetTag,
+      assetModel: assetRequest.asset.model,
+      assetBrand: assetRequest.asset.brand,
+      assetType: assetRequest.asset.type,
+      userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
+      userEmail: assetRequest.member?.email || '',
+      orgSlug,
+      orgName,
+      primaryColor,
+    });
+
     try {
-      const org = await prisma.organization.findUnique({
-        where: { id: tenantId },
-        select: { slug: true, name: true, primaryColor: true },
-      });
-      const orgSlug = org?.slug || 'app';
-      const orgName = org?.name || 'Durj';
-      const primaryColor = org?.primaryColor || undefined;
+      const result = await sendBatchEmails(admins.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
 
-      // Get all admins in tenant
-      const admins = await prisma.teamMember.findMany({
-        where: {
-          tenantId,
-          role: TeamMemberRole.ADMIN,
-        },
-        select: { id: true, email: true },
-      });
-
-      // Send batch email to all admins
-      const emailData = assetAssignmentAcceptedEmail({
+      // Check if any emails failed and notify super admin
+      if (!result.success && result.results.some(r => 'success' in r && !r.success)) {
+        const failedAdmins = admins.filter((_, i) => 'success' in result.results[i] && !result.results[i].success);
+        for (const admin of failedAdmins) {
+          await handleEmailFailure({
+            module: 'asset-requests',
+            action: 'assignment-accepted-notification',
+            tenantId,
+            organizationName: orgName,
+            organizationSlug: orgSlug,
+            recipientEmail: admin.email,
+            recipientName: admin.name || admin.email,
+            emailSubject: emailData.subject,
+            error: 'Batch email failed',
+            metadata: {
+              requestId: id,
+              requestNumber: assetRequest.requestNumber,
+              assetTag: assetRequest.asset.assetTag,
+            },
+          }).catch(() => {}); // Non-blocking
+        }
+      }
+    } catch (emailError) {
+      logger.error({
+        error: emailError instanceof Error ? emailError.message : 'Unknown error',
+        requestId: id,
         requestNumber: assetRequest.requestNumber,
-        assetTag: assetRequest.asset.assetTag,
-        assetModel: assetRequest.asset.model,
-        assetBrand: assetRequest.asset.brand,
-        assetType: assetRequest.asset.type,
-        userName: assetRequest.member?.name || assetRequest.member?.email || 'Employee',
-        userEmail: assetRequest.member?.email || '',
-        orgSlug,
-        orgName,
-        primaryColor,
-      });
-      await sendBatchEmails(admins.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
+      }, 'Failed to send notification for asset assignment acceptance');
 
-      // Send in-app notifications to all admins
+      // Notify super admin about the failure
+      await handleEmailFailure({
+        module: 'asset-requests',
+        action: 'assignment-accepted-notification',
+        tenantId,
+        organizationName: orgName,
+        organizationSlug: orgSlug,
+        recipientEmail: 'admins@' + orgSlug,
+        recipientName: 'Organization Admins',
+        emailSubject: emailData.subject,
+        error: emailError instanceof Error ? emailError.message : 'Unknown error',
+        metadata: {
+          requestId: id,
+          requestNumber: assetRequest.requestNumber,
+          assetTag: assetRequest.asset.assetTag,
+          adminCount: admins.length,
+        },
+      }).catch(() => {}); // Non-blocking
+    }
+
+    // Send in-app notifications to all admins
+    try {
       const notifications = admins.map(admin =>
         NotificationTemplates.assetAssignmentAccepted(
           admin.id,
@@ -270,12 +322,11 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
         )
       );
       await createBulkNotifications(notifications, tenantId);
-    } catch (emailError) {
+    } catch (notifError) {
       logger.error({
-        error: emailError instanceof Error ? emailError.message : 'Unknown error',
+        error: notifError instanceof Error ? notifError.message : 'Unknown error',
         requestId: id,
-        requestNumber: assetRequest.requestNumber,
-      }, 'Failed to send notification for asset assignment acceptance');
+      }, 'Failed to send in-app notifications for assignment acceptance');
     }
 
     return NextResponse.json(updatedRequest);

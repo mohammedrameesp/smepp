@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 
 import { PurchaseRequestListTable } from '@/features/purchase-requests/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function AdminPurchaseRequestsPage() {
   const session = await getServerSession(authOptions);
@@ -53,33 +54,19 @@ export default async function AdminPurchaseRequestsPage() {
         title="Purchase Requests"
         subtitle="Review and manage all purchase requests from employees"
       >
-        {/* Stats Summary */}
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-            <span className="text-blue-400 text-sm font-medium">{totalRequests} total</span>
-          </div>
-          {pendingRequests > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-              <span className="text-amber-400 text-sm font-medium">{pendingRequests} pending</span>
-            </div>
-          )}
-          {underReviewRequests > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-cyan-500/20 rounded-lg">
-              <span className="text-cyan-400 text-sm font-medium">{underReviewRequests} under review</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-            <span className="text-emerald-400 text-sm font-medium">{approvedRequests} approved</span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 rounded-lg">
-            <span className="text-purple-400 text-sm font-medium">{completedRequests} completed</span>
-          </div>
-          {totalApprovedAmount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-              <span className="text-emerald-400 text-sm font-medium">QAR {totalApprovedAmount.toLocaleString()} approved</span>
-            </div>
-          )}
-        </div>
+        <StatChipGroup>
+          <StatChip value={totalRequests} label="total" color="blue" />
+          <StatChip value={pendingRequests} label="pending" color="amber" hideWhenZero />
+          <StatChip value={underReviewRequests} label="under review" color="cyan" hideWhenZero />
+          <StatChip value={approvedRequests} label="approved" color="emerald" />
+          <StatChip value={completedRequests} label="completed" color="purple" />
+          <StatChip
+            value={`QAR ${totalApprovedAmount.toLocaleString()}`}
+            label="approved value"
+            color="emerald"
+            hideWhenZero
+          />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

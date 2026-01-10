@@ -10,8 +10,8 @@ import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import logger from '@/lib/core/log';
-import { generateWPSSIFFile, getBankCode, generateWPSFileName, validateWPSRecord } from '@/lib/payroll/wps';
-import { parseDecimal } from '@/lib/payroll/utils';
+import { generateWPSSIFFile, getBankCode, generateWPSFileName, validateWPSRecord } from '@/features/payroll/lib/wps';
+import { parseDecimal } from '@/features/payroll/lib/utils';
 import type { WPSEmployeeRecord, WPSFileHeader } from '@/features/payroll/types/payroll';
 
 interface RouteParams {

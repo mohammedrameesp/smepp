@@ -7,7 +7,7 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import { LucideIcon, Search, Inbox, CheckCircle2, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 

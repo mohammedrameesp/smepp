@@ -88,7 +88,7 @@ describe('Security Headers Tests', () => {
 
     describe('Content-Security-Policy', () => {
       it('should use relaxed CSP in development', () => {
-        process.env.NODE_ENV = 'development';
+        Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
         const response = createMockResponse();
 
         addSecurityHeaders(response);
@@ -99,7 +99,7 @@ describe('Security Headers Tests', () => {
       });
 
       it('should use strict CSP in production', () => {
-        process.env.NODE_ENV = 'production';
+        Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true });
         const response = createMockResponse();
 
         addSecurityHeaders(response);
@@ -112,7 +112,7 @@ describe('Security Headers Tests', () => {
 
     describe('Strict-Transport-Security', () => {
       it('should add HSTS header in production', () => {
-        process.env.NODE_ENV = 'production';
+        Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true });
         const response = createMockResponse();
 
         addSecurityHeaders(response);
@@ -122,7 +122,7 @@ describe('Security Headers Tests', () => {
       });
 
       it('should not add HSTS header in development', () => {
-        process.env.NODE_ENV = 'development';
+        Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
         const response = createMockResponse();
 
         addSecurityHeaders(response);
@@ -219,7 +219,7 @@ describe('Security Headers Tests', () => {
 
     describe('HTTPS Enforcement', () => {
       it('should enforce HTTPS for 1 year in production', () => {
-        process.env.NODE_ENV = 'production';
+        Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true });
         const response = createMockResponse();
         addSecurityHeaders(response);
 
@@ -278,7 +278,7 @@ describe('Security Headers Tests', () => {
     };
 
     it('should include all recommended security headers', () => {
-      process.env.NODE_ENV = 'production';
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true });
       const response = createMockResponse();
       addSecurityHeaders(response);
 

@@ -39,7 +39,7 @@ import {
   Percent,
   type LucideIcon,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 // Icon map for string-based icon names
 const iconMap: Record<string, LucideIcon> = {

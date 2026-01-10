@@ -13,7 +13,7 @@ import {
   updatePurchaseRequestSchema,
   updatePurchaseRequestStatusSchema,
   updatePurchaseRequestItemSchema,
-} from '@/lib/validations/purchase-request';
+} from '@/lib/validations/projects/purchase-request';
 
 describe('Purchase Request Validation Schemas', () => {
   // ===== Enum Schemas =====

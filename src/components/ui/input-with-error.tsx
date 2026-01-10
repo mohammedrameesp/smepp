@@ -10,7 +10,7 @@ import * as React from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Input } from './input';
 import { Label } from './label';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 interface InputWithErrorProps extends React.ComponentProps<'input'> {
   label?: string;

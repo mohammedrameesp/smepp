@@ -43,7 +43,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DatePicker } from '@/components/ui/date-picker';
-import { toInputDateString } from '@/lib/date-format';
+import { toInputDateString } from '@/lib/core/datetime';
 
 // Default exchange rates to QAR (fallback if not set in settings)
 const DEFAULT_RATES: Record<string, number> = {

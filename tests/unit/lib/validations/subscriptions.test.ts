@@ -8,7 +8,7 @@ import {
   createSubscriptionSchema,
   updateSubscriptionSchema,
   subscriptionQuerySchema,
-} from '@/lib/validations/subscriptions';
+} from '@/features/subscriptions/validations/subscriptions';
 
 // Mock the qatar-timezone module
 jest.mock('@/lib/qatar-timezone', () => ({

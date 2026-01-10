@@ -7,10 +7,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { updatePurchaseRequestStatusSchema } from '@/lib/validations/purchase-request';
+import { updatePurchaseRequestStatusSchema } from '@/lib/validations/projects/purchase-request';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { getAllowedStatusTransitions, getStatusLabel } from '@/lib/purchase-request-utils';
+import { getAllowedStatusTransitions, getStatusLabel } from '@/features/purchase-requests/lib/purchase-request-utils';
 import { sendEmail } from '@/lib/core/email';
+import { handleEmailFailure } from '@/lib/core/email-failure-handler';
 import { purchaseRequestStatusEmail } from '@/lib/core/email-templates';
 import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -162,47 +163,67 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
     }
 
     // Send email notification to requester
-    try {
-      // Get org details for email (use raw prisma for non-tenant model)
-      const org = await prisma.organization.findUnique({
-        where: { id: tenantId },
-        select: { slug: true, name: true, primaryColor: true },
+    // Get org details for email (use raw prisma for non-tenant model)
+    const org = await prisma.organization.findUnique({
+      where: { id: tenantId },
+      select: { slug: true, name: true, primaryColor: true },
+    });
+    const orgSlug = org?.slug || 'app';
+    const orgName = org?.name || 'Organization';
+
+    // Get user info for reviewer name
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true },
+    });
+
+    if (currentRequest.requester.email) {
+      const emailContent = purchaseRequestStatusEmail({
+        referenceNumber: purchaseRequest.referenceNumber,
+        userName: currentRequest.requester.name || currentRequest.requester.email,
+        title: purchaseRequest.title,
+        previousStatus: getStatusLabel(currentRequest.status),
+        newStatus: getStatusLabel(status),
+        reviewNotes: reviewNotes || undefined,
+        reviewerName: user?.name || user?.email || 'Admin',
+        orgSlug,
+        orgName,
+        primaryColor: org?.primaryColor || undefined,
       });
 
-      // Get user info for reviewer name
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { name: true, email: true },
-      });
-
-      if (currentRequest.requester.email) {
-        const emailContent = purchaseRequestStatusEmail({
-          referenceNumber: purchaseRequest.referenceNumber,
-          userName: currentRequest.requester.name || currentRequest.requester.email,
-          title: purchaseRequest.title,
-          previousStatus: getStatusLabel(currentRequest.status),
-          newStatus: getStatusLabel(status),
-          reviewNotes: reviewNotes || undefined,
-          reviewerName: user?.name || user?.email || 'Admin',
-          orgSlug: org?.slug || 'app',
-          orgName: org?.name || 'Organization',
-          primaryColor: org?.primaryColor || undefined,
-        });
-
+      try {
         await sendEmail({
           to: currentRequest.requester.email,
           subject: emailContent.subject,
           html: emailContent.html,
           text: emailContent.text,
         });
+      } catch (emailError) {
+        logger.error({
+          tenantId,
+          purchaseRequestId: purchaseRequest.id,
+          error: emailError instanceof Error ? emailError.message : String(emailError),
+        }, 'Failed to send status notification email');
+
+        // Notify admins and super admin about email failure
+        await handleEmailFailure({
+          module: 'purchase-requests',
+          action: `status-${status.toLowerCase()}`,
+          tenantId,
+          organizationName: orgName,
+          organizationSlug: orgSlug,
+          recipientEmail: currentRequest.requester.email,
+          recipientName: currentRequest.requester.name || currentRequest.requester.email,
+          emailSubject: emailContent.subject,
+          error: emailError instanceof Error ? emailError.message : String(emailError),
+          metadata: {
+            purchaseRequestId: purchaseRequest.id,
+            referenceNumber: purchaseRequest.referenceNumber,
+            previousStatus: currentRequest.status,
+            newStatus: status,
+          },
+        }).catch(() => {}); // Non-blocking
       }
-    } catch (emailError) {
-      logger.error({
-        tenantId,
-        purchaseRequestId: purchaseRequest.id,
-        error: emailError instanceof Error ? emailError.message : String(emailError),
-      }, 'Failed to send status notification email');
-      // Don't fail the request if email fails
     }
 
     // Send in-app notification for approved/rejected status

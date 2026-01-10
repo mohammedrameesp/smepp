@@ -5,7 +5,8 @@
  * @module oauth
  */
 
-import { getBaseUrl } from './utils';
+import { getBaseUrl, validateEmailDomain } from './utils';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AZURE AD OAUTH CONFIGURATION
@@ -110,7 +111,7 @@ export async function exchangeAzureCodeForTokens(
 
   if (!response.ok) {
     const error = await response.text();
-    console.error('Azure token exchange failed:', error);
+    logger.error({ status: response.status, error }, 'Azure token exchange failed');
     throw new Error(`Failed to exchange code for tokens: ${response.status}`);
   }
 
@@ -129,7 +130,7 @@ export async function getAzureUserInfo(accessToken: string): Promise<AzureUserIn
 
   if (!response.ok) {
     const error = await response.text();
-    console.error('Failed to get Azure user info:', error);
+    logger.error({ status: response.status, error }, 'Failed to get Azure user info');
     throw new Error(`Failed to get user info: ${response.status}`);
   }
 
@@ -155,18 +156,5 @@ export function getAzureUserEmail(userInfo: AzureUserInfo): string {
   throw new Error('Could not determine user email from Azure response');
 }
 
-/**
- * Validate that the user's email domain is allowed for the organization
- */
-export function validateEmailDomain(
-  email: string,
-  allowedDomains: string[],
-  enforceDomainRestriction: boolean
-): boolean {
-  if (!enforceDomainRestriction || allowedDomains.length === 0) {
-    return true;
-  }
-
-  const emailDomain = email.split('@')[1]?.toLowerCase();
-  return allowedDomains.some(d => d.toLowerCase() === emailDomain);
-}
+// Re-export validateEmailDomain from utils for convenience
+export { validateEmailDomain } from './utils';

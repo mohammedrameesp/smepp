@@ -36,6 +36,7 @@ import { SubscriptionListTableServerSearch } from '@/features/subscriptions';
 import { getExchangeRateToQAR } from '@/lib/core/currency';
 import { Plus } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function AdminSubscriptionsPage() {
   const session = await getServerSession(authOptions);
@@ -127,24 +128,16 @@ export default async function AdminSubscriptionsPage() {
           </PageHeaderButton>
         }
       >
-        {/* Stats Summary */}
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-            <span className="text-blue-400 text-sm font-medium">{activeCount} active</span>
-          </div>
-          {cancelledCount > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-              <span className="text-slate-400 text-sm font-medium">{cancelledCount} cancelled</span>
-            </div>
-          )}
-          {totalInQAR > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-              <span className="text-emerald-400 text-sm font-medium">
-                QAR {totalInQAR.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} this month
-              </span>
-            </div>
-          )}
-        </div>
+        <StatChipGroup>
+          <StatChip value={activeCount} label="active" color="blue" />
+          <StatChip value={cancelledCount} label="cancelled" color="slate" hideWhenZero />
+          <StatChip
+            value={`QAR ${totalInQAR.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
+            label="this month"
+            color="emerald"
+            hideWhenZero
+          />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

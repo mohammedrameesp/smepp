@@ -37,13 +37,13 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Package, ShoppingCart, MapPin, Info, Wrench, RefreshCw } from 'lucide-react';
 import { DisposeAssetDialog } from '@/features/assets';
-import { toInputDateString, formatDate } from '@/lib/date-format';
+import { toInputDateString, formatDate } from '@/lib/core/datetime';
 import { updateAssetSchema, type UpdateAssetRequest } from '@/features/assets';
 import { AssetStatus } from '@prisma/client';
 import { CategorySelector } from '@/features/assets';
 import { AssetTypeCombobox } from '@/features/assets';
 import { DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
-import { getQatarEndOfDay } from '@/lib/qatar-timezone';
+import { getQatarEndOfDay } from '@/lib/core/datetime';
 
 interface Asset {
   id: string;

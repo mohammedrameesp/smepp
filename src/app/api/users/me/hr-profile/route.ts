@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { hrProfileSchema, hrProfileEmployeeSchema } from '@/lib/validations/hr-profile';
+import { hrProfileSchema, hrProfileEmployeeSchema } from '@/features/employees/validations/hr-profile';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { TeamMemberRole } from '@prisma/client';

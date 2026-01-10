@@ -31,7 +31,7 @@ import {
 import { NotificationBell } from '@/features/notifications/components';
 import { FeedbackTrigger } from '@/components/feedback/feedback-trigger';
 import { type BadgeCounts } from '@/components/layout/badge-types';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import { Button } from '@/components/ui/button';
 
 interface AdminTopNavProps {

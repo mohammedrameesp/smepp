@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Package, Laptop, Smartphone, Monitor, CreditCard, ArrowRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 interface Asset {
   id: string;

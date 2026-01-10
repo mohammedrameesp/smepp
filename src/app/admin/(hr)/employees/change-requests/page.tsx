@@ -23,7 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Loader2, CheckCircle, XCircle, Clock, User, ChevronRight, MessageSquare } from 'lucide-react';
-import { formatDateTime } from '@/lib/date-format';
+import { formatDateTime } from '@/lib/core/datetime';
 import { toast } from 'sonner';
 
 interface ChangeRequest {

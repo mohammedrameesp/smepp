@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { AlertsClient } from './client';
 
 export const metadata: Metadata = {
@@ -245,37 +246,14 @@ export default async function AlertsPage() {
         title="Alerts"
         subtitle="Upcoming birthdays, anniversaries, expiries, and renewals"
       >
-        {/* Summary Chips */}
-        <div className="flex flex-wrap items-center gap-3 mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/50 rounded-lg">
-            <span className="text-slate-300 text-sm font-medium">{counts.total} total</span>
-          </div>
-          {counts.expired > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/20 rounded-lg">
-              <span className="text-rose-400 text-sm font-medium">{counts.expired} expired</span>
-            </div>
-          )}
-          {counts.birthdays > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-              <span className="text-blue-400 text-sm font-medium">{counts.birthdays} birthdays</span>
-            </div>
-          )}
-          {counts.anniversaries > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-              <span className="text-emerald-400 text-sm font-medium">{counts.anniversaries} anniversaries</span>
-            </div>
-          )}
-          {(counts.employeeDocuments + counts.companyDocuments) > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-              <span className="text-amber-400 text-sm font-medium">{counts.employeeDocuments + counts.companyDocuments} documents</span>
-            </div>
-          )}
-          {counts.subscriptions > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 rounded-lg">
-              <span className="text-purple-400 text-sm font-medium">{counts.subscriptions} subscriptions</span>
-            </div>
-          )}
-        </div>
+        <StatChipGroup>
+          <StatChip value={counts.total} label="total" color="slate" />
+          <StatChip value={counts.expired} label="expired" color="rose" hideWhenZero />
+          <StatChip value={counts.birthdays} label="birthdays" color="blue" hideWhenZero />
+          <StatChip value={counts.anniversaries} label="anniversaries" color="emerald" hideWhenZero />
+          <StatChip value={counts.employeeDocuments + counts.companyDocuments} label="documents" color="amber" hideWhenZero />
+          <StatChip value={counts.subscriptions} label="subscriptions" color="purple" hideWhenZero />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

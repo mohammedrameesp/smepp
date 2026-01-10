@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Palmtree, ShoppingCart, Search, CreditCard, HelpCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 interface QuickAction {
   label: string;

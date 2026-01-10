@@ -10,7 +10,7 @@ import {
   getExpiryStatus,
   getOverallExpiryStatus,
   calculateTeamMemberProfileCompletion,
-} from '@/lib/hr-utils';
+} from '@/features/employees/lib/hr-utils';
 
 // GET /api/employees - Get all employees with HR profile data
 export const GET = withErrorHandler(

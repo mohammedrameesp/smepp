@@ -41,6 +41,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { EmployeeSubscriptionListTable } from '@/features/subscriptions';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { Package, CheckCircle, User } from 'lucide-react';
 
 export default async function EmployeeSubscriptionsPage() {
@@ -86,28 +87,27 @@ export default async function EmployeeSubscriptionsPage() {
           { label: 'Subscriptions' }
         ]}
       >
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          <Link href="/employee/my-assets?tab=subscriptions">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg hover:bg-blue-500/30 transition-colors cursor-pointer">
-              <User className="h-4 w-4 text-blue-400" />
-              <span className="text-blue-400 text-sm font-medium">
-                {myActiveSubscriptions.length} my subscriptions
-              </span>
-            </div>
-          </Link>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-            <CheckCircle className="h-4 w-4 text-emerald-400" />
-            <span className="text-emerald-400 text-sm font-medium">
-              {activeSubscriptions.length} active
-            </span>
-          </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-            <Package className="h-4 w-4 text-slate-400" />
-            <span className="text-slate-400 text-sm font-medium">
-              {subscriptions.length} total
-            </span>
-          </div>
-        </div>
+        <StatChipGroup>
+          <StatChip
+            value={myActiveSubscriptions.length}
+            label="my subscriptions"
+            color="blue"
+            icon={<User className="h-4 w-4" />}
+            href="/employee/my-assets?tab=subscriptions"
+          />
+          <StatChip
+            value={activeSubscriptions.length}
+            label="active"
+            color="emerald"
+            icon={<CheckCircle className="h-4 w-4" />}
+          />
+          <StatChip
+            value={subscriptions.length}
+            label="total"
+            color="slate"
+            icon={<Package className="h-4 w-4" />}
+          />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>

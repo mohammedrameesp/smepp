@@ -15,7 +15,7 @@ import {
   getCostTypeLabel,
   getPaymentModeLabel,
   getBillingCycleLabel,
-} from '@/lib/purchase-request-utils';
+} from '@/features/purchase-requests/lib/purchase-request-utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function exportPurchaseRequestsHandler(request: NextRequest, context: APIContext) {

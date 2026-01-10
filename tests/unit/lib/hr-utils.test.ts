@@ -17,7 +17,7 @@ import {
   EXPIRY_WARNING_DAYS,
   PROFILE_COMPLETION_THRESHOLD,
   HR_REQUIRED_FIELDS,
-} from '@/lib/hr-utils';
+} from '@/features/employees/lib/hr-utils';
 
 describe('HR Utilities', () => {
   describe('Constants', () => {

@@ -8,7 +8,7 @@ import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { approvePayrollSchema } from '@/lib/validations/payroll';
+import { approvePayrollSchema } from '@/features/payroll/validations/payroll';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
 async function approvePayrollHandler(request: NextRequest, context: APIContext) {

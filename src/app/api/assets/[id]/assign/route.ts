@@ -55,14 +55,14 @@ import {
   AssetRequestStatus,
   AssetRequestType,
   AssetHistoryAction,
-  TeamMemberRole,
-  NotificationType,
 } from '@prisma/client';
 import { z } from 'zod';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { sendEmail } from '@/lib/core/email';
-import { assetAssignmentEmail, assetAssignmentPendingEmail } from '@/lib/email-templates';
-import { createNotification, createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
+import { handleEmailFailure, getOrganizationContext } from '@/lib/core/email-failure-handler';
+import { assetAssignmentEmail } from '@/lib/core/email-templates';
+import { assetAssignmentPendingEmail } from '@/lib/core/asset-request-emails';
+import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { generateRequestNumber } from '@/features/asset-requests';
 import logger from '@/lib/core/log';
@@ -117,8 +117,8 @@ const assignAssetSchema = z.object({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Notify all admins when email notification fails.
- * Creates in-app notification for each admin in the tenant.
+ * Notify admins when email notification fails.
+ * Uses centralized handler to notify tenant admins (in-app) and super admin (email).
  *
  * @param tenantId - Tenant ID for isolation
  * @param context - Details about the failed notification
@@ -129,26 +129,39 @@ async function notifyAdminsOfEmailFailure(
     action: 'assignment' | 'return_request' | 'unassignment' | 'reassignment';
     assetTag: string;
     memberName: string;
+    memberEmail: string;
+    emailSubject: string;
     error: string;
+    metadata?: Record<string, unknown>;
   }
 ): Promise<void> {
   try {
-    // Get all admins in tenant
-    const admins = await prisma.teamMember.findMany({
-      where: { tenantId, role: TeamMemberRole.ADMIN },
-      select: { id: true },
+    const org = await getOrganizationContext(tenantId);
+    if (!org) {
+      logger.error({ tenantId }, 'Could not get organization context for email failure notification');
+      return;
+    }
+
+    await handleEmailFailure({
+      module: 'assets',
+      action: context.action,
+      tenantId,
+      organizationName: org.name,
+      organizationSlug: org.slug,
+      recipientEmail: context.memberEmail,
+      recipientName: context.memberName,
+      emailSubject: context.emailSubject,
+      error: context.error,
+      metadata: {
+        assetTag: context.assetTag,
+        ...context.metadata,
+      },
     });
-
-    const notifications = admins.map((admin) => ({
-      recipientId: admin.id,
-      title: 'Email Notification Failed',
-      message: `Failed to send ${context.action} email for asset ${context.assetTag} to ${context.memberName}. Error: ${context.error}`,
-      type: 'GENERAL' as NotificationType,
-    }));
-
-    await createBulkNotifications(notifications, tenantId);
-  } catch {
-    logger.error({ tenantId, action: context.action, assetTag: context.assetTag }, 'Failed to notify admins of email failure');
+  } catch (error) {
+    logger.error(
+      { tenantId, action: context.action, assetTag: context.assetTag, error: error instanceof Error ? error.message : String(error) },
+      'Failed to handle email failure notification'
+    );
   }
 }
 
@@ -228,7 +241,10 @@ async function sendAssignmentNotifications(
           action: 'assignment',
           assetTag: asset.assetTag || asset.model,
           memberName: member.name || member.email,
+          memberEmail: member.email,
+          emailSubject: emailContent.subject,
           error: emailError instanceof Error ? emailError.message : 'Unknown error',
+          metadata: { assetId: asset.id, assetModel: asset.model },
         });
       }
     }
@@ -300,7 +316,10 @@ async function sendPendingAssignmentNotifications(
           action: 'assignment',
           assetTag: asset.assetTag || asset.model,
           memberName: member.name || member.email,
+          memberEmail: member.email,
+          emailSubject: emailData.subject,
           error: emailError instanceof Error ? emailError.message : 'Unknown error',
+          metadata: { requestId: request.id, requestNumber: request.requestNumber },
         });
       }
     }
@@ -370,7 +389,10 @@ async function sendReassignmentUnassignNotification(
         action: 'reassignment',
         assetTag: asset.assetTag || asset.model,
         memberName: previousMember.name || previousMember.email,
+        memberEmail: previousMember.email,
+        emailSubject: emailData.subject,
         error: emailError instanceof Error ? emailError.message : 'Unknown error',
+        metadata: { assetId: asset.id, reason },
       });
     }
 
@@ -792,7 +814,10 @@ async function directUnassign(
         action: 'unassignment',
         assetTag: updatedAsset.assetTag || updatedAsset.model,
         memberName: previousMember.name || previousMember.email,
+        memberEmail: previousMember.email,
+        emailSubject: emailData.subject,
         error: emailError instanceof Error ? emailError.message : 'Unknown error',
+        metadata: { assetId: updatedAsset.id },
       });
     });
 

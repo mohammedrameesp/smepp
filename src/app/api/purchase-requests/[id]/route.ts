@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { updatePurchaseRequestSchema } from '@/lib/validations/purchase-request';
+import { updatePurchaseRequestSchema } from '@/lib/validations/projects/purchase-request';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { calculatePurchaseRequestItems, CalculatedItem } from '@/features/purchase-requests/lib/purchase-request-creation';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { format, formatDistanceToNow } from 'date-fns';
 import { SetupChecklist } from '@/components/dashboard/SetupChecklist';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 // Avatar color palette - consistent colors based on name
 const AVATAR_COLORS = [
@@ -405,39 +406,29 @@ export default async function AdminDashboard() {
               : "You're all caught up!"}
           </p>
 
-          {/* Summary Chips */}
-          <div className="flex flex-wrap items-center gap-4 mt-4">
-            {(dashboardData?.totalPendingApprovals || 0) > 0 && (
-              <Link
-                href="/admin/my-approvals"
-                className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-slate-800"
-              >
-                <span className="text-red-400 text-sm font-medium">
-                  {dashboardData?.totalPendingApprovals} pending approvals
-                </span>
-              </Link>
-            )}
-            {(dashboardData?.expiringDocsCount || 0) > 0 && (
-              <Link
-                href="/admin/alerts"
-                className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-800"
-              >
-                <span className="text-amber-400 text-sm font-medium">
-                  {dashboardData?.expiringDocsCount} documents expiring
-                </span>
-              </Link>
-            )}
-            {(dashboardData?.stats.onLeaveToday || 0) > 0 && (
-              <Link
-                href="/admin/leave/requests"
-                className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-800"
-              >
-                <span className="text-blue-400 text-sm font-medium">
-                  {dashboardData?.stats.onLeaveToday} out of office
-                </span>
-              </Link>
-            )}
-          </div>
+          <StatChipGroup>
+            <StatChip
+              value={dashboardData?.totalPendingApprovals || 0}
+              label="pending approvals"
+              color="red"
+              href="/admin/my-approvals"
+              hideWhenZero
+            />
+            <StatChip
+              value={dashboardData?.expiringDocsCount || 0}
+              label="documents expiring"
+              color="amber"
+              href="/admin/alerts"
+              hideWhenZero
+            />
+            <StatChip
+              value={dashboardData?.stats.onLeaveToday || 0}
+              label="out of office"
+              color="blue"
+              href="/admin/leave/requests"
+              hideWhenZero
+            />
+          </StatChipGroup>
         </div>
       </div>
 

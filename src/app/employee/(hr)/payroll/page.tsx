@@ -6,9 +6,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Calculator, CreditCard, ArrowRight, DollarSign, Wallet } from 'lucide-react';
-import { formatCurrency, getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/lib/payroll/utils';
-import { calculateGratuity, getServiceDurationText } from '@/lib/payroll/gratuity';
+import { formatCurrency, getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/features/payroll/lib/utils';
+import { calculateGratuity, getServiceDurationText } from '@/features/payroll/lib/gratuity';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { DetailCard } from '@/components/ui/detail-card';
+import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
 export default async function EmployeePayrollPage() {
   const session = await getServerSession(authOptions);
@@ -90,49 +93,38 @@ export default async function EmployeePayrollPage() {
           </Link>
         }
       >
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          {grossSalary > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 rounded-lg">
-              <DollarSign className="h-4 w-4 text-emerald-400" />
-              <span className="text-emerald-400 text-sm font-medium">
-                {formatCurrency(grossSalary)} monthly
-              </span>
-            </div>
-          )}
+        <StatChipGroup>
+          <StatChip
+            value={formatCurrency(grossSalary)}
+            label="monthly"
+            color="emerald"
+            icon={<DollarSign className="h-4 w-4" />}
+            hideWhenZero
+          />
           {gratuityCalculation && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-              <Calculator className="h-4 w-4 text-blue-400" />
-              <span className="text-blue-400 text-sm font-medium">
-                {formatCurrency(gratuityCalculation.gratuityAmount)} gratuity
-              </span>
-            </div>
+            <StatChip
+              value={formatCurrency(gratuityCalculation.gratuityAmount)}
+              label="gratuity"
+              color="blue"
+              icon={<Calculator className="h-4 w-4" />}
+            />
           )}
-          {totalLoanRemaining > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-              <Wallet className="h-4 w-4 text-amber-400" />
-              <span className="text-amber-400 text-sm font-medium">
-                {formatCurrency(totalLoanRemaining)} loan balance
-              </span>
-            </div>
-          )}
-        </div>
+          <StatChip
+            value={formatCurrency(totalLoanRemaining)}
+            label="loan balance"
+            color="amber"
+            icon={<Wallet className="h-4 w-4" />}
+            hideWhenZero
+          />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>
 
       {/* Salary Overview */}
       {salaryStructure ? (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-              <DollarSign className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-slate-900">Salary Overview</h2>
-              <p className="text-sm text-slate-500">Your current monthly salary breakdown</p>
-            </div>
-          </div>
-          <div className="p-5">
+        <div className="mb-6">
+          <DetailCard icon={DollarSign} iconColor="emerald" title="Salary Overview" subtitle="Your current monthly salary breakdown">
             <div className="grid gap-4 md:grid-cols-3 mb-6">
               <div className="p-4 bg-slate-50 rounded-xl">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Basic Salary</p>
@@ -164,29 +156,14 @@ export default async function EmployeePayrollPage() {
             <div className="pt-4 border-t border-slate-200">
               <p className="text-sm font-semibold text-slate-900 mb-3">Allowance Breakdown</p>
               <div className="grid gap-3 md:grid-cols-5">
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-xs text-slate-500 mb-1">Housing</p>
-                  <p className="font-semibold text-slate-900">{formatCurrency(Number(salaryStructure.housingAllowance))}</p>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-xs text-slate-500 mb-1">Transport</p>
-                  <p className="font-semibold text-slate-900">{formatCurrency(Number(salaryStructure.transportAllowance))}</p>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-xs text-slate-500 mb-1">Food</p>
-                  <p className="font-semibold text-slate-900">{formatCurrency(Number(salaryStructure.foodAllowance))}</p>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-xs text-slate-500 mb-1">Phone</p>
-                  <p className="font-semibold text-slate-900">{formatCurrency(Number(salaryStructure.phoneAllowance))}</p>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-lg">
-                  <p className="text-xs text-slate-500 mb-1">Other</p>
-                  <p className="font-semibold text-slate-900">{formatCurrency(Number(salaryStructure.otherAllowances))}</p>
-                </div>
+                <InfoField label="Housing" value={formatCurrency(Number(salaryStructure.housingAllowance))} size="sm" />
+                <InfoField label="Transport" value={formatCurrency(Number(salaryStructure.transportAllowance))} size="sm" />
+                <InfoField label="Food" value={formatCurrency(Number(salaryStructure.foodAllowance))} size="sm" />
+                <InfoField label="Phone" value={formatCurrency(Number(salaryStructure.phoneAllowance))} size="sm" />
+                <InfoField label="Other" value={formatCurrency(Number(salaryStructure.otherAllowances))} size="sm" />
               </div>
             </div>
-          </div>
+          </DetailCard>
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center mb-6">
@@ -266,59 +243,53 @@ export default async function EmployeePayrollPage() {
       </div>
 
       {/* Recent Payslips */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-              <FileText className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-slate-900">Recent Payslips</h2>
-              <p className="text-sm text-slate-500">Your payment history</p>
-            </div>
-          </div>
+      <DetailCard
+        icon={FileText}
+        iconColor="blue"
+        title="Recent Payslips"
+        subtitle="Your payment history"
+        actions={
           <Link href="/employee/payroll/payslips">
             <Button variant="outline" size="sm">View All</Button>
           </Link>
-        </div>
-        <div className="p-5">
-          {recentPayslips.length === 0 ? (
-            <p className="text-sm text-slate-500 text-center py-8">
-              No payslips available yet
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {recentPayslips.map((payslip) => (
-                <Link
-                  key={payslip.id}
-                  href={`/employee/payroll/payslips/${payslip.id}`}
-                  className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
-                >
-                  <div>
-                    <p className="font-medium text-slate-900">
-                      {getMonthName(payslip.payrollRun.month)} {payslip.payrollRun.year}
-                    </p>
-                    <p className="text-sm text-slate-500 font-mono">
-                      {payslip.payslipNumber}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-slate-900">
-                      {formatCurrency(Number(payslip.netSalary))}
-                    </p>
-                    <Badge
-                      style={{ backgroundColor: getPayrollStatusColor(payslip.payrollRun.status) }}
-                      className="text-white text-xs"
-                    >
-                      {payslip.isPaid ? 'Paid' : getPayrollStatusText(payslip.payrollRun.status)}
-                    </Badge>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+        }
+      >
+        {recentPayslips.length === 0 ? (
+          <p className="text-sm text-slate-500 text-center py-8">
+            No payslips available yet
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {recentPayslips.map((payslip) => (
+              <Link
+                key={payslip.id}
+                href={`/employee/payroll/payslips/${payslip.id}`}
+                className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
+              >
+                <div>
+                  <p className="font-medium text-slate-900">
+                    {getMonthName(payslip.payrollRun.month)} {payslip.payrollRun.year}
+                  </p>
+                  <p className="text-sm text-slate-500 font-mono">
+                    {payslip.payslipNumber}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-slate-900">
+                    {formatCurrency(Number(payslip.netSalary))}
+                  </p>
+                  <Badge
+                    style={{ backgroundColor: getPayrollStatusColor(payslip.payrollRun.status) }}
+                    className="text-white text-xs"
+                  >
+                    {payslip.isPaid ? 'Paid' : getPayrollStatusText(payslip.payrollRun.status)}
+                  </Badge>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </DetailCard>
       </PageContent>
     </>
   );

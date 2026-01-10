@@ -690,7 +690,8 @@ describe('Import Utils Tests', () => {
 
     describe('Duplicate Strategy', () => {
       it('should default to skip', () => {
-        const strategy = undefined || 'skip';
+        const userInput: string | undefined = undefined;
+        const strategy = userInput || 'skip';
         expect(strategy).toBe('skip');
       });
 

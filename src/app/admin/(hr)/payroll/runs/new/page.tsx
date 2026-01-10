@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getMonthName } from '@/lib/payroll/utils';
+import { getMonthName } from '@/features/payroll/lib/utils';
 
 export default function NewPayrollRunPage() {
   const router = useRouter();

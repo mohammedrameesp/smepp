@@ -27,7 +27,7 @@ describe('Super Admin Impersonation API', () => {
     jest.clearAllMocks();
     process.env.NEXTAUTH_SECRET = 'test-secret';
     process.env.NEXT_PUBLIC_APP_DOMAIN = 'durj.com';
-    process.env.NODE_ENV = 'test';
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'test', writable: true });
   });
 
   describe('GET /api/super-admin/impersonate', () => {
@@ -298,14 +298,14 @@ describe('Super Admin Impersonation API', () => {
     });
 
     it('should use HTTPS in production', () => {
-      process.env.NODE_ENV = 'production';
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true });
 
       const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
       expect(protocol).toBe('https');
     });
 
     it('should use HTTP in development', () => {
-      process.env.NODE_ENV = 'development';
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
 
       const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
       expect(protocol).toBe('http');

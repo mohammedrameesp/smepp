@@ -9,7 +9,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Building2, Check, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import { generateCodePrefixFromName } from '@/lib/utils/code-prefix';
 
 interface OrgNameStepProps {

@@ -25,10 +25,13 @@ import {
   Banknote,
   Receipt,
   FileText,
+  Clock,
 } from 'lucide-react';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
-import { formatCurrency } from '@/lib/payroll/utils';
+import { formatCurrency } from '@/features/payroll/lib/utils';
 import { LoanActions } from '@/features/payroll/components';
+import { DetailCard } from '@/components/ui/detail-card';
+import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -150,17 +153,8 @@ export default async function LoanDetailPage({ params }: PageProps) {
         {/* Main Content - 2/3 */}
         <div className="lg:col-span-2 space-y-6">
           {/* Amount Summary */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
-                <Banknote className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Amount Summary</h2>
-                <p className="text-sm text-slate-500">Loan progress and balances</p>
-              </div>
-            </div>
-            <div className="p-6 space-y-6">
+          <DetailCard icon={Banknote} iconColor="emerald" title="Amount Summary" subtitle="Loan progress and balances">
+            <div className="space-y-6">
               {/* Progress Bar */}
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
@@ -205,173 +199,126 @@ export default async function LoanDetailPage({ params }: PageProps) {
                 </div>
               )}
             </div>
-          </div>
+          </DetailCard>
 
           {/* Repayment History */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                <Receipt className="h-5 w-5 text-indigo-600" />
+          <DetailCard
+            icon={Receipt}
+            iconColor="indigo"
+            title="Repayment History"
+            subtitle={`${loan.repayments.length} payment${loan.repayments.length !== 1 ? 's' : ''} recorded`}
+          >
+            {loan.repayments.length === 0 ? (
+              <div className="text-center py-8 text-slate-400">
+                <Receipt className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No repayments recorded yet</p>
               </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Repayment History</h2>
-                <p className="text-sm text-slate-500">{loan.repayments.length} payment{loan.repayments.length !== 1 ? 's' : ''} recorded</p>
-              </div>
-            </div>
-            <div className="p-6">
-              {loan.repayments.length === 0 ? (
-                <div className="text-center py-8 text-slate-400">
-                  <Receipt className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No repayments recorded yet</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                        <TableHead>Method</TableHead>
-                        <TableHead>Reference</TableHead>
-                        <TableHead>Notes</TableHead>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead>Reference</TableHead>
+                      <TableHead>Notes</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loan.repayments.map((repayment) => (
+                      <TableRow key={repayment.id}>
+                        <TableCell className="text-slate-600">
+                          {new Date(repayment.paymentDate).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-emerald-600">
+                          {formatCurrency(Number(repayment.amount))}
+                        </TableCell>
+                        <TableCell className="text-slate-600">
+                          {repayment.paymentMethod.replace(/_/g, ' ')}
+                        </TableCell>
+                        <TableCell className="text-slate-500 font-mono text-sm">
+                          {repayment.reference || '-'}
+                        </TableCell>
+                        <TableCell className="text-slate-500">
+                          {repayment.notes || '-'}
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {loan.repayments.map((repayment) => (
-                        <TableRow key={repayment.id}>
-                          <TableCell className="text-slate-600">
-                            {new Date(repayment.paymentDate).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </TableCell>
-                          <TableCell className="text-right font-semibold text-emerald-600">
-                            {formatCurrency(Number(repayment.amount))}
-                          </TableCell>
-                          <TableCell className="text-slate-600">
-                            {repayment.paymentMethod.replace(/_/g, ' ')}
-                          </TableCell>
-                          <TableCell className="text-slate-500 font-mono text-sm">
-                            {repayment.reference || '-'}
-                          </TableCell>
-                          <TableCell className="text-slate-500">
-                            {repayment.notes || '-'}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
-          </div>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </DetailCard>
 
           {/* Notes */}
           {loan.notes && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-amber-600" />
-                </div>
-                <h2 className="font-semibold text-slate-900">Notes</h2>
+            <DetailCard icon={FileText} iconColor="amber" title="Notes">
+              <div className="bg-slate-50 rounded-xl p-4">
+                <p className="text-sm text-slate-700 leading-relaxed">{loan.notes}</p>
               </div>
-              <div className="p-6">
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-sm text-slate-700 leading-relaxed">{loan.notes}</p>
-                </div>
-              </div>
-            </div>
+            </DetailCard>
           )}
         </div>
 
         {/* Sidebar - 1/3 */}
         <div className="space-y-6">
           {/* Loan Information */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
-                <CreditCard className="h-5 w-5 text-blue-600" />
-              </div>
-              <h2 className="font-semibold text-slate-900">Loan Details</h2>
-            </div>
-            <div className="p-6 space-y-4">
+          <DetailCard icon={CreditCard} iconColor="blue" title="Loan Details">
+            <InfoFieldGrid columns={1}>
               <div className="bg-slate-50 rounded-xl p-4">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Employee</p>
                 <p className="text-sm font-semibold text-slate-900">{loan.member?.name}</p>
                 <p className="text-xs text-slate-500">{loan.member?.employeeCode || loan.member?.email}</p>
               </div>
-              <div className="bg-slate-50 rounded-xl p-4">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Loan Type</p>
-                <p className="text-sm font-semibold text-slate-900">{loan.type.replace(/_/g, ' ')}</p>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Calendar className="h-4 w-4 text-slate-400" />
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Start Date</p>
-                </div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {new Date(loan.startDate).toLocaleDateString('en-US', {
+              <InfoField label="Loan Type" value={loan.type.replace(/_/g, ' ')} />
+              <InfoField
+                label="Start Date"
+                value={new Date(loan.startDate).toLocaleDateString('en-US', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              />
+              {loan.endDate && (
+                <InfoField
+                  label="Expected End"
+                  value={new Date(loan.endDate).toLocaleDateString('en-US', {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric',
                   })}
-                </p>
-              </div>
-              {loan.endDate && (
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Calendar className="h-4 w-4 text-slate-400" />
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Expected End</p>
-                  </div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    {new Date(loan.endDate).toLocaleDateString('en-US', {
+                />
+              )}
+            </InfoFieldGrid>
+          </DetailCard>
+
+          {/* Approval Information */}
+          {loan.approvedBy && (
+            <DetailCard icon={CheckCircle} iconColor="emerald" title="Approval">
+              <InfoFieldGrid columns={1}>
+                <InfoField label="Approved By" value={loan.approvedBy.name} />
+                {loan.approvedAt && (
+                  <InfoField
+                    label="Approved On"
+                    value={new Date(loan.approvedAt).toLocaleDateString('en-US', {
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric',
                     })}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Approval Information */}
-          {loan.approvedBy && (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
-                  <CheckCircle className="h-5 w-5 text-emerald-600" />
-                </div>
-                <h2 className="font-semibold text-slate-900">Approval</h2>
-              </div>
-              <div className="p-6 space-y-4">
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Approved By</p>
-                  <p className="text-sm font-semibold text-slate-900">{loan.approvedBy.name}</p>
-                </div>
-                {loan.approvedAt && (
-                  <div className="bg-slate-50 rounded-xl p-4">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Approved On</p>
-                    <p className="text-sm font-semibold text-slate-900">
-                      {new Date(loan.approvedAt).toLocaleDateString('en-US', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </p>
-                  </div>
+                  />
                 )}
-              </div>
-            </div>
+              </InfoFieldGrid>
+            </DetailCard>
           )}
 
           {/* Record Information */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100">
-              <h2 className="font-semibold text-slate-900">Record Information</h2>
-            </div>
-            <div className="p-6 space-y-3">
+          <DetailCard icon={Clock} iconColor="slate" title="Record Information">
+            <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-500">Created</span>
                 <span className="text-slate-900">
@@ -393,7 +340,7 @@ export default async function LoanDetailPage({ params }: PageProps) {
                 </span>
               </div>
             </div>
-          </div>
+          </DetailCard>
         </div>
         </div>
       </PageContent>

@@ -31,6 +31,8 @@ import { Package, Clock, FileText, AlertCircle } from 'lucide-react';
 import { AssetRequestListTable } from '@/features/asset-requests';
 import { PendingAssignmentsAlert } from '@/features/asset-requests';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { DetailCard } from '@/components/ui/detail-card';
 
 /**
  * Employee asset requests page component
@@ -104,30 +106,28 @@ export default async function EmployeeAssetRequestsPage() {
           </div>
         }
       >
-        <div className="flex flex-wrap items-center gap-4 mt-4">
-          {pendingAssignments.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 rounded-lg">
-              <AlertCircle className="h-4 w-4 text-amber-400" />
-              <span className="text-amber-400 text-sm font-medium">
-                {pendingAssignments.length} pending acceptance
-              </span>
-            </div>
-          )}
-          {pendingRequests.length > 0 && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 rounded-lg">
-              <Clock className="h-4 w-4 text-blue-400" />
-              <span className="text-blue-400 text-sm font-medium">
-                {pendingRequests.length} pending approval
-              </span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-500/20 rounded-lg">
-            <FileText className="h-4 w-4 text-slate-400" />
-            <span className="text-slate-400 text-sm font-medium">
-              {requests.length} total requests
-            </span>
-          </div>
-        </div>
+        <StatChipGroup>
+          <StatChip
+            value={pendingAssignments.length}
+            label="pending acceptance"
+            color="amber"
+            icon={<AlertCircle className="h-4 w-4" />}
+            hideWhenZero
+          />
+          <StatChip
+            value={pendingRequests.length}
+            label="pending approval"
+            color="blue"
+            icon={<Clock className="h-4 w-4" />}
+            hideWhenZero
+          />
+          <StatChip
+            value={requests.length}
+            label="total requests"
+            color="slate"
+            icon={<FileText className="h-4 w-4" />}
+          />
+        </StatChipGroup>
       </PageHeader>
 
       <PageContent>
@@ -135,37 +135,26 @@ export default async function EmployeeAssetRequestsPage() {
         <PendingAssignmentsAlert />
 
         {/* Requests List */}
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-              <Package className="h-5 w-5 text-indigo-600" />
+        <DetailCard icon={Package} iconColor="indigo" title={`All Requests (${requests.length})`} subtitle="Your asset requests, assignments, and return requests">
+          {requests.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-4xl mb-4">📋</div>
+              <p className="text-lg font-medium text-slate-900">No requests yet</p>
+              <p className="text-sm text-slate-500 mb-4">
+                Browse available assets to submit a request
+              </p>
+              <Link href="/employee/assets">
+                <Button>Browse Assets</Button>
+              </Link>
             </div>
-            <div>
-              <h2 className="font-semibold text-slate-900">All Requests ({requests.length})</h2>
-              <p className="text-sm text-slate-500">Your asset requests, assignments, and return requests</p>
-            </div>
-          </div>
-          <div className="p-5">
-            {requests.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-4xl mb-4">📋</div>
-                <p className="text-lg font-medium text-slate-900">No requests yet</p>
-                <p className="text-sm text-slate-500 mb-4">
-                  Browse available assets to submit a request
-                </p>
-                <Link href="/employee/assets">
-                  <Button>Browse Assets</Button>
-                </Link>
-              </div>
-            ) : (
-              <AssetRequestListTable
-                requests={requests}
-                showUser={false}
-                basePath="/employee/asset-requests"
-              />
-            )}
-          </div>
-        </div>
+          ) : (
+            <AssetRequestListTable
+              requests={requests}
+              showUser={false}
+              basePath="/employee/asset-requests"
+            />
+          )}
+        </DetailCard>
       </PageContent>
     </>
   );

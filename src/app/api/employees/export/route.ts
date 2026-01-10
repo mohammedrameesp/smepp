@@ -10,7 +10,7 @@ import {
   getExpiryStatus,
   calculateProfileCompletion,
   maskSensitiveData,
-} from '@/lib/hr-utils';
+} from '@/features/employees/lib/hr-utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 

@@ -3,7 +3,7 @@
  * @see src/lib/utils.ts
  */
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 describe('Utility Functions', () => {
   describe('cn (className merge utility)', () => {

@@ -21,7 +21,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { BirthDatePicker } from '@/components/ui/birth-date-picker';
 import { ChevronDown, ChevronUp, User, Phone, AlertTriangle, CreditCard, Briefcase, Building2, GraduationCap, FileText, Info, Loader2 } from 'lucide-react';
 
-import { hrProfileSchema, type HRProfileInput } from '@/lib/validations/hr-profile';
+import { hrProfileSchema, type HRProfileInput } from '@/features/employees/validations/hr-profile';
 import {
   COUNTRIES,
   QATAR_BANKS,

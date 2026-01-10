@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
-import { formatDate, formatDateTime } from '@/lib/date-format';
+import { formatDate, formatDateTime } from '@/lib/core/datetime';
 import { Edit, AlertTriangle, Package, CreditCard, FileText, Calendar, Clock, Trash2 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { DetailCard } from '@/components/ui/detail-card';
+import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 import { EmployeeHRViewSection } from '@/features/employees/components';
 import { getMemberSubscriptionHistory } from '@/features/subscriptions';
 import { getMemberAssetHistory } from '@/features/assets';
@@ -257,23 +259,13 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
       </div>
 
       {/* System Information */}
-      <div className="mt-6 bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-          <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
-            <Clock className="h-5 w-5 text-slate-600" />
-          </div>
-          <h2 className="font-semibold text-slate-900">System Information</h2>
-        </div>
-        <div className="p-5 grid sm:grid-cols-2 gap-4">
-          <div className="p-4 bg-slate-50 rounded-xl">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Account Created</p>
-            <p className="font-semibold text-slate-900">{formatDateTime(employee.createdAt)}</p>
-          </div>
-          <div className="p-4 bg-slate-50 rounded-xl">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Last Updated</p>
-            <p className="font-semibold text-slate-900">{formatDateTime(employee.updatedAt)}</p>
-          </div>
-        </div>
+      <div className="mt-6">
+        <DetailCard icon={Clock} iconColor="slate" title="System Information">
+          <InfoFieldGrid columns={2}>
+            <InfoField label="Account Created" value={formatDateTime(employee.createdAt)} />
+            <InfoField label="Last Updated" value={formatDateTime(employee.updatedAt)} />
+          </InfoFieldGrid>
+        </DetailCard>
       </div>
       </PageContent>
     </>

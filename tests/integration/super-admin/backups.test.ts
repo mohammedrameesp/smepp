@@ -324,8 +324,8 @@ describe('Super Admin Backups API', () => {
 
       const redacted = mockRedactBackupData(sensitiveData);
 
-      expect(redacted.users[0].password).toBe('[REDACTED]');
-      expect(redacted.teamMembers[0].bankAccountNumber).toBe('[REDACTED]');
+      expect((redacted as any).users[0].password).toBe('[REDACTED]');
+      expect((redacted as any).teamMembers[0].bankAccountNumber).toBe('[REDACTED]');
     });
 
     it('should use .enc extension for encrypted files', () => {

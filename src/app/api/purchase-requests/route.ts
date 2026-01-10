@@ -8,9 +8,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Prisma, PurchaseRequestStatus, PurchaseRequestPriority } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { createPurchaseRequestSchema } from '@/lib/validations/purchase-request';
+import { createPurchaseRequestSchema } from '@/lib/validations/projects/purchase-request';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { generatePurchaseRequestNumber } from '@/lib/purchase-request-utils';
+import { generatePurchaseRequestNumber } from '@/features/purchase-requests/lib/purchase-request-utils';
 import {
   calculatePurchaseRequestItems,
   sendPurchaseRequestNotifications,

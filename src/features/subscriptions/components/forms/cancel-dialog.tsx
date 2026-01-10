@@ -45,7 +45,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DatePicker } from '@/components/ui/date-picker';
-import { toInputDateString } from '@/lib/date-format';
+import { toInputDateString } from '@/lib/core/datetime';
 
 interface CancelDialogProps {
   open: boolean;

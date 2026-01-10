@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, ChevronLeft, ChevronRight, Loader2, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
-import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays, getRequestTypeText } from '@/lib/leave-utils';
+import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays, getRequestTypeText } from '@/features/leave/lib/leave-utils';
 import { LeaveStatus } from '@prisma/client';
 
 interface LeaveRequest {

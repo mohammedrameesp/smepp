@@ -24,7 +24,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 
 const mainNavItems = [
   { icon: LayoutDashboard, href: '/super-admin', title: 'Dashboard' },

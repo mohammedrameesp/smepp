@@ -334,8 +334,8 @@ model Organization {
 
   // AI Chat feature (super-admin controlled)
   aiChatEnabled        Boolean @default(false)
-  aiTokenBudgetMonthly Int?    // Custom monthly AI token limit (null = use tier default)
-  chatRetentionDays    Int?    // Chat conversation retention (null = 90 days, 0 = never delete)
+  aiTokenBudgetMonthly Int? // Custom monthly AI token limit (null = use tier default)
+  chatRetentionDays    Int? // Chat conversation retention (null = 90 days, 0 = never delete)
 
   // Additional currencies beyond QAR (e.g., ["USD", "EUR"])
   additionalCurrencies String[] @default([])
@@ -697,6 +697,7 @@ model TeamMember {
   assetRequestsAssigned        AssetRequest[]        @relation("AssetRequestAssigner")
   assetRequestsProcessed       AssetRequest[]        @relation("AssetRequestProcessor")
   assetRequestHistoryPerformed AssetRequestHistory[] @relation("AssetRequestHistoryPerformer")
+  maintenancePerformed         MaintenanceRecord[]   @relation("MaintenancePerformer")
 
   // Subscriptions
   subscriptions                Subscription[]
@@ -1222,13 +1223,15 @@ model MaintenanceRecord {
   asset           Asset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
   maintenanceDate DateTime
   notes           String?
-  performedBy     String?
+  performedById   String?
+  performedBy     TeamMember?  @relation("MaintenancePerformer", fields: [performedById], references: [id], onDelete: SetNull)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
   @@index([assetId])
   @@index([maintenanceDate])
   @@index([tenantId])
+  @@index([performedById])
 }
 
 model Supplier {
@@ -2164,7 +2167,7 @@ model ChatConversation {
   id        String    @id @default(cuid())
   tenantId  String
   memberId  String
-  title     String?   // Auto-generated from first message
+  title     String? // Auto-generated from first message
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   expiresAt DateTime? // For data retention - conversations auto-delete after this date

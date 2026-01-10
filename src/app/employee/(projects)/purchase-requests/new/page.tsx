@@ -15,7 +15,7 @@ import {
   PURCHASE_TYPES,
   COST_TYPES,
   PAYMENT_MODES,
-} from '@/lib/purchase-request-utils';
+} from '@/features/purchase-requests/lib/purchase-request-utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 // Type configuration for dynamic UI based on purchase type

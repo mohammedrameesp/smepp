@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Loader2, CheckCircle, XCircle, Clock, FileCheck, ShoppingCart, DollarSign, User, Calendar, Building2, FileText, AlertCircle } from 'lucide-react';
 import { StatusBadge, PriorityBadge } from '@/features/purchase-requests/components';
-import { getAllowedStatusTransitions, getStatusLabel, getPurchaseTypeLabel, getCostTypeLabel, getPaymentModeLabel } from '@/lib/purchase-request-utils';
+import { getAllowedStatusTransitions, getStatusLabel, getPurchaseTypeLabel, getCostTypeLabel, getPaymentModeLabel } from '@/features/purchase-requests/lib/purchase-request-utils';
 
 interface PurchaseRequestItem {
   id: string;

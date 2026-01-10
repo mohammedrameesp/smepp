@@ -128,8 +128,8 @@ describe('Super Admin Organizations API', () => {
       (mockPrisma.organization.findMany as jest.Mock).mockResolvedValue([mockOrg]);
 
       const orgs = await mockPrisma.organization.findMany();
-      expect(orgs[0]._count.teamMembers).toBe(10);
-      expect(orgs[0]._count.assets).toBe(25);
+      expect((orgs[0] as any)._count.teamMembers).toBe(10);
+      expect((orgs[0] as any)._count.assets).toBe(25);
     });
   });
 
@@ -269,7 +269,7 @@ describe('Super Admin Organizations API', () => {
 
       mockValidateSlug.mockReturnValue({ valid: true });
       mockIsSlugAvailable.mockResolvedValue(true);
-      mockSendEmail.mockResolvedValue({ success: true });
+      mockSendEmail.mockResolvedValue({ success: true, messageId: 'msg-123' });
 
       const emailResult = await mockSendEmail({
         to: 'admin@test.com',
@@ -305,7 +305,7 @@ describe('Super Admin Organizations API', () => {
 
       mockValidateSlug.mockReturnValue({ valid: true });
       mockIsSlugAvailable.mockResolvedValue(true);
-      mockSendEmail.mockResolvedValue({ success: true });
+      mockSendEmail.mockResolvedValue({ success: true, messageId: 'msg-456' });
 
       // Expected response structure
       const expectedResponse = {

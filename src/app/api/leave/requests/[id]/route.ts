@@ -6,12 +6,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { updateLeaveRequestSchema } from '@/lib/validations/leave';
+import { updateLeaveRequestSchema } from '@/features/leave/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import {
   calculateWorkingDays,
   canEditLeaveRequest,
-} from '@/lib/leave-utils';
+} from '@/features/leave/lib/leave-utils';
 import { validateNoOverlap } from '@/features/leave/lib/leave-request-validation';
 import { cleanupStorageFile } from '@/lib/storage/cleanup';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';

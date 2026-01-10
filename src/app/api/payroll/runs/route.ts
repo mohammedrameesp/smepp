@@ -8,7 +8,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
-import { createPayrollRunSchema, payrollRunQuerySchema } from '@/lib/validations/payroll';
+import { createPayrollRunSchema, payrollRunQuerySchema } from '@/features/payroll/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler } from '@/lib/http/handler';
 import {
@@ -16,7 +16,7 @@ import {
   getPeriodStartDate,
   getPeriodEndDate,
   parseDecimal
-} from '@/lib/payroll/utils';
+} from '@/features/payroll/lib/utils';
 
 export const GET = withErrorHandler(
   async (request, { prisma: tenantPrisma, tenant }) => {

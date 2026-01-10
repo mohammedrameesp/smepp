@@ -41,7 +41,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { formatRelativeTime } from '@/lib/date-format';
+import { formatRelativeTime } from '@/lib/core/datetime';
 import { User, MapPin, RefreshCw, Plus, Edit, UserMinus, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 

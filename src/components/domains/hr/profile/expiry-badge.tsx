@@ -7,11 +7,11 @@
 
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, XCircle, CheckCircle } from 'lucide-react';
-import { formatDate } from '@/lib/date-format';
+import { formatDate } from '@/lib/core/datetime';
 import {
   getExpiryStatus as getExpiryStatusUtil,
   getDaysRemaining,
-} from '@/lib/hr-utils';
+} from '@/features/employees/lib/hr-utils';
 
 interface ExpiryBadgeProps {
   date: Date | string | null | undefined;

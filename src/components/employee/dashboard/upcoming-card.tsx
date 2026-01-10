@@ -1,5 +1,5 @@
 import { Calendar, Palmtree, RefreshCw } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/core/utils';
 import { format } from 'date-fns';
 
 type EventType = 'leave' | 'renewal';
