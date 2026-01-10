@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { sendEmail } from '@/lib/core/email';
@@ -53,7 +54,7 @@ export async function GET(
 
     return NextResponse.json({ invitations });
   } catch (error) {
-    console.error('Get invitations error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Get invitations error');
     return NextResponse.json(
       { error: 'Failed to get invitations' },
       { status: 500 }
@@ -208,7 +209,7 @@ export async function POST(
       { status: 201 }
     );
   } catch (error) {
-    console.error('Send invitation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Send invitation error');
     return NextResponse.json(
       { error: 'Failed to send invitation' },
       { status: 500 }
@@ -276,7 +277,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Cancel invitation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Cancel invitation error');
     return NextResponse.json(
       { error: 'Failed to cancel invitation' },
       { status: 500 }

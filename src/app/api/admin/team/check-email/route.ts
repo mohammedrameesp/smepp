@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 /**
  * GET /api/admin/team/check-email?email=user@example.com
@@ -93,7 +94,7 @@ export async function GET(request: NextRequest) {
       valid: true,
     });
   } catch (error) {
-    console.error('Check email error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to check email availability');
     return NextResponse.json(
       { error: 'Failed to check email' },
       { status: 500 }

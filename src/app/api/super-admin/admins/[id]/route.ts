@@ -9,6 +9,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { requireRecent2FA } from '@/lib/two-factor';
+import logger from '@/lib/core/log';
 
 export async function DELETE(
   request: NextRequest,
@@ -71,7 +72,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Super admin privileges removed' });
   } catch (error) {
-    console.error('Remove super admin error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Remove super admin error');
     return NextResponse.json(
       { error: 'Failed to remove super admin' },
       { status: 500 }

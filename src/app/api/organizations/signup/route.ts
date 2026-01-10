@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 import { z } from 'zod';
 import { validateSlug, isSlugAvailable } from '@/lib/multi-tenant/subdomain';
 import { randomBytes } from 'crypto';
@@ -126,17 +127,17 @@ export async function POST(request: NextRequest) {
 
     // Seed default permissions for the new organization (non-blocking)
     seedDefaultPermissions(organization.id).catch((err: Error) => {
-      console.error('[Signup] Failed to seed default permissions:', err);
+      logger.error({ error: err.message, organizationId: organization.id }, 'Failed to seed default permissions');
     });
 
     // Seed default leave types for the new organization (non-blocking)
     seedDefaultLeaveTypes(organization.id).catch((err: Error) => {
-      console.error('[Signup] Failed to seed default leave types:', err);
+      logger.error({ error: err.message, organizationId: organization.id }, 'Failed to seed default leave types');
     });
 
     // Seed default asset categories for the new organization (non-blocking)
     seedDefaultAssetCategories(organization.id).catch((err: Error) => {
-      console.error('[Signup] Failed to seed default asset categories:', err);
+      logger.error({ error: err.message, organizationId: organization.id }, 'Failed to seed default asset categories');
     });
 
     // Build organization-specific invite URL using subdomain
@@ -164,8 +165,8 @@ export async function POST(request: NextRequest) {
           <!-- Header -->
           <tr>
             <td align="center" style="background-color: #2563eb; padding: 40px 40px 30px;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Durj</h1>
-              <p style="color: #bfdbfe; margin: 8px 0 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Your Business, Simplified</p>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">${name}</h1>
+              <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Welcome to Your New Workspace</p>
             </td>
           </tr>
 
@@ -192,7 +193,7 @@ export async function POST(request: NextRequest) {
                   <td align="center" style="padding: 10px 0 30px;">
                     <table cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td align="center" style="background-color: #2563eb; border-radius: 8px;">
+                        <td align="center" style="background-color: #2563eb; border-radius: 6px;">
                           <a href="${inviteUrl}" target="_blank" style="display: inline-block; padding: 16px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">
                             Complete Your Setup
                           </a>
@@ -204,7 +205,7 @@ export async function POST(request: NextRequest) {
               </table>
 
               <!-- Organization Info -->
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border-radius: 8px; margin-bottom: 20px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border-radius: 6px; margin-bottom: 20px;">
                 <tr>
                   <td style="padding: 20px;">
                     <p style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 8px; font-family: Arial, Helvetica, sans-serif;">Your Portal URL</p>
@@ -236,10 +237,10 @@ export async function POST(request: NextRequest) {
           <tr>
             <td style="background-color: #f8fafc; padding: 30px 40px; border-top: 1px solid #e2e8f0;">
               <p style="color: #64748b; font-size: 14px; line-height: 21px; margin: 0 0 10px; font-family: Arial, Helvetica, sans-serif;">
-                If you didn't sign up for Durj, you can safely ignore this email.
+                If you didn't create this organization, you can safely ignore this email.
               </p>
               <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
-                © ${new Date().getFullYear()} Durj. All rights reserved.
+                © ${new Date().getFullYear()} ${name}. Powered by Durj.
               </p>
             </td>
           </tr>
@@ -260,9 +261,9 @@ Your portal URL: ${slug}.${(process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:300
 
 Note: This link expires in 7 days.
 
-If you didn't sign up for Durj, you can safely ignore this email.
+If you didn't create this organization, you can safely ignore this email.
 
-- The Durj Team`,
+- The ${name} Team`,
     });
 
     // Send notification to super admin (non-blocking)
@@ -286,7 +287,7 @@ If you didn't sign up for Durj, you can safely ignore this email.
         html: superAdminNotification.html,
         text: superAdminNotification.text,
       }).catch((err) => {
-        console.error('[Signup] Failed to send super admin notification:', err);
+        logger.error({ error: err instanceof Error ? err.message : String(err) }, 'Failed to send super admin notification');
       });
     }
 
@@ -302,7 +303,7 @@ If you didn't sign up for Durj, you can safely ignore this email.
       { status: 201 }
     );
   } catch (error) {
-    console.error('Signup error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Signup error');
     return NextResponse.json(
       {
         error: 'Failed to create organization',

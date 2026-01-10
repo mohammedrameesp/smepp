@@ -11,6 +11,7 @@ import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import { generateBackupCodes } from '@/lib/two-factor/backup-codes';
 import { verifyTOTPCode } from '@/lib/two-factor/totp';
+import logger from '@/lib/core/log';
 
 const regenerateSchema = z.object({
   code: z.string().length(6, 'Code must be 6 digits'),
@@ -48,7 +49,7 @@ export async function GET() {
       remainingCodes: user.twoFactorBackupCodes?.length || 0,
     });
   } catch (error) {
-    console.error('Get backup codes error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Get backup codes error');
     return NextResponse.json(
       { error: 'Failed to get backup codes count' },
       { status: 500 }
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
       warning: 'Your previous backup codes have been invalidated. Save these new codes in a safe place.',
     });
   } catch (error) {
-    console.error('Regenerate backup codes error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Regenerate backup codes error');
     return NextResponse.json(
       { error: 'Failed to regenerate backup codes' },
       { status: 500 }

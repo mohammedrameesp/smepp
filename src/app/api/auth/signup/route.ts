@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { validatePassword, DEFAULT_PASSWORD_REQUIREMENTS } from '@/lib/security/password-validation';
 import { TeamMemberRole, OrgRole } from '@prisma/client';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION SCHEMA
@@ -210,7 +211,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Signup error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Signup error');
     return NextResponse.json(
       { error: 'Failed to create account. Please try again.' },
       { status: 500 }

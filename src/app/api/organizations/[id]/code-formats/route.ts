@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 import { clearPrefixCache, validateFormatPattern, type CodeFormatConfig } from '@/lib/utils/code-prefix';
 import { z } from 'zod';
 
@@ -68,7 +69,7 @@ export async function GET(
       codeFormats: organization.codeFormats as CodeFormatConfig,
     });
   } catch (error) {
-    console.error('Get code formats error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Get code formats error');
     return NextResponse.json({ error: 'Failed to get code formats' }, { status: 500 });
   }
 }
@@ -152,7 +153,7 @@ export async function PUT(
       codeFormats: organization.codeFormats,
     });
   } catch (error) {
-    console.error('Update code formats error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Update code formats error');
     return NextResponse.json({ error: 'Failed to update code formats' }, { status: 500 });
   }
 }

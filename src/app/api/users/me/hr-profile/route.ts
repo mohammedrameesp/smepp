@@ -16,6 +16,7 @@ import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { TeamMemberRole } from '@prisma/client';
 import { sendEmail } from '@/lib/core/email';
 import { initializeMemberLeaveBalances } from '@/features/leave/lib/leave-balance-init';
+import logger from '@/lib/core/log';
 
 // GET /api/users/me/hr-profile - Get current user's HR profile (now from TeamMember)
 async function getHRProfileHandler(request: NextRequest, context: APIContext) {
@@ -240,8 +241,7 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
       data: processedData,
     });
   } catch (dbError) {
-    console.error('[HR Profile] Database error during update:', dbError);
-    console.error('[HR Profile] Processed data:', JSON.stringify(processedData, null, 2));
+    logger.error({ error: String(dbError), userId: tenant.userId }, 'Database error during HR profile update');
     return NextResponse.json(
       {
         error: 'Failed to save HR profile',
@@ -314,7 +314,7 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
       }
     } catch (emailError) {
       // Log error but don't fail the request
-      console.error('Failed to send onboarding completion email:', emailError);
+      logger.error({ error: String(emailError), userId: tenant.userId }, 'Failed to send onboarding completion email');
     }
 
     // Initialize leave balances when onboarding is completed with dateOfJoining
@@ -322,7 +322,7 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
       try {
         await initializeMemberLeaveBalances(tenant.userId, new Date().getFullYear(), tenant.tenantId);
       } catch (leaveError) {
-        console.error('[Leave] Failed to initialize leave balances on onboarding completion:', leaveError);
+        logger.error({ error: String(leaveError), userId: tenant.userId }, 'Failed to initialize leave balances on onboarding completion');
         // Don't fail the request if leave balance initialization fails
       }
     }

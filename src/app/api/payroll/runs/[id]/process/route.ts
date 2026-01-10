@@ -9,6 +9,7 @@ import { authOptions } from '@/lib/core/auth';
 import { TeamMemberRole, PayrollStatus, DeductionType, LoanStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/core/activity';
+import logger from '@/lib/core/log';
 import {
   generatePayslipNumberWithPrefix,
   parseDecimal,
@@ -43,7 +44,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
         where: { tenantId },
       });
     } catch (dbError) {
-      console.error('[Payroll Process] Database error:', dbError);
+      logger.error({ error: dbError instanceof Error ? dbError.message : 'Unknown error' }, 'Payroll process database error');
       return NextResponse.json({
         error: 'Database connection or table error. SalaryStructure table may not exist.',
         details: dbError instanceof Error ? dbError.message : 'Unknown'
@@ -303,10 +304,12 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
         // Verify sum of individual deductions equals payslip total
         const deductionSum = addMoney(...deductionItems.map(d => d.amount));
         if (Math.abs(deductionSum - cappedDeductions) > 0.01) {
-          console.error(
-            `[Payroll] Deduction reconciliation failed for member ${salary.memberId}: ` +
-            `sum=${deductionSum}, total=${cappedDeductions}`
-          );
+          logger.error({
+            memberId: salary.memberId,
+            deductionSum,
+            cappedDeductions,
+            payslipNumber,
+          }, 'Deduction reconciliation failed');
           throw new Error(`Deduction reconciliation failed for payslip ${payslipNumber}`);
         }
 
@@ -373,7 +376,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       ...result,
     });
   } catch (error) {
-    console.error('Payroll process error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Payroll process error');
     let errorMessage = 'Unknown error';
     let statusCode = 500;
 

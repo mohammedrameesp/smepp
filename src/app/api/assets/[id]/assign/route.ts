@@ -65,6 +65,7 @@ import { assetAssignmentEmail, assetAssignmentPendingEmail } from '@/lib/email-t
 import { createNotification, createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { generateRequestNumber } from '@/features/asset-requests';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -147,7 +148,7 @@ async function notifyAdminsOfEmailFailure(
 
     await createBulkNotifications(notifications, tenantId);
   } catch {
-    console.error('[notifyAdminsOfEmailFailure] Failed to notify admins');
+    logger.error({ tenantId, action: context.action, assetTag: context.assetTag }, 'Failed to notify admins of email failure');
   }
 }
 
@@ -246,7 +247,7 @@ async function sendAssignmentNotifications(
       );
     }
   } catch (error) {
-    console.error('[sendAssignmentNotifications] Error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', assetId: asset.id, memberId: member.id }, 'Error sending assignment notifications');
   }
 }
 
@@ -317,7 +318,7 @@ async function sendPendingAssignmentNotifications(
       tenantId
     );
   } catch (error) {
-    console.error('[sendPendingAssignmentNotifications] Error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', requestId: request.id, assetTag: asset.assetTag }, 'Error sending pending assignment notifications');
   }
 }
 
@@ -384,7 +385,7 @@ async function sendReassignmentUnassignNotification(
       tenantId
     );
   } catch (error) {
-    console.error('[sendReassignmentUnassignNotification] Error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', assetId: asset.id, previousMemberId: previousMember.id }, 'Error sending reassignment unassign notification');
   }
 }
 
@@ -801,7 +802,7 @@ async function directUnassign(
       tenantId
     );
   } catch (error) {
-    console.error('[directUnassign] Notification error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', assetId: asset.id, previousMemberId: previousMember.id }, 'Error sending unassign notifications');
   }
 
   return NextResponse.json({

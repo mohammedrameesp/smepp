@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 // SECURITY: Fail fast if NEXTAUTH_SECRET is not set
 if (!process.env.NEXTAUTH_SECRET) {
@@ -135,7 +136,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Impersonation verify error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Impersonation verify error');
     return NextResponse.json(
       { error: 'Failed to verify impersonation token' },
       { status: 500 }

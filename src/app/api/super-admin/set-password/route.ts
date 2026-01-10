@@ -7,6 +7,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import bcrypt from 'bcryptjs';
+import logger from '@/lib/core/log';
 
 export async function POST(request: Request) {
   try {
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    console.error('Set password failed:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Set password failed');
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

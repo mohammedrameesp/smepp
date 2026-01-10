@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { TeamMemberRole } from '@prisma/client';
 import { arrayToCSV, formatDateForCSV } from '@/lib/core/csv-utils';
+import logger from '@/lib/core/log';
 
 export const maxDuration = 60; // Set max duration to 60 seconds for large exports
 
@@ -539,7 +540,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Full backup export error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Full backup export error');
     return NextResponse.json(
       { error: 'Failed to create full backup' },
       { status: 500 }

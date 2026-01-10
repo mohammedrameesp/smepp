@@ -6,6 +6,20 @@ const DEFAULT_BRAND_COLOR = '#3B82F6';
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 
 /**
+ * Escape HTML special characters to prevent XSS attacks
+ * Use this for any user-provided content interpolated into email HTML
+ */
+function escapeHtml(text: string | null | undefined): string {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
  * Get tenant-specific portal URL
  * @param orgSlug - Organization slug for subdomain
  * @param path - Optional path to append (e.g., '/admin', '/profile')
@@ -107,11 +121,11 @@ export function supplierApprovalEmail(data: SupplierApprovalData): { subject: st
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Congratulations! Your Supplier Registration is Approved</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Dear <strong>${data.companyName}</strong>,
+      Dear <strong>${escapeHtml(data.companyName)}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      We are pleased to inform you that your supplier registration with ${data.orgName} has been approved. You are now an approved vendor in our system.
+      We are pleased to inform you that your supplier registration with ${escapeHtml(data.orgName)} has been approved. You are now an approved vendor in our system.
     </p>
 
     <!-- Supplier Details Box -->
@@ -122,11 +136,11 @@ export function supplierApprovalEmail(data: SupplierApprovalData): { subject: st
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Company Name:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${data.companyName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${escapeHtml(data.companyName)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Service Category:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.serviceCategory}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.serviceCategory)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Approval Date:</td>
@@ -207,7 +221,7 @@ export function assetAssignmentEmail(data: AssetAssignmentData): { subject: stri
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Asset Assignment Notification</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Dear <strong>${data.userName}</strong>,
+      Dear <strong>${escapeHtml(data.userName)}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
@@ -342,23 +356,23 @@ export function changeRequestEmail(data: ChangeRequestData): { subject: string; 
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Employee Name:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${data.employeeName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${escapeHtml(data.employeeName)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Employee Email:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.employeeEmail}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.employeeEmail)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Field to Change:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.fieldName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.fieldName)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Current Value:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.currentValue || 'Not set'}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.currentValue) || 'Not set'}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Requested Value:</td>
-              <td style="padding: 8px 0; color: ${brandColor}; font-size: 14px; font-weight: bold;">${data.requestedValue}</td>
+              <td style="padding: 8px 0; color: ${brandColor}; font-size: 14px; font-weight: bold;">${escapeHtml(data.requestedValue)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Submitted On:</td>
@@ -375,7 +389,7 @@ export function changeRequestEmail(data: ChangeRequestData): { subject: string; 
         <td style="padding: 20px;">
           <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Reason for Change:</h4>
           <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">
-            ${data.reason || 'No reason provided'}
+            ${escapeHtml(data.reason) || 'No reason provided'}
           </p>
         </td>
       </tr>
@@ -480,7 +494,7 @@ export function welcomeUserEmail(data: WelcomeUserData): { subject: string; html
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Welcome to ${data.orgName}!</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Dear <strong>${data.userName}</strong>,
+      Dear <strong>${escapeHtml(data.userName)}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
@@ -495,11 +509,11 @@ export function welcomeUserEmail(data: WelcomeUserData): { subject: string; html
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Name:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${data.userName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${escapeHtml(data.userName)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Email:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.userEmail}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.userEmail)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Role:</td>
@@ -601,7 +615,7 @@ export function welcomeUserWithPasswordSetupEmail(data: WelcomeUserWithPasswordS
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Welcome to ${data.orgName}!</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Dear <strong>${data.userName}</strong>,
+      Dear <strong>${escapeHtml(data.userName)}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
@@ -616,11 +630,11 @@ export function welcomeUserWithPasswordSetupEmail(data: WelcomeUserWithPasswordS
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Name:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${data.userName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${escapeHtml(data.userName)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Email:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.userEmail}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.userEmail)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Role:</td>
@@ -741,7 +755,7 @@ export function organizationInvitationEmail(data: OrganizationInvitationEmailDat
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">You're Invited to Join ${data.orgName}!</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Dear <strong>${data.userName}</strong>,
+      Dear <strong>${escapeHtml(data.userName)}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
@@ -756,11 +770,11 @@ export function organizationInvitationEmail(data: OrganizationInvitationEmailDat
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Name:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${data.userName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${escapeHtml(data.userName)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Email:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.userEmail}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.userEmail)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Role:</td>
@@ -930,7 +944,7 @@ export function documentExpiryAlertEmail(data: DocumentExpiryAlertData): { subje
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Document Expiry Reminder</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Dear <strong>${data.userName}</strong>,
+      Dear <strong>${escapeHtml(data.userName)}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
@@ -1238,23 +1252,23 @@ export function newSupplierRegistrationEmail(data: NewSupplierRegistrationData):
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Company Name:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${data.companyName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${escapeHtml(data.companyName)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Category:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.category}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.category)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Contact Person:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.contactName || 'Not provided'}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.contactName) || 'Not provided'}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Contact Email:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.contactEmail || 'Not provided'}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.contactEmail) || 'Not provided'}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Country:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.country || 'Not provided'}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.country) || 'Not provided'}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Registration Date:</td>
@@ -1378,11 +1392,11 @@ export function purchaseRequestSubmittedEmail(data: PurchaseRequestSubmittedData
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Title:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.title}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.title)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Requested By:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.requesterName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.requesterName)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Priority:</td>
@@ -1511,7 +1525,7 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Purchase Request Status Update</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Dear <strong>${data.userName}</strong>,
+      Dear <strong>${escapeHtml(data.userName)}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
@@ -1530,7 +1544,7 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Title:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.title}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.title)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Previous Status:</td>
@@ -1546,7 +1560,7 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Reviewed By:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.reviewerName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.reviewerName)}</td>
             </tr>
           </table>
         </td>
@@ -1560,7 +1574,7 @@ export function purchaseRequestStatusEmail(data: PurchaseRequestStatusData): { s
         <td style="padding: 20px;">
           <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Reviewer Notes:</h4>
           <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">
-            ${data.reviewNotes}
+            ${escapeHtml(data.reviewNotes)}
           </p>
         </td>
       </tr>

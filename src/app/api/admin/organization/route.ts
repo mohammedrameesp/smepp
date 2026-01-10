@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import { updateSetupProgressBulk } from '@/features/onboarding/lib';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/admin/organization - Get current organization details
@@ -79,7 +80,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Get organization error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Get organization error');
     return NextResponse.json(
       { error: 'Failed to get organization' },
       { status: 500 }
@@ -172,7 +173,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ organization: updated });
   } catch (error) {
-    console.error('Update organization error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Update organization error');
     return NextResponse.json(
       { error: 'Failed to update organization' },
       { status: 500 }

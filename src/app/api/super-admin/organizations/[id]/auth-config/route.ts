@@ -9,6 +9,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
+import logger from '@/lib/core/log';
 
 const authMethodSchema = z.enum(['credentials', 'google', 'azure-ad']);
 
@@ -103,7 +104,7 @@ function decrypt(encryptedText: string): string {
     decrypted += decipher.final('utf8');
     return decrypted;
   } catch {
-    console.error('Failed to decrypt OAuth secret');
+    logger.error({}, 'Failed to decrypt OAuth secret');
     return '';
   }
 }
@@ -166,7 +167,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Get auth config error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Get auth config error');
     return NextResponse.json(
       { error: 'Failed to get auth configuration' },
       { status: 500 }
@@ -293,7 +294,7 @@ export async function PATCH(
       },
     });
   } catch (error) {
-    console.error('Update auth config error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Update auth config error');
     return NextResponse.json(
       { error: 'Failed to update auth configuration' },
       { status: 500 }

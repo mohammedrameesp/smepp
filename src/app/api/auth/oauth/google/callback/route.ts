@@ -15,6 +15,7 @@ import {
   getGoogleUserInfo,
   validateEmailDomain,
 } from '@/lib/oauth/google';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/auth/oauth/google/callback
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     // Handle OAuth errors from Google
     if (error) {
-      console.error('Google OAuth error:', error);
+      logger.error({ error }, 'Google OAuth error');
       return NextResponse.redirect(
         `${getTenantUrl('www', '/login')}?error=OAuthError&message=${encodeURIComponent(error)}`
       );
@@ -109,7 +110,7 @@ export async function GET(request: NextRequest) {
     // This checks: isDeleted, canLogin, account lockout, and auth method restrictions
     const securityCheck = await validateOAuthSecurity(googleUser.email, org.id, 'google');
     if (!securityCheck.allowed) {
-      console.log(`[OAuth] Security check failed for ${googleUser.email}: ${securityCheck.error}`);
+      logger.warn({ reason: securityCheck.error, orgId: org.id }, 'Google OAuth security check failed');
       return NextResponse.redirect(
         `${getTenantUrl(subdomain, '/login')}?error=${securityCheck.error}`
       );
@@ -153,7 +154,7 @@ export async function GET(request: NextRequest) {
     const redirectPath = inviteToken ? `/invite/${inviteToken}` : '/admin';
     return NextResponse.redirect(getTenantUrl(subdomain, redirectPath));
   } catch (error) {
-    console.error('Google OAuth callback error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Google OAuth callback error');
 
     // Try to get subdomain from state for error redirect
     const stateParam = request.nextUrl.searchParams.get('state');

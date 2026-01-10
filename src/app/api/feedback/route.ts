@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 import { z } from 'zod';
 
 // Validation schema for feedback submission
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
       id: feedback.id,
     });
   } catch (error) {
-    console.error('Error submitting feedback:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Error submitting feedback');
     return NextResponse.json({ error: 'Failed to submit feedback' }, { status: 500 });
   }
 }
@@ -128,7 +129,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching feedback:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Error fetching feedback');
     return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 });
   }
 }

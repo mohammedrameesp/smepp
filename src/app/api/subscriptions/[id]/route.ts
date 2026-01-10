@@ -31,6 +31,12 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
 /**
+ * Maximum number of history entries to return in GET response.
+ * Limits payload size while providing recent context.
+ */
+const SUBSCRIPTION_HISTORY_LIMIT = 10;
+
+/**
  * GET /api/subscriptions/[id] - Retrieve subscription details
  *
  * Returns complete subscription information including:
@@ -76,7 +82,7 @@ async function getSubscriptionHandler(request: NextRequest, context: APIContext)
         },
         history: {
           orderBy: { createdAt: 'desc' },
-          take: 10,
+          take: SUBSCRIPTION_HISTORY_LIMIT,
         },
       },
     });
@@ -143,7 +149,14 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const body = await request.json();
+    // Parse request body with error handling for malformed JSON
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
     const validation = updateSubscriptionSchema.safeParse(body);
 
     if (!validation.success) {
@@ -190,21 +203,23 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
       }
     }
 
-    const updateData: any = { ...data };
+    // Build update data object, transforming dates and excluding assignment-only fields
+    // Using Record type for flexibility since we transform string dates to Date objects
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { assignmentDate: _assignmentDate, purchaseDate, renewalDate, ...restData } = data;
+    const updateData: Record<string, unknown> = { ...restData };
 
     // Ensure costQAR is set if calculated
     if (costQAR !== undefined) {
       updateData.costQAR = costQAR;
     }
 
-    // Remove assignmentDate as it's only used for history tracking, not stored on the subscription
-    delete updateData.assignmentDate;
-
-    if (data.purchaseDate !== undefined) {
-      updateData.purchaseDate = data.purchaseDate ? parseInputDateString(data.purchaseDate) : null;
+    // Convert date strings to Date objects for Prisma
+    if (purchaseDate !== undefined) {
+      updateData.purchaseDate = purchaseDate ? parseInputDateString(purchaseDate) : null;
     }
-    if (data.renewalDate !== undefined) {
-      updateData.renewalDate = data.renewalDate ? parseInputDateString(data.renewalDate) : null;
+    if (renewalDate !== undefined) {
+      updateData.renewalDate = renewalDate ? parseInputDateString(renewalDate) : null;
     }
 
     // Update subscription using tenant-scoped prisma
@@ -217,7 +232,10 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
     });
 
     // Track member assignment changes in history with custom date
-    // Note: SubscriptionHistory doesn't have tenantId, isolation is via subscriptionId FK
+    // DESIGN: SubscriptionHistory uses global prisma (not tenant-scoped) because:
+    // - SubscriptionHistory table has no tenantId column
+    // - Tenant isolation is enforced via subscriptionId FK - subscription was already
+    //   verified above using tenant-scoped query, so history inherits that isolation
     if (data.assignedMemberId !== undefined && data.assignedMemberId !== currentSubscription.assignedMemberId) {
       const oldMemberName = currentSubscription.assignedMember?.name || currentSubscription.assignedMember?.email || 'Unassigned';
       const newMemberName = subscription.assignedMember?.name || subscription.assignedMember?.email || 'Unassigned';

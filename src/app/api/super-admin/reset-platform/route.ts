@@ -10,6 +10,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { requireRecent2FA } from '@/lib/two-factor';
 import { createClient } from '@supabase/supabase-js';
+import logger from '@/lib/core/log';
 export async function POST() {
   try {
     const session = await getServerSession(authOptions);
@@ -171,7 +172,7 @@ export async function POST() {
         }
       }
     } catch (storageError) {
-      console.error('Storage cleanup error (non-fatal):', storageError);
+      logger.warn({ error: storageError instanceof Error ? storageError.message : 'Unknown error' }, 'Storage cleanup error (non-fatal)');
     }
     results.storageFiles = storageDeleted;
 
@@ -181,7 +182,7 @@ export async function POST() {
       deleted: results,
     });
   } catch (error) {
-    console.error('Platform reset error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Platform reset error');
     return NextResponse.json(
       { error: 'Failed to reset platform', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

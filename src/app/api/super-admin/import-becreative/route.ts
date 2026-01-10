@@ -9,6 +9,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { requireRecent2FA } from '@/lib/two-factor';
+import logger from '@/lib/core/log';
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,20 +45,12 @@ export async function POST(request: NextRequest) {
     }
 
     // AUDIT: Log import operation for security tracking
-    console.log('[AUDIT] Data import initiated:', JSON.stringify({
+    logger.info({
       event: 'IMPORT_DATA_START',
-      timestamp: new Date().toISOString(),
-      superAdmin: {
-        id: session.user.id,
-        email: session.user.email,
-      },
-      targetOrganization: {
-        id: org.id,
-        name: org.name,
-        slug: org.slug,
-      },
-      backupMetadata: backupData._metadata,
-    }));
+      superAdminId: session.user.id,
+      targetOrgId: org.id,
+      targetOrgSlug: org.slug,
+    }, 'Data import initiated');
 
     const tenantId = org.id;
 
@@ -408,7 +401,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Import failed:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Import failed');
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 /**
  * ONE-TIME SCRIPT: Sync dates with purchase dates
@@ -51,7 +52,7 @@ export async function POST(_request: NextRequest) {
       },
     });
 
-    console.log(`Found ${assets.length} assets with purchase dates`);
+    logger.info({ count: assets.length }, 'Found assets with purchase dates');
 
     // Update each asset's createdAt to match purchaseDate
     for (const asset of assets) {
@@ -67,7 +68,7 @@ export async function POST(_request: NextRequest) {
         });
 
         results.assetsUpdated++;
-        console.log(`Updated asset ${asset.assetTag || asset.model}: createdAt set to ${asset.purchaseDate.toISOString().split('T')[0]}`);
+        logger.debug({ assetTag: asset.assetTag, model: asset.model, purchaseDate: asset.purchaseDate.toISOString().split('T')[0] }, 'Updated asset createdAt');
 
         // Update all assignment history records for this asset
         const historyRecords = await prisma.assetHistory.findMany({
@@ -91,7 +92,7 @@ export async function POST(_request: NextRequest) {
       } catch (error) {
         results.assetsSkipped++;
         results.errors.push(`Failed to update asset ${asset.assetTag || asset.model}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        console.error(`Error updating asset ${asset.id}:`, error);
+        logger.error({ assetId: asset.id, error: error instanceof Error ? error.message : String(error) }, 'Error updating asset');
       }
     }
 
@@ -108,7 +109,7 @@ export async function POST(_request: NextRequest) {
       },
     });
 
-    console.log(`Found ${assetsWithoutPurchaseDate.length} assets without purchase dates`);
+    logger.info({ count: assetsWithoutPurchaseDate.length }, 'Found assets without purchase dates');
 
     // Set old date for assets without purchase dates (so they appear last when sorted)
     const veryOldDate = new Date('1900-01-01');
@@ -120,9 +121,9 @@ export async function POST(_request: NextRequest) {
             createdAt: veryOldDate,
           },
         });
-        console.log(`Set old date for asset without purchase date: ${asset.assetTag || asset.model}`);
+        logger.debug({ assetTag: asset.assetTag, model: asset.model }, 'Set old date for asset without purchase date');
       } catch (error) {
-        console.error(`Error setting old date for asset ${asset.id}:`, error);
+        logger.error({ assetId: asset.id, error: error instanceof Error ? error.message : String(error) }, 'Error setting old date for asset');
       }
     }
 
@@ -145,7 +146,7 @@ export async function POST(_request: NextRequest) {
       },
     });
 
-    console.log(`Found ${subscriptions.length} subscriptions with purchase dates`);
+    logger.info({ count: subscriptions.length }, 'Found subscriptions with purchase dates');
 
     // Update each subscription's createdAt to match purchaseDate
     for (const subscription of subscriptions) {
@@ -161,7 +162,7 @@ export async function POST(_request: NextRequest) {
         });
 
         results.subscriptionsUpdated++;
-        console.log(`Updated subscription ${subscription.serviceName}: createdAt set to ${subscription.purchaseDate.toISOString().split('T')[0]}`);
+        logger.debug({ serviceName: subscription.serviceName, purchaseDate: subscription.purchaseDate.toISOString().split('T')[0] }, 'Updated subscription createdAt');
 
         // Update all assignment history records for this subscription
         const historyRecords = await prisma.subscriptionHistory.findMany({
@@ -188,7 +189,7 @@ export async function POST(_request: NextRequest) {
       } catch (error) {
         results.subscriptionsSkipped++;
         results.errors.push(`Failed to update subscription ${subscription.serviceName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        console.error(`Error updating subscription ${subscription.id}:`, error);
+        logger.error({ subscriptionId: subscription.id, error: error instanceof Error ? error.message : String(error) }, 'Error updating subscription');
       }
     }
 
@@ -204,7 +205,7 @@ export async function POST(_request: NextRequest) {
       },
     });
 
-    console.log(`Found ${subscriptionsWithoutPurchaseDate.length} subscriptions without purchase dates`);
+    logger.info({ count: subscriptionsWithoutPurchaseDate.length }, 'Found subscriptions without purchase dates');
 
     // Set old date for subscriptions without purchase dates (so they appear last when sorted)
     for (const subscription of subscriptionsWithoutPurchaseDate) {
@@ -215,9 +216,9 @@ export async function POST(_request: NextRequest) {
             createdAt: veryOldDate,
           },
         });
-        console.log(`Set old date for subscription without purchase date: ${subscription.serviceName}`);
+        logger.debug({ serviceName: subscription.serviceName }, 'Set old date for subscription without purchase date');
       } catch (error) {
-        console.error(`Error setting old date for subscription ${subscription.id}:`, error);
+        logger.error({ subscriptionId: subscription.id, error: error instanceof Error ? error.message : String(error) }, 'Error setting old date for subscription');
       }
     }
 
@@ -244,7 +245,7 @@ export async function POST(_request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Asset date sync error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Asset date sync error');
     return NextResponse.json(
       {
         error: 'Failed to sync asset dates',

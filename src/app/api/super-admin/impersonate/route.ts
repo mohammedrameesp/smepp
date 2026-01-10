@@ -11,6 +11,7 @@ import { prisma } from '@/lib/core/prisma';
 import jwt from 'jsonwebtoken';
 import { requireRecent2FA } from '@/lib/two-factor';
 import { generateJti } from '@/lib/security/impersonation';
+import logger from '@/lib/core/log';
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET!;
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
@@ -65,23 +66,14 @@ export async function GET(request: NextRequest) {
                      'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';
 
-    console.log('[AUDIT] Impersonation started:', JSON.stringify({
+    logger.info({
       event: 'IMPERSONATION_START',
-      timestamp: new Date().toISOString(),
-      superAdmin: {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
-      },
-      targetOrganization: {
-        id: organization.id,
-        name: organization.name,
-        slug: organization.slug,
-      },
+      superAdminId: session.user.id,
+      targetOrgId: organization.id,
+      targetOrgSlug: organization.slug,
       clientIp,
-      userAgent,
       expiresIn: `${IMPERSONATION_EXPIRY_SECONDS / 60} minutes`,
-    }));
+    }, 'Impersonation started');
 
     // Create impersonation token
     const jti = generateJti();
@@ -112,7 +104,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(portalUrl);
   } catch (error) {
-    console.error('Impersonation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Impersonation error');
     return NextResponse.json(
       { error: 'Failed to start impersonation' },
       { status: 500 }
@@ -168,25 +160,15 @@ export async function POST(request: NextRequest) {
     const clientIp = request.headers.get('x-forwarded-for') ||
                      request.headers.get('x-real-ip') ||
                      'unknown';
-    const userAgent = request.headers.get('user-agent') || 'unknown';
 
-    console.log('[AUDIT] Impersonation started:', JSON.stringify({
+    logger.info({
       event: 'IMPERSONATION_START',
-      timestamp: new Date().toISOString(),
-      superAdmin: {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
-      },
-      targetOrganization: {
-        id: organization.id,
-        name: organization.name,
-        slug: organization.slug,
-      },
+      superAdminId: session.user.id,
+      targetOrgId: organization.id,
+      targetOrgSlug: organization.slug,
       clientIp,
-      userAgent,
       expiresIn: `${IMPERSONATION_EXPIRY_SECONDS / 60} minutes`,
-    }));
+    }, 'Impersonation started');
 
     // Create an impersonation token that will be verified by the middleware
     // This token contains the super admin's original ID and the target org with all context
@@ -227,7 +209,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Impersonation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Impersonation error');
     return NextResponse.json(
       { error: 'Failed to start impersonation' },
       { status: 500 }

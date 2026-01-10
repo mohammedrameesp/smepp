@@ -11,6 +11,7 @@ import { prisma } from '@/lib/core/prisma';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/core/email';
+import logger from '@/lib/core/log';
 
 export async function GET(
   request: NextRequest,
@@ -46,7 +47,7 @@ export async function GET(
 
     return NextResponse.json({ invitations: invitationsWithStatus });
   } catch (error) {
-    console.error('Get invitations error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Get invitations error');
     return NextResponse.json(
       { error: 'Failed to get invitations' },
       { status: 500 }
@@ -185,7 +186,7 @@ export async function POST(
       { status: 201 }
     );
   } catch (error) {
-    console.error('Create invitation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Create invitation error');
     return NextResponse.json(
       { error: 'Failed to create invitation' },
       { status: 500 }

@@ -40,6 +40,7 @@ import { sendBatchEmails } from '@/lib/core/email';
 import { assetAssignmentAcceptedEmail } from '@/lib/email-templates';
 import { createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/asset-requests/[id]/accept - Accept Assignment
@@ -270,7 +271,11 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
       );
       await createBulkNotifications(notifications, tenantId);
     } catch (emailError) {
-      console.error('Failed to send notification:', emailError);
+      logger.error({
+        error: emailError instanceof Error ? emailError.message : 'Unknown error',
+        requestId: id,
+        requestNumber: assetRequest.requestNumber,
+      }, 'Failed to send notification for asset assignment acceptance');
     }
 
     return NextResponse.json(updatedRequest);

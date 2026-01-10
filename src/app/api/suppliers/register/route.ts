@@ -8,6 +8,7 @@ import { prisma } from '@/lib/core/prisma';
 import { createSupplierSchema } from '@/features/suppliers';
 import { logAction } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import logger from '@/lib/core/log';
 
 async function registerSupplierHandler(request: NextRequest, _context: APIContext) {
     // Get tenant from subdomain (set by middleware)

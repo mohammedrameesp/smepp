@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { encryptState } from '@/lib/oauth/utils';
 import { buildAzureAuthUrl } from '@/lib/oauth/azure';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/auth/oauth/azure
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
     // Redirect to Azure
     return NextResponse.redirect(authUrl);
   } catch (error) {
-    console.error('Azure OAuth initiation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Azure OAuth initiation error');
     return NextResponse.json(
       { error: 'Failed to initiate Microsoft OAuth' },
       { status: 500 }

@@ -9,6 +9,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { generateTOTPSecret } from '@/lib/two-factor/totp';
+import logger from '@/lib/core/log';
 export async function POST() {
   try {
     const session = await getServerSession(authOptions);
@@ -57,7 +58,7 @@ export async function POST() {
       message: 'Scan the QR code with your authenticator app, then verify with a code to enable 2FA.',
     });
   } catch (error) {
-    console.error('2FA setup error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, '2FA setup error');
     return NextResponse.json(
       { error: 'Failed to set up 2FA' },
       { status: 500 }
@@ -91,7 +92,7 @@ export async function GET() {
       backupCodesCount: user.twoFactorBackupCodes?.length || 0,
     });
   } catch (error) {
-    console.error('2FA status check error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, '2FA status check error');
     return NextResponse.json(
       { error: 'Failed to check 2FA status' },
       { status: 500 }

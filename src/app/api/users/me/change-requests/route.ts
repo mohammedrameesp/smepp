@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { sendBatchEmails } from '@/lib/core/email';
 import { changeRequestEmail } from '@/lib/core/email-templates';
 import { TeamMemberRole } from '@prisma/client';
+import logger from '@/lib/core/log';
 
 const createRequestSchema = z.object({
   description: z.string().min(10, 'Please provide at least 10 characters describing your change request'),
@@ -140,7 +141,7 @@ async function createChangeRequestHandler(request: NextRequest, context: APICont
       await sendBatchEmails(emailsToSend);
     }
   } catch (emailError) {
-    console.error('[Email] Failed to send change request notification:', emailError);
+    logger.error({ error: String(emailError), userId: tenant.userId }, 'Failed to send change request notification');
     // Don't fail the request if email fails
   }
 

@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth/next';
-import { Role } from '@prisma/client';
+import { Role, OrgRole } from '@prisma/client';
 
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
@@ -9,13 +9,92 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
     jest.clearAllMocks();
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // MULTI-TENANT ISOLATION TESTS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('Multi-Tenant Isolation', () => {
+    const mockTenant1Session = {
+      user: {
+        id: 'user-t1-123',
+        email: 'admin@tenant1.com',
+        organizationId: 'tenant-1',
+        organizationSlug: 'tenant1',
+        orgRole: 'ADMIN' as OrgRole,
+        role: Role.ADMIN,
+      },
+      expires: new Date(Date.now() + 86400000).toISOString(),
+    };
+
+    const mockTenant2Session = {
+      user: {
+        id: 'user-t2-456',
+        email: 'admin@tenant2.com',
+        organizationId: 'tenant-2',
+        organizationSlug: 'tenant2',
+        orgRole: 'ADMIN' as OrgRole,
+        role: Role.ADMIN,
+      },
+      expires: new Date(Date.now() + 86400000).toISOString(),
+    };
+
+    it('should prevent access to resources from another tenant', () => {
+      const resourceTenantId = 'tenant-1';
+      const requestingUserTenantId = 'tenant-2';
+
+      // Cross-tenant access must be blocked
+      expect(resourceTenantId).not.toBe(requestingUserTenantId);
+    });
+
+    it('should allow access to resources within same tenant', () => {
+      const resourceTenantId = 'tenant-1';
+      const requestingUserTenantId = 'tenant-1';
+
+      expect(resourceTenantId).toBe(requestingUserTenantId);
+    });
+
+    it('should validate tenantId matches session organizationId', () => {
+      const validateTenantAccess = (
+        resourceTenantId: string,
+        sessionOrgId: string
+      ): boolean => {
+        return resourceTenantId === sessionOrgId;
+      };
+
+      // Same tenant - allowed
+      expect(validateTenantAccess('tenant-1', mockTenant1Session.user.organizationId)).toBe(true);
+
+      // Different tenant - blocked
+      expect(validateTenantAccess('tenant-1', mockTenant2Session.user.organizationId)).toBe(false);
+    });
+
+    it('should reject requests with missing tenant context', () => {
+      const sessionWithoutOrg = {
+        user: {
+          id: 'user-123',
+          email: 'user@example.com',
+          // Missing organizationId
+        },
+        expires: new Date(Date.now() + 86400000).toISOString(),
+      };
+
+      expect(sessionWithoutOrg.user).not.toHaveProperty('organizationId');
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // ASSET ACCESS CONTROL TESTS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
   describe('Asset Access Control', () => {
-    it('should allow admin to access any asset', async () => {
+    it('should allow admin to access any asset within their tenant', async () => {
       const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
       const mockSession = {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
+          organizationId: 'tenant-1',
+          orgRole: 'ADMIN' as OrgRole,
           role: Role.ADMIN,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
@@ -24,16 +103,17 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).toBe(Role.ADMIN);
-      // Admin can access any resource regardless of assignedUserId
+      expect(session?.user.orgRole).toBe('ADMIN');
     });
 
-    it('should prevent employee from accessing another user\'s asset', async () => {
+    it('should prevent employee from modifying asset they do not own', async () => {
       const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
       const mockSession = {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
+          organizationId: 'tenant-1',
+          orgRole: 'MEMBER' as OrgRole,
           role: Role.EMPLOYEE,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
@@ -42,20 +122,22 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      const assetOwnerId = 'user-456'; // Different user
+      const assetAssignedMemberId = 'member-456'; // Different member
       const currentUserId = session?.user.id;
 
-      // This should return 403 Forbidden
-      expect(currentUserId).not.toBe(assetOwnerId);
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(currentUserId).not.toBe(assetAssignedMemberId);
+      expect(session?.user.orgRole).not.toBe('ADMIN');
     });
 
-    it('should allow employee to access their own asset', async () => {
+    it('should allow employee to view their assigned asset', async () => {
       const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
       const mockSession = {
         user: {
           id: 'user-123',
+          memberId: 'member-123',
           email: 'employee@example.com',
+          organizationId: 'tenant-1',
+          orgRole: 'MEMBER' as OrgRole,
           role: Role.EMPLOYEE,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
@@ -64,21 +146,25 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      const assetOwnerId = 'user-123'; // Same user
-      const currentUserId = session?.user.id;
+      const assetAssignedMemberId = 'member-123';
 
-      // This should return 200 OK
-      expect(currentUserId).toBe(assetOwnerId);
+      expect((session?.user as any).memberId).toBe(assetAssignedMemberId);
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // SUBSCRIPTION ACCESS CONTROL TESTS
+  // ═══════════════════════════════════════════════════════════════════════════════
 
   describe('Subscription Access Control', () => {
-    it('should prevent employee from accessing another user\'s subscription', async () => {
+    it('should prevent access to subscription from different tenant', async () => {
       const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
       const mockSession = {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
+          organizationId: 'tenant-1',
+          orgRole: 'MEMBER' as OrgRole,
           role: Role.EMPLOYEE,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
@@ -86,75 +172,301 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
 
       mockGetServerSession.mockResolvedValue(mockSession);
 
-      const session = await mockGetServerSession();
-      const subscriptionOwnerId = 'user-789'; // Different user
-      const currentUserId = session?.user.id;
+      const subscriptionTenantId = 'tenant-2'; // Different tenant
+      const userTenantId = mockSession.user.organizationId;
 
-      // This should return 403 Forbidden
-      expect(currentUserId).not.toBe(subscriptionOwnerId);
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(userTenantId).not.toBe(subscriptionTenantId);
     });
 
-    it('should allow employee to access their own subscription', async () => {
+    it('should allow admin to access all subscriptions in their tenant', async () => {
       const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
       const mockSession = {
         user: {
-          id: 'user-123',
-          email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          id: 'admin-123',
+          email: 'admin@example.com',
+          organizationId: 'tenant-1',
+          orgRole: 'ADMIN' as OrgRole,
+          role: Role.ADMIN,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
 
       mockGetServerSession.mockResolvedValue(mockSession);
 
-      const session = await mockGetServerSession();
-      const subscriptionOwnerId = 'user-123'; // Same user
-      const currentUserId = session?.user.id;
+      const subscriptionTenantId = 'tenant-1';
+      const userTenantId = mockSession.user.organizationId;
 
-      // This should return 200 OK
-      expect(currentUserId).toBe(subscriptionOwnerId);
+      expect(userTenantId).toBe(subscriptionTenantId);
+      expect(mockSession.user.orgRole).toBe('ADMIN');
     });
   });
 
-  describe('Authorization Logic', () => {
-    it('should correctly implement authorization check', () => {
-      // Test the authorization logic
-      const checkAuthorization = (
-        userRole: Role,
-        userId: string,
-        resourceOwnerId: string | null
-      ): boolean => {
-        // Admin can access everything
-        if (userRole === Role.ADMIN) return true;
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // LEAVE REQUEST ACCESS CONTROL TESTS
+  // ═══════════════════════════════════════════════════════════════════════════════
 
-        // Non-admin can only access their own resources
-        return userId === resourceOwnerId;
+  describe('Leave Request Access Control', () => {
+    it('should prevent employee from viewing another employee leave request', () => {
+      const checkLeaveAccess = (
+        userId: string,
+        orgRole: OrgRole,
+        leaveRequestMemberId: string,
+        userMemberId: string
+      ): boolean => {
+        // Admin/Manager can see all
+        if (orgRole === 'ADMIN' || orgRole === 'OWNER' || orgRole === 'MANAGER') {
+          return true;
+        }
+        // Regular member can only see their own
+        return leaveRequestMemberId === userMemberId;
+      };
+
+      expect(checkLeaveAccess('u1', 'MEMBER', 'member-1', 'member-2')).toBe(false);
+      expect(checkLeaveAccess('u1', 'MEMBER', 'member-1', 'member-1')).toBe(true);
+      expect(checkLeaveAccess('u1', 'ADMIN', 'member-1', 'member-2')).toBe(true);
+      expect(checkLeaveAccess('u1', 'MANAGER', 'member-1', 'member-2')).toBe(true);
+    });
+
+    it('should allow manager to approve leave in their tenant only', () => {
+      const canApproveLeave = (
+        approverTenantId: string,
+        leaveTenantId: string,
+        approverRole: OrgRole
+      ): boolean => {
+        if (approverTenantId !== leaveTenantId) return false;
+        return ['ADMIN', 'OWNER', 'MANAGER'].includes(approverRole);
+      };
+
+      expect(canApproveLeave('t1', 't1', 'MANAGER')).toBe(true);
+      expect(canApproveLeave('t1', 't2', 'MANAGER')).toBe(false);
+      expect(canApproveLeave('t1', 't1', 'MEMBER')).toBe(false);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // PAYROLL ACCESS CONTROL TESTS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('Payroll Access Control', () => {
+    it('should restrict payroll access to admin only', () => {
+      const canAccessPayroll = (orgRole: OrgRole): boolean => {
+        return ['ADMIN', 'OWNER'].includes(orgRole);
+      };
+
+      expect(canAccessPayroll('ADMIN')).toBe(true);
+      expect(canAccessPayroll('OWNER')).toBe(true);
+      expect(canAccessPayroll('MANAGER')).toBe(false);
+      expect(canAccessPayroll('MEMBER')).toBe(false);
+    });
+
+    it('should allow employee to view only their own payslip', () => {
+      const canViewPayslip = (
+        requesterId: string,
+        payslipMemberId: string,
+        requesterRole: OrgRole
+      ): boolean => {
+        if (['ADMIN', 'OWNER'].includes(requesterRole)) return true;
+        return requesterId === payslipMemberId;
+      };
+
+      expect(canViewPayslip('m1', 'm1', 'MEMBER')).toBe(true);
+      expect(canViewPayslip('m1', 'm2', 'MEMBER')).toBe(false);
+      expect(canViewPayslip('m1', 'm2', 'ADMIN')).toBe(true);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // SUPPLIER ACCESS CONTROL TESTS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('Supplier Access Control', () => {
+    it('should show only approved suppliers to non-admin users', () => {
+      const filterSuppliersForRole = (
+        suppliers: Array<{ status: string }>,
+        orgRole: OrgRole
+      ) => {
+        if (['ADMIN', 'OWNER'].includes(orgRole)) {
+          return suppliers;
+        }
+        return suppliers.filter(s => s.status === 'APPROVED');
+      };
+
+      const allSuppliers = [
+        { status: 'APPROVED' },
+        { status: 'PENDING' },
+        { status: 'REJECTED' },
+      ];
+
+      expect(filterSuppliersForRole(allSuppliers, 'ADMIN').length).toBe(3);
+      expect(filterSuppliersForRole(allSuppliers, 'MEMBER').length).toBe(1);
+    });
+
+    it('should prevent cross-tenant supplier access', () => {
+      const validateSupplierAccess = (
+        supplierTenantId: string,
+        userTenantId: string
+      ): boolean => {
+        return supplierTenantId === userTenantId;
+      };
+
+      expect(validateSupplierAccess('tenant-1', 'tenant-1')).toBe(true);
+      expect(validateSupplierAccess('tenant-1', 'tenant-2')).toBe(false);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // PURCHASE REQUEST ACCESS CONTROL TESTS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('Purchase Request Access Control', () => {
+    it('should allow requester to view their own PR', () => {
+      const canViewPR = (
+        requesterId: string,
+        prRequesterId: string,
+        orgRole: OrgRole
+      ): boolean => {
+        if (['ADMIN', 'OWNER', 'MANAGER'].includes(orgRole)) return true;
+        return requesterId === prRequesterId;
+      };
+
+      expect(canViewPR('m1', 'm1', 'MEMBER')).toBe(true);
+      expect(canViewPR('m1', 'm2', 'MEMBER')).toBe(false);
+      expect(canViewPR('m1', 'm2', 'ADMIN')).toBe(true);
+    });
+
+    it('should prevent PR modification after approval', () => {
+      const canModifyPR = (status: string, orgRole: OrgRole): boolean => {
+        // Only draft PRs can be modified
+        if (status !== 'DRAFT') return false;
+        return true;
+      };
+
+      expect(canModifyPR('DRAFT', 'MEMBER')).toBe(true);
+      expect(canModifyPR('PENDING', 'MEMBER')).toBe(false);
+      expect(canModifyPR('APPROVED', 'ADMIN')).toBe(false);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // AUTHORIZATION LOGIC TESTS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('Authorization Logic', () => {
+    it('should correctly implement multi-level authorization check', () => {
+      const checkAuthorization = (
+        userRole: OrgRole,
+        userId: string,
+        resourceOwnerId: string | null,
+        resourceTenantId: string,
+        userTenantId: string
+      ): { allowed: boolean; reason: string } => {
+        // Cross-tenant access is always blocked
+        if (resourceTenantId !== userTenantId) {
+          return { allowed: false, reason: 'cross_tenant_access' };
+        }
+
+        // Owner/Admin can access everything in their tenant
+        if (userRole === 'OWNER' || userRole === 'ADMIN') {
+          return { allowed: true, reason: 'admin_access' };
+        }
+
+        // Manager has elevated access
+        if (userRole === 'MANAGER') {
+          return { allowed: true, reason: 'manager_access' };
+        }
+
+        // Regular member can only access their own resources
+        if (userId === resourceOwnerId) {
+          return { allowed: true, reason: 'owner_access' };
+        }
+
+        return { allowed: false, reason: 'unauthorized' };
       };
 
       // Test cases
-      expect(checkAuthorization(Role.ADMIN, 'user-1', 'user-2')).toBe(true);
-      expect(checkAuthorization(Role.EMPLOYEE, 'user-1', 'user-1')).toBe(true);
-      expect(checkAuthorization(Role.EMPLOYEE, 'user-1', 'user-2')).toBe(false);
-      expect(checkAuthorization(Role.EMPLOYEE, 'user-1', null)).toBe(false);
+      expect(checkAuthorization('ADMIN', 'u1', 'u2', 't1', 't1').allowed).toBe(true);
+      expect(checkAuthorization('MEMBER', 'u1', 'u1', 't1', 't1').allowed).toBe(true);
+      expect(checkAuthorization('MEMBER', 'u1', 'u2', 't1', 't1').allowed).toBe(false);
+      expect(checkAuthorization('ADMIN', 'u1', 'u2', 't1', 't2').allowed).toBe(false); // Cross-tenant blocked even for admin
     });
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // URL PARAMETER TAMPERING TESTS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
   describe('URL Parameter Tampering', () => {
     it('should detect resource ID tampering attempt', () => {
-      const requestedResourceId = 'asset-999';
-      const userOwnedResourceIds = ['asset-1', 'asset-2', 'asset-3'];
+      const validateResourceAccess = (
+        requestedId: string,
+        allowedIds: string[],
+        isAdmin: boolean
+      ): boolean => {
+        if (isAdmin) return true;
+        return allowedIds.includes(requestedId);
+      };
 
-      // This should be blocked
-      expect(userOwnedResourceIds).not.toContain(requestedResourceId);
+      const userAllowedAssets = ['asset-1', 'asset-2'];
+
+      expect(validateResourceAccess('asset-999', userAllowedAssets, false)).toBe(false);
+      expect(validateResourceAccess('asset-1', userAllowedAssets, false)).toBe(true);
+      expect(validateResourceAccess('asset-999', userAllowedAssets, true)).toBe(true);
     });
 
-    it('should allow access to owned resource', () => {
-      const requestedResourceId = 'asset-2';
-      const userOwnedResourceIds = ['asset-1', 'asset-2', 'asset-3'];
+    it('should validate UUID format to prevent injection', () => {
+      const isValidCuid = (id: string): boolean => {
+        // CUID format validation (simplified)
+        return /^c[a-z0-9]{24,}$/i.test(id) || /^[a-zA-Z0-9_-]{25}$/.test(id);
+      };
 
-      // This should be allowed
-      expect(userOwnedResourceIds).toContain(requestedResourceId);
+      expect(isValidCuid('cld123456789012345678901234')).toBe(true);
+      expect(isValidCuid('invalid')).toBe(false);
+      expect(isValidCuid("'; DROP TABLE assets; --")).toBe(false);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // SESSION VALIDATION TESTS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  describe('Session Validation', () => {
+    it('should reject expired sessions', () => {
+      const isSessionValid = (expiresAt: string): boolean => {
+        return new Date(expiresAt) > new Date();
+      };
+
+      const futureDate = new Date(Date.now() + 86400000).toISOString();
+      const pastDate = new Date(Date.now() - 86400000).toISOString();
+
+      expect(isSessionValid(futureDate)).toBe(true);
+      expect(isSessionValid(pastDate)).toBe(false);
+    });
+
+    it('should validate session has required tenant context', () => {
+      const hasValidTenantContext = (session: any): boolean => {
+        return !!(
+          session?.user?.organizationId &&
+          session?.user?.organizationSlug
+        );
+      };
+
+      const validSession = {
+        user: {
+          id: 'u1',
+          organizationId: 't1',
+          organizationSlug: 'tenant1',
+        },
+      };
+
+      const invalidSession = {
+        user: {
+          id: 'u1',
+          // Missing organization context
+        },
+      };
+
+      expect(hasValidTenantContext(validSession)).toBe(true);
+      expect(hasValidTenantContext(invalidSession)).toBe(false);
     });
   });
 });

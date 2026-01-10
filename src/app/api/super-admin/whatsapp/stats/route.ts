@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 export async function GET() {
   try {
@@ -122,7 +123,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Get WhatsApp stats error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Get WhatsApp stats error');
     return NextResponse.json(
       { error: 'Failed to get WhatsApp statistics' },
       { status: 500 }

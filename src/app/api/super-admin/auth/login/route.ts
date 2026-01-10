@@ -11,6 +11,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { authRateLimitMiddleware } from '@/lib/security/rateLimit';
+import logger from '@/lib/core/log';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -143,7 +144,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Super admin login error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Super admin login error');
     return NextResponse.json(
       { error: 'Login failed. Please try again.' },
       { status: 500 }

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { AssetStatus, BillingCycle, SubscriptionStatus, Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import ExcelJS from 'exceljs';
+import logger from '@/lib/core/log';
 
 export async function POST(request: NextRequest) {
   try {
@@ -271,7 +272,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Full restore error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Full restore error');
     return NextResponse.json(
       { error: 'Failed to restore database', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

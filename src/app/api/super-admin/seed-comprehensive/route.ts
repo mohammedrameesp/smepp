@@ -10,6 +10,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import bcrypt from 'bcryptjs';
 import { requireRecent2FA } from '@/lib/two-factor';
+import logger from '@/lib/core/log';
 import {
   Role,
   TeamMemberRole,
@@ -119,19 +120,12 @@ export async function POST(request: NextRequest) {
     }
 
     // AUDIT: Log seed operation for security tracking
-    console.log('[AUDIT] Data seed initiated:', JSON.stringify({
+    logger.info({
       event: 'SEED_DATA_START',
-      timestamp: new Date().toISOString(),
-      superAdmin: {
-        id: session.user.id,
-        email: session.user.email,
-      },
-      targetOrganization: {
-        id: org.id,
-        name: org.name,
-        slug: org.slug,
-      },
-    }));
+      superAdminId: session.user.id,
+      targetOrgId: org.id,
+      targetOrgSlug: org.slug,
+    }, 'Data seed initiated');
 
     const tenantId = org.id;
     const today = new Date();
@@ -729,7 +723,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Seed comprehensive error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Seed comprehensive error');
     return NextResponse.json(
       { error: 'Failed to seed data', details: String(error) },
       { status: 500 }
@@ -769,7 +763,7 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error('Get organizations error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Get organizations error');
     return NextResponse.json({ error: 'Failed to get organizations' }, { status: 500 });
   }
 }

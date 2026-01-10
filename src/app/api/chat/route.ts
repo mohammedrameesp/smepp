@@ -2,13 +2,49 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 import { processChat, getConversations, getConversationMessages, deleteConversation } from '@/lib/ai/chat-service';
 import { sanitizeInput, shouldBlockInput, formatSanitizationLog } from '@/lib/ai/input-sanitizer';
-import { checkRateLimit, formatRateLimitError } from '@/lib/ai/rate-limiter';
+import {
+  checkRateLimit,
+  checkReadRateLimit,
+  formatRateLimitError,
+  acquireConcurrentSlot,
+  releaseConcurrentSlot,
+} from '@/lib/ai/rate-limiter';
 import { createAuditEntry, logAuditEntry } from '@/lib/ai/audit-logger';
 import { trackTokenUsage } from '@/lib/ai/budget-tracker';
 import { SubscriptionTier, Role } from '@prisma/client';
 import { z } from 'zod';
+
+/**
+ * Verify CSRF by checking Origin header matches expected domains
+ */
+function verifyCsrf(request: NextRequest): boolean {
+  const origin = request.headers.get('origin');
+  if (!origin) {
+    // Allow requests without Origin (e.g., same-origin fetch)
+    return true;
+  }
+
+  // Get expected host from request
+  const host = request.headers.get('host');
+  if (!host) {
+    return false;
+  }
+
+  try {
+    const originUrl = new URL(origin);
+    // Check if origin matches the host (accounting for subdomains)
+    const hostBase = host.split(':')[0]; // Remove port
+    const originHost = originUrl.hostname;
+
+    // Allow if origin matches host or is a subdomain
+    return originHost === hostBase || originHost.endsWith(`.${hostBase}`);
+  } catch {
+    return false;
+  }
+}
 
 const sendMessageSchema = z.object({
   message: z.string().min(1).max(2000),
@@ -19,6 +55,8 @@ const sendMessageSchema = z.object({
  * POST /api/chat - Send a message and get AI response
  */
 export async function POST(request: NextRequest) {
+  let userId: string | null = null;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -27,6 +65,23 @@ export async function POST(request: NextRequest) {
 
     if (!session.user.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    }
+
+    userId = session.user.id;
+
+    // Check concurrent request limit
+    if (!acquireConcurrentSlot(userId)) {
+      return NextResponse.json(
+        {
+          error: 'Too many simultaneous requests. Please wait for your current requests to complete.',
+          rateLimitInfo: {
+            reason: 'concurrent_limit',
+            current: 3,
+            limit: 3,
+          },
+        },
+        { status: 429 }
+      );
     }
 
     // Check if AI chat is enabled for this organization
@@ -94,7 +149,7 @@ export async function POST(request: NextRequest) {
     // Check if input should be blocked entirely
     const blockCheck = shouldBlockInput(message);
     if (blockCheck.blocked) {
-      console.warn(`[AI Chat] Blocked message from user ${session.user.id}: ${blockCheck.reason}`);
+      logger.warn({ userId: session.user.id, reason: blockCheck.reason }, 'AI Chat: Blocked message');
       return NextResponse.json(
         { error: 'Your message could not be processed. Please rephrase and try again.' },
         { status: 400 }
@@ -106,8 +161,9 @@ export async function POST(request: NextRequest) {
 
     // Log flagged messages for security monitoring
     if (sanitizationResult.flagged) {
-      console.warn(
-        `[AI Chat] Flagged message from user ${session.user.id}: ${formatSanitizationLog(sanitizationResult)}`
+      logger.warn(
+        { userId: session.user.id, sanitizationDetails: formatSanitizationLog(sanitizationResult) },
+        'AI Chat: Flagged message'
       );
     }
 
@@ -133,7 +189,7 @@ export async function POST(request: NextRequest) {
       (sanitizationResult.sanitized.length + response.message.length) / 4
     );
 
-    // Log audit entry (fire and forget)
+    // Log audit entry (fire and forget, but log failures)
     const auditEntry = createAuditEntry(
       { tenantId: session.user.organizationId, memberId: session.user.id },
       message, // Original message for hashing
@@ -147,22 +203,32 @@ export async function POST(request: NextRequest) {
         userAgent: request.headers.get('user-agent') || undefined,
       }
     );
-    logAuditEntry(auditEntry).catch(() => {}); // Non-blocking
+    logAuditEntry(auditEntry).catch((err) => {
+      // Log audit failures for visibility
+      console.error('[AI Audit] Failed to log audit entry:', err instanceof Error ? err.message : String(err));
+    });
 
     // Track budget and send alerts if needed (fire and forget)
     trackTokenUsage(
       session.user.organizationId,
       org.subscriptionTier || SubscriptionTier.FREE,
       estimatedTokens
-    ).catch(() => {}); // Non-blocking
+    ).catch((err) => {
+      console.error('[AI Budget] Failed to track token usage:', err instanceof Error ? err.message : String(err));
+    });
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Chat error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Chat error');
     return NextResponse.json(
       { error: 'Failed to process chat message' },
       { status: 500 }
     );
+  } finally {
+    // Always release concurrent slot when request completes
+    if (userId) {
+      releaseConcurrentSlot(userId);
+    }
   }
 }
 
@@ -180,12 +246,46 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
     }
 
+    // Check rate limit for read operations
+    const rateLimitResult = await checkReadRateLimit(
+      session.user.id,
+      session.user.organizationId
+    );
+
+    if (!rateLimitResult.allowed) {
+      const errorMessage = formatRateLimitError(rateLimitResult);
+      return NextResponse.json(
+        {
+          error: errorMessage,
+          rateLimitInfo: {
+            reason: rateLimitResult.reason,
+            current: rateLimitResult.current,
+            limit: rateLimitResult.limit,
+            resetAt: rateLimitResult.resetAt?.toISOString(),
+            retryAfterSeconds: rateLimitResult.retryAfterSeconds,
+          },
+        },
+        {
+          status: 429,
+          headers: rateLimitResult.retryAfterSeconds
+            ? { 'Retry-After': String(rateLimitResult.retryAfterSeconds) }
+            : undefined,
+        }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const conversationId = searchParams.get('conversationId');
+    const cursor = searchParams.get('cursor') || undefined;
+    const limitParam = searchParams.get('limit');
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
 
     if (conversationId) {
-      // Get messages for a specific conversation
-      const conversation = await getConversationMessages(conversationId, session.user.id);
+      // Get messages for a specific conversation with pagination
+      const conversation = await getConversationMessages(conversationId, session.user.id, {
+        cursor,
+        limit,
+      });
       if (!conversation) {
         return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
       }
@@ -196,7 +296,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ conversations });
     }
   } catch (error) {
-    console.error('Chat GET error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Chat GET error');
     return NextResponse.json(
       { error: 'Failed to fetch chat data' },
       { status: 500 }
@@ -209,6 +309,11 @@ export async function GET(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    // Verify CSRF for state-changing operations
+    if (!verifyCsrf(request)) {
+      return NextResponse.json({ error: 'Invalid request origin' }, { status: 403 });
+    }
+
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -228,7 +333,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Chat DELETE error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Chat DELETE error');
     return NextResponse.json(
       { error: 'Failed to delete conversation' },
       { status: 500 }

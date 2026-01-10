@@ -10,6 +10,7 @@ import { prisma } from '@/lib/core/prisma';
 import { calculateGratuity, projectGratuity } from '@/lib/payroll/gratuity';
 import { parseDecimal } from '@/lib/payroll/utils';
 import { gratuityQuerySchema } from '@/lib/validations/payroll';
+import logger from '@/lib/core/log';
 
 export async function GET(request: NextRequest) {
   try {
@@ -101,7 +102,7 @@ export async function GET(request: NextRequest) {
       projections: isTerminated ? [] : projections, // No future projections for terminated employees
     });
   } catch (error) {
-    console.error('Gratuity GET error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Gratuity calculation error');
     return NextResponse.json(
       { error: 'Failed to calculate gratuity' },
       { status: 500 }

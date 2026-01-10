@@ -9,6 +9,7 @@ import { authOptions } from '@/lib/core/auth';
 import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/core/activity';
+import logger from '@/lib/core/log';
 import { generateWPSSIFFile, getBankCode, generateWPSFileName, validateWPSRecord } from '@/lib/payroll/wps';
 import { parseDecimal } from '@/lib/payroll/utils';
 import type { WPSEmployeeRecord, WPSFileHeader } from '@/features/payroll/types/payroll';
@@ -211,7 +212,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error('WPS generation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'WPS generation error');
     return NextResponse.json(
       { error: 'Failed to generate WPS file' },
       { status: 500 }

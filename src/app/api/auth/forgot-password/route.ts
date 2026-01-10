@@ -3,6 +3,7 @@ import { prisma } from '@/lib/core/prisma';
 import { randomBytes, createHash } from 'crypto';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/core/email';
+import logger from '@/lib/core/log';
 
 /**
  * Hash reset token for storage
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
       },
       include: {
         tenant: {
-          select: { slug: true },
+          select: { slug: true, name: true, primaryColor: true },
         },
       },
     });
@@ -97,10 +98,15 @@ export async function POST(request: NextRequest) {
         ? `${protocol}://${orgSlug}.${appDomain}/reset-password/${resetToken}`
         : `${protocol}://${appDomain}/reset-password/${resetToken}`;
 
+      // Determine branding based on whether this is an org user or platform user
+      const brandName = teamMember?.tenant?.name || 'Durj';
+      const brandColor = teamMember?.tenant?.primaryColor || '#2563eb';
+      const brandSubtitle = teamMember ? 'Password Reset' : 'Business Management Platform';
+
       // Send password reset email
       await sendEmail({
         to: targetUser.email,
-        subject: 'Reset your Durj password',
+        subject: `Reset your ${brandName} password`,
         html: `
 <!DOCTYPE html>
 <html>
@@ -115,9 +121,9 @@ export async function POST(request: NextRequest) {
         <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border: 1px solid #e2e8f0;">
           <!-- Header -->
           <tr>
-            <td align="center" style="background-color: #2563eb; padding: 40px 40px 30px;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Durj</h1>
-              <p style="color: #bfdbfe; margin: 8px 0 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Business Management Platform</p>
+            <td align="center" style="background-color: ${brandColor}; padding: 40px 40px 30px;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">${brandName}</h1>
+              <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">${brandSubtitle}</p>
             </td>
           </tr>
 
@@ -140,7 +146,7 @@ export async function POST(request: NextRequest) {
                   <td align="center" style="padding: 10px 0 30px;">
                     <table cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td align="center" style="background-color: #2563eb; border-radius: 6px;">
+                        <td align="center" style="background-color: ${brandColor}; border-radius: 6px;">
                           <a href="${resetUrl}" target="_blank" style="display: inline-block; padding: 16px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">
                             Reset Password
                           </a>
@@ -178,10 +184,10 @@ export async function POST(request: NextRequest) {
           <tr>
             <td style="background-color: #f8fafc; padding: 30px 40px; border-top: 1px solid #e2e8f0;">
               <p style="color: #64748b; font-size: 14px; line-height: 21px; margin: 0 0 10px; font-family: Arial, Helvetica, sans-serif;">
-                This is an automated message from Durj.
+                This is an automated message from ${brandName}.
               </p>
               <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
-                © ${new Date().getFullYear()} Durj. All rights reserved.
+                © ${new Date().getFullYear()} ${brandName}.${teamMember ? ' Powered by Durj.' : ' All rights reserved.'}
               </p>
             </td>
           </tr>
@@ -194,7 +200,7 @@ export async function POST(request: NextRequest) {
         `,
         text: `Hello${targetUser.name ? ` ${targetUser.name}` : ''},
 
-We received a request to reset your password for Durj.
+We received a request to reset your password for ${brandName}.
 
 Reset your password: ${resetUrl}
 
@@ -202,10 +208,10 @@ This link will expire in 1 hour for security reasons.
 
 If you didn't request a password reset, you can safely ignore this email.
 
-- The Durj Team`,
+- The ${brandName} Team`,
       });
 
-      console.log(`[Password Reset] Email sent to ${targetUser.email}`);
+      logger.debug('Password reset email sent');
     }
 
     // Always return success (security: don't reveal if email exists)
@@ -214,7 +220,7 @@ If you didn't request a password reset, you can safely ignore this email.
       message: 'If an account exists, a reset link has been sent',
     });
   } catch (error) {
-    console.error('Forgot password error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Forgot password error');
     return NextResponse.json(
       { error: 'Failed to process request' },
       { status: 500 }

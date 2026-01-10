@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/admin/team - Get organization members
@@ -150,7 +151,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Get team error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to get team members');
     return NextResponse.json(
       { error: 'Failed to get team members' },
       { status: 500 }

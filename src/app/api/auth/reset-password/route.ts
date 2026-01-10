@@ -4,6 +4,7 @@ import { hash } from 'bcryptjs';
 import { createHash } from 'crypto';
 import { z } from 'zod';
 import { validatePassword, DEFAULT_PASSWORD_REQUIREMENTS } from '@/lib/security/password-validation';
+import logger from '@/lib/core/log';
 
 /**
  * Hash reset token for comparison
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ valid: !!(teamMember || user) });
   } catch (error) {
-    console.error('Validate reset token error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Validate reset token error');
     return NextResponse.json({ valid: false }, { status: 500 });
   }
 }
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
           resetTokenExpiry: null,
         },
       });
-      console.log(`Password reset successful for team member: ${teamMember.email}`);
+      logger.debug({ memberId: teamMember.id }, 'Password reset successful for team member');
     } else if (user) {
       // Update User: set new password, clear reset token, and invalidate existing sessions
       await prisma.user.update({
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
           passwordChangedAt: new Date(), // SECURITY: Invalidates all existing sessions
         },
       });
-      console.log(`Password reset successful for user: ${user.email}`);
+      logger.debug({ userId: user.id }, 'Password reset successful for user');
     }
 
     return NextResponse.json({
@@ -156,7 +157,7 @@ export async function POST(request: NextRequest) {
       message: 'Password reset successful',
     });
   } catch (error) {
-    console.error('Reset password error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Reset password error');
     return NextResponse.json(
       { error: 'Failed to reset password' },
       { status: 500 }

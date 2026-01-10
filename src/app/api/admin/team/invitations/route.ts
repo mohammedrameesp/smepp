@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/core/email';
 import { updateSetupProgress } from '@/features/onboarding/lib';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/admin/team/invitations - Get pending invitations
@@ -44,7 +45,7 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error('Get invitations error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to get invitations');
     return NextResponse.json(
       { error: 'Failed to get invitations' },
       { status: 500 }
@@ -91,7 +92,12 @@ export async function POST(request: NextRequest) {
     // Check org limits
     const org = await prisma.organization.findUnique({
       where: { id: session.user.organizationId },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        primaryColor: true,
+        maxUsers: true,
         _count: { select: { teamMembers: true } },
       },
     });
@@ -189,9 +195,9 @@ export async function POST(request: NextRequest) {
         <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border: 1px solid #e2e8f0;">
           <!-- Header -->
           <tr>
-            <td align="center" style="background-color: #2563eb; padding: 40px 40px 30px;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Durj</h1>
-              <p style="color: #bfdbfe; margin: 8px 0 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Business Management Platform</p>
+            <td align="center" style="background-color: ${org.primaryColor || '#2563eb'}; padding: 40px 40px 30px;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">${org.name}</h1>
+              <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Team Invitation</p>
             </td>
           </tr>
 
@@ -218,7 +224,7 @@ export async function POST(request: NextRequest) {
                   <td align="center" style="padding: 10px 0 30px;">
                     <table cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td align="center" style="background-color: #2563eb; border-radius: 6px;">
+                        <td align="center" style="background-color: ${org.primaryColor || '#2563eb'}; border-radius: 6px;">
                           <a href="${inviteUrl}" target="_blank" style="display: inline-block; padding: 16px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">
                             Accept Invitation
                           </a>
@@ -255,7 +261,7 @@ export async function POST(request: NextRequest) {
                 If you did not expect this invitation, you can safely ignore this email.
               </p>
               <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
-                © ${new Date().getFullYear()} Durj. All rights reserved.
+                © ${new Date().getFullYear()} ${org.name}. Powered by Durj.
               </p>
             </td>
           </tr>
@@ -276,7 +282,7 @@ Note: This invitation will expire in 7 days.
 
 If you did not expect this invitation, you can safely ignore this email.
 
-- The Durj Team`,
+- The ${org.name} Team`,
     });
 
     // Update setup progress for first team member invited (non-blocking)
@@ -297,7 +303,7 @@ If you did not expect this invitation, you can safely ignore this email.
       { status: 201 }
     );
   } catch (error) {
-    console.error('Create invitation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to create invitation');
     return NextResponse.json(
       { error: 'Failed to create invitation' },
       { status: 500 }

@@ -1,5 +1,12 @@
+/**
+ * @file route.ts
+ * @description Cron job to permanently delete users after retention period
+ * @module api/cron/cleanup-deleted-users
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 /**
  * Cron job to permanently delete users whose scheduled deletion date has passed.
@@ -42,7 +49,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const results: { success: string[]; failed: { id: string; email: string; error: string }[] } = {
+    const results: { success: string[]; failed: { id: string; error: string }[] } = {
       success: [],
       failed: [],
     };
@@ -56,26 +63,34 @@ export async function GET(request: NextRequest) {
           where: { id: user.id },
         });
 
-        results.success.push(user.email);
-        console.log(`[Cleanup] Permanently deleted user: ${user.email} (${user.id})`);
+        results.success.push(user.id);
+        logger.debug({ userId: user.id }, 'Permanently deleted user');
       } catch (error) {
-        console.error(`[Cleanup] Failed to delete user ${user.email}:`, error);
+        logger.error({
+          userId: user.id,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }, 'Failed to delete user');
         results.failed.push({
           id: user.id,
-          email: user.email,
           error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     }
 
+    logger.info({
+      deletedCount: results.success.length,
+      failedCount: results.failed.length,
+    }, 'User cleanup completed');
+
     return NextResponse.json({
       message: `Cleanup complete`,
       deletedCount: results.success.length,
       failedCount: results.failed.length,
-      results,
     });
   } catch (error) {
-    console.error('[Cleanup] Cron job failed:', error);
+    logger.error({
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }, 'Cleanup cron job failed');
     return NextResponse.json(
       { error: 'Cleanup job failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

@@ -15,6 +15,7 @@ import { welcomeUserEmail, welcomeUserWithPasswordSetupEmail, organizationInvita
 import { randomBytes } from 'crypto';
 import { updateSetupProgress } from '@/features/onboarding/lib';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
+import logger from '@/lib/core/log';
 
 async function getUsersHandler(request: NextRequest, context: APIContext) {
   const { tenant, prisma: tenantPrisma } = context;
@@ -326,7 +327,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
         });
       }
     } catch (emailError) {
-      console.error('[Email] Failed to send welcome/invitation email:', emailError);
+      logger.error({ error: String(emailError), userId: user.id }, 'Failed to send welcome/invitation email');
       // Don't fail the request if email fails
     }
   }

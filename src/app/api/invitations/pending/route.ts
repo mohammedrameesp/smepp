@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/invitations/pending - Get pending invitations for current user
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error('Get pending invitations error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to get pending invitations');
     return NextResponse.json(
       { error: 'Failed to get pending invitations' },
       { status: 500 }

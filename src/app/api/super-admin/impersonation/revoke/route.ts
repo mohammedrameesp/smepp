@@ -16,6 +16,7 @@ import { authOptions } from '@/lib/core/auth';
 import { requireRecent2FA } from '@/lib/two-factor';
 import { revokeToken } from '@/lib/security/impersonation';
 import * as jose from 'jose';
+import logger from '@/lib/core/log';
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,15 +56,14 @@ export async function POST(request: NextRequest) {
         expiresAt: new Date(expiresAt),
       });
 
-      console.log('[AUDIT] Impersonation token revoked:', {
+      logger.info({
         event: 'IMPERSONATION_REVOKED',
-        timestamp: new Date().toISOString(),
-        revokedBy: session.user.email,
+        revokedById: session.user.id,
         jti,
         organizationId,
         organizationSlug,
         reason,
-      });
+      }, 'Impersonation token revoked');
 
       return NextResponse.json({ success: true, message: 'Token revoked' });
     }
@@ -87,15 +87,14 @@ export async function POST(request: NextRequest) {
             expiresAt: new Date((payload.exp as number) * 1000),
           });
 
-          console.log('[AUDIT] Current impersonation session revoked:', {
+          logger.info({
             event: 'IMPERSONATION_REVOKED',
-            timestamp: new Date().toISOString(),
-            revokedBy: session.user.email,
-            jti: payload.jti,
-            organizationId: payload.organizationId,
-            organizationSlug: payload.organizationSlug,
+            revokedById: session.user.id,
+            jti: payload.jti as string,
+            organizationId: payload.organizationId as string,
+            organizationSlug: payload.organizationSlug as string,
             reason: reason || 'Session ended by super admin',
-          });
+          }, 'Current impersonation session revoked');
 
           // Clear the cookie
           const response = NextResponse.json({ success: true, message: 'Current session revoked' });
@@ -123,7 +122,7 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   } catch (error) {
-    console.error('Token revocation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Token revocation error');
     return NextResponse.json(
       { error: 'Failed to revoke token' },
       { status: 500 }
@@ -153,7 +152,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ jti, revoked });
   } catch (error) {
-    console.error('Token check error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Token check error');
     return NextResponse.json(
       { error: 'Failed to check token status' },
       { status: 500 }

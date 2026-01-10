@@ -1,6 +1,13 @@
+/**
+ * @file route.ts
+ * @description Monthly depreciation cron job for all tenants
+ * @module api/cron/depreciation
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { runDepreciationForTenant } from '@/features/assets/lib/depreciation';
+import logger from '@/lib/core/log';
 
 /**
  * Verify cron secret for scheduled jobs
@@ -33,7 +40,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  console.log('[Depreciation Cron] Starting monthly depreciation run');
+  logger.info('Starting monthly depreciation run');
 
   try {
     // Get calculation date from request body or use current date
@@ -45,7 +52,7 @@ export async function POST(request: NextRequest) {
       select: { id: true, slug: true, name: true },
     });
 
-    console.log(`[Depreciation Cron] Processing ${organizations.length} organizations`);
+    logger.info({ count: organizations.length }, 'Processing organizations');
 
     const results: {
       organizationSlug: string;
@@ -70,11 +77,17 @@ export async function POST(request: NextRequest) {
           failed: result.failed,
         });
 
-        console.log(
-          `[Depreciation Cron] ${org.slug}: ${result.processed} processed, ${result.skipped} skipped, ${result.failed} failed`
-        );
+        logger.debug({
+          orgSlug: org.slug,
+          processed: result.processed,
+          skipped: result.skipped,
+          failed: result.failed,
+        }, 'Organization depreciation completed');
       } catch (error) {
-        console.error(`[Depreciation Cron] Error processing ${org.slug}:`, error);
+        logger.error({
+          orgSlug: org.slug,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }, 'Error processing organization depreciation');
         results.push({
           organizationSlug: org.slug,
           organizationName: org.name,
@@ -100,9 +113,12 @@ export async function POST(request: NextRequest) {
       { organizations: 0, totalAssets: 0, processed: 0, skipped: 0, failed: 0, errors: 0 }
     );
 
-    console.log(
-      `[Depreciation Cron] Completed: ${totals.processed} processed, ${totals.skipped} skipped, ${totals.failed} failed across ${totals.organizations} organizations`
-    );
+    logger.info({
+      processed: totals.processed,
+      skipped: totals.skipped,
+      failed: totals.failed,
+      organizations: totals.organizations,
+    }, 'Monthly depreciation completed');
 
     return NextResponse.json({
       success: true,
@@ -112,7 +128,9 @@ export async function POST(request: NextRequest) {
       details: results,
     });
   } catch (error) {
-    console.error('[Depreciation Cron] Critical error:', error);
+    logger.error({
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }, 'Critical error in depreciation cron');
     return NextResponse.json(
       {
         error: 'Depreciation cron job failed',

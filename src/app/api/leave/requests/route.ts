@@ -29,6 +29,7 @@ import {
 } from '@/features/leave/lib/leave-request-validation';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import logger from '@/lib/core/log';
 
 async function getLeaveRequestsHandler(request: NextRequest, context: APIContext) {
     const { tenant, prisma: tenantPrisma } = context;
@@ -533,7 +534,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
         }
       }
     } catch (notifyError) {
-      console.error('Failed to send leave request notifications:', notifyError);
+      logger.error({ error: notifyError instanceof Error ? notifyError.message : 'Unknown error', leaveRequestId: leaveRequest.id }, 'Failed to send leave request notifications');
     }
 
     return NextResponse.json(leaveRequest, { status: 201 });

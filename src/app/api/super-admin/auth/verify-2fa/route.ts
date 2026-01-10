@@ -11,6 +11,7 @@ import jwt from 'jsonwebtoken';
 import { verifyTOTPCode } from '@/lib/two-factor/totp';
 import { verifyBackupCode, removeBackupCode } from '@/lib/two-factor/backup-codes';
 import { authRateLimitMiddleware } from '@/lib/security/rateLimit';
+import logger from '@/lib/core/log';
 
 const verify2FASchema = z.object({
   pending2faToken: z.string().min(1, 'Token is required'),
@@ -178,7 +179,7 @@ export async function POST(request: NextRequest) {
       remainingBackupCodes: isBackupCode ? user.twoFactorBackupCodes.length - 1 : undefined,
     });
   } catch (error) {
-    console.error('2FA verification error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, '2FA verification error');
     return NextResponse.json(
       { error: 'Verification failed. Please try again.' },
       { status: 500 }

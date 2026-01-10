@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 export const dynamic = 'force-dynamic';
 
@@ -174,7 +175,7 @@ export async function GET() {
       monthlyOrgs,
     });
   } catch (error) {
-    console.error('Analytics API error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Analytics API error');
     return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 });
   }
 }

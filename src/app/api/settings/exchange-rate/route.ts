@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 // Default rates for common currencies to primary currency (QAR)
 const DEFAULT_RATES: Record<string, string> = {
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
       updatedById: setting?.updatedById || null,
     });
   } catch (error) {
-    console.error('Get exchange rate error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Get exchange rate error');
     return NextResponse.json(
       { error: 'Failed to get exchange rate' },
       { status: 500 }
@@ -141,7 +142,7 @@ export async function PUT(request: NextRequest) {
       updatedBy: setting.updatedBy?.name || setting.updatedBy?.email,
     });
   } catch (error) {
-    console.error('Update exchange rate error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Update exchange rate error');
     return NextResponse.json(
       { error: 'Failed to update exchange rate' },
       { status: 500 }

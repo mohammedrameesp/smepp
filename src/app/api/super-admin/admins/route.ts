@@ -11,6 +11,7 @@ import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { requireRecent2FA } from '@/lib/two-factor';
+import logger from '@/lib/core/log';
 
 export async function GET() {
   try {
@@ -35,7 +36,7 @@ export async function GET() {
 
     return NextResponse.json({ superAdmins });
   } catch (error) {
-    console.error('Get super admins error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Get super admins error');
     return NextResponse.json(
       { error: 'Failed to get super admins' },
       { status: 500 }
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    console.error('Create super admin error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Create super admin error');
     return NextResponse.json(
       { error: 'Failed to create super admin' },
       { status: 500 }

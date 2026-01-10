@@ -13,6 +13,7 @@ import { validateSlug, isSlugAvailable } from '@/lib/multi-tenant/subdomain';
 import { randomBytes } from 'crypto';
 import { sendEmail } from '@/lib/core/email';
 import { seedDefaultPermissions } from '@/lib/access-control';
+import logger from '@/lib/core/log';
 
 const createOrgSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100),
@@ -48,7 +49,7 @@ export async function GET() {
 
     return NextResponse.json({ organizations });
   } catch (error) {
-    console.error('Get organizations error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Get organizations error');
     return NextResponse.json(
       { error: 'Failed to get organizations' },
       { status: 500 }
@@ -138,7 +139,7 @@ export async function POST(request: NextRequest) {
 
     // Seed default permissions for the new organization (non-blocking)
     seedDefaultPermissions(organization.id).catch((err: Error) => {
-      console.error('[SuperAdmin] Failed to seed default permissions:', err);
+      logger.error({ error: err.message, stack: err.stack, organizationId: organization.id }, 'Failed to seed default permissions');
     });
 
     // Build organization-specific invite URL using subdomain
@@ -273,7 +274,7 @@ If you did not expect this invitation, you can safely ignore this email.
       { status: 201 }
     );
   } catch (error) {
-    console.error('Create organization error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Create organization error');
     return NextResponse.json(
       {
         error: 'Failed to create organization',

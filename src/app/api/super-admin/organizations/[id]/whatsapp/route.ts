@@ -10,6 +10,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import { setTenantPlatformWhatsAppAccess, getTenantWhatsAppStatus } from '@/lib/whatsapp/config';
+import logger from '@/lib/core/log';
 
 const updateSchema = z.object({
   whatsAppPlatformEnabled: z.boolean().optional(),
@@ -93,7 +94,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Get tenant WhatsApp status error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Get tenant WhatsApp status error');
     return NextResponse.json(
       { error: 'Failed to get WhatsApp status' },
       { status: 500 }
@@ -161,7 +162,7 @@ export async function PATCH(
       whatsApp: status,
     });
   } catch (error) {
-    console.error('Update tenant WhatsApp settings error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Update tenant WhatsApp settings error');
     return NextResponse.json(
       { error: 'Failed to update WhatsApp settings' },
       { status: 500 }

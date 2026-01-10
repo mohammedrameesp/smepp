@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { randomBytes } from 'crypto';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/admin/team/invitations/[id] - Resend invitation (regenerate token)
@@ -75,7 +76,7 @@ export async function POST(
       },
     });
   } catch (error) {
-    console.error('Resend invitation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to resend invitation');
     return NextResponse.json(
       { error: 'Failed to resend invitation' },
       { status: 500 }
@@ -127,7 +128,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Cancel invitation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to cancel invitation');
     return NextResponse.json(
       { error: 'Failed to cancel invitation' },
       { status: 500 }

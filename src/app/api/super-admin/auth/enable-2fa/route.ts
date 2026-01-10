@@ -11,6 +11,7 @@ import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import { verifyTOTPCode } from '@/lib/two-factor/totp';
 import { generateBackupCodes } from '@/lib/two-factor/backup-codes';
+import logger from '@/lib/core/log';
 
 const enableSchema = z.object({
   code: z.string().length(6, 'Code must be 6 digits'),
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
       warning: 'Save these backup codes in a safe place. They can only be viewed once.',
     });
   } catch (error) {
-    console.error('Enable 2FA error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Enable 2FA error');
     return NextResponse.json(
       { error: 'Failed to enable 2FA' },
       { status: 500 }
@@ -180,7 +181,7 @@ export async function DELETE(request: NextRequest) {
       message: '2FA has been disabled successfully',
     });
   } catch (error) {
-    console.error('Disable 2FA error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Disable 2FA error');
     return NextResponse.json(
       { error: 'Failed to disable 2FA' },
       { status: 500 }

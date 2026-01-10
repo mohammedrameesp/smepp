@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 import { z } from 'zod';
 import {
   getSetupProgress,
@@ -78,7 +79,7 @@ export async function GET() {
       organization: org,
     });
   } catch (error) {
-    console.error('Get setup progress error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Get setup progress error');
     return NextResponse.json({ error: 'Failed to get setup progress' }, { status: 500 });
   }
 }
@@ -101,7 +102,7 @@ export async function PUT(request: NextRequest) {
       // Single field update
       const result = updateProgressSchema.safeParse(body);
       if (!result.success) {
-        console.error('[Setup Progress] Single field validation failed:', result.error.flatten());
+        logger.error({ validationErrors: result.error.flatten() }, 'Setup progress single field validation failed');
         return NextResponse.json(
           { error: 'Validation failed', details: result.error.flatten().fieldErrors },
           { status: 400 }
@@ -117,8 +118,7 @@ export async function PUT(request: NextRequest) {
       // Bulk update
       const result = bulkUpdateSchema.safeParse(body);
       if (!result.success) {
-        console.error('[Setup Progress] Bulk validation failed:', result.error.flatten());
-        console.error('[Setup Progress] Received body:', JSON.stringify(body));
+        logger.error({ validationErrors: result.error.flatten() }, 'Setup progress bulk validation failed');
         return NextResponse.json(
           { error: 'Validation failed', details: result.error.flatten(), received: body },
           { status: 400 }
@@ -136,7 +136,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   } catch (error) {
-    console.error('Update setup progress error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Update setup progress error');
     return NextResponse.json({ error: 'Failed to update setup progress' }, { status: 500 });
   }
 }

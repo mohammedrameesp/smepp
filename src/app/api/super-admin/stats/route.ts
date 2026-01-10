@@ -6,6 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 export async function GET() {
   try {
     // Get counts
@@ -24,7 +25,7 @@ export async function GET() {
       uptime: '99.9%', // Static for now, could be dynamic with monitoring
     });
   } catch (error) {
-    console.error('Stats fetch error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Stats fetch error');
     // Return default values on error
     return NextResponse.json({
       organizations: 0,

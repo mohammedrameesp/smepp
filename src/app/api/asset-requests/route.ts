@@ -49,6 +49,7 @@ import {
 } from '@/features/asset-requests';
 import { sendAssetRequestNotifications } from '@/features/asset-requests';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/asset-requests - List Asset Requests (Most Used)
@@ -435,7 +436,11 @@ async function createAssetRequestHandler(request: NextRequest, context: APIConte
         targetUserId: memberId,
       });
     } catch (notificationError) {
-      console.error('Failed to send notification:', notificationError);
+      logger.error({
+        error: notificationError instanceof Error ? notificationError.message : 'Unknown error',
+        requestId: assetRequest.id,
+        requestNumber: assetRequest.requestNumber,
+      }, 'Failed to send asset request notification');
       // Don't fail the request if notifications fail
     }
 

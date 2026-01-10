@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
+import logger from '@/lib/core/log';
 
 const querySchema = z.object({
   actor: z.string().optional(),
@@ -90,7 +91,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Activity log error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Activity log error');
     return NextResponse.json(
       { error: 'Failed to fetch activity log' },
       { status: 500 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 import { z } from 'zod';
 import {
   validateSlug,
@@ -55,7 +56,7 @@ export async function GET() {
 
     return NextResponse.json({ organizations });
   } catch (error) {
-    console.error('Get organizations error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Get organizations error');
     return NextResponse.json(
       { error: 'Failed to get organizations' },
       { status: 500 }
@@ -199,7 +200,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Create organization error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Create organization error');
 
     // Handle slug taken error
     if (error instanceof Error && error.message === 'SLUG_TAKEN') {

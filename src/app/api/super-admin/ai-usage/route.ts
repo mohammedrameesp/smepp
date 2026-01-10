@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 export async function GET(request: NextRequest) {
   try {
@@ -106,7 +107,7 @@ export async function GET(request: NextRequest) {
       period,
     });
   } catch (error) {
-    console.error('AI usage stats error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'AI usage stats error');
     return NextResponse.json(
       { error: 'Failed to get AI usage stats' },
       { status: 500 }

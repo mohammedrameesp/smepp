@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 import { z } from 'zod';
 
 // Validation schema for updating feedback
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(feedback);
   } catch (error) {
-    console.error('Error fetching feedback:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Error fetching feedback detail');
     return NextResponse.json({ error: 'Failed to fetch feedback' }, { status: 500 });
   }
 }
@@ -104,7 +105,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       feedback: updated,
     });
   } catch (error) {
-    console.error('Error updating feedback:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Error updating feedback');
     return NextResponse.json({ error: 'Failed to update feedback' }, { status: 500 });
   }
 }

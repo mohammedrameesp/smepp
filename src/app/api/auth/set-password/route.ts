@@ -3,6 +3,7 @@ import { prisma } from '@/lib/core/prisma';
 import { hash } from 'bcryptjs';
 import { z } from 'zod';
 import { validatePassword, DEFAULT_PASSWORD_REQUIREMENTS } from '@/lib/security/password-validation';
+import logger from '@/lib/core/log';
 
 // SEC-010: Enhanced password validation with complexity requirements
 const setPasswordSchema = z.object({
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Validate setup token error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Validate setup token error');
     return NextResponse.json({ valid: false, reason: 'error' }, { status: 500 });
   }
 }
@@ -179,7 +180,7 @@ export async function POST(request: NextRequest) {
           setupTokenExpiry: null,
         },
       });
-      console.log(`Initial password set for team member: ${teamMember.email}`);
+      logger.debug({ memberId: teamMember.id }, 'Initial password set for team member');
     } else if (user) {
       // Update User: set password, verify email, and clear setup token
       await prisma.user.update({
@@ -191,7 +192,7 @@ export async function POST(request: NextRequest) {
           setupTokenExpiry: null,
         },
       });
-      console.log(`Initial password set for user: ${user.email}`);
+      logger.debug({ userId: user.id }, 'Initial password set for user');
     }
 
     return NextResponse.json({
@@ -199,7 +200,7 @@ export async function POST(request: NextRequest) {
       message: 'Password created successfully. You can now sign in.',
     });
   } catch (error) {
-    console.error('Set password error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Set password error');
     return NextResponse.json(
       { error: 'Failed to set password' },
       { status: 500 }

@@ -10,6 +10,34 @@ import { prisma } from '@/lib/core/prisma';
 import type { SanitizationResult } from './input-sanitizer';
 import { getRiskScore } from './input-sanitizer';
 
+/**
+ * Anonymize IP address for GDPR compliance
+ * IPv4: Replace last octet with 0 (e.g., 192.168.1.100 -> 192.168.1.0)
+ * IPv6: Truncate to /64 (first 4 segments)
+ */
+function anonymizeIpAddress(ip: string | undefined): string | undefined {
+  if (!ip) return undefined;
+
+  // Check if it's IPv6
+  if (ip.includes(':')) {
+    // IPv6: Keep first 4 segments (64 bits), zero out the rest
+    const segments = ip.split(':');
+    if (segments.length >= 4) {
+      return `${segments.slice(0, 4).join(':')}::`;
+    }
+    return ip; // Malformed, return as-is
+  }
+
+  // IPv4: Replace last octet with 0
+  const parts = ip.split('.');
+  if (parts.length === 4) {
+    parts[3] = '0';
+    return parts.join('.');
+  }
+
+  return ip; // Malformed, return as-is
+}
+
 export interface AuditLogEntry {
   tenantId: string;
   memberId: string;
@@ -129,7 +157,7 @@ export async function logAuditEntry(entry: AuditLogEntry): Promise<void> {
         dataAccessed: JSON.parse(JSON.stringify(entry.dataAccessed)),
         tokensUsed: entry.tokensUsed,
         responseTimeMs: entry.responseTimeMs,
-        ipAddress: entry.ipAddress,
+        ipAddress: anonymizeIpAddress(entry.ipAddress), // Anonymize for GDPR compliance
         userAgent: entry.userAgent,
         flagged,
         flagReasons,

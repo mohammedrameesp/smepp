@@ -1,6 +1,7 @@
 /**
  * Prisma Client Mock
  * Provides mock implementations for all Prisma models used in testing
+ * Updated: Comprehensive coverage for all 70+ models in schema
  */
 
 import { jest } from '@jest/globals';
@@ -11,6 +12,7 @@ const createModelMock = () => ({
   findFirst: jest.fn(),
   findMany: jest.fn(),
   create: jest.fn(),
+  createMany: jest.fn(),
   update: jest.fn(),
   updateMany: jest.fn(),
   upsert: jest.fn(),
@@ -19,27 +21,116 @@ const createModelMock = () => ({
   count: jest.fn(),
   aggregate: jest.fn(),
   groupBy: jest.fn(),
+  findUniqueOrThrow: jest.fn(),
+  findFirstOrThrow: jest.fn(),
 });
 
 export const mockPrisma = {
+  // Core User & Auth models
   user: createModelMock(),
+  account: createModelMock(),
+  session: createModelMock(),
+  verificationToken: createModelMock(),
+
+  // Organization models
+  organization: createModelMock(),
+  organizationInvitation: createModelMock(),
+  organizationSetupProgress: createModelMock(),
+  rolePermission: createModelMock(),
+
+  // Team Member model (replaces OrganizationUser + HRProfile)
+  teamMember: createModelMock(),
+
+  // Asset Management models
   asset: createModelMock(),
   assetHistory: createModelMock(),
+  assetCategory: createModelMock(),
+  assetTypeMapping: createModelMock(),
+  location: createModelMock(),
+  maintenanceRecord: createModelMock(),
+  depreciationCategory: createModelMock(),
+  depreciationRecord: createModelMock(),
+
+  // Asset Request models
+  assetRequest: createModelMock(),
+  assetRequestHistory: createModelMock(),
+
+  // Subscription models
   subscription: createModelMock(),
   subscriptionHistory: createModelMock(),
+
+  // Supplier models
   supplier: createModelMock(),
   supplierEngagement: createModelMock(),
+
+  // Purchase Request models
+  purchaseRequest: createModelMock(),
+  purchaseRequestItem: createModelMock(),
+  purchaseRequestHistory: createModelMock(),
+
+  // Leave Management models
+  leaveType: createModelMock(),
+  leaveBalance: createModelMock(),
+  leaveRequest: createModelMock(),
+  leaveRequestHistory: createModelMock(),
+
+  // Payroll models
+  salaryStructure: createModelMock(),
+  salaryStructureHistory: createModelMock(),
+  payrollRun: createModelMock(),
+  payrollHistory: createModelMock(),
+  payslip: createModelMock(),
+  payslipDeduction: createModelMock(),
+  employeeLoan: createModelMock(),
+  loanRepayment: createModelMock(),
+
+  // Approval Workflow models
+  approvalPolicy: createModelMock(),
+  approvalLevel: createModelMock(),
+  approvalStep: createModelMock(),
+  approverDelegation: createModelMock(),
+
+  // Company Document models
+  companyDocumentType: createModelMock(),
+  companyDocument: createModelMock(),
+
+  // Notification model
+  notification: createModelMock(),
+
+  // Activity & Audit models
+  activityLog: createModelMock(),
+  profileChangeRequest: createModelMock(),
+
+  // Settings models
+  systemSettings: createModelMock(),
+
+  // Chat/AI models
+  chatConversation: createModelMock(),
+  chatMessage: createModelMock(),
+  aIChatUsage: createModelMock(),
+  aIChatAuditLog: createModelMock(),
+
+  // WhatsApp models
+  whatsAppConfig: createModelMock(),
+  whatsAppUserPhone: createModelMock(),
+  whatsAppActionToken: createModelMock(),
+  whatsAppMessageLog: createModelMock(),
+  platformWhatsAppConfig: createModelMock(),
+
+  // Feedback model
+  feedback: createModelMock(),
+
+  // Super Admin models
+  revokedImpersonationToken: createModelMock(),
+
+  // Legacy models (for backward compatibility)
+  hRProfile: createModelMock(),
   accreditation: createModelMock(),
   accreditationProject: createModelMock(),
   accreditationHistory: createModelMock(),
   accreditationScan: createModelMock(),
-  activityLog: createModelMock(),
-  maintenanceRecord: createModelMock(),
-  systemSettings: createModelMock(),
   appSetting: createModelMock(),
-  account: createModelMock(),
-  session: createModelMock(),
-  verificationToken: createModelMock(),
+
   // Task Management models
   board: createModelMock(),
   boardMember: createModelMock(),
@@ -47,25 +138,21 @@ export const mockPrisma = {
   task: createModelMock(),
   taskAssignee: createModelMock(),
   taskLabel: createModelMock(),
+  taskLabelAssignment: createModelMock(),
   taskChecklist: createModelMock(),
+  taskChecklistItem: createModelMock(),
   checklistItem: createModelMock(),
   taskComment: createModelMock(),
   taskAttachment: createModelMock(),
   taskHistory: createModelMock(),
-  // Purchase Request models
-  purchaseRequest: createModelMock(),
-  purchaseRequestItem: createModelMock(),
-  // HR Profile models
-  hRProfile: createModelMock(),
-  profileChangeRequest: createModelMock(),
-  // Leave Management models
-  leaveType: createModelMock(),
-  leaveBalance: createModelMock(),
-  leaveRequest: createModelMock(),
-  leaveRequestHistory: createModelMock(),
+
+  // Transaction and connection methods
   $transaction: jest.fn((callback: any) => callback(mockPrisma)),
   $connect: jest.fn(),
   $disconnect: jest.fn(),
+  $extends: jest.fn().mockReturnThis(),
+  $queryRaw: jest.fn(),
+  $executeRaw: jest.fn(),
 };
 
 // Reset all mocks utility

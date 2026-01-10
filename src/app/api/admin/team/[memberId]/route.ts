@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import { TeamMemberRole, TeamMemberStatus } from '@prisma/client';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PATCH /api/admin/team/[memberId] - Update member role
@@ -72,7 +73,7 @@ export async function PATCH(
 
     return NextResponse.json({ member: updated });
   } catch (error) {
-    console.error('Update member error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to update member');
     return NextResponse.json(
       { error: 'Failed to update member' },
       { status: 500 }
@@ -155,7 +156,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Remove member error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to remove member');
     return NextResponse.json(
       { error: 'Failed to remove member' },
       { status: 500 }

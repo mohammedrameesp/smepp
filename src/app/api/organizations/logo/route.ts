@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 import { sbUpload, sbPublicUrl } from '@/lib/storage/supabase';
 import { updateSetupProgress } from '@/features/onboarding/lib';
 import {
@@ -114,9 +115,7 @@ export async function POST(request: NextRequest) {
     // Upload to Supabase
     const bytes = Buffer.from(await file.arrayBuffer());
 
-    console.log('[Logo Upload] Uploading to path:', logoPath);
-    console.log('[Logo Upload] File size:', bytes.length, 'bytes');
-    console.log('[Logo Upload] Content type:', file.type);
+    logger.debug({ path: logoPath, size: bytes.length, contentType: file.type }, 'Logo upload starting');
 
     try {
       await sbUpload({
@@ -124,21 +123,21 @@ export async function POST(request: NextRequest) {
         bytes,
         contentType: file.type,
       });
-      console.log('[Logo Upload] Original upload successful');
+      logger.debug('Logo original upload successful');
     } catch (uploadError) {
-      console.error('[Logo Upload] Upload failed:', uploadError);
+      logger.error({ error: uploadError instanceof Error ? uploadError.message : String(uploadError) }, 'Logo upload failed');
       throw uploadError;
     }
 
     // Get public URL with cache-busting timestamp
     const baseUrl = await sbPublicUrl(logoPath);
     const logoUrl = `${baseUrl}?v=${Date.now()}`;
-    console.log('[Logo Upload] Public URL:', logoUrl);
+    logger.debug({ logoUrl }, 'Logo public URL generated');
 
     // Generate inverse (white) version for dark backgrounds
     let logoUrlInverse: string | null = null;
 
-    console.log('[Logo Upload] Generating inverse version...');
+    logger.debug('Generating inverse logo version');
     const inverseResult = await generateInverseLogo(bytes, file.type);
 
     if (inverseResult.success && inverseResult.buffer) {
@@ -151,18 +150,18 @@ export async function POST(request: NextRequest) {
 
         const baseInverseUrl = await sbPublicUrl(inversePath);
         logoUrlInverse = `${baseInverseUrl}?v=${Date.now()}`;
-        console.log('[Logo Upload] Inverse upload successful:', logoUrlInverse);
+        logger.debug({ logoUrlInverse }, 'Logo inverse upload successful');
       } catch (inverseUploadError) {
         // Log but don't fail - inverse is optional enhancement
-        console.error(
-          '[Logo Upload] Inverse upload failed (non-critical):',
-          inverseUploadError
+        logger.error(
+          { error: inverseUploadError instanceof Error ? inverseUploadError.message : String(inverseUploadError) },
+          'Logo inverse upload failed (non-critical)'
         );
       }
     } else {
-      console.warn(
-        '[Logo Upload] Inverse generation failed (non-critical):',
-        inverseResult.error
+      logger.warn(
+        { error: inverseResult.error },
+        'Logo inverse generation failed (non-critical)'
       );
     }
 
@@ -182,7 +181,7 @@ export async function POST(request: NextRequest) {
       inverseGenerated: !!logoUrlInverse,
     });
   } catch (error) {
-    console.error('Logo upload error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Logo upload error');
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       { error: `Failed to upload logo: ${message}` },

@@ -6,6 +6,20 @@ const DEFAULT_BRAND_COLOR = '#73c5d1';
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 
 /**
+ * Escape HTML special characters to prevent XSS attacks
+ * Use this for any user-provided content interpolated into email HTML
+ */
+function escapeHtml(text: string | null | undefined): string {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
  * Get tenant-specific portal URL
  * @param orgSlug - Organization slug for subdomain
  * @param path - Optional path to append (e.g., '/admin', '/employee')
@@ -119,7 +133,7 @@ export function assetRequestSubmittedEmail(data: AssetRequestSubmittedData): { s
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Requested By:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.requesterName} (${data.requesterEmail})</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.requesterName)} (${escapeHtml(data.requesterEmail)})</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Asset:</td>
@@ -142,7 +156,7 @@ export function assetRequestSubmittedEmail(data: AssetRequestSubmittedData): { s
       <tr>
         <td style="padding: 20px;">
           <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Reason for Request:</h4>
-          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${data.reason}</p>
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${escapeHtml(data.reason)}</p>
         </td>
       </tr>
     </table>
@@ -208,11 +222,11 @@ export function assetAssignmentPendingEmail(data: AssetAssignmentPendingData): {
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Asset Assignment Pending</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Dear <strong>${data.userName}</strong>,
+      Dear <strong>${escapeHtml(data.userName)}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      An asset has been assigned to you by ${data.assignerName}. Please review and accept or decline.
+      An asset has been assigned to you by ${escapeHtml(data.assignerName)}. Please review and accept or decline.
     </p>
 
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
@@ -238,7 +252,7 @@ export function assetAssignmentPendingEmail(data: AssetAssignmentPendingData): {
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Assigned By:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.assignerName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.assignerName)}</td>
             </tr>
           </table>
         </td>
@@ -250,7 +264,7 @@ export function assetAssignmentPendingEmail(data: AssetAssignmentPendingData): {
       <tr>
         <td style="padding: 20px;">
           <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Notes:</h4>
-          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${data.reason}</p>
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${escapeHtml(data.reason)}</p>
         </td>
       </tr>
     </table>
@@ -327,7 +341,7 @@ export function assetAssignmentAcceptedEmail(data: AssetAssignmentAcceptedData):
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Accepted By:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.userName} (${data.userEmail})</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.userName)} (${escapeHtml(data.userEmail)})</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Asset:</td>
@@ -399,7 +413,7 @@ export function assetAssignmentDeclinedEmail(data: AssetAssignmentDeclinedData):
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Declined By:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.userName} (${data.userEmail})</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.userName)} (${escapeHtml(data.userEmail)})</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Asset:</td>
@@ -418,7 +432,7 @@ export function assetAssignmentDeclinedEmail(data: AssetAssignmentDeclinedData):
       <tr>
         <td style="padding: 20px;">
           <h4 style="color: #dc2626; margin: 0 0 10px 0; font-size: 14px;">Reason:</h4>
-          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${data.reason}</p>
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${escapeHtml(data.reason)}</p>
         </td>
       </tr>
     </table>
@@ -484,7 +498,7 @@ export function assetReturnRequestEmail(data: AssetReturnRequestData): { subject
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Requested By:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.userName} (${data.userEmail})</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.userName)} (${escapeHtml(data.userEmail)})</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Asset:</td>
@@ -503,7 +517,7 @@ export function assetReturnRequestEmail(data: AssetReturnRequestData): { subject
       <tr>
         <td style="padding: 20px;">
           <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Reason for Return:</h4>
-          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${data.reason}</p>
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${escapeHtml(data.reason)}</p>
         </td>
       </tr>
     </table>
@@ -564,7 +578,7 @@ export function assetRequestApprovedEmail(data: AssetRequestApprovedData): { sub
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Asset Request Approved</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Dear <strong>${data.userName}</strong>,
+      Dear <strong>${escapeHtml(data.userName)}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
@@ -594,7 +608,7 @@ export function assetRequestApprovedEmail(data: AssetRequestApprovedData): { sub
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Approved By:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.approverName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.approverName)}</td>
             </tr>
           </table>
         </td>
@@ -662,7 +676,7 @@ export function assetRequestRejectedEmail(data: AssetRequestRejectedData): { sub
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Asset Request Rejected</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Dear <strong>${data.userName}</strong>,
+      Dear <strong>${escapeHtml(data.userName)}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
@@ -688,7 +702,7 @@ export function assetRequestRejectedEmail(data: AssetRequestRejectedData): { sub
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Rejected By:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.rejectorName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.rejectorName)}</td>
             </tr>
           </table>
         </td>
@@ -699,7 +713,7 @@ export function assetRequestRejectedEmail(data: AssetRequestRejectedData): { sub
       <tr>
         <td style="padding: 20px;">
           <h4 style="color: #dc2626; margin: 0 0 10px 0; font-size: 14px;">Reason:</h4>
-          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${data.reason}</p>
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${escapeHtml(data.reason)}</p>
         </td>
       </tr>
     </table>
@@ -754,7 +768,7 @@ export function assetReturnRejectedEmail(data: AssetReturnRejectedData): { subje
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Asset Return Request Rejected</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Dear <strong>${data.userName}</strong>,
+      Dear <strong>${escapeHtml(data.userName)}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
@@ -780,7 +794,7 @@ export function assetReturnRejectedEmail(data: AssetReturnRejectedData): { subje
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Rejected By:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.rejectorName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.rejectorName)}</td>
             </tr>
           </table>
         </td>
@@ -791,7 +805,7 @@ export function assetReturnRejectedEmail(data: AssetReturnRejectedData): { subje
       <tr>
         <td style="padding: 20px;">
           <h4 style="color: #dc2626; margin: 0 0 10px 0; font-size: 14px;">Reason:</h4>
-          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${data.reason}</p>
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${escapeHtml(data.reason)}</p>
         </td>
       </tr>
     </table>
@@ -845,7 +859,7 @@ export function assetReturnApprovedEmail(data: AssetReturnApprovedData): { subje
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Asset Return Approved</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Dear <strong>${data.userName}</strong>,
+      Dear <strong>${escapeHtml(data.userName)}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
@@ -871,7 +885,7 @@ export function assetReturnApprovedEmail(data: AssetReturnApprovedData): { subje
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Approved By:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.approverName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.approverName)}</td>
             </tr>
           </table>
         </td>
@@ -932,7 +946,7 @@ export function assetUnassignedEmail(data: AssetUnassignedData): { subject: stri
     <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Asset Unassigned</h2>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
-      Dear <strong>${data.userName}</strong>,
+      Dear <strong>${escapeHtml(data.userName)}</strong>,
     </p>
 
     <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
@@ -958,7 +972,7 @@ export function assetUnassignedEmail(data: AssetUnassignedData): { subject: stri
             </tr>
             <tr>
               <td style="padding: 8px 0; color: #666666; font-size: 14px;">Unassigned By:</td>
-              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.adminName}</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.adminName)}</td>
             </tr>
           </table>
         </td>
@@ -970,7 +984,7 @@ export function assetUnassignedEmail(data: AssetUnassignedData): { subject: stri
       <tr>
         <td style="padding: 20px;">
           <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Reason:</h4>
-          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${data.reason}</p>
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">${escapeHtml(data.reason)}</p>
         </td>
       </tr>
     </table>

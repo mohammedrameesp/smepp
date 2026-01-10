@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { ApprovalModule } from '@prisma/client';
 import { getApprovalChain, getApprovalChainSummary } from '@/features/approvals/lib';
+import logger from '@/lib/core/log';
 
 interface RouteParams {
   params: Promise<{ entityType: string; entityId: string }>;
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       summary,
     });
   } catch (error) {
-    console.error('Get approval chain error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Get approval chain error');
     return NextResponse.json(
       { error: 'Failed to get approval chain' },
       { status: 500 }

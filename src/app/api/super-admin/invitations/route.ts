@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 export async function GET() {
   try {
@@ -48,7 +49,7 @@ export async function GET() {
 
     return NextResponse.json({ invitations: invitationsWithStatus });
   } catch (error) {
-    console.error('Get invitations error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Get invitations error');
     return NextResponse.json(
       { error: 'Failed to get invitations' },
       { status: 500 }

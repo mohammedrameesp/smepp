@@ -16,6 +16,7 @@ import {
   getAzureUserEmail,
   validateEmailDomain,
 } from '@/lib/oauth/azure';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/auth/oauth/azure/callback
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     // Handle OAuth errors from Azure
     if (error) {
-      console.error('Azure OAuth error:', error, errorDescription);
+      logger.error({ error, errorDescription: errorDescription ?? undefined }, 'Azure OAuth error');
       return NextResponse.redirect(
         `${getTenantUrl('www', '/login')}?error=OAuthError&message=${encodeURIComponent(errorDescription || error)}`
       );
@@ -122,7 +123,7 @@ export async function GET(request: NextRequest) {
     // This checks: isDeleted, canLogin, account lockout, and auth method restrictions
     const securityCheck = await validateOAuthSecurity(email, org.id, 'azure-ad');
     if (!securityCheck.allowed) {
-      console.log(`[OAuth] Security check failed for ${email}: ${securityCheck.error}`);
+      logger.warn({ reason: securityCheck.error, orgId: org.id }, 'Azure OAuth security check failed');
       return NextResponse.redirect(
         `${getTenantUrl(subdomain, '/login')}?error=${securityCheck.error}`
       );
@@ -166,7 +167,7 @@ export async function GET(request: NextRequest) {
     const redirectPath = inviteToken ? `/invite/${inviteToken}` : '/admin';
     return NextResponse.redirect(getTenantUrl(subdomain, redirectPath));
   } catch (error) {
-    console.error('Azure OAuth callback error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Azure OAuth callback error');
 
     // Try to get subdomain from state for error redirect
     const stateParam = request.nextUrl.searchParams.get('state');

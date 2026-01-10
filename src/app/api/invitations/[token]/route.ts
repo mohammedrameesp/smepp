@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { TeamMemberRole, OrgRole } from '@prisma/client';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/invitations/[token] - Get invitation details
@@ -96,7 +97,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Get invitation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to get invitation');
     return NextResponse.json(
       { error: 'Failed to get invitation' },
       { status: 500 }
@@ -340,7 +341,7 @@ export async function POST(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Accept invitation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to accept invitation');
 
     // Handle unique constraint violations (concurrent acceptance)
     if (error instanceof Error && error.message.includes('Unique constraint')) {

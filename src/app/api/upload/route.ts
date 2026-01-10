@@ -1,9 +1,16 @@
+/**
+ * @file route.ts
+ * @description File upload endpoint with Supabase storage
+ * @module api/upload
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { validateUploadedFile } from '@/lib/files/sanity';
 import { storageUpload, storagePublicUrl } from '@/lib/storage';
 import { logAction } from '@/lib/core/activity';
+import logger from '@/lib/core/log';
 
 // Force Node.js runtime for file upload handling
 export const runtime = 'nodejs';
@@ -31,12 +38,12 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
  * - url: The file path in Supabase storage
  */
 export async function POST(request: NextRequest) {
-  console.log('[UPLOAD] Starting file upload...');
+  logger.debug('Starting file upload');
 
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
-    console.log('[UPLOAD] Session check:', session?.user ? 'Authenticated' : 'Not authenticated');
+    logger.debug({ authenticated: !!session?.user }, 'Session check');
 
     if (!session?.user) {
       return NextResponse.json(
@@ -57,11 +64,11 @@ export async function POST(request: NextRequest) {
     // Parse the multipart form data using Next.js built-in API
     let formData: FormData;
     try {
-      console.log('[UPLOAD] Parsing multipart form...');
+      logger.debug('Parsing multipart form');
       formData = await request.formData();
-      console.log('[UPLOAD] Form parsed successfully');
+      logger.debug('Form parsed successfully');
     } catch (error) {
-      console.error('[UPLOAD] Error parsing form data:', error);
+      logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error parsing form data');
       return NextResponse.json(
         { error: 'Failed to parse upload data. Please ensure the file is under 10MB.' },
         { status: 400 }
@@ -128,9 +135,7 @@ export async function POST(request: NextRequest) {
 
     // Upload to Supabase storage
     try {
-      console.log('[UPLOAD] Uploading to Supabase storage...');
-      console.log('[UPLOAD] File path:', filePath);
-      console.log('[UPLOAD] File size:', buffer.length, 'bytes');
+      logger.debug({ fileSize: buffer.length }, 'Uploading to Supabase storage');
 
       await storageUpload({
         path: filePath,
@@ -138,9 +143,9 @@ export async function POST(request: NextRequest) {
         contentType: file.type || 'application/octet-stream',
       });
 
-      console.log('[UPLOAD] Upload to Supabase successful');
+      logger.debug('Upload to Supabase successful');
     } catch (error) {
-      console.error('[UPLOAD] Error uploading to Supabase:', error);
+      logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error uploading to Supabase');
       return NextResponse.json(
         { error: 'Failed to upload file to storage' },
         { status: 500 }
@@ -149,7 +154,6 @@ export async function POST(request: NextRequest) {
 
     // Get the public URL for the uploaded file
     const publicUrl = await storagePublicUrl(filePath);
-    console.log('[UPLOAD] Public URL:', publicUrl);
 
     // Log the upload action
     try {
@@ -166,8 +170,7 @@ export async function POST(request: NextRequest) {
           publicUrl,
         }
       );
-    } catch (error) {
-      console.error('Error logging upload action:', error);
+    } catch {
       // Don't fail the request if logging fails
     }
 
@@ -180,8 +183,10 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[UPLOAD] Unexpected error in upload endpoint:', error);
-    console.error('[UPLOAD] Error stack:', error instanceof Error ? error.stack : 'No stack');
+    logger.error({
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    }, 'Unexpected error in upload endpoint');
     return NextResponse.json(
       { error: 'An unexpected error occurred during upload' },
       { status: 500 }

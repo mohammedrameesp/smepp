@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DELETE /api/organizations/[id]/members/[memberId] - Remove member from org
@@ -87,10 +88,10 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: `Removed ${targetMember.email} from organization`,
+      message: 'Member removed from organization',
     });
   } catch (error) {
-    console.error('Remove member error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Remove member error');
     return NextResponse.json({ error: 'Failed to remove member' }, { status: 500 });
   }
 }

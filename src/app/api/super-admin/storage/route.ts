@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 export const dynamic = 'force-dynamic';
 
@@ -120,7 +121,7 @@ export async function GET(request: NextRequest) {
       organizations: orgStorageStats,
     });
   } catch (error) {
-    console.error('Error fetching storage stats:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error fetching storage stats');
     return NextResponse.json({ error: 'Failed to fetch storage statistics' }, { status: 500 });
   }
 }

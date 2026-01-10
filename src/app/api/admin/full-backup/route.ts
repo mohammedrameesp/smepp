@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { TeamMemberRole } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import ExcelJS from 'exceljs';
+import logger from '@/lib/core/log';
 
 export async function GET(_request: NextRequest) {
   try {
@@ -642,7 +643,7 @@ export async function GET(_request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Full backup error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Full backup error');
     return NextResponse.json(
       { error: 'Failed to create backup', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

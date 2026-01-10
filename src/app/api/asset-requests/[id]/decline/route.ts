@@ -42,6 +42,7 @@ import { sendBatchEmails } from '@/lib/core/email';
 import { assetAssignmentDeclinedEmail } from '@/lib/email-templates';
 import { createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/asset-requests/[id]/decline - Decline Assignment
@@ -246,7 +247,11 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
       );
       await createBulkNotifications(notifications, tenantId);
     } catch (emailError) {
-      console.error('Failed to send notification:', emailError);
+      logger.error({
+        error: emailError instanceof Error ? emailError.message : 'Unknown error',
+        requestId: id,
+        requestNumber: assetRequest.requestNumber,
+      }, 'Failed to send notification for asset assignment decline');
     }
 
     return NextResponse.json(updatedRequest);

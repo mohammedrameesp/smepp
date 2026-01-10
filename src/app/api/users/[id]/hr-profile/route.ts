@@ -13,6 +13,7 @@ import { hrProfileSchema } from '@/lib/validations/hr-profile';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { reinitializeMemberLeaveBalances } from '@/features/leave/lib/leave-balance-init';
+import logger from '@/lib/core/log';
 
 // GET /api/users/[id]/hr-profile - Get a team member's HR profile (admin only)
 async function getHRProfileHandler(
@@ -262,7 +263,7 @@ async function updateHRProfileHandler(
     try {
       await reinitializeMemberLeaveBalances(id);
     } catch (leaveError) {
-      console.error('[Leave] Failed to reinitialize leave balances:', leaveError);
+      logger.error({ error: String(leaveError), memberId: id }, 'Failed to reinitialize leave balances');
       // Don't fail the request if leave balance reinitialization fails
     }
   }

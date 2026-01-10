@@ -39,6 +39,7 @@ import { assetRequestApprovedEmail, assetReturnApprovedEmail } from '@/features/
 import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { invalidateTokensForEntity } from '@/lib/whatsapp';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/asset-requests/[id]/approve - Approve Request
@@ -287,7 +288,11 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
         }
       }
     } catch (emailError) {
-      console.error('Failed to send email notification:', emailError);
+      logger.error({
+        error: emailError instanceof Error ? emailError.message : 'Unknown error',
+        requestId: id,
+        requestNumber: assetRequest.requestNumber,
+      }, 'Failed to send email notification for asset request approval');
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -304,7 +309,11 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
         tenantId
       );
     } catch (notifError) {
-      console.error('Failed to send in-app notification:', notifError);
+      logger.error({
+        error: notifError instanceof Error ? notifError.message : 'Unknown error',
+        requestId: id,
+        requestNumber: assetRequest.requestNumber,
+      }, 'Failed to send in-app notification for asset request approval');
     }
 
     return NextResponse.json(updatedRequest);

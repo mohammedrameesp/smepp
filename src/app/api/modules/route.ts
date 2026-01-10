@@ -12,6 +12,7 @@ import {
   canInstallModule,
   canUninstallModule,
 } from '@/lib/modules/registry';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/modules - List all available modules with installation status
@@ -53,7 +54,7 @@ export async function GET() {
       subscriptionTier: org.subscriptionTier,
     });
   } catch (error) {
-    console.error('Get modules error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Get modules error');
     return NextResponse.json({ error: 'Failed to fetch modules' }, { status: 500 });
   }
 }
@@ -155,7 +156,7 @@ export async function POST(request: NextRequest) {
       enabledModules: updatedOrg.enabledModules,
     });
   } catch (error) {
-    console.error('Install module error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Install module error');
     return NextResponse.json({ error: 'Failed to install module' }, { status: 500 });
   }
 }
@@ -275,7 +276,7 @@ export async function DELETE(request: NextRequest) {
       dataDeleted: deleteData,
     });
   } catch (error) {
-    console.error('Uninstall module error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Uninstall module error');
     const message = error instanceof Error ? error.message : 'Failed to uninstall module';
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -379,6 +380,6 @@ async function deleteModuleDataWithTx(
       break;
 
     default:
-      console.warn(`No data deletion handler for module: ${moduleId}`);
+      logger.warn({ moduleId }, 'No data deletion handler for module');
   }
 }

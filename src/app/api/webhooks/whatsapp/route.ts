@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 import { AssetHistoryAction } from '@prisma/client';
 import {
   validateAndConsumeToken,
@@ -103,7 +104,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       || 'unknown';
 
     if (!checkWebhookRateLimit(clientIp)) {
-      console.warn(`WhatsApp webhook: Rate limited IP ${clientIp}`);
+      logger.warn('WhatsApp webhook: Rate limited');
       return new Response('Rate limit exceeded', { status: 429 });
     }
 
@@ -115,7 +116,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     const appSecret = process.env.WHATSAPP_APP_SECRET;
     if (appSecret) {
       if (!signature) {
-        console.error('WhatsApp webhook: Missing signature header');
+        logger.error('WhatsApp webhook: Missing signature header');
         return new Response('Missing signature', { status: 403 });
       }
 
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         .digest('hex');
 
       if (signature !== expectedSignature) {
-        console.error('WhatsApp webhook: Invalid signature');
+        logger.error('WhatsApp webhook: Invalid signature');
         return new Response('Invalid signature', { status: 403 });
       }
     }
@@ -165,7 +166,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     return new Response('OK', { status: 200 });
   } catch (error) {
-    console.error('WhatsApp webhook error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'WhatsApp webhook error');
     return new Response('Internal error', { status: 500 });
   }
 }
@@ -182,7 +183,7 @@ async function processButtonClick(
   const result = await validateAndConsumeToken(tokenPayload);
 
   if (!result.valid || !result.payload) {
-    console.log(`WhatsApp: Invalid token from ${senderPhone}: ${result.error}`);
+    logger.debug({ error: result.error }, 'WhatsApp: Invalid token received');
     return;
   }
 
@@ -207,11 +208,12 @@ async function processButtonClick(
       details,
     });
 
-    console.log(
-      `WhatsApp: ${action} executed for ${entityType}:${entityId} by approver ${approverId}`
+    logger.info(
+      { action, entityType, entityId },
+      'WhatsApp: Action executed'
     );
   } catch (error) {
-    console.error('WhatsApp: Error executing action:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'WhatsApp: Error executing action');
   }
 }
 

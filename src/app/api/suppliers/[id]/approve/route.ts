@@ -11,6 +11,7 @@ import { sendEmail } from '@/lib/core/email';
 import { supplierApprovalEmail } from '@/lib/email-templates';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
+import logger from '@/lib/core/log';
 
 async function approveSupplierHandler(request: NextRequest, context: APIContext) {
     const { tenant, prisma: tenantPrisma } = context;
@@ -94,7 +95,7 @@ async function approveSupplierHandler(request: NextRequest, context: APIContext)
           text: emailContent.text,
         });
       } catch (emailError) {
-        console.error('[Email] Failed to send supplier approval email:', emailError);
+        logger.error({ error: emailError instanceof Error ? emailError.message : 'Unknown error', supplierId: supplier.id }, 'Failed to send supplier approval email');
         // Don't fail the request if email fails
       }
     }

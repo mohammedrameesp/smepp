@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { revalidatePath } from 'next/cache';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 import { z } from 'zod';
 import { updateSetupProgressBulk } from '@/features/onboarding/lib';
 import { clearPrefixCache } from '@/lib/utils/code-prefix';
@@ -71,7 +72,7 @@ export async function GET() {
 
     return NextResponse.json({ settings: organization });
   } catch (error) {
-    console.error('Get settings error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Get settings error');
     return NextResponse.json({ error: 'Failed to get settings' }, { status: 500 });
   }
 }
@@ -180,7 +181,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true, settings: organization });
   } catch (error) {
-    console.error('Update settings error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Update settings error');
     return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
   }
 }

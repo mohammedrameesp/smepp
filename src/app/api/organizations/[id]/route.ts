@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 import { clearPrefixCache, isCodePrefixAvailable } from '@/lib/utils/code-prefix';
 import { z } from 'zod';
 
@@ -79,7 +80,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Get organization error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Get organization error');
     return NextResponse.json({ error: 'Failed to get organization' }, { status: 500 });
   }
 }
@@ -163,7 +164,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, organization });
   } catch (error) {
-    console.error('Update organization error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Update organization error');
     return NextResponse.json({ error: 'Failed to update organization' }, { status: 500 });
   }
 }

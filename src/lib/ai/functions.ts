@@ -1,6 +1,43 @@
 import { prisma } from '@/lib/core/prisma';
 import { ChatContext } from './chat-service';
 
+// Maximum number of records to return from any function
+const MAX_RESULT_ARRAY_LENGTH = 50;
+
+/**
+ * Sanitize function results to prevent data leakage
+ * - Limits array sizes to prevent large data dumps
+ * - Removes any unexpected fields from results
+ */
+function sanitizeResult<T>(result: T): T {
+  if (Array.isArray(result)) {
+    // Limit array size
+    const limited = result.slice(0, MAX_RESULT_ARRAY_LENGTH);
+    // Recursively sanitize each element
+    return limited.map(item => sanitizeResult(item)) as T;
+  }
+
+  if (result && typeof result === 'object') {
+    // Handle Date objects
+    if (result instanceof Date) {
+      return result;
+    }
+
+    // Sanitize nested objects
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(result)) {
+      // Skip any internal/private fields
+      if (key.startsWith('_') || key.startsWith('$')) {
+        continue;
+      }
+      sanitized[key] = sanitizeResult(value);
+    }
+    return sanitized as T;
+  }
+
+  return result;
+}
+
 export interface ChatFunction {
   name: string;
   description: string;
@@ -231,6 +268,7 @@ export const chatFunctions: ChatFunction[] = [
 
 /**
  * Execute a chat function with the given arguments
+ * Results are sanitized to prevent data leakage
  */
 export async function executeFunction(
   name: string,
@@ -239,6 +277,18 @@ export async function executeFunction(
 ): Promise<unknown> {
   const { tenantId } = context;
 
+  const result = await executeFunctionInternal(name, args, tenantId);
+  return sanitizeResult(result);
+}
+
+/**
+ * Internal function execution (before sanitization)
+ */
+async function executeFunctionInternal(
+  name: string,
+  args: Record<string, unknown>,
+  tenantId: string
+): Promise<unknown> {
   switch (name) {
     case 'searchEmployees': {
       const query = (args.query as string).toLowerCase();

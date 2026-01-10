@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { decrypt, encryptState } from '@/lib/oauth/utils';
+import { encryptState } from '@/lib/oauth/utils';
 import { buildGoogleAuthUrl } from '@/lib/oauth/google';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/auth/oauth/google
@@ -84,7 +85,7 @@ export async function GET(request: NextRequest) {
     // Redirect to Google
     return NextResponse.redirect(authUrl);
   } catch (error) {
-    console.error('Google OAuth initiation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Google OAuth initiation error');
     return NextResponse.json(
       { error: 'Failed to initiate Google OAuth' },
       { status: 500 }

@@ -334,7 +334,8 @@ model Organization {
 
   // AI Chat feature (super-admin controlled)
   aiChatEnabled        Boolean @default(false)
-  aiTokenBudgetMonthly Int? // Custom monthly AI token limit (null = use tier default)
+  aiTokenBudgetMonthly Int?    // Custom monthly AI token limit (null = use tier default)
+  chatRetentionDays    Int?    // Chat conversation retention (null = 90 days, 0 = never delete)
 
   // Additional currencies beyond QAR (e.g., ["USD", "EUR"])
   additionalCurrencies String[] @default([])
@@ -2160,12 +2161,13 @@ model CompanyDocument {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model ChatConversation {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   tenantId  String
   memberId  String
-  title     String? // Auto-generated from first message
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  title     String?   // Auto-generated from first message
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime? // For data retention - conversations auto-delete after this date
 
   tenant   Organization  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   member   TeamMember    @relation(fields: [memberId], references: [id], onDelete: Cascade)
@@ -2174,6 +2176,7 @@ model ChatConversation {
   @@index([tenantId])
   @@index([memberId])
   @@index([createdAt])
+  @@index([expiresAt])
 }
 
 model ChatMessage {

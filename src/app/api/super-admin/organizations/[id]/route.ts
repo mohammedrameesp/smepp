@@ -9,6 +9,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
+import logger from '@/lib/core/log';
 
 export async function GET(
   request: NextRequest,
@@ -142,7 +143,7 @@ export async function GET(
       recentActivity,
     });
   } catch (error) {
-    console.error('Get organization error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Get organization error');
     return NextResponse.json(
       { error: 'Failed to get organization' },
       { status: 500 }
@@ -210,7 +211,7 @@ export async function PATCH(
 
     return NextResponse.json({ organization });
   } catch (error) {
-    console.error('Update organization error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Update organization error');
     return NextResponse.json(
       { error: 'Failed to update organization' },
       { status: 500 }
@@ -301,7 +302,7 @@ export async function DELETE(
       }
     });
   } catch (error) {
-    console.error('Delete organization error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Delete organization error');
     return NextResponse.json(
       { error: 'Failed to delete organization' },
       { status: 500 }

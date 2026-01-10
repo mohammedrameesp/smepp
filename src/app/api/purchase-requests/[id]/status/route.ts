@@ -14,6 +14,7 @@ import { sendEmail } from '@/lib/core/email';
 import { purchaseRequestStatusEmail } from '@/lib/core/email-templates';
 import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import logger from '@/lib/core/log';
 import { invalidateTokensForEntity } from '@/lib/whatsapp';
 
 // PATCH - Update purchase request status (admin only)
@@ -196,7 +197,11 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
         });
       }
     } catch (emailError) {
-      console.error('Failed to send status notification email:', emailError);
+      logger.error({
+        tenantId,
+        purchaseRequestId: purchaseRequest.id,
+        error: emailError instanceof Error ? emailError.message : String(emailError),
+      }, 'Failed to send status notification email');
       // Don't fail the request if email fails
     }
 

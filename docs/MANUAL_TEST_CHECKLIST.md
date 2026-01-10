@@ -98,6 +98,12 @@ Cross-module workflows and E2E scenarios
 36. [Activity Logging Service](#section-36-activity-logging-service)
 37. [Impersonation Security](#section-37-impersonation-security)
 38. [Approval Delegation Details](#section-38-approval-delegation-details)
+
+### New Sections (Added January 2026)
+76. [Chat / AI Integration](#section-76-chat--ai-integration)
+77. [Backup & Restore Procedures](#section-77-backup--restore-procedures)
+78. [Data Export (GDPR Compliance)](#section-78-data-export-gdpr-compliance)
+79. [WhatsApp Notifications](#section-79-whatsapp-notifications)
 39. [Organization Configuration Tabs](#section-39-organization-configuration-tabs)
 40. [CSV Parsing Utilities](#section-40-csv-parsing-utilities)
 41. [Import Utilities](#section-41-import-utilities)
@@ -7251,6 +7257,205 @@ DRAFT → SUBMITTED → APPROVED → PROCESSED → PAID
 ### Maintenance Intervals
 - [ ] Compare last maintenance to interval days
 - [ ] Flag assets exceeding interval
+
+---
+
+# SECTION 76: CHAT / AI INTEGRATION
+
+> **Key Files:**
+> - `src/app/api/chat/route.ts` - AI chat API endpoint
+> - `src/lib/ai/chat-service.ts` - AI chat service
+> - `src/lib/ai/rate-limiter.ts` - AI rate limiting per tier
+> - `src/lib/ai/permissions.ts` - AI function access control
+> - `src/lib/ai/input-sanitizer.ts` - Input validation for AI
+> - `src/lib/ai/audit-logger.ts` - AI action audit logging
+> - `src/lib/ai/budget-tracker.ts` - API usage budget tracking
+
+## 76.1 AI Chat Authentication
+- [ ] **Requires authenticated session**
+- [ ] **Requires tenant context (organizationId)**
+- [ ] Unauthenticated requests → 401
+- [ ] Missing organization → 403
+
+## 76.2 AI Rate Limiting
+- [ ] Rate limits based on subscription tier
+- [ ] FREE tier: Limited requests per day
+- [ ] STARTER tier: Moderate limits
+- [ ] PROFESSIONAL tier: Higher limits
+- [ ] ENTERPRISE tier: Custom limits
+- [ ] Rate limit exceeded → 429 with retry-after
+
+## 76.3 Input Sanitization
+- [ ] Malicious prompts blocked
+- [ ] Injection attempts detected and blocked
+- [ ] Blocked message logged with reason
+- [ ] User notified of blocked message
+
+## 76.4 AI Function Permissions
+- [ ] Function access based on user role
+- [ ] Admin functions restricted to ADMIN/OWNER
+- [ ] Sensitive data filtered for non-admin users
+- [ ] Only available functions returned per role
+
+## 76.5 AI Audit Logging
+- [ ] All AI interactions logged
+- [ ] Budget usage tracked per tenant
+- [ ] Super admin can view AI usage stats
+- [ ] Per-tenant AI usage visible in admin
+
+## 76.6 Chat History
+- [ ] GET returns chat history for user
+- [ ] DELETE clears chat history
+- [ ] History is tenant-scoped
+
+---
+
+# SECTION 77: BACKUP & RESTORE PROCEDURES
+
+> **Key Files:**
+> - `src/app/api/admin/backup/route.ts` - Tenant backup
+> - `src/app/api/admin/full-backup/route.ts` - Full tenant backup
+> - `src/app/api/admin/full-restore/route.ts` - Restore from backup
+> - `src/app/api/export/full-backup/route.ts` - Export all data
+> - `src/app/api/super-admin/backups/route.ts` - Platform backups
+> - `src/app/api/super-admin/backups/cron/route.ts` - Scheduled backups
+> - `src/app/api/super-admin/backups/restore/route.ts` - Platform restore
+
+## 77.1 Tenant Backup (Admin)
+- [ ] Admin can create tenant backup
+- [ ] Backup includes all tenant data:
+  - [ ] Assets, Asset Categories, Asset Requests
+  - [ ] Subscriptions
+  - [ ] Suppliers
+  - [ ] Employees (TeamMembers)
+  - [ ] Leave Types, Leave Requests, Leave Balances
+  - [ ] Payroll Runs, Payslips, Salary Structures
+  - [ ] Purchase Requests
+  - [ ] Company Documents
+  - [ ] Locations
+  - [ ] Settings
+- [ ] Backup exported as JSON
+- [ ] File download with proper headers
+
+## 77.2 Full Restore (Admin)
+- [ ] Restore from backup file
+- [ ] **WARNING: Destructive operation**
+- [ ] Requires admin confirmation
+- [ ] Validates backup format
+- [ ] Restores all entities
+- [ ] Maintains referential integrity
+- [ ] Logs restore action
+
+## 77.3 Platform Backup (Super Admin)
+- [ ] Super admin can backup all organizations
+- [ ] Per-organization backup files
+- [ ] Platform-wide statistics included
+- [ ] Encrypted backup option
+- [ ] Stored in secure location
+
+## 77.4 Scheduled Backups (Cron)
+- [ ] Daily automated backups at 1 AM UTC
+- [ ] Requires CRON_SECRET authorization
+- [ ] Creates per-org backup files
+- [ ] Retention policy enforcement
+- [ ] Failure notifications to super admin
+
+## 77.5 Backup Security
+- [ ] Backups encrypted at rest
+- [ ] Sensitive data redacted in export
+- [ ] Password hashes NOT included
+- [ ] Reset tokens NOT included
+- [ ] API keys NOT included
+
+---
+
+# SECTION 78: DATA EXPORT (GDPR COMPLIANCE)
+
+> **Key Files:**
+> - `src/app/api/export/full-backup/route.ts` - Full data export
+> - `src/app/api/assets/export/route.ts` - Asset export
+> - `src/app/api/subscriptions/export/route.ts` - Subscription export
+> - `src/app/api/users/export/route.ts` - User export
+> - `src/app/api/employees/export/route.ts` - Employee export
+> - `src/app/api/suppliers/export/route.ts` - Supplier export
+> - `src/app/api/purchase-requests/export/route.ts` - PR export
+
+## 78.1 Right to Data Portability
+- [ ] Users can export their personal data
+- [ ] Export in machine-readable format (CSV, JSON)
+- [ ] Includes all user-related data:
+  - [ ] Profile information
+  - [ ] HR profile data
+  - [ ] Leave history
+  - [ ] Assigned assets
+  - [ ] Payroll history
+  - [ ] Activity log
+
+## 78.2 Admin Data Export
+- [ ] Admin can export organization data
+- [ ] Bulk export with filters
+- [ ] Excel/CSV format options
+- [ ] Column selection available
+- [ ] Date range filtering
+
+## 78.3 Export Security
+- [ ] Export requires authentication
+- [ ] Export logged in activity
+- [ ] Rate limiting on exports
+- [ ] Large exports may be async
+- [ ] Sensitive fields redacted/masked
+
+## 78.4 Right to Erasure
+- [ ] Soft delete with retention period (7 days)
+- [ ] Permanent deletion after retention
+- [ ] Cascading deletion of related data
+- [ ] Cleanup cron job runs daily
+- [ ] Deletion logged for audit
+
+## 78.5 Data Retention
+- [ ] Configurable retention periods
+- [ ] Audit logs retained longer
+- [ ] Financial data retained per regulations
+- [ ] Cleanup of expired data automated
+
+---
+
+# SECTION 79: WHATSAPP NOTIFICATIONS
+
+> **Key Files:**
+> - `src/app/api/webhooks/whatsapp/route.ts` - Webhook handler
+> - `src/lib/whatsapp/client.ts` - WhatsApp API client
+> - `src/lib/whatsapp/config.ts` - Configuration
+> - `src/lib/whatsapp/templates.ts` - Message templates
+> - `src/lib/whatsapp/approval-integration.ts` - Approval workflows
+> - `src/lib/whatsapp/action-tokens.ts` - Action token management
+
+## 79.1 WhatsApp Webhook Security
+- [ ] Signature validation required
+- [ ] Rate limiting per IP
+- [ ] Invalid signature → 401
+- [ ] Rate limited → 429
+- [ ] Webhook token verification
+
+## 79.2 Approval via WhatsApp
+- [ ] Leave requests can be approved/rejected
+- [ ] Purchase requests can be approved/rejected
+- [ ] Asset requests can be approved/rejected
+- [ ] Action tokens expire after 24 hours
+- [ ] One-time use tokens
+
+## 79.3 WhatsApp Message Templates
+- [ ] Leave approval template
+- [ ] Purchase approval template
+- [ ] Asset approval template
+- [ ] Confirmation messages
+- [ ] Error messages
+
+## 79.4 WhatsApp Configuration
+- [ ] Per-organization WhatsApp setup
+- [ ] Platform-wide WhatsApp config
+- [ ] Phone number verification
+- [ ] API credentials management
 
 ---
 

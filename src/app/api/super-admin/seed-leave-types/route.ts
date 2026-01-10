@@ -9,6 +9,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { LeaveCategory } from '@prisma/client';
+import logger from '@/lib/core/log';
 const DEFAULT_LEAVE_TYPES = [
   {
     name: 'Annual Leave',
@@ -287,7 +288,7 @@ export async function POST(request: NextRequest) {
       results,
     });
   } catch (error) {
-    console.error('Seed leave types error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Seed leave types error');
     return NextResponse.json(
       { error: 'Failed to seed leave types', details: String(error) },
       { status: 500 }
@@ -329,7 +330,7 @@ export async function GET() {
       needsSeeding: orgsWithStatus.filter(o => o.needsSeeding),
     });
   } catch (error) {
-    console.error('Get organizations error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Get organizations error');
     return NextResponse.json(
       { error: 'Failed to get organizations' },
       { status: 500 }

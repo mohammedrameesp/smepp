@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as jose from 'jose';
 import { revokeToken } from '@/lib/security/impersonation';
+import logger from '@/lib/core/log';
 
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 
@@ -45,18 +46,16 @@ export async function POST(request: NextRequest) {
           expiresAt: new Date((payload.exp as number) * 1000),
         });
 
-        console.log('[AUDIT] Impersonation ended:', {
+        logger.info({
           event: 'IMPERSONATION_ENDED',
-          timestamp: new Date().toISOString(),
-          superAdminId: payload.superAdminId,
-          superAdminEmail: payload.superAdminEmail,
-          organizationId: payload.organizationId,
-          organizationSlug: payload.organizationSlug,
-        });
+          superAdminId: payload.superAdminId as string,
+          organizationId: payload.organizationId as string,
+          organizationSlug: payload.organizationSlug as string,
+        }, 'Impersonation ended');
       }
     } catch {
       // Token expired or invalid - still clear the cookie
-      console.log('[AUDIT] Expired/invalid impersonation token cleared');
+      logger.debug('Expired/invalid impersonation token cleared');
     }
 
     // Clear the cookie and redirect to super admin dashboard
@@ -77,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('End impersonation error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'End impersonation error');
     return NextResponse.json(
       { error: 'Failed to end impersonation' },
       { status: 500 }

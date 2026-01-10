@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { hasPermission, hasPermissions, isValidPermission } from '@/lib/access-control';
 import { OrgRole } from '@prisma/client';
+import logger from '@/lib/core/log';
 
 /**
  * GET /api/permissions/check
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!membership) {
-      console.log(`[Permissions Check] User ${session.user.id} not a member of org ${orgId}`);
+      logger.debug({ orgId }, 'Permission check failed - user not a member of organization');
       return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
     }
 
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   } catch (error) {
-    console.error('[Permissions Check] Error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Permission check error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

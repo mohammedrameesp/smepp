@@ -16,6 +16,7 @@ import {
   sendPurchaseRequestNotifications,
 } from '@/features/purchase-requests/lib/purchase-request-creation';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import logger from '@/lib/core/log';
 
 // GET - List purchase requests
 async function getPurchaseRequestsHandler(request: NextRequest, context: APIContext) {
@@ -230,7 +231,11 @@ async function createPurchaseRequestHandler(request: NextRequest, context: APICo
         priority: data.priority,
       });
     } catch (notificationError) {
-      console.error('Failed to send notification:', notificationError);
+      logger.error({
+        tenantId,
+        purchaseRequestId: purchaseRequest.id,
+        error: notificationError instanceof Error ? notificationError.message : String(notificationError),
+      }, 'Failed to send purchase request notification');
       // Don't fail the request if notifications fail
     }
 

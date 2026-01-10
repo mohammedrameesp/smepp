@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
+import logger from '@/lib/core/log';
 
 const SETTINGS_KEY = 'salary_component_percentages';
 
@@ -40,7 +41,7 @@ export async function GET() {
       return NextResponse.json({ percentages: DEFAULT_PERCENTAGES });
     }
   } catch (error) {
-    console.error('Payroll percentages GET error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Payroll percentages GET error');
     return NextResponse.json(
       { error: 'Failed to fetch payroll percentages' },
       { status: 500 }
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, percentages });
   } catch (error) {
-    console.error('Payroll percentages POST error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Payroll percentages POST error');
     return NextResponse.json(
       { error: 'Failed to save payroll percentages' },
       { status: 500 }

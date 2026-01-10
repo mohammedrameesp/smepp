@@ -8,6 +8,7 @@ import {
   organizationInvitationEmail,
 } from '@/lib/core/email-templates';
 import { randomBytes } from 'crypto';
+import logger from '@/lib/core/log';
 
 interface RouteContext {
   params: Promise<{ memberId: string }>;
@@ -157,7 +158,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Invalid pending type' }, { status: 400 });
     }
   } catch (error) {
-    console.error('Resend member invite error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to resend member invitation');
     return NextResponse.json(
       { error: 'Failed to resend invitation' },
       { status: 500 }

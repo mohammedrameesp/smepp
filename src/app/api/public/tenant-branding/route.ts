@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { RESERVED_SUBDOMAINS } from '@/lib/multi-tenant/subdomain';
 import type { TenantBranding, TenantBrandingResponse } from '@/lib/types/tenant-branding';
+import logger from '@/lib/core/log';
 
 /**
  * GET /api/public/tenant-branding?subdomain=acme
@@ -90,7 +91,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching tenant branding:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Error fetching tenant branding');
     return NextResponse.json<TenantBrandingResponse>(
       { found: false, error: 'Internal server error' },
       { status: 500 }

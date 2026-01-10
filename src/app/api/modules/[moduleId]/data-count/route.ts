@@ -11,6 +11,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { MODULE_REGISTRY } from '@/lib/modules/registry';
+import logger from '@/lib/core/log';
 
 interface RouteParams {
   params: Promise<{ moduleId: string }>;
@@ -172,7 +173,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       hasData: totalRecords > 0,
     });
   } catch (error) {
-    console.error('Get module data count error:', error);
+    logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Get module data count error');
     return NextResponse.json({ error: 'Failed to get data counts' }, { status: 500 });
   }
 }

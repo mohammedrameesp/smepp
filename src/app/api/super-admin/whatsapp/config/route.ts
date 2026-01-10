@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { z } from 'zod';
+import logger from '@/lib/core/log';
 import {
   savePlatformWhatsAppConfig,
   disablePlatformWhatsApp,
@@ -43,7 +44,7 @@ export async function GET() {
       webhookUrl,
     });
   } catch (error) {
-    console.error('Get platform WhatsApp config error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Get platform WhatsApp config error');
     return NextResponse.json(
       { error: 'Failed to get platform WhatsApp configuration' },
       { status: 500 }
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
       webhookUrl,
     });
   } catch (error) {
-    console.error('Save platform WhatsApp config error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Save platform WhatsApp config error');
     return NextResponse.json(
       { error: 'Failed to save platform WhatsApp configuration' },
       { status: 500 }
@@ -139,7 +140,7 @@ export async function DELETE() {
       message: 'Platform WhatsApp configuration disabled',
     });
   } catch (error) {
-    console.error('Disable platform WhatsApp error:', error);
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Disable platform WhatsApp error');
     return NextResponse.json(
       { error: 'Failed to disable platform WhatsApp configuration' },
       { status: 500 }
