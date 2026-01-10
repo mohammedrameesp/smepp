@@ -62,6 +62,14 @@ export async function POST(request: NextRequest) {
 
     // Check if user exists
     if (!user) {
+      // AUDIT: Log failed login attempt (user not found)
+      logger.warn({
+        event: 'SUPER_ADMIN_LOGIN_FAILED',
+        reason: 'user_not_found',
+        attemptedEmail: normalizedEmail,
+        clientIp: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+      }, 'Super admin login failed: user not found');
+
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
@@ -70,6 +78,15 @@ export async function POST(request: NextRequest) {
 
     // Check if user is a super admin
     if (!user.isSuperAdmin) {
+      // AUDIT: Log non-super admin access attempt
+      logger.warn({
+        event: 'SUPER_ADMIN_LOGIN_FAILED',
+        reason: 'not_super_admin',
+        userId: user.id,
+        userEmail: user.email,
+        clientIp: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+      }, 'Super admin login failed: user is not a super admin');
+
       return NextResponse.json(
         { error: 'Access denied. Super admin privileges required.' },
         { status: 403 }
@@ -87,6 +104,15 @@ export async function POST(request: NextRequest) {
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
+      // AUDIT: Log failed login attempt (wrong password)
+      logger.warn({
+        event: 'SUPER_ADMIN_LOGIN_FAILED',
+        reason: 'invalid_password',
+        userId: user.id,
+        userEmail: user.email,
+        clientIp: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+      }, 'Super admin login failed: invalid password');
+
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
@@ -116,6 +142,14 @@ export async function POST(request: NextRequest) {
         { expiresIn: PENDING_2FA_TOKEN_EXPIRY }
       );
 
+      // AUDIT: Log that password was correct, awaiting 2FA
+      logger.info({
+        event: 'SUPER_ADMIN_LOGIN_PENDING_2FA',
+        userId: user.id,
+        userEmail: user.email,
+        clientIp: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+      }, 'Super admin login: password verified, awaiting 2FA');
+
       return NextResponse.json({
         requires2FA: true,
         pending2faToken,
@@ -133,6 +167,15 @@ export async function POST(request: NextRequest) {
       JWT_SECRET,
       { expiresIn: '1m' }
     );
+
+    // AUDIT: Log successful login (no 2FA)
+    logger.info({
+      event: 'SUPER_ADMIN_LOGIN_SUCCESS',
+      userId: user.id,
+      userEmail: user.email,
+      twoFactorUsed: false,
+      clientIp: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+    }, 'Super admin login successful (no 2FA)');
 
     return NextResponse.json({
       requires2FA: false,

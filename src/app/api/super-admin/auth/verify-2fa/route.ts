@@ -150,6 +150,15 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isValid) {
+      // AUDIT: Log failed 2FA attempt
+      logger.warn({
+        event: 'SUPER_ADMIN_2FA_FAILED',
+        userId: user.id,
+        userEmail: user.email,
+        method: isBackupCode ? 'backup_code' : 'totp',
+        clientIp: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+      }, 'Super admin 2FA verification failed');
+
       return NextResponse.json(
         { error: isBackupCode ? 'Invalid backup code' : 'Invalid verification code' },
         { status: 401 }
@@ -167,6 +176,16 @@ export async function POST(request: NextRequest) {
       JWT_SECRET,
       { expiresIn: '1m' }
     );
+
+    // AUDIT: Log successful 2FA verification and login
+    logger.info({
+      event: 'SUPER_ADMIN_LOGIN_SUCCESS',
+      userId: user.id,
+      userEmail: user.email,
+      twoFactorUsed: true,
+      twoFactorMethod: isBackupCode ? 'backup_code' : 'totp',
+      clientIp: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+    }, 'Super admin login successful (with 2FA)');
 
     return NextResponse.json({
       success: true,
