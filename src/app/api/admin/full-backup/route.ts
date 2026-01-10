@@ -79,6 +79,7 @@ export async function GET(_request: NextRequest) {
         where: { tenantId },
         include: {
           asset: { select: { assetTag: true, model: true } },
+          performedBy: { select: { name: true, email: true } },
         },
       }),
       prisma.subscription.findMany({
@@ -286,7 +287,7 @@ export async function GET(_request: NextRequest) {
         assetTag: record.asset.assetTag || '',
         maintenanceDate: formatDate(record.maintenanceDate),
         notes: record.notes || '',
-        performedBy: record.performedBy || '',
+        performedBy: record.performedBy?.name || '',
         createdAt: formatDate(record.createdAt),
         updatedAt: formatDate(record.updatedAt),
       });
