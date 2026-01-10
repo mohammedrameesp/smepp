@@ -44,36 +44,72 @@ export interface TenantContext {
 }
 
 // Models that have tenantId field and need tenant isolation
+// IMPORTANT: Keep this list in sync with prisma/schema.prisma
+// All models with a tenantId field MUST be listed here for proper tenant isolation
 const TENANT_MODELS = [
+  // Core business entities
   'Asset',
   'AssetCategory',
   'AssetHistory',
   'AssetRequest',
   'AssetTypeMapping',
   'Subscription',
-  'ActivityLog',
-  'Notification',
-  'ApprovalPolicy',
-  'ApprovalStep',
-  'ApproverDelegation',
-  'MaintenanceRecord',
-  'Supplier',
-  'SupplierEngagement',
-  'SystemSettings',
-  'HRProfile',
+  'Location',
+
+  // Team & HR
+  'TeamMember',
   'ProfileChangeRequest',
-  'PurchaseRequest',
+
+  // Leave management
   'LeaveType',
   'LeaveBalance',
   'LeaveRequest',
+
+  // Payroll
   'SalaryStructure',
   'PayrollRun',
   'Payslip',
   'EmployeeLoan',
-  'Project',
+
+  // Purchase requests
+  'PurchaseRequest',
+
+  // Suppliers
+  'Supplier',
+  'SupplierEngagement',
+
+  // Approvals & workflows
+  'ApprovalPolicy',
+  'ApprovalStep',
+  'ApproverDelegation',
+
+  // Maintenance
+  'MaintenanceRecord',
+
+  // Depreciation
+  'DepreciationCategory',
+  'DepreciationRecord',
+
+  // Company documents
   'CompanyDocumentType',
   'CompanyDocument',
-  'Location',
+
+  // System
+  'ActivityLog',
+  'Notification',
+  'SystemSettings',
+  'RolePermission',
+
+  // AI Chat
+  'ChatConversation',
+  'AIChatUsage',
+  'AIChatAuditLog',
+
+  // WhatsApp integration
+  'WhatsAppConfig',
+  'WhatsAppUserPhone',
+  'WhatsAppActionToken',
+  'WhatsAppMessageLog',
 ] as const;
 
 type TenantModel = (typeof TENANT_MODELS)[number];
