@@ -1,16 +1,26 @@
 /**
  * @file route.ts
- * @description Set user password (development utility endpoint)
+ * @description Set user password (super admin utility endpoint)
  * @module system/super-admin
+ *
+ * SECURITY: Requires super admin authentication
  */
 
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import bcrypt from 'bcryptjs';
 import logger from '@/lib/core/log';
 
 export async function POST(request: Request) {
   try {
+    // SECURITY: Require super admin authentication
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.isSuperAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { email, password } = await request.json();
 
     if (!email || !password) {
@@ -29,6 +39,15 @@ export async function POST(request: Request) {
       },
       select: { id: true, email: true, name: true },
     });
+
+    // AUDIT: Log super admin password reset action
+    logger.info({
+      event: 'SUPER_ADMIN_PASSWORD_RESET',
+      superAdminId: session.user.id,
+      superAdminEmail: session.user.email,
+      targetUserId: user.id,
+      targetUserEmail: user.email,
+    }, `Super admin ${session.user.email} reset password for ${user.email}`);
 
     return NextResponse.json({
       success: true,

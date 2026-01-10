@@ -2,6 +2,9 @@
  * @file route.ts
  * @description Platform statistics for super admin dashboard and login page
  * @module system/super-admin
+ *
+ * NOTE: This endpoint is intentionally unauthenticated to allow display on the
+ * super admin login page. Only aggregate counts are exposed (no PII).
  */
 
 import { NextResponse } from 'next/server';
