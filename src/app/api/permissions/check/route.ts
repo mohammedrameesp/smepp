@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/core/auth';
-import { prisma } from '@/lib/core/prisma';
+import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { hasPermission, hasPermissions, isValidPermission } from '@/lib/access-control';
 import { OrgRole } from '@prisma/client';
 import logger from '@/lib/core/log';
@@ -19,14 +17,8 @@ import logger from '@/lib/core/log';
  * - Single permission: { allowed: boolean }
  * - Multiple permissions: { permissions: { [key]: boolean } }
  */
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-    }
-
+export const GET = withErrorHandler(
+  async (request: NextRequest, { prisma, tenant }: APIContext) => {
     const { searchParams } = new URL(request.url);
     const singlePermission = searchParams.get('permission');
     const multiplePermissions = searchParams.get('permissions');
@@ -38,34 +30,23 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const orgId = session.user.organizationId;
-    const orgRole = session.user.orgRole as OrgRole;
+    const orgId = tenant!.tenantId;
+    const orgRole = tenant!.orgRole as OrgRole;
 
-    if (!orgId || !orgRole) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
-    }
-
-    // SECURITY: Validate user membership in the organization (defense-in-depth)
-    // This prevents potential session manipulation attacks
-    const membership = await prisma.teamMember.findFirst({
-      where: {
-        tenantId: orgId,
-        id: session.user.id,
-        isDeleted: false,
-      },
-      include: {
-        tenant: {
-          select: { enabledModules: true },
-        },
-      },
+    // Get enabled modules for the organization (using tenant-scoped prisma)
+    const org = await prisma.systemSettings.findFirst({
+      where: { tenantId: orgId },
+      select: { tenantId: true },
     });
 
-    if (!membership) {
-      logger.debug({ orgId }, 'Permission check failed - user not a member of organization');
-      return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
-    }
+    // Get enabled modules from organization
+    const { prisma: rawPrisma } = await import('@/lib/core/prisma');
+    const organization = await rawPrisma.organization.findUnique({
+      where: { id: orgId },
+      select: { enabledModules: true },
+    });
 
-    const enabledModules = membership.tenant.enabledModules || [];
+    const enabledModules = organization?.enabledModules || [];
 
     // Single permission check
     if (singlePermission) {
@@ -97,8 +78,6 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
-  } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error' }, 'Permission check error');
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
+  },
+  { requireAuth: true }
+);

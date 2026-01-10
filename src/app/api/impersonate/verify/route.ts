@@ -1,3 +1,17 @@
+/**
+ * @file route.ts
+ * @description Impersonation token verification endpoint
+ * @module impersonation
+ *
+ * NOTE: This endpoint intentionally uses raw prisma (not tenant-scoped) because:
+ * 1. It's a cross-tenant super admin operation
+ * 2. JWT token is cryptographically verified with NEXTAUTH_SECRET
+ * 3. Super admin status is re-validated before granting access
+ * 4. Organization existence is verified globally
+ *
+ * SECURITY: Token must be signed by NEXTAUTH_SECRET and contain valid super admin ID
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/core/prisma';
