@@ -19,9 +19,14 @@ jest.mock('@/lib/core/prisma', () => ({
   prisma: {
     revokedImpersonationToken: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
       upsert: jest.fn(),
       deleteMany: jest.fn(),
       findMany: jest.fn(),
+    },
+    user: {
+      update: jest.fn(),
     },
   },
 }));
@@ -175,6 +180,40 @@ describe('Impersonation Security Tests', () => {
   });
 
   describe('revokeAllTokensForSuperAdmin', () => {
+    beforeEach(() => {
+      (mockPrisma.revokedImpersonationToken.create as jest.Mock).mockResolvedValue({});
+      (mockPrisma.user.update as jest.Mock).mockResolvedValue({});
+    });
+
+    it('should create bulk revocation entry', async () => {
+      await revokeAllTokensForSuperAdmin(
+        'super-admin-123',
+        'system',
+        'Security breach',
+        'org-123'
+      );
+
+      expect(mockPrisma.revokedImpersonationToken.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          jti: expect.stringMatching(/^bulk_revoke_super-admin-123_/),
+          revokedBy: 'system',
+          reason: 'Security breach',
+          superAdminId: 'super-admin-123',
+          organizationId: 'org-123',
+          organizationSlug: 'BULK_REVOKE',
+        }),
+      });
+    });
+
+    it('should update user passwordChangedAt for defense-in-depth', async () => {
+      await revokeAllTokensForSuperAdmin('super-admin-123', 'system');
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'super-admin-123' },
+        data: { passwordChangedAt: expect.any(Date) },
+      });
+    });
+
     it('should log audit action when organizationId is provided', async () => {
       await revokeAllTokensForSuperAdmin(
         'super-admin-123',
@@ -194,7 +233,6 @@ describe('Impersonation Security Tests', () => {
           revokedBy: 'system',
           reason: 'Security breach',
           action: 'REVOKE_ALL_TOKENS',
-          timestamp: expect.any(String),
         })
       );
     });
@@ -205,10 +243,10 @@ describe('Impersonation Security Tests', () => {
       expect(logAction).not.toHaveBeenCalled();
     });
 
-    it('should return 0 (placeholder for future implementation)', async () => {
+    it('should return 1 (bulk revocation created)', async () => {
       const result = await revokeAllTokensForSuperAdmin('super-admin-123', 'system');
 
-      expect(result).toBe(0);
+      expect(result).toBe(1);
     });
   });
 

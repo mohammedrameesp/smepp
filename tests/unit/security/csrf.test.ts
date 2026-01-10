@@ -122,18 +122,13 @@ describe('CSRF Protection Tests', () => {
       expect(expectedOptions.path).toBe('/');
     });
 
-    it('should set secure flag in production', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true });
-      const secure = process.env.NODE_ENV === 'production';
+    it('should set secure flag based on NODE_ENV', () => {
+      // Test the logic that would be used in the actual implementation
+      const getSecureFlag = (nodeEnv: string) => nodeEnv === 'production';
 
-      expect(secure).toBe(true);
-    });
-
-    it('should not set secure flag in development', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
-      const secure = process.env.NODE_ENV === 'production';
-
-      expect(secure).toBe(false);
+      expect(getSecureFlag('production')).toBe(true);
+      expect(getSecureFlag('development')).toBe(false);
+      expect(getSecureFlag('test')).toBe(false);
     });
   });
 

@@ -24,7 +24,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { OrgRole } from '@prisma/client';
 
 // Mock all dependencies before importing the handler
-jest.mock('next-auth/next', () => ({
+jest.mock('next-auth', () => ({
   getServerSession: jest.fn(),
 }));
 
@@ -91,7 +91,22 @@ jest.mock('@/lib/access-control', () => ({
   hasPermission: jest.fn().mockResolvedValue(true),
 }));
 
-import { getServerSession } from 'next-auth/next';
+jest.mock('@/lib/security/impersonation', () => ({
+  isTokenRevoked: jest.fn().mockResolvedValue(false),
+}));
+
+jest.mock('@/lib/core/activity', () => ({
+  logAction: jest.fn(),
+  ActivityActions: {
+    SECURITY_IMPERSONATION_BLOCKED: 'SECURITY_IMPERSONATION_BLOCKED',
+  },
+}));
+
+jest.mock('@/lib/constants/limits', () => ({
+  MAX_BODY_SIZE_BYTES: 1048576,
+}));
+
+import { getServerSession } from 'next-auth';
 import { checkRateLimit } from '@/lib/security/rateLimit';
 import { getTenantContextFromHeaders, createTenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { hasModuleAccess } from '@/lib/modules/access';
@@ -189,7 +204,7 @@ describe('API Handler Wrapper', () => {
     it('should reject non-admin users when admin required', async () => {
       const handler = jest.fn();
       mockGetServerSession.mockResolvedValue({
-        user: { id: 'user-1', role: 'USER' },
+        user: { id: 'user-1', teamMemberRole: 'MEMBER' },
       });
 
       const wrappedHandler = withErrorHandler(handler, { requireAdmin: true });
@@ -204,7 +219,7 @@ describe('API Handler Wrapper', () => {
         NextResponse.json({ success: true })
       );
       mockGetServerSession.mockResolvedValue({
-        user: { id: 'user-1', role: 'ADMIN', organizationId: 'org-1' },
+        user: { id: 'user-1', teamMemberRole: 'ADMIN', organizationId: 'org-1' },
       });
 
       const wrappedHandler = withErrorHandler(handler, { requireAdmin: true });

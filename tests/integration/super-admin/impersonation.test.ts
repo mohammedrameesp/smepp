@@ -298,17 +298,17 @@ describe('Super Admin Impersonation API', () => {
     });
 
     it('should use HTTPS in production', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', writable: true });
+      // Test the protocol selection logic directly
+      const getProtocol = (nodeEnv: string) => nodeEnv === 'production' ? 'https' : 'http';
 
-      const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-      expect(protocol).toBe('https');
+      expect(getProtocol('production')).toBe('https');
     });
 
     it('should use HTTP in development', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', { value: 'development', writable: true });
+      // Test the protocol selection logic directly
+      const getProtocol = (nodeEnv: string) => nodeEnv === 'production' ? 'https' : 'http';
 
-      const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-      expect(protocol).toBe('http');
+      expect(getProtocol('development')).toBe('http');
     });
   });
 

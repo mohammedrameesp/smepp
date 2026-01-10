@@ -251,12 +251,15 @@ describe('OAuth Utilities', () => {
       expect(result.error).toBe('AccountDeactivated');
     });
 
-    it('should block users who cannot login', async () => {
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
-        id: 'user-123',
+    it('should block team members who cannot login', async () => {
+      // canLogin check is on TeamMember, not User
+      (mockPrisma.teamMember.findFirst as jest.Mock).mockResolvedValue({
+        id: 'member-123',
         isDeleted: false,
         canLogin: false,
-        isSuperAdmin: false,
+        tenant: {
+          allowedAuthMethods: [],
+        },
       });
 
       const result = await validateOAuthSecurity('driver@example.com', 'org-123', 'google');
@@ -516,9 +519,11 @@ describe('OAuth Utilities', () => {
         null
       );
 
-      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
-        where: { email: 'test@example.com' },
-      });
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { email: 'test@example.com' },
+        })
+      );
     });
   });
 
@@ -527,25 +532,21 @@ describe('OAuth Utilities', () => {
   // ═══════════════════════════════════════════════════════════════════════════════
 
   describe('createSessionToken', () => {
-    it('should create JWT token for user with organization', async () => {
+    it('should create JWT token for super admin with organization', async () => {
+      // createSessionToken is now for super admins only - it queries user and org separately
       (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: 'user-123',
         email: 'user@example.com',
         name: 'Test User',
         image: 'https://example.com/avatar.jpg',
-        organizationMemberships: [
-          {
-            organizationId: 'org-123',
-            role: 'ADMIN',
-            isOwner: false,
-            organization: {
-              id: 'org-123',
-              slug: 'acme',
-              subscriptionTier: 'PROFESSIONAL',
-              enabledModules: ['assets', 'employees'],
-            },
-          },
-        ],
+        role: 'USER',
+        isSuperAdmin: true,
+      });
+      (mockPrisma.organization.findUnique as jest.Mock).mockResolvedValue({
+        id: 'org-123',
+        slug: 'acme',
+        subscriptionTier: 'PROFESSIONAL',
+        enabledModules: ['assets', 'employees'],
       });
 
       const token = await createSessionToken('user-123', 'org-123');
@@ -557,7 +558,6 @@ describe('OAuth Utilities', () => {
           name: 'Test User',
           organizationId: 'org-123',
           organizationSlug: 'acme',
-          orgRole: 'ADMIN',
           subscriptionTier: 'PROFESSIONAL',
         }),
         secret: process.env.NEXTAUTH_SECRET,
@@ -566,46 +566,36 @@ describe('OAuth Utilities', () => {
       expect(token).toBe('mock-jwt-token');
     });
 
-    it('should use first organization if specified org not found', async () => {
+    it('should not include org data if org not found', async () => {
       (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: 'user-123',
         email: 'user@example.com',
         name: 'Test User',
         image: null,
-        organizationMemberships: [
-          {
-            organizationId: 'org-456',
-            role: 'MEMBER',
-            isOwner: false,
-            organization: {
-              id: 'org-456',
-              slug: 'other-org',
-              subscriptionTier: 'FREE',
-              enabledModules: [],
-            },
-          },
-        ],
+        role: 'USER',
+        isSuperAdmin: true,
       });
+      (mockPrisma.organization.findUnique as jest.Mock).mockResolvedValue(null);
 
       await createSessionToken('user-123', 'org-999'); // Non-existent org
 
       expect(encode).toHaveBeenCalledWith({
-        token: expect.objectContaining({
-          organizationId: 'org-456', // Falls back to first membership
-          organizationSlug: 'other-org',
+        token: expect.not.objectContaining({
+          organizationId: expect.anything(),
         }),
         secret: expect.any(String),
         maxAge: expect.any(Number),
       });
     });
 
-    it('should create token without org data for user with no memberships', async () => {
+    it('should create token without org data when orgId is null', async () => {
       (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({
         id: 'user-123',
         email: 'user@example.com',
         name: 'Test User',
         image: null,
-        organizationMemberships: [],
+        role: 'USER',
+        isSuperAdmin: true,
       });
 
       await createSessionToken('user-123', null);
@@ -617,6 +607,8 @@ describe('OAuth Utilities', () => {
         secret: expect.any(String),
         maxAge: expect.any(Number),
       });
+      // Org query should not be made when orgId is null
+      expect(mockPrisma.organization.findUnique).not.toHaveBeenCalled();
     });
 
     it('should throw error for non-existent user', async () => {

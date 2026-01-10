@@ -28,10 +28,12 @@ describe('Supplier Validation Schemas', () => {
         primaryContactTitle: 'Sales Manager',
         primaryContactEmail: 'ahmed@techsolutions.com',
         primaryContactMobile: '+97412345678',
+        primaryContactMobileCode: '+974',
         secondaryContactName: 'Sara Khan',
         secondaryContactTitle: 'Account Executive',
         secondaryContactEmail: 'sara@techsolutions.com',
         secondaryContactMobile: '+97487654321',
+        secondaryContactMobileCode: '+974',
         paymentTerms: 'Net 30',
         additionalInfo: 'Preferred vendor for IT equipment',
       };
@@ -44,6 +46,8 @@ describe('Supplier Validation Schemas', () => {
       const minimalSupplier = {
         name: 'Simple Supplier',
         category: 'General',
+        primaryContactName: 'John Doe',
+        primaryContactEmail: 'john@example.com',
       };
 
       const result = createSupplierSchema.safeParse(minimalSupplier);
@@ -108,6 +112,8 @@ describe('Supplier Validation Schemas', () => {
         const result = createSupplierSchema.safeParse({
           name: 'Test Supplier',
           category: 'General',
+          primaryContactName: 'John Doe',
+          primaryContactEmail: 'john@example.com',
           website,
         });
         expect(result.success).toBe(true);
@@ -134,8 +140,8 @@ describe('Supplier Validation Schemas', () => {
 
     it('should accept empty/null website', () => {
       const suppliers = [
-        { name: 'Test', category: 'General', website: '' },
-        { name: 'Test', category: 'General', website: null },
+        { name: 'Test', category: 'General', primaryContactName: 'John Doe', primaryContactEmail: 'john@example.com', website: '' },
+        { name: 'Test', category: 'General', primaryContactName: 'John Doe', primaryContactEmail: 'john@example.com', website: null },
       ];
 
       suppliers.forEach(supplier => {
@@ -151,6 +157,8 @@ describe('Supplier Validation Schemas', () => {
         const result = createSupplierSchema.safeParse({
           name: 'Test',
           category: 'General',
+          primaryContactName: 'John Doe',
+          primaryContactEmail: 'john@example.com',
           establishmentYear: year,
         });
         expect(result.success).toBe(true);
@@ -162,6 +170,8 @@ describe('Supplier Validation Schemas', () => {
         const result = createSupplierSchema.safeParse({
           name: 'Test',
           category: 'General',
+          primaryContactName: 'John Doe',
+          primaryContactEmail: 'john@example.com',
           establishmentYear: year,
         });
         expect(result.success).toBe(false);
@@ -179,6 +189,7 @@ describe('Supplier Validation Schemas', () => {
         const result = createSupplierSchema.safeParse({
           name: 'Test',
           category: 'General',
+          primaryContactName: 'John Doe',
           primaryContactEmail: email,
         });
         expect(result.success).toBe(true);
@@ -211,11 +222,12 @@ describe('Supplier Validation Schemas', () => {
       const supplier = {
         name: 'Test Supplier',
         category: 'General',
+        primaryContactName: 'John Doe',
+        primaryContactEmail: 'john@example.com',
+        // Optional fields can be null/empty
         address: null,
         city: '',
         country: null,
-        primaryContactName: '',
-        primaryContactEmail: null,
         additionalInfo: '',
       };
 
