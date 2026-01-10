@@ -1477,8 +1477,7 @@ async function main() {
         tenantId,
         assetId: `${tenantId}-asset-high-util`,
         maintenanceDate: monthsAgo(6),
-        notes: 'Annual checkup - battery health 95%, all tests passed',
-        performedBy: 'Apple Service Center',
+        notes: 'Annual checkup by Apple Service Center - battery health 95%, all tests passed',
       },
     }),
     () => prisma.maintenanceRecord.create({
@@ -1486,8 +1485,8 @@ async function main() {
         tenantId,
         assetId: `${tenantId}-asset-high-util`,
         maintenanceDate: daysAgo(30),
-        notes: 'Software update and security patches applied',
-        performedBy: 'IT Team',
+        notes: 'Software update and security patches applied by IT Team',
+        performedById: admin.id,
       },
     }),
     () => prisma.maintenanceRecord.create({
@@ -1495,8 +1494,7 @@ async function main() {
         tenantId,
         assetId: `${tenantId}-asset-repair`,
         maintenanceDate: daysAgo(5),
-        notes: 'Screen damage assessment - replacement needed. Parts ordered.',
-        performedBy: 'Apple Service Center',
+        notes: 'Screen damage assessment by Apple Service Center - replacement needed. Parts ordered.',
       },
     }),
     () => prisma.maintenanceRecord.create({
@@ -1504,8 +1502,7 @@ async function main() {
         tenantId,
         assetId: `${tenantId}-asset-vehicle`,
         maintenanceDate: monthsAgo(3),
-        notes: '10,000 km service: oil change, filter replacement, tire rotation',
-        performedBy: 'Toyota Service Center',
+        notes: '10,000 km service at Toyota Service Center: oil change, filter replacement, tire rotation',
       },
     }),
     () => prisma.maintenanceRecord.create({
@@ -1513,8 +1510,7 @@ async function main() {
         tenantId,
         assetId: `${tenantId}-asset-vehicle`,
         maintenanceDate: monthsAgo(9),
-        notes: '5,000 km service: oil change, inspection',
-        performedBy: 'Toyota Service Center',
+        notes: '5,000 km service at Toyota Service Center: oil change, inspection',
       },
     }),
     () => prisma.maintenanceRecord.create({
@@ -1522,8 +1518,7 @@ async function main() {
         tenantId,
         assetId: `${tenantId}-asset-shared`,
         maintenanceDate: monthsAgo(1),
-        notes: 'Toner replacement, cleaning, and calibration',
-        performedBy: 'HP Support',
+        notes: 'Toner replacement, cleaning, and calibration by HP Support',
       },
     }),
     () => prisma.maintenanceRecord.create({
@@ -1531,8 +1526,7 @@ async function main() {
         tenantId,
         assetId: `${tenantId}-asset-custom-life`,
         maintenanceDate: monthsAgo(6),
-        notes: 'Firmware update, RAID health check, fan cleaning',
-        performedBy: 'Dell ProSupport',
+        notes: 'Firmware update, RAID health check, fan cleaning by Dell ProSupport',
       },
     }),
   ]);
