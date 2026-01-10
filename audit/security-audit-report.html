@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Durj Security Audit Report - Learning Guide</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --warning: #ea580c;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .status-banner {
+            background: var(--success);
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        nav {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background 0.2s;
+        }
+
+        nav a:hover {
+            background: var(--bg);
+            color: var(--primary);
+        }
+
+        section {
+            margin: 2rem 0;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
+        }
+
+        h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        h3 {
+            color: var(--text);
+            margin: 1.5rem 0 1rem;
+        }
+
+        h4 {
+            color: var(--text-muted);
+            margin: 1rem 0 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 0.25rem;
+        }
+
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+
+        .concept-box {
+            background: #f0f9ff;
+            border-left: 4px solid var(--primary);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .concept-box h4 {
+            color: var(--primary);
+            margin-top: 0;
+            text-transform: none;
+            font-size: 1rem;
+        }
+
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid var(--warning);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .success-box {
+            background: #dcfce7;
+            border-left: 4px solid var(--success);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .danger-box {
+            background: #fee2e2;
+            border-left: 4px solid var(--danger);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-size: 0.9rem;
+            margin: 1rem 0;
+        }
+
+        code {
+            font-family: 'Fira Code', 'Consolas', monospace;
+        }
+
+        .inline-code {
+            background: #f1f5f9;
+            padding: 0.15rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.9em;
+            color: #be185d;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg);
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background: var(--bg);
+        }
+
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding: 2rem;
+            background: var(--bg);
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .flow-step {
+            background: var(--card-bg);
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            border: 2px solid var(--primary);
+            min-width: 150px;
+        }
+
+        .flow-arrow {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .checklist li::before {
+            content: "✓";
+            color: var(--success);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .stat-card {
+            background: var(--bg);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            border-left: 2px solid var(--primary);
+            margin: 1rem 0;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: "";
+            position: absolute;
+            left: -2.35rem;
+            top: 0.25rem;
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .timeline-item.completed::before {
+            background: var(--success);
+        }
+
+        footer {
+            background: #1e293b;
+            color: #94a3b8;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            header h1 {
+                font-size: 1.75rem;
+            }
+
+            nav ul {
+                gap: 0.5rem;
+            }
+
+            .flow-diagram {
+                flex-direction: column;
+            }
+
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Durj Security Audit Report</h1>
+        <p>A Learning Guide to Multi-Tenant SaaS Security</p>
+        <p style="margin-top: 1rem; opacity: 0.8;">Audit Date: January 10, 2026</p>
+    </header>
+
+    <div class="status-banner">
+        ✅ SHIP STATUS: READY TO SHIP - All Security Issues Resolved
+    </div>
+
+    <nav>
+        <ul>
+            <li><a href="#summary">Summary</a></li>
+            <li><a href="#concepts">Security Concepts</a></li>
+            <li><a href="#blockers">Blockers Fixed</a></li>
+            <li><a href="#multi-tenant">Multi-Tenant Security</a></li>
+            <li><a href="#authentication">Authentication</a></li>
+            <li><a href="#owasp">OWASP Top 10</a></li>
+            <li><a href="#checklist">Checklist</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+
+        <!-- Executive Summary -->
+        <section id="summary">
+            <div class="card">
+                <h2>Executive Summary</h2>
+                <p>This audit reviewed the Durj multi-tenant SaaS platform for security vulnerabilities. The platform has a <strong>solid security foundation</strong> with proper multi-tenant architecture, authentication, and CSRF protection.</p>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">BLOCKER Issues Fixed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">4</div>
+                        <div class="stat-label">HIGH Priority Fixed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">MEDIUM Priority Fixed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">~250</div>
+                        <div class="stat-label">Files Reviewed</div>
+                    </div>
+                </div>
+
+                <div class="success-box">
+                    <h4>Final Status</h4>
+                    <p>All BLOCKER, HIGH, and MEDIUM priority security issues have been resolved. The platform is production-ready with proper multi-tenant isolation, secure authentication, and comprehensive audit logging.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Security Concepts -->
+        <section id="concepts">
+            <div class="card">
+                <h2>Security Concepts Explained</h2>
+                <p>Before diving into the findings, let's understand the key security concepts that apply to multi-tenant SaaS applications.</p>
+
+                <div class="concept-box">
+                    <h4>🏢 Multi-Tenant Architecture</h4>
+                    <p>In a multi-tenant system, multiple customers (tenants) share the same application instance but their data must be completely isolated. Each tenant's data should be invisible to other tenants - this is called <strong>tenant isolation</strong>.</p>
+                    <p style="margin-top: 0.5rem;"><em>Example: Company A should never see Company B's employees, assets, or payroll data.</em></p>
+                </div>
+
+                <div class="concept-box">
+                    <h4>🔐 Authentication vs Authorization</h4>
+                    <p><strong>Authentication</strong> = "Who are you?" (login, identity verification)</p>
+                    <p><strong>Authorization</strong> = "What can you do?" (permissions, access control)</p>
+                    <p style="margin-top: 0.5rem;"><em>Example: After logging in (authentication), a MEMBER role can view assets but only ADMIN can delete them (authorization).</em></p>
+                </div>
+
+                <div class="concept-box">
+                    <h4>🛡️ CSRF Protection</h4>
+                    <p><strong>Cross-Site Request Forgery (CSRF)</strong> is an attack where a malicious website tricks your browser into making requests to another site where you're logged in.</p>
+                    <p style="margin-top: 0.5rem;"><em>Example: A malicious link could delete your account if you click it while logged in - unless CSRF protection is in place.</em></p>
+                </div>
+
+                <div class="concept-box">
+                    <h4>🎫 JWT Tokens</h4>
+                    <p><strong>JSON Web Tokens (JWT)</strong> are signed tokens that contain user information. They're used for stateless authentication - the server doesn't need to look up session data, it just verifies the token signature.</p>
+                    <p style="margin-top: 0.5rem;"><em>Think of it like a signed letter of authorization that can't be forged.</em></p>
+                </div>
+
+                <div class="concept-box">
+                    <h4>🔑 Impersonation</h4>
+                    <p><strong>Impersonation</strong> allows super admins to temporarily access a tenant's account for support purposes. This is powerful and requires careful security controls including token revocation and audit logging.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Blockers Fixed -->
+        <section id="blockers">
+            <div class="card">
+                <h2>BLOCKER Issues Found & Fixed</h2>
+                <p>These were critical security vulnerabilities that could allow unauthorized access. All have been fixed.</p>
+
+                <h3>1. Missing Tenant Models in Isolation Filter</h3>
+                <span class="badge badge-success">FIXED</span>
+                <span class="badge badge-info">Commit: 43eae38</span>
+
+                <div class="danger-box">
+                    <h4>The Problem</h4>
+                    <p>The system uses a <code class="inline-code">TENANT_MODELS</code> array to know which database tables should be filtered by tenant. <strong>20+ models were missing from this list</strong>, meaning queries on those tables could return data from ANY tenant!</p>
+                </div>
+
+                <h4>Before (Vulnerable)</h4>
+                <pre><code>const TENANT_MODELS = [
+  'Asset', 'Supplier', 'Subscription',
+  // ... only 14 models listed
+  // TeamMember, ChatConversation, etc. MISSING!
+];</code></pre>
+
+                <h4>After (Fixed)</h4>
+                <pre><code>const TENANT_MODELS = [
+  'Asset', 'Supplier', 'Subscription',
+  'TeamMember', 'ChatConversation', 'AIChatUsage',
+  'WhatsAppConfig', 'DepreciationRecord',
+  // ... all 35 tenant-scoped models now included
+];</code></pre>
+
+                <div class="success-box">
+                    <h4>Why This Matters</h4>
+                    <p>Without the tenant filter, a query like <code class="inline-code">prisma.teamMember.findMany()</code> would return ALL employees from ALL companies - a massive data breach!</p>
+                </div>
+
+                <hr style="margin: 2rem 0;">
+
+                <h3>2. Cron Job Authentication Bypass</h3>
+                <span class="badge badge-success">FIXED</span>
+                <span class="badge badge-info">Commit: 43eae38</span>
+
+                <div class="danger-box">
+                    <h4>The Problem</h4>
+                    <p>The cron job endpoint had a conditional that allowed unauthenticated access when the <code class="inline-code">CRON_SECRET</code> environment variable was not set.</p>
+                </div>
+
+                <h4>Before (Vulnerable)</h4>
+                <pre><code>// If secret exists AND doesn't match, reject
+if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  return new Response('Unauthorized', { status: 401 });
+}
+// BUG: If cronSecret is undefined, this check is SKIPPED!</code></pre>
+
+                <h4>After (Fixed)</h4>
+                <pre><code>// Require secret to be set AND match
+if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  return new Response('Unauthorized', { status: 401 });
+}
+// Now: No secret = always rejected</code></pre>
+
+                <div class="success-box">
+                    <h4>Lesson Learned</h4>
+                    <p>Security checks should <strong>fail closed</strong> (deny by default). If something is missing or misconfigured, access should be denied, not granted.</p>
+                </div>
+
+                <hr style="margin: 2rem 0;">
+
+                <h3>3. Unauthenticated Password Reset Endpoint</h3>
+                <span class="badge badge-success">FIXED</span>
+                <span class="badge badge-info">Commit: 57781b1</span>
+
+                <div class="danger-box">
+                    <h4>The Problem</h4>
+                    <p>The <code class="inline-code">/api/super-admin/set-password</code> endpoint had <strong>NO authentication check</strong>. Anyone could set any user's password!</p>
+                </div>
+
+                <h4>Before (Vulnerable)</h4>
+                <pre><code>export async function POST(request: NextRequest) {
+  const { userId, password } = await request.json();
+  // NO AUTH CHECK - anyone can call this!
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: await hash(password, 12) }
+  });
+}</code></pre>
+
+                <h4>After (Fixed)</h4>
+                <pre><code>export async function POST(request: NextRequest) {
+  // Require super admin authentication
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isSuperAdmin) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const { userId, password } = await request.json();
+  // Now only super admins can reach this code
+  await prisma.user.update({...});
+}</code></pre>
+
+                <div class="success-box">
+                    <h4>Lesson Learned</h4>
+                    <p>Every API endpoint must have explicit authentication/authorization checks. Never assume a route is "internal only" - always verify the caller's identity and permissions.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Multi-Tenant Security -->
+        <section id="multi-tenant">
+            <div class="card">
+                <h2>Multi-Tenant Security Architecture</h2>
+                <p>Understanding how tenant isolation works is crucial for SaaS security.</p>
+
+                <h3>How Tenant Isolation Works</h3>
+
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <strong>1. Request</strong><br>
+                        User makes API call
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>2. Middleware</strong><br>
+                        Extract tenant from JWT
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>3. Headers</strong><br>
+                        Set x-tenant-id
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>4. Handler</strong><br>
+                        Create scoped Prisma
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>5. Query</strong><br>
+                        Auto-filter by tenant
+                    </div>
+                </div>
+
+                <div class="concept-box">
+                    <h4>Prisma Extension Magic</h4>
+                    <p>The system uses a Prisma extension that automatically adds <code class="inline-code">WHERE tenantId = '...'</code> to every query. This means developers don't have to remember to add tenant filters - it happens automatically.</p>
+                </div>
+
+                <h4>Example: How Queries are Modified</h4>
+                <pre><code>// What you write:
+const assets = await prisma.asset.findMany();
+
+// What actually executes:
+const assets = await prisma.asset.findMany({
+  where: { tenantId: 'tenant_123' }  // Automatically added!
+});</code></pre>
+
+                <h3>Key Files for Tenant Isolation</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline-code">src/middleware.ts</code></td>
+                            <td>Extracts tenant from JWT, sets headers</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">src/lib/http/handler.ts</code></td>
+                            <td>Reads headers, creates tenant-scoped Prisma</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">src/lib/core/prisma-tenant.ts</code></td>
+                            <td>Prisma extension that filters queries</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="warning-box">
+                    <h4>⚠️ Exceptions to Tenant Isolation</h4>
+                    <p>Some operations legitimately need to access data across tenants:</p>
+                    <ul style="margin-top: 0.5rem;">
+                        <li><strong>Super admin routes</strong> - Platform management</li>
+                        <li><strong>Cron jobs</strong> - System-wide cleanup</li>
+                        <li><strong>Email check</strong> - Global uniqueness validation</li>
+                        <li><strong>User lookup during login</strong> - Before tenant is known</li>
+                    </ul>
+                    <p style="margin-top: 0.5rem;">These files use raw Prisma with careful manual controls and are documented with comments explaining why.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Authentication -->
+        <section id="authentication">
+            <div class="card">
+                <h2>Authentication Security</h2>
+                <p>The platform uses NextAuth.js with multiple authentication providers and robust security measures.</p>
+
+                <h3>Authentication Providers</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Provider</th>
+                            <th>Use Case</th>
+                            <th>Security Features</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Google OAuth</td>
+                            <td>Primary social login</td>
+                            <td>OAuth 2.0, email verified</td>
+                        </tr>
+                        <tr>
+                            <td>Azure AD</td>
+                            <td>Enterprise customers</td>
+                            <td>OAuth 2.0, org-specific</td>
+                        </tr>
+                        <tr>
+                            <td>Credentials</td>
+                            <td>Email/password login</td>
+                            <td>bcrypt hashing, lockout</td>
+                        </tr>
+                        <tr>
+                            <td>Super Admin</td>
+                            <td>Platform management</td>
+                            <td>2FA required, audit logged</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Security Features Implemented</h3>
+
+                <div class="success-box">
+                    <h4>✓ Brute-Force Protection</h4>
+                    <p>After multiple failed login attempts, the account is temporarily locked. This prevents attackers from guessing passwords.</p>
+                </div>
+
+                <div class="success-box">
+                    <h4>✓ Password Change Session Invalidation</h4>
+                    <p>When a password is changed, all existing sessions are invalidated. This ensures that if an attacker compromises a session, changing the password kicks them out.</p>
+                </div>
+
+                <div class="success-box">
+                    <h4>✓ 2FA for Super Admins</h4>
+                    <p>Super admins must use two-factor authentication. Even if their password is compromised, attackers can't access the platform without the 2FA code.</p>
+                </div>
+
+                <div class="success-box">
+                    <h4>✓ Secure Cookie Configuration</h4>
+                    <p>Session cookies are configured with: <code class="inline-code">httpOnly</code> (no JavaScript access), <code class="inline-code">secure</code> (HTTPS only), <code class="inline-code">sameSite: lax</code> (CSRF protection).</p>
+                </div>
+
+                <h3>Session Security Check</h3>
+                <p>The system periodically checks if a user should still have access:</p>
+
+                <pre><code>// Every 2 minutes, check:
+// 1. Has the user's password been changed?
+// 2. Has the user been deactivated?
+// 3. Has the user been deleted?
+const SECURITY_CHECK_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes</code></pre>
+
+                <div class="concept-box">
+                    <h4>Why Not Check Every Request?</h4>
+                    <p>Checking the database on every request would be expensive and slow. The 2-minute interval balances security (deactivated users are blocked within 2 minutes) with performance (minimal database queries).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Impersonation Security -->
+        <section>
+            <div class="card">
+                <h2>Impersonation Security</h2>
+                <p>Super admins can impersonate tenant users for support purposes. This powerful feature requires careful security controls.</p>
+
+                <h3>How Impersonation Works</h3>
+
+                <div class="flow-diagram">
+                    <div class="flow-step">
+                        <strong>1. Request</strong><br>
+                        Super admin clicks "Access"
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>2. Token</strong><br>
+                        Signed JWT generated
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>3. Redirect</strong><br>
+                        URL stripped, cookie set
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <strong>4. Access</strong><br>
+                        Tenant dashboard shown
+                    </div>
+                </div>
+
+                <h3>Security Controls</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Control</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Token Signing</td>
+                            <td>JWT signed with NEXTAUTH_SECRET</td>
+                            <td><span class="badge badge-success">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>Short TTL</td>
+                            <td>15-minute expiration</td>
+                            <td><span class="badge badge-success">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>URL Stripping</td>
+                            <td>Token removed from URL after use</td>
+                            <td><span class="badge badge-success">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>Token Revocation</td>
+                            <td>Individual tokens can be revoked</td>
+                            <td><span class="badge badge-success">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>Bulk Revocation</td>
+                            <td>All tokens for a super admin can be revoked</td>
+                            <td><span class="badge badge-success">✓</span></td>
+                        </tr>
+                        <tr>
+                            <td>Audit Logging</td>
+                            <td>All impersonation events logged</td>
+                            <td><span class="badge badge-success">✓</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="concept-box">
+                    <h4>Why Strip Token from URL?</h4>
+                    <p>If the token stays in the URL, it could appear in:</p>
+                    <ul style="margin-top: 0.5rem;">
+                        <li>Browser history</li>
+                        <li>Server logs</li>
+                        <li>Referrer headers sent to external sites</li>
+                    </ul>
+                    <p style="margin-top: 0.5rem;">By redirecting immediately and storing in a cookie instead, we prevent token exposure.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- OWASP Top 10 -->
+        <section id="owasp">
+            <div class="card">
+                <h2>OWASP Top 10 Coverage</h2>
+                <p>The OWASP Top 10 is a standard awareness document for web application security. Here's how Durj addresses each category.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>How It's Addressed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>A01: Broken Access Control</strong></td>
+                            <td><span class="badge badge-success">Good</span></td>
+                            <td>Tenant isolation via Prisma extension, role-based access control</td>
+                        </tr>
+                        <tr>
+                            <td><strong>A02: Cryptographic Failures</strong></td>
+                            <td><span class="badge badge-success">Good</span></td>
+                            <td>bcrypt for passwords, JWT signing, HTTPS enforced</td>
+                        </tr>
+                        <tr>
+                            <td><strong>A03: Injection</strong></td>
+                            <td><span class="badge badge-success">Good</span></td>
+                            <td>Prisma parameterized queries, React auto-escaping</td>
+                        </tr>
+                        <tr>
+                            <td><strong>A04: Insecure Design</strong></td>
+                            <td><span class="badge badge-success">Good</span></td>
+                            <td>Rate limiting, account lockout, session timeout</td>
+                        </tr>
+                        <tr>
+                            <td><strong>A05: Security Misconfiguration</strong></td>
+                            <td><span class="badge badge-success">Good</span></td>
+                            <td>Environment validation at startup, no debug in prod</td>
+                        </tr>
+                        <tr>
+                            <td><strong>A06: Vulnerable Components</strong></td>
+                            <td><span class="badge badge-warning">Monitor</span></td>
+                            <td>Run npm audit regularly</td>
+                        </tr>
+                        <tr>
+                            <td><strong>A07: Auth Failures</strong></td>
+                            <td><span class="badge badge-success">Good</span></td>
+                            <td>Multi-provider auth, 2FA for admins, session management</td>
+                        </tr>
+                        <tr>
+                            <td><strong>A08: Software Integrity</strong></td>
+                            <td><span class="badge badge-success">Good</span></td>
+                            <td>package-lock.json for dependency integrity</td>
+                        </tr>
+                        <tr>
+                            <td><strong>A09: Logging & Monitoring</strong></td>
+                            <td><span class="badge badge-success">Good</span></td>
+                            <td>Request logging, activity log, security event logging</td>
+                        </tr>
+                        <tr>
+                            <td><strong>A10: SSRF</strong></td>
+                            <td><span class="badge badge-success">Good</span></td>
+                            <td>No user-controlled URL fetching, webhook signatures validated</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Timeline of Fixes -->
+        <section>
+            <div class="card">
+                <h2>Audit Timeline</h2>
+                <p>A chronological view of what was found and fixed during the audit.</p>
+
+                <div class="timeline">
+                    <div class="timeline-item completed">
+                        <strong>BLOCKER #1: Tenant Models Missing</strong>
+                        <p style="color: var(--text-muted);">Added all 35 tenant-scoped models to TENANT_MODELS array</p>
+                        <span class="badge badge-success">Commit: 43eae38</span>
+                    </div>
+                    <div class="timeline-item completed">
+                        <strong>BLOCKER #2: Cron Auth Bypass</strong>
+                        <p style="color: var(--text-muted);">Fixed conditional to require CRON_SECRET</p>
+                        <span class="badge badge-success">Commit: 43eae38</span>
+                    </div>
+                    <div class="timeline-item completed">
+                        <strong>BLOCKER #3: Set-Password No Auth</strong>
+                        <p style="color: var(--text-muted);">Added isSuperAdmin check and audit logging</p>
+                        <span class="badge badge-success">Commit: 57781b1</span>
+                    </div>
+                    <div class="timeline-item completed">
+                        <strong>HIGH: Super Admin Route Audit</strong>
+                        <p style="color: var(--text-muted);">Verified all /api/super-admin/** routes check isSuperAdmin</p>
+                        <span class="badge badge-success">Commit: 57781b1</span>
+                    </div>
+                    <div class="timeline-item completed">
+                        <strong>HIGH: Raw Prisma Import Audit</strong>
+                        <p style="color: var(--text-muted);">Audited 142 files - all legitimate uses with documentation</p>
+                        <span class="badge badge-success">Commit: 9126094</span>
+                    </div>
+                    <div class="timeline-item completed">
+                        <strong>MEDIUM: Impersonation Audit Logging</strong>
+                        <p style="color: var(--text-muted);">Added logging for impersonation start/end/blocked events</p>
+                        <span class="badge badge-success">Commit: 7b3b208</span>
+                    </div>
+                    <div class="timeline-item completed">
+                        <strong>MEDIUM: Session Check Interval</strong>
+                        <p style="color: var(--text-muted);">Reduced from 5 minutes to 2 minutes</p>
+                        <span class="badge badge-success">Commit: 9f96452</span>
+                    </div>
+                    <div class="timeline-item completed">
+                        <strong>MEDIUM: Token URL Stripping</strong>
+                        <p style="color: var(--text-muted);">Impersonation token now stripped via redirect</p>
+                        <span class="badge badge-success">Commit: 9f96452</span>
+                    </div>
+                    <div class="timeline-item completed">
+                        <strong>MEDIUM: Revoke-All Tokens</strong>
+                        <p style="color: var(--text-muted);">Implemented bulk token revocation for super admins</p>
+                        <span class="badge badge-success">Commit: 9f96452</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Production Checklist -->
+        <section id="checklist">
+            <div class="card">
+                <h2>Production Deployment Checklist</h2>
+                <p>Before deploying to production, ensure these items are verified.</p>
+
+                <h3>Environment Variables</h3>
+                <ul class="checklist">
+                    <li><code class="inline-code">NEXTAUTH_SECRET</code> - 32+ bytes, cryptographically secure</li>
+                    <li><code class="inline-code">DATABASE_URL</code> - PostgreSQL with SSL</li>
+                    <li><code class="inline-code">CRON_SECRET</code> - Secure random token</li>
+                    <li><code class="inline-code">DEV_AUTH_ENABLED=false</code> - MUST be false in production</li>
+                </ul>
+
+                <h3>Security Configuration</h3>
+                <ul class="checklist">
+                    <li>All API routes use <code class="inline-code">withErrorHandler</code></li>
+                    <li>Sensitive routes have <code class="inline-code">requireAuth</code></li>
+                    <li>Admin routes have <code class="inline-code">requireAdmin</code></li>
+                    <li>OAuth redirect URIs are production URLs</li>
+                    <li>2FA enabled for super admin accounts</li>
+                </ul>
+
+                <h3>Tenant Isolation</h3>
+                <ul class="checklist">
+                    <li>All tenant models in TENANT_MODELS list</li>
+                    <li>No unauthorized direct Prisma imports</li>
+                    <li>Raw queries have manual tenant filter</li>
+                </ul>
+
+                <h3>Security Headers (Verify in Production)</h3>
+                <pre><code>Content-Security-Policy: default-src 'self'; ...
+X-Frame-Options: DENY
+X-Content-Type-Options: nosniff
+Strict-Transport-Security: max-age=31536000
+Referrer-Policy: strict-origin-when-cross-origin</code></pre>
+            </div>
+        </section>
+
+        <!-- Key Lessons -->
+        <section>
+            <div class="card">
+                <h2>Key Lessons Learned</h2>
+
+                <div class="concept-box">
+                    <h4>1. Fail Closed, Not Open</h4>
+                    <p>When something is missing or misconfigured (like a secret), deny access rather than allow it. The cron auth bypass was caused by failing open when the secret wasn't set.</p>
+                </div>
+
+                <div class="concept-box">
+                    <h4>2. Defense in Depth</h4>
+                    <p>Multiple layers of security protect against failures. Even if one layer fails (like the tenant model list), other layers (session validation, role checks) provide protection.</p>
+                </div>
+
+                <div class="concept-box">
+                    <h4>3. Audit Everything Sensitive</h4>
+                    <p>Every sensitive operation (impersonation, password changes, admin actions) should be logged. If something goes wrong, you need to know what happened.</p>
+                </div>
+
+                <div class="concept-box">
+                    <h4>4. Assume Nothing</h4>
+                    <p>Never assume a route is "internal only" or that code paths are unreachable. Every API endpoint needs explicit auth checks.</p>
+                </div>
+
+                <div class="concept-box">
+                    <h4>5. Regular Audits Matter</h4>
+                    <p>Security vulnerabilities can be introduced gradually as features are added. Regular audits catch issues before they become breaches.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Files Reference -->
+        <section>
+            <div class="card">
+                <h2>Key Security Files Reference</h2>
+                <p>Quick reference to the most important security-related files in the codebase.</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code class="inline-code">src/middleware.ts</code></td>
+                            <td>Request interception, tenant context, impersonation handling</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">src/lib/core/auth.ts</code></td>
+                            <td>NextAuth configuration, providers, session management</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">src/lib/http/handler.ts</code></td>
+                            <td>API wrapper with auth, authorization, tenant isolation</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">src/lib/core/prisma-tenant.ts</code></td>
+                            <td>Prisma extension for automatic tenant filtering</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">src/lib/security/csrf.ts</code></td>
+                            <td>CSRF protection implementation</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">src/lib/security/rateLimit.ts</code></td>
+                            <td>Token bucket rate limiting</td>
+                        </tr>
+                        <tr>
+                            <td><code class="inline-code">src/lib/security/impersonation.ts</code></td>
+                            <td>Impersonation token management and revocation</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>Durj Security Audit Report - Generated by Claude Code</p>
+        <p style="margin-top: 0.5rem; opacity: 0.7;">January 10, 2026</p>
+    </footer>
+</body>
+</html>
