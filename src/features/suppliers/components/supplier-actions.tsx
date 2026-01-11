@@ -51,9 +51,11 @@ export function SupplierActions({
   const [rejectDialog, setRejectDialog] = useState<{
     open: boolean;
     rejectionReason: string;
+    isSubmitting: boolean;
   }>({
     open: false,
     rejectionReason: '',
+    isSubmitting: false,
   });
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [engagementDialog, setEngagementDialog] = useState({
@@ -89,6 +91,8 @@ export function SupplierActions({
       return;
     }
 
+    setRejectDialog(prev => ({ ...prev, isSubmitting: true }));
+
     try {
       const response = await fetch(`/api/suppliers/${supplierId}/reject`, {
         method: 'PATCH',
@@ -98,14 +102,20 @@ export function SupplierActions({
 
       if (!response.ok) {
         const data = await response.json();
+        // If supplier not found, it was already rejected/deleted - just redirect
+        if (response.status === 404) {
+          router.push('/admin/suppliers');
+          return;
+        }
         throw new Error(data.error || 'Failed to reject supplier');
       }
 
       toast.success('Supplier rejected and removed');
-      setRejectDialog({ open: false, rejectionReason: '' });
+      setRejectDialog({ open: false, rejectionReason: '', isSubmitting: false });
       router.push('/admin/suppliers');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to reject supplier', { duration: 10000 });
+      setRejectDialog(prev => ({ ...prev, isSubmitting: false }));
     }
   };
 
@@ -179,7 +189,7 @@ export function SupplierActions({
               Approve
             </Button>
             <Button
-              onClick={() => setRejectDialog({ open: true, rejectionReason: '' })}
+              onClick={() => setRejectDialog({ open: true, rejectionReason: '', isSubmitting: false })}
               variant="destructive"
             >
               <XCircle className="h-4 w-4 mr-2" />
@@ -244,7 +254,7 @@ export function SupplierActions({
       </Dialog>
 
       {/* Rejection Dialog */}
-      <Dialog open={rejectDialog.open} onOpenChange={(open) => setRejectDialog({ ...rejectDialog, open })}>
+      <Dialog open={rejectDialog.open} onOpenChange={(open) => !rejectDialog.isSubmitting && setRejectDialog({ ...rejectDialog, open })}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reject Supplier</DialogTitle>
@@ -264,18 +274,20 @@ export function SupplierActions({
                 placeholder="Enter the reason for rejection..."
                 rows={4}
                 required
+                disabled={rejectDialog.isSubmitting}
               />
             </div>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setRejectDialog({ open: false, rejectionReason: '' })}
+              onClick={() => setRejectDialog({ open: false, rejectionReason: '', isSubmitting: false })}
+              disabled={rejectDialog.isSubmitting}
             >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleRejectSubmit}>
-              Reject Supplier
+            <Button variant="destructive" onClick={handleRejectSubmit} disabled={rejectDialog.isSubmitting}>
+              {rejectDialog.isSubmitting ? 'Rejecting...' : 'Reject Supplier'}
             </Button>
           </DialogFooter>
         </DialogContent>
