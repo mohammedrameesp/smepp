@@ -119,12 +119,21 @@ export default function SupplierRegistrationPage() {
   const primaryContactMobileCodeValue = watch('primaryContactMobileCode');
   const secondaryContactMobileCodeValue = watch('secondaryContactMobileCode');
 
-  // Trigger email validation when mobile changes (for cross-field "either email or mobile" validation)
+  // Watch email field too for cross-field validation
+  const primaryContactEmailValue = watch('primaryContactEmail');
+
+  // Trigger cross-field validation when either email or mobile changes
+  // The "either email or mobile required" error is on primaryContactEmail field
   useEffect(() => {
-    if (primaryContactMobileValue) {
-      trigger('primaryContactEmail');
+    // Only trigger if one of them has a value (to clear the error)
+    if (primaryContactMobileValue || primaryContactEmailValue) {
+      // Use a small delay to ensure the value is updated before validation
+      const timer = setTimeout(() => {
+        trigger('primaryContactEmail');
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [primaryContactMobileValue, trigger]);
+  }, [primaryContactMobileValue, primaryContactEmailValue, trigger]);
 
   // Fetch category suggestions
   useEffect(() => {
