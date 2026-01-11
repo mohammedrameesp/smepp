@@ -138,7 +138,6 @@ export function SupplierListTableServerSearch() {
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="PENDING">Pending</SelectItem>
             <SelectItem value="APPROVED">Approved</SelectItem>
-            <SelectItem value="REJECTED">Rejected</SelectItem>
           </SelectContent>
         </Select>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -231,10 +230,7 @@ export function SupplierListTableServerSearch() {
               suppliers.map((supplier) => (
                 <TableRow
                   key={supplier.id}
-                  className={
-                    supplier.status === 'PENDING' ? 'bg-amber-50/50 hover:bg-amber-100/50' :
-                    supplier.status === 'REJECTED' ? 'bg-red-50/50 hover:bg-red-100/50' : ''
-                  }
+                  className={supplier.status === 'PENDING' ? 'bg-amber-50/50 hover:bg-amber-100/50' : ''}
                 >
                   <TableCell className="font-mono text-sm">
                     {supplier.suppCode || <span className="text-gray-400">—</span>}
@@ -257,11 +253,6 @@ export function SupplierListTableServerSearch() {
                     {supplier.status === 'PENDING' && (
                       <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
                         Pending
-                      </Badge>
-                    )}
-                    {supplier.status === 'REJECTED' && (
-                      <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">
-                        Rejected
                       </Badge>
                     )}
                   </TableCell>
