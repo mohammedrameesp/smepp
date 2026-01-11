@@ -34,6 +34,7 @@ export async function GET() {
         // Branding
         primaryColor: true,
         secondaryColor: true,
+        website: true,
         // Currency settings
         additionalCurrencies: true,
         // Module settings
@@ -103,6 +104,7 @@ const updateOrgSchema = z.object({
   codePrefix: z.string().length(3, 'Code prefix must be exactly 3 characters').regex(/^[A-Z0-9]+$/, 'Only uppercase letters and numbers allowed').optional(),
   primaryColor: colorSchema,
   secondaryColor: colorSchema,
+  website: z.string().url('Invalid URL format').nullable().optional().or(z.literal('')),
   additionalCurrencies: z.array(z.string()).optional(),
   enabledModules: z.array(z.string()).optional(),
   hasMultipleLocations: z.boolean().optional(),
@@ -131,12 +133,15 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const { name, codePrefix, primaryColor, secondaryColor, additionalCurrencies, enabledModules, hasMultipleLocations } = result.data;
+    const { name, codePrefix, primaryColor, secondaryColor, website, additionalCurrencies, enabledModules, hasMultipleLocations } = result.data;
 
     // Normalize colors: empty/null resets to default for primaryColor, null for secondaryColor
     const DEFAULT_PRIMARY_COLOR = '#0f172a';
     const normalizedPrimaryColor = (!primaryColor || primaryColor === '') ? DEFAULT_PRIMARY_COLOR : primaryColor;
     const normalizedSecondaryColor = (!secondaryColor || secondaryColor === '') ? null : secondaryColor;
+
+    // Normalize website: empty string becomes null
+    const normalizedWebsite = (!website || website === '') ? null : website;
 
     const updated = await prisma.organization.update({
       where: { id: session.user.organizationId },
@@ -145,6 +150,7 @@ export async function PATCH(request: NextRequest) {
         ...(codePrefix && { codePrefix }),
         ...(primaryColor !== undefined && { primaryColor: normalizedPrimaryColor }),
         ...(secondaryColor !== undefined && { secondaryColor: normalizedSecondaryColor }),
+        ...(website !== undefined && { website: normalizedWebsite }),
         ...(additionalCurrencies !== undefined && { additionalCurrencies }),
         ...(enabledModules !== undefined && { enabledModules }),
         ...(hasMultipleLocations !== undefined && { hasMultipleLocations }),
@@ -157,6 +163,7 @@ export async function PATCH(request: NextRequest) {
         codePrefix: true,
         primaryColor: true,
         secondaryColor: true,
+        website: true,
         additionalCurrencies: true,
         enabledModules: true,
         hasMultipleLocations: true,

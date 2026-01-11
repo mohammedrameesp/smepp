@@ -44,6 +44,7 @@ export function useTenantBranding(subdomain: string | null): TenantBrandingState
           loginBackgroundUrl: null,
           welcomeTitle: DEFAULT_TENANT_BRANDING.welcomeTitle!,
           welcomeSubtitle: DEFAULT_TENANT_BRANDING.welcomeSubtitle!,
+          website: null,
           allowedAuthMethods: DEFAULT_TENANT_BRANDING.allowedAuthMethods!,
           allowedEmailDomains: DEFAULT_TENANT_BRANDING.allowedEmailDomains!,
           enforceDomainRestriction: DEFAULT_TENANT_BRANDING.enforceDomainRestriction!,

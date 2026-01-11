@@ -17,6 +17,7 @@ export interface TenantBranding {
   loginBackgroundUrl: string | null;
   welcomeTitle: string | null;
   welcomeSubtitle: string | null;
+  website: string | null;
   // Authentication configuration
   allowedAuthMethods: AuthMethod[];
   allowedEmailDomains: string[];

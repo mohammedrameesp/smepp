@@ -231,13 +231,23 @@ export default function SupplierRegistrationPage() {
                     </ol>
                   </div>
 
-                  <Button
-                    onClick={() => setSuccess(false)}
-                    style={{ backgroundColor: primaryColor }}
-                    className="mt-4 hover:opacity-90"
-                  >
-                    Register Another Supplier
-                  </Button>
+                  {branding?.website ? (
+                    <Button
+                      onClick={() => window.open(branding.website!, '_blank')}
+                      style={{ backgroundColor: primaryColor }}
+                      className="mt-4 hover:opacity-90"
+                    >
+                      Visit Our Website
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => window.close()}
+                      style={{ backgroundColor: primaryColor }}
+                      className="mt-4 hover:opacity-90"
+                    >
+                      Close
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

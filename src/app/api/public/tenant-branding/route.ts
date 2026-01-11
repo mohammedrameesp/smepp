@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
         loginBackgroundUrl: true,
         welcomeTitle: true,
         welcomeSubtitle: true,
+        website: true,
         // Authentication configuration
         allowedAuthMethods: true,
         allowedEmailDomains: true,
@@ -81,6 +82,7 @@ export async function GET(request: NextRequest) {
         loginBackgroundUrl: org.loginBackgroundUrl,
         welcomeTitle: org.welcomeTitle,
         welcomeSubtitle: org.welcomeSubtitle,
+        website: org.website,
         // Authentication configuration
         allowedAuthMethods: (org.allowedAuthMethods || []) as TenantBranding['allowedAuthMethods'],
         allowedEmailDomains: org.allowedEmailDomains || [],

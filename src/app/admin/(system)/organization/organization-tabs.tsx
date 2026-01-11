@@ -46,6 +46,7 @@ interface Organization {
   createdAt: string;
   primaryColor: string | null;
   secondaryColor: string | null;
+  website: string | null;
   additionalCurrencies: string[];
   enabledModules: string[];
   hasMultipleLocations: boolean;
@@ -122,6 +123,7 @@ export function OrganizationTabs({
   const [codePrefix, setCodePrefix] = useState(org.codePrefix || 'ORG');
   const [primaryColor, setPrimaryColor] = useState(org.primaryColor || '#3B82F6');
   const [secondaryColor, setSecondaryColor] = useState(org.secondaryColor || '');
+  const [website, setWebsite] = useState(org.website || '');
   const [additionalCurrencies, setAdditionalCurrencies] = useState<string[]>(org.additionalCurrencies || []);
   const [enabledModules, setEnabledModules] = useState<string[]>(org.enabledModules || ['assets', 'subscriptions', 'suppliers']);
   const [hasMultipleLocations, setHasMultipleLocations] = useState(org.hasMultipleLocations || false);
@@ -173,6 +175,20 @@ export function OrganizationTabs({
       });
       if (!res.ok) throw new Error('Failed to save');
       setOrg(prev => ({ ...prev, ...value }));
+    },
+  });
+
+  const websiteAutoSave = useAutoSave({
+    value: website,
+    enabled: isAdmin && website !== org.website,
+    onSave: async (value) => {
+      const res = await fetch('/api/admin/organization', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ website: value || null }),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      setOrg(prev => ({ ...prev, website: value || null }));
     },
   });
 
@@ -390,6 +406,27 @@ export function OrganizationTabs({
                     disabled={!isAdmin}
                     minLength={2}
                   />
+                </div>
+
+                {/* Website */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="website">Website URL</Label>
+                    <AutoSaveIndicator status={websiteAutoSave.status} error={websiteAutoSave.error} />
+                  </div>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="website"
+                      type="url"
+                      value={website}
+                      onChange={(e) => setWebsite(e.target.value)}
+                      placeholder="https://yourcompany.com"
+                      disabled={!isAdmin}
+                      className="pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Shown to suppliers after registration</p>
                 </div>
 
                 {/* Subdomain */}

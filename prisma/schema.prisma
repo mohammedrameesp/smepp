@@ -311,6 +311,7 @@ model Organization {
   loginBackgroundUrl String? // Background image for login page
   welcomeTitle       String? // Custom welcome title (e.g., "Welcome to Acme")
   welcomeSubtitle    String? // Custom welcome subtitle/tagline
+  website            String? // Organization's public website URL
 
   // Settings
   timezone String @default("Asia/Qatar") // Hardcoded to Qatar timezone (UTC+3)
