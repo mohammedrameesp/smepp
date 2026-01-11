@@ -568,6 +568,10 @@ export default function AdminPurchaseRequestDetailPage({ params }: { params: Pro
             </div>
             <div className="p-5 space-y-3">
               <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-500">Priority</span>
+                <PriorityBadge priority={request.priority} />
+              </div>
+              <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-500">Items</span>
                 <span className="font-semibold text-slate-900">{request.items.length}</span>
               </div>
@@ -581,6 +585,18 @@ export default function AdminPurchaseRequestDetailPage({ params }: { params: Pro
               </div>
             </div>
           </div>
+
+          {/* Additional Notes */}
+          {request.additionalNotes && (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100">
+                <h2 className="font-semibold text-slate-900">Additional Notes</h2>
+              </div>
+              <div className="p-5">
+                <p className="text-slate-700 text-sm whitespace-pre-wrap">{request.additionalNotes}</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
