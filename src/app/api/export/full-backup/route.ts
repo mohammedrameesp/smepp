@@ -192,6 +192,13 @@ export async function GET() {
               model: true,
             },
           },
+          performedBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
         },
       }),
       prisma.profileChangeRequest.findMany({
@@ -411,7 +418,7 @@ export async function GET() {
       assetType: m.asset?.type || '',
       assetModel: m.asset?.model || '',
       maintenanceDate: formatDateForCSV(m.maintenanceDate),
-      performedBy: m.performedBy || '',
+      performedBy: m.performedBy ? (m.performedBy.name || m.performedBy.email) : '',
       notes: m.notes || '',
       createdAt: formatDateForCSV(m.createdAt),
       updatedAt: formatDateForCSV(m.updatedAt),
