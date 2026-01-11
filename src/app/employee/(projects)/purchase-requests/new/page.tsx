@@ -16,6 +16,7 @@ import {
   PAYMENT_MODES,
 } from '@/features/purchase-requests/lib/purchase-request-utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
 
 // Type configuration for dynamic UI based on purchase type
 const TYPE_CONFIG: Record<string, {
@@ -143,10 +144,11 @@ export default function NewPurchaseRequestPage() {
 
   // Currency (form-level for all items)
   const [currency, setCurrency] = useState<string>('QAR');
-  const [customCurrency, setCustomCurrency] = useState('');
   const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(DEFAULT_RATES_TO_QAR);
+  const [usingFallbackRates, setUsingFallbackRates] = useState(false);
 
-  // Fetch org settings for currency defaults
+  // Fetch org settings for currency defaults and exchange rates
   useEffect(() => {
     async function fetchOrgSettings() {
       try {
@@ -158,6 +160,30 @@ export default function NewPurchaseRequestPage() {
           const currencies = [primary, ...additional.filter((c: string) => c !== primary)];
           setAvailableCurrencies(currencies.length > 0 ? currencies : ['QAR', 'USD']);
           setCurrency(primary);
+
+          // Fetch exchange rates for all currencies
+          const rates: Record<string, number> = { ...DEFAULT_RATES_TO_QAR };
+          const allCurrencies = currencies.filter((c: string) => c !== 'QAR');
+          let ratesFailed = false;
+          await Promise.all(
+            allCurrencies.map(async (curr: string) => {
+              try {
+                const rateRes = await fetch(`/api/exchange-rates/${curr}`);
+                if (rateRes.ok) {
+                  const rateData = await rateRes.json();
+                  if (rateData.rate) {
+                    rates[curr] = rateData.rate;
+                  }
+                } else {
+                  ratesFailed = true;
+                }
+              } catch {
+                ratesFailed = true;
+              }
+            })
+          );
+          setExchangeRates(rates);
+          setUsingFallbackRates(ratesFailed);
         }
       } catch (error) {
         console.error('Error fetching org settings:', error);
@@ -185,7 +211,7 @@ export default function NewPurchaseRequestPage() {
   const typeConfig = useMemo(() => TYPE_CONFIG[purchaseType] || TYPE_CONFIG.OTHER, [purchaseType]);
 
   // Get display currency label
-  const currencyLabel = currency === 'OTHER' ? (customCurrency || 'Currency') : currency;
+  const currencyLabel = currency;
 
   // Get today's date in format YYYY-MM-DD
   const today = new Date().toISOString().split('T')[0];
@@ -285,11 +311,6 @@ export default function NewPurchaseRequestPage() {
       return;
     }
 
-    if (currency === 'OTHER' && !customCurrency.trim()) {
-      setError('Please specify the currency code');
-      return;
-    }
-
     const validItems = items.filter((item) => item.description.trim());
     if (validItems.length === 0) {
       setError('At least one item with a description is required');
@@ -328,8 +349,6 @@ export default function NewPurchaseRequestPage() {
 
     setSubmitting(true);
 
-    const effectiveCurrency = currency === 'OTHER' ? customCurrency : currency;
-
     try {
       const response = await fetch('/api/purchase-requests', {
         method: 'POST',
@@ -342,7 +361,7 @@ export default function NewPurchaseRequestPage() {
           neededByDate: neededByDate || undefined,
           purchaseType,
           paymentMode,
-          currency: effectiveCurrency,
+          currency,
           vendorName: vendorName || undefined,
           vendorContact: vendorContact || undefined,
           vendorEmail: vendorEmail || undefined,
@@ -351,7 +370,7 @@ export default function NewPurchaseRequestPage() {
             description: item.description,
             quantity: typeConfig.showQty ? item.quantity : 1,
             unitPrice: isSubscription ? 0 : item.unitPrice,
-            currency: effectiveCurrency,
+            currency,
             billingCycle: isSubscription ? item.billingCycle : 'ONE_TIME',
             durationMonths: isSubscription && item.billingCycle === 'MONTHLY' ? item.durationMonths : undefined,
             amountPerCycle: isSubscription ? item.amountPerCycle : undefined,
@@ -496,19 +515,19 @@ export default function NewPurchaseRequestPage() {
                           {curr}
                         </SelectItem>
                       ))}
-                      <SelectItem value="OTHER">Other</SelectItem>
                     </SelectContent>
                   </Select>
-                  {currency === 'OTHER' && (
-                    <Input
-                      className="mt-2"
-                      value={customCurrency}
-                      onChange={(e) => setCustomCurrency(e.target.value.toUpperCase())}
-                      placeholder="Enter currency (e.g. EUR)"
-                      maxLength={5}
-                    />
-                  )}
-                  <p className="text-xs text-muted-foreground">All prices below will be in this currency</p>
+                  <p className="text-xs text-muted-foreground">
+                    All prices below will be in this currency
+                    {currency !== 'QAR' && (
+                      <span className="ml-1">
+                        (1 {currency} ≈ {(exchangeRates[currency] || 1).toFixed(2)} QAR)
+                        {usingFallbackRates && (
+                          <span className="text-amber-600 ml-1" title="Using default exchange rate">⚠</span>
+                        )}
+                      </span>
+                    )}
+                  </p>
                 </div>
               </div>
 
@@ -862,20 +881,37 @@ export default function NewPurchaseRequestPage() {
               <div className="mt-6 pt-4 border-t text-right space-y-1">
                 <div className="font-semibold">
                   Estimated Total: {formatAmount(totalContractValue)} {currencyLabel}
+                  {currency !== 'QAR' && totalContractValue > 0 && (
+                    <span className="text-sm font-normal text-muted-foreground ml-2">
+                      (≈ {formatAmount(totalContractValue * (exchangeRates[currency] || 1))} QAR)
+                    </span>
+                  )}
                 </div>
                 {purchaseType === 'SOFTWARE_SUBSCRIPTION' && totalMonthly > 0 && (
                   <div className="text-sm text-muted-foreground">
                     Monthly Total: {formatAmount(totalMonthly)} {currencyLabel}
+                    {currency !== 'QAR' && (
+                      <span className="ml-1">
+                        (≈ {formatAmount(totalMonthly * (exchangeRates[currency] || 1))} QAR)
+                      </span>
+                    )}
                   </div>
                 )}
                 {purchaseType === 'SOFTWARE_SUBSCRIPTION' && totalContractValue > 0 && totalContractValue !== totalMonthly && (
                   <div className="text-sm text-muted-foreground">
                     Contract Total: {formatAmount(totalContractValue)} {currencyLabel}
+                    {currency !== 'QAR' && (
+                      <span className="ml-1">
+                        (≈ {formatAmount(totalContractValue * (exchangeRates[currency] || 1))} QAR)
+                      </span>
+                    )}
                   </div>
                 )}
-                <p className="text-xs text-gray-500">
-                  * USD amounts will be converted to QAR at the current exchange rate
-                </p>
+                {currency !== 'QAR' && usingFallbackRates && (
+                  <p className="text-xs text-amber-600">
+                    ⚠ Using default exchange rates - actual values may differ
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
