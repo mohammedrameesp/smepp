@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Loader2, Plus, Trash2, ExternalLink } from 'lucide-react';
 import {
   PURCHASE_TYPES,
-  COST_TYPES,
   PAYMENT_MODES,
 } from '@/features/purchase-requests/lib/purchase-request-utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
@@ -126,11 +125,9 @@ export default function NewPurchaseRequestPage() {
   const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'>('MEDIUM');
   const [neededByDate, setNeededByDate] = useState('');
 
-  // Purchase Type & Cost Details
+  // Purchase Type & Payment Details
   const [purchaseType, setPurchaseType] = useState<string>('SOFTWARE_SUBSCRIPTION');
   const [otherPurchaseType, setOtherPurchaseType] = useState('');
-  const [costType, setCostType] = useState<string>('OPERATING_COST');
-  const [projectName, setProjectName] = useState('');
   const [paymentMode, setPaymentMode] = useState<string>('BANK_TRANSFER');
 
   // Business Justification
@@ -288,11 +285,6 @@ export default function NewPurchaseRequestPage() {
       return;
     }
 
-    if (costType === 'PROJECT_COST' && !projectName.trim()) {
-      setError('Project name is required when Cost Type is Project Cost');
-      return;
-    }
-
     if (currency === 'OTHER' && !customCurrency.trim()) {
       setError('Please specify the currency code');
       return;
@@ -349,8 +341,6 @@ export default function NewPurchaseRequestPage() {
           priority,
           neededByDate: neededByDate || undefined,
           purchaseType,
-          costType,
-          projectName: costType === 'PROJECT_COST' ? projectName : undefined,
           paymentMode,
           currency: effectiveCurrency,
           vendorName: vendorName || undefined,
@@ -522,51 +512,20 @@ export default function NewPurchaseRequestPage() {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="costType">Cost Type *</Label>
-                  <Select value={costType} onValueChange={setCostType}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COST_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {costType === 'PROJECT_COST' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="projectName">Project Name *</Label>
-                    <Input
-                      id="projectName"
-                      value={projectName}
-                      onChange={(e) => setProjectName(e.target.value)}
-                      placeholder="Enter the project name"
-                      required={costType === 'PROJECT_COST'}
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="paymentMode">Mode of Payment</Label>
-                  <Select value={paymentMode} onValueChange={setPaymentMode}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PAYMENT_MODES.map((mode) => (
-                        <SelectItem key={mode.value} value={mode.value}>
-                          {mode.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="paymentMode">Mode of Payment</Label>
+                <Select value={paymentMode} onValueChange={setPaymentMode}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PAYMENT_MODES.map((mode) => (
+                      <SelectItem key={mode.value} value={mode.value}>
+                        {mode.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
