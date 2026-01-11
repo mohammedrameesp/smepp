@@ -10,8 +10,8 @@ import { QATAR_TIMEZONE } from './datetime';
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/** Default brand color (blue-500) used when organization color is not provided */
-export const DEFAULT_BRAND_COLOR = '#3B82F6';
+/** Default brand color (slate-900) used when organization color is not provided */
+export const DEFAULT_BRAND_COLOR = '#0f172a';
 
 /** Application domain from environment or fallback to localhost */
 export const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';

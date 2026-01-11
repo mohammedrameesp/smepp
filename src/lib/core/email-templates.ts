@@ -1,5 +1,5 @@
 // Email Templates for Durj
-// Default brand color: #3B82F6 (blue-500)
+// Default brand color: #0f172a (slate-900)
 // Organization's primaryColor can override this via the primaryColor parameter
 
 import {

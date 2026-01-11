@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
         <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border: 1px solid #e2e8f0;">
           <!-- Header -->
           <tr>
-            <td align="center" style="background-color: #2563eb; padding: 40px 40px 30px;">
+            <td align="center" style="background-color: #0f172a; padding: 40px 40px 30px;">
               <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">Durj</h1>
               <p style="color: #bfdbfe; margin: 8px 0 0; font-size: 14px; font-family: Arial, Helvetica, sans-serif;">Business Management Platform</p>
             </td>
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
                   <td align="center" style="padding: 10px 0 30px;">
                     <table cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td align="center" style="background-color: #2563eb; border-radius: 6px;">
+                        <td align="center" style="background-color: #0f172a; border-radius: 6px;">
                           <a href="${inviteUrl}" target="_blank" style="display: inline-block; padding: 16px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; font-family: Arial, Helvetica, sans-serif;">
                             Accept Invitation &amp; Get Started
                           </a>
@@ -209,7 +209,7 @@ export async function POST(request: NextRequest) {
               <!-- Alternative Link -->
               <p style="color: #64748b; font-size: 14px; line-height: 21px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
                 Or copy and paste this link into your browser:<br/>
-                <a href="${inviteUrl}" style="color: #2563eb; word-break: break-all;">${inviteUrl}</a>
+                <a href="${inviteUrl}" style="color: #0f172a; word-break: break-all;">${inviteUrl}</a>
               </p>
 
               <!-- Expiry Notice -->

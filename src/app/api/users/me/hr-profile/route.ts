@@ -300,7 +300,7 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
               </p>
               <div style="margin-top: 24px;">
                 <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin/employees/${tenant.userId}"
-                   style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+                   style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
                   View Profile
                 </a>
               </div>

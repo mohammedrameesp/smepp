@@ -234,11 +234,11 @@ export async function sendPurchaseRequestNotifications(
     priority,
   } = params;
 
-  // Get org slug and user info for notifications
+  // Get org slug, branding, and user info for notifications
   const [org, currentMember] = await Promise.all([
     prisma.organization.findUnique({
       where: { id: tenantId },
-      select: { slug: true, name: true },
+      select: { slug: true, name: true, primaryColor: true },
     }),
     prisma.teamMember.findUnique({
       where: { id: userId },
@@ -247,6 +247,7 @@ export async function sendPurchaseRequestNotifications(
   ]);
   const orgSlug = org?.slug || 'app';
   const orgName = org?.name || 'Organization';
+  const primaryColor = org?.primaryColor || undefined;
   const userName = currentMember?.name || currentMember?.email || 'User';
 
   // Check for multi-level approval policy
@@ -291,6 +292,7 @@ export async function sendPurchaseRequestNotifications(
           priority,
           orgSlug,
           orgName,
+          primaryColor,
         });
 
         await sendEmail({
@@ -337,6 +339,7 @@ export async function sendPurchaseRequestNotifications(
         priority,
         orgSlug,
         orgName,
+        primaryColor,
       });
 
       await sendEmail({

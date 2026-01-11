@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
       // Determine branding based on whether this is an org user or platform user
       const brandName = teamMember?.tenant?.name || 'Durj';
-      const brandColor = teamMember?.tenant?.primaryColor || '#2563eb';
+      const brandColor = teamMember?.tenant?.primaryColor || '#0f172a';
       const brandSubtitle = teamMember ? 'Password Reset' : 'Business Management Platform';
 
       // Send password reset email
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
               <!-- Alternative Link -->
               <p style="color: #64748b; font-size: 14px; line-height: 21px; margin: 0 0 20px; font-family: Arial, Helvetica, sans-serif;">
                 Or copy and paste this link into your browser:<br/>
-                <a href="${resetUrl}" style="color: #2563eb; word-break: break-all;">${resetUrl}</a>
+                <a href="${resetUrl}" style="color: #0f172a; word-break: break-all;">${resetUrl}</a>
               </p>
 
               <!-- Expiry Notice -->
