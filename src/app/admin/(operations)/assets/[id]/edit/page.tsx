@@ -580,10 +580,10 @@ export default function EditAssetPage() {
                 </div>
 
                 {/* Asset Tag - Generated from category, editable if needed */}
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Label className="text-xs text-blue-700 uppercase tracking-wide">Asset Tag</Label>
+                      <Label className="text-xs text-slate-700 uppercase tracking-wide">Asset Tag</Label>
                       <Input
                         id="assetTag"
                         {...register('assetTag')}
@@ -595,7 +595,7 @@ export default function EditAssetPage() {
                             setIsTagManuallyEdited(true);
                           }
                         }}
-                        className="font-mono text-base h-9 w-44 uppercase bg-white"
+                        className="font-mono text-base h-9 w-36 uppercase bg-white"
                       />
                       {isTagManuallyEdited && suggestedTag && (
                         <Button
@@ -612,7 +612,7 @@ export default function EditAssetPage() {
                         </Button>
                       )}
                     </div>
-                    <p className="text-xs text-blue-600">
+                    <p className="text-xs text-slate-500">
                       {isTagManuallyEdited ? 'Custom tag' : 'Edit if needed'}
                     </p>
                   </div>
@@ -837,7 +837,7 @@ export default function EditAssetPage() {
                 </div>
 
                 {watchedStatus === AssetStatus.IN_USE && (
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         id="isShared"
@@ -854,7 +854,7 @@ export default function EditAssetPage() {
                         This is a shared/common resource
                       </Label>
                     </div>
-                    <p className="text-xs text-blue-700 ml-7">
+                    <p className="text-xs text-slate-600 ml-7">
                       Check this for assets used by multiple team members (e.g., conference room equipment,
                       shared printers, common area devices). Shared assets won&apos;t be assigned to any specific person.
                     </p>

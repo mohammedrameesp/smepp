@@ -438,10 +438,10 @@ export default function NewAssetPage() {
                 </div>
 
                 {/* Asset Tag - Generated from category, editable if needed */}
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Label className="text-xs text-blue-700 uppercase tracking-wide">Asset Tag</Label>
+                      <Label className="text-xs text-slate-700 uppercase tracking-wide">Asset Tag</Label>
                       <Input
                         id="assetTag"
                         {...register('assetTag')}
@@ -453,7 +453,7 @@ export default function NewAssetPage() {
                             setIsTagManuallyEdited(true);
                           }
                         }}
-                        className="font-mono text-base h-9 w-44 uppercase bg-white"
+                        className="font-mono text-base h-9 w-36 uppercase bg-white"
                       />
                       {isTagManuallyEdited && suggestedTag && (
                         <Button
@@ -470,7 +470,7 @@ export default function NewAssetPage() {
                         </Button>
                       )}
                     </div>
-                    <p className="text-xs text-blue-600">
+                    <p className="text-xs text-slate-500">
                       {isTagManuallyEdited ? 'Custom tag' : 'Auto-generated from category. Edit if needed.'}
                     </p>
                   </div>
