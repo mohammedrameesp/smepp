@@ -86,6 +86,7 @@ export default function SupplierRegistrationPage() {
     watch,
     setValue,
     reset,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<CreateSupplierRequest>({
     resolver: zodResolver(createSupplierSchema) as any,
@@ -114,8 +115,16 @@ export default function SupplierRegistrationPage() {
 
   const categoryValue = watch('category');
   const countryValue = watch('country');
+  const primaryContactMobileValue = watch('primaryContactMobile');
   const primaryContactMobileCodeValue = watch('primaryContactMobileCode');
   const secondaryContactMobileCodeValue = watch('secondaryContactMobileCode');
+
+  // Trigger email validation when mobile changes (for cross-field "either email or mobile" validation)
+  useEffect(() => {
+    if (primaryContactMobileValue) {
+      trigger('primaryContactEmail');
+    }
+  }, [primaryContactMobileValue, trigger]);
 
   // Fetch category suggestions
   useEffect(() => {

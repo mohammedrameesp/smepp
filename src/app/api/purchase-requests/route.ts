@@ -175,10 +175,7 @@ async function createPurchaseRequestHandler(request: NextRequest, context: APICo
         totalContractValue: totalContractValue > 0 ? totalContractValue : null,
         tenantId,
         items: {
-          create: itemsWithCalculations.map(item => ({
-            ...item,
-            tenantId,
-          })),
+          create: itemsWithCalculations,
         },
         history: {
           create: {
