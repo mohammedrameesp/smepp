@@ -48,12 +48,21 @@ describe('Purchase Request Utilities', () => {
         const values = PURCHASE_TYPES.map(t => t.value);
         expect(values).toContain('HARDWARE');
         expect(values).toContain('SOFTWARE_SUBSCRIPTION');
-        expect(values).toContain('SERVICES');
+        expect(values).toContain('EQUIPMENT');
+        expect(values).toContain('FURNITURE');
         expect(values).toContain('OFFICE_SUPPLIES');
+        expect(values).toContain('INVENTORY');
+        expect(values).toContain('SERVICES');
+        expect(values).toContain('MAINTENANCE');
+        expect(values).toContain('UTILITIES');
         expect(values).toContain('MARKETING');
         expect(values).toContain('TRAVEL');
         expect(values).toContain('TRAINING');
         expect(values).toContain('OTHER');
+      });
+
+      it('should have 13 purchase types', () => {
+        expect(PURCHASE_TYPES).toHaveLength(13);
       });
 
       it('should have value and label for each type', () => {
@@ -124,8 +133,13 @@ describe('Purchase Request Utilities', () => {
     it('should return correct labels', () => {
       expect(getPurchaseTypeLabel('HARDWARE')).toBe('Hardware');
       expect(getPurchaseTypeLabel('SOFTWARE_SUBSCRIPTION')).toBe('Software/Subscription');
-      expect(getPurchaseTypeLabel('SERVICES')).toBe('Services');
+      expect(getPurchaseTypeLabel('EQUIPMENT')).toBe('Equipment');
+      expect(getPurchaseTypeLabel('FURNITURE')).toBe('Furniture');
       expect(getPurchaseTypeLabel('OFFICE_SUPPLIES')).toBe('Office Supplies');
+      expect(getPurchaseTypeLabel('INVENTORY')).toBe('Inventory/Stock');
+      expect(getPurchaseTypeLabel('SERVICES')).toBe('Services');
+      expect(getPurchaseTypeLabel('MAINTENANCE')).toBe('Maintenance/Repairs');
+      expect(getPurchaseTypeLabel('UTILITIES')).toBe('Utilities/Telecom');
       expect(getPurchaseTypeLabel('MARKETING')).toBe('Marketing');
       expect(getPurchaseTypeLabel('TRAVEL')).toBe('Travel');
       expect(getPurchaseTypeLabel('TRAINING')).toBe('Training');
