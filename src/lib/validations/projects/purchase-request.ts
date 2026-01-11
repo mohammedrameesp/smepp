@@ -56,7 +56,7 @@ export const createPurchaseRequestSchema = z.object({
 
   // New fields from prototype
   purchaseType: purchaseTypeEnum.default('OTHER'),
-  costType: costTypeEnum.default('OPERATING_COST'),
+  costType: costTypeEnum.optional().default('OPERATING_COST'),
   projectName: z.string().optional().nullable(),
   paymentMode: paymentModeEnum.default('BANK_TRANSFER'),
   currency: z.string().min(1).max(5).default('QAR'), // Form-level currency
