@@ -198,10 +198,8 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     { userName: user.name, userEmail: user.email, userRole: user.role }
   );
 
-  // Update setup progress for first employee (non-blocking)
-  if (isEmployee) {
-    updateSetupProgress(tenantId, 'firstEmployeeAdded', true).catch(() => {});
-  }
+  // Update setup progress for first team member (non-blocking)
+  updateSetupProgress(tenantId, 'firstTeamMemberInvited', true).catch(() => {});
 
   // Note: Leave balances are initialized when the employee completes
   // their HR profile onboarding with dateOfJoining set

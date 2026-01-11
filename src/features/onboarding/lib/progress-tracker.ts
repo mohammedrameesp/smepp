@@ -12,8 +12,7 @@ export type SetupProgressField =
   | 'logoUploaded'
   | 'brandingConfigured'
   | 'firstAssetAdded'
-  | 'firstTeamMemberInvited'
-  | 'firstEmployeeAdded';
+  | 'firstTeamMemberInvited';
 
 export interface SetupProgressStatus {
   progress: OrganizationSetupProgress | null;
@@ -29,51 +28,62 @@ const CHECKLIST_FIELDS: SetupProgressField[] = [
   'brandingConfigured',
   'firstAssetAdded',
   'firstTeamMemberInvited',
-  'firstEmployeeAdded',
 ];
 
 /**
  * Get setup progress for an organization
- * If no progress record exists, check actual organization data to infer progress
+ * Always syncs data-driven fields (assets, team members, employees) with actual counts
  */
 export async function getSetupProgress(tenantId: string): Promise<SetupProgressStatus> {
-  let progress = await prisma.organizationSetupProgress.findUnique({
-    where: { organizationId: tenantId },
-  });
+  // Always fetch actual data to keep progress in sync
+  const [org, assetCount, memberCount, existingProgress] = await Promise.all([
+    prisma.organization.findUnique({
+      where: { id: tenantId },
+      select: { name: true, logoUrl: true, primaryColor: true },
+    }),
+    prisma.asset.count({ where: { tenantId } }),
+    prisma.teamMember.count({ where: { tenantId, isDeleted: false } }),
+    prisma.organizationSetupProgress.findUnique({
+      where: { organizationId: tenantId },
+    }),
+  ]);
 
-  // If no progress record exists, create one based on actual org data
-  if (!progress) {
-    const [org, assetCount, memberCount, employeeCount] = await Promise.all([
-      prisma.organization.findUnique({
-        where: { id: tenantId },
-        select: { name: true, logoUrl: true, primaryColor: true },
-      }),
-      prisma.asset.count({ where: { tenantId } }),
-      prisma.teamMember.count({ where: { tenantId, isDeleted: false } }),
-      prisma.teamMember.count({ where: { tenantId, isEmployee: true, isDeleted: false } }),
-    ]);
+  if (!org) {
+    return {
+      progress: null,
+      completedCount: 0,
+      totalCount: CHECKLIST_FIELDS.length,
+      percentComplete: 0,
+      isComplete: false,
+    };
+  }
 
-    if (org) {
-      // Infer progress from actual data
-      const inferredProgress = {
-        profileComplete: Boolean(org.name && org.name.length > 2),
-        logoUploaded: Boolean(org.logoUrl),
-        brandingConfigured: Boolean(org.primaryColor),
-        firstAssetAdded: assetCount > 0,
-        firstTeamMemberInvited: memberCount > 1, // More than just the owner
-        firstEmployeeAdded: employeeCount > 0,
-      };
+  // Infer data-driven progress from actual counts
+  const dataProgress = {
+    profileComplete: Boolean(org.name && org.name.length > 2),
+    logoUploaded: Boolean(org.logoUrl),
+    brandingConfigured: Boolean(org.primaryColor),
+    firstAssetAdded: assetCount > 0,
+    firstTeamMemberInvited: memberCount > 1, // More than just the owner
+  };
 
-      // Create the progress record with inferred values
-      progress = await prisma.organizationSetupProgress.upsert({
-        where: { organizationId: tenantId },
-        create: {
-          organizationId: tenantId,
-          ...inferredProgress,
-        },
-        update: inferredProgress,
-      });
-    }
+  // Check if any data-driven field needs to be updated
+  const needsUpdate = !existingProgress ||
+    existingProgress.firstAssetAdded !== dataProgress.firstAssetAdded ||
+    existingProgress.firstTeamMemberInvited !== dataProgress.firstTeamMemberInvited ||
+    existingProgress.logoUploaded !== dataProgress.logoUploaded ||
+    existingProgress.brandingConfigured !== dataProgress.brandingConfigured;
+
+  let progress = existingProgress;
+  if (needsUpdate) {
+    progress = await prisma.organizationSetupProgress.upsert({
+      where: { organizationId: tenantId },
+      create: {
+        organizationId: tenantId,
+        ...dataProgress,
+      },
+      update: dataProgress,
+    });
   }
 
   if (!progress) {
@@ -211,12 +221,5 @@ export const CHECKLIST_ITEMS = [
     description: 'Bring your team on board',
     link: '/admin/employees',
     icon: 'UserPlus',
-  },
-  {
-    field: 'firstEmployeeAdded' as const,
-    title: 'Add your first employee',
-    description: 'Create your first employee record',
-    link: '/admin/employees/new',
-    icon: 'Users',
   },
 ];
