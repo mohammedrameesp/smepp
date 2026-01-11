@@ -2910,19 +2910,7 @@
                     </ul>
                 </div>
 
-                <div class="subsection">
-                    <div class="subsection-header">
-                        <span>Enums - Cost Type</span>
-                    </div>
-                    <ul class="checklist">
-                        <li><input type="checkbox" id="c1066" onchange="updateProgress()"><label for="c1066">Valid cost types: OPERATING_COST, PROJECT_COST</label></li>
-                        <li><input type="checkbox" id="c1067" onchange="updateProgress()"><label for="c1067">Invalid cost type rejected (e.g., &quot;CAPITAL_COST&quot;)</label></li>
-                        <li><input type="checkbox" id="c1068" onchange="updateProgress()"><label for="c1068">Defaults to OPERATING_COST</label></li>
-                        <li><input type="checkbox" id="c1069" onchange="updateProgress()"><label for="c1069">**RULE: If costType=PROJECT_COST, projectName is required**</label></li>
-                        <li><input type="checkbox" id="c1070" onchange="updateProgress()"><label for="c1070">Empty projectName with PROJECT_COST rejected</label></li>
-                        <li><input type="checkbox" id="c1071" onchange="updateProgress()"><label for="c1071">projectName not required when OPERATING_COST</label></li>
-                    </ul>
-                </div>
+                <!-- Cost Type removed from UI - defaults to OPERATING_COST server-side -->
 
                 <div class="subsection">
                     <div class="subsection-header">
@@ -3053,7 +3041,6 @@
                         <li><input type="checkbox" id="c1128" onchange="updateProgress()"><label for="c1128">Filter by status</label></li>
                         <li><input type="checkbox" id="c1129" onchange="updateProgress()"><label for="c1129">Filter by priority</label></li>
                         <li><input type="checkbox" id="c1130" onchange="updateProgress()"><label for="c1130">Filter by purchase type</label></li>
-                        <li><input type="checkbox" id="c1131" onchange="updateProgress()"><label for="c1131">Filter by cost type</label></li>
                         <li><input type="checkbox" id="c1132" onchange="updateProgress()"><label for="c1132">Non-admin: only see own requests</label></li>
                         <li><input type="checkbox" id="c1133" onchange="updateProgress()"><label for="c1133">Pagination with sorting</label></li>
                     </ul>
@@ -4618,13 +4605,12 @@
                         <span>24.1 Setup Progress Tracking</span>
                     </div>
                     <ul class="checklist">
-                        <li><input type="checkbox" id="c1624" onchange="updateProgress()"><label for="c1624">Track 6 setup steps in OrganizationSetupProgress model</label></li>
+                        <li><input type="checkbox" id="c1624" onchange="updateProgress()"><label for="c1624">Track 5 setup steps in OrganizationSetupProgress model</label></li>
                         <li><input type="checkbox" id="c1625" onchange="updateProgress()"><label for="c1625">profileComplete: organization name &gt; 2 characters</label></li>
                         <li><input type="checkbox" id="c1626" onchange="updateProgress()"><label for="c1626">logoUploaded: logoUrl is not null</label></li>
                         <li><input type="checkbox" id="c1627" onchange="updateProgress()"><label for="c1627">brandingConfigured: primaryColor is set</label></li>
                         <li><input type="checkbox" id="c1628" onchange="updateProgress()"><label for="c1628">firstAssetAdded: asset count &gt; 0</label></li>
                         <li><input type="checkbox" id="c1629" onchange="updateProgress()"><label for="c1629">firstTeamMemberInvited: member count &gt; 1 (owner + 1)</label></li>
-                        <li><input type="checkbox" id="c1630" onchange="updateProgress()"><label for="c1630">firstEmployeeAdded: employee count &gt; 0</label></li>
                     </ul>
                 </div>
 
@@ -4633,7 +4619,7 @@
                         <span>24.2 Progress Calculation</span>
                     </div>
                     <ul class="checklist">
-                        <li><input type="checkbox" id="c1631" onchange="updateProgress()"><label for="c1631">Percentage = (completed steps / 6) * 100</label></li>
+                        <li><input type="checkbox" id="c1631" onchange="updateProgress()"><label for="c1631">Percentage = (completed steps / 5) * 100</label></li>
                         <li><input type="checkbox" id="c1632" onchange="updateProgress()"><label for="c1632">Returns isComplete = true when 100%</label></li>
                         <li><input type="checkbox" id="c1633" onchange="updateProgress()"><label for="c1633">Progress can be inferred from actual data if no record exists</label></li>
                         <li><input type="checkbox" id="c1634" onchange="updateProgress()"><label for="c1634">Supports re-calculation on data changes</label></li>
@@ -10028,14 +10014,7 @@
                     </ul>
                 </div>
 
-                <div class="subsection">
-                    <div class="subsection-header">
-                        <span>COST_TYPES</span>
-                    </div>
-                    <ul class="checklist">
-                        <li><input type="checkbox" id="c3263" onchange="updateProgress()"><label for="c3263">**2 cost types:** OPERATING_COST, PROJECT_COST</label></li>
-                    </ul>
-                </div>
+                <!-- COST_TYPES removed from UI - defaults to OPERATING_COST server-side -->
 
                 <div class="subsection">
                     <div class="subsection-header">
@@ -10082,16 +10061,7 @@
                     </ul>
                 </div>
 
-                <div class="subsection">
-                    <div class="subsection-header">
-                        <span>getCostTypeLabel</span>
-                    </div>
-                    <ul class="checklist">
-                        <li><input type="checkbox" id="c3276" onchange="updateProgress()"><label for="c3276">OPERATING_COST → &quot;Operating Cost&quot;</label></li>
-                        <li><input type="checkbox" id="c3277" onchange="updateProgress()"><label for="c3277">PROJECT_COST → &quot;Project Cost&quot;</label></li>
-                        <li><input type="checkbox" id="c3278" onchange="updateProgress()"><label for="c3278">**Unknown type → returns input value**</label></li>
-                    </ul>
-                </div>
+                <!-- getCostTypeLabel removed - cost type not used in UI -->
 
                 <div class="subsection">
                     <div class="subsection-header">
