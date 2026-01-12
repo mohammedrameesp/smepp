@@ -68,8 +68,8 @@ const optionalDateString = z.string().optional().nullable().or(z.literal(''));
 export const hrProfileSchema = z.object({
   // Personal Information
   dateOfBirth: optionalDateString,
-  gender: optionalString,
-  maritalStatus: optionalString,
+  gender: z.string().optional().nullable().transform((val) => val ? val.toUpperCase() : val),
+  maritalStatus: z.string().optional().nullable().transform((val) => val ? val.toUpperCase() : val),
   nationality: optionalString,
 
   // Contact Information
