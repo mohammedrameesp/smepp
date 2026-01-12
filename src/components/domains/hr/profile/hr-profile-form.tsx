@@ -5,7 +5,7 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -24,6 +24,7 @@ import { ChevronDown, ChevronUp, User, Phone, AlertTriangle, CreditCard, Briefca
 import { hrProfileSchema, type HRProfileInput } from '@/features/employees/validations/hr-profile';
 import {
   COUNTRIES,
+  COUNTRY_CODES,
   QATAR_BANKS,
   RELATIONSHIPS,
   QUALIFICATIONS,
@@ -36,6 +37,33 @@ import { PhoneInput, QatarPhoneInput } from './phone-input';
 import { DocumentUpload } from './document-upload';
 import { MultiSelectTags, TagsInput } from './multi-select-tags';
 import { ExpiryBadge, ExpiryIndicator } from './expiry-badge';
+
+/**
+ * Get the phone country code for a given nationality.
+ * Handles common naming differences between COUNTRIES and COUNTRY_CODES.
+ */
+function getCountryCodeFromNationality(nationality: string | null | undefined): string | null {
+  if (!nationality) return null;
+
+  // Normalize for matching
+  const normalizedNationality = nationality.toLowerCase().trim();
+
+  // Handle common naming differences
+  const nationalityToCountryMap: Record<string, string> = {
+    'united kingdom': 'uk',
+    'united states': 'usa/canada',
+    'united arab emirates': 'uae',
+  };
+
+  const mappedCountry = nationalityToCountryMap[normalizedNationality];
+
+  const match = COUNTRY_CODES.find((c) => {
+    const countryLower = c.country.toLowerCase();
+    return countryLower === normalizedNationality || countryLower === mappedCountry;
+  });
+
+  return match?.code || null;
+}
 
 interface HRProfileFormProps {
   initialData?: Partial<HRProfileInput> & { workEmail?: string; isAdmin?: boolean; userId?: string };
@@ -137,6 +165,23 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
   const healthCardExpiry = watch('healthCardExpiry');
   const licenseExpiry = watch('licenseExpiry');
   const contractExpiry = watch('contractExpiry');
+  const nationality = watch('nationality');
+  const otherMobileCode = watch('otherMobileCode');
+  const homeEmergencyPhoneCode = watch('homeEmergencyPhoneCode');
+
+  // Update phone country codes when nationality changes
+  useEffect(() => {
+    const countryCode = getCountryCodeFromNationality(nationality);
+    if (countryCode) {
+      // Only update if the current codes are defaults or empty
+      if (!otherMobileCode || otherMobileCode === '+91') {
+        setValue('otherMobileCode', countryCode, { shouldDirty: true });
+      }
+      if (!homeEmergencyPhoneCode || homeEmergencyPhoneCode === '+91') {
+        setValue('homeEmergencyPhoneCode', countryCode, { shouldDirty: true });
+      }
+    }
+  }, [nationality, otherMobileCode, homeEmergencyPhoneCode, setValue]);
 
   const toggleSection = (section: string) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));

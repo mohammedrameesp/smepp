@@ -20,6 +20,34 @@ import { ContactEmergencyStep } from './components/steps/ContactEmergencyStep';
 import { IdentificationStep } from './components/steps/IdentificationStep';
 import { BankingDocumentsStep } from './components/steps/BankingDocumentsStep';
 import { ReviewStep } from './components/steps/ReviewStep';
+import { COUNTRY_CODES } from '@/lib/data/constants';
+
+/**
+ * Get the phone country code for a given nationality.
+ * Handles common naming differences between COUNTRIES and COUNTRY_CODES.
+ */
+function getCountryCodeFromNationality(nationality: string | null): string | null {
+  if (!nationality) return null;
+
+  // Normalize for matching
+  const normalizedNationality = nationality.toLowerCase().trim();
+
+  // Handle common naming differences
+  const nationalityToCountryMap: Record<string, string> = {
+    'united kingdom': 'uk',
+    'united states': 'usa/canada',
+    'united arab emirates': 'uae',
+  };
+
+  const mappedCountry = nationalityToCountryMap[normalizedNationality];
+
+  const match = COUNTRY_CODES.find((c) => {
+    const countryLower = c.country.toLowerCase();
+    return countryLower === normalizedNationality || countryLower === mappedCountry;
+  });
+
+  return match?.code || null;
+}
 
 const STEPS = [
   { title: 'Personal', description: 'Basic information' },
@@ -194,6 +222,28 @@ export function EmployeeOnboardingClient() {
       router.push('/login');
     }
   }, [status, router]);
+
+  // Update phone country codes when nationality changes
+  useEffect(() => {
+    const countryCode = getCountryCodeFromNationality(formData.nationality);
+    if (countryCode) {
+      setFormData((prev) => {
+        // Only update if the current codes are defaults or empty
+        const shouldUpdateOtherMobile = !prev.otherMobileCode || prev.otherMobileCode === '+91';
+        const shouldUpdateHomeEmergency = !prev.homeEmergencyPhoneCode || prev.homeEmergencyPhoneCode === '+91';
+
+        if (!shouldUpdateOtherMobile && !shouldUpdateHomeEmergency) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          ...(shouldUpdateOtherMobile && { otherMobileCode: countryCode }),
+          ...(shouldUpdateHomeEmergency && { homeEmergencyPhoneCode: countryCode }),
+        };
+      });
+    }
+  }, [formData.nationality]);
 
   // Update field helper
   const updateField = useCallback((field: string, value: unknown) => {
