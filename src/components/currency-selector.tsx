@@ -24,19 +24,38 @@ export function CurrencySelector({
 }: CurrencySelectorProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
-  // Filter currencies based on search (exclude QAR as it's always primary)
-  const filteredCurrencies = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const query = searchQuery.toLowerCase();
+  // Get all available currencies (exclude QAR and already selected)
+  const availableCurrencies = useMemo(() => {
     return ALL_CURRENCIES.filter(
       (c) =>
         c.code !== 'QAR' &&
-        !selectedCurrencies.includes(c.code) &&
-        (c.code.toLowerCase().includes(query) ||
-          c.name.toLowerCase().includes(query))
-    ).slice(0, 6);
-  }, [searchQuery, selectedCurrencies]);
+        !selectedCurrencies.includes(c.code)
+    );
+  }, [selectedCurrencies]);
+
+  // Filter currencies based on search
+  const filteredCurrencies = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+
+    // If searching, filter by query
+    if (query) {
+      return availableCurrencies.filter(
+        (c) =>
+          c.code.toLowerCase().includes(query) ||
+          c.name.toLowerCase().includes(query)
+      ).slice(0, 8);
+    }
+
+    // If showAll, return all available
+    if (showAll) {
+      return availableCurrencies;
+    }
+
+    // Default: show first 10
+    return availableCurrencies.slice(0, 10);
+  }, [searchQuery, availableCurrencies, showAll]);
 
   // Get suggested currencies that haven't been added yet
   const availableSuggestions = useMemo(() => {
@@ -107,7 +126,7 @@ export function CurrencySelector({
 
           {/* Search dropdown */}
           {showDropdown && filteredCurrencies.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 py-1 max-h-48 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 py-1 max-h-64 overflow-y-auto">
               {filteredCurrencies.map((currency) => (
                 <button
                   key={currency.code}
@@ -127,6 +146,16 @@ export function CurrencySelector({
                   <Plus className="w-4 h-4 text-slate-400" />
                 </button>
               ))}
+              {/* Show more button when not searching and more currencies available */}
+              {!searchQuery.trim() && !showAll && availableCurrencies.length > 10 && (
+                <button
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowAll(true)}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors border-t border-slate-100"
+                >
+                  Show all {availableCurrencies.length} currencies
+                </button>
+              )}
             </div>
           )}
         </div>
