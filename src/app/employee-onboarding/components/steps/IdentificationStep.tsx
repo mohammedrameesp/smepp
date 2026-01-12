@@ -28,7 +28,7 @@ const formatDateForPicker = (date: Date | string | null | undefined): string => 
 
 export function IdentificationStep({ formData, updateField, errors }: IdentificationStepProps) {
   return (
-    <div className="max-w-xl mx-auto">
+    <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
         <div className="h-16 w-16 rounded-2xl bg-purple-100 flex items-center justify-center mx-auto mb-4">
           <CreditCard className="h-8 w-8 text-purple-600" />

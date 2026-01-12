@@ -516,7 +516,7 @@ export function EmployeeOnboardingClient() {
           </StepTransition>
 
           {/* Navigation */}
-          <div className="flex justify-between mt-8 max-w-lg mx-auto">
+          <div className="flex justify-between mt-8 max-w-2xl mx-auto">
             {currentStep > 1 ? (
               <Button
                 variant="ghost"

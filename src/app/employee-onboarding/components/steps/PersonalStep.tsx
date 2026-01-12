@@ -26,7 +26,7 @@ const formatDateForPicker = (date: Date | string | null | undefined): string => 
 
 export function PersonalStep({ formData, updateField, errors }: PersonalStepProps) {
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
         <div className="h-16 w-16 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-4">
           <User className="h-8 w-8 text-blue-600" />
