@@ -28,8 +28,23 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { NotificationBell } from '@/features/notifications/components';
 import { FeedbackTrigger } from '@/components/feedback/feedback-trigger';
+import { ClientOnly } from '@/components/ui/client-only';
 import { cn } from '@/lib/core/utils';
 import { Button } from '@/components/ui/button';
+
+// Fallback avatar button shown during SSR to prevent layout shift
+function UserAvatarFallback({ initials }: { initials: string }) {
+  return (
+    <div
+      className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center ring-2 ring-slate-700"
+      aria-label="User menu"
+    >
+      <span className="text-white text-xs font-medium" aria-hidden="true">
+        {initials}
+      </span>
+    </div>
+  );
+}
 
 interface EmployeeTopNavProps {
   enabledModules?: string[];
@@ -127,66 +142,74 @@ export function EmployeeTopNav({ enabledModules = [], isAdminInEmployeeView = fa
             <NotificationBell />
 
             {/* User Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center cursor-pointer outline-none ring-2 ring-slate-700">
-                <span className="text-white text-xs font-medium">
-                  {session?.user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-                </span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-2">
-                  <p className="font-medium text-slate-900 text-sm">{session?.user?.name || 'User'}</p>
-                  <p className="text-xs text-slate-500">{session?.user?.email}</p>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
-                    <User className="h-4 w-4 text-slate-400" />
-                    My Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {isModuleEnabled('assets') && (
+            <ClientOnly
+              fallback={
+                <UserAvatarFallback
+                  initials={session?.user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                />
+              }
+            >
+              <DropdownMenu>
+                <DropdownMenuTrigger className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center cursor-pointer outline-none ring-2 ring-slate-700">
+                  <span className="text-white text-xs font-medium">
+                    {session?.user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                  </span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-2">
+                    <p className="font-medium text-slate-900 text-sm">{session?.user?.name || 'User'}</p>
+                    <p className="text-xs text-slate-500">{session?.user?.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/employee/my-assets" className="flex items-center gap-2 cursor-pointer">
-                      <Package className="h-4 w-4 text-slate-400" />
-                      My Holdings
+                    <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                      <User className="h-4 w-4 text-slate-400" />
+                      My Profile
                     </Link>
                   </DropdownMenuItem>
-                )}
-                {isModuleEnabled('leave') && (
+                  <DropdownMenuSeparator />
+                  {isModuleEnabled('assets') && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/employee/my-assets" className="flex items-center gap-2 cursor-pointer">
+                        <Package className="h-4 w-4 text-slate-400" />
+                        My Holdings
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {isModuleEnabled('leave') && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/employee/leave" className="flex items-center gap-2 cursor-pointer">
+                        <PalmtreeIcon className="h-4 w-4 text-slate-400" />
+                        Leave Requests
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {isModuleEnabled('purchase-requests') && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/employee/purchase-requests" className="flex items-center gap-2 cursor-pointer">
+                        <ShoppingCart className="h-4 w-4 text-slate-400" />
+                        Purchase Requests
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/employee/leave" className="flex items-center gap-2 cursor-pointer">
-                      <PalmtreeIcon className="h-4 w-4 text-slate-400" />
-                      Leave Requests
+                    <Link href="/help" className="flex items-center gap-2 cursor-pointer">
+                      <HelpCircle className="h-4 w-4 text-slate-400" />
+                      Help & Support
                     </Link>
                   </DropdownMenuItem>
-                )}
-                {isModuleEnabled('purchase-requests') && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/employee/purchase-requests" className="flex items-center gap-2 cursor-pointer">
-                      <ShoppingCart className="h-4 w-4 text-slate-400" />
-                      Purchase Requests
-                    </Link>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    className="flex items-center gap-2 cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/help" className="flex items-center gap-2 cursor-pointer">
-                    <HelpCircle className="h-4 w-4 text-slate-400" />
-                    Help & Support
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => signOut({ callbackUrl: '/login' })}
-                  className="flex items-center gap-2 cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </ClientOnly>
           </div>
         </div>
       </div>

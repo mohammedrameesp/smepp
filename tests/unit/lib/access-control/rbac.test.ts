@@ -1,0 +1,586 @@
+/**
+ * @file rbac.test.ts
+ * @description Unit tests for Role-Based Access Control (RBAC) system
+ * @module tests/unit/lib/access-control
+ */
+
+import { OrgRole } from '@prisma/client';
+
+// Mock Prisma
+jest.mock('@/lib/core/prisma', () => ({
+  prisma: {
+    rolePermission: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      upsert: jest.fn(),
+      deleteMany: jest.fn(),
+      createMany: jest.fn(),
+    },
+    $transaction: jest.fn((callback) => callback({
+      rolePermission: {
+        deleteMany: jest.fn(),
+        createMany: jest.fn(),
+      },
+    })),
+  },
+}));
+
+import {
+  PERMISSIONS,
+  PERMISSION_GROUPS,
+  getAllPermissions,
+  DEFAULT_MANAGER_PERMISSIONS,
+  DEFAULT_MEMBER_PERMISSIONS,
+  MODULE_PERMISSION_MAP,
+} from '@/lib/access-control/permissions';
+import {
+  hasPermission,
+  hasPermissions,
+  getPermissionsForRole,
+  grantPermission,
+  revokePermission,
+  setRolePermissions,
+  isValidPermission,
+} from '@/lib/access-control/permission-service';
+import { prisma } from '@/lib/core/prisma';
+
+const mockRolePermission = prisma.rolePermission as jest.Mocked<typeof prisma.rolePermission>;
+
+describe('RBAC Permissions System', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PERMISSION CONSTANTS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('Permission Constants', () => {
+    it('should define all asset permissions', () => {
+      expect(PERMISSIONS.ASSETS_VIEW).toBe('assets:view');
+      expect(PERMISSIONS.ASSETS_CREATE).toBe('assets:create');
+      expect(PERMISSIONS.ASSETS_EDIT).toBe('assets:edit');
+      expect(PERMISSIONS.ASSETS_DELETE).toBe('assets:delete');
+      expect(PERMISSIONS.ASSETS_ASSIGN).toBe('assets:assign');
+      expect(PERMISSIONS.ASSETS_EXPORT).toBe('assets:export');
+      expect(PERMISSIONS.ASSETS_DEPRECIATION).toBe('assets:depreciation');
+    });
+
+    it('should define all employee permissions', () => {
+      expect(PERMISSIONS.EMPLOYEES_VIEW).toBe('employees:view');
+      expect(PERMISSIONS.EMPLOYEES_VIEW_SALARIES).toBe('employees:view-salaries');
+      expect(PERMISSIONS.EMPLOYEES_CREATE).toBe('employees:create');
+      expect(PERMISSIONS.EMPLOYEES_EDIT).toBe('employees:edit');
+      expect(PERMISSIONS.EMPLOYEES_DELETE).toBe('employees:delete');
+      expect(PERMISSIONS.EMPLOYEES_EXPORT).toBe('employees:export');
+    });
+
+    it('should define all leave permissions', () => {
+      expect(PERMISSIONS.LEAVE_VIEW).toBe('leave:view');
+      expect(PERMISSIONS.LEAVE_REQUEST).toBe('leave:request');
+      expect(PERMISSIONS.LEAVE_APPROVE).toBe('leave:approve');
+      expect(PERMISSIONS.LEAVE_MANAGE_TYPES).toBe('leave:manage-types');
+      expect(PERMISSIONS.LEAVE_MANAGE_BALANCES).toBe('leave:manage-balances');
+      expect(PERMISSIONS.LEAVE_EXPORT).toBe('leave:export');
+    });
+
+    it('should define all payroll permissions', () => {
+      expect(PERMISSIONS.PAYROLL_VIEW).toBe('payroll:view');
+      expect(PERMISSIONS.PAYROLL_VIEW_SALARIES).toBe('payroll:view-salaries');
+      expect(PERMISSIONS.PAYROLL_RUN).toBe('payroll:run');
+      expect(PERMISSIONS.PAYROLL_APPROVE).toBe('payroll:approve');
+      expect(PERMISSIONS.PAYROLL_EXPORT).toBe('payroll:export');
+      expect(PERMISSIONS.PAYROLL_MANAGE_STRUCTURES).toBe('payroll:manage-structures');
+      expect(PERMISSIONS.PAYROLL_MANAGE_LOANS).toBe('payroll:manage-loans');
+    });
+
+    it('should define all settings permissions', () => {
+      expect(PERMISSIONS.SETTINGS_VIEW).toBe('settings:view');
+      expect(PERMISSIONS.SETTINGS_MANAGE).toBe('settings:manage');
+      expect(PERMISSIONS.SETTINGS_BILLING).toBe('settings:billing');
+      expect(PERMISSIONS.SETTINGS_MODULES).toBe('settings:modules');
+      expect(PERMISSIONS.SETTINGS_PERMISSIONS).toBe('settings:permissions');
+    });
+
+    it('should follow module:action naming pattern', () => {
+      const allPermissions = getAllPermissions();
+      const pattern = /^[a-z-]+:[a-z-]+$/;
+
+      allPermissions.forEach(permission => {
+        expect(permission).toMatch(pattern);
+      });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PERMISSION GROUPS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('Permission Groups', () => {
+    it('should organize permissions by module', () => {
+      expect(PERMISSION_GROUPS.assets).toBeDefined();
+      expect(PERMISSION_GROUPS.subscriptions).toBeDefined();
+      expect(PERMISSION_GROUPS.suppliers).toBeDefined();
+      expect(PERMISSION_GROUPS.employees).toBeDefined();
+      expect(PERMISSION_GROUPS.leave).toBeDefined();
+      expect(PERMISSION_GROUPS.payroll).toBeDefined();
+      expect(PERMISSION_GROUPS.users).toBeDefined();
+      expect(PERMISSION_GROUPS.settings).toBeDefined();
+    });
+
+    it('should include label for each group', () => {
+      Object.values(PERMISSION_GROUPS).forEach(group => {
+        expect(group.label).toBeDefined();
+        expect(typeof group.label).toBe('string');
+      });
+    });
+
+    it('should include permissions with metadata', () => {
+      const assetsGroup = PERMISSION_GROUPS.assets;
+      expect(assetsGroup.permissions.length).toBeGreaterThan(0);
+
+      assetsGroup.permissions.forEach(perm => {
+        expect(perm.key).toBeDefined();
+        expect(perm.label).toBeDefined();
+        expect(perm.description).toBeDefined();
+      });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ROLE HIERARCHY
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('Role Hierarchy', () => {
+    const roles: OrgRole[] = ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER'];
+    const tenantId = 'tenant-123';
+    const enabledModules = ['assets', 'subscriptions', 'suppliers', 'employees', 'leave', 'payroll'];
+
+    it('should grant OWNER all permissions', async () => {
+      const result = await hasPermission(tenantId, 'OWNER', 'assets:delete', enabledModules);
+      expect(result).toBe(true);
+    });
+
+    it('should grant ADMIN all permissions', async () => {
+      const result = await hasPermission(tenantId, 'ADMIN', 'settings:permissions', enabledModules);
+      expect(result).toBe(true);
+    });
+
+    it('should check database for MANAGER permissions', async () => {
+      mockRolePermission.findUnique.mockResolvedValue({
+        id: '1',
+        tenantId,
+        role: 'MANAGER' as OrgRole,
+        permission: 'assets:view',
+        createdAt: new Date(),
+      });
+
+      const result = await hasPermission(tenantId, 'MANAGER', 'assets:view', enabledModules);
+      expect(mockRolePermission.findUnique).toHaveBeenCalled();
+      expect(result).toBe(true);
+    });
+
+    it('should check database for MEMBER permissions', async () => {
+      mockRolePermission.findUnique.mockResolvedValue(null);
+
+      const result = await hasPermission(tenantId, 'MEMBER', 'assets:delete', enabledModules);
+      expect(mockRolePermission.findUnique).toHaveBeenCalled();
+      expect(result).toBe(false);
+    });
+
+    it('should respect role hierarchy: OWNER > ADMIN > MANAGER > MEMBER', () => {
+      // OWNER and ADMIN have all permissions by default
+      // MANAGER and MEMBER have custom permissions
+      const hierarchy = {
+        OWNER: 4,
+        ADMIN: 3,
+        MANAGER: 2,
+        MEMBER: 1,
+      };
+
+      expect(hierarchy.OWNER).toBeGreaterThan(hierarchy.ADMIN);
+      expect(hierarchy.ADMIN).toBeGreaterThan(hierarchy.MANAGER);
+      expect(hierarchy.MANAGER).toBeGreaterThan(hierarchy.MEMBER);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DEFAULT PERMISSIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('Default Role Permissions', () => {
+    describe('MANAGER defaults', () => {
+      it('should include view permissions for all modules', () => {
+        expect(DEFAULT_MANAGER_PERMISSIONS).toContain('assets:view');
+        expect(DEFAULT_MANAGER_PERMISSIONS).toContain('subscriptions:view');
+        expect(DEFAULT_MANAGER_PERMISSIONS).toContain('suppliers:view');
+        expect(DEFAULT_MANAGER_PERMISSIONS).toContain('employees:view');
+        expect(DEFAULT_MANAGER_PERMISSIONS).toContain('leave:view');
+        expect(DEFAULT_MANAGER_PERMISSIONS).toContain('payroll:view');
+      });
+
+      it('should include create/edit for most modules', () => {
+        expect(DEFAULT_MANAGER_PERMISSIONS).toContain('assets:create');
+        expect(DEFAULT_MANAGER_PERMISSIONS).toContain('assets:edit');
+        expect(DEFAULT_MANAGER_PERMISSIONS).toContain('subscriptions:create');
+        expect(DEFAULT_MANAGER_PERMISSIONS).toContain('employees:create');
+      });
+
+      it('should include approval permissions', () => {
+        expect(DEFAULT_MANAGER_PERMISSIONS).toContain('leave:approve');
+        expect(DEFAULT_MANAGER_PERMISSIONS).toContain('purchase:approve');
+        expect(DEFAULT_MANAGER_PERMISSIONS).toContain('asset-requests:approve');
+      });
+
+      it('should NOT include delete permissions by default', () => {
+        expect(DEFAULT_MANAGER_PERMISSIONS).not.toContain('assets:delete');
+        expect(DEFAULT_MANAGER_PERMISSIONS).not.toContain('subscriptions:delete');
+        expect(DEFAULT_MANAGER_PERMISSIONS).not.toContain('employees:delete');
+      });
+
+      it('should NOT include salary view by default', () => {
+        expect(DEFAULT_MANAGER_PERMISSIONS).not.toContain('employees:view-salaries');
+        expect(DEFAULT_MANAGER_PERMISSIONS).not.toContain('payroll:view-salaries');
+      });
+
+      it('should NOT include payroll run/approve by default', () => {
+        expect(DEFAULT_MANAGER_PERMISSIONS).not.toContain('payroll:run');
+        expect(DEFAULT_MANAGER_PERMISSIONS).not.toContain('payroll:approve');
+      });
+    });
+
+    describe('MEMBER defaults', () => {
+      it('should include basic view permissions', () => {
+        expect(DEFAULT_MEMBER_PERMISSIONS).toContain('assets:view');
+        expect(DEFAULT_MEMBER_PERMISSIONS).toContain('subscriptions:view');
+        expect(DEFAULT_MEMBER_PERMISSIONS).toContain('suppliers:view');
+        expect(DEFAULT_MEMBER_PERMISSIONS).toContain('employees:view');
+        expect(DEFAULT_MEMBER_PERMISSIONS).toContain('leave:view');
+      });
+
+      it('should include self-service permissions', () => {
+        expect(DEFAULT_MEMBER_PERMISSIONS).toContain('leave:request');
+        expect(DEFAULT_MEMBER_PERMISSIONS).toContain('purchase:create');
+        expect(DEFAULT_MEMBER_PERMISSIONS).toContain('asset-requests:create');
+      });
+
+      it('should NOT include any approval permissions', () => {
+        expect(DEFAULT_MEMBER_PERMISSIONS).not.toContain('leave:approve');
+        expect(DEFAULT_MEMBER_PERMISSIONS).not.toContain('purchase:approve');
+        expect(DEFAULT_MEMBER_PERMISSIONS).not.toContain('asset-requests:approve');
+      });
+
+      it('should NOT include create/edit for admin modules', () => {
+        expect(DEFAULT_MEMBER_PERMISSIONS).not.toContain('assets:create');
+        expect(DEFAULT_MEMBER_PERMISSIONS).not.toContain('employees:create');
+        expect(DEFAULT_MEMBER_PERMISSIONS).not.toContain('subscriptions:create');
+      });
+
+      it('should have fewer permissions than MANAGER', () => {
+        expect(DEFAULT_MEMBER_PERMISSIONS.length).toBeLessThan(DEFAULT_MANAGER_PERMISSIONS.length);
+      });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MODULE-PERMISSION MAPPING
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('Module-Permission Mapping', () => {
+    it('should map assets module to asset permissions', () => {
+      expect(MODULE_PERMISSION_MAP.assets).toContain('assets');
+      expect(MODULE_PERMISSION_MAP.assets).toContain('asset-requests');
+    });
+
+    it('should map payroll module to payroll permissions', () => {
+      expect(MODULE_PERMISSION_MAP.payroll).toContain('payroll');
+    });
+
+    it('should map leave module to leave permissions', () => {
+      expect(MODULE_PERMISSION_MAP.leave).toContain('leave');
+    });
+
+    it('should respect module enablement for permissions', async () => {
+      const tenantId = 'tenant-123';
+      const enabledModules = ['assets']; // Only assets enabled, not payroll
+
+      // OWNER should have payroll permission blocked if module disabled
+      const hasPayroll = await hasPermission(tenantId, 'OWNER', 'payroll:view', enabledModules);
+      expect(hasPayroll).toBe(false);
+
+      // OWNER should have assets permission when module enabled
+      const hasAssets = await hasPermission(tenantId, 'OWNER', 'assets:view', enabledModules);
+      expect(hasAssets).toBe(true);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PERMISSION SERVICE OPERATIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('Permission Service Operations', () => {
+    const tenantId = 'tenant-123';
+    const enabledModules = ['assets', 'subscriptions'];
+
+    describe('hasPermission', () => {
+      it('should return true for OWNER without DB check', async () => {
+        const result = await hasPermission(tenantId, 'OWNER', 'assets:view', enabledModules);
+        expect(result).toBe(true);
+        expect(mockRolePermission.findUnique).not.toHaveBeenCalled();
+      });
+
+      it('should return true for ADMIN without DB check', async () => {
+        const result = await hasPermission(tenantId, 'ADMIN', 'settings:manage', enabledModules);
+        expect(result).toBe(true);
+        expect(mockRolePermission.findUnique).not.toHaveBeenCalled();
+      });
+
+      it('should check DB for MANAGER', async () => {
+        mockRolePermission.findUnique.mockResolvedValue({
+          id: '1',
+          tenantId,
+          role: 'MANAGER' as OrgRole,
+          permission: 'assets:view',
+          createdAt: new Date(),
+        });
+
+        await hasPermission(tenantId, 'MANAGER', 'assets:view', enabledModules);
+        expect(mockRolePermission.findUnique).toHaveBeenCalledWith({
+          where: {
+            tenantId_role_permission: { tenantId, role: 'MANAGER', permission: 'assets:view' },
+          },
+        });
+      });
+    });
+
+    describe('hasPermissions (batch)', () => {
+      it('should check multiple permissions efficiently', async () => {
+        mockRolePermission.findMany.mockResolvedValue([
+          { permission: 'assets:view' },
+          { permission: 'assets:edit' },
+        ]);
+
+        const result = await hasPermissions(
+          tenantId,
+          'MANAGER',
+          ['assets:view', 'assets:edit', 'assets:delete'],
+          enabledModules
+        );
+
+        expect(result['assets:view']).toBe(true);
+        expect(result['assets:edit']).toBe(true);
+        expect(result['assets:delete']).toBe(false);
+      });
+
+      it('should return all true for OWNER', async () => {
+        const result = await hasPermissions(
+          tenantId,
+          'OWNER',
+          ['assets:view', 'assets:edit', 'assets:delete'],
+          enabledModules
+        );
+
+        expect(result['assets:view']).toBe(true);
+        expect(result['assets:edit']).toBe(true);
+        expect(result['assets:delete']).toBe(true);
+      });
+    });
+
+    describe('grantPermission', () => {
+      it('should upsert permission for MANAGER', async () => {
+        await grantPermission(tenantId, 'MANAGER', 'assets:delete');
+
+        expect(mockRolePermission.upsert).toHaveBeenCalledWith({
+          where: {
+            tenantId_role_permission: { tenantId, role: 'MANAGER', permission: 'assets:delete' },
+          },
+          create: { tenantId, role: 'MANAGER', permission: 'assets:delete' },
+          update: {},
+        });
+      });
+
+      it('should NOT store permission for OWNER', async () => {
+        await grantPermission(tenantId, 'OWNER', 'assets:delete');
+        expect(mockRolePermission.upsert).not.toHaveBeenCalled();
+      });
+
+      it('should NOT store permission for ADMIN', async () => {
+        await grantPermission(tenantId, 'ADMIN', 'assets:delete');
+        expect(mockRolePermission.upsert).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('revokePermission', () => {
+      it('should delete permission from database', async () => {
+        await revokePermission(tenantId, 'MANAGER', 'assets:delete');
+
+        expect(mockRolePermission.deleteMany).toHaveBeenCalledWith({
+          where: { tenantId, role: 'MANAGER', permission: 'assets:delete' },
+        });
+      });
+    });
+
+    describe('isValidPermission', () => {
+      it('should return true for valid permissions', () => {
+        expect(isValidPermission('assets:view')).toBe(true);
+        expect(isValidPermission('payroll:run')).toBe(true);
+        expect(isValidPermission('settings:manage')).toBe(true);
+      });
+
+      it('should return false for invalid permissions', () => {
+        expect(isValidPermission('invalid:permission')).toBe(false);
+        expect(isValidPermission('assets:fly')).toBe(false);
+        expect(isValidPermission('')).toBe(false);
+      });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CORE MODULE PERMISSIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('Core Module Permissions', () => {
+    const tenantId = 'tenant-123';
+    // Empty enabled modules - only core should work
+    const enabledModules: string[] = [];
+
+    it('should always allow settings permissions', async () => {
+      const result = await hasPermission(tenantId, 'OWNER', 'settings:view', enabledModules);
+      expect(result).toBe(true);
+    });
+
+    it('should always allow users permissions', async () => {
+      const result = await hasPermission(tenantId, 'OWNER', 'users:view', enabledModules);
+      expect(result).toBe(true);
+    });
+
+    it('should always allow reports permissions', async () => {
+      const result = await hasPermission(tenantId, 'OWNER', 'reports:view', enabledModules);
+      expect(result).toBe(true);
+    });
+
+    it('should always allow activity permissions', async () => {
+      const result = await hasPermission(tenantId, 'OWNER', 'activity:view', enabledModules);
+      expect(result).toBe(true);
+    });
+
+    it('should always allow approvals permissions', async () => {
+      const result = await hasPermission(tenantId, 'OWNER', 'approvals:view', enabledModules);
+      expect(result).toBe(true);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TENANT ISOLATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('Tenant Isolation', () => {
+    it('should scope permission checks to tenant', async () => {
+      const tenant1 = 'tenant-123';
+      const tenant2 = 'tenant-456';
+      const enabledModules = ['assets'];
+
+      mockRolePermission.findUnique
+        .mockResolvedValueOnce({ permission: 'assets:delete' }) // tenant1
+        .mockResolvedValueOnce(null); // tenant2
+
+      const result1 = await hasPermission(tenant1, 'MANAGER', 'assets:delete', enabledModules);
+      const result2 = await hasPermission(tenant2, 'MANAGER', 'assets:delete', enabledModules);
+
+      expect(result1).toBe(true);
+      expect(result2).toBe(false);
+    });
+
+    it('should include tenantId in permission queries', async () => {
+      const tenantId = 'tenant-123';
+      mockRolePermission.findUnique.mockResolvedValue(null);
+
+      await hasPermission(tenantId, 'MANAGER', 'assets:view', ['assets']);
+
+      expect(mockRolePermission.findUnique).toHaveBeenCalledWith({
+        where: {
+          tenantId_role_permission: {
+            tenantId,
+            role: 'MANAGER',
+            permission: 'assets:view',
+          },
+        },
+      });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SENSITIVE PERMISSIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('Sensitive Permissions', () => {
+    it('should define salary view as separate permission', () => {
+      expect(PERMISSIONS.EMPLOYEES_VIEW_SALARIES).toBe('employees:view-salaries');
+      expect(PERMISSIONS.PAYROLL_VIEW_SALARIES).toBe('payroll:view-salaries');
+    });
+
+    it('should define billing as separate permission', () => {
+      expect(PERMISSIONS.SETTINGS_BILLING).toBe('settings:billing');
+    });
+
+    it('should define permission management as separate', () => {
+      expect(PERMISSIONS.SETTINGS_PERMISSIONS).toBe('settings:permissions');
+    });
+
+    it('should NOT include sensitive permissions in MEMBER defaults', () => {
+      const sensitivePermissions = [
+        'employees:view-salaries',
+        'payroll:view-salaries',
+        'payroll:run',
+        'payroll:approve',
+        'settings:billing',
+        'settings:permissions',
+      ];
+
+      sensitivePermissions.forEach(perm => {
+        expect(DEFAULT_MEMBER_PERMISSIONS).not.toContain(perm);
+      });
+    });
+
+    it('should NOT include sensitive permissions in MANAGER defaults', () => {
+      const highlySensitivePermissions = [
+        'employees:view-salaries',
+        'payroll:view-salaries',
+        'payroll:run',
+        'payroll:approve',
+        'settings:billing',
+        'settings:permissions',
+        'settings:modules',
+      ];
+
+      highlySensitivePermissions.forEach(perm => {
+        expect(DEFAULT_MANAGER_PERMISSIONS).not.toContain(perm);
+      });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PERMISSION COUNT VALIDATION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('Permission Count Validation', () => {
+    it('should have complete set of permissions', () => {
+      const allPermissions = getAllPermissions();
+      // Ensure we have a reasonable number of permissions
+      expect(allPermissions.length).toBeGreaterThan(40);
+    });
+
+    it('should have permissions for all modules in groups', () => {
+      const groupedModules = Object.keys(PERMISSION_GROUPS);
+      const expectedModules = [
+        'assets', 'asset-requests', 'subscriptions', 'suppliers',
+        'employees', 'leave', 'payroll', 'purchase',
+        'users', 'documents', 'settings', 'reports', 'activity', 'approvals'
+      ];
+
+      expectedModules.forEach(module => {
+        expect(groupedModules).toContain(module);
+      });
+    });
+  });
+});

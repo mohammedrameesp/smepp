@@ -30,9 +30,24 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { NotificationBell } from '@/features/notifications/components';
 import { FeedbackTrigger } from '@/components/feedback/feedback-trigger';
+import { ClientOnly } from '@/components/ui/client-only';
 import { type BadgeCounts } from '@/components/layout/badge-types';
 import { cn } from '@/lib/core/utils';
 import { Button } from '@/components/ui/button';
+
+// Fallback avatar button shown during SSR to prevent layout shift
+function UserAvatarFallback({ initials }: { initials: string }) {
+  return (
+    <div
+      className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center ring-2 ring-slate-700"
+      aria-label="User menu"
+    >
+      <span className="text-white text-xs font-medium" aria-hidden="true">
+        {initials}
+      </span>
+    </div>
+  );
+}
 
 interface AdminTopNavProps {
   badgeCounts?: BadgeCounts;
@@ -167,68 +182,76 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
               <NotificationBell />
 
               {/* User Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center cursor-pointer outline-none ring-2 ring-slate-700"
-                  aria-label="User menu"
-                >
-                  <span className="text-white text-xs font-medium" aria-hidden="true">
-                    {session?.user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-                  </span>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-2 py-2">
-                    <p className="font-medium text-slate-900 text-sm">{session?.user?.name || 'User'}</p>
-                    <p className="text-xs text-slate-500">{session?.user?.email}</p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
-                      <User className="h-4 w-4 text-slate-400" />
-                      Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/settings" className="flex items-center gap-2 cursor-pointer">
-                      <Settings className="h-4 w-4 text-slate-400" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/organization" className="flex items-center gap-2 cursor-pointer">
-                      <Building2 className="h-4 w-4 text-slate-400" />
-                      Organization
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/reports" className="flex items-center gap-2 cursor-pointer">
-                      <BarChart3 className="h-4 w-4 text-slate-400" />
-                      Reports
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin/activity" className="flex items-center gap-2 cursor-pointer">
-                      <Activity className="h-4 w-4 text-slate-400" />
-                      Activity Log
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/help" className="flex items-center gap-2 cursor-pointer">
-                      <HelpCircle className="h-4 w-4 text-slate-400" />
-                      Help & Support
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => signOut({ callbackUrl: '/login' })}
-                    className="flex items-center gap-2 cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
+              <ClientOnly
+                fallback={
+                  <UserAvatarFallback
+                    initials={session?.user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                  />
+                }
+              >
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center cursor-pointer outline-none ring-2 ring-slate-700"
+                    aria-label="User menu"
                   >
-                    <LogOut className="h-4 w-4" />
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <span className="text-white text-xs font-medium" aria-hidden="true">
+                      {session?.user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                    </span>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-2 py-2">
+                      <p className="font-medium text-slate-900 text-sm">{session?.user?.name || 'User'}</p>
+                      <p className="text-xs text-slate-500">{session?.user?.email}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="flex items-center gap-2 cursor-pointer">
+                        <User className="h-4 w-4 text-slate-400" />
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/settings" className="flex items-center gap-2 cursor-pointer">
+                        <Settings className="h-4 w-4 text-slate-400" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/organization" className="flex items-center gap-2 cursor-pointer">
+                        <Building2 className="h-4 w-4 text-slate-400" />
+                        Organization
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/reports" className="flex items-center gap-2 cursor-pointer">
+                        <BarChart3 className="h-4 w-4 text-slate-400" />
+                        Reports
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/activity" className="flex items-center gap-2 cursor-pointer">
+                        <Activity className="h-4 w-4 text-slate-400" />
+                        Activity Log
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/help" className="flex items-center gap-2 cursor-pointer">
+                        <HelpCircle className="h-4 w-4 text-slate-400" />
+                        Help & Support
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => signOut({ callbackUrl: '/login' })}
+                      className="flex items-center gap-2 cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </ClientOnly>
             </div>
           </div>
         </div>
