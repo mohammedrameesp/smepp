@@ -55,6 +55,66 @@ export const DEFAULT_RATES_TO_QAR: Record<string, number> = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// CURRENCY METADATA (for UI display)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface CurrencyInfo {
+  code: string;
+  name: string;
+  flag: string;
+}
+
+/**
+ * All supported currencies with display metadata.
+ * QAR is first as it's the primary/base currency.
+ */
+export const ALL_CURRENCIES: CurrencyInfo[] = [
+  { code: 'QAR', name: 'Qatari Riyal', flag: '🇶🇦' },
+  { code: 'USD', name: 'US Dollar', flag: '🇺🇸' },
+  { code: 'EUR', name: 'Euro', flag: '🇪🇺' },
+  { code: 'GBP', name: 'British Pound', flag: '🇬🇧' },
+  { code: 'SAR', name: 'Saudi Riyal', flag: '🇸🇦' },
+  { code: 'AED', name: 'UAE Dirham', flag: '🇦🇪' },
+  { code: 'KWD', name: 'Kuwaiti Dinar', flag: '🇰🇼' },
+  { code: 'BHD', name: 'Bahraini Dinar', flag: '🇧🇭' },
+  { code: 'OMR', name: 'Omani Rial', flag: '🇴🇲' },
+  { code: 'INR', name: 'Indian Rupee', flag: '🇮🇳' },
+  { code: 'PKR', name: 'Pakistani Rupee', flag: '🇵🇰' },
+  { code: 'PHP', name: 'Philippine Peso', flag: '🇵🇭' },
+  { code: 'BDT', name: 'Bangladeshi Taka', flag: '🇧🇩' },
+  { code: 'NPR', name: 'Nepalese Rupee', flag: '🇳🇵' },
+  { code: 'LKR', name: 'Sri Lankan Rupee', flag: '🇱🇰' },
+  { code: 'EGP', name: 'Egyptian Pound', flag: '🇪🇬' },
+  { code: 'JOD', name: 'Jordanian Dinar', flag: '🇯🇴' },
+  { code: 'CNY', name: 'Chinese Yuan', flag: '🇨🇳' },
+  { code: 'JPY', name: 'Japanese Yen', flag: '🇯🇵' },
+  { code: 'AUD', name: 'Australian Dollar', flag: '🇦🇺' },
+  { code: 'CAD', name: 'Canadian Dollar', flag: '🇨🇦' },
+  { code: 'CHF', name: 'Swiss Franc', flag: '🇨🇭' },
+  { code: 'SGD', name: 'Singapore Dollar', flag: '🇸🇬' },
+  { code: 'MYR', name: 'Malaysian Ringgit', flag: '🇲🇾' },
+  { code: 'THB', name: 'Thai Baht', flag: '🇹🇭' },
+  { code: 'IDR', name: 'Indonesian Rupiah', flag: '🇮🇩' },
+  { code: 'ZAR', name: 'South African Rand', flag: '🇿🇦' },
+  { code: 'TRY', name: 'Turkish Lira', flag: '🇹🇷' },
+  { code: 'RUB', name: 'Russian Ruble', flag: '🇷🇺' },
+  { code: 'BRL', name: 'Brazilian Real', flag: '🇧🇷' },
+  { code: 'MXN', name: 'Mexican Peso', flag: '🇲🇽' },
+];
+
+/**
+ * Currency lookup map for O(1) access by code.
+ */
+export const CURRENCY_MAP: Record<string, CurrencyInfo> = Object.fromEntries(
+  ALL_CURRENCIES.map((c) => [c.code, c])
+);
+
+/**
+ * Suggested currencies for quick selection (GCC region + USD).
+ */
+export const SUGGESTED_CURRENCIES = ['USD', 'SAR', 'AED', 'KWD', 'BHD', 'OMR'];
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // CACHE
 // ═══════════════════════════════════════════════════════════════════════════════
 

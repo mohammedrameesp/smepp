@@ -31,6 +31,7 @@ import {
 import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
 import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings, LocationsSettings, ExchangeRateSettings, PayrollSettings } from '@/features/settings/components';
+import { CurrencySelector } from '@/components/currency-selector';
 import type { OrgRole } from '@prisma/client';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
 
@@ -61,15 +62,6 @@ interface OrganizationTabsProps {
 
 // Constants
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
-
-const AVAILABLE_CURRENCIES = [
-  { code: 'USD', name: 'US Dollar' },
-  { code: 'EUR', name: 'Euro' },
-  { code: 'GBP', name: 'British Pound' },
-  { code: 'SAR', name: 'Saudi Riyal' },
-  { code: 'AED', name: 'UAE Dirham' },
-  { code: 'KWD', name: 'Kuwaiti Dinar' },
-];
 
 const AVAILABLE_MODULES = [
   { id: 'assets', name: 'Assets', description: 'Track company assets' },
@@ -288,12 +280,6 @@ export function OrganizationTabs({
       setUploadingLogo(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
-  }
-
-  function toggleCurrency(code: string) {
-    setAdditionalCurrencies(prev =>
-      prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
-    );
   }
 
   function toggleModule(id: string) {
@@ -738,30 +724,12 @@ export function OrganizationTabs({
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {AVAILABLE_CURRENCIES.map((currency) => (
-                      <label
-                        key={currency.code}
-                        className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
-                          additionalCurrencies.includes(currency.code)
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'hover:bg-muted'
-                        } ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={additionalCurrencies.includes(currency.code)}
-                          onChange={() => toggleCurrency(currency.code)}
-                          disabled={!isAdmin}
-                          className="h-4 w-4 rounded border-gray-300"
-                        />
-                        <div>
-                          <p className="font-medium">{currency.code}</p>
-                          <p className="text-xs text-muted-foreground">{currency.name}</p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
+                  <CurrencySelector
+                    selectedCurrencies={additionalCurrencies}
+                    onChange={setAdditionalCurrencies}
+                    disabled={!isAdmin}
+                    showSuggestions={true}
+                  />
                 </CardContent>
               </Card>
 
