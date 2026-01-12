@@ -1243,7 +1243,11 @@
                     <ul class="checklist">
                         <li><input type="checkbox" id="c413" onchange="updateProgress()"><label for="c413">Date of birth optional (ISO date)</label></li>
                         <li><input type="checkbox" id="c414" onchange="updateProgress()"><label for="c414">Gender optional</label></li>
+                        <li><input type="checkbox" id="c414a" onchange="updateProgress()"><label for="c414a">Gender transformed to uppercase for Prisma enum (e.g., "Male" → "MALE")</label></li>
+                        <li><input type="checkbox" id="c414b" onchange="updateProgress()"><label for="c414b">Gender accepts: MALE, FEMALE (case-insensitive input)</label></li>
                         <li><input type="checkbox" id="c415" onchange="updateProgress()"><label for="c415">Marital status optional</label></li>
+                        <li><input type="checkbox" id="c415a" onchange="updateProgress()"><label for="c415a">Marital status transformed to uppercase for Prisma enum (e.g., "Single" → "SINGLE")</label></li>
+                        <li><input type="checkbox" id="c415b" onchange="updateProgress()"><label for="c415b">Marital status accepts: SINGLE, MARRIED, DIVORCED, WIDOWED (case-insensitive input)</label></li>
                         <li><input type="checkbox" id="c416" onchange="updateProgress()"><label for="c416">Nationality optional</label></li>
                     </ul>
                 </div>
@@ -1399,6 +1403,28 @@
                     </ul>
                 </div>
 
+                <div class="subsection">
+                    <div class="subsection-header">
+                        <span>5.13 Nationality-Based Country Code Auto-Population</span>
+                    </div>
+                    <ul class="checklist">
+                        <li><input type="checkbox" id="c487a" onchange="updateProgress()"><label for="c487a">When nationality is selected, "Other Mobile" country code auto-updates to match</label></li>
+                        <li><input type="checkbox" id="c487b" onchange="updateProgress()"><label for="c487b">When nationality is selected, "Home Emergency Phone" country code auto-updates to match</label></li>
+                        <li><input type="checkbox" id="c487c" onchange="updateProgress()"><label for="c487c">Auto-update only happens if current code is default (+91) or empty</label></li>
+                        <li><input type="checkbox" id="c487d" onchange="updateProgress()"><label for="c487d">User-selected country codes are NOT overwritten by nationality change</label></li>
+                        <li><input type="checkbox" id="c487e" onchange="updateProgress()"><label for="c487e">Pakistan nationality → +92 country code</label></li>
+                        <li><input type="checkbox" id="c487f" onchange="updateProgress()"><label for="c487f">India nationality → +91 country code</label></li>
+                        <li><input type="checkbox" id="c487g" onchange="updateProgress()"><label for="c487g">Philippines nationality → +63 country code</label></li>
+                        <li><input type="checkbox" id="c487h" onchange="updateProgress()"><label for="c487h">Bangladesh nationality → +880 country code</label></li>
+                        <li><input type="checkbox" id="c487i" onchange="updateProgress()"><label for="c487i">Nepal nationality → +977 country code</label></li>
+                        <li><input type="checkbox" id="c487j" onchange="updateProgress()"><label for="c487j">Sri Lanka nationality → +94 country code</label></li>
+                        <li><input type="checkbox" id="c487k" onchange="updateProgress()"><label for="c487k">United Kingdom nationality → +44 country code (handles "UK" mapping)</label></li>
+                        <li><input type="checkbox" id="c487l" onchange="updateProgress()"><label for="c487l">United States nationality → +1 country code (handles "USA/Canada" mapping)</label></li>
+                        <li><input type="checkbox" id="c487m" onchange="updateProgress()"><label for="c487m">United Arab Emirates nationality → +971 country code (handles "UAE" mapping)</label></li>
+                        <li><input type="checkbox" id="c487n" onchange="updateProgress()"><label for="c487n">Works in Employee Onboarding wizard (EmployeeOnboardingClient.tsx)</label></li>
+                        <li><input type="checkbox" id="c487o" onchange="updateProgress()"><label for="c487o">Works in Admin HR Profile form (hr-profile-form.tsx)</label></li>
+                    </ul>
+                </div>
 
                 <div class="subsection">
                     <div class="subsection-header">
