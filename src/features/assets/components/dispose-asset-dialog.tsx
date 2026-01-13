@@ -95,7 +95,6 @@ import {
   TrendingUp,
   TrendingDown,
   Loader2,
-  DollarSign,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
@@ -554,8 +553,8 @@ export function DisposeAssetDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {DISPOSAL_METHODS.map((method) => (
-                    <SelectItem key={method.value} value={method.value}>
-                      <div>
+                    <SelectItem key={method.value} value={method.value} className="text-left">
+                      <div className="text-left">
                         <div className="font-medium">{method.label}</div>
                         <div className="text-xs text-muted-foreground">{method.description}</div>
                       </div>
@@ -571,7 +570,7 @@ export function DisposeAssetDialog({
                 Proceeds (QAR) {disposalMethod === 'SOLD' && '*'}
               </Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <span className="absolute left-3 top-2.5 text-xs font-medium text-muted-foreground" aria-hidden="true">QAR</span>
                 <Input
                   id="disposalProceeds"
                   type="number"
@@ -580,7 +579,7 @@ export function DisposeAssetDialog({
                   step="0.01"
                   value={disposalProceeds}
                   onChange={(e) => setDisposalProceeds(e.target.value)}
-                  className="pl-9"
+                  className="pl-12"
                   placeholder="0.00"
                   aria-required={disposalMethod === 'SOLD'}
                   aria-invalid={!!proceedsError || isSoldWithoutProceeds}
