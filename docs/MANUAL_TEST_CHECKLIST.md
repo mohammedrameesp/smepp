@@ -582,10 +582,8 @@ Cross-module workflows and E2E scenarios
 - [ ] Email failure falls back to admin notification
 
 ## 4.4 Asset Unassignment (Check-out)
-- [ ] Admin can unassign asset
+- [ ] Admin can unassign asset directly (no approval needed)
 - [ ] Validates asset is currently assigned
-- [ ] Creates PENDING_RETURN_APPROVAL if workflow enabled
-- [ ] Direct unassign if no approval workflow
 - [ ] Unassignment sets status to SPARE
 - [ ] Unassignment creates AssetHistory entry
 - [ ] Unassignment sends notification to previous assignee

@@ -133,32 +133,33 @@ export function AdminRequestActions({ requestId, type, status }: AdminRequestAct
   const dialogContent = getDialogContent();
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2">
       {canProcess && (
         <>
-          <Button
-            variant="outline"
+          <button
             onClick={() => setAction('reject')}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-transparent text-slate-300 hover:text-white border border-slate-500 hover:border-slate-400 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-slate-400"
           >
-            <XCircle className="h-4 w-4 mr-2" />
+            <XCircle className="h-4 w-4" />
             Reject
-          </Button>
-          <Button onClick={() => setAction('approve')}>
-            <CheckCircle className="h-4 w-4 mr-2" />
+          </button>
+          <button
+            onClick={() => setAction('approve')}
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-emerald-600 text-white hover:bg-emerald-700 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-emerald-500"
+          >
+            <CheckCircle className="h-4 w-4" />
             Approve {actionLabel}
-          </Button>
+          </button>
         </>
       )}
       {canRevoke && (
-        <Button
-          variant="outline"
+        <button
           onClick={() => setAction('revoke')}
-          className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-transparent text-slate-300 hover:text-white border border-slate-500 hover:border-slate-400 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-slate-400"
         >
-          <Ban className="h-4 w-4 mr-2" />
+          <Ban className="h-4 w-4" />
           Revoke Assignment
-        </Button>
+        </button>
       )}
 
       <Dialog open={action !== null} onOpenChange={(open) => !open && setAction(null)}>

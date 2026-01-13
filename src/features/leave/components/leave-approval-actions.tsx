@@ -73,20 +73,20 @@ export function LeaveApprovalActions({ requestId, onApproved, onRejected }: Leav
   return (
     <>
       <div className="flex gap-2">
-        <Button
+        <button
           onClick={() => setApproveOpen(true)}
-          className="bg-green-600 hover:bg-green-700"
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-emerald-600 text-white hover:bg-emerald-700 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-emerald-500"
         >
-          <CheckCircle className="h-4 w-4 mr-2" />
+          <CheckCircle className="h-4 w-4" />
           Approve
-        </Button>
-        <Button
-          variant="destructive"
+        </button>
+        <button
           onClick={() => setRejectOpen(true)}
+          className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-red-600 text-white hover:bg-red-700 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-red-500"
         >
-          <XCircle className="h-4 w-4 mr-2" />
+          <XCircle className="h-4 w-4" />
           Reject
-        </Button>
+        </button>
       </div>
 
       {/* Approve Dialog */}
