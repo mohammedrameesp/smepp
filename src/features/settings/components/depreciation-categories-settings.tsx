@@ -101,6 +101,7 @@ export function DepreciationCategoriesSettings({
   const [createUsefulLifeYears, setCreateUsefulLifeYears] = useState('');
   const [createDescription, setCreateDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [createErrors, setCreateErrors] = useState<{ code?: string; name?: string; rate?: string }>({});
 
   // Edit dialog state
   const [editCategory, setEditCategory] = useState<DepreciationCategory | null>(null);
@@ -193,8 +194,35 @@ export function DepreciationCategoriesSettings({
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!createCode || !createName || !createAnnualRate) return;
 
+    // Client-side validation
+    const errors: { code?: string; name?: string; rate?: string } = {};
+
+    if (!createCode || createCode.length < 2) {
+      errors.code = 'Code must be at least 2 characters';
+    } else if (!/^[A-Z0-9_]+$/.test(createCode)) {
+      errors.code = 'Code must be uppercase letters, numbers, and underscores only';
+    }
+
+    if (!createName || createName.length < 2) {
+      errors.name = 'Name must be at least 2 characters';
+    }
+
+    if (!createAnnualRate) {
+      errors.rate = 'Annual rate is required';
+    } else {
+      const rateNum = parseFloat(createAnnualRate);
+      if (isNaN(rateNum) || rateNum < 0 || rateNum > 100) {
+        errors.rate = 'Rate must be between 0 and 100';
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setCreateErrors(errors);
+      return;
+    }
+
+    setCreateErrors({});
     setIsCreating(true);
     try {
       const rate = parseFloat(createAnnualRate);
@@ -209,7 +237,7 @@ export function DepreciationCategoriesSettings({
           name: createName,
           annualRate: rate,
           usefulLifeYears: isFinite(usefulLife) ? usefulLife : 0,
-          description: createDescription || null,
+          ...(createDescription ? { description: createDescription } : {}),
         }),
       });
 
@@ -220,7 +248,13 @@ export function DepreciationCategoriesSettings({
         fetchCategories();
       } else {
         const data = await response.json();
-        toast.error(data.error || 'Failed to create category');
+        // Show detailed validation errors if available
+        if (data.details && Array.isArray(data.details)) {
+          const errorMessages = data.details.map((d: { message: string }) => d.message).join(', ');
+          toast.error(errorMessages);
+        } else {
+          toast.error(data.error || 'Failed to create category');
+        }
       }
     } catch (error) {
       console.error('Error creating category:', error);
@@ -236,6 +270,7 @@ export function DepreciationCategoriesSettings({
     setCreateAnnualRate('');
     setCreateUsefulLifeYears('');
     setCreateDescription('');
+    setCreateErrors({});
   }
 
   async function handleUpdate(e: React.FormEvent) {
@@ -256,7 +291,7 @@ export function DepreciationCategoriesSettings({
           name: editName,
           annualRate: rate,
           usefulLifeYears: isFinite(usefulLife) ? usefulLife : 0,
-          description: editDescription || null,
+          ...(editDescription ? { description: editDescription } : {}),
         }),
       });
 
@@ -535,21 +570,28 @@ export function DepreciationCategoriesSettings({
                   <Input
                     id="create-code"
                     value={createCode}
-                    onChange={(e) => setCreateCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ''))}
+                    onChange={(e) => {
+                      setCreateCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ''));
+                      if (createErrors.code) setCreateErrors((prev) => ({ ...prev, code: undefined }));
+                    }}
                     placeholder="e.g., IT_EQUIPMENT"
-                    className="uppercase font-mono"
-                    required
+                    className={`uppercase font-mono ${createErrors.code ? 'border-red-500' : ''}`}
                   />
+                  {createErrors.code && <p className="text-xs text-red-500">{createErrors.code}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="create-name">Name *</Label>
                   <Input
                     id="create-name"
                     value={createName}
-                    onChange={(e) => setCreateName(e.target.value)}
+                    onChange={(e) => {
+                      setCreateName(e.target.value);
+                      if (createErrors.name) setCreateErrors((prev) => ({ ...prev, name: undefined }));
+                    }}
                     placeholder="e.g., Computers & IT"
-                    required
+                    className={createErrors.name ? 'border-red-500' : ''}
                   />
+                  {createErrors.name && <p className="text-xs text-red-500">{createErrors.name}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -562,19 +604,21 @@ export function DepreciationCategoriesSettings({
                     min="0"
                     max="100"
                     value={createAnnualRate}
-                    onChange={(e) =>
-                      handleRateChange(e.target.value, setCreateAnnualRate, setCreateUsefulLifeYears)
-                    }
+                    onChange={(e) => {
+                      handleRateChange(e.target.value, setCreateAnnualRate, setCreateUsefulLifeYears);
+                      if (createErrors.rate) setCreateErrors((prev) => ({ ...prev, rate: undefined }));
+                    }}
                     placeholder="e.g., 20.00"
-                    required
+                    className={createErrors.rate ? 'border-red-500' : ''}
                   />
+                  {createErrors.rate && <p className="text-xs text-red-500">{createErrors.rate}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="create-life">Useful Life (years)</Label>
                   <Input
                     id="create-life"
                     type="number"
-                    min="1"
+                    min="0"
                     max="100"
                     value={createUsefulLifeYears}
                     onChange={(e) =>
@@ -585,7 +629,7 @@ export function DepreciationCategoriesSettings({
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="create-description">Description</Label>
+                <Label htmlFor="create-description">Description (optional)</Label>
                 <Input
                   id="create-description"
                   value={createDescription}
