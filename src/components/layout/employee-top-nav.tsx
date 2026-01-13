@@ -89,11 +89,14 @@ export function EmployeeTopNav({ enabledModules = [], isAdminInEmployeeView = fa
           {/* Left: Logo + Org Name */}
           <div className="flex items-center gap-6">
             <Link href="/employee" className="flex items-center gap-3">
-              {/* Use inverted logo for dark background, fallback to regular logo, then default */}
-              {session?.user?.organizationLogoUrlInverse ? (
-                <img src={session.user.organizationLogoUrlInverse} alt={session.user.organizationName || 'Organization'} className="h-7 w-auto max-w-[120px] object-contain" />
-              ) : session?.user?.organizationLogoUrl ? (
-                <img src={session.user.organizationLogoUrl} alt={session.user.organizationName || 'Organization'} className="h-7 w-auto max-w-[120px] object-contain" />
+              {/* Use inverted logo for dark background, with CSS filter fallback */}
+              {session?.user?.organizationLogoUrl ? (
+                <img
+                  src={session.user.organizationLogoUrlInverse || session.user.organizationLogoUrl}
+                  alt={session.user.organizationName || 'Organization'}
+                  className="h-7 w-auto max-w-[120px] object-contain"
+                  style={!session.user.organizationLogoUrlInverse ? { filter: 'brightness(0) invert(1)' } : undefined}
+                />
               ) : (
                 <img src="/sme-wordmark-white.png" alt="Durj" className="h-7 w-auto" />
               )}
