@@ -61,7 +61,6 @@ interface Location {
 }
 
 interface LocationsSettingsProps {
-  organizationId: string;
   isAdmin?: boolean;
 }
 

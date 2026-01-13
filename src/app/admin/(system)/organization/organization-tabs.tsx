@@ -640,7 +640,6 @@ export function OrganizationTabs({
               {enabledModules.includes('assets') ? (
                 <>
                   <AssetCategoriesSettings
-                    organizationId={org.id}
                     codePrefix={codePrefix}
                     isAdmin={isAdmin}
                   />
@@ -649,7 +648,6 @@ export function OrganizationTabs({
                     isAdmin={isAdmin}
                   />
                   <DepreciationCategoriesSettings
-                    organizationId={org.id}
                     isAdmin={isAdmin}
                   />
 
@@ -693,7 +691,6 @@ export function OrganizationTabs({
                   {/* Locations - only show when multiple locations is enabled */}
                   {hasMultipleLocations && (
                     <LocationsSettings
-                      organizationId={org.id}
                       isAdmin={isAdmin}
                     />
                   )}

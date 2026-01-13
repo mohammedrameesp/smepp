@@ -42,8 +42,7 @@ import { z } from 'zod';
  * {
  *   code: "EV",
  *   name: "Electric Vehicles",
- *   description: "Electric cars and bikes",
- *   icon: "car"
+ *   description: "Electric cars and bikes"
  * }
  */
 export const createAssetCategorySchema = z.object({
@@ -62,8 +61,6 @@ export const createAssetCategorySchema = z.object({
   name: z.string().min(1, 'Name is required').max(50, 'Name must be at most 50 characters'),
   /** Category description with examples (optional, max 200 chars) */
   description: z.string().max(200, 'Description must be at most 200 characters').optional().nullable(),
-  /** Icon identifier for UI display (optional) */
-  icon: z.string().optional().nullable(),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -97,10 +94,6 @@ export const updateAssetCategorySchema = z.object({
   name: z.string().min(1, 'Name is required').max(50, 'Name must be at most 50 characters').optional(),
   /** Updated description */
   description: z.string().max(200, 'Description must be at most 200 characters').optional().nullable(),
-  /** Updated icon identifier */
-  icon: z.string().optional().nullable(),
-  /** Display order in category lists (0 = first) */
-  sortOrder: z.number().int().min(0).optional(),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

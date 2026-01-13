@@ -100,9 +100,6 @@ async function createAssetCategoryHandler(request: NextRequest, context: APICont
       code: data.code,
       name: data.name,
       description: data.description || null,
-      icon: data.icon || null,
-      isDefault: false,
-      isActive: true,
       sortOrder: (maxSortOrder._max.sortOrder ?? -1) + 1,
     },
   });

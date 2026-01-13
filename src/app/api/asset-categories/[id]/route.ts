@@ -115,8 +115,6 @@ async function updateAssetCategoryHandler(request: NextRequest, context: APICont
       ...(data.code !== undefined && { code: data.code }),
       ...(data.name !== undefined && { name: data.name }),
       ...(data.description !== undefined && { description: data.description }),
-      ...(data.icon !== undefined && { icon: data.icon }),
-      ...(data.sortOrder !== undefined && { sortOrder: data.sortOrder }),
     },
   });
 

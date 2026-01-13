@@ -77,7 +77,6 @@ interface DepreciationCategory {
 }
 
 interface DepreciationCategoriesSettingsProps {
-  organizationId: string;
   isAdmin?: boolean;
 }
 
@@ -133,13 +132,7 @@ export function DepreciationCategoriesSettings({
       const response = await fetch('/api/depreciation/categories');
       if (response.ok) {
         const data = await response.json();
-        const fetchedCategories = data.categories || [];
-        setCategories(fetchedCategories);
-
-        // Auto-seed defaults if no categories exist
-        if (fetchedCategories.length === 0 && isAdmin) {
-          await seedDefaultCategories();
-        }
+        setCategories(data.categories || []);
       } else {
         toast.error('Failed to load depreciation categories');
       }
@@ -149,7 +142,7 @@ export function DepreciationCategoriesSettings({
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, seedDefaultCategories]);
+  }, []);
 
   useEffect(() => {
     fetchCategories();

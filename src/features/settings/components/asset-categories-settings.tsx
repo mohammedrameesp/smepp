@@ -59,7 +59,6 @@ interface AssetCategory {
 }
 
 interface AssetCategoriesSettingsProps {
-  organizationId: string;
   codePrefix: string;
   isAdmin?: boolean;
 }
