@@ -2,6 +2,12 @@
  * @file route.ts
  * @description Cron job to permanently delete assets after 7-day retention period
  * @module api/cron/cleanup-deleted-assets
+ *
+ * @todo Add to vercel.json crons array:
+ * {
+ *   "path": "/api/cron/cleanup-deleted-assets",
+ *   "schedule": "0 3 * * *"
+ * }
  */
 
 import { NextRequest, NextResponse } from 'next/server';
