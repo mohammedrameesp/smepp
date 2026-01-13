@@ -48,14 +48,15 @@ import { z } from 'zod';
  */
 export const createAssetCategorySchema = z.object({
   /**
-   * 2-letter category code for asset tag generation.
-   * Must be exactly 2 uppercase letters (A-Z).
+   * 2-3 letter category code for asset tag generation.
+   * Must be 2-3 uppercase letters (A-Z).
    * Auto-transforms lowercase to uppercase.
    */
   code: z
     .string()
-    .length(2, 'Code must be exactly 2 characters')
-    .regex(/^[A-Za-z]{2}$/, 'Code must be 2 letters')
+    .min(2, 'Code must be at least 2 characters')
+    .max(3, 'Code must be at most 3 characters')
+    .regex(/^[A-Za-z]{2,3}$/, 'Code must be 2-3 letters only')
     .transform((val) => val.toUpperCase()),
   /** Human-readable category name (required, max 50 chars) */
   name: z.string().min(1, 'Name is required').max(50, 'Name must be at most 50 characters'),
@@ -83,13 +84,14 @@ export const createAssetCategorySchema = z.object({
  */
 export const updateAssetCategorySchema = z.object({
   /**
-   * 2-letter category code (optional for updates).
+   * 2-3 letter category code (optional for updates).
    * Changing code affects new asset tag generation only.
    */
   code: z
     .string()
-    .length(2, 'Code must be exactly 2 characters')
-    .regex(/^[A-Za-z]{2}$/, 'Code must be 2 letters')
+    .min(2, 'Code must be at least 2 characters')
+    .max(3, 'Code must be at most 3 characters')
+    .regex(/^[A-Za-z]{2,3}$/, 'Code must be 2-3 letters only')
     .transform((val) => val.toUpperCase())
     .optional(),
   /** Updated category name */

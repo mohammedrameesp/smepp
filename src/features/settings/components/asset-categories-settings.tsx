@@ -124,10 +124,10 @@ export function AssetCategoriesSettings({
 
     if (!createCode) {
       errors.code = 'Code is required';
-    } else if (createCode.length !== 2) {
-      errors.code = 'Code must be exactly 2 characters';
-    } else if (!/^[A-Za-z]{2}$/.test(createCode)) {
-      errors.code = 'Code must be 2 letters only';
+    } else if (createCode.length < 2 || createCode.length > 3) {
+      errors.code = 'Code must be 2-3 characters';
+    } else if (!/^[A-Za-z]{2,3}$/.test(createCode)) {
+      errors.code = 'Code must be 2-3 letters only';
     }
 
     if (!createName) {
@@ -186,10 +186,10 @@ export function AssetCategoriesSettings({
 
     if (!editCode) {
       errors.code = 'Code is required';
-    } else if (editCode.length !== 2) {
-      errors.code = 'Code must be exactly 2 characters';
-    } else if (!/^[A-Za-z]{2}$/.test(editCode)) {
-      errors.code = 'Code must be 2 letters only';
+    } else if (editCode.length < 2 || editCode.length > 3) {
+      errors.code = 'Code must be 2-3 characters';
+    } else if (!/^[A-Za-z]{2,3}$/.test(editCode)) {
+      errors.code = 'Code must be 2-3 letters only';
     }
 
     if (!editName) {
@@ -443,22 +443,22 @@ export function AssetCategoriesSettings({
           <DialogHeader>
             <DialogTitle>Add Asset Category</DialogTitle>
             <DialogDescription>
-              Create a new category with a 2-letter code for asset tagging
+              Create a new category with a 2-3 letter code for asset tagging
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCreate}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="create-code">Code (2 letters) *</Label>
+                <Label htmlFor="create-code">Code (2-3 letters) *</Label>
                 <Input
                   id="create-code"
                   value={createCode}
                   onChange={(e) => {
-                    setCreateCode(e.target.value.toUpperCase().slice(0, 2));
+                    setCreateCode(e.target.value.toUpperCase().slice(0, 3));
                     if (createErrors.code) setCreateErrors((prev) => ({ ...prev, code: undefined }));
                   }}
-                  placeholder="e.g., IT, HR, MK"
-                  maxLength={2}
+                  placeholder="e.g., IT, FUR, VEH"
+                  maxLength={3}
                   className={`uppercase font-mono ${createErrors.code ? 'border-destructive' : ''}`}
                 />
                 {createErrors.code ? (
@@ -529,15 +529,15 @@ export function AssetCategoriesSettings({
           <form onSubmit={handleUpdate}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-code">Code (2 letters) *</Label>
+                <Label htmlFor="edit-code">Code (2-3 letters) *</Label>
                 <Input
                   id="edit-code"
                   value={editCode}
                   onChange={(e) => {
-                    setEditCode(e.target.value.toUpperCase().slice(0, 2));
+                    setEditCode(e.target.value.toUpperCase().slice(0, 3));
                     if (editErrors.code) setEditErrors((prev) => ({ ...prev, code: undefined }));
                   }}
-                  maxLength={2}
+                  maxLength={3}
                   className={`uppercase font-mono ${editErrors.code ? 'border-destructive' : ''}`}
                 />
                 {editErrors.code && (
