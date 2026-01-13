@@ -42,13 +42,6 @@ test.describe('Settings Page', () => {
     await expect(page.locator('body')).not.toBeEmpty();
   });
 
-  test('should load delegations settings page', async ({ page }) => {
-    await page.goto('/admin/settings/delegations');
-
-    // Page should load without errors
-    await expect(page.locator('body')).not.toBeEmpty();
-  });
-
   test('should load AI usage settings page', async ({ page }) => {
     await page.goto('/admin/settings/ai-usage');
 

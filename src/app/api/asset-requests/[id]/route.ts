@@ -43,7 +43,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  * @returns {AssetRequest} Request with all related data and history
  *
  * @throws {400} ID is required
- * @throws {403} Organization context required
+ * @throws {403} Tenant context required
  * @throws {403} Access denied (non-admin viewing other's request)
  * @throws {404} Asset request not found
  *
@@ -64,7 +64,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 async function getAssetRequestHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;
@@ -171,7 +171,7 @@ export const GET = withErrorHandler(getAssetRequestHandler, { requireAuth: true,
  *
  * @throws {400} ID is required
  * @throws {400} Cannot cancel this request (invalid state)
- * @throws {403} Organization context required
+ * @throws {403} Tenant context required
  * @throws {404} Asset request not found
  *
  * @example Response:
@@ -180,7 +180,7 @@ export const GET = withErrorHandler(getAssetRequestHandler, { requireAuth: true,
 async function deleteAssetRequestHandler(request: NextRequest, context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;

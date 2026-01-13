@@ -67,7 +67,7 @@ async function updateApprovalPolicyHandler(request: NextRequest, context: APICon
   // Verify policy exists and belongs to tenant
   const existing = await db.approvalPolicy.findFirst({
     where: { id },
-    include: { levels: true },
+    select: { id: true },
   });
 
   if (!existing) {

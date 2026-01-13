@@ -56,7 +56,7 @@ import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
  *
  * @returns {Asset} Asset with assigned member info and assignment date
  *
- * @throws {403} Organization context required
+ * @throws {403} Tenant context required
  * @throws {400} ID is required
  * @throws {404} Asset not found
  * @throws {403} Forbidden (non-admin trying to view unassigned asset)
@@ -762,7 +762,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
  *
  * @returns {{ message: string, deletedAt: Date }} Success message with deletion timestamp
  *
- * @throws {403} Organization context required
+ * @throws {403} Tenant context required
  * @throws {400} ID is required / Asset is currently assigned
  * @throws {404} Asset not found
  *

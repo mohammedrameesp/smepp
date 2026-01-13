@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
   const authResult = verifyCronAuth(request);
   if (!authResult.valid) {
     logger.warn({ error: authResult.error }, 'Cron auth failed');
-    return NextResponse.json({ error: 'Unauthorized', details: authResult.error }, { status: 401 });
+    return NextResponse.json({ error: 'Authentication required', details: authResult.error }, { status: 401 });
   }
 
   logger.info('Starting scheduled backup job (4 AM Qatar time)');

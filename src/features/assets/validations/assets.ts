@@ -44,6 +44,8 @@
  */
 
 import { z } from 'zod';
+import { optionalString, optionalStringToNull } from '@/lib/validations/field-schemas';
+import { createQuerySchema } from '@/lib/validations/pagination-schema';
 import { AssetStatus } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -74,49 +76,49 @@ import { AssetStatus } from '@prisma/client';
  */
 export const createAssetSchema = z.object({
   /** Custom asset tag or auto-generated if empty (format: ORG-CAT-YYSEQ) */
-  assetTag: z.string().optional().nullable().or(z.literal('')),
+  assetTag: optionalString(),
   /** Asset type (e.g., "Laptop", "Monitor") - required for categorization */
   type: z.string().min(1, 'Type is required'),
   /** Category ID for tag generation and reporting (optional, auto-detected from type) */
-  categoryId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  categoryId: optionalStringToNull(),
   /** Manufacturer/brand name */
-  brand: z.string().optional().nullable().or(z.literal('')),
+  brand: optionalString(),
   /** Model name/number - required for identification */
   model: z.string().min(1, 'Model is required'),
   /** Serial number for warranty/tracking */
-  serial: z.string().optional().nullable().or(z.literal('')),
+  serial: optionalString(),
   /** Hardware configuration details (RAM, storage, etc.) */
-  configuration: z.string().optional().nullable().or(z.literal('')),
+  configuration: optionalString(),
   /** Date of purchase (ISO string) */
-  purchaseDate: z.string().optional().nullable().or(z.literal('')),
+  purchaseDate: optionalString(),
   /** Warranty expiration date (ISO string) */
-  warrantyExpiry: z.string().optional().nullable().or(z.literal('')),
+  warrantyExpiry: optionalString(),
   /** Supplier/vendor name */
-  supplier: z.string().optional().nullable().or(z.literal('')),
+  supplier: optionalString(),
   /** Purchase invoice/PO number */
-  invoiceNumber: z.string().optional().nullable().or(z.literal('')),
+  invoiceNumber: optionalString(),
   /** Purchase price in original currency */
   price: z.number().positive().optional().nullable(),
   /** Original price currency code (e.g., "USD", "QAR") */
-  priceCurrency: z.string().optional().nullable().or(z.literal('')),
+  priceCurrency: optionalString(),
   /** Price converted to QAR (auto-calculated at 3.65 rate for USD) */
   priceQAR: z.number().positive().optional().nullable(),
   /** Asset status (default: IN_USE) */
   status: z.nativeEnum(AssetStatus).default(AssetStatus.IN_USE),
   /** ID of assigned team member (required for IN_USE unless shared) */
-  assignedMemberId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  assignedMemberId: optionalStringToNull(),
   /** Date asset was assigned (required for IN_USE unless shared) */
-  assignmentDate: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  assignmentDate: optionalStringToNull(),
   /** Date of status change (for SPARE, REPAIR, etc.) */
-  statusChangeDate: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  statusChangeDate: optionalStringToNull(),
   /** Additional notes about the asset */
-  notes: z.string().optional().nullable().or(z.literal('')),
+  notes: optionalString(),
   /** Location ID (references Location model) */
-  locationId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  locationId: optionalStringToNull(),
   /** Whether asset is shared (no specific assignee) */
   isShared: z.boolean().default(false),
   /** Depreciation category ID for financial tracking */
-  depreciationCategoryId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  depreciationCategoryId: optionalStringToNull(),
 }).superRefine((data, ctx) => {
   // ─────────────────────────────────────────────────────────────────────────────
   // RULE: IN_USE non-shared assets require assignment
@@ -165,28 +167,28 @@ export const createAssetSchema = z.object({
  * Separating base from refinements allows partial updates.
  */
 const baseAssetSchema = z.object({
-  assetTag: z.string().optional().nullable().or(z.literal('')),
+  assetTag: optionalString(),
   type: z.string().min(1, 'Type is required'),
-  categoryId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
-  brand: z.string().optional().nullable().or(z.literal('')),
+  categoryId: optionalStringToNull(),
+  brand: optionalString(),
   model: z.string().min(1, 'Model is required'),
-  serial: z.string().optional().nullable().or(z.literal('')),
-  configuration: z.string().optional().nullable().or(z.literal('')),
-  purchaseDate: z.string().optional().nullable().or(z.literal('')),
-  warrantyExpiry: z.string().optional().nullable().or(z.literal('')),
-  supplier: z.string().optional().nullable().or(z.literal('')),
-  invoiceNumber: z.string().optional().nullable().or(z.literal('')),
+  serial: optionalString(),
+  configuration: optionalString(),
+  purchaseDate: optionalString(),
+  warrantyExpiry: optionalString(),
+  supplier: optionalString(),
+  invoiceNumber: optionalString(),
   price: z.number().positive().optional().nullable(),
-  priceCurrency: z.string().optional().nullable().or(z.literal('')),
+  priceCurrency: optionalString(),
   priceQAR: z.number().positive().optional().nullable(),
   status: z.nativeEnum(AssetStatus).optional(),
-  assignedMemberId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
-  assignmentDate: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
-  statusChangeDate: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
-  notes: z.string().optional().nullable().or(z.literal('')),
-  locationId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  assignedMemberId: optionalStringToNull(),
+  assignmentDate: optionalStringToNull(),
+  statusChangeDate: optionalStringToNull(),
+  notes: optionalString(),
+  locationId: optionalStringToNull(),
   isShared: z.boolean().optional(),
-  depreciationCategoryId: z.string().optional().nullable().or(z.literal('')).transform(val => val === '' ? null : val),
+  depreciationCategoryId: optionalStringToNull(),
 });
 
 /**

@@ -19,12 +19,12 @@ export async function GET(request: NextRequest) {
     // Check authentication and authorization
     const session = await getServerSession(authOptions);
     if (!session || session.user.teamMemberRole !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     // Require organization context for tenant isolation
     if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;

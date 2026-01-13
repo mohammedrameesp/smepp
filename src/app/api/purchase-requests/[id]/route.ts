@@ -92,7 +92,7 @@ async function updatePurchaseRequestHandler(request: NextRequest, context: APICo
     // Get current request within tenant
     const currentRequest = await db.purchaseRequest.findFirst({
       where: { id },
-      include: { items: true },
+      select: { id: true, status: true, requesterId: true, totalAmount: true, totalAmountQAR: true, purchaseType: true, referenceNumber: true, title: true },
     });
 
     if (!currentRequest) {

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     if (!session?.user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Authentication required' },
         { status: 401 }
       );
     }
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     const tenantId = session.user.organizationId;
     if (!tenantId) {
       return NextResponse.json(
-        { error: 'Organization context required' },
+        { error: 'Tenant context required' },
         { status: 403 }
       );
     }

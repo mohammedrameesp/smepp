@@ -17,11 +17,11 @@ export async function POST(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
     const userId = session.user.id;
@@ -101,11 +101,11 @@ export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     if (!session.user.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
     const userId = session.user.id;

@@ -1,12 +1,11 @@
 /**
  * @file approvals.ts
- * @description Validation schemas for multi-level approval workflows, policies, and delegations
+ * @description Validation schemas for multi-level approval workflows and policies
  * @module domains/system/approvals/validations
  *
  * FEATURES:
  * - Approval Policy management (create, update, configure levels)
  * - Approval Step processing (approve, reject)
- * - Approval Delegation (delegate approval authority during absence)
  *
  * MODULES SUPPORTED:
  * - LEAVE_REQUEST: Employee leave approvals (threshold: days)
@@ -173,63 +172,6 @@ export const processApprovalSchema = z.object({
 });
 
 export type ProcessApprovalInput = z.infer<typeof processApprovalSchema>;
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// DELEGATION SCHEMAS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Schema for creating an approval delegation.
- *
- * Delegations allow an approver to temporarily transfer their approval
- * authority to another user (e.g., during vacation or leave).
- *
- * @example
- * {
- *   delegateeId: "clx123...",
- *   startDate: "2024-03-01T00:00:00Z",
- *   endDate: "2024-03-15T00:00:00Z",
- *   reason: "Annual vacation"
- * }
- */
-export const createDelegationSchema = z.object({
-  /** ID of the user receiving delegation authority */
-  delegateeId: z.string().cuid('Invalid delegatee ID'),
-  /** Delegation start date (ISO datetime or Date) */
-  startDate: z.string().datetime().or(z.date()),
-  /** Delegation end date (ISO datetime or Date) */
-  endDate: z.string().datetime().or(z.date()),
-  /** Optional reason for delegation */
-  reason: z.string().max(255).optional(),
-}).refine(
-  (data) => {
-    const start = new Date(data.startDate);
-    const end = new Date(data.endDate);
-    return end > start;
-  },
-  {
-    message: 'End date must be after start date',
-    path: ['endDate'],
-  }
-);
-
-/**
- * Schema for updating a delegation.
- * Can extend/shorten dates or deactivate the delegation.
- */
-export const updateDelegationSchema = z.object({
-  /** Updated start date */
-  startDate: z.string().datetime().or(z.date()).optional(),
-  /** Updated end date */
-  endDate: z.string().datetime().or(z.date()).optional(),
-  /** Deactivate the delegation */
-  isActive: z.boolean().optional(),
-  /** Updated reason */
-  reason: z.string().max(255).optional(),
-});
-
-export type CreateDelegationInput = z.infer<typeof createDelegationSchema>;
-export type UpdateDelegationInput = z.infer<typeof updateDelegationSchema>;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // QUERY SCHEMAS

@@ -34,7 +34,7 @@ async function getCategoriesHandler(request: NextRequest, _context: APIContext) 
     }
 
     if (!tenantId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);

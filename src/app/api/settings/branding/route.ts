@@ -17,7 +17,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
-      return formatErrorResponse('Organization context required', 403);
+      return formatErrorResponse('Tenant context required', 403);
     }
 
     const org = await prisma.organization.findUnique({
@@ -51,7 +51,7 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
-      return formatErrorResponse('Organization context required', 403);
+      return formatErrorResponse('Tenant context required', 403);
     }
     if (session.user.teamMemberRole !== 'ADMIN') {
       return formatErrorResponse('Admin access required', 403);

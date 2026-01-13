@@ -67,8 +67,7 @@ Cross-module workflows and E2E scenarios
 
 ### Supporting Modules (Phase 3)
 11. [Approval Workflows](#section-11-approval-workflows)
-12. [Delegations Module](#section-12-delegations-module)
-13. [Notifications Module](#section-13-notifications-module)
+12. [Notifications Module](#section-12-notifications-module)
 14. [Organizations & Team Management](#section-14-organizations--team-management)
 15. [Company Documents Module](#section-15-company-documents-module)
 16. [Locations Module](#section-16-locations-module)
@@ -97,7 +96,6 @@ Cross-module workflows and E2E scenarios
 35. [Client-Side Caching](#section-35-client-side-caching)
 36. [Activity Logging Service](#section-36-activity-logging-service)
 37. [Impersonation Security](#section-37-impersonation-security)
-38. [Approval Delegation Details](#section-38-approval-delegation-details)
 
 ### New Sections (Added January 2026)
 76. [Chat / AI Integration](#section-76-chat--ai-integration)

@@ -19,6 +19,8 @@
  */
 
 import { z } from 'zod';
+import { approvalSchema, rejectionSchema, cancellationSchema } from '@/lib/validations/workflow-schemas';
+import { createQuerySchema } from '@/lib/validations/pagination-schema';
 import { LeaveStatus, LeaveRequestType, LeaveCategory } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { BillingCycle } from '@prisma/client';
-import { getNextRenewalDate } from '../../utils/renewal-date';
+import { getNextRenewalDate } from '../../lib/renewal-date';
 import { DatePicker } from '@/components/ui/date-picker';
 import { toInputDateString } from '@/lib/core/datetime';
 

@@ -241,34 +241,6 @@ test.describe('Settings & Configuration', () => {
     });
   });
 
-  test.describe('Delegations', () => {
-    test('Admin can view delegations', async ({ page }) => {
-      await page.goto('/admin/settings/delegations');
-      await page.waitForLoadState('networkidle');
-
-      // Should see delegations page
-      const bodyText = await page.textContent('body');
-      const hasDelegations = bodyText?.toLowerCase().includes('delegation') ||
-        bodyText?.toLowerCase().includes('delegate') ||
-        bodyText?.toLowerCase().includes('no delegations');
-
-      expect(hasDelegations).toBeTruthy();
-    });
-
-    test('Admin can access new delegation form', async ({ page }) => {
-      await page.goto('/admin/settings/delegations/new');
-      await page.waitForLoadState('networkidle');
-
-      // Should see delegation form
-      const hasForm = await page.locator('form').count() > 0;
-      const bodyText = await page.textContent('body');
-      const hasDelegationText = bodyText?.toLowerCase().includes('delegation') ||
-        bodyText?.toLowerCase().includes('delegate');
-
-      expect(hasForm || hasDelegationText).toBeTruthy();
-    });
-  });
-
   test.describe('Permissions', () => {
     test('Admin can view permissions page', async ({ page }) => {
       await page.goto('/admin/settings/permissions');

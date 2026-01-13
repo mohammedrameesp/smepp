@@ -47,6 +47,11 @@ interface RecordAssetHistoryParams {
   notes?: string;
   performedById: string;
   statusChangeDate?: Date;
+  // Bi-temporal tracking
+  effectiveDate?: Date; // When the event actually occurred (defaults to now)
+  // Correction tracking
+  correctsEntryId?: string; // ID of entry being corrected
+  correctionReason?: string; // Why correction is needed
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

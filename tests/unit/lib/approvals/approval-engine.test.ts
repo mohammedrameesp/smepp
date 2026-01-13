@@ -8,7 +8,6 @@
  * - Approval chain initialization
  * - Step processing (approve/reject)
  * - Admin bypass functionality
- * - Delegation support
  * - Chain status utilities
  */
 
@@ -30,10 +29,6 @@ jest.mock('@/lib/core/prisma', () => ({
       updateMany: jest.fn(),
       count: jest.fn(),
       deleteMany: jest.fn(),
-    },
-    approverDelegation: {
-      findFirst: jest.fn(),
-      findMany: jest.fn(),
     },
     user: {
       findUnique: jest.fn(),
@@ -264,23 +259,10 @@ describe('Approval Engine', () => {
 
     it('should reject user without matching role', async () => {
       (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ role: 'EMPLOYEE', approvalRole: 'EMPLOYEE' });
-      (mockPrisma.approverDelegation.findFirst as jest.Mock).mockResolvedValue(null);
 
       const result = await canUserApprove('user-1', mockStep);
       expect(result.canApprove).toBe(false);
       expect(result.reason).toContain('MANAGER');
-    });
-
-    it('should allow user with delegation to approve', async () => {
-      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ role: 'EMPLOYEE', approvalRole: 'EMPLOYEE' });
-      (mockPrisma.approverDelegation.findFirst as jest.Mock).mockResolvedValue({
-        delegatorId: 'manager-1',
-        delegator: { id: 'manager-1', name: 'Manager' },
-      });
-
-      const result = await canUserApprove('user-1', mockStep);
-      expect(result.canApprove).toBe(true);
-      expect(result.viaDelegation).toBe(true);
     });
 
     it('should reject non-existent user', async () => {
@@ -553,26 +535,6 @@ describe('Approval Engine', () => {
       const result = await getPendingApprovalsForUser('unknown');
 
       expect(result).toEqual([]);
-    });
-
-    it('should include delegated approvals', async () => {
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({ role: 'EMPLOYEE' });
-      (mockPrisma.approverDelegation.findMany as jest.Mock).mockResolvedValue([
-        { delegator: { approvalRole: 'MANAGER' } },
-      ]);
-      (mockPrisma.approvalStep.findMany as jest.Mock).mockResolvedValue([
-        { id: 'step-1', entityType: 'LEAVE_REQUEST', entityId: 'e1', levelOrder: 1 },
-      ]);
-
-      const _result = await getPendingApprovalsForUser('user-1');
-
-      expect(mockPrisma.approvalStep.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            requiredRole: { in: ['EMPLOYEE', 'MANAGER'] },
-          }),
-        })
-      );
     });
 
     it('should filter by tenantId when provided', async () => {

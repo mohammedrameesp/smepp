@@ -65,7 +65,9 @@ const AssetHistoryEntrySchema = z.object({
   fromLocation: z.string().nullable().optional(),
   toLocation: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
-  createdAt: z.string(),
+  // Bi-temporal tracking
+  effectiveDate: z.string().nullable().optional(), // When the event actually occurred
+  createdAt: z.string(), // When it was recorded in the system
 });
 
 type AssetHistoryEntry = z.infer<typeof AssetHistoryEntrySchema>;

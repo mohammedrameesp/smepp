@@ -1,6 +1,6 @@
 /**
  * Approval Workflow API Integration Tests
- * Covers: /api/approval-policies/*, /api/approval-steps/*, /api/delegations/*
+ * Covers: /api/approval-policies/*, /api/approval-steps/*
  */
 
 import { getServerSession } from 'next-auth/next';
@@ -305,29 +305,6 @@ describe('Approval Workflow API Tests', () => {
         expect(step.requiredRole).not.toBe(userRole);
       });
 
-      it('should check delegation', async () => {
-        const mockDelegation = getMockedModel(prisma.approverDelegation);
-        mockDelegation.findFirst.mockResolvedValue({
-          id: 'delegation-1',
-          delegatorId: 'director-123',
-          delegateeId: 'manager-123',
-          isActive: true,
-          startDate: new Date(Date.now() - 86400000),
-          endDate: new Date(Date.now() + 86400000),
-        });
-
-        const delegation = await mockDelegation.findFirst({
-          where: {
-            delegateeId: 'manager-123',
-            isActive: true,
-            startDate: { lte: new Date() },
-            endDate: { gte: new Date() },
-          },
-        });
-
-        expect(delegation).not.toBeNull();
-      });
-
       it('should trigger next step if exists', async () => {
         const mockStep = getMockedModel(prisma.approvalStep);
         mockStep.findFirst.mockResolvedValue({
@@ -387,133 +364,6 @@ describe('Approval Workflow API Tests', () => {
         });
 
         expect(request.status).toBe('REJECTED');
-      });
-    });
-  });
-
-  describe('Delegations API', () => {
-    describe('GET /api/delegations', () => {
-      it('should return active delegations for user', async () => {
-        mockGetServerSession.mockResolvedValue(mockManagerSession);
-
-        const mockDelegation = getMockedModel(prisma.approverDelegation);
-        mockDelegation.findMany.mockResolvedValue([
-          {
-            id: 'delegation-1',
-            delegatorId: 'manager-123',
-            delegateeId: 'backup-manager-123',
-            startDate: new Date(),
-            endDate: new Date(Date.now() + 7 * 86400000),
-            isActive: true,
-          },
-        ]);
-
-        const delegations = await mockDelegation.findMany({
-          where: {
-            tenantId: 'org-123',
-            delegatorId: 'manager-123',
-          },
-        });
-
-        expect(delegations).toHaveLength(1);
-      });
-    });
-
-    describe('POST /api/delegations', () => {
-      it('should create new delegation', async () => {
-        mockGetServerSession.mockResolvedValue(mockManagerSession);
-
-        const mockDelegation = getMockedModel(prisma.approverDelegation);
-        mockDelegation.create.mockResolvedValue({
-          id: 'delegation-new',
-          delegatorId: 'manager-123',
-          delegateeId: 'backup-123',
-          startDate: new Date(),
-          endDate: new Date(Date.now() + 7 * 86400000),
-          isActive: true,
-          reason: 'Vacation',
-        });
-
-        const delegation = await mockDelegation.create({
-          data: {
-            tenantId: 'org-123',
-            delegatorId: 'manager-123',
-            delegateeId: 'backup-123',
-            startDate: new Date(),
-            endDate: new Date(Date.now() + 7 * 86400000),
-          },
-        });
-
-        expect(delegation.delegateeId).toBe('backup-123');
-      });
-
-      it('should validate date range', () => {
-        const startDate = new Date();
-        const endDate = new Date(Date.now() + 7 * 86400000);
-
-        expect(endDate.getTime()).toBeGreaterThan(startDate.getTime());
-      });
-
-      it('should prevent self-delegation', () => {
-        const delegatorId = 'manager-123';
-        const delegateeId = 'manager-123';
-
-        expect(delegatorId).toBe(delegateeId);
-        // Should return 400
-      });
-
-      it('should check for overlapping delegations', async () => {
-        const mockDelegation = getMockedModel(prisma.approverDelegation);
-        mockDelegation.findFirst.mockResolvedValue({
-          id: 'delegation-existing',
-          startDate: new Date(),
-          endDate: new Date(Date.now() + 14 * 86400000),
-        });
-
-        const existing = await mockDelegation.findFirst({
-          where: {
-            delegatorId: 'manager-123',
-            isActive: true,
-            OR: [
-              { startDate: { lte: new Date() }, endDate: { gte: new Date() } },
-            ],
-          },
-        });
-
-        expect(existing).not.toBeNull();
-      });
-    });
-
-    describe('DELETE /api/delegations/[id]', () => {
-      it('should deactivate delegation', async () => {
-        const mockDelegation = getMockedModel(prisma.approverDelegation);
-        mockDelegation.update.mockResolvedValue({
-          id: 'delegation-123',
-          isActive: false,
-        });
-
-        const delegation = await mockDelegation.update({
-          where: { id: 'delegation-123' },
-          data: { isActive: false },
-        });
-
-        expect(delegation.isActive).toBe(false);
-      });
-
-      it('should only allow delegator to delete', async () => {
-        mockGetServerSession.mockResolvedValue(mockManagerSession);
-
-        const mockDelegation = getMockedModel(prisma.approverDelegation);
-        mockDelegation.findFirst.mockResolvedValue({
-          id: 'delegation-123',
-          delegatorId: 'manager-123',
-        });
-
-        const delegation = await mockDelegation.findFirst({
-          where: { id: 'delegation-123' },
-        });
-
-        expect(delegation.delegatorId).toBe(mockManagerSession.user.id);
       });
     });
   });

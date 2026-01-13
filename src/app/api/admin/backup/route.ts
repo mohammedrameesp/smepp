@@ -19,11 +19,11 @@ export async function GET(request: NextRequest) {
   if (!isCronJob) {
     const session = await getServerSession(authOptions);
     if (!session || session.user.teamMemberRole !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
     tenantId = session.user.organizationId;
     if (!tenantId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
   }
 

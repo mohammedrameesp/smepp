@@ -18,6 +18,7 @@
  */
 
 import { z } from 'zod';
+import { approvalSchema, rejectionSchema } from '@/lib/validations/workflow-schemas';
 import { PayrollStatus, LoanStatus, DeductionType } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════

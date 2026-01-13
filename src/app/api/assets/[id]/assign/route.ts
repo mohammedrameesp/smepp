@@ -103,13 +103,14 @@ interface MemberData {
  * @property notes - Optional notes for the operation
  * @property skipAcceptance - Force direct assign even if user has login
  * @property createReturnRequest - Create return request instead of direct unassign
+ * @property assignmentDate - When the assignment/return actually occurred (ISO date string, defaults to today)
  */
 const assignAssetSchema = z.object({
   assignedMemberId: z.string().nullable(),
   notes: z.string().max(1000).optional().nullable(),
   skipAcceptance: z.boolean().optional().default(false),
   createReturnRequest: z.boolean().optional().default(false),
-  assignmentDate: z.string().optional().nullable(),
+  assignmentDate: z.string().optional().nullable(), // When the event actually occurred
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -81,7 +81,6 @@ const TENANT_MODELS = [
   // Approvals & workflows
   'ApprovalPolicy',
   'ApprovalStep',
-  'ApproverDelegation',
 
   // Maintenance
   'MaintenanceRecord',

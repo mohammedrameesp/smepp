@@ -24,6 +24,9 @@
  */
 
 import { z } from 'zod';
+import { optionalString } from '@/lib/validations/field-schemas';
+import { VALIDATION_PATTERNS, PATTERN_MESSAGES } from '@/lib/validations/patterns';
+import { createQuerySchema } from '@/lib/validations/pagination-schema';
 import { SupplierStatus } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -7,5 +7,3 @@ export * from './lib';
 // Validations
 export * from './validations';
 
-// Utils
-export * from './utils';

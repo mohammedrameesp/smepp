@@ -130,3 +130,44 @@ export async function apiFetch<T = unknown>(
     throw new Error(error instanceof Error ? error.message : 'Network error occurred');
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// API ERROR MESSAGES (Standardized for consistency)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Standardized API error messages for consistent user experience.
+ * Use these constants in all API routes instead of hardcoded strings.
+ */
+export const API_ERRORS = {
+  // Authentication errors (401)
+  AUTH_REQUIRED: 'Authentication required',
+  SESSION_EXPIRED: 'Session expired. Please log in again.',
+  INVALID_TOKEN: 'Invalid authentication token',
+
+  // Authorization errors (403)
+  ADMIN_REQUIRED: 'Admin access required',
+  OWNER_REQUIRED: 'Owner access required',
+  FORBIDDEN: 'You do not have permission to perform this action',
+  MODULE_DISABLED: 'This module is not enabled for your organization',
+
+  // Resource errors (404)
+  NOT_FOUND: 'Resource not found',
+  USER_NOT_FOUND: 'User not found',
+  ORGANIZATION_NOT_FOUND: 'Organization not found',
+
+  // Validation errors (400)
+  INVALID_REQUEST: 'Invalid request',
+  INVALID_ID: 'Invalid ID provided',
+  MISSING_REQUIRED_FIELDS: 'Missing required fields',
+
+  // Conflict errors (409)
+  ALREADY_EXISTS: 'Resource already exists',
+  DUPLICATE_ENTRY: 'Duplicate entry',
+
+  // Server errors (500)
+  INTERNAL_ERROR: 'An unexpected error occurred',
+  DATABASE_ERROR: 'Database operation failed',
+} as const;
+
+export type ApiErrorKey = keyof typeof API_ERRORS;

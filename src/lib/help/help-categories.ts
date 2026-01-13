@@ -164,7 +164,7 @@ export const systemCategory: CategoryInfo = {
     {
       id: 'approvals',
       name: 'Approval Workflows',
-      description: 'Configure approval policies and delegations',
+      description: 'Configure approval policies and workflows',
       icon: 'GitBranch',
       adminOnly: true,
       href: '/help/system/approvals',

@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod';
+import { optionalString } from '@/lib/validations/field-schemas';
 
 // ============================================================================
 // Company Document Type Schemas
@@ -38,7 +39,7 @@ export const companyDocumentSchema = z.object({
   referenceNumber: z.string().max(100).optional().nullable(),
   expiryDate: z.string().min(1, 'Expiry date is required'),
   documentUrl: z.string().url().optional().nullable().or(z.literal('')),
-  assetId: z.string().optional().nullable().or(z.literal('')),
+  assetId: optionalString(),
   // Handle NaN from empty number inputs - transform to undefined before validation
   renewalCost: z.union([
     z.number().positive(),
@@ -65,8 +66,8 @@ export const companyDocumentQuerySchema = z.object({
   assetId: z.string().cuid().optional(),
   expiryStatus: z.enum(['all', 'expired', 'expiring', 'valid']).optional().default('all'),
   search: z.string().optional(),
-  page: z.coerce.number().int().positive().optional().default(1),
-  limit: z.coerce.number().int().positive().max(100).optional().default(20),
+  p: z.coerce.number().int().positive().optional().default(1),
+  ps: z.coerce.number().int().positive().max(100).optional().default(20),
   sortBy: z.enum(['expiryDate', 'createdAt', 'documentTypeName']).optional().default('expiryDate'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('asc'),
 });

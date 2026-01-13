@@ -59,7 +59,7 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
     const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
 
     if (!isOwner && !isAdmin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     // Check if can be cancelled

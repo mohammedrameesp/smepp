@@ -376,11 +376,35 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       // Get organization's code prefix
       const codePrefix = await getOrganizationCodePrefix(tenantId!);
 
-      // Generate unique request number: {PREFIX}-LR-XXXXX
-      const leaveCount = await tx.leaveRequest.count({
-        where: { tenantId: tenantId! }
+      // Generate unique request number: {PREFIX}-LR-YYMMDD-NNN (date-based to reduce race conditions)
+      const now = new Date();
+      const yearStr = now.getFullYear().toString().slice(-2);
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      const datePrefix = `${codePrefix}-LR-${yearStr}${month}${day}`;
+
+      // Find highest sequence for today (reduces collision window to same day)
+      const existingRequests = await tx.leaveRequest.findMany({
+        where: {
+          tenantId: tenantId!,
+          requestNumber: { startsWith: datePrefix },
+        },
+        orderBy: { requestNumber: 'desc' },
+        take: 1,
       });
-      const requestNumber = `${codePrefix}-LR-${String(leaveCount + 1).padStart(5, '0')}`;
+
+      let nextSequence = 1;
+      if (existingRequests.length > 0) {
+        const latestNumber = existingRequests[0].requestNumber;
+        const parts = latestNumber.split('-');
+        if (parts.length === 4) {
+          const currentSequence = parseInt(parts[3], 10);
+          if (!isNaN(currentSequence)) {
+            nextSequence = currentSequence + 1;
+          }
+        }
+      }
+      const requestNumber = `${datePrefix}-${nextSequence.toString().padStart(3, '0')}`;
 
       // Create the request
       const request = await tx.leaveRequest.create({
@@ -495,16 +519,17 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
             select: { id: true },
           });
 
-          for (const approver of approvers) {
-            await createNotification({
+          if (approvers.length > 0) {
+            const notifications = approvers.map(approver => ({
               recipientId: approver.id,
-              type: 'APPROVAL_PENDING',
+              type: 'APPROVAL_PENDING' as const,
               title: 'Leave Request Approval Required',
               message: `${leaveRequest.member?.name || leaveRequest.member?.email || 'Employee'} submitted a ${leaveType.name} request (${leaveRequest.requestNumber}) for ${totalDays} day${totalDays === 1 ? '' : 's'}. Your approval is required.`,
               link: `/admin/leave/requests/${leaveRequest.id}`,
               entityType: 'LeaveRequest',
               entityId: leaveRequest.id,
-            }, tenantId);
+            }));
+            await createBulkNotifications(notifications, tenantId);
           }
         }
       } else {

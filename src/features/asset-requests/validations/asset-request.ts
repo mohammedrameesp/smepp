@@ -25,6 +25,8 @@
  */
 
 import { z } from 'zod';
+import { approvalSchema, rejectionSchema } from '@/lib/validations/workflow-schemas';
+import { createQuerySchema } from '@/lib/validations/pagination-schema';
 import { AssetRequestType, AssetRequestStatus } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -22,8 +22,8 @@ export const GET = withErrorHandler(async (request: NextRequest, context: APICon
     assetId: searchParams.get('assetId') || undefined,
     expiryStatus: searchParams.get('expiryStatus') || 'all',
     search: searchParams.get('search') || undefined,
-    page: searchParams.get('page') || 1,
-    limit: searchParams.get('limit') || 20,
+    p: searchParams.get('p') || 1,
+    ps: searchParams.get('ps') || 20,
     sortBy: searchParams.get('sortBy') || 'expiryDate',
     sortOrder: searchParams.get('sortOrder') || 'asc',
   });
@@ -71,14 +71,14 @@ export const GET = withErrorHandler(async (request: NextRequest, context: APICon
   const orderBy: Prisma.CompanyDocumentOrderByWithRelationInput = {};
   orderBy[query.sortBy as keyof Prisma.CompanyDocumentOrderByWithRelationInput] = query.sortOrder;
 
-  const skip = (query.page - 1) * query.limit;
+  const skip = (query.p - 1) * query.ps;
 
   const [documents, total] = await Promise.all([
     db.companyDocument.findMany({
       where,
       orderBy,
       skip,
-      take: query.limit,
+      take: query.ps,
       include: {
         asset: {
           select: {
@@ -108,10 +108,10 @@ export const GET = withErrorHandler(async (request: NextRequest, context: APICon
   return NextResponse.json({
     documents: documentsWithExpiry,
     pagination: {
-      page: query.page,
-      limit: query.limit,
+      p: query.p,
+      ps: query.ps,
       total,
-      totalPages: Math.ceil(total / query.limit),
+      totalPages: Math.ceil(total / query.ps),
     },
   });
 }, { requireAuth: true, requireModule: 'documents' });

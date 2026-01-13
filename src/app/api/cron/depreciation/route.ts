@@ -37,7 +37,7 @@ function verifyCronAuth(request: NextRequest): boolean {
 export async function POST(request: NextRequest) {
   // Verify cron authorization
   if (!verifyCronAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
   logger.info('Starting monthly depreciation run');
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   // Verify cron authorization
   if (!verifyCronAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
   // Get counts of assets with depreciation configured

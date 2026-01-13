@@ -42,7 +42,12 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  * Get the complete history timeline for an asset.
  * Returns all changes, assignments, and events in chronological order.
  *
+ * Supports bi-temporal ordering:
+ * - orderBy=effective (default): Order by when events actually occurred
+ * - orderBy=recorded: Order by when events were entered in system
+ *
  * @route GET /api/assets/[id]/history
+ * @query {string} orderBy - Order by 'effective' (when it happened) or 'recorded' (when entered). Defaults to 'effective'.
  *
  * @param {string} id - Asset ID (path parameter)
  *
@@ -56,14 +61,16 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  *   {
  *     "id": "clx...",
  *     "action": "CREATED",
- *     "createdAt": "2025-01-01T00:00:00.000Z",
+ *     "effectiveDate": "2025-01-01T00:00:00.000Z",
+ *     "createdAt": "2025-01-05T00:00:00.000Z",
  *     "performedBy": { "name": "Admin", "email": "admin@..." }
  *   },
  *   {
  *     "id": "clx...",
  *     "action": "ASSIGNED",
  *     "toMember": { "name": "John", "email": "john@..." },
- *     "assignmentDate": "2025-01-15T00:00:00.000Z"
+ *     "effectiveDate": "2025-01-15T00:00:00.000Z",
+ *     "createdAt": "2025-01-15T00:00:00.000Z"
  *   }
  * ]
  */
@@ -78,6 +85,7 @@ async function getAssetHistoryHandler(request: NextRequest, context: APIContext)
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
+
 
     // ─────────────────────────────────────────────────────────────────────────────
     // Fetch asset history (tenant filtering handled by the service function)

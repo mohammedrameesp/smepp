@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
   const viewModeCookie = request.cookies.get(VIEW_MODE_COOKIE);
@@ -41,7 +41,7 @@ export async function POST() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
   // Only admins can toggle view mode
@@ -77,7 +77,7 @@ export async function DELETE() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
   const response = NextResponse.json({

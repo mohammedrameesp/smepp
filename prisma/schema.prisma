@@ -398,7 +398,6 @@ model Organization {
   notifications          Notification[]
   approvalPolicies       ApprovalPolicy[]
   approvalSteps          ApprovalStep[]
-  approverDelegations    ApproverDelegation[]
   maintenanceRecords     MaintenanceRecord[]
   suppliers              Supplier[]
   supplierEngagements    SupplierEngagement[]
@@ -749,9 +748,7 @@ model TeamMember {
   notifications Notification[] @relation("MemberNotifications")
 
   // Approvals
-  approvalSteps     ApprovalStep[]       @relation("ApprovalStepApprover")
-  delegationsAsFrom ApproverDelegation[] @relation("DelegatorMember")
-  delegationsAsTo   ApproverDelegation[] @relation("DelegateeMember")
+  approvalSteps ApprovalStep[] @relation("ApprovalStepApprover")
 
   // Depreciation
   depreciationRecords DepreciationRecord[] @relation("DepreciationRecordCalculator")
@@ -985,6 +982,7 @@ enum AssetHistoryAction {
   LOCATION_CHANGED
   CREATED
   UPDATED
+  CORRECTION // Indicates this entry corrects a previous entry
 }
 
 model AssetHistory {
@@ -1199,28 +1197,6 @@ model ApprovalStep {
   @@index([tenantId])
   @@index([tenantId, status, requiredRole])
   @@index([tenantId, approverId, status])
-}
-
-model ApproverDelegation {
-  id          String       @id @default(cuid())
-  tenantId    String
-  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  delegatorId String // Member who is delegating
-  delegator   TeamMember   @relation("DelegatorMember", fields: [delegatorId], references: [id])
-  delegateeId String // Member receiving delegation
-  delegatee   TeamMember   @relation("DelegateeMember", fields: [delegateeId], references: [id])
-
-  startDate DateTime
-  endDate   DateTime
-  isActive  Boolean  @default(true)
-  reason    String? // e.g., "On leave"
-
-  createdAt DateTime @default(now())
-
-  @@index([delegatorId, isActive])
-  @@index([delegateeId, isActive])
-  @@index([startDate, endDate])
-  @@index([tenantId])
 }
 
 model MaintenanceRecord {

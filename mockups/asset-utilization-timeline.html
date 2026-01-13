@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asset Utilization Timeline - Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .timeline-bar {
+      height: 32px;
+      border-radius: 4px;
+    }
+    .timeline-container {
+      position: relative;
+      min-height: 200px;
+    }
+    .timeline-row {
+      position: relative;
+      height: 48px;
+      display: flex;
+      align-items: center;
+    }
+    .timeline-segment {
+      position: absolute;
+      height: 32px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: white;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .timeline-segment:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10;
+    }
+    .user-1 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .user-2 { background: linear-gradient(135deg, #10b981, #059669); }
+    .user-3 { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .user-4 { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .spare { background: linear-gradient(135deg, #9ca3af, #6b7280); }
+    .maintenance { background: repeating-linear-gradient(45deg, #ef4444, #ef4444 10px, #dc2626 10px, #dc2626 20px); }
+  </style>
+</head>
+<body class="bg-gray-50 p-8">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-gray-900">Asset Utilization Timeline</h1>
+      <p class="text-gray-500 mt-1">MacBook Pro 14" (SN: MBP-2024-001)</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-4 gap-4 mb-8">
+      <div class="bg-white rounded-lg border p-4">
+        <div class="text-sm text-gray-500">Total Lifespan</div>
+        <div class="text-2xl font-bold text-gray-900">12 months</div>
+        <div class="text-xs text-gray-400">Jan 2025 - Present</div>
+      </div>
+      <div class="bg-white rounded-lg border p-4">
+        <div class="text-sm text-gray-500">Active Usage</div>
+        <div class="text-2xl font-bold text-green-600">87%</div>
+        <div class="text-xs text-gray-400">10.5 months in use</div>
+      </div>
+      <div class="bg-white rounded-lg border p-4">
+        <div class="text-sm text-gray-500">Idle Time</div>
+        <div class="text-2xl font-bold text-gray-600">8%</div>
+        <div class="text-xs text-gray-400">1 month spare</div>
+      </div>
+      <div class="bg-white rounded-lg border p-4">
+        <div class="text-sm text-gray-500">Maintenance</div>
+        <div class="text-2xl font-bold text-red-600">5%</div>
+        <div class="text-xs text-gray-400">0.5 months</div>
+      </div>
+    </div>
+
+    <!-- Timeline Visualization -->
+    <div class="bg-white rounded-lg border p-6 mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">Usage Timeline</h2>
+        <div class="flex items-center gap-4 text-sm">
+          <span class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded bg-blue-500"></span> Assigned
+          </span>
+          <span class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded bg-gray-400"></span> Spare
+          </span>
+          <span class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded bg-red-500"></span> Maintenance
+          </span>
+        </div>
+      </div>
+
+      <!-- Month Labels -->
+      <div class="flex border-b pb-2 mb-2">
+        <div class="w-32 flex-shrink-0"></div>
+        <div class="flex-1 flex">
+          <div class="flex-1 text-xs text-gray-500 text-center">Jan</div>
+          <div class="flex-1 text-xs text-gray-500 text-center">Feb</div>
+          <div class="flex-1 text-xs text-gray-500 text-center">Mar</div>
+          <div class="flex-1 text-xs text-gray-500 text-center">Apr</div>
+          <div class="flex-1 text-xs text-gray-500 text-center">May</div>
+          <div class="flex-1 text-xs text-gray-500 text-center">Jun</div>
+          <div class="flex-1 text-xs text-gray-500 text-center">Jul</div>
+          <div class="flex-1 text-xs text-gray-500 text-center">Aug</div>
+          <div class="flex-1 text-xs text-gray-500 text-center">Sep</div>
+          <div class="flex-1 text-xs text-gray-500 text-center">Oct</div>
+          <div class="flex-1 text-xs text-gray-500 text-center">Nov</div>
+          <div class="flex-1 text-xs text-gray-500 text-center">Dec</div>
+        </div>
+      </div>
+
+      <!-- Timeline Bar -->
+      <div class="flex items-center">
+        <div class="w-32 flex-shrink-0 text-sm text-gray-600 font-medium">2025</div>
+        <div class="flex-1 relative h-12">
+          <!-- Background grid -->
+          <div class="absolute inset-0 flex">
+            <div class="flex-1 border-r border-gray-100"></div>
+            <div class="flex-1 border-r border-gray-100"></div>
+            <div class="flex-1 border-r border-gray-100"></div>
+            <div class="flex-1 border-r border-gray-100"></div>
+            <div class="flex-1 border-r border-gray-100"></div>
+            <div class="flex-1 border-r border-gray-100"></div>
+            <div class="flex-1 border-r border-gray-100"></div>
+            <div class="flex-1 border-r border-gray-100"></div>
+            <div class="flex-1 border-r border-gray-100"></div>
+            <div class="flex-1 border-r border-gray-100"></div>
+            <div class="flex-1 border-r border-gray-100"></div>
+            <div class="flex-1"></div>
+          </div>
+
+          <!-- Timeline segments -->
+          <!-- Jan 1 - Jan 31: Ahmed (1 month = 8.33%) -->
+          <div class="timeline-segment user-1" style="left: 0%; width: 8.33%;" title="Ahmed Hassan: Jan 1 - Jan 31, 2025">
+            Ahmed
+          </div>
+
+          <!-- Feb 1 - May 15: Sarah (3.5 months = 29.16%) -->
+          <div class="timeline-segment user-2" style="left: 8.33%; width: 29.16%;" title="Sarah Khan: Feb 1 - May 15, 2025">
+            Sarah Khan
+          </div>
+
+          <!-- May 16 - May 31: Spare (0.5 month = 4.16%) -->
+          <div class="timeline-segment spare" style="left: 37.49%; width: 4.16%;" title="Spare: May 16 - May 31, 2025">
+            Spare
+          </div>
+
+          <!-- Jun 1 - Jun 15: Maintenance (0.5 month = 4.16%) -->
+          <div class="timeline-segment maintenance" style="left: 41.65%; width: 4.16%;" title="Maintenance: Jun 1 - Jun 15, 2025">
+            Repair
+          </div>
+
+          <!-- Jun 16 - Oct 31: Omar (4.5 months = 37.5%) -->
+          <div class="timeline-segment user-3" style="left: 45.81%; width: 37.5%;" title="Omar Ali: Jun 16 - Oct 31, 2025">
+            Omar Ali
+          </div>
+
+          <!-- Nov 1 - Dec 31: Fatima (2 months = 16.66%) -->
+          <div class="timeline-segment user-4" style="left: 83.31%; width: 16.66%;" title="Fatima Noor: Nov 1 - Present">
+            Fatima Noor
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Assignment History -->
+    <div class="bg-white rounded-lg border p-6 mb-8">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Assignment History</h2>
+
+      <div class="space-y-4">
+        <!-- Entry 1 -->
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <span class="text-blue-600 font-semibold text-sm">AH</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="font-medium text-gray-900">Ahmed Hassan</span>
+              <span class="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">Software Engineer</span>
+            </div>
+            <div class="flex items-center gap-4 mt-1 text-sm text-gray-500">
+              <span>Jan 1, 2025 - Jan 31, 2025</span>
+              <span class="text-gray-300">|</span>
+              <span>31 days</span>
+            </div>
+            <div class="mt-2 text-sm text-gray-600">
+              Initial assignment after purchase. Transferred due to department change.
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-sm font-medium text-gray-900">8.5%</div>
+            <div class="text-xs text-gray-400">of total</div>
+          </div>
+        </div>
+
+        <!-- Entry 2 -->
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+            <span class="text-green-600 font-semibold text-sm">SK</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="font-medium text-gray-900">Sarah Khan</span>
+              <span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">Product Manager</span>
+            </div>
+            <div class="flex items-center gap-4 mt-1 text-sm text-gray-500">
+              <span>Feb 1, 2025 - May 15, 2025</span>
+              <span class="text-gray-300">|</span>
+              <span>104 days</span>
+            </div>
+            <div class="mt-2 text-sm text-gray-600">
+              Transferred from Ahmed. Returned for maintenance after display issues.
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-sm font-medium text-gray-900">28.5%</div>
+            <div class="text-xs text-gray-400">of total</div>
+          </div>
+        </div>
+
+        <!-- Entry 3 - Spare -->
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="font-medium text-gray-900">Spare Pool</span>
+              <span class="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-600">Unassigned</span>
+            </div>
+            <div class="flex items-center gap-4 mt-1 text-sm text-gray-500">
+              <span>May 16, 2025 - May 31, 2025</span>
+              <span class="text-gray-300">|</span>
+              <span>16 days</span>
+            </div>
+            <div class="mt-2 text-sm text-gray-600">
+              Awaiting maintenance scheduling.
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-sm font-medium text-gray-500">4.4%</div>
+            <div class="text-xs text-gray-400">idle</div>
+          </div>
+        </div>
+
+        <!-- Entry 4 - Maintenance -->
+        <div class="flex items-start gap-4 p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="font-medium text-gray-900">Under Maintenance</span>
+              <span class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700">Display Repair</span>
+            </div>
+            <div class="flex items-center gap-4 mt-1 text-sm text-gray-500">
+              <span>Jun 1, 2025 - Jun 15, 2025</span>
+              <span class="text-gray-300">|</span>
+              <span>15 days</span>
+            </div>
+            <div class="mt-2 text-sm text-gray-600">
+              Display panel replacement at Apple Service Center. Cost: $450
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-sm font-medium text-red-600">4.1%</div>
+            <div class="text-xs text-gray-400">downtime</div>
+          </div>
+        </div>
+
+        <!-- Entry 5 -->
+        <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+          <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+            <span class="text-amber-600 font-semibold text-sm">OA</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="font-medium text-gray-900">Omar Ali</span>
+              <span class="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700">Senior Developer</span>
+            </div>
+            <div class="flex items-center gap-4 mt-1 text-sm text-gray-500">
+              <span>Jun 16, 2025 - Oct 31, 2025</span>
+              <span class="text-gray-300">|</span>
+              <span>138 days</span>
+            </div>
+            <div class="mt-2 text-sm text-gray-600">
+              Post-maintenance assignment. Reassigned due to project completion.
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-sm font-medium text-gray-900">37.8%</div>
+            <div class="text-xs text-gray-400">of total</div>
+          </div>
+        </div>
+
+        <!-- Entry 6 - Current -->
+        <div class="flex items-start gap-4 p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
+          <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+            <span class="text-purple-600 font-semibold text-sm">FN</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="font-medium text-gray-900">Fatima Noor</span>
+              <span class="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700">UX Designer</span>
+              <span class="px-2 py-0.5 text-xs rounded-full bg-green-500 text-white">Current</span>
+            </div>
+            <div class="flex items-center gap-4 mt-1 text-sm text-gray-500">
+              <span>Nov 1, 2025 - Present</span>
+              <span class="text-gray-300">|</span>
+              <span>74 days (ongoing)</span>
+            </div>
+            <div class="mt-2 text-sm text-gray-600">
+              Assigned for design team expansion project.
+            </div>
+          </div>
+          <div class="text-right flex-shrink-0">
+            <div class="text-sm font-medium text-gray-900">16.7%</div>
+            <div class="text-xs text-gray-400">of total</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Utilization Chart Alternative View -->
+    <div class="bg-white rounded-lg border p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Utilization Breakdown</h2>
+
+      <div class="flex items-center gap-4 mb-6">
+        <!-- Pie chart representation using stacked bar -->
+        <div class="flex-1">
+          <div class="h-8 rounded-full overflow-hidden flex">
+            <div class="bg-blue-500" style="width: 8.5%" title="Ahmed: 8.5%"></div>
+            <div class="bg-green-500" style="width: 28.5%" title="Sarah: 28.5%"></div>
+            <div class="bg-gray-400" style="width: 4.4%" title="Spare: 4.4%"></div>
+            <div class="bg-red-500" style="width: 4.1%" title="Maintenance: 4.1%"></div>
+            <div class="bg-amber-500" style="width: 37.8%" title="Omar: 37.8%"></div>
+            <div class="bg-purple-500" style="width: 16.7%" title="Fatima: 16.7%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="grid grid-cols-3 gap-4">
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-blue-500"></div>
+          <span class="text-sm text-gray-600">Ahmed Hassan (8.5%)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-green-500"></div>
+          <span class="text-sm text-gray-600">Sarah Khan (28.5%)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-amber-500"></div>
+          <span class="text-sm text-gray-600">Omar Ali (37.8%)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-purple-500"></div>
+          <span class="text-sm text-gray-600">Fatima Noor (16.7%)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-gray-400"></div>
+          <span class="text-sm text-gray-600">Spare/Idle (4.4%)</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 rounded bg-red-500"></div>
+          <span class="text-sm text-gray-600">Maintenance (4.1%)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Note -->
+    <div class="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <div class="flex items-start gap-3">
+        <svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div class="text-sm text-blue-800">
+          <strong>Bi-Temporal Note:</strong> This timeline uses <strong>Effective Dates</strong> (when events actually occurred), not when they were recorded in the system.
+          If an entry was backdated (e.g., recorded today for an event that happened last month), the timeline reflects the actual event date.
+          <br><br>
+          <span class="text-blue-600">Example: Sarah's transfer (Feb 1) was entered on Feb 5 - the timeline shows Feb 1 as that's when it actually happened.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

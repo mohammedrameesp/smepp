@@ -1,7 +1,7 @@
 /**
  * @file approval-engine.ts
  * @description Multi-level approval workflow engine. Handles policy matching, approval chain
- *              initialization, step processing, delegation support, and admin bypass functionality.
+ *              initialization, step processing, and admin bypass functionality.
  *              Supports leave requests, purchase requests, and asset requests with configurable
  *              thresholds and role-based approval levels.
  * @module domains/system/approvals
@@ -208,50 +208,15 @@ export async function getCurrentPendingStep(
 }
 
 /**
- * Check if member has an active delegation from another member.
- */
-export async function getActiveDelegation(
-  delegateeId: string,
-  delegatorRole: Role
-): Promise<{ delegatorId: string; delegatorName: string | null } | null> {
-  const now = new Date();
-
-  const delegation = await prisma.approverDelegation.findFirst({
-    where: {
-      delegateeId,
-      isActive: true,
-      startDate: { lte: now },
-      endDate: { gte: now },
-      delegator: {
-        approvalRole: delegatorRole,
-      },
-    },
-    include: {
-      delegator: {
-        select: { id: true, name: true },
-      },
-    },
-  });
-
-  if (!delegation) return null;
-
-  return {
-    delegatorId: delegation.delegatorId,
-    delegatorName: delegation.delegator?.name ?? null,
-  };
-}
-
-/**
  * Check if a member can approve a specific step.
  * Member can approve if:
  * 1. They have the required role, OR
- * 2. They are an ADMIN (bypass), OR
- * 3. They have an active delegation from someone with the required role
+ * 2. They are an ADMIN (bypass)
  */
 export async function canMemberApprove(
   memberId: string,
   step: ApprovalStepWithApprover
-): Promise<{ canApprove: boolean; reason?: string; viaDelegation?: boolean }> {
+): Promise<{ canApprove: boolean; reason?: string }> {
   const member = await prisma.teamMember.findUnique({
     where: { id: memberId },
     select: { approvalRole: true, role: true },
@@ -271,15 +236,9 @@ export async function canMemberApprove(
     return { canApprove: true };
   }
 
-  // Check for delegation
-  const delegation = await getActiveDelegation(memberId, step.requiredRole);
-  if (delegation) {
-    return { canApprove: true, viaDelegation: true };
-  }
-
   return {
     canApprove: false,
-    reason: `Requires ${step.requiredRole} role or delegation`,
+    reason: `Requires ${step.requiredRole} role`,
   };
 }
 
@@ -425,7 +384,6 @@ export async function adminBypassApproval(
 
 /**
  * Get all pending approval steps for a user based on their role.
- * Includes steps where user has delegation authority.
  * IMPORTANT: tenantId is required for proper tenant isolation.
  */
 export async function getPendingApprovalsForUser(
@@ -458,36 +416,11 @@ export async function getPendingApprovalsForUser(
     });
   }
 
-  // Get roles the user can approve for (their own role + delegations)
-  const rolesCanApprove: Role[] = [user.role];
-
-  // Find active delegations where user is delegatee
-  const now = new Date();
-  const delegations = await prisma.approverDelegation.findMany({
-    where: {
-      delegateeId: userId,
-      isActive: true,
-      startDate: { lte: now },
-      endDate: { gte: now },
-    },
-    include: {
-      delegator: {
-        select: { approvalRole: true },
-      },
-    },
-  });
-
-  for (const delegation of delegations) {
-    if (!rolesCanApprove.includes(delegation.delegator.approvalRole)) {
-      rolesCanApprove.push(delegation.delegator.approvalRole);
-    }
-  }
-
   // Get pending steps where this is the current step (lowest pending levelOrder)
-  // and the required role matches user's roles (with tenant filter if provided)
-  const pendingStepsWhere: { status: 'PENDING'; requiredRole: { in: Role[] }; tenantId?: string } = {
+  // and the required role matches user's role (with tenant filter if provided)
+  const pendingStepsWhere: { status: 'PENDING'; requiredRole: Role; tenantId?: string } = {
     status: 'PENDING',
-    requiredRole: { in: rolesCanApprove },
+    requiredRole: user.role,
   };
   if (tenantId) {
     pendingStepsWhere.tenantId = tenantId;

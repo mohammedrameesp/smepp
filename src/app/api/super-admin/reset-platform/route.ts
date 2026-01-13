@@ -85,7 +85,6 @@ export async function POST() {
     results.companyDocumentTypes = (await prisma.companyDocumentType.deleteMany()).count;
 
     // Approvals
-    results.approverDelegations = (await prisma.approverDelegation.deleteMany()).count;
     results.approvalSteps = (await prisma.approvalStep.deleteMany()).count;
     results.approvalLevels = (await prisma.approvalLevel.deleteMany()).count;
     results.approvalPolicies = (await prisma.approvalPolicy.deleteMany()).count;

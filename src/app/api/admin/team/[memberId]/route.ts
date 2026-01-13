@@ -22,7 +22,7 @@ export async function PATCH(
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     // Only owners can change roles
@@ -93,7 +93,7 @@ export async function DELETE(
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
     // Only admins/owners can remove members

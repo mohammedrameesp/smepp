@@ -58,7 +58,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  *
  * @returns {Object} Request counts by status category
  *
- * @throws {403} Organization context required
+ * @throws {403} Tenant context required
  *
  * @example Admin Response:
  * {
@@ -80,7 +80,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 async function getAssetRequestStatsHandler(_request: NextRequest, _context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+      return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
     const tenantId = session.user.organizationId;

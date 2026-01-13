@@ -176,8 +176,6 @@ const ADMIN_PAGES = [
   '/admin/settings/permissions',
   '/admin/settings/approvals',
   '/admin/settings/approvals/new',
-  '/admin/settings/delegations',
-  '/admin/settings/delegations/new',
   '/admin/settings/ai-usage',
   '/admin/settings/whatsapp',
 ];

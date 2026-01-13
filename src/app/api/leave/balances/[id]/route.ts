@@ -55,7 +55,7 @@ async function getLeaveBalanceHandler(request: NextRequest, context: APIContext)
         select: { id: true },
       });
       if (balance.memberId !== currentMember?.id) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
       }
     }
 

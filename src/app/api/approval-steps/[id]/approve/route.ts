@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { processApprovalSchema } from '@/features/approvals/validations/approvals';
 import { processApproval, getCurrentPendingStep } from '@/features/approvals/lib';
 import { logAction } from '@/lib/core/activity';
-import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
+import { createNotification, createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
@@ -230,15 +230,16 @@ async function notifyNextApprover(
   }
 
   // Notify all users with required role
-  for (const approver of approvers) {
-    await createNotification({
+  if (approvers.length > 0) {
+    const notifications = approvers.map(approver => ({
       recipientId: approver.id,
-      type: 'APPROVAL_PENDING',
+      type: 'APPROVAL_PENDING' as const,
       title: 'Approval Required',
       message: `${entityDetails.requesterName}'s ${entityDetails.title} requires your approval.`,
       link: entityDetails.link,
       entityType,
       entityId,
-    }, tenantId);
+    }));
+    await createBulkNotifications(notifications, tenantId);
   }
 }

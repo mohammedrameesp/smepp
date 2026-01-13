@@ -55,7 +55,7 @@ import {
  * @returns {Buffer} Excel file download (Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)
  *
  * @throws {401} Unauthorized (non-admin)
- * @throws {403} Organization context required
+ * @throws {403} Tenant context required
  *
  * @example Usage:
  * // In browser, this will trigger a download:

@@ -25,28 +25,12 @@
  */
 
 import { z } from 'zod';
+import { optionalString } from '@/lib/validations/field-schemas';
+import { VALIDATION_PATTERNS, PATTERN_MESSAGES } from '@/lib/validations/patterns';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// VALIDATION PATTERNS
+// HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════════
-
-/** Qatar ID: exactly 11 digits */
-const qidRegex = /^\d{11}$/;
-
-/** Qatar mobile: exactly 8 digits (without country code) */
-const qatarMobileRegex = /^\d{8}$/;
-
-/** Generic mobile number: 5-15 digits */
-const mobileRegex = /^\d{5,15}$/;
-
-/** Email validation pattern */
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/** International IBAN pattern */
-const ibanRegex = /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/i;
-
-/** Passport number: alphanumeric, 5-20 characters */
-const passportRegex = /^[A-Z0-9]{5,20}$/i;
 
 /**
  * Strip non-digit characters from a string.
@@ -57,11 +41,6 @@ const stripNonDigits = (val: string | null | undefined): string => {
   return val.replace(/\D/g, '');
 };
 
-// Note: healthCardNumber and licenseNumber removed - QID serves as unique identifier
-
-/** Helper for optional string that can be empty */
-const optionalString = z.string().optional().nullable().or(z.literal(''));
-
 /** Helper for optional date string */
 const optionalDateString = z.string().optional().nullable().or(z.literal(''));
 
@@ -70,59 +49,59 @@ export const hrProfileSchema = z.object({
   dateOfBirth: optionalDateString,
   gender: z.string().optional().nullable().transform((val) => val ? val.toUpperCase() : val),
   maritalStatus: z.string().optional().nullable().transform((val) => val ? val.toUpperCase() : val),
-  nationality: optionalString,
+  nationality: optionalString(),
 
   // Contact Information
   qatarMobile: z.string()
     .optional()
     .nullable()
     .transform((val) => val ? stripNonDigits(val) : val)
-    .refine((val) => !val || qatarMobileRegex.test(val), {
-      message: 'Qatar mobile must be exactly 8 digits',
+    .refine((val) => !val || VALIDATION_PATTERNS.qatarMobile.test(val), {
+      message: PATTERN_MESSAGES.qatarMobile,
     }),
-  otherMobileCode: optionalString,
+  otherMobileCode: optionalString(),
   otherMobileNumber: z.string()
     .optional()
     .nullable()
     .transform((val) => val ? stripNonDigits(val) : val)
-    .refine((val) => !val || mobileRegex.test(val), {
-      message: 'Invalid mobile number format',
+    .refine((val) => !val || VALIDATION_PATTERNS.mobile.test(val), {
+      message: PATTERN_MESSAGES.mobile,
     }),
   personalEmail: z.string()
     .optional()
     .nullable()
     .transform((val) => val?.trim() || val)
-    .refine((val) => !val || emailRegex.test(val), {
-      message: 'Invalid email address',
+    .refine((val) => !val || VALIDATION_PATTERNS.email.test(val), {
+      message: PATTERN_MESSAGES.email,
     }),
-  qatarZone: optionalString,
-  qatarStreet: optionalString,
-  qatarBuilding: optionalString,
-  qatarUnit: optionalString,
-  homeCountryAddress: optionalString,
+  qatarZone: optionalString(),
+  qatarStreet: optionalString(),
+  qatarBuilding: optionalString(),
+  qatarUnit: optionalString(),
+  homeCountryAddress: optionalString(),
 
   // Emergency Contacts - Local (Qatar)
-  localEmergencyName: optionalString,
-  localEmergencyRelation: optionalString,
-  localEmergencyPhoneCode: optionalString,
+  localEmergencyName: optionalString(),
+  localEmergencyRelation: optionalString(),
+  localEmergencyPhoneCode: optionalString(),
   localEmergencyPhone: z.string()
     .optional()
     .nullable()
     .transform((val) => val ? stripNonDigits(val) : val)
-    .refine((val) => !val || mobileRegex.test(val), {
-      message: 'Invalid phone number format',
+    .refine((val) => !val || VALIDATION_PATTERNS.mobile.test(val), {
+      message: PATTERN_MESSAGES.mobile,
     }),
 
   // Emergency Contacts - Home Country
-  homeEmergencyName: optionalString,
-  homeEmergencyRelation: optionalString,
-  homeEmergencyPhoneCode: optionalString,
+  homeEmergencyName: optionalString(),
+  homeEmergencyRelation: optionalString(),
+  homeEmergencyPhoneCode: optionalString(),
   homeEmergencyPhone: z.string()
     .optional()
     .nullable()
     .transform((val) => val ? stripNonDigits(val) : val)
-    .refine((val) => !val || mobileRegex.test(val), {
-      message: 'Invalid phone number format',
+    .refine((val) => !val || VALIDATION_PATTERNS.mobile.test(val), {
+      message: PATTERN_MESSAGES.mobile,
     }),
 
   // Identification & Legal
@@ -130,57 +109,54 @@ export const hrProfileSchema = z.object({
     .optional()
     .nullable()
     .transform((val) => val ? stripNonDigits(val) : val)
-    .refine((val) => !val || qidRegex.test(val), {
-      message: 'QID must be exactly 11 digits',
+    .refine((val) => !val || VALIDATION_PATTERNS.qatarId.test(val), {
+      message: PATTERN_MESSAGES.qatarId,
     }),
   qidExpiry: optionalDateString,
   passportNumber: z.string()
     .optional()
     .nullable()
     .transform((val) => val?.trim().toUpperCase() || val)
-    .refine((val) => !val || passportRegex.test(val), {
-      message: 'Invalid passport number format (5-20 alphanumeric characters)',
+    .refine((val) => !val || VALIDATION_PATTERNS.passport.test(val), {
+      message: PATTERN_MESSAGES.passport,
     }),
   passportExpiry: optionalDateString,
-  // passportCountry removed - QID serves as unique identifier
-  // healthCardNumber removed - QID serves as unique identifier
   healthCardExpiry: optionalDateString,
-  sponsorshipType: optionalString,
+  sponsorshipType: optionalString(),
 
   // Employment Information
-  employeeId: optionalString,
-  designation: optionalString,
+  employeeId: optionalString(),
+  designation: optionalString(),
   dateOfJoining: optionalDateString,
 
   // Bank & Payroll
-  bankName: optionalString,
+  bankName: optionalString(),
   iban: z.string()
     .optional()
     .nullable()
     .transform((val) => val?.replace(/\s/g, '').toUpperCase() || val)
-    .refine((val) => !val || ibanRegex.test(val), {
-      message: 'Invalid IBAN format (e.g., QA00XXXX0000000000XXXXXXXXXXX)',
+    .refine((val) => !val || VALIDATION_PATTERNS.iban.test(val), {
+      message: PATTERN_MESSAGES.iban,
     }),
 
   // Education
-  highestQualification: optionalString,
-  specialization: optionalString,
-  institutionName: optionalString,
+  highestQualification: optionalString(),
+  specialization: optionalString(),
+  institutionName: optionalString(),
   graduationYear: z.coerce.number().int().min(1950).max(new Date().getFullYear()).optional().nullable(),
 
   // Documents (URLs)
-  qidUrl: optionalString,
-  passportCopyUrl: optionalString,
-  photoUrl: optionalString,
-  contractCopyUrl: optionalString,
-  contractExpiry: optionalDateString, // Employment contract / work permit expiry
+  qidUrl: optionalString(),
+  passportCopyUrl: optionalString(),
+  photoUrl: optionalString(),
+  contractCopyUrl: optionalString(),
+  contractExpiry: optionalDateString,
 
   // Additional Info
   hasDrivingLicense: z.boolean().optional().default(false),
-  // licenseNumber removed - QID serves as unique identifier
   licenseExpiry: optionalDateString,
-  languagesKnown: optionalString, // JSON array as string
-  skillsCertifications: optionalString, // JSON array as string
+  languagesKnown: optionalString(),
+  skillsCertifications: optionalString(),
 
   // Onboarding tracking
   onboardingStep: z.coerce.number().int().min(0).max(10).optional(),
@@ -188,7 +164,7 @@ export const hrProfileSchema = z.object({
 
   // Leave settings
   bypassNoticeRequirement: z.boolean().optional(),
-}).passthrough(); // Allow extra fields (like id, userId, workEmail, etc.) to pass through
+}).passthrough();
 
 // Schema for admin update (includes employeeId)
 export const hrProfileAdminSchema = hrProfileSchema;
@@ -199,8 +175,8 @@ export const hrProfileEmployeeSchema = hrProfileSchema.omit({ employeeId: true }
 export type HRProfileInput = z.infer<typeof hrProfileSchema>;
 export type HRProfileEmployeeInput = z.infer<typeof hrProfileEmployeeSchema>;
 
-// Validation helpers for individual fields
-export const validateQID = (qid: string): boolean => qidRegex.test(qid);
-export const validateQatarMobile = (mobile: string): boolean => qatarMobileRegex.test(mobile);
-export const validateIBAN = (iban: string): boolean => ibanRegex.test(iban.replace(/\s/g, ''));
-export const validatePassportNumber = (passport: string): boolean => passportRegex.test(passport);
+// Validation helpers for individual fields (using centralized patterns)
+export const validateQID = (qid: string): boolean => VALIDATION_PATTERNS.qatarId.test(qid);
+export const validateQatarMobile = (mobile: string): boolean => VALIDATION_PATTERNS.qatarMobile.test(mobile);
+export const validateIBAN = (iban: string): boolean => VALIDATION_PATTERNS.iban.test(iban.replace(/\s/g, ''));
+export const validatePassportNumber = (passport: string): boolean => VALIDATION_PATTERNS.passport.test(passport);

@@ -88,7 +88,6 @@ export const mockPrisma = {
   approvalPolicy: createModelMock(),
   approvalLevel: createModelMock(),
   approvalStep: createModelMock(),
-  approverDelegation: createModelMock(),
 
   // Company Document models
   companyDocumentType: createModelMock(),

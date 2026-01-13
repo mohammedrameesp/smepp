@@ -52,18 +52,6 @@ export const statusChangeSchema = z.object({
 export type StatusChangeInput = z.infer<typeof statusChangeSchema>;
 
 /**
- * Schema for delegation actions
- */
-export const delegationSchema = z.object({
-  delegateToId: z.string().min(1, 'Delegate user is required'),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
-  notes: z.string().max(500, 'Notes must be 500 characters or less').optional(),
-});
-
-export type DelegationInput = z.infer<typeof delegationSchema>;
-
-/**
  * Schema for assignment actions
  */
 export const assignmentSchema = z.object({

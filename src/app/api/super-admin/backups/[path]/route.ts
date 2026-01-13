@@ -78,7 +78,7 @@ export async function GET(
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.isSuperAdmin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
   try {
@@ -128,7 +128,7 @@ export async function DELETE(
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.isSuperAdmin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
   try {

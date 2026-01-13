@@ -25,7 +25,7 @@ function verifyCronAuth(request: NextRequest): boolean {
  */
 export async function POST(request: NextRequest) {
   if (!verifyCronAuth(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   }
 
   try {

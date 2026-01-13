@@ -235,11 +235,11 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
     try {
       const result = await sendBatchEmails(admins.map(a => ({ to: a.email, subject: emailData.subject, html: emailData.html, text: emailData.text })));
 
-      // Check if any emails failed and notify super admin
+      // Check if any emails failed and notify super admin (parallel processing)
       if (!result.success && result.results.some(r => 'success' in r && !r.success)) {
         const failedAdmins = admins.filter((_, i) => 'success' in result.results[i] && !result.results[i].success);
-        for (const admin of failedAdmins) {
-          await handleEmailFailure({
+        await Promise.all(failedAdmins.map(admin =>
+          handleEmailFailure({
             module: 'asset-requests',
             action: 'assignment-declined-notification',
             tenantId,
@@ -254,8 +254,8 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
               requestNumber: assetRequest.requestNumber,
               assetTag: assetRequest.asset.assetTag,
             },
-          }).catch(() => {}); // Non-blocking
-        }
+          }).catch(() => {}) // Non-blocking
+        ));
       }
     } catch (emailError) {
       logger.error({

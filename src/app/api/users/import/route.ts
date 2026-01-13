@@ -20,7 +20,7 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
   const { tenant, prisma: tenantPrisma } = context;
 
   if (!tenant?.tenantId) {
-    return NextResponse.json({ error: 'Organization context required' }, { status: 403 });
+    return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
   }
 
   const { tenantId } = tenant;
