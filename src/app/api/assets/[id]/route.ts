@@ -314,9 +314,21 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     // ─────────────────────────────────────────────────────────────────────────────
     const statusChanged = data.status && data.status !== currentAsset.status;
 
+    // Track member being unassigned for notification
+    let unassignedMember: { id: string; name: string | null; email: string } | null = null;
+
     if (statusChanged && data.status !== 'IN_USE') {
       // Auto-unassign if currently assigned
       if (currentAsset.assignedMemberId) {
+        // Fetch member details for notification before disconnecting
+        const member = await prisma.teamMember.findUnique({
+          where: { id: currentAsset.assignedMemberId },
+          select: { id: true, name: true, email: true },
+        });
+        if (member) {
+          unassignedMember = member;
+        }
+
         // Override the assignedMember relation to disconnect
         updateData.assignedMember = { disconnect: true };
 
@@ -673,6 +685,64 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
         tenant.userId,
         updatedFieldsMessage
       );
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 11: Send notification for auto-unassignment due to status change
+    // ─────────────────────────────────────────────────────────────────────────────
+    if (unassignedMember && statusChanged) {
+      // Send notifications asynchronously (non-blocking)
+      (async () => {
+        try {
+          // Fetch org and admin details for email
+          const [org, admin] = await Promise.all([
+            prisma.organization.findUnique({
+              where: { id: tenantId },
+              select: { name: true, slug: true, primaryColor: true },
+            }),
+            prisma.teamMember.findUnique({
+              where: { id: tenant.userId },
+              select: { name: true, email: true },
+            }),
+          ]);
+
+          // Send email notification
+          const { assetUnassignedEmail } = await import('@/lib/core/asset-request-emails');
+          const emailData = assetUnassignedEmail({
+            userName: unassignedMember.name || unassignedMember.email,
+            assetBrand: asset.brand || null,
+            assetModel: asset.model,
+            assetTag: asset.assetTag || null,
+            assetType: asset.type,
+            adminName: admin?.name || admin?.email || 'Administrator',
+            reason: `Asset status changed to ${data.status}`,
+            orgSlug: org?.slug || '',
+            orgName: org?.name || 'Organization',
+            primaryColor: org?.primaryColor || undefined,
+          });
+
+          await sendEmail({
+            to: unassignedMember.email,
+            subject: emailData.subject,
+            html: emailData.html,
+            text: emailData.text,
+          });
+
+          // Send in-app notification
+          await createNotification(
+            NotificationTemplates.assetUnassigned(
+              unassignedMember.id,
+              asset.assetTag || '',
+              asset.model,
+              asset.id
+            ),
+            tenantId
+          );
+        } catch (err) {
+          // Log error but don't fail the request
+          console.error('Failed to send auto-unassignment notification:', err);
+        }
+      })();
     }
 
     return NextResponse.json(asset);

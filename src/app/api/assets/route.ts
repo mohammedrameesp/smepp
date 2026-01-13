@@ -25,7 +25,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AssetStatus, AssetRequestStatus, Prisma } from '@prisma/client';
 import { createAssetSchema, assetQuerySchema } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { generateAssetTagByCategory } from '@/features/assets';
+import { generateAssetTagByCategory, recordAssetCreation } from '@/features/assets';
 import { convertToQAR } from '@/lib/core/currency';
 import { buildFilterWithSearch } from '@/lib/db/search-filter';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -513,6 +513,9 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
     } catch {
       // Ignore activity log errors - non-critical
     }
+
+    // Record asset creation in history (for asset timeline)
+    recordAssetCreation(asset.id, userId, data.assignedMemberId || null).catch(() => {});
 
     // Update onboarding checklist progress
     updateSetupProgress(tenantId, 'firstAssetAdded', true).catch(() => {});
