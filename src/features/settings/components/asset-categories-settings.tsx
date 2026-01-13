@@ -81,6 +81,7 @@ export function AssetCategoriesSettings({
   const [createName, setCreateName] = useState('');
   const [createDescription, setCreateDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [createErrors, setCreateErrors] = useState<{ code?: string; name?: string; description?: string }>({});
 
   // Edit dialog state
   const [editCategory, setEditCategory] = useState<AssetCategory | null>(null);
@@ -88,6 +89,7 @@ export function AssetCategoriesSettings({
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [editErrors, setEditErrors] = useState<{ code?: string; name?: string; description?: string }>({});
 
   // Delete dialog state
   const [deleteCategory, setDeleteCategory] = useState<AssetCategory | null>(null);
@@ -116,8 +118,34 @@ export function AssetCategoriesSettings({
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!createCode || !createName) return;
 
+    // Client-side validation
+    const errors: { code?: string; name?: string; description?: string } = {};
+
+    if (!createCode) {
+      errors.code = 'Code is required';
+    } else if (createCode.length !== 2) {
+      errors.code = 'Code must be exactly 2 characters';
+    } else if (!/^[A-Za-z]{2}$/.test(createCode)) {
+      errors.code = 'Code must be 2 letters only';
+    }
+
+    if (!createName) {
+      errors.name = 'Name is required';
+    } else if (createName.length > 50) {
+      errors.name = 'Name must be at most 50 characters';
+    }
+
+    if (createDescription && createDescription.length > 200) {
+      errors.description = 'Description must be at most 200 characters';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setCreateErrors(errors);
+      return;
+    }
+
+    setCreateErrors({});
     setIsCreating(true);
     try {
       const response = await fetch('/api/asset-categories', {
@@ -126,7 +154,7 @@ export function AssetCategoriesSettings({
         body: JSON.stringify({
           code: createCode.toUpperCase(),
           name: createName,
-          description: createDescription || null,
+          ...(createDescription ? { description: createDescription } : {}),
         }),
       });
 
@@ -151,8 +179,35 @@ export function AssetCategoriesSettings({
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
-    if (!editCategory || !editCode || !editName) return;
+    if (!editCategory) return;
 
+    // Client-side validation
+    const errors: { code?: string; name?: string; description?: string } = {};
+
+    if (!editCode) {
+      errors.code = 'Code is required';
+    } else if (editCode.length !== 2) {
+      errors.code = 'Code must be exactly 2 characters';
+    } else if (!/^[A-Za-z]{2}$/.test(editCode)) {
+      errors.code = 'Code must be 2 letters only';
+    }
+
+    if (!editName) {
+      errors.name = 'Name is required';
+    } else if (editName.length > 50) {
+      errors.name = 'Name must be at most 50 characters';
+    }
+
+    if (editDescription && editDescription.length > 200) {
+      errors.description = 'Description must be at most 200 characters';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setEditErrors(errors);
+      return;
+    }
+
+    setEditErrors({});
     setIsUpdating(true);
     try {
       const response = await fetch(`/api/asset-categories/${editCategory.id}`, {
@@ -161,7 +216,7 @@ export function AssetCategoriesSettings({
         body: JSON.stringify({
           code: editCode.toUpperCase(),
           name: editName,
-          description: editDescription || null,
+          ...(editDescription ? { description: editDescription } : { description: null }),
         }),
       });
 
@@ -232,6 +287,7 @@ export function AssetCategoriesSettings({
     setEditCode(category.code);
     setEditName(category.name);
     setEditDescription(category.description || '');
+    setEditErrors({});
   }
 
   const activeCategories = categories.filter((c) => c.isActive);
@@ -379,7 +435,10 @@ export function AssetCategoriesSettings({
       </Card>
 
       {/* Create Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+      <Dialog open={showCreateDialog} onOpenChange={(open) => {
+        setShowCreateDialog(open);
+        if (!open) setCreateErrors({});
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Asset Category</DialogTitle>
@@ -394,41 +453,60 @@ export function AssetCategoriesSettings({
                 <Input
                   id="create-code"
                   value={createCode}
-                  onChange={(e) => setCreateCode(e.target.value.toUpperCase().slice(0, 2))}
+                  onChange={(e) => {
+                    setCreateCode(e.target.value.toUpperCase().slice(0, 2));
+                    if (createErrors.code) setCreateErrors((prev) => ({ ...prev, code: undefined }));
+                  }}
                   placeholder="e.g., IT, HR, MK"
                   maxLength={2}
-                  className="uppercase font-mono"
-                  required
+                  className={`uppercase font-mono ${createErrors.code ? 'border-destructive' : ''}`}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Tag preview: {codePrefix}-<span className="font-mono">{createCode || 'XX'}</span>-25001
-                </p>
+                {createErrors.code ? (
+                  <p className="text-xs text-destructive">{createErrors.code}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Tag preview: {codePrefix}-<span className="font-mono">{createCode || 'XX'}</span>-25001
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="create-name">Name *</Label>
                 <Input
                   id="create-name"
                   value={createName}
-                  onChange={(e) => setCreateName(e.target.value)}
+                  onChange={(e) => {
+                    setCreateName(e.target.value);
+                    if (createErrors.name) setCreateErrors((prev) => ({ ...prev, name: undefined }));
+                  }}
                   placeholder="e.g., IT Equipment"
-                  required
+                  className={createErrors.name ? 'border-destructive' : ''}
                 />
+                {createErrors.name && (
+                  <p className="text-xs text-destructive">{createErrors.name}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="create-description">Description</Label>
                 <Input
                   id="create-description"
                   value={createDescription}
-                  onChange={(e) => setCreateDescription(e.target.value)}
-                  placeholder="Optional description"
+                  onChange={(e) => {
+                    setCreateDescription(e.target.value);
+                    if (createErrors.description) setCreateErrors((prev) => ({ ...prev, description: undefined }));
+                  }}
+                  placeholder="Optional description (max 200 chars)"
+                  className={createErrors.description ? 'border-destructive' : ''}
                 />
+                {createErrors.description && (
+                  <p className="text-xs text-destructive">{createErrors.description}</p>
+                )}
               </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isCreating || !createCode || !createName}>
+              <Button type="submit" disabled={isCreating}>
                 {isCreating ? 'Creating...' : 'Create Category'}
               </Button>
             </DialogFooter>
@@ -437,7 +515,12 @@ export function AssetCategoriesSettings({
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editCategory} onOpenChange={(open) => !open && setEditCategory(null)}>
+      <Dialog open={!!editCategory} onOpenChange={(open) => {
+        if (!open) {
+          setEditCategory(null);
+          setEditErrors({});
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Category</DialogTitle>
@@ -450,35 +533,54 @@ export function AssetCategoriesSettings({
                 <Input
                   id="edit-code"
                   value={editCode}
-                  onChange={(e) => setEditCode(e.target.value.toUpperCase().slice(0, 2))}
+                  onChange={(e) => {
+                    setEditCode(e.target.value.toUpperCase().slice(0, 2));
+                    if (editErrors.code) setEditErrors((prev) => ({ ...prev, code: undefined }));
+                  }}
                   maxLength={2}
-                  className="uppercase font-mono"
-                  required
+                  className={`uppercase font-mono ${editErrors.code ? 'border-destructive' : ''}`}
                 />
+                {editErrors.code && (
+                  <p className="text-xs text-destructive">{editErrors.code}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Name *</Label>
                 <Input
                   id="edit-name"
                   value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  required
+                  onChange={(e) => {
+                    setEditName(e.target.value);
+                    if (editErrors.name) setEditErrors((prev) => ({ ...prev, name: undefined }));
+                  }}
+                  className={editErrors.name ? 'border-destructive' : ''}
                 />
+                {editErrors.name && (
+                  <p className="text-xs text-destructive">{editErrors.name}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-description">Description</Label>
                 <Input
                   id="edit-description"
                   value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
+                  onChange={(e) => {
+                    setEditDescription(e.target.value);
+                    if (editErrors.description) setEditErrors((prev) => ({ ...prev, description: undefined }));
+                  }}
+                  placeholder="Optional description (max 200 chars)"
+                  className={editErrors.description ? 'border-destructive' : ''}
                 />
+                {editErrors.description && (
+                  <p className="text-xs text-destructive">{editErrors.description}</p>
+                )}
               </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditCategory(null)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isUpdating || !editCode || !editName}>
+              <Button type="submit" disabled={isUpdating}>
                 {isUpdating ? 'Saving...' : 'Save Changes'}
               </Button>
             </DialogFooter>
