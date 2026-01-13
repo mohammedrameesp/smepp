@@ -204,8 +204,8 @@ export default async function AssetDetailPage({ params }: Props) {
             const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
             const isExpired = daysUntilExpiry < 0;
             const isExpiringSoon = daysUntilExpiry >= 0 && daysUntilExpiry <= 30;
-            // Only show expired alert for warranties expired within last 90 days
-            const isRecentlyExpired = isExpired && daysUntilExpiry >= -90;
+            // Only show expired alert for warranties expired within last 30 days
+            const isRecentlyExpired = isExpired && daysUntilExpiry >= -30;
 
             if (!isRecentlyExpired && !isExpiringSoon) return null;
 
