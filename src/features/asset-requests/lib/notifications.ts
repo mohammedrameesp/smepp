@@ -62,6 +62,7 @@ export interface AssetRequestNotificationParams {
 interface OrgInfo {
   slug: string;
   name: string;
+  primaryColor: string | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -78,7 +79,7 @@ async function getNotificationContext(
   const [org, currentMember] = await Promise.all([
     prisma.organization.findUnique({
       where: { id: tenantId },
-      select: { slug: true, name: true },
+      select: { slug: true, name: true, primaryColor: true },
     }),
     prisma.teamMember.findUnique({
       where: { id: currentUserId },
@@ -90,6 +91,7 @@ async function getNotificationContext(
     org: {
       slug: org?.slug || 'app',
       name: org?.name || 'Durj',
+      primaryColor: org?.primaryColor || null,
     },
     currentUserName: currentMember?.name || currentMember?.email || 'Admin',
   };
@@ -172,6 +174,7 @@ async function sendEmployeeRequestNotifications(
         reason: reason || '',
         orgSlug: org.slug,
         orgName: org.name,
+        primaryColor: org.primaryColor || undefined,
       });
       await sendBatchEmails(approvers.map(a => ({
         to: a.email,
@@ -208,6 +211,7 @@ async function sendEmployeeRequestNotifications(
       reason: reason || '',
       orgSlug: org.slug,
       orgName: org.name,
+      primaryColor: org.primaryColor || undefined,
     });
     await sendBatchEmails(admins.map(a => ({
       to: a.email,
@@ -253,6 +257,7 @@ async function sendAdminAssignmentNotifications(
     reason: notes || undefined,
     orgSlug: org.slug,
     orgName: org.name,
+    primaryColor: org.primaryColor || undefined,
   });
   await sendEmail({
     to: assetRequest.user.email,
@@ -298,6 +303,7 @@ async function sendReturnRequestNotifications(
     reason: reason || '',
     orgSlug: org.slug,
     orgName: org.name,
+    primaryColor: org.primaryColor || undefined,
   });
   await sendBatchEmails(admins.map(a => ({
     to: a.email,
