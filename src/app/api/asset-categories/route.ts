@@ -6,10 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import {
-  createAssetCategorySchema,
-  assetCategoryQuerySchema,
-} from '@/features/assets';
+import { createAssetCategorySchema } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { ensureAssetCategories } from '@/features/assets';
@@ -18,7 +15,7 @@ import { ensureAssetCategories } from '@/features/assets';
  * GET /api/asset-categories
  * List all asset categories for the current tenant
  */
-async function getAssetCategoriesHandler(request: NextRequest, context: APIContext) {
+async function getAssetCategoriesHandler(_request: NextRequest, context: APIContext) {
   const { tenant, prisma: tenantPrisma } = context;
 
   if (!tenant?.tenantId) {
@@ -31,30 +28,7 @@ async function getAssetCategoriesHandler(request: NextRequest, context: APIConte
   // Ensure categories exist for this tenant (handles legacy orgs)
   await ensureAssetCategories(tenantId);
 
-  const { searchParams } = new URL(request.url);
-  const queryParams = Object.fromEntries(searchParams.entries());
-
-  const validation = assetCategoryQuerySchema.safeParse(queryParams);
-  if (!validation.success) {
-    return NextResponse.json(
-      {
-        error: 'Invalid query parameters',
-        details: validation.error.issues,
-      },
-      { status: 400 }
-    );
-  }
-
-  const { includeInactive } = validation.data;
-
-  // Build where clause
-  const where: Record<string, unknown> = {};
-  if (!includeInactive) {
-    where.isActive = true;
-  }
-
   const categories = await db.assetCategory.findMany({
-    where,
     orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     include: {
       _count: {

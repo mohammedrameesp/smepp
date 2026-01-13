@@ -78,8 +78,7 @@ export const createAssetCategorySchema = z.object({
  *
  * @example
  * {
- *   name: "Computing & IT",
- *   isActive: false
+ *   name: "Computing & IT"
  * }
  */
 export const updateAssetCategorySchema = z.object({
@@ -100,28 +99,8 @@ export const updateAssetCategorySchema = z.object({
   description: z.string().max(200, 'Description must be at most 200 characters').optional().nullable(),
   /** Updated icon identifier */
   icon: z.string().optional().nullable(),
-  /** Whether category is active (inactive categories hidden in dropdowns) */
-  isActive: z.boolean().optional(),
   /** Display order in category lists (0 = first) */
   sortOrder: z.number().int().min(0).optional(),
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// QUERY SCHEMA
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Schema for querying asset categories.
- *
- * By default, only active categories are returned.
- * Use includeInactive=true to show all categories.
- *
- * @example
- * // GET /api/assets/categories?includeInactive=true
- */
-export const assetCategoryQuerySchema = z.object({
-  /** Include deactivated categories in results (default: false) */
-  includeInactive: z.enum(['true', 'false']).optional().transform((val) => val === 'true'),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -132,5 +111,3 @@ export const assetCategoryQuerySchema = z.object({
 export type CreateAssetCategoryRequest = z.infer<typeof createAssetCategorySchema>;
 /** Inferred type for category update */
 export type UpdateAssetCategoryRequest = z.infer<typeof updateAssetCategorySchema>;
-/** Inferred type for category query */
-export type AssetCategoryQuery = z.infer<typeof assetCategoryQuerySchema>;

@@ -52,7 +52,6 @@ interface AssetCategory {
   code: string;
   name: string;
   description: string | null;
-  isActive: boolean;
   isDefault: boolean;
   _count: {
     assets: number;
@@ -98,7 +97,7 @@ export function AssetCategoriesSettings({
 
   async function fetchCategories() {
     try {
-      const response = await fetch('/api/asset-categories?includeInactive=true');
+      const response = await fetch('/api/asset-categories');
       if (response.ok) {
         const data = await response.json();
         setCategories(data.categories || []);
