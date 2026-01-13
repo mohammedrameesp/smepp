@@ -27,14 +27,11 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 // GET /api/depreciation/categories - List depreciation categories
 // ═══════════════════════════════════════════════════════════════════════════════
 
-async function getHandler(request: NextRequest, context: APIContext) {
+async function getHandler(_request: NextRequest, context: APIContext) {
   const { tenant } = context;
   const tenantId = tenant!.tenantId;
 
-  const { searchParams } = new URL(request.url);
-  const includeInactive = searchParams.get('includeInactive') === 'true';
-
-  const categories = await getDepreciationCategories(tenantId, !includeInactive);
+  const categories = await getDepreciationCategories(tenantId);
 
   return NextResponse.json({
     categories: categories.map((c) => ({
@@ -44,7 +41,6 @@ async function getHandler(request: NextRequest, context: APIContext) {
       annualRate: Number(c.annualRate),
       usefulLifeYears: c.usefulLifeYears,
       description: c.description,
-      isActive: c.isActive,
     })),
   });
 }
@@ -64,7 +60,7 @@ async function postHandler(request: NextRequest, context: APIContext) {
     const results = await seedDepreciationCategories(tenantId);
 
     // Return the seeded categories so frontend can use them directly
-    const categories = await getDepreciationCategories(tenantId, false);
+    const categories = await getDepreciationCategories(tenantId);
 
     return NextResponse.json({
       message: 'Default depreciation categories seeded',
@@ -76,7 +72,6 @@ async function postHandler(request: NextRequest, context: APIContext) {
         annualRate: Number(c.annualRate),
         usefulLifeYears: c.usefulLifeYears,
         description: c.description,
-        isActive: c.isActive,
       })),
     });
   }
@@ -91,7 +86,7 @@ async function postHandler(request: NextRequest, context: APIContext) {
     );
   }
 
-  const { name, code, annualRate, usefulLifeYears, description, isActive } = validation.data;
+  const { name, code, annualRate, usefulLifeYears, description } = validation.data;
 
   // Check if code already exists for this tenant
   const existing = await prisma.depreciationCategory.findFirst({
@@ -111,7 +106,6 @@ async function postHandler(request: NextRequest, context: APIContext) {
     annualRate,
     usefulLifeYears,
     description,
-    isActive,
   });
 
   return NextResponse.json(
@@ -124,7 +118,6 @@ async function postHandler(request: NextRequest, context: APIContext) {
         annualRate: Number(category.annualRate),
         usefulLifeYears: category.usefulLifeYears,
         description: category.description,
-        isActive: category.isActive,
       },
     },
     { status: 201 }

@@ -282,12 +282,9 @@ export async function assignDepreciationCategory(
 /**
  * Get all depreciation categories for a tenant
  */
-export async function getDepreciationCategories(tenantId: string, activeOnly = true) {
+export async function getDepreciationCategories(tenantId: string) {
   return prisma.depreciationCategory.findMany({
-    where: {
-      tenantId,
-      ...(activeOnly ? { isActive: true } : {}),
-    },
+    where: { tenantId },
     orderBy: { name: 'asc' },
   });
 }
@@ -315,7 +312,6 @@ export async function seedDepreciationCategories(tenantId: string) {
           annualRate: new Prisma.Decimal(category.annualRate),
           usefulLifeYears: category.usefulLifeYears,
           description: category.description,
-          isActive: true,
         },
       });
       results.push({ code: category.code, action: 'created', id: created.id });
@@ -355,7 +351,6 @@ export async function createDepreciationCategory(
     annualRate: number;
     usefulLifeYears: number;
     description?: string;
-    isActive?: boolean;
   }
 ) {
   return prisma.depreciationCategory.create({
@@ -366,7 +361,6 @@ export async function createDepreciationCategory(
       annualRate: new Prisma.Decimal(data.annualRate),
       usefulLifeYears: data.usefulLifeYears,
       description: data.description,
-      isActive: data.isActive ?? true,
     },
   });
 }
@@ -383,7 +377,6 @@ export async function updateDepreciationCategory(
     annualRate?: number;
     usefulLifeYears?: number;
     description?: string | null;
-    isActive?: boolean;
   }
 ) {
   return prisma.depreciationCategory.update({
@@ -394,7 +387,6 @@ export async function updateDepreciationCategory(
       ...(data.annualRate !== undefined && { annualRate: new Prisma.Decimal(data.annualRate) }),
       ...(data.usefulLifeYears !== undefined && { usefulLifeYears: data.usefulLifeYears }),
       ...(data.description !== undefined && { description: data.description }),
-      ...(data.isActive !== undefined && { isActive: data.isActive }),
     },
   });
 }

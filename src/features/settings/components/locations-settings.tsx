@@ -7,7 +7,6 @@
  *
  * FEATURES:
  * - View, create, edit, delete locations
- * - Toggle active/inactive status
  * - Shows asset count per location
  */
 
@@ -50,8 +49,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  ToggleLeft,
-  ToggleRight,
   Loader2,
   Package,
 } from 'lucide-react';
@@ -60,7 +57,6 @@ interface Location {
   id: string;
   name: string;
   description: string | null;
-  isActive: boolean;
   assetsCount?: number;
 }
 
@@ -74,7 +70,6 @@ export function LocationsSettings({
 }: LocationsSettingsProps) {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showInactive, setShowInactive] = useState(false);
 
   // Create form state
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -98,7 +93,7 @@ export function LocationsSettings({
 
   async function fetchLocations() {
     try {
-      const response = await fetch('/api/locations?includeInactive=true');
+      const response = await fetch('/api/locations');
       if (response.ok) {
         const data = await response.json();
         setLocations(data.locations || []);
@@ -181,27 +176,6 @@ export function LocationsSettings({
     }
   }
 
-  async function handleToggleActive(location: Location) {
-    try {
-      const response = await fetch(`/api/locations/${location.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !location.isActive }),
-      });
-
-      if (response.ok) {
-        toast.success(`Location ${location.isActive ? 'deactivated' : 'activated'}`);
-        fetchLocations();
-      } else {
-        const data = await response.json();
-        toast.error(data.error || 'Failed to toggle location');
-      }
-    } catch (error) {
-      console.error('Error toggling location:', error);
-      toast.error('Failed to toggle location');
-    }
-  }
-
   async function handleDelete() {
     if (!deleteLocation) return;
 
@@ -233,10 +207,6 @@ export function LocationsSettings({
     setEditDescription(location.description || '');
   }
 
-  const activeLocations = locations.filter((l) => l.isActive);
-  const inactiveLocations = locations.filter((l) => !l.isActive);
-  const displayLocations = showInactive ? locations : activeLocations;
-
   return (
     <>
       <Card>
@@ -253,23 +223,12 @@ export function LocationsSettings({
                 </CardDescription>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {inactiveLocations.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowInactive(!showInactive)}
-                >
-                  {showInactive ? 'Hide' : 'Show'} Inactive ({inactiveLocations.length})
-                </Button>
-              )}
-              {isAdmin && (
-                <Button size="sm" onClick={() => setShowCreateDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Location
-                </Button>
-              )}
-            </div>
+            {isAdmin && (
+              <Button size="sm" onClick={() => setShowCreateDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Location
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -278,7 +237,7 @@ export function LocationsSettings({
               <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
               Loading locations...
             </div>
-          ) : displayLocations.length === 0 ? (
+          ) : locations.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground space-y-4">
               <MapPin className="h-12 w-12 mx-auto text-muted-foreground/50" />
               <p>No locations configured yet.</p>
@@ -297,19 +256,16 @@ export function LocationsSettings({
                     <TableHead>Name</TableHead>
                     <TableHead className="hidden md:table-cell">Description</TableHead>
                     <TableHead className="text-center w-28">Assets</TableHead>
-                    <TableHead className="text-right w-28">Actions</TableHead>
+                    <TableHead className="text-right w-24">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {displayLocations.map((location) => (
-                    <TableRow key={location.id} className={!location.isActive ? 'opacity-50' : ''}>
+                  {locations.map((location) => (
+                    <TableRow key={location.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">{location.name}</span>
-                          {!location.isActive && (
-                            <Badge variant="secondary" className="text-xs">Inactive</Badge>
-                          )}
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-muted-foreground text-sm max-w-xs truncate">
@@ -331,18 +287,6 @@ export function LocationsSettings({
                               title="Edit"
                             >
                               <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleToggleActive(location)}
-                              title={location.isActive ? 'Deactivate' : 'Activate'}
-                            >
-                              {location.isActive ? (
-                                <ToggleRight className="h-4 w-4 text-green-600" />
-                              ) : (
-                                <ToggleLeft className="h-4 w-4" />
-                              )}
                             </Button>
                             <Button
                               variant="ghost"

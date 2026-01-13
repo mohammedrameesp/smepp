@@ -7,7 +7,6 @@
 import {
   createLocationSchema,
   updateLocationSchema,
-  locationQuerySchema,
 } from '@/features/locations/validations/locations';
 
 describe('Location Validation Schemas', () => {
@@ -133,22 +132,15 @@ describe('Location Validation Schemas', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should accept partial update with only isActive', () => {
-      const result = updateLocationSchema.safeParse({ isActive: false });
-      expect(result.success).toBe(true);
-    });
-
     it('should accept full update with all fields', () => {
       const result = updateLocationSchema.safeParse({
         name: 'Updated Office',
         description: 'Updated description',
-        isActive: true,
       });
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.name).toBe('Updated Office');
         expect(result.data.description).toBe('Updated description');
-        expect(result.data.isActive).toBe(true);
       }
     });
 
@@ -160,64 +152,6 @@ describe('Location Validation Schemas', () => {
     it('should reject name if provided but empty', () => {
       const result = updateLocationSchema.safeParse({ name: '' });
       expect(result.success).toBe(false);
-    });
-
-    it('should validate isActive as boolean', () => {
-      const validTrue = updateLocationSchema.safeParse({ isActive: true });
-      const validFalse = updateLocationSchema.safeParse({ isActive: false });
-      expect(validTrue.success).toBe(true);
-      expect(validFalse.success).toBe(true);
-    });
-
-    it('should reject invalid isActive values', () => {
-      const result = updateLocationSchema.safeParse({ isActive: 'yes' });
-      expect(result.success).toBe(false);
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // LOCATION QUERY SCHEMA
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  describe('locationQuerySchema', () => {
-    it('should transform "true" string to boolean true', () => {
-      const result = locationQuerySchema.safeParse({ includeInactive: 'true' });
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.includeInactive).toBe(true);
-      }
-    });
-
-    it('should transform "false" string to boolean false', () => {
-      const result = locationQuerySchema.safeParse({ includeInactive: 'false' });
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.includeInactive).toBe(false);
-      }
-    });
-
-    it('should transform null to boolean false', () => {
-      const result = locationQuerySchema.safeParse({ includeInactive: null });
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.includeInactive).toBe(false);
-      }
-    });
-
-    it('should transform undefined to boolean false', () => {
-      const result = locationQuerySchema.safeParse({});
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.includeInactive).toBe(false);
-      }
-    });
-
-    it('should transform any non-"true" string to false', () => {
-      const result = locationQuerySchema.safeParse({ includeInactive: 'yes' });
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.includeInactive).toBe(false);
-      }
     });
   });
 });

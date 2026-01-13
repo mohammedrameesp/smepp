@@ -8,7 +8,6 @@
  * FEATURES:
  * - View, create, edit, delete depreciation categories
  * - Seed default Qatar tax depreciation rates
- * - Toggle active/inactive status
  *
  * CATEGORIES (Qatar Tax Authority rates):
  * - Machinery & Equipment: 15% (7 years)
@@ -56,8 +55,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  ToggleLeft,
-  ToggleRight,
   Loader2,
   Download,
   Info,
@@ -76,7 +73,6 @@ interface DepreciationCategory {
   annualRate: number;
   usefulLifeYears: number;
   description: string | null;
-  isActive: boolean;
   assetsCount?: number;
 }
 
@@ -90,7 +86,6 @@ export function DepreciationCategoriesSettings({
 }: DepreciationCategoriesSettingsProps) {
   const [categories, setCategories] = useState<DepreciationCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showInactive, setShowInactive] = useState(false);
   const [seeding, setSeeding] = useState(false);
 
   // Create form state
@@ -135,7 +130,7 @@ export function DepreciationCategoriesSettings({
 
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await fetch('/api/depreciation/categories?includeInactive=true');
+      const response = await fetch('/api/depreciation/categories');
       if (response.ok) {
         const data = await response.json();
         const fetchedCategories = data.categories || [];
@@ -311,27 +306,6 @@ export function DepreciationCategoriesSettings({
     }
   }
 
-  async function handleToggleActive(category: DepreciationCategory) {
-    try {
-      const response = await fetch(`/api/depreciation/categories/${category.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !category.isActive }),
-      });
-
-      if (response.ok) {
-        toast.success(`Category ${category.isActive ? 'deactivated' : 'activated'}`);
-        fetchCategories();
-      } else {
-        const data = await response.json();
-        toast.error(data.error || 'Failed to toggle category');
-      }
-    } catch (error) {
-      console.error('Error toggling category:', error);
-      toast.error('Failed to toggle category');
-    }
-  }
-
   async function handleDelete() {
     if (!deleteCategory) return;
 
@@ -384,10 +358,6 @@ export function DepreciationCategoriesSettings({
     }
   }
 
-  const activeCategories = categories.filter((c) => c.isActive);
-  const inactiveCategories = categories.filter((c) => !c.isActive);
-  const displayCategories = showInactive ? categories : activeCategories;
-
   return (
     <TooltipProvider>
       <Card>
@@ -405,15 +375,6 @@ export function DepreciationCategoriesSettings({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {inactiveCategories.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowInactive(!showInactive)}
-                >
-                  {showInactive ? 'Hide' : 'Show'} Inactive ({inactiveCategories.length})
-                </Button>
-              )}
               {isAdmin && categories.length === 0 && (
                 <Button
                   variant="outline"
@@ -444,7 +405,7 @@ export function DepreciationCategoriesSettings({
               <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
               Loading categories...
             </div>
-          ) : displayCategories.length === 0 ? (
+          ) : categories.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
               <p>No depreciation categories configured.</p>
             </div>
@@ -470,24 +431,19 @@ export function DepreciationCategoriesSettings({
                     </TableHead>
                     <TableHead className="text-right w-28">Useful Life</TableHead>
                     <TableHead className="hidden md:table-cell">Description</TableHead>
-                    <TableHead className="text-right w-28">Actions</TableHead>
+                    <TableHead className="text-right w-24">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {displayCategories.map((category) => (
-                    <TableRow key={category.id} className={!category.isActive ? 'opacity-50' : ''}>
+                  {categories.map((category) => (
+                    <TableRow key={category.id}>
                       <TableCell>
                         <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
                           {category.code}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{category.name}</span>
-                          {!category.isActive && (
-                            <Badge variant="secondary" className="text-xs">Inactive</Badge>
-                          )}
-                        </div>
+                        <span className="font-medium">{category.name}</span>
                       </TableCell>
                       <TableCell className="text-right font-mono">
                         {category.annualRate.toFixed(2)}%
@@ -508,18 +464,6 @@ export function DepreciationCategoriesSettings({
                               title="Edit"
                             >
                               <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleToggleActive(category)}
-                              title={category.isActive ? 'Deactivate' : 'Activate'}
-                            >
-                              {category.isActive ? (
-                                <ToggleRight className="h-4 w-4 text-green-600" />
-                              ) : (
-                                <ToggleLeft className="h-4 w-4" />
-                              )}
                             </Button>
                             <Button
                               variant="ghost"

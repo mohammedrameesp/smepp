@@ -15,26 +15,18 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import { createLocationSchema, locationQuerySchema } from '@/features/locations';
+import { createLocationSchema } from '@/features/locations';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/locations - List locations
 // ═══════════════════════════════════════════════════════════════════════════════
 
-async function getHandler(request: NextRequest, context: APIContext) {
+async function getHandler(_request: NextRequest, context: APIContext) {
   const { prisma, tenant } = context;
   const tenantId = tenant!.tenantId;
 
-  const { searchParams } = new URL(request.url);
-  const query = locationQuerySchema.parse({
-    includeInactive: searchParams.get('includeInactive'),
-  });
-
   const locations = await prisma.location.findMany({
-    where: {
-      tenantId,
-      ...(query.includeInactive ? {} : { isActive: true }),
-    },
+    where: { tenantId },
     orderBy: { name: 'asc' },
     include: {
       _count: {
@@ -48,7 +40,6 @@ async function getHandler(request: NextRequest, context: APIContext) {
       id: loc.id,
       name: loc.name,
       description: loc.description,
-      isActive: loc.isActive,
       assetsCount: loc._count.assets,
     })),
   });
@@ -101,7 +92,6 @@ async function postHandler(request: NextRequest, context: APIContext) {
         id: location.id,
         name: location.name,
         description: location.description,
-        isActive: location.isActive,
       },
     },
     { status: 201 }

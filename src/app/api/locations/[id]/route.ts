@@ -45,7 +45,6 @@ async function getHandler(request: NextRequest, context: APIContext) {
       id: location.id,
       name: location.name,
       description: location.description,
-      isActive: location.isActive,
       assetsCount: location._count.assets,
       createdAt: location.createdAt,
       updatedAt: location.updatedAt,
@@ -81,7 +80,7 @@ async function putHandler(request: NextRequest, context: APIContext) {
     );
   }
 
-  const { name, description, isActive } = validation.data;
+  const { name, description } = validation.data;
 
   // If name is changing, check for duplicates
   if (name && name !== existing.name) {
@@ -102,7 +101,6 @@ async function putHandler(request: NextRequest, context: APIContext) {
     data: {
       ...(name !== undefined && { name }),
       ...(description !== undefined && { description }),
-      ...(isActive !== undefined && { isActive }),
     },
   });
 
@@ -112,7 +110,6 @@ async function putHandler(request: NextRequest, context: APIContext) {
       id: location.id,
       name: location.name,
       description: location.description,
-      isActive: location.isActive,
     },
   });
 }
@@ -143,7 +140,7 @@ async function deleteHandler(request: NextRequest, context: APIContext) {
   if (location._count.assets > 0) {
     return NextResponse.json(
       {
-        error: `Cannot delete location with ${location._count.assets} assigned asset(s). Please reassign or remove assets first, or deactivate the location instead.`,
+        error: `Cannot delete location with ${location._count.assets} assigned asset(s). Please reassign or remove assets first.`,
       },
       { status: 400 }
     );

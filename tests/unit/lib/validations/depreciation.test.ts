@@ -140,7 +140,6 @@ describe('Depreciation Validation Schemas', () => {
         expect(result.data.code).toBe(input.code);
         expect(result.data.annualRate).toBe(input.annualRate);
         expect(result.data.usefulLifeYears).toBe(input.usefulLifeYears);
-        expect(result.data.isActive).toBe(true); // Default
       }
     });
 
@@ -301,21 +300,6 @@ describe('Depreciation Validation Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should accept explicit isActive value', () => {
-      const input = {
-        name: 'Test Category',
-        code: 'TEST',
-        annualRate: 10,
-        usefulLifeYears: 10,
-        isActive: false,
-      };
-
-      const result = createDepreciationCategorySchema.safeParse(input);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.isActive).toBe(false);
-      }
-    });
   });
 
   describe('updateDepreciationCategorySchema', () => {
@@ -346,15 +330,6 @@ describe('Depreciation Validation Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should accept updating only isActive', () => {
-      const input = {
-        isActive: false,
-      };
-
-      const result = updateDepreciationCategorySchema.safeParse(input);
-      expect(result.success).toBe(true);
-    });
-
     it('should accept full update with all fields', () => {
       const input = {
         name: 'Updated Category',
@@ -362,7 +337,6 @@ describe('Depreciation Validation Schemas', () => {
         annualRate: 25,
         usefulLifeYears: 4,
         description: 'Updated description',
-        isActive: true,
       };
 
       const result = updateDepreciationCategorySchema.safeParse(input);
@@ -400,7 +374,6 @@ describe('Depreciation Validation Schemas', () => {
         annualRate: 10,
         usefulLifeYears: 10,
         description: 'Improvements to leased premises, depreciated over lease term or useful life',
-        isActive: true,
       };
 
       const result = createDepreciationCategorySchema.safeParse(input);

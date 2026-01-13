@@ -1165,7 +1165,6 @@
                         <li><input type="checkbox" id="c388" onchange="updateProgress()"><label for="c388">Multiple reassignments to same member → separate periods</label></li>
                         <li><input type="checkbox" id="c389" onchange="updateProgress()"><label for="c389">Period starts before asset existed → adjust to asset birth date</label></li>
                         <li><input type="checkbox" id="c390" onchange="updateProgress()"><label for="c390">Set sort order for display</label></li>
-                        <li><input type="checkbox" id="c391" onchange="updateProgress()"><label for="c391">Query includes/excludes inactive categories</label></li>
                     </ul>
                 </div>
 
@@ -3765,8 +3764,7 @@
                         <li><input type="checkbox" id="c1350" onchange="updateProgress()"><label for="c1350">Description optional (max 500 chars)</label></li>
                         <li><input type="checkbox" id="c1351" onchange="updateProgress()"><label for="c1351">Update location name</label></li>
                         <li><input type="checkbox" id="c1352" onchange="updateProgress()"><label for="c1352">Update location description</label></li>
-                        <li><input type="checkbox" id="c1353" onchange="updateProgress()"><label for="c1353">Deactivate location (isActive = false)</label></li>
-                        <li><input type="checkbox" id="c1354" onchange="updateProgress()"><label for="c1354">Query includes/excludes inactive</label></li>
+                        <li><input type="checkbox" id="c1353" onchange="updateProgress()"><label for="c1353">Delete location (only if no assets assigned)</label></li>
                     </ul>
                 </div>
             </div>
@@ -4992,7 +4990,6 @@
                         <li><input type="checkbox" id="c1767" onchange="updateProgress()"><label for="c1767">Non-integer useful life years rejected (e.g., 4.5)</label></li>
                         <li><input type="checkbox" id="c1768" onchange="updateProgress()"><label for="c1768">**Description optional:** max 500 characters</label></li>
                         <li><input type="checkbox" id="c1769" onchange="updateProgress()"><label for="c1769">Description &gt; 500 chars rejected</label></li>
-                        <li><input type="checkbox" id="c1770" onchange="updateProgress()"><label for="c1770">**isActive:** defaults to true</label></li>
                         <li><input type="checkbox" id="c1770a" onchange="updateProgress()"><label for="c1770a">**Form edge case:** Annual rate of 0 prevents Infinity in usefulLifeYears calculation</label></li>
                         <li><input type="checkbox" id="c1770b" onchange="updateProgress()"><label for="c1770b">**Form edge case:** isFinite() check prevents invalid usefulLifeYears (NaN/Infinity)</label></li>
                         <li><input type="checkbox" id="c1770c" onchange="updateProgress()"><label for="c1770c">**Form auto-calculation:** usefulLifeYears = Math.round(100 / annualRate) when rate &gt; 0</label></li>

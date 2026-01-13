@@ -144,7 +144,6 @@ describe('Depreciation Validation Tests', () => {
         expect(result.data.code).toBe('COMP_EQUIP');
         expect(result.data.annualRate).toBe(25);
         expect(result.data.usefulLifeYears).toBe(4);
-        expect(result.data.isActive).toBe(true); // default
       }
     });
 
@@ -276,15 +275,6 @@ describe('Depreciation Validation Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should accept isActive flag', () => {
-      const input = { ...validInput, isActive: false };
-
-      const result = createDepreciationCategorySchema.safeParse(input);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.isActive).toBe(false);
-      }
-    });
   });
 
   describe('updateDepreciationCategorySchema', () => {
@@ -331,7 +321,6 @@ describe('Depreciation Validation Tests', () => {
       const input = {
         name: 'New Name',
         annualRate: 20,
-        isActive: false,
       };
 
       const result = updateDepreciationCategorySchema.safeParse(input);
@@ -339,7 +328,6 @@ describe('Depreciation Validation Tests', () => {
       if (result.success) {
         expect(result.data.name).toBe('New Name');
         expect(result.data.annualRate).toBe(20);
-        expect(result.data.isActive).toBe(false);
       }
     });
   });

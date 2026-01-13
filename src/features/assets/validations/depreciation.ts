@@ -35,7 +35,6 @@ export const createDepreciationCategorySchema = z.object({
   annualRate: z.number().min(0, 'Rate cannot be negative').max(100, 'Rate cannot exceed 100%'),
   usefulLifeYears: z.number().int().min(0, 'Useful life cannot be negative'),
   description: z.string().max(500).optional(),
-  isActive: z.boolean().optional().default(true),
 });
 
 export type CreateDepreciationCategoryInput = z.infer<typeof createDepreciationCategorySchema>;

@@ -56,7 +56,6 @@ async function getHandler(request: NextRequest, context: APIContext) {
       annualRate: Number(category.annualRate),
       usefulLifeYears: category.usefulLifeYears,
       description: category.description,
-      isActive: category.isActive,
       assetsCount: category._count.assets,
     },
   });
@@ -119,7 +118,6 @@ async function putHandler(request: NextRequest, context: APIContext) {
       annualRate: Number(category.annualRate),
       usefulLifeYears: category.usefulLifeYears,
       description: category.description,
-      isActive: category.isActive,
     },
   });
 }
