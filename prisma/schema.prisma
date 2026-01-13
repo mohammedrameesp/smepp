@@ -691,6 +691,7 @@ model TeamMember {
   // Assets
   assets                       Asset[]               @relation("MemberAssets")
   assetsDisposed               Asset[]               @relation("AssetDisposer")
+  assetsDeleted                Asset[]               @relation("AssetDeleter")
   assetHistoryFrom             AssetHistory[]        @relation("AssetHistoryFromMember")
   assetHistoryTo               AssetHistory[]        @relation("AssetHistoryToMember")
   assetHistoryPerformed        AssetHistory[]        @relation("AssetHistoryPerformer")
@@ -872,6 +873,11 @@ model Asset {
   disposedById         String?
   disposedBy           TeamMember?     @relation("AssetDisposer", fields: [disposedById], references: [id])
 
+  // Soft delete (7-day recovery window)
+  deletedAt   DateTime?
+  deletedById String?
+  deletedBy   TeamMember? @relation("AssetDeleter", fields: [deletedById], references: [id])
+
   // Relations & Metadata
   history             AssetHistory[]
   maintenanceRecords  MaintenanceRecord[]
@@ -896,6 +902,7 @@ model Asset {
   @@index([tenantId, categoryId]) // For category filtering
   @@index([tenantId, assignedMemberId]) // For assignment filtering
   @@index([tenantId, status, disposalDate]) // For disposal reporting
+  @@index([tenantId, deletedAt]) // For soft delete queries
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

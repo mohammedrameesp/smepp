@@ -140,6 +140,8 @@ describe('Asset Export Tests', () => {
       disposalNetBookValue: null,
       disposalGainLoss: null,
       disposedById: null,
+      deletedAt: null,
+      deletedById: null,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-15'),
       ...overrides,
@@ -322,6 +324,8 @@ describe('Asset Export Tests', () => {
       disposalNetBookValue: null,
       disposalGainLoss: null,
       disposedById: null,
+      deletedAt: null,
+      deletedById: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -439,6 +443,8 @@ describe('Asset Export Tests', () => {
         disposalNetBookValue: null,
         disposalGainLoss: null,
         disposedById: null,
+        deletedAt: null,
+        deletedById: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

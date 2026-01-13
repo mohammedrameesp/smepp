@@ -218,6 +218,9 @@ async function getAssetsHandler(request: NextRequest, context: APIContext) {
     }
   }
 
+  // Exclude soft-deleted assets from normal queries
+  filters.deletedAt = null;
+
   // Build where clause using reusable search filter utility
   // Searches across multiple fields with OR logic
   const where = buildFilterWithSearch({

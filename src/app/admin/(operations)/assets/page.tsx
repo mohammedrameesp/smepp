@@ -19,7 +19,7 @@ import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { AssetRequestStatus } from '@prisma/client';
 import { AssetListTableServerSearch } from '@/features/assets';
-import { Plus, Inbox } from 'lucide-react';
+import { Plus, Inbox, Trash2 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
@@ -44,20 +44,23 @@ export default async function AdminAssetsPage() {
 
   const tenantId = session.user.organizationId;
 
-  const [assetStats, assignedCount, pendingRequests, pendingReturns] = await Promise.all([
+  const [assetStats, assignedCount, pendingRequests, pendingReturns, deletedCount] = await Promise.all([
     prisma.asset.aggregate({
-      where: { tenantId },
+      where: { tenantId, deletedAt: null },
       _count: { _all: true },
       _sum: { priceQAR: true },
     }),
     prisma.asset.count({
-      where: { tenantId, assignedMemberId: { not: null } },
+      where: { tenantId, deletedAt: null, assignedMemberId: { not: null } },
     }),
     prisma.assetRequest.count({
       where: { tenantId, status: AssetRequestStatus.PENDING_ADMIN_APPROVAL },
     }),
     prisma.assetRequest.count({
       where: { tenantId, status: AssetRequestStatus.PENDING_RETURN_APPROVAL },
+    }),
+    prisma.asset.count({
+      where: { tenantId, deletedAt: { not: null } },
     }),
   ]);
 
@@ -72,6 +75,15 @@ export default async function AdminAssetsPage() {
         subtitle="Manage company assets and equipment"
         actions={
           <>
+            {deletedCount > 0 && (
+              <PageHeaderButton href="/admin/assets/deleted" variant="outline">
+                <Trash2 className="h-4 w-4" />
+                Trash
+                <span className="bg-slate-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                  {deletedCount}
+                </span>
+              </PageHeaderButton>
+            )}
             <PageHeaderButton href="/admin/asset-requests" variant="secondary">
               <Inbox className="h-4 w-4" />
               Requests

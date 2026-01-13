@@ -749,27 +749,28 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DELETE /api/assets/[id] - Delete Asset
+// DELETE /api/assets/[id] - Soft Delete Asset
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Delete an asset permanently.
+ * Soft delete an asset (moves to trash with 7-day recovery window).
  * For financial tracking, consider using disposal (dispose route) instead.
  *
  * @route DELETE /api/assets/[id]
  *
  * @param {string} id - Asset ID (path parameter)
  *
- * @returns {{ message: string }} Success message
+ * @returns {{ message: string, deletedAt: Date }} Success message with deletion timestamp
  *
  * @throws {403} Organization context required
- * @throws {400} ID is required
+ * @throws {400} ID is required / Asset is currently assigned
  * @throws {404} Asset not found
  *
  * @sideEffects
- * - Permanently removes asset from database
- * - Cascades to related records (history, maintenance, etc.)
+ * - Sets deletedAt timestamp (7-day recovery window)
  * - Logs deletion activity for audit
+ * - Asset can be restored via /api/assets/[id]/restore
+ * - Auto-purged after 7 days by cron job
  */
 async function deleteAssetHandler(request: NextRequest, context: APIContext) {
     const { tenant, prisma: tenantPrisma } = context;
@@ -785,22 +786,32 @@ async function deleteAssetHandler(request: NextRequest, context: APIContext) {
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 1: Get asset details for logging before deletion
+    // STEP 1: Get asset details and validate
     // ─────────────────────────────────────────────────────────────────────────────
     const asset = await db.asset.findFirst({
-      where: { id },
-      select: { id: true, model: true, brand: true, type: true, assetTag: true },
+      where: { id, deletedAt: null },
+      select: { id: true, model: true, brand: true, type: true, assetTag: true, assignedMemberId: true },
     });
 
     if (!asset) {
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
     }
 
+    // Prevent deletion of assigned assets
+    if (asset.assignedMemberId) {
+      return NextResponse.json({ error: 'Cannot delete an assigned asset. Please unassign it first.' }, { status: 400 });
+    }
+
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 2: Delete asset (cascades to related records)
+    // STEP 2: Soft delete asset (set deletedAt timestamp)
     // ─────────────────────────────────────────────────────────────────────────────
-    await db.asset.delete({
+    const deletedAt = new Date();
+    await db.asset.update({
       where: { id },
+      data: {
+        deletedAt,
+        deletedById: tenant.userId,
+      },
     });
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -812,10 +823,14 @@ async function deleteAssetHandler(request: NextRequest, context: APIContext) {
       ActivityActions.ASSET_DELETED,
       'Asset',
       asset.id,
-      { assetModel: asset.model, assetType: asset.type, assetTag: asset.assetTag }
+      { assetModel: asset.model, assetType: asset.type, assetTag: asset.assetTag, softDelete: true }
     );
 
-    return NextResponse.json({ message: 'Asset deleted successfully' });
+    return NextResponse.json({
+      message: 'Asset moved to trash. It will be permanently deleted after 7 days.',
+      deletedAt,
+      recoveryDeadline: new Date(deletedAt.getTime() + 7 * 24 * 60 * 60 * 1000),
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
