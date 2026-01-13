@@ -455,7 +455,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
           memberId: newMemberData.id,
           type: AssetRequestType.ADMIN_ASSIGNMENT,
           status: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
-          reason: data.notes || 'Assigned via asset edit',
+          reason: data.notes || 'This asset has been assigned to you. Please review and accept to confirm receipt.',
           assignedById: tenant.userId,
         },
         include: {
@@ -471,7 +471,7 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
           action: 'CREATED',
           oldStatus: null,
           newStatus: AssetRequestStatus.PENDING_USER_ACCEPTANCE,
-          notes: data.notes || 'Admin assignment created via asset edit',
+          notes: data.notes || 'Asset assignment created',
           performedById: tenant.userId,
         },
       });
