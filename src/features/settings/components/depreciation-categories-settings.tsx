@@ -197,14 +197,18 @@ export function DepreciationCategoriesSettings({
 
     setIsCreating(true);
     try {
+      const rate = parseFloat(createAnnualRate);
+      const calculatedLife = rate > 0 ? Math.round(100 / rate) : 0;
+      const usefulLife = createUsefulLifeYears ? parseInt(createUsefulLifeYears, 10) : calculatedLife;
+
       const response = await fetch('/api/depreciation/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code: createCode.toUpperCase(),
           name: createName,
-          annualRate: parseFloat(createAnnualRate),
-          usefulLifeYears: createUsefulLifeYears ? parseInt(createUsefulLifeYears, 10) : Math.round(100 / parseFloat(createAnnualRate)),
+          annualRate: rate,
+          usefulLifeYears: isFinite(usefulLife) ? usefulLife : 0,
           description: createDescription || null,
         }),
       });
@@ -240,14 +244,18 @@ export function DepreciationCategoriesSettings({
 
     setIsUpdating(true);
     try {
+      const rate = parseFloat(editAnnualRate);
+      const calculatedLife = rate > 0 ? Math.round(100 / rate) : 0;
+      const usefulLife = editUsefulLifeYears ? parseInt(editUsefulLifeYears, 10) : calculatedLife;
+
       const response = await fetch(`/api/depreciation/categories/${editCategory.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code: editCode.toUpperCase(),
           name: editName,
-          annualRate: parseFloat(editAnnualRate),
-          usefulLifeYears: editUsefulLifeYears ? parseInt(editUsefulLifeYears, 10) : Math.round(100 / parseFloat(editAnnualRate)),
+          annualRate: rate,
+          usefulLifeYears: isFinite(usefulLife) ? usefulLife : 0,
           description: editDescription || null,
         }),
       });
