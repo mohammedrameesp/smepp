@@ -491,8 +491,12 @@ async function directAssign(
     directAssign: true,
   });
 
-  // Send notifications (non-blocking)
-  sendAssignmentNotifications(updatedAsset, member, previousMember, tenantId).catch(() => {});
+  // Send notifications (await to ensure completion on serverless)
+  try {
+    await sendAssignmentNotifications(updatedAsset, member, previousMember, tenantId);
+  } catch (error) {
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', assetId: asset.id }, 'Error sending assignment notifications');
+  }
 
   return NextResponse.json({
     success: true,
@@ -637,11 +641,14 @@ async function unassignForReassignment(
     reason,
   });
 
-  // Send notification to previous member (non-blocking but log errors)
+  // Send notification to previous member (await to ensure it completes before response on serverless)
   logger.info({ assetId: asset.id, previousMemberId: previousMember.id }, 'Calling sendReassignmentUnassignNotification');
-  sendReassignmentUnassignNotification(asset, previousMember, tenantId, adminId, reason).catch((error) => {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', assetId: asset.id, previousMemberId: previousMember.id }, 'Unhandled error in sendReassignmentUnassignNotification');
-  });
+  try {
+    await sendReassignmentUnassignNotification(asset, previousMember, tenantId, adminId, reason);
+    logger.info({ assetId: asset.id, previousMemberId: previousMember.id }, 'sendReassignmentUnassignNotification completed');
+  } catch (error) {
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', assetId: asset.id, previousMemberId: previousMember.id }, 'Error in sendReassignmentUnassignNotification');
+  }
 }
 
 /**
