@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/core/prisma';
 import { ChatContext } from './chat-service';
+import { SubscriptionStatus, AssetStatus } from '@prisma/client';
 
 // Maximum number of records to return from any function
 const MAX_RESULT_ARRAY_LENGTH = 50;
@@ -443,10 +444,13 @@ async function executeFunctionInternal(
 
     case 'listSubscriptions': {
       const status = args.status as string | undefined;
+      const validStatus = status && Object.values(SubscriptionStatus).includes(status as SubscriptionStatus)
+        ? (status as SubscriptionStatus)
+        : undefined;
       const subscriptions = await prisma.subscription.findMany({
         where: {
           tenantId,
-          ...(status && { status: status as any }),
+          ...(validStatus && { status: validStatus }),
         },
         select: {
           id: true,
@@ -510,6 +514,9 @@ async function executeFunctionInternal(
       const query = args.query as string | undefined;
       const type = args.type as string | undefined;
       const status = args.status as string | undefined;
+      const validAssetStatus = status && Object.values(AssetStatus).includes(status as AssetStatus)
+        ? (status as AssetStatus)
+        : undefined;
       const assets = await prisma.asset.findMany({
         where: {
           tenantId,
@@ -520,7 +527,7 @@ async function executeFunctionInternal(
             ],
           }),
           ...(type && { type: { contains: type, mode: 'insensitive' } }),
-          ...(status && { status: status as any }),
+          ...(validAssetStatus && { status: validAssetStatus }),
         },
         select: {
           id: true,

@@ -19,7 +19,7 @@ import {
 } from '@/features/payroll/lib/utils';
 
 export const GET = withErrorHandler(
-  async (request, { prisma: tenantPrisma, tenant }) => {
+  async (request, { prisma: tenantPrisma }) => {
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
 

@@ -5,6 +5,20 @@ import { prisma } from '@/lib/core/prisma';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+  count: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
 describe('Assets API Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -44,7 +58,7 @@ describe('Assets API Tests', () => {
         },
       ];
 
-      const mockPrismaAsset = prisma.asset as any;
+      const mockPrismaAsset = getMockedModel(prisma.asset);
       mockPrismaAsset.findMany.mockResolvedValue(mockAssets);
       mockPrismaAsset.count.mockResolvedValue(mockAssets.length);
 
@@ -167,7 +181,7 @@ describe('Assets API Tests', () => {
         status: 'AVAILABLE',
       };
 
-      const mockPrismaAsset = prisma.asset as any;
+      const mockPrismaAsset = getMockedModel(prisma.asset);
       mockPrismaAsset.create.mockResolvedValue({
         id: 'asset-new',
         ...validAssetData,
@@ -192,7 +206,7 @@ describe('Assets API Tests', () => {
     });
 
     it('should prevent duplicate asset tags', async () => {
-      const mockPrismaAsset = prisma.asset as any;
+      const mockPrismaAsset = getMockedModel(prisma.asset);
 
       // Existing asset with tag
       mockPrismaAsset.findFirst.mockResolvedValue({
@@ -237,7 +251,7 @@ describe('Assets API Tests', () => {
         assignedUserId: 'user-456', // Different user
       };
 
-      const mockPrismaAsset = prisma.asset as any;
+      const mockPrismaAsset = getMockedModel(prisma.asset);
       mockPrismaAsset.findUnique.mockResolvedValue(mockAsset);
 
       const asset = await mockPrismaAsset.findUnique({ where: { id: 'asset-1' } });
@@ -267,7 +281,7 @@ describe('Assets API Tests', () => {
         assignedUserId: 'user-123', // Same user
       };
 
-      const mockPrismaAsset = prisma.asset as any;
+      const mockPrismaAsset = getMockedModel(prisma.asset);
       mockPrismaAsset.findUnique.mockResolvedValue(mockAsset);
 
       const asset = await mockPrismaAsset.findUnique({ where: { id: 'asset-1' } });
@@ -296,10 +310,10 @@ describe('Assets API Tests', () => {
         assignedUserId: 'user-456', // Different user
       };
 
-      const mockPrismaAsset = prisma.asset as any;
+      const mockPrismaAsset = getMockedModel(prisma.asset);
       mockPrismaAsset.findUnique.mockResolvedValue(mockAsset);
 
-      const asset = await mockPrismaAsset.findUnique({ where: { id: 'asset-1' } });
+      const _asset = await mockPrismaAsset.findUnique({ where: { id: 'asset-1' } });
       const session = await mockGetServerSession();
 
       // Should return 200 (admin can access any asset)
@@ -307,7 +321,7 @@ describe('Assets API Tests', () => {
     });
 
     it('should return 404 if asset not found', async () => {
-      const mockPrismaAsset = prisma.asset as any;
+      const mockPrismaAsset = getMockedModel(prisma.asset);
       mockPrismaAsset.findUnique.mockResolvedValue(null);
 
       const asset = await mockPrismaAsset.findUnique({ where: { id: 'nonexistent' } });

@@ -35,7 +35,7 @@ async function getUsersHandler(request: NextRequest, context: APIContext) {
 
   // Query TeamMember instead of User (all HR data is now on TeamMember)
   // Note: tenantId filtering is handled automatically by tenant-scoped prisma client
-  const where: any = {};
+  const where: Record<string, unknown> = {};
   if (role) where.role = role;
 
   // By default, exclude soft-deleted users unless explicitly requested

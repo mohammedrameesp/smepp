@@ -242,7 +242,7 @@ describe('Renewal Date Tests', () => {
   });
 
   describe('getRenewalStatus logic', () => {
-    const getRenewalStatus = (renewalDate: Date | null, billingCycle: string) => {
+    const getRenewalStatus = (renewalDate: Date | null, _billingCycle: string) => {
       if (!renewalDate) {
         return {
           nextRenewal: null,

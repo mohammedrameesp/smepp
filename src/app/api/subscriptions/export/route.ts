@@ -90,7 +90,7 @@ async function exportSubscriptionsHandler(_request: NextRequest, context: APICon
   });
 
     // Transform data for CSV - Main subscriptions sheet
-    const csvData = subscriptions.map(sub => ({
+    const csvData: Record<string, unknown>[] = subscriptions.map(sub => ({
       id: sub.id,
       serviceName: sub.serviceName,
       category: sub.category || '',
@@ -117,7 +117,7 @@ async function exportSubscriptionsHandler(_request: NextRequest, context: APICon
     }));
 
     // Transform subscription history for separate sheet
-    const historyData: any[] = [];
+    const historyData: Record<string, unknown>[] = [];
     try {
       subscriptions.forEach(sub => {
         if (sub.history && Array.isArray(sub.history)) {
@@ -144,7 +144,7 @@ async function exportSubscriptionsHandler(_request: NextRequest, context: APICon
     }
 
     // Define CSV headers for subscriptions
-    const headers = [
+    const headers: { key: string; header: string }[] = [
       { key: 'id', header: 'ID' },
       { key: 'serviceName', header: 'Service Name' },
       { key: 'category', header: 'Category' },
@@ -187,8 +187,8 @@ async function exportSubscriptionsHandler(_request: NextRequest, context: APICon
     ];
 
     // Generate Excel file with multiple sheets
-    const csvBuffer = await arrayToCSV(csvData, headers as any, historyData.length > 0 ? [
-      { name: 'Subscriptions', data: csvData, headers: headers as any },
+    const csvBuffer = await arrayToCSV(csvData, headers, historyData.length > 0 ? [
+      { name: 'Subscriptions', data: csvData, headers: headers },
       { name: 'Subscription History', data: historyData, headers: historyHeaders },
     ] : undefined);
 

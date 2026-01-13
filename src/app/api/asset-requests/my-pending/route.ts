@@ -79,7 +79,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  *   }
  * }
  */
-async function getMyPendingRequestsHandler(_request: NextRequest, context: APIContext) {
+async function getMyPendingRequestsHandler(_request: NextRequest, _context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });

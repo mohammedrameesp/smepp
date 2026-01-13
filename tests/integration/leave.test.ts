@@ -7,7 +7,6 @@ import { getServerSession } from 'next-auth/next';
 import { Role, LeaveStatus, LeaveRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import {
-  createMockUser,
   createMockLeaveType,
   createMockLeaveBalance,
   createMockLeaveRequest,
@@ -15,6 +14,25 @@ import {
 
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
+
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+  count: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
+// Type for leave request status check
+interface LeaveRequestStatusResult {
+  status: string;
+}
 
 describe('Leave Management API Tests', () => {
   beforeEach(() => {
@@ -52,7 +70,7 @@ describe('Leave Management API Tests', () => {
           createMockLeaveType({ id: 'type-2', name: 'Sick Leave', requiresDocument: true }),
         ];
 
-        const mockPrismaLeaveType = prisma.leaveType as any;
+        const mockPrismaLeaveType = getMockedModel(prisma.leaveType);
         mockPrismaLeaveType.findMany.mockResolvedValue(mockLeaveTypes);
 
         const result = await mockPrismaLeaveType.findMany();
@@ -124,7 +142,7 @@ describe('Leave Management API Tests', () => {
           allowCarryForward: false,
         };
 
-        const mockPrismaLeaveType = prisma.leaveType as any;
+        const mockPrismaLeaveType = getMockedModel(prisma.leaveType);
         mockPrismaLeaveType.create.mockResolvedValue({
           id: 'leave-type-new',
           ...validLeaveTypeData,
@@ -138,7 +156,7 @@ describe('Leave Management API Tests', () => {
       });
 
       it('should prevent duplicate leave type names', async () => {
-        const mockPrismaLeaveType = prisma.leaveType as any;
+        const mockPrismaLeaveType = getMockedModel(prisma.leaveType);
 
         mockPrismaLeaveType.findUnique.mockResolvedValue({
           id: 'existing-type',
@@ -173,7 +191,7 @@ describe('Leave Management API Tests', () => {
           minNoticeDays: 5,
         };
 
-        const mockPrismaLeaveType = prisma.leaveType as any;
+        const mockPrismaLeaveType = getMockedModel(prisma.leaveType);
         mockPrismaLeaveType.update.mockResolvedValue({
           id: 'leave-type-1',
           name: 'Annual Leave',
@@ -192,7 +210,7 @@ describe('Leave Management API Tests', () => {
 
     describe('DELETE /api/leave/types/[id]', () => {
       it('should not delete leave type with existing requests', async () => {
-        const mockPrismaLeaveRequest = prisma.leaveRequest as any;
+        const mockPrismaLeaveRequest = getMockedModel(prisma.leaveRequest);
         mockPrismaLeaveRequest.count.mockResolvedValue(5);
 
         const requestCount = await mockPrismaLeaveRequest.count({
@@ -204,8 +222,8 @@ describe('Leave Management API Tests', () => {
       });
 
       it('should delete leave type with no requests', async () => {
-        const mockPrismaLeaveRequest = prisma.leaveRequest as any;
-        const mockPrismaLeaveType = prisma.leaveType as any;
+        const mockPrismaLeaveRequest = getMockedModel(prisma.leaveRequest);
+        const mockPrismaLeaveType = getMockedModel(prisma.leaveType);
 
         mockPrismaLeaveRequest.count.mockResolvedValue(0);
         mockPrismaLeaveType.delete.mockResolvedValue({
@@ -260,7 +278,7 @@ describe('Leave Management API Tests', () => {
           createMockLeaveRequest({ id: 'req-3', userId: 'user-3' }),
         ];
 
-        const mockPrismaLeaveRequest = prisma.leaveRequest as any;
+        const mockPrismaLeaveRequest = getMockedModel(prisma.leaveRequest);
         mockPrismaLeaveRequest.findMany.mockResolvedValue(mockRequests);
         mockPrismaLeaveRequest.count.mockResolvedValue(3);
 
@@ -341,7 +359,7 @@ describe('Leave Management API Tests', () => {
           reason: 'Annual vacation',
         };
 
-        const mockPrismaLeaveRequest = prisma.leaveRequest as any;
+        const mockPrismaLeaveRequest = getMockedModel(prisma.leaveRequest);
         mockPrismaLeaveRequest.count.mockResolvedValue(10);
         mockPrismaLeaveRequest.create.mockResolvedValue({
           id: 'leave-request-new',
@@ -427,7 +445,7 @@ describe('Leave Management API Tests', () => {
 
         mockGetServerSession.mockResolvedValue(mockSession);
 
-        const mockPrismaLeaveRequest = prisma.leaveRequest as any;
+        const mockPrismaLeaveRequest = getMockedModel(prisma.leaveRequest);
         mockPrismaLeaveRequest.findUnique.mockResolvedValue(
           createMockLeaveRequest({
             id: 'req-123',
@@ -456,7 +474,7 @@ describe('Leave Management API Tests', () => {
       });
 
       it('should update balance when request is approved', async () => {
-        const mockPrismaLeaveBalance = prisma.leaveBalance as any;
+        const mockPrismaLeaveBalance = getMockedModel(prisma.leaveBalance);
 
         mockPrismaLeaveBalance.update.mockResolvedValue({
           id: 'balance-123',
@@ -500,7 +518,7 @@ describe('Leave Management API Tests', () => {
 
         mockGetServerSession.mockResolvedValue(mockSession);
 
-        const mockPrismaLeaveRequest = prisma.leaveRequest as any;
+        const mockPrismaLeaveRequest = getMockedModel(prisma.leaveRequest);
         mockPrismaLeaveRequest.update.mockResolvedValue({
           id: 'req-123',
           status: LeaveStatus.REJECTED,
@@ -524,7 +542,7 @@ describe('Leave Management API Tests', () => {
       });
 
       it('should restore pending balance when request is rejected', async () => {
-        const mockPrismaLeaveBalance = prisma.leaveBalance as any;
+        const mockPrismaLeaveBalance = getMockedModel(prisma.leaveBalance);
 
         mockPrismaLeaveBalance.update.mockResolvedValue({
           id: 'balance-123',
@@ -566,7 +584,7 @@ describe('Leave Management API Tests', () => {
           startDate: futureDate,
         });
 
-        const mockPrismaLeaveRequest = prisma.leaveRequest as any;
+        const mockPrismaLeaveRequest = getMockedModel(prisma.leaveRequest);
         mockPrismaLeaveRequest.findUnique.mockResolvedValue(mockRequest);
         mockPrismaLeaveRequest.update.mockResolvedValue({
           ...mockRequest,
@@ -605,7 +623,7 @@ describe('Leave Management API Tests', () => {
       });
 
       it('should restore used balance when approved request is cancelled', async () => {
-        const mockPrismaLeaveBalance = prisma.leaveBalance as any;
+        const mockPrismaLeaveBalance = getMockedModel(prisma.leaveBalance);
 
         mockPrismaLeaveBalance.update.mockResolvedValue({
           id: 'balance-123',
@@ -647,7 +665,7 @@ describe('Leave Management API Tests', () => {
           createMockLeaveBalance({ id: 'bal-2', userId: 'user-2' }),
         ];
 
-        const mockPrismaLeaveBalance = prisma.leaveBalance as any;
+        const mockPrismaLeaveBalance = getMockedModel(prisma.leaveBalance);
         mockPrismaLeaveBalance.findMany.mockResolvedValue(mockBalances);
 
         const result = await mockPrismaLeaveBalance.findMany();
@@ -704,7 +722,7 @@ describe('Leave Management API Tests', () => {
 
         mockGetServerSession.mockResolvedValue(mockSession);
 
-        const mockPrismaLeaveBalance = prisma.leaveBalance as any;
+        const mockPrismaLeaveBalance = getMockedModel(prisma.leaveBalance);
         mockPrismaLeaveBalance.create.mockResolvedValue({
           id: 'balance-new',
           userId: 'user-456',
@@ -746,7 +764,7 @@ describe('Leave Management API Tests', () => {
 
         mockGetServerSession.mockResolvedValue(mockSession);
 
-        const mockPrismaLeaveBalance = prisma.leaveBalance as any;
+        const mockPrismaLeaveBalance = getMockedModel(prisma.leaveBalance);
         mockPrismaLeaveBalance.update.mockResolvedValue({
           id: 'balance-123',
           adjustment: 5,
@@ -817,7 +835,7 @@ describe('Leave Management API Tests', () => {
           }),
         ];
 
-        const mockPrismaLeaveRequest = prisma.leaveRequest as any;
+        const mockPrismaLeaveRequest = getMockedModel(prisma.leaveRequest);
         mockPrismaLeaveRequest.findMany.mockResolvedValue(mockRequests);
 
         const result = await mockPrismaLeaveRequest.findMany({
@@ -829,7 +847,7 @@ describe('Leave Management API Tests', () => {
         });
 
         expect(result).toHaveLength(2);
-        expect(result.every((r: any) => r.status === LeaveStatus.APPROVED)).toBe(true);
+        expect(result.every((r: LeaveRequestStatusResult) => r.status === LeaveStatus.APPROVED)).toBe(true);
       });
 
       it('should filter by leave type', async () => {
@@ -851,7 +869,7 @@ describe('Leave Management API Tests', () => {
       });
 
       it('should include user information', async () => {
-        const mockPrismaLeaveRequest = prisma.leaveRequest as any;
+        const mockPrismaLeaveRequest = getMockedModel(prisma.leaveRequest);
         mockPrismaLeaveRequest.findMany.mockResolvedValue([
           {
             id: 'req-1',
@@ -904,7 +922,7 @@ describe('Leave Management API Tests', () => {
         userId: 'other-user-456',
       });
 
-      const mockPrismaLeaveRequest = prisma.leaveRequest as any;
+      const mockPrismaLeaveRequest = getMockedModel(prisma.leaveRequest);
       mockPrismaLeaveRequest.findUnique.mockResolvedValue(mockRequest);
 
       const session = await mockGetServerSession();
@@ -933,7 +951,7 @@ describe('Leave Management API Tests', () => {
         userId: 'other-user-456',
       });
 
-      const mockPrismaLeaveRequest = prisma.leaveRequest as any;
+      const mockPrismaLeaveRequest = getMockedModel(prisma.leaveRequest);
       mockPrismaLeaveRequest.findUnique.mockResolvedValue(mockRequest);
 
       const session = await mockGetServerSession();
@@ -963,7 +981,7 @@ describe('Leave Management API Tests', () => {
         userId: 'user-123',
       });
 
-      const mockPrismaLeaveRequest = prisma.leaveRequest as any;
+      const mockPrismaLeaveRequest = getMockedModel(prisma.leaveRequest);
       mockPrismaLeaveRequest.findUnique.mockResolvedValue(mockRequest);
 
       const session = await mockGetServerSession();

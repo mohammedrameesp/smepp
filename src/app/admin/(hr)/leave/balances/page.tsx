@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AdjustBalanceDialog } from '@/features/leave/components';
-import { Search, ChevronLeft, ChevronRight, Plus, User, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
-import { calculateRemainingBalance, getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
+import { Search, Plus, User, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -427,7 +427,6 @@ export default function AdminLeaveBalancesPage() {
 
                               const total = effectiveEntitlement + Number(balance.carriedForward) + Number(balance.adjustment);
                               const remaining = total - Number(balance.used) - Number(balance.pending);
-                              const usedPercent = total > 0 ? (Number(balance.used) / total) * 100 : 0;
 
                               return (
                                 <div

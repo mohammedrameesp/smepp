@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Shield, Wrench, ChevronRight, MessageCircle } from 'lucide-react';
 
 export default function SuperAdminSettingsPage() {

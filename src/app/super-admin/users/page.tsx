@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/core/prisma';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 // Prevent static pre-rendering (requires database)
 export const dynamic = 'force-dynamic';

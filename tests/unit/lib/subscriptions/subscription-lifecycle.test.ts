@@ -11,10 +11,19 @@
  * - Billing cycle handling
  */
 
-import { BillingCycle, SubscriptionStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 // Mock Prisma before importing the module
+interface MockPrismaTransaction {
+  subscription: {
+    findUnique: jest.Mock;
+    update: jest.Mock;
+  };
+  subscriptionHistory: {
+    create: jest.Mock;
+  };
+}
+
 jest.mock('@/lib/core/prisma', () => ({
   prisma: {
     subscription: {
@@ -25,7 +34,7 @@ jest.mock('@/lib/core/prisma', () => ({
     subscriptionHistory: {
       create: jest.fn(),
     },
-    $transaction: jest.fn((callback: (tx: any) => Promise<any>) =>
+    $transaction: jest.fn((callback: (tx: MockPrismaTransaction) => Promise<unknown>) =>
       callback({
         subscription: {
           findUnique: jest.fn(),
@@ -166,7 +175,7 @@ describe('Subscription Lifecycle Management', () => {
     it('should use provided reactivation date when specified', async () => {
       const newRenewalDate = createDate(2024, 7, 1);
       const reactivationDate = createDate(2024, 6, 10);
-      let capturedUpdateData: any;
+      let capturedUpdateData: Record<string, unknown> = {};
 
       (mockPrisma.$transaction as jest.Mock).mockImplementation(async (cb) => {
         const tx = {
@@ -176,7 +185,7 @@ describe('Subscription Lifecycle Management', () => {
               status: 'CANCELLED',
               renewalDate: createDate(2024, 5, 1),
             }),
-            update: jest.fn().mockImplementation((args) => {
+            update: jest.fn().mockImplementation((args: { data: Record<string, unknown> }) => {
               capturedUpdateData = args.data;
               return Promise.resolve({
                 ...args.data,

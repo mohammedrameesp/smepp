@@ -7,6 +7,22 @@ import { prisma } from '@/lib/core/prisma';
 
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+  count: jest.Mock;
+  groupBy: jest.Mock;
+  aggregate: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
 describe('Super Admin API Tests', () => {
   const mockSuperAdminSession = {
     isSuperAdmin: true,
@@ -58,7 +74,7 @@ describe('Super Admin API Tests', () => {
 
   describe('POST /api/super-admin/auth/verify-2fa', () => {
     it('should verify TOTP code', () => {
-      const verifyTOTP = (code: string, secret: string): boolean => {
+      const verifyTOTP = (code: string, _secret: string): boolean => {
         // Simulated TOTP verification
         return code.length === 6 && /^\d+$/.test(code);
       };
@@ -85,7 +101,7 @@ describe('Super Admin API Tests', () => {
 
   describe('GET /api/super-admin/organizations', () => {
     it('should return all organizations', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findMany.mockResolvedValue([
         { id: 'org-1', name: 'Org 1', slug: 'org-1', subscriptionTier: 'FREE' },
         { id: 'org-2', name: 'Org 2', slug: 'org-2', subscriptionTier: 'PROFESSIONAL' },
@@ -96,7 +112,7 @@ describe('Super Admin API Tests', () => {
     });
 
     it('should support search and filtering', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findMany.mockResolvedValue([
         { id: 'org-1', name: 'Acme Corp', subscriptionTier: 'PROFESSIONAL' },
       ]);
@@ -116,7 +132,7 @@ describe('Super Admin API Tests', () => {
     });
 
     it('should include usage statistics', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findMany.mockResolvedValue([
         {
           id: 'org-1',
@@ -137,7 +153,7 @@ describe('Super Admin API Tests', () => {
 
   describe('GET /api/super-admin/organizations/[id]', () => {
     it('should return organization details', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findUnique.mockResolvedValue({
         id: 'org-1',
         name: 'Test Org',
@@ -157,7 +173,7 @@ describe('Super Admin API Tests', () => {
 
   describe('PATCH /api/super-admin/organizations/[id]', () => {
     it('should update organization tier', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.update.mockResolvedValue({
         id: 'org-1',
         subscriptionTier: 'ENTERPRISE',
@@ -178,7 +194,7 @@ describe('Super Admin API Tests', () => {
     });
 
     it('should enable/disable features', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.update.mockResolvedValue({
         id: 'org-1',
         aiChatEnabled: true,
@@ -196,7 +212,7 @@ describe('Super Admin API Tests', () => {
 
   describe('DELETE /api/super-admin/organizations/[id]', () => {
     it('should schedule organization for deletion', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       const deletionDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
       mockOrg.update.mockResolvedValue({
@@ -233,7 +249,7 @@ describe('Super Admin API Tests', () => {
     });
 
     it('should log impersonation for audit', async () => {
-      const mockActivityLog = prisma.activityLog as any;
+      const mockActivityLog = getMockedModel(prisma.activityLog);
       mockActivityLog.create.mockResolvedValue({
         id: 'log-1',
         action: 'SUPER_ADMIN_IMPERSONATION',
@@ -260,7 +276,7 @@ describe('Super Admin API Tests', () => {
 
   describe('POST /api/super-admin/impersonation/revoke', () => {
     it('should revoke impersonation token', async () => {
-      const mockRevoked = prisma.revokedImpersonationToken as any;
+      const mockRevoked = getMockedModel(prisma.revokedImpersonationToken);
       mockRevoked.create.mockResolvedValue({
         token: 'imp-token-123',
         revokedAt: new Date(),
@@ -276,9 +292,9 @@ describe('Super Admin API Tests', () => {
 
   describe('GET /api/super-admin/stats', () => {
     it('should return platform statistics', async () => {
-      const mockOrg = prisma.organization as any;
-      const mockTeamMember = prisma.teamMember as any;
-      const mockAsset = prisma.asset as any;
+      const mockOrg = getMockedModel(prisma.organization);
+      const mockTeamMember = getMockedModel(prisma.teamMember);
+      const mockAsset = getMockedModel(prisma.asset);
 
       mockOrg.count.mockResolvedValue(50);
       mockTeamMember.count.mockResolvedValue(500);
@@ -296,7 +312,7 @@ describe('Super Admin API Tests', () => {
     });
 
     it('should return tier distribution', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.groupBy.mockResolvedValue([
         { subscriptionTier: 'FREE', _count: 30 },
         { subscriptionTier: 'STARTER', _count: 15 },
@@ -315,7 +331,7 @@ describe('Super Admin API Tests', () => {
 
   describe('GET /api/super-admin/ai-usage', () => {
     it('should return AI usage across platform', async () => {
-      const mockUsage = prisma.aIChatUsage as any;
+      const mockUsage = getMockedModel(prisma.aIChatUsage);
       mockUsage.aggregate.mockResolvedValue({
         _sum: { totalTokens: 1000000 },
         _count: { id: 500 },
@@ -388,7 +404,7 @@ describe('Super Admin API Tests', () => {
 
   describe('POST /api/super-admin/seed-comprehensive', () => {
     it('should seed demo data', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.create.mockResolvedValue({ id: 'demo-org', name: 'Demo Company' });
 
       const org = await mockOrg.create({
@@ -425,7 +441,7 @@ describe('Super Admin API Tests', () => {
   describe('WhatsApp Configuration', () => {
     describe('GET /api/super-admin/whatsapp/config', () => {
       it('should return WhatsApp platform config', async () => {
-        const mockConfig = prisma.platformWhatsAppConfig as any;
+        const mockConfig = getMockedModel(prisma.platformWhatsAppConfig);
         mockConfig.findFirst.mockResolvedValue({
           id: 'config-1',
           apiUrl: 'https://api.whatsapp.com',
@@ -439,7 +455,7 @@ describe('Super Admin API Tests', () => {
 
     describe('GET /api/super-admin/whatsapp/stats', () => {
       it('should return WhatsApp usage stats', async () => {
-        const mockMessageLog = prisma.whatsAppMessageLog as any;
+        const mockMessageLog = getMockedModel(prisma.whatsAppMessageLog);
         mockMessageLog.count.mockResolvedValue(5000);
         mockMessageLog.groupBy.mockResolvedValue([
           { status: 'SENT', _count: 4500 },

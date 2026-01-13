@@ -146,7 +146,7 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
                       <p className="font-medium mb-1">Employee</p>
                       <p className="text-xs">Full HR profile with document tracking (QID, passport, health card expiry), leave management, and payroll.</p>
                       <p className="font-medium mt-2 mb-1">Non-employee</p>
-                      <p className="text-xs">System accounts like info@company.com, sales@company.com, or admin users who don't need HR tracking.</p>
+                      <p className="text-xs">System accounts like info@company.com, sales@company.com, or admin users who don&apos;t need HR tracking.</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -167,7 +167,7 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs" side="top">
                         <p className="font-medium mb-1">WPS (Wage Protection System)</p>
-                        <p className="text-xs">Include this user in the company's monthly salary file for Qatar labor compliance. Only for employees receiving salary through your company.</p>
+                        <p className="text-xs">Include this user in the company&apos;s monthly salary file for Qatar labor compliance. Only for employees receiving salary through your company.</p>
                       </TooltipContent>
                     </Tooltip>
                   </div>

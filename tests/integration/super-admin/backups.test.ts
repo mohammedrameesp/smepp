@@ -29,6 +29,12 @@ const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockEncryptBackup = encryptBackup as jest.MockedFunction<typeof encryptBackup>;
 const mockRedactBackupData = redactBackupData as jest.MockedFunction<typeof redactBackupData>;
 
+// Type for redacted backup data
+interface RedactedBackupData {
+  users: { id: string; email: string; password: string }[];
+  teamMembers: { id: string; bankAccountNumber: string }[];
+}
+
 describe('Super Admin Backups API', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -322,10 +328,10 @@ describe('Super Admin Backups API', () => {
         ],
       });
 
-      const redacted = mockRedactBackupData(sensitiveData);
+      const redacted = mockRedactBackupData(sensitiveData) as unknown as RedactedBackupData;
 
-      expect((redacted as any).users[0].password).toBe('[REDACTED]');
-      expect((redacted as any).teamMembers[0].bankAccountNumber).toBe('[REDACTED]');
+      expect(redacted.users[0].password).toBe('[REDACTED]');
+      expect(redacted.teamMembers[0].bankAccountNumber).toBe('[REDACTED]');
     });
 
     it('should use .enc extension for encrypted files', () => {

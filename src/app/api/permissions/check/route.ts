@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { hasPermission, hasPermissions, isValidPermission } from '@/lib/access-control';
 import { OrgRole } from '@prisma/client';
-import logger from '@/lib/core/log';
 
 /**
  * GET /api/permissions/check
@@ -18,7 +17,7 @@ import logger from '@/lib/core/log';
  * - Multiple permissions: { permissions: { [key]: boolean } }
  */
 export const GET = withErrorHandler(
-  async (request: NextRequest, { prisma, tenant }: APIContext) => {
+  async (request: NextRequest, { tenant }: APIContext) => {
     const { searchParams } = new URL(request.url);
     const singlePermission = searchParams.get('permission');
     const multiplePermissions = searchParams.get('permissions');
@@ -32,12 +31,6 @@ export const GET = withErrorHandler(
 
     const orgId = tenant!.tenantId;
     const orgRole = tenant!.orgRole as OrgRole;
-
-    // Get enabled modules for the organization (using tenant-scoped prisma)
-    const org = await prisma.systemSettings.findFirst({
-      where: { tenantId: orgId },
-      select: { tenantId: true },
-    });
 
     // Get enabled modules from organization
     const { prisma: rawPrisma } = await import('@/lib/core/prisma');

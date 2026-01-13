@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -42,7 +42,6 @@ interface PermissionsClientProps {
 type Role = 'MANAGER' | 'MEMBER';
 
 export function PermissionsClient({
-  organizationName,
   enabledModules,
   initialPermissions,
   permissionGroups,
@@ -56,10 +55,10 @@ export function PermissionsClient({
   // Check if a module is enabled
   const isModuleEnabled = useCallback(
     (permissionKey: string) => {
-      const module = permissionKey.split(':')[0];
+      const modulePrefix = permissionKey.split(':')[0];
       // Core modules are always enabled
       const coreModules = ['users', 'settings', 'reports', 'activity', 'approvals', 'documents'];
-      if (coreModules.includes(module)) return true;
+      if (coreModules.includes(modulePrefix)) return true;
 
       // Map permission prefixes to module slugs
       const moduleMap: Record<string, string> = {
@@ -73,7 +72,7 @@ export function PermissionsClient({
         purchase: 'purchase-requests',
       };
 
-      const moduleSlug = moduleMap[module];
+      const moduleSlug = moduleMap[modulePrefix];
       return moduleSlug ? enabledModules.includes(moduleSlug) : true;
     },
     [enabledModules]

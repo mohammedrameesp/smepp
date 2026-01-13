@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Loader2, Clock, CheckCircle, XCircle, FileCheck, Trash2, Pencil, FileText, ShoppingCart, DollarSign } from 'lucide-react';
+import { ArrowLeft, Loader2, Clock, CheckCircle, XCircle, FileCheck, Trash2, Pencil, FileText, ShoppingCart } from 'lucide-react';
 import { StatusBadge, PriorityBadge } from '@/features/purchase-requests/components';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
-import { getStatusLabel, canDeleteRequest, canEditRequest } from '@/features/purchase-requests/lib/purchase-request-utils';
+import { getStatusLabel, canDeleteRequest } from '@/features/purchase-requests/lib/purchase-request-utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -89,11 +89,7 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchRequest();
-  }, [resolvedParams.id]);
-
-  const fetchRequest = async () => {
+  const fetchRequest = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/purchase-requests/${resolvedParams.id}`);
@@ -106,7 +102,11 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
     } finally {
       setLoading(false);
     }
-  };
+  }, [resolvedParams.id]);
+
+  useEffect(() => {
+    fetchRequest();
+  }, [fetchRequest]);
 
   const handleDelete = async () => {
     if (!request) return;

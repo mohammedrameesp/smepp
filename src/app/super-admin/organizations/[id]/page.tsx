@@ -16,7 +16,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Collapsible,
@@ -37,7 +36,6 @@ import {
   Mail,
   Calendar,
   Loader2,
-  Copy,
   Check,
   RefreshCw,
   ExternalLink,
@@ -201,7 +199,6 @@ export default function OrganizationDetailPage() {
 
   // Auth config state
   const [authConfig, setAuthConfig] = useState<AuthConfig | null>(null);
-  const [authConfigLoading, setAuthConfigLoading] = useState(false);
   const [savingAuthConfig, setSavingAuthConfig] = useState(false);
   const [newDomain, setNewDomain] = useState('');
 

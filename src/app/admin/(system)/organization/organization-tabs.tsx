@@ -101,7 +101,6 @@ function ModuleRequiredPlaceholder({
 export function OrganizationTabs({
   organization: initialOrg,
   currentUserRole,
-  isOwner,
 }: OrganizationTabsProps) {
   const { update: updateSession } = useSession();
   const isAdmin = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';

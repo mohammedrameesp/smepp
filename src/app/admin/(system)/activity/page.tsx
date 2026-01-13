@@ -123,7 +123,7 @@ export default async function ActivityLogPage() {
                       {activity.payload && (
                         <div className="text-xs max-w-xs">
                           {typeof activity.payload === 'object' ? (
-                            Object.entries(activity.payload as Record<string, any>).map(([key, value]) => (
+                            Object.entries(activity.payload as Record<string, unknown>).map(([key, value]) => (
                               <div key={key}>
                                 <span className="text-gray-500">{key}:</span> {String(value).substring(0, 50)}
                               </div>

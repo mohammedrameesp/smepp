@@ -77,7 +77,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  *   "totalPending": 3
  * }
  */
-async function getAssetRequestStatsHandler(_request: NextRequest, context: APIContext) {
+async function getAssetRequestStatsHandler(_request: NextRequest, _context: APIContext) {
     const session = await getServerSession(authOptions);
     if (!session?.user?.organizationId) {
       return NextResponse.json({ error: 'Organization context required' }, { status: 403 });

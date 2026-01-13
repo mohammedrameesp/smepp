@@ -12,7 +12,6 @@
  * - Activity logging and asset history tracking
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import {
   parseImportFile,
@@ -70,7 +69,7 @@ async function importAssetsHandler(request: NextRequest, context: APIContext) {
         }
 
         const { data: parsedData } = parseResult;
-        const { id, assetTag, type } = parsedData;
+        const { id, assetTag } = parsedData;
 
         // Build database-ready asset data
         const assetData = buildAssetDbData(parsedData);
@@ -99,14 +98,14 @@ async function importAssetsHandler(request: NextRequest, context: APIContext) {
           // If no assetTag provided and asset is new, leave it undefined (can be set later via UI)
 
           // Use upsert with ID to preserve relationships
-           
+          // Type assertion needed: AssetDbData is compatible with Prisma input but tenantId is auto-injected by tenant extension
           const asset = await db.asset.upsert({
             where: { id },
             create: {
               id,
               ...assetData,
-            } as any,
-            update: assetData as any,
+            } as Parameters<typeof db.asset.upsert>[0]['create'],
+            update: assetData as Parameters<typeof db.asset.upsert>[0]['update'],
           });
 
           // Log activity
@@ -189,9 +188,9 @@ async function importAssetsHandler(request: NextRequest, context: APIContext) {
         assetData.assetTag = finalAssetTag || undefined;
 
         // Create new asset
-         
+        // Type assertion needed: AssetDbData is compatible with Prisma input but tenantId is auto-injected by tenant extension
         const asset = await db.asset.create({
-          data: assetData as any,
+          data: assetData as Parameters<typeof db.asset.create>[0]['data'],
         });
 
         // Log activity

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Loader2, CheckCircle, XCircle, Clock, FileCheck, ShoppingCart, DollarSign, User, Calendar, Building2, FileText, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, XCircle, Clock, FileCheck, ShoppingCart, DollarSign, User, Building2, FileText, AlertCircle } from 'lucide-react';
 import { StatusBadge, PriorityBadge } from '@/features/purchase-requests/components';
 import { getAllowedStatusTransitions, getStatusLabel, getPurchaseTypeLabel, getCostTypeLabel, getPaymentModeLabel } from '@/features/purchase-requests/lib/purchase-request-utils';
 
@@ -85,11 +85,7 @@ export default function AdminPurchaseRequestDetailPage({ params }: { params: Pro
   const [reviewNotes, setReviewNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchRequest();
-  }, [resolvedParams.id]);
-
-  const fetchRequest = async () => {
+  const fetchRequest = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/purchase-requests/${resolvedParams.id}`);
@@ -102,7 +98,11 @@ export default function AdminPurchaseRequestDetailPage({ params }: { params: Pro
     } finally {
       setLoading(false);
     }
-  };
+  }, [resolvedParams.id]);
+
+  useEffect(() => {
+    fetchRequest();
+  }, [fetchRequest]);
 
   const updateStatus = async (newStatus: string) => {
     if (!request) return;

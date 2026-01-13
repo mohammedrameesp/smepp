@@ -15,7 +15,7 @@
  */
 
 import { BillingCycle, SubscriptionStatus } from '@prisma/client';
-import { convertToQARSync, DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
+import { convertToQARSync } from '@/lib/core/currency';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES

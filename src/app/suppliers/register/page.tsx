@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -89,7 +89,7 @@ export default function SupplierRegistrationPage() {
     trigger,
     formState: { errors, isSubmitting },
   } = useForm<CreateSupplierRequest>({
-    resolver: zodResolver(createSupplierSchema) as any,
+    resolver: zodResolver(createSupplierSchema) as Resolver<CreateSupplierRequest>,
     mode: 'onChange',
     defaultValues: {
       name: '',
@@ -171,8 +171,11 @@ export default function SupplierRegistrationPage() {
       const responseData = await response.json();
 
       if (!response.ok) {
+        interface ValidationDetail {
+          message: string;
+        }
         const errorMessage = responseData.details
-          ? `${responseData.error}: ${responseData.details.map((d: any) => d.message).join(', ')}`
+          ? `${responseData.error}: ${(responseData.details as ValidationDetail[]).map((d) => d.message).join(', ')}`
           : responseData.error;
         throw new Error(errorMessage || 'Failed to register supplier');
       }
@@ -289,7 +292,7 @@ export default function SupplierRegistrationPage() {
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Company Information */}
             <Card>
               <CardHeader>

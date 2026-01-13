@@ -108,7 +108,7 @@ export function ExpiryDateDisplay({
 
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   const status = getExpiryStatus(dateObj);
-  const days = getDaysUntilExpiry(dateObj);
+  getDaysUntilExpiry(dateObj);
 
   if (!status) {
     return <span className="text-gray-400">{placeholder}</span>;

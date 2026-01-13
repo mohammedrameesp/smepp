@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { csvToArray } from '@/lib/core/csv-utils';
 import { logAction, ActivityActions } from '@/lib/core/activity';
-import { SupplierStatus } from '@prisma/client';
+import { SupplierStatus, Prisma } from '@prisma/client';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 
@@ -126,8 +126,8 @@ async function importSuppliersHandler(request: NextRequest, context: APIContext)
           }
         }
 
-        // Supplier data object
-        const supplierData: any = {
+        // Supplier data object for both create and update operations
+        const supplierData: Record<string, unknown> = {
           suppCode: suppCode || null,
           name,
           category,
@@ -164,8 +164,8 @@ async function importSuppliersHandler(request: NextRequest, context: APIContext)
             create: {
               id,
               ...supplierData,
-            },
-            update: supplierData,
+            } as Prisma.SupplierUncheckedCreateInput,
+            update: supplierData as Prisma.SupplierUncheckedUpdateInput,
           });
 
           // Log activity
@@ -239,7 +239,7 @@ async function importSuppliersHandler(request: NextRequest, context: APIContext)
 
         // Create new supplier - tenantId auto-injected by tenant-scoped prisma
         const supplier = await db.supplier.create({
-          data: supplierData,
+          data: supplierData as Prisma.SupplierUncheckedCreateInput,
         });
 
         // Log activity

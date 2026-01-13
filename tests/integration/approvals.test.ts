@@ -10,6 +10,26 @@ import { OrgRole } from '@prisma/client';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  createMany: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+  count: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
+// Type for approval step status check
+interface ApprovalStep {
+  status: string;
+}
+
 describe('Approval Workflow API Tests', () => {
   const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 
@@ -48,7 +68,7 @@ describe('Approval Workflow API Tests', () => {
       it('should return policies for admin', async () => {
         mockGetServerSession.mockResolvedValue(mockAdminSession);
 
-        const mockPolicy = prisma.approvalPolicy as any;
+        const mockPolicy = getMockedModel(prisma.approvalPolicy);
         mockPolicy.findMany.mockResolvedValue([
           {
             id: 'policy-1',
@@ -76,7 +96,7 @@ describe('Approval Workflow API Tests', () => {
       });
 
       it('should support module filtering', async () => {
-        const mockPolicy = prisma.approvalPolicy as any;
+        const mockPolicy = getMockedModel(prisma.approvalPolicy);
         mockPolicy.findMany.mockResolvedValue([
           { id: 'policy-1', module: 'LEAVE_REQUEST' },
         ]);
@@ -93,7 +113,7 @@ describe('Approval Workflow API Tests', () => {
       it('should create new approval policy', async () => {
         mockGetServerSession.mockResolvedValue(mockAdminSession);
 
-        const mockPolicy = prisma.approvalPolicy as any;
+        const mockPolicy = getMockedModel(prisma.approvalPolicy);
         mockPolicy.create.mockResolvedValue({
           id: 'policy-new',
           name: 'New Policy',
@@ -123,14 +143,14 @@ describe('Approval Workflow API Tests', () => {
 
       it('should validate module type', () => {
         const validModules = ['LEAVE_REQUEST', 'PURCHASE_REQUEST', 'ASSET_REQUEST'];
-        const module = 'LEAVE_REQUEST';
-        expect(validModules).toContain(module);
+        const moduleType = 'LEAVE_REQUEST';
+        expect(validModules).toContain(moduleType);
       });
     });
 
     describe('GET /api/approval-policies/[id]', () => {
       it('should return policy details with levels', async () => {
-        const mockPolicy = prisma.approvalPolicy as any;
+        const mockPolicy = getMockedModel(prisma.approvalPolicy);
         mockPolicy.findFirst.mockResolvedValue({
           id: 'policy-123',
           name: 'Leave Policy',
@@ -150,7 +170,7 @@ describe('Approval Workflow API Tests', () => {
       });
 
       it('should return 404 for non-existent policy', async () => {
-        const mockPolicy = prisma.approvalPolicy as any;
+        const mockPolicy = getMockedModel(prisma.approvalPolicy);
         mockPolicy.findFirst.mockResolvedValue(null);
 
         const policy = await mockPolicy.findFirst({
@@ -163,7 +183,7 @@ describe('Approval Workflow API Tests', () => {
 
     describe('PATCH /api/approval-policies/[id]', () => {
       it('should update policy', async () => {
-        const mockPolicy = prisma.approvalPolicy as any;
+        const mockPolicy = getMockedModel(prisma.approvalPolicy);
         mockPolicy.update.mockResolvedValue({
           id: 'policy-123',
           name: 'Updated Policy',
@@ -182,7 +202,7 @@ describe('Approval Workflow API Tests', () => {
 
     describe('DELETE /api/approval-policies/[id]', () => {
       it('should delete policy', async () => {
-        const mockPolicy = prisma.approvalPolicy as any;
+        const mockPolicy = getMockedModel(prisma.approvalPolicy);
         mockPolicy.delete.mockResolvedValue({ id: 'policy-123' });
 
         const result = await mockPolicy.delete({
@@ -199,7 +219,7 @@ describe('Approval Workflow API Tests', () => {
       it('should return pending approval steps for user', async () => {
         mockGetServerSession.mockResolvedValue(mockManagerSession);
 
-        const mockStep = prisma.approvalStep as any;
+        const mockStep = getMockedModel(prisma.approvalStep);
         mockStep.findMany.mockResolvedValue([
           {
             id: 'step-1',
@@ -224,7 +244,7 @@ describe('Approval Workflow API Tests', () => {
 
     describe('GET /api/approval-steps/by-entity/[entityType]/[entityId]', () => {
       it('should return steps for specific entity', async () => {
-        const mockStep = prisma.approvalStep as any;
+        const mockStep = getMockedModel(prisma.approvalStep);
         mockStep.findMany.mockResolvedValue([
           { id: 'step-1', levelOrder: 1, status: 'APPROVED', approverId: 'manager-1' },
           { id: 'step-2', levelOrder: 2, status: 'PENDING', approverId: null },
@@ -248,7 +268,7 @@ describe('Approval Workflow API Tests', () => {
       it('should approve step', async () => {
         mockGetServerSession.mockResolvedValue(mockManagerSession);
 
-        const mockStep = prisma.approvalStep as any;
+        const mockStep = getMockedModel(prisma.approvalStep);
         mockStep.findFirst.mockResolvedValue({
           id: 'step-123',
           status: 'PENDING',
@@ -274,7 +294,7 @@ describe('Approval Workflow API Tests', () => {
       });
 
       it('should validate user has required role', async () => {
-        const mockStep = prisma.approvalStep as any;
+        const mockStep = getMockedModel(prisma.approvalStep);
         mockStep.findFirst.mockResolvedValue({
           id: 'step-123',
           requiredRole: 'DIRECTOR',
@@ -286,7 +306,7 @@ describe('Approval Workflow API Tests', () => {
       });
 
       it('should check delegation', async () => {
-        const mockDelegation = prisma.approverDelegation as any;
+        const mockDelegation = getMockedModel(prisma.approverDelegation);
         mockDelegation.findFirst.mockResolvedValue({
           id: 'delegation-1',
           delegatorId: 'director-123',
@@ -309,7 +329,7 @@ describe('Approval Workflow API Tests', () => {
       });
 
       it('should trigger next step if exists', async () => {
-        const mockStep = prisma.approvalStep as any;
+        const mockStep = getMockedModel(prisma.approvalStep);
         mockStep.findFirst.mockResolvedValue({
           id: 'step-2',
           levelOrder: 2,
@@ -332,7 +352,7 @@ describe('Approval Workflow API Tests', () => {
       it('should reject step with reason', async () => {
         mockGetServerSession.mockResolvedValue(mockManagerSession);
 
-        const mockStep = prisma.approvalStep as any;
+        const mockStep = getMockedModel(prisma.approvalStep);
         mockStep.update.mockResolvedValue({
           id: 'step-123',
           status: 'REJECTED',
@@ -355,7 +375,7 @@ describe('Approval Workflow API Tests', () => {
       });
 
       it('should update parent entity status', async () => {
-        const mockLeaveRequest = prisma.leaveRequest as any;
+        const mockLeaveRequest = getMockedModel(prisma.leaveRequest);
         mockLeaveRequest.update.mockResolvedValue({
           id: 'leave-123',
           status: 'REJECTED',
@@ -376,7 +396,7 @@ describe('Approval Workflow API Tests', () => {
       it('should return active delegations for user', async () => {
         mockGetServerSession.mockResolvedValue(mockManagerSession);
 
-        const mockDelegation = prisma.approverDelegation as any;
+        const mockDelegation = getMockedModel(prisma.approverDelegation);
         mockDelegation.findMany.mockResolvedValue([
           {
             id: 'delegation-1',
@@ -403,7 +423,7 @@ describe('Approval Workflow API Tests', () => {
       it('should create new delegation', async () => {
         mockGetServerSession.mockResolvedValue(mockManagerSession);
 
-        const mockDelegation = prisma.approverDelegation as any;
+        const mockDelegation = getMockedModel(prisma.approverDelegation);
         mockDelegation.create.mockResolvedValue({
           id: 'delegation-new',
           delegatorId: 'manager-123',
@@ -443,7 +463,7 @@ describe('Approval Workflow API Tests', () => {
       });
 
       it('should check for overlapping delegations', async () => {
-        const mockDelegation = prisma.approverDelegation as any;
+        const mockDelegation = getMockedModel(prisma.approverDelegation);
         mockDelegation.findFirst.mockResolvedValue({
           id: 'delegation-existing',
           startDate: new Date(),
@@ -466,7 +486,7 @@ describe('Approval Workflow API Tests', () => {
 
     describe('DELETE /api/delegations/[id]', () => {
       it('should deactivate delegation', async () => {
-        const mockDelegation = prisma.approverDelegation as any;
+        const mockDelegation = getMockedModel(prisma.approverDelegation);
         mockDelegation.update.mockResolvedValue({
           id: 'delegation-123',
           isActive: false,
@@ -483,7 +503,7 @@ describe('Approval Workflow API Tests', () => {
       it('should only allow delegator to delete', async () => {
         mockGetServerSession.mockResolvedValue(mockManagerSession);
 
-        const mockDelegation = prisma.approverDelegation as any;
+        const mockDelegation = getMockedModel(prisma.approverDelegation);
         mockDelegation.findFirst.mockResolvedValue({
           id: 'delegation-123',
           delegatorId: 'manager-123',
@@ -500,7 +520,7 @@ describe('Approval Workflow API Tests', () => {
 
   describe('Approval Workflow Integration', () => {
     it('should create steps when entity is submitted', async () => {
-      const mockStep = prisma.approvalStep as any;
+      const mockStep = getMockedModel(prisma.approvalStep);
       mockStep.createMany.mockResolvedValue({ count: 2 });
 
       const result = await mockStep.createMany({
@@ -515,7 +535,7 @@ describe('Approval Workflow API Tests', () => {
 
     it('should progress workflow on approval', async () => {
       // First step approved
-      const mockStep = prisma.approvalStep as any;
+      const mockStep = getMockedModel(prisma.approvalStep);
       mockStep.findFirst.mockResolvedValueOnce({
         id: 'step-1',
         levelOrder: 1,
@@ -540,7 +560,7 @@ describe('Approval Workflow API Tests', () => {
     });
 
     it('should complete entity when all steps approved', async () => {
-      const mockStep = prisma.approvalStep as any;
+      const mockStep = getMockedModel(prisma.approvalStep);
       mockStep.findMany.mockResolvedValue([
         { status: 'APPROVED' },
         { status: 'APPROVED' },
@@ -550,14 +570,14 @@ describe('Approval Workflow API Tests', () => {
         where: { entityId: 'leave-123' },
       });
 
-      const allApproved = steps.every((s: any) => s.status === 'APPROVED');
+      const allApproved = steps.every((s: ApprovalStep) => s.status === 'APPROVED');
       expect(allApproved).toBe(true);
     });
   });
 
   describe('Multi-tenant Isolation', () => {
     it('should filter policies by tenant', async () => {
-      const mockPolicy = prisma.approvalPolicy as any;
+      const mockPolicy = getMockedModel(prisma.approvalPolicy);
       mockPolicy.findMany.mockResolvedValue([]);
 
       await mockPolicy.findMany({ where: { tenantId: 'other-org' } });

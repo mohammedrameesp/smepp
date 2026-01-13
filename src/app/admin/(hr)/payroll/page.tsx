@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
-import { Role, PayrollStatus, LoanStatus } from '@prisma/client';
+import { PayrollStatus, LoanStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,7 +71,6 @@ export default async function PayrollDashboardPage() {
   ]);
 
   const totalMonthlyPayroll = Number(totalSalaryStructures._sum.grossSalary || 0);
-  const totalLoanOutstanding = activeLoans.reduce((sum, loan) => sum + Number(loan.remainingAmount), 0);
 
   return (
     <>

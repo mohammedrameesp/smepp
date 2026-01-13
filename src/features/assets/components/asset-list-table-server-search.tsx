@@ -91,7 +91,7 @@ export function AssetListTableServerSearch() {
   // Dynamic filter options
   const [typeOptions, setTypeOptions] = useState<TypeOption[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
-  const [filterError, setFilterError] = useState(false);
+  const [, setFilterError] = useState(false);
 
   // Fetch filter options on mount
   useEffect(() => {

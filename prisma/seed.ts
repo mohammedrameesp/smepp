@@ -47,7 +47,7 @@ async function main() {
   ]);
 
   // Create system account for shared resources
-  const _sharedResourcesUser = await prisma.user.create({
+  await prisma.user.create({
     data: {
       name: 'Shared Resources',
       email: 'shared-assets@system.internal',
@@ -158,7 +158,7 @@ async function main() {
   console.log('✅ Created assets');
 
   // Create subscriptions
-  const _subscriptions = await Promise.all([
+  await Promise.all([
     prisma.subscription.create({
       data: {
         serviceName: 'GitHub Pro',

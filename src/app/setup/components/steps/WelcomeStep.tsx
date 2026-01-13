@@ -74,7 +74,7 @@ export function WelcomeStep({
         transition={{ delay: 0.3 }}
       >
         <h1 className="text-3xl font-bold text-slate-900 mb-3">
-          You're all set!
+          You&apos;re all set!
         </h1>
         <p className="text-slate-600 mb-8">
           Welcome to <span className="font-semibold">{orgName}</span>.
@@ -119,7 +119,7 @@ export function WelcomeStep({
                   {inviteCount} team invitation{inviteCount !== 1 ? 's' : ''} sent
                 </p>
                 <p className="text-xs text-slate-500">
-                  They'll receive an email shortly
+                  They&apos;ll receive an email shortly
                 </p>
               </div>
             </div>

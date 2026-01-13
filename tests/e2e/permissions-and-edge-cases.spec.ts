@@ -138,7 +138,7 @@ test.describe('Edge Cases & Validation', () => {
     // Try to create subscription with renewal date in the past
     await page.goto('/admin/subscriptions/new');
 
-    const subscriptionData = generateAssetData();
+    const _subscriptionData = generateAssetData();
     const pastDate = new Date();
     pastDate.setFullYear(pastDate.getFullYear() - 1); // 1 year ago
     const pastDateString = pastDate.toISOString().split('T')[0];

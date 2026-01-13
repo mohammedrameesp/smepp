@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
@@ -99,7 +99,7 @@ export default function EditSupplierPage() {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<UpdateSupplierRequest>({
-    resolver: zodResolver(updateSupplierSchema) as any,
+    resolver: zodResolver(updateSupplierSchema) as Resolver<UpdateSupplierRequest>,
     mode: 'onChange',
   });
 

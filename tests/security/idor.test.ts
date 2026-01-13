@@ -148,7 +148,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
       const session = await mockGetServerSession();
       const assetAssignedMemberId = 'member-123';
 
-      expect((session?.user as any).memberId).toBe(assetAssignedMemberId);
+      expect((session?.user as unknown as { memberId: string }).memberId).toBe(assetAssignedMemberId);
     });
   });
 
@@ -335,7 +335,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
     });
 
     it('should prevent PR modification after approval', () => {
-      const canModifyPR = (status: string, orgRole: OrgRole): boolean => {
+      const canModifyPR = (status: string, _orgRole: OrgRole): boolean => {
         // Only draft PRs can be modified
         if (status !== 'DRAFT') return false;
         return true;
@@ -443,7 +443,14 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
     });
 
     it('should validate session has required tenant context', () => {
-      const hasValidTenantContext = (session: any): boolean => {
+      interface SessionWithTenant {
+        user?: {
+          organizationId?: string;
+          organizationSlug?: string;
+        };
+      }
+
+      const hasValidTenantContext = (session: SessionWithTenant | null): boolean => {
         return !!(
           session?.user?.organizationId &&
           session?.user?.organizationSlug
@@ -458,9 +465,8 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
         },
       };
 
-      const invalidSession = {
+      const invalidSession: SessionWithTenant = {
         user: {
-          id: 'u1',
           // Missing organization context
         },
       };

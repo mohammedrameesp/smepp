@@ -1,7 +1,7 @@
 'use client';
 
 import * as Icons from 'lucide-react';
-import { HelpCircle, Check, BookOpen, Video, FileText, AlertCircle } from 'lucide-react';
+import { HelpCircle, Check, FileText } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import type { HelpModule, UserRole } from '@/lib/help/help-types';
 import type { CategoryInfo, ModuleInfo } from '@/lib/help/help-categories';

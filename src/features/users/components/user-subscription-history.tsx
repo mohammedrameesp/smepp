@@ -9,11 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Clock, DollarSign } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { formatDate as formatDateUtil } from '@/lib/core/datetime';
 import { formatCurrency } from '@/lib/core/currency';
 
-interface ActivePeriod {
+export interface UserSubscriptionActivePeriod {
   startDate: Date;
   endDate: Date | null;
   renewalDate: Date;
@@ -21,23 +21,23 @@ interface ActivePeriod {
   cost: number;
 }
 
-interface Subscription {
+export interface UserSubscriptionHistoryItem {
   id: string;
   serviceName: string;
   vendor: string | null;
   status: string;
   category: string | null;
-  costPerCycle: any;
+  costPerCycle: number | null;
   costCurrency: string | null;
   billingCycle: string;
-  activePeriods: ActivePeriod[];
+  activePeriods: UserSubscriptionActivePeriod[];
   totalCost: number;
   totalMonths: number;
-  currentPeriod?: ActivePeriod | null;
+  currentPeriod?: UserSubscriptionActivePeriod | null;
 }
 
 interface UserSubscriptionHistoryProps {
-  subscriptions: Subscription[];
+  subscriptions: UserSubscriptionHistoryItem[];
   viewMode?: 'admin' | 'employee';
 }
 

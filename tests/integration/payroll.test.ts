@@ -10,6 +10,40 @@ import { PayrollStatus } from '@prisma/client';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  createMany: jest.Mock;
+  update: jest.Mock;
+  updateMany: jest.Mock;
+  delete: jest.Mock;
+  count: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
+// Type for payroll run year check
+interface PayrollRunYear {
+  year: number;
+}
+
+// Type for salary structure
+interface SalaryStructure {
+  memberId: string;
+  grossSalary: number;
+  basicSalary: number;
+  isActive: boolean;
+}
+
+// Type for active salary structure check
+interface ActiveSalaryStructure {
+  isActive: boolean;
+}
+
 describe('Payroll API Tests', () => {
   const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 
@@ -89,7 +123,7 @@ describe('Payroll API Tests', () => {
 
   describe('GET /api/payroll/runs', () => {
     it('should return paginated payroll runs', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
       mockPayrollRun.findMany.mockResolvedValue(mockPayrollRuns);
       mockPayrollRun.count.mockResolvedValue(2);
 
@@ -107,18 +141,18 @@ describe('Payroll API Tests', () => {
     });
 
     it('should filter by year', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
       mockPayrollRun.findMany.mockResolvedValue(mockPayrollRuns);
 
       const runs = await mockPayrollRun.findMany({
         where: { year: 2024 },
       });
 
-      expect(runs.every((r: any) => r.year === 2024)).toBe(true);
+      expect(runs.every((r: PayrollRunYear) => r.year === 2024)).toBe(true);
     });
 
     it('should filter by status', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
       mockPayrollRun.findMany.mockResolvedValue([mockPayrollRuns[0]]);
 
       const runs = await mockPayrollRun.findMany({
@@ -147,9 +181,9 @@ describe('Payroll API Tests', () => {
 
   describe('POST /api/payroll/runs', () => {
     it('should create new payroll run', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
-      const mockSalaryStructure = prisma.salaryStructure as any;
-      const mockPayrollHistory = prisma.payrollHistory as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
+      const mockSalaryStructure = getMockedModel(prisma.salaryStructure);
+      const mockPayrollHistory = getMockedModel(prisma.payrollHistory);
 
       mockPayrollRun.findFirst.mockResolvedValue(null); // No existing run
       mockSalaryStructure.findMany.mockResolvedValue(mockSalaryStructures);
@@ -203,7 +237,7 @@ describe('Payroll API Tests', () => {
     });
 
     it('should reject duplicate period', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
       mockPayrollRun.findFirst.mockResolvedValue(mockPayrollRuns[0]);
 
       const existing = await mockPayrollRun.findFirst({
@@ -215,7 +249,7 @@ describe('Payroll API Tests', () => {
     });
 
     it('should require at least one employee with salary structure', async () => {
-      const mockSalaryStructure = prisma.salaryStructure as any;
+      const mockSalaryStructure = getMockedModel(prisma.salaryStructure);
       mockSalaryStructure.findMany.mockResolvedValue([]);
 
       const salaries = await mockSalaryStructure.findMany({
@@ -251,7 +285,7 @@ describe('Payroll API Tests', () => {
 
   describe('GET /api/payroll/runs/[id]', () => {
     it('should return payroll run details', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
       mockPayrollRun.findUnique.mockResolvedValue({
         ...mockPayrollRuns[0],
         payslips: [],
@@ -271,7 +305,7 @@ describe('Payroll API Tests', () => {
     });
 
     it('should return 404 for non-existent run', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
       mockPayrollRun.findUnique.mockResolvedValue(null);
 
       const payroll = await mockPayrollRun.findUnique({
@@ -284,9 +318,9 @@ describe('Payroll API Tests', () => {
 
   describe('POST /api/payroll/runs/[id]/process', () => {
     it('should process payroll and generate payslips', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
-      const mockPayslip = prisma.payslip as any;
-      const mockSalaryStructure = prisma.salaryStructure as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
+      const mockPayslip = getMockedModel(prisma.payslip);
+      const mockSalaryStructure = getMockedModel(prisma.salaryStructure);
 
       mockPayrollRun.findUnique.mockResolvedValue(mockPayrollRuns[0]);
       mockSalaryStructure.findMany.mockResolvedValue(mockSalaryStructures);
@@ -305,7 +339,7 @@ describe('Payroll API Tests', () => {
         where: { isActive: true },
       });
 
-      const payslipsData = salaries.map((s: any) => ({
+      const payslipsData = salaries.map((s: SalaryStructure) => ({
         payrollRunId: 'payroll-1',
         memberId: s.memberId,
         tenantId: 'org-123',
@@ -325,7 +359,7 @@ describe('Payroll API Tests', () => {
     });
 
     it('should only process DRAFT status payroll', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
       mockPayrollRun.findUnique.mockResolvedValue({
         ...mockPayrollRuns[1],
         status: PayrollStatus.PAID,
@@ -341,7 +375,7 @@ describe('Payroll API Tests', () => {
 
   describe('POST /api/payroll/runs/[id]/submit', () => {
     it('should submit payroll for approval', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
       mockPayrollRun.update.mockResolvedValue({
         ...mockPayrollRuns[0],
         status: PayrollStatus.PENDING_APPROVAL,
@@ -373,7 +407,7 @@ describe('Payroll API Tests', () => {
 
   describe('POST /api/payroll/runs/[id]/approve', () => {
     it('should approve payroll run', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
       mockPayrollRun.update.mockResolvedValue({
         ...mockPayrollRuns[0],
         status: PayrollStatus.APPROVED,
@@ -396,7 +430,7 @@ describe('Payroll API Tests', () => {
 
   describe('POST /api/payroll/runs/[id]/pay', () => {
     it('should mark payroll as paid', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
       mockPayrollRun.update.mockResolvedValue({
         ...mockPayrollRuns[0],
         status: PayrollStatus.PAID,
@@ -426,7 +460,7 @@ describe('Payroll API Tests', () => {
 
   describe('POST /api/payroll/runs/[id]/cancel', () => {
     it('should cancel payroll run', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
       mockPayrollRun.update.mockResolvedValue({
         ...mockPayrollRuns[0],
         status: PayrollStatus.CANCELLED,
@@ -455,8 +489,8 @@ describe('Payroll API Tests', () => {
 
   describe('GET /api/payroll/runs/[id]/wps', () => {
     it('should generate WPS file for payroll', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
-      const mockPayslip = prisma.payslip as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
+      const mockPayslip = getMockedModel(prisma.payslip);
 
       mockPayrollRun.findUnique.mockResolvedValue(mockPayrollRuns[0]);
       mockPayslip.findMany.mockResolvedValue([
@@ -494,7 +528,7 @@ describe('Payroll API Tests', () => {
 
   describe('GET /api/payroll/salary-structures', () => {
     it('should return all salary structures', async () => {
-      const mockSalaryStructure = prisma.salaryStructure as any;
+      const mockSalaryStructure = getMockedModel(prisma.salaryStructure);
       mockSalaryStructure.findMany.mockResolvedValue(mockSalaryStructures);
 
       const structures = await mockSalaryStructure.findMany({
@@ -505,20 +539,20 @@ describe('Payroll API Tests', () => {
     });
 
     it('should filter by active status', async () => {
-      const mockSalaryStructure = prisma.salaryStructure as any;
+      const mockSalaryStructure = getMockedModel(prisma.salaryStructure);
       mockSalaryStructure.findMany.mockResolvedValue(mockSalaryStructures);
 
       const structures = await mockSalaryStructure.findMany({
         where: { isActive: true },
       });
 
-      expect(structures.every((s: any) => s.isActive)).toBe(true);
+      expect(structures.every((s: ActiveSalaryStructure) => s.isActive)).toBe(true);
     });
   });
 
   describe('POST /api/payroll/salary-structures', () => {
     it('should create salary structure for employee', async () => {
-      const mockSalaryStructure = prisma.salaryStructure as any;
+      const mockSalaryStructure = getMockedModel(prisma.salaryStructure);
       mockSalaryStructure.create.mockResolvedValue({
         id: 'salary-new',
         tenantId: 'org-123',
@@ -543,7 +577,7 @@ describe('Payroll API Tests', () => {
     });
 
     it('should deactivate existing structure when creating new one', async () => {
-      const mockSalaryStructure = prisma.salaryStructure as any;
+      const mockSalaryStructure = getMockedModel(prisma.salaryStructure);
       mockSalaryStructure.updateMany.mockResolvedValue({ count: 1 });
 
       await mockSalaryStructure.updateMany({
@@ -557,7 +591,7 @@ describe('Payroll API Tests', () => {
 
   describe('GET /api/payroll/payslips', () => {
     it('should return payslips for employee', async () => {
-      const mockPayslip = prisma.payslip as any;
+      const mockPayslip = getMockedModel(prisma.payslip);
       mockPayslip.findMany.mockResolvedValue([
         {
           id: 'payslip-1',
@@ -576,7 +610,7 @@ describe('Payroll API Tests', () => {
     });
 
     it('should include payroll run details', async () => {
-      const mockPayslip = prisma.payslip as any;
+      const mockPayslip = getMockedModel(prisma.payslip);
       mockPayslip.findMany.mockResolvedValue([
         {
           id: 'payslip-1',
@@ -603,7 +637,7 @@ describe('Payroll API Tests', () => {
 
   describe('GET /api/payroll/loans', () => {
     it('should return employee loans', async () => {
-      const mockLoan = prisma.employeeLoan as any;
+      const mockLoan = getMockedModel(prisma.employeeLoan);
       mockLoan.findMany.mockResolvedValue([
         {
           id: 'loan-1',
@@ -627,7 +661,7 @@ describe('Payroll API Tests', () => {
 
   describe('POST /api/payroll/loans', () => {
     it('should create new employee loan', async () => {
-      const mockLoan = prisma.employeeLoan as any;
+      const mockLoan = getMockedModel(prisma.employeeLoan);
       mockLoan.create.mockResolvedValue({
         id: 'loan-new',
         tenantId: 'org-123',
@@ -657,7 +691,7 @@ describe('Payroll API Tests', () => {
 
   describe('POST /api/payroll/loans/[id]/pause', () => {
     it('should pause loan deductions', async () => {
-      const mockLoan = prisma.employeeLoan as any;
+      const mockLoan = getMockedModel(prisma.employeeLoan);
       mockLoan.update.mockResolvedValue({
         id: 'loan-1',
         status: 'PAUSED',
@@ -680,7 +714,7 @@ describe('Payroll API Tests', () => {
 
   describe('POST /api/payroll/loans/[id]/write-off', () => {
     it('should write off remaining loan balance', async () => {
-      const mockLoan = prisma.employeeLoan as any;
+      const mockLoan = getMockedModel(prisma.employeeLoan);
       mockLoan.update.mockResolvedValue({
         id: 'loan-1',
         status: 'WRITTEN_OFF',
@@ -729,7 +763,7 @@ describe('Payroll API Tests', () => {
 
   describe('Tenant Isolation', () => {
     it('should filter all payroll queries by tenant', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
       mockPayrollRun.findMany.mockResolvedValue(mockPayrollRuns);
 
       await mockPayrollRun.findMany({
@@ -746,7 +780,7 @@ describe('Payroll API Tests', () => {
     });
 
     it('should prevent accessing other tenant payroll data', async () => {
-      const mockPayrollRun = prisma.payrollRun as any;
+      const mockPayrollRun = getMockedModel(prisma.payrollRun);
       mockPayrollRun.findFirst.mockResolvedValue(null);
 
       const payroll = await mockPayrollRun.findFirst({

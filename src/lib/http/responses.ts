@@ -43,9 +43,15 @@ export function fileResponse(
   filename: string,
   contentType: string
 ): NextResponse {
-  // Create Uint8Array from buffer for consistent handling
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return new NextResponse(new Uint8Array(buffer as any), {
+  // Convert to Uint8Array for consistent handling across environments.
+  // Buffer extends Uint8Array, but NextResponse needs a standard Uint8Array.
+  // Using buffer.buffer (ArrayBuffer) with byteOffset and length ensures proper handling.
+  const bytes = Buffer.isBuffer(buffer)
+    ? new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength)
+    : buffer;
+  // NextResponse accepts Uint8Array as body per Web API spec, but TypeScript's
+  // BodyInit type may not include it in all configurations. Cast via unknown.
+  return new NextResponse(bytes as unknown as BodyInit, {
     status: 200,
     headers: {
       'Content-Type': contentType,

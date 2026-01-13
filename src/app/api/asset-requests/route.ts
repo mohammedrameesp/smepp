@@ -33,7 +33,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { AssetRequestStatus, AssetRequestType } from '@prisma/client';
+import { AssetRequestStatus, AssetRequestType, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import {
@@ -96,7 +96,6 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
     }
 
     const db = tenantPrisma as TenantPrismaClient;
-    const tenantId = tenant.tenantId;
     const currentUserId = tenant.userId;
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -125,8 +124,7 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 3: Build where clause with filters
     // ─────────────────────────────────────────────────────────────────────────────
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: Record<string, any> = {};
+    const where: Prisma.AssetRequestWhereInput = {};
 
     if (effectiveMemberId) {
       where.memberId = effectiveMemberId;

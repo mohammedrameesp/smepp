@@ -67,7 +67,6 @@ export function SubscriptionLifecycleActions({
   subscriptionName,
   status,
   billingCycle,
-  renewalDate
 }: SubscriptionLifecycleActionsProps) {
   const router = useRouter();
   const [reactivateDialogOpen, setReactivateDialogOpen] = useState(false);

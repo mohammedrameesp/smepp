@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, FileText, Calendar, Clock, Phone, ExternalLink, Info } from 'lucide-react';
 import Link from 'next/link';
 import { DetailCard } from '@/components/ui/detail-card';
@@ -88,7 +87,7 @@ export default function EmployeeLeaveRequestDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRequest = async () => {
+  const fetchRequest = useCallback(async () => {
     try {
       const response = await fetch(`/api/leave/requests/${params.id}`);
       if (!response.ok) {
@@ -121,11 +120,11 @@ export default function EmployeeLeaveRequestDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
 
   useEffect(() => {
     fetchRequest();
-  }, [params.id]);
+  }, [fetchRequest]);
 
   const handleCancelled = () => {
     router.push('/employee/leave');
@@ -176,7 +175,7 @@ export default function EmployeeLeaveRequestDetailPage() {
   }
 
   const canCancel = canCancelLeaveRequest(request.status, new Date(request.startDate));
-  const canEdit = canEditLeaveRequest(request.status, new Date(request.startDate));
+  canEditLeaveRequest(request.status, new Date(request.startDate));
 
   return (
     <>

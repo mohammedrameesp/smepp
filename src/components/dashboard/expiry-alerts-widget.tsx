@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,11 +28,7 @@ export function ExpiryAlertsWidget({ isAdmin = false }: ExpiryAlertsWidgetProps)
   const [isLoading, setIsLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
 
-  useEffect(() => {
-    fetchExpiryAlerts();
-  }, []);
-
-  const fetchExpiryAlerts = async () => {
+  const fetchExpiryAlerts = useCallback(async () => {
     try {
       setIsLoading(true);
       const endpoint = isAdmin ? '/api/employees/expiry-alerts' : '/api/users/me/expiry-alerts';
@@ -49,7 +45,11 @@ export function ExpiryAlertsWidget({ isAdmin = false }: ExpiryAlertsWidgetProps)
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAdmin]);
+
+  useEffect(() => {
+    fetchExpiryAlerts();
+  }, [fetchExpiryAlerts]);
 
   const getDocumentBadge = (type: string) => {
     const colors: Record<string, string> = {

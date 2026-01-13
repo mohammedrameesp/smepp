@@ -1,10 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { EmployeeSupplierListTable } from '@/features/suppliers';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Building2, Users, FolderOpen } from 'lucide-react';

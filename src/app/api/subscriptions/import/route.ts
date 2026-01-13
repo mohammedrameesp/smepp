@@ -175,7 +175,7 @@ async function importSubscriptionsHandler(request: NextRequest, context: APICont
         }
 
         // Update existing subscription
-        const subscription = await db.$transaction(async (tx) => {
+        await db.$transaction(async (tx) => {
           const sub = await tx.subscription.update({
             where: { id: existingByName.id },
             data: subscriptionData,

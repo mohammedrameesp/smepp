@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  MessageCircle,
   X,
   Send,
   Loader2,
@@ -19,9 +18,8 @@ import {
   History,
   HelpCircle,
   Search,
-  AlertCircle,
   Clock,
-  ChevronDown,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 
@@ -166,6 +164,10 @@ export function ChatWidget() {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
+    // sendMessage and startNewConversation are intentionally excluded from deps.
+    // We want keyboard shortcuts to use the current function implementations
+    // without recreating the event listener on every function update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, showHelp, deleteConfirmId, messages.length, isLoading]);
 
   // Mobile swipe to close
@@ -313,14 +315,14 @@ export function ChatWidget() {
     sendMessage(query);
   };
 
-  const startNewConversation = () => {
+  const startNewConversation = useCallback(() => {
     setMessages([]);
     setConversationId(null);
     setError(null);
     setRateLimitInfo(null);
     setStreamingContent('');
     showToast('Started new conversation', 'success');
-  };
+  }, [showToast]);
 
   const copyToClipboard = useCallback(async (text: string, messageId: string) => {
     try {
@@ -432,7 +434,7 @@ export function ChatWidget() {
     } finally {
       setDeleteConfirmId(null);
     }
-  }, [conversationId, showToast]);
+  }, [conversationId, showToast, startNewConversation]);
 
   useEffect(() => {
     if (showSidebar) {

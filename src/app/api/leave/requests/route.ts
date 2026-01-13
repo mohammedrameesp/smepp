@@ -5,7 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { createLeaveRequestSchema, leaveRequestQuerySchema } from '@/features/leave/validations/leave';
@@ -24,7 +23,6 @@ import {
   validateOnceInEmploymentLeave,
   validateLeaveRequestDates,
   validateNoOverlap,
-  validateSufficientBalance,
   validateDocumentRequirement,
 } from '@/features/leave/lib/leave-request-validation';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';

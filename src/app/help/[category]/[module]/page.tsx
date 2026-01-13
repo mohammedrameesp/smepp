@@ -77,10 +77,10 @@ export async function generateStaticParams() {
   const { helpCategories } = await import('@/lib/help/help-categories');
 
   for (const category of helpCategories) {
-    for (const module of category.modules) {
+    for (const moduleItem of category.modules) {
       params.push({
         category: category.id,
-        module: module.id,
+        module: moduleItem.id,
       });
     }
   }

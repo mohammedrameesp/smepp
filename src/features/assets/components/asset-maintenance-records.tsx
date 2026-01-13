@@ -27,7 +27,7 @@
  */
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -59,11 +59,7 @@ export function AssetMaintenanceRecords({ assetId, readOnly = false }: AssetMain
     notes: '',
   });
 
-  useEffect(() => {
-    fetchRecords();
-  }, [assetId]);
-
-  const fetchRecords = async () => {
+  const fetchRecords = useCallback(async () => {
     try {
       const response = await fetch(`/api/assets/${assetId}/maintenance`);
       if (response.ok) {
@@ -75,7 +71,11 @@ export function AssetMaintenanceRecords({ assetId, readOnly = false }: AssetMain
     } finally {
       setLoading(false);
     }
-  };
+  }, [assetId]);
+
+  useEffect(() => {
+    fetchRecords();
+  }, [fetchRecords]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

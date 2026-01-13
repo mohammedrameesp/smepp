@@ -23,7 +23,7 @@ export interface SearchFilterOptions {
  * });
  * // Returns: { OR: [{ model: { contains: 'laptop', mode: 'insensitive' } }, ...] }
  */
-export function buildSearchFilter(options: SearchFilterOptions): any {
+export function buildSearchFilter(options: SearchFilterOptions): Record<string, unknown> {
   const { searchTerm, searchFields, caseSensitive = false } = options;
 
   if (!searchTerm || searchTerm.trim() === '') {
@@ -52,7 +52,7 @@ export function buildSearchFilter(options: SearchFilterOptions): any {
  *   { projectId: '123' }
  * );
  */
-export function mergeWhereAnd(...conditions: any[]): any {
+export function mergeWhereAnd(...conditions: Record<string, unknown>[]): Record<string, unknown> {
   const validConditions = conditions.filter(
     (condition) => condition && Object.keys(condition).length > 0
   );
@@ -81,9 +81,9 @@ export function mergeWhereAnd(...conditions: any[]): any {
 export function buildFilterWithSearch(options: {
   searchTerm?: string | null;
   searchFields: SearchableField[];
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   caseSensitive?: boolean;
-}): any {
+}): Record<string, unknown> {
   const { searchTerm, searchFields, filters, caseSensitive } = options;
 
   const searchWhere = buildSearchFilter({

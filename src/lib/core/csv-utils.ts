@@ -13,7 +13,7 @@ import ExcelJS from 'exceljs';
 export async function arrayToCSV<T extends Record<string, unknown>>(
   data: T[],
   headers: { key: keyof T; header: string }[],
-  sheets?: { name: string; data: any[]; headers: { key: string; header: string }[] }[]
+  sheets?: { name: string; data: Record<string, unknown>[]; headers: { key: string; header: string }[] }[]
 ): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
 
@@ -148,7 +148,7 @@ export async function csvToArray<T>(
   } else {
     // Parse as Excel
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer as any);
+    await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
 
     const worksheet = workbook.getWorksheet(1);
     if (!worksheet) {

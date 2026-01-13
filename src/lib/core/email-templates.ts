@@ -6,7 +6,6 @@ import {
   DEFAULT_BRAND_COLOR,
   escapeHtml,
   getTenantPortalUrl,
-  formatTimestamp,
   emailWrapper,
 } from './email-utils';
 

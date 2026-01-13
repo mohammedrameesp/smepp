@@ -5,6 +5,20 @@ import { prisma } from '@/lib/core/prisma';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+  count: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
 describe('Subscriptions API Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -42,7 +56,7 @@ describe('Subscriptions API Tests', () => {
         },
       ];
 
-      const mockPrismaSubscription = prisma.subscription as any;
+      const mockPrismaSubscription = getMockedModel(prisma.subscription);
       mockPrismaSubscription.findMany.mockResolvedValue(mockSubscriptions);
 
       const result = await mockPrismaSubscription.findMany();
@@ -79,7 +93,7 @@ describe('Subscriptions API Tests', () => {
         assignedUserId: 'user-456', // Different user
       };
 
-      const mockPrismaSubscription = prisma.subscription as any;
+      const mockPrismaSubscription = getMockedModel(prisma.subscription);
       mockPrismaSubscription.findUnique.mockResolvedValue(mockSubscription);
 
       const subscription = await mockPrismaSubscription.findUnique({ where: { id: 'sub-1' } });
@@ -109,7 +123,7 @@ describe('Subscriptions API Tests', () => {
         assignedUserId: 'user-123', // Same user
       };
 
-      const mockPrismaSubscription = prisma.subscription as any;
+      const mockPrismaSubscription = getMockedModel(prisma.subscription);
       mockPrismaSubscription.findUnique.mockResolvedValue(mockSubscription);
 
       const subscription = await mockPrismaSubscription.findUnique({ where: { id: 'sub-1' } });
@@ -138,10 +152,10 @@ describe('Subscriptions API Tests', () => {
         assignedUserId: 'user-456', // Different user
       };
 
-      const mockPrismaSubscription = prisma.subscription as any;
+      const mockPrismaSubscription = getMockedModel(prisma.subscription);
       mockPrismaSubscription.findUnique.mockResolvedValue(mockSubscription);
 
-      const subscription = await mockPrismaSubscription.findUnique({ where: { id: 'sub-1' } });
+      const _subscription = await mockPrismaSubscription.findUnique({ where: { id: 'sub-1' } });
       const session = await mockGetServerSession();
 
       // Should return 200 (admin can access any subscription)
@@ -189,7 +203,7 @@ describe('Subscriptions API Tests', () => {
         costCurrency: 'USD',
       };
 
-      const mockPrismaSubscription = prisma.subscription as any;
+      const mockPrismaSubscription = getMockedModel(prisma.subscription);
       mockPrismaSubscription.create.mockResolvedValue({
         id: 'sub-new',
         ...validSubscriptionData,

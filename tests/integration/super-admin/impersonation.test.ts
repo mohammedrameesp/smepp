@@ -17,6 +17,7 @@ jest.mock('jsonwebtoken', () => ({
   verify: jest.fn(() => ({ superAdminId: 'admin-123' })),
 }));
 
+
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockRequireRecent2FA = requireRecent2FA as jest.MockedFunction<typeof requireRecent2FA>;
@@ -58,7 +59,7 @@ describe('Super Admin Impersonation API', () => {
       mockRequireRecent2FA.mockResolvedValue({
         status: 403,
         json: () => Promise.resolve({ error: '2FA verification required' }),
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any -- Mock partial response
 
       const require2FAResult = await mockRequireRecent2FA('super-admin-123');
       expect(require2FAResult).toBeDefined();
@@ -170,7 +171,7 @@ describe('Super Admin Impersonation API', () => {
 
       mockRequireRecent2FA.mockResolvedValue({
         status: 403,
-      } as any);
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any -- Mock partial response
 
       const result = await mockRequireRecent2FA('super-admin-123');
       expect(result).toBeDefined();

@@ -9,6 +9,30 @@ import { prisma } from '@/lib/core/prisma';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+  deleteMany: jest.Mock;
+  createMany: jest.Mock;
+  count: jest.Mock;
+}
+
+// Type for mocked Prisma client with $queryRaw
+interface MockPrismaClient {
+  $queryRaw: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
+// Helper to get mocked Prisma client
+const getMockedClient = (client: unknown): MockPrismaClient => client as MockPrismaClient;
+
 describe('Company Documents API Tests', () => {
   const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 
@@ -60,7 +84,7 @@ describe('Company Documents API Tests', () => {
 
   describe('GET /api/company-documents/types', () => {
     it('should return document types', async () => {
-      const mockDocType = prisma.companyDocumentType as any;
+      const mockDocType = getMockedModel(prisma.companyDocumentType);
       mockDocType.findMany.mockResolvedValue(mockDocumentTypes);
 
       const types = await mockDocType.findMany({
@@ -75,7 +99,7 @@ describe('Company Documents API Tests', () => {
 
   describe('POST /api/company-documents/types', () => {
     it('should create document type', async () => {
-      const mockDocType = prisma.companyDocumentType as any;
+      const mockDocType = getMockedModel(prisma.companyDocumentType);
       mockDocType.create.mockResolvedValue({
         id: 'type-new',
         tenantId: 'org-123',
@@ -98,7 +122,7 @@ describe('Company Documents API Tests', () => {
     });
 
     it('should validate unique name within tenant', async () => {
-      const mockDocType = prisma.companyDocumentType as any;
+      const mockDocType = getMockedModel(prisma.companyDocumentType);
       mockDocType.findFirst.mockResolvedValue(mockDocumentTypes[0]);
 
       const existing = await mockDocType.findFirst({
@@ -114,7 +138,7 @@ describe('Company Documents API Tests', () => {
 
   describe('GET /api/company-documents', () => {
     it('should return all company documents', async () => {
-      const mockDoc = prisma.companyDocument as any;
+      const mockDoc = getMockedModel(prisma.companyDocument);
       mockDoc.findMany.mockResolvedValue(mockDocuments);
 
       const docs = await mockDoc.findMany({
@@ -127,7 +151,7 @@ describe('Company Documents API Tests', () => {
     });
 
     it('should filter by status', async () => {
-      const mockDoc = prisma.companyDocument as any;
+      const mockDoc = getMockedModel(prisma.companyDocument);
       mockDoc.findMany.mockResolvedValue([mockDocuments[1]]);
 
       const docs = await mockDoc.findMany({
@@ -142,7 +166,7 @@ describe('Company Documents API Tests', () => {
     });
 
     it('should filter by type', async () => {
-      const mockDoc = prisma.companyDocument as any;
+      const mockDoc = getMockedModel(prisma.companyDocument);
       mockDoc.findMany.mockResolvedValue([mockDocuments[0]]);
 
       const docs = await mockDoc.findMany({
@@ -158,7 +182,7 @@ describe('Company Documents API Tests', () => {
 
   describe('POST /api/company-documents', () => {
     it('should create company document', async () => {
-      const mockDoc = prisma.companyDocument as any;
+      const mockDoc = getMockedModel(prisma.companyDocument);
       mockDoc.create.mockResolvedValue({
         id: 'doc-new',
         tenantId: 'org-123',
@@ -186,7 +210,7 @@ describe('Company Documents API Tests', () => {
     });
 
     it('should require expiry date for expiring document types', async () => {
-      const mockDocType = prisma.companyDocumentType as any;
+      const mockDocType = getMockedModel(prisma.companyDocumentType);
       mockDocType.findUnique.mockResolvedValue(mockDocumentTypes[0]);
 
       const type = await mockDocType.findUnique({
@@ -219,7 +243,7 @@ describe('Company Documents API Tests', () => {
 
   describe('GET /api/company-documents/[id]', () => {
     it('should return document details', async () => {
-      const mockDoc = prisma.companyDocument as any;
+      const mockDoc = getMockedModel(prisma.companyDocument);
       mockDoc.findUnique.mockResolvedValue({
         ...mockDocuments[0],
         type: mockDocumentTypes[0],
@@ -235,7 +259,7 @@ describe('Company Documents API Tests', () => {
     });
 
     it('should return 404 for non-existent document', async () => {
-      const mockDoc = prisma.companyDocument as any;
+      const mockDoc = getMockedModel(prisma.companyDocument);
       mockDoc.findUnique.mockResolvedValue(null);
 
       const doc = await mockDoc.findUnique({
@@ -248,7 +272,7 @@ describe('Company Documents API Tests', () => {
 
   describe('PATCH /api/company-documents/[id]', () => {
     it('should update document', async () => {
-      const mockDoc = prisma.companyDocument as any;
+      const mockDoc = getMockedModel(prisma.companyDocument);
       mockDoc.update.mockResolvedValue({
         ...mockDocuments[0],
         expiryDate: new Date('2026-01-01'),
@@ -268,7 +292,7 @@ describe('Company Documents API Tests', () => {
 
   describe('DELETE /api/company-documents/[id]', () => {
     it('should delete document', async () => {
-      const mockDoc = prisma.companyDocument as any;
+      const mockDoc = getMockedModel(prisma.companyDocument);
       mockDoc.delete.mockResolvedValue(mockDocuments[0]);
 
       const deleted = await mockDoc.delete({
@@ -281,7 +305,7 @@ describe('Company Documents API Tests', () => {
 
   describe('Document Expiry Notifications', () => {
     it('should identify documents expiring soon', async () => {
-      const mockDoc = prisma.companyDocument as any;
+      const mockDoc = getMockedModel(prisma.companyDocument);
       const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
       mockDoc.findMany.mockResolvedValue([mockDocuments[1]]);
@@ -297,7 +321,7 @@ describe('Company Documents API Tests', () => {
     });
 
     it('should identify expired documents', async () => {
-      const mockDoc = prisma.companyDocument as any;
+      const mockDoc = getMockedModel(prisma.companyDocument);
       mockDoc.findMany.mockResolvedValue([]);
 
       const expiredDocs = await mockDoc.findMany({
@@ -315,7 +339,7 @@ describe('Company Documents API Tests', () => {
 
   describe('Tenant Isolation', () => {
     it('should only access documents from current tenant', async () => {
-      const mockDoc = prisma.companyDocument as any;
+      const mockDoc = getMockedModel(prisma.companyDocument);
       mockDoc.findMany.mockResolvedValue(mockDocuments);
 
       await mockDoc.findMany({
@@ -336,7 +360,7 @@ describe('Company Documents API Tests', () => {
 describe('Locations API Tests', () => {
   describe('GET /api/locations', () => {
     it('should return all locations', async () => {
-      const mockLocation = prisma.location as any;
+      const mockLocation = getMockedModel(prisma.location);
       mockLocation.findMany.mockResolvedValue([
         { id: 'loc-1', tenantId: 'org-123', name: 'Main Office', address: '123 Main St' },
         { id: 'loc-2', tenantId: 'org-123', name: 'Warehouse', address: '456 Industrial Ave' },
@@ -351,7 +375,7 @@ describe('Locations API Tests', () => {
     });
 
     it('should include asset counts', async () => {
-      const mockLocation = prisma.location as any;
+      const mockLocation = getMockedModel(prisma.location);
       mockLocation.findMany.mockResolvedValue([
         { id: 'loc-1', name: 'Main Office', _count: { assets: 25 } },
       ]);
@@ -367,7 +391,7 @@ describe('Locations API Tests', () => {
 
   describe('POST /api/locations', () => {
     it('should create location', async () => {
-      const mockLocation = prisma.location as any;
+      const mockLocation = getMockedModel(prisma.location);
       mockLocation.create.mockResolvedValue({
         id: 'loc-new',
         tenantId: 'org-123',
@@ -394,7 +418,7 @@ describe('Locations API Tests', () => {
 
   describe('PATCH /api/locations/[id]', () => {
     it('should update location', async () => {
-      const mockLocation = prisma.location as any;
+      const mockLocation = getMockedModel(prisma.location);
       mockLocation.update.mockResolvedValue({
         id: 'loc-1',
         name: 'Updated Office',
@@ -412,7 +436,7 @@ describe('Locations API Tests', () => {
 
   describe('DELETE /api/locations/[id]', () => {
     it('should delete location without assets', async () => {
-      const mockLocation = prisma.location as any;
+      const mockLocation = getMockedModel(prisma.location);
       mockLocation.findUnique.mockResolvedValue({
         id: 'loc-1',
         _count: { assets: 0 },
@@ -431,7 +455,7 @@ describe('Locations API Tests', () => {
     });
 
     it('should prevent deletion with assigned assets', async () => {
-      const mockLocation = prisma.location as any;
+      const mockLocation = getMockedModel(prisma.location);
       mockLocation.findUnique.mockResolvedValue({
         id: 'loc-1',
         _count: { assets: 10 },
@@ -451,7 +475,7 @@ describe('Locations API Tests', () => {
 describe('Invitations API Tests', () => {
   describe('GET /api/invitations/[token]', () => {
     it('should return invitation details', async () => {
-      const mockInvitation = prisma.organizationInvitation as any;
+      const mockInvitation = getMockedModel(prisma.organizationInvitation);
       mockInvitation.findFirst.mockResolvedValue({
         id: 'inv-1',
         token: 'valid-token',
@@ -476,7 +500,7 @@ describe('Invitations API Tests', () => {
     });
 
     it('should return 404 for expired invitation', async () => {
-      const mockInvitation = prisma.organizationInvitation as any;
+      const mockInvitation = getMockedModel(prisma.organizationInvitation);
       mockInvitation.findFirst.mockResolvedValue(null);
 
       const invitation = await mockInvitation.findFirst({
@@ -493,8 +517,8 @@ describe('Invitations API Tests', () => {
 
   describe('POST /api/invitations/[token]', () => {
     it('should accept invitation and create team member', async () => {
-      const mockInvitation = prisma.organizationInvitation as any;
-      const mockTeamMember = prisma.teamMember as any;
+      const mockInvitation = getMockedModel(prisma.organizationInvitation);
+      const mockTeamMember = getMockedModel(prisma.teamMember);
 
       mockInvitation.findFirst.mockResolvedValue({
         id: 'inv-1',
@@ -533,7 +557,7 @@ describe('Invitations API Tests', () => {
 
   describe('GET /api/invitations/pending', () => {
     it('should return pending invitations for user email', async () => {
-      const mockInvitation = prisma.organizationInvitation as any;
+      const mockInvitation = getMockedModel(prisma.organizationInvitation);
       mockInvitation.findMany.mockResolvedValue([
         {
           id: 'inv-1',
@@ -566,9 +590,9 @@ describe('Invitations API Tests', () => {
 describe('Export API Tests', () => {
   describe('GET /api/export/full-backup', () => {
     it('should export all organization data', async () => {
-      const mockAsset = prisma.asset as any;
-      const mockTeamMember = prisma.teamMember as any;
-      const mockSubscription = prisma.subscription as any;
+      const mockAsset = getMockedModel(prisma.asset);
+      const mockTeamMember = getMockedModel(prisma.teamMember);
+      const mockSubscription = getMockedModel(prisma.subscription);
 
       mockAsset.findMany.mockResolvedValue([{ id: 'asset-1' }, { id: 'asset-2' }]);
       mockTeamMember.findMany.mockResolvedValue([{ id: 'member-1' }]);
@@ -604,7 +628,7 @@ describe('Export API Tests', () => {
 describe('Health API Tests', () => {
   describe('GET /api/health', () => {
     it('should return health status', async () => {
-      const mockPrisma = prisma as any;
+      const mockPrisma = getMockedClient(prisma);
       mockPrisma.$queryRaw = jest.fn().mockResolvedValue([{ '1': 1 }]);
 
       const dbHealthy = await mockPrisma.$queryRaw`SELECT 1`;
@@ -620,12 +644,12 @@ describe('Health API Tests', () => {
     });
 
     it('should return unhealthy when database is down', async () => {
-      const mockPrisma = prisma as any;
+      const mockPrisma = getMockedClient(prisma);
       mockPrisma.$queryRaw = jest.fn().mockRejectedValue(new Error('Connection refused'));
 
       try {
         await mockPrisma.$queryRaw`SELECT 1`;
-      } catch (error) {
+      } catch {
         const healthStatus = {
           status: 'unhealthy',
           database: 'disconnected',

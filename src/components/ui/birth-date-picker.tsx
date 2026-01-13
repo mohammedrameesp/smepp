@@ -47,8 +47,8 @@ export function BirthDatePicker({
   minDate,
 }: BirthDatePickerProps) {
   // Default maxDate to today, minDate to 1940
-  const effectiveMaxDate = maxDate || new Date();
-  const effectiveMinDate = minDate || new Date(1940, 0, 1);
+  const effectiveMaxDate = React.useMemo(() => maxDate || new Date(), [maxDate]);
+  const effectiveMinDate = React.useMemo(() => minDate || new Date(1940, 0, 1), [minDate]);
 
   const [date, setDate] = React.useState<Date | undefined>(() => {
     if (value) {

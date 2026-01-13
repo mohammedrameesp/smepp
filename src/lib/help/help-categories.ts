@@ -208,8 +208,8 @@ export function filterCategoriesByRole(
 
 export function getModuleById(moduleId: string): ModuleInfo | undefined {
   for (const category of helpCategories) {
-    const module = category.modules.find(m => m.id === moduleId);
-    if (module) return module;
+    const moduleItem = category.modules.find(m => m.id === moduleId);
+    if (moduleItem) return moduleItem;
   }
   return undefined;
 }
@@ -224,9 +224,9 @@ export function getModuleByPath(
 ): { category: CategoryInfo; module: ModuleInfo } | undefined {
   const category = getCategoryById(categoryId);
   if (!category) return undefined;
-  const module = category.modules.find(m => m.id === moduleId);
-  if (!module) return undefined;
-  return { category, module };
+  const moduleItem = category.modules.find(m => m.id === moduleId);
+  if (!moduleItem) return undefined;
+  return { category, module: moduleItem };
 }
 
 // ============================================================================

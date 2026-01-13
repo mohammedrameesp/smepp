@@ -41,8 +41,8 @@ export default async function MyHoldingsPage() {
     const assetHistory = await getMemberAssetHistory(session.user.id, tenantId);
 
     // Calculate stats
-    const activeAssets = assetHistory.filter((a: any) => a.isCurrentlyAssigned);
-    const activeSubscriptions = subscriptionHistory.filter((s: any) => s.status === 'ACTIVE');
+    const activeAssets = assetHistory.filter((a): a is NonNullable<typeof a> => a !== null && a.isCurrentlyAssigned);
+    const activeSubscriptions = subscriptionHistory.filter((s) => s.status === 'ACTIVE');
     const totalAssets = assetHistory.length;
     const totalSubscriptions = subscriptionHistory.length;
 
@@ -67,10 +67,10 @@ export default async function MyHoldingsPage() {
         <PageContent>
           <div className="space-y-6">
             {/* Subscription History */}
-            <UserSubscriptionHistory subscriptions={subscriptionHistory as any} viewMode="employee" />
+            <UserSubscriptionHistory subscriptions={subscriptionHistory} viewMode="employee" />
 
             {/* Asset History */}
-            <UserAssetHistory assets={assetHistory as any} viewMode="employee" />
+            <UserAssetHistory assets={assetHistory.filter((a): a is NonNullable<typeof a> => a !== null)} viewMode="employee" />
           </div>
         </PageContent>
       </>

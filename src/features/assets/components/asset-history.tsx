@@ -272,6 +272,26 @@ export default function AssetHistory({ assetId }: AssetHistoryProps) {
     fetchHistory();
   }, [fetchHistory]);
 
+  // Memoize note lines to avoid recreating arrays on every render
+  const notesByEntryId = useMemo(() => {
+    const map = new Map<string, string[]>();
+    history.forEach((entry) => {
+      if (entry.action === 'UPDATED' && entry.notes) {
+        map.set(entry.id, entry.notes.split('\n').filter(Boolean));
+      }
+    });
+    return map;
+  }, [history]);
+
+  // Safe date formatting with fallback
+  const formatDate = useCallback((dateString: string): string => {
+    try {
+      return formatRelativeTime(dateString);
+    } catch {
+      return 'Unknown time';
+    }
+  }, []);
+
   if (loading) {
     return (
       <Card>
@@ -326,26 +346,6 @@ export default function AssetHistory({ assetId }: AssetHistoryProps) {
       </Card>
     );
   }
-
-  // Memoize note lines to avoid recreating arrays on every render
-  const notesByEntryId = useMemo(() => {
-    const map = new Map<string, string[]>();
-    history.forEach((entry) => {
-      if (entry.action === 'UPDATED' && entry.notes) {
-        map.set(entry.id, entry.notes.split('\n').filter(Boolean));
-      }
-    });
-    return map;
-  }, [history]);
-
-  // Safe date formatting with fallback
-  const formatDate = useCallback((dateString: string): string => {
-    try {
-      return formatRelativeTime(dateString);
-    } catch {
-      return 'Unknown time';
-    }
-  }, []);
 
   return (
     <Card>

@@ -38,9 +38,6 @@ interface LeaveBalance {
   accrued?: number;
 }
 
-interface HRProfile {
-  dateOfJoining?: string | null;
-}
 
 export default function EmployeeNewLeavePage() {
   const router = useRouter();

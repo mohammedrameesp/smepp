@@ -5,10 +5,10 @@
  * approve/reject actions via WhatsApp button callbacks.
  */
 
-import { randomBytes, createHash, createHmac } from 'crypto';
+import { randomBytes, createHmac } from 'crypto';
 import { prisma } from '@/lib/core/prisma';
 import { ApprovalModule } from '@prisma/client';
-import type { ActionTokenPayload, ActionTokenValidationResult, ApprovalEntityType } from './types';
+import type { ActionTokenValidationResult, ApprovalEntityType } from './types';
 
 // NOTIF-003: Reduced from 60 to 15 minutes for security-sensitive approval actions
 const TOKEN_EXPIRY_MINUTES = 15;

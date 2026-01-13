@@ -80,7 +80,7 @@ function mergeOverlappingPeriods(periods: AssignmentPeriod[]): AssignmentPeriod[
 
   const merged: AssignmentPeriod[] = [];
 
-  for (const [memberId, memberPeriods] of periodsByMember) {
+  for (const [, memberPeriods] of periodsByMember) {
     // Sort by start date
     const sorted = memberPeriods.sort((a, b) =>
       a.startDate.getTime() - b.startDate.getTime()

@@ -20,6 +20,23 @@ jest.mock('crypto', () => ({
   })),
 }));
 
+// Type for organization with count included
+interface OrganizationWithCount {
+  id: string;
+  name: string;
+  slug: string;
+  subscriptionTier?: string;
+  createdAt?: Date;
+  _count?: { teamMembers: number; assets: number };
+}
+
+// Type for session user
+interface SessionUser {
+  id?: string;
+  email?: string;
+  isSuperAdmin?: boolean;
+}
+
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockValidateSlug = validateSlug as jest.MockedFunction<typeof validateSlug>;
@@ -127,9 +144,9 @@ describe('Super Admin Organizations API', () => {
 
       (mockPrisma.organization.findMany as jest.Mock).mockResolvedValue([mockOrg]);
 
-      const orgs = await mockPrisma.organization.findMany();
-      expect((orgs[0] as any)._count.teamMembers).toBe(10);
-      expect((orgs[0] as any)._count.assets).toBe(25);
+      const orgs = await mockPrisma.organization.findMany() as OrganizationWithCount[];
+      expect(orgs[0]._count?.teamMembers).toBe(10);
+      expect(orgs[0]._count?.assets).toBe(25);
     });
   });
 
@@ -389,7 +406,7 @@ describe('Super Admin Organizations API', () => {
 
   describe('Security', () => {
     it('should only allow super admin access', async () => {
-      const testCases = [
+      const testCases: Array<{ user: SessionUser | null; expected: string }> = [
         { user: null, expected: 'forbidden' },
         { user: { isSuperAdmin: false }, expected: 'forbidden' },
         { user: { isSuperAdmin: true }, expected: 'allowed' },
@@ -397,7 +414,7 @@ describe('Super Admin Organizations API', () => {
 
       for (const testCase of testCases) {
         mockGetServerSession.mockResolvedValue(
-          testCase.user ? { user: testCase.user as any, expires: '' } : null
+          testCase.user ? { user: testCase.user as SessionUser, expires: '' } : null
         );
 
         const session = await mockGetServerSession();

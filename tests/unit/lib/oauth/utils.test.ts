@@ -67,8 +67,6 @@ import { isAccountLocked, clearFailedLogins, isTeamMemberLocked, clearTeamMember
 import { encode } from 'next-auth/jwt';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
-const mockIsTeamMemberLocked = isTeamMemberLocked as jest.Mock;
-const mockClearTeamMemberFailedLogins = clearTeamMemberFailedLogins as jest.Mock;
 
 describe('OAuth Utilities', () => {
   beforeEach(() => {

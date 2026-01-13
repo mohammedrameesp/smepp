@@ -44,16 +44,21 @@ export async function GET(request: NextRequest) {
     const { actor, entityType, from, to, limit, offset } = validation.data;
 
     // Build where clause with tenant filtering
-    const where: any = { tenantId };
-    
+    const where: {
+      tenantId: string;
+      actorMemberId?: string;
+      entityType?: string;
+      at?: { gte?: Date; lte?: Date };
+    } = { tenantId };
+
     if (actor) {
       where.actorMemberId = actor;
     }
-    
+
     if (entityType) {
       where.entityType = entityType;
     }
-    
+
     if (from || to) {
       where.at = {};
       if (from) where.at.gte = new Date(from);

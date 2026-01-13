@@ -7,10 +7,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { createSupplierSchema } from '@/features/suppliers';
 import { logAction } from '@/lib/core/activity';
-import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import logger from '@/lib/core/log';
+import { withErrorHandler } from '@/lib/http/handler';
 
-async function registerSupplierHandler(request: NextRequest, _context: APIContext) {
+async function registerSupplierHandler(request: NextRequest) {
     // Get tenant from subdomain (set by middleware)
     const subdomain = request.headers.get('x-subdomain');
 

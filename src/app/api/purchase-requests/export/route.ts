@@ -31,7 +31,7 @@ async function exportPurchaseRequestsHandler(request: NextRequest, context: APIC
     const status = searchParams.get('status');
 
     // Build where clause (tenant filtering is handled by db extension)
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (status && status !== 'all') {
       where.status = status;
     }
@@ -120,7 +120,7 @@ async function exportPurchaseRequestsHandler(request: NextRequest, context: APIC
     };
 
     // Add data
-    requests.forEach((req: any) => {
+    requests.forEach((req) => {
       requestsSheet.addRow({
         referenceNumber: req.referenceNumber,
         title: req.title,
@@ -185,8 +185,8 @@ async function exportPurchaseRequestsHandler(request: NextRequest, context: APIC
     };
 
     // Add data
-    requests.forEach((req: any) => {
-      req.items.forEach((item: any) => {
+    requests.forEach((req) => {
+      req.items.forEach((item) => {
         itemsSheet.addRow({
           referenceNumber: req.referenceNumber,
           itemNumber: item.itemNumber,
@@ -214,7 +214,7 @@ async function exportPurchaseRequestsHandler(request: NextRequest, context: APIC
     // Return file
     const filename = `purchase-requests-${new Date().toISOString().split('T')[0]}.xlsx`;
 
-    return new NextResponse(new Uint8Array(buffer as any), {
+    return new NextResponse(new Uint8Array(buffer as ArrayBuffer), {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': `attachment; filename="${filename}"`,

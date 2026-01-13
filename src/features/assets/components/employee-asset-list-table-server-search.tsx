@@ -46,7 +46,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { AssetStatusBadge, type EmployeeAssetServer } from './asset-shared';
 import { Loader2 } from 'lucide-react';
-import { formatDate } from '@/lib/core/datetime';
 
 // Using EmployeeAssetServer from asset-shared.tsx (excludes sensitive fields)
 type Asset = EmployeeAssetServer;
@@ -88,7 +87,7 @@ export function EmployeeAssetListTableServerSearch({ currentUserId }: EmployeeAs
 
   // Dynamic filter options
   const [typeOptions, setTypeOptions] = useState<TypeOption[]>([]);
-  const [filterError, setFilterError] = useState(false);
+  const [, setFilterError] = useState(false);
 
   // Fetch filter options on mount
   useEffect(() => {

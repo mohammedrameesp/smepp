@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect, notFound } from 'next/navigation';
-import { Role, PayrollStatus } from '@prisma/client';
+import { PayrollStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,8 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ArrowLeft, Download, Eye, Clock, AlertCircle, CreditCard, CalendarOff } from 'lucide-react';
-import { formatCurrency, getMonthName, getPayrollStatusColor, getPayrollStatusText } from '@/features/payroll/lib/utils';
+import { Download, Eye, Clock, AlertCircle, CreditCard, CalendarOff } from 'lucide-react';
+import { formatCurrency, getMonthName, getPayrollStatusText } from '@/features/payroll/lib/utils';
 import { PayrollWorkflowActions } from '@/features/payroll/components';
 import { calculatePayrollPreview } from '@/features/payroll/lib/preview';
 import { StatsCard, StatsCardGrid } from '@/components/ui/stats-card';

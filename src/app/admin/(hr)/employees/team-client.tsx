@@ -115,7 +115,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
   const [members, setMembers] = useState<Member[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [limits, setLimits] = useState<Limits | null>(null);
-  const [authConfig, setAuthConfig] = useState<AuthConfig | null>(null);
+  const [, setAuthConfig] = useState<AuthConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -177,7 +177,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
         const data = await invitesRes.json();
         setInvitations(data.invitations);
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load team data');
     } finally {
       setLoading(false);
@@ -242,7 +242,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
   async function handleRemoveMember() {
     if (!memberToRemove) return;
 
-    const { id, name } = memberToRemove;
+    const { id } = memberToRemove;
     setRemovingId(id);
     setRemoveDialogOpen(false);
 

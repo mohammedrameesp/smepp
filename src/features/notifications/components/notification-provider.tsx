@@ -160,11 +160,13 @@ export function NotificationProvider({
   }, [status, fetchCount, startPolling, stopPolling]);
 
   // Re-setup polling when interval changes due to backoff
+  // Note: currentIntervalMs.current is intentionally not in deps - polling interval
+  // is managed internally by startPolling through the backoff mechanism
   useEffect(() => {
     if (status === 'authenticated' && isTabVisible.current && consecutiveErrors.current > 0) {
       startPolling();
     }
-  }, [currentIntervalMs.current, status, startPolling]);
+  }, [status, startPolling]);
 
   return (
     <NotificationContext.Provider

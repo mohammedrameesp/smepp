@@ -9,6 +9,21 @@ import { prisma } from '@/lib/core/prisma';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  upsert: jest.Mock;
+  delete: jest.Mock;
+  count: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
 describe('Authentication API Tests', () => {
   const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 
@@ -24,7 +39,7 @@ describe('Authentication API Tests', () => {
         name: 'New User',
       };
 
-      const mockUser = prisma.user as any;
+      const mockUser = getMockedModel(prisma.user);
       mockUser.findUnique.mockResolvedValue(null); // No existing user
       mockUser.create.mockResolvedValue({
         id: 'user-new',
@@ -41,7 +56,7 @@ describe('Authentication API Tests', () => {
     });
 
     it('should reject signup with existing email', async () => {
-      const mockUser = prisma.user as any;
+      const mockUser = getMockedModel(prisma.user);
       mockUser.findUnique.mockResolvedValue({
         id: 'user-existing',
         email: 'existing@example.com',
@@ -78,7 +93,7 @@ describe('Authentication API Tests', () => {
 
   describe('POST /api/auth/forgot-password', () => {
     it('should generate reset token for existing user', async () => {
-      const mockUser = prisma.user as any;
+      const mockUser = getMockedModel(prisma.user);
       mockUser.findUnique.mockResolvedValue({
         id: 'user-123',
         email: 'user@example.com',
@@ -91,7 +106,7 @@ describe('Authentication API Tests', () => {
 
     it('should not reveal if email exists (security)', async () => {
       // Both existing and non-existing emails should return same response
-      const mockUser = prisma.user as any;
+      const mockUser = getMockedModel(prisma.user);
       mockUser.findUnique.mockResolvedValue(null);
 
       const user = await mockUser.findUnique({ where: { email: 'nonexistent@example.com' } });
@@ -122,7 +137,7 @@ describe('Authentication API Tests', () => {
 
   describe('POST /api/auth/reset-password', () => {
     it('should reset password with valid token', async () => {
-      const mockUser = prisma.user as any;
+      const mockUser = getMockedModel(prisma.user);
       mockUser.findFirst.mockResolvedValue({
         id: 'user-123',
         email: 'user@example.com',
@@ -140,7 +155,7 @@ describe('Authentication API Tests', () => {
     });
 
     it('should reject expired token', async () => {
-      const mockUser = prisma.user as any;
+      const mockUser = getMockedModel(prisma.user);
       mockUser.findFirst.mockResolvedValue(null); // Token expired
 
       const user = await mockUser.findFirst({
@@ -153,7 +168,7 @@ describe('Authentication API Tests', () => {
     });
 
     it('should clear reset token after use', async () => {
-      const mockUser = prisma.user as any;
+      const mockUser = getMockedModel(prisma.user);
       mockUser.update.mockResolvedValue({
         id: 'user-123',
         resetToken: null,
@@ -176,7 +191,7 @@ describe('Authentication API Tests', () => {
     });
 
     it('should invalidate existing sessions on password change', async () => {
-      const mockUser = prisma.user as any;
+      const mockUser = getMockedModel(prisma.user);
       const passwordChangedAt = new Date();
 
       mockUser.update.mockResolvedValue({
@@ -195,7 +210,7 @@ describe('Authentication API Tests', () => {
 
   describe('GET/POST /api/auth/set-password', () => {
     it('should validate setup token', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findFirst.mockResolvedValue({
         id: 'member-123',
         email: 'newuser@example.com',
@@ -210,7 +225,7 @@ describe('Authentication API Tests', () => {
     });
 
     it('should set password and clear setup token', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.update.mockResolvedValue({
         id: 'member-123',
         passwordHash: 'hashed_password',
@@ -249,7 +264,7 @@ describe('Authentication API Tests', () => {
       });
 
       it('should use custom OAuth credentials if configured', async () => {
-        const mockOrg = prisma.organization as any;
+        const mockOrg = getMockedModel(prisma.organization);
         mockOrg.findFirst.mockResolvedValue({
           id: 'org-123',
           slug: 'custom-org',
@@ -277,7 +292,7 @@ describe('Authentication API Tests', () => {
       });
 
       it('should create or update user on successful OAuth', async () => {
-        const mockUser = prisma.user as any;
+        const mockUser = getMockedModel(prisma.user);
         mockUser.upsert.mockResolvedValue({
           id: 'user-oauth',
           email: 'oauth@example.com',
@@ -295,7 +310,7 @@ describe('Authentication API Tests', () => {
       });
 
       it('should check if user is allowed to access tenant', async () => {
-        const mockTeamMember = prisma.teamMember as any;
+        const mockTeamMember = getMockedModel(prisma.teamMember);
         mockTeamMember.findFirst.mockResolvedValue({
           id: 'member-123',
           tenantId: 'tenant-123',
@@ -326,7 +341,7 @@ describe('Authentication API Tests', () => {
 
     describe('GET /api/auth/oauth/azure/callback', () => {
       it('should handle Azure AD callback', async () => {
-        const mockUser = prisma.user as any;
+        const mockUser = getMockedModel(prisma.user);
         mockUser.upsert.mockResolvedValue({
           id: 'user-azure',
           email: 'azure@example.com',
@@ -346,7 +361,7 @@ describe('Authentication API Tests', () => {
   describe('Account Lockout', () => {
     it('should lock account after max failed attempts', async () => {
       const MAX_FAILED_ATTEMPTS = 5;
-      const mockUser = prisma.user as any;
+      const mockUser = getMockedModel(prisma.user);
       mockUser.findUnique.mockResolvedValue({
         id: 'user-123',
         failedLoginAttempts: MAX_FAILED_ATTEMPTS,
@@ -366,7 +381,7 @@ describe('Authentication API Tests', () => {
     });
 
     it('should clear failed attempts on successful login', async () => {
-      const mockUser = prisma.user as any;
+      const mockUser = getMockedModel(prisma.user);
       mockUser.update.mockResolvedValue({
         id: 'user-123',
         failedLoginAttempts: 0,

@@ -83,11 +83,6 @@ export default async function EmployeeAssetRequestsPage() {
   const pendingRequests = requests.filter(r =>
     r.status === 'PENDING_ADMIN_APPROVAL' || r.status === 'PENDING_RETURN_APPROVAL'
   );
-  const completedRequests = requests.filter(r =>
-    r.status === 'ACCEPTED' || r.status === 'APPROVED' ||
-    r.status === 'REJECTED' || r.status === 'REJECTED_BY_USER'
-  );
-
   return (
     <>
       <PageHeader

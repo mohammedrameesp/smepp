@@ -8,7 +8,12 @@ const FILE_SIGNATURES = {
 } as const;
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg'] as const;
+type AllowedExtension = typeof ALLOWED_EXTENSIONS[number];
 const ALLOWED_MIME_TYPES = Object.keys(FILE_SIGNATURES) as string[];
+
+function isAllowedExtension(ext: string): ext is AllowedExtension {
+  return (ALLOWED_EXTENSIONS as readonly string[]).includes(ext);
+}
 
 export interface FileSanityResult {
   valid: boolean;
@@ -27,7 +32,7 @@ export async function scanFileBuffer(
   try {
     // 1. Extension check
     const extension = originalFilename.toLowerCase().substring(originalFilename.lastIndexOf('.'));
-    if (!ALLOWED_EXTENSIONS.includes(extension as any)) {
+    if (!isAllowedExtension(extension)) {
       errors.push(`File extension ${extension} not allowed. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`);
     }
 

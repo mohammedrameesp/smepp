@@ -8,8 +8,6 @@ import {
   Wifi,
   CheckCircle,
   AlertTriangle,
-  Clock,
-  TrendingUp,
   RefreshCw,
   Zap,
   FlaskConical

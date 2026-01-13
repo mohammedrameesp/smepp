@@ -146,8 +146,8 @@ export function EmployeeSubscriptionListTable({ subscriptions, currentUserId }: 
       if (a.status === 'CANCELLED' && b.status !== 'CANCELLED') return 1;
       if (a.status !== 'CANCELLED' && b.status === 'CANCELLED') return -1;
 
-      let aValue: any;
-      let bValue: any;
+      let aValue: string | number;
+      let bValue: string | number;
 
       switch (sortBy) {
         case 'serviceName':

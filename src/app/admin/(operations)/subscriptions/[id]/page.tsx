@@ -34,7 +34,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 
@@ -49,9 +48,9 @@ import {
   User,
   Calendar,
   Clock,
+  FileText,
   CheckCircle,
   XCircle,
-  FileText,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';

@@ -68,10 +68,14 @@ function hashQuery(query: string): string {
 /**
  * Extract data access summary from function calls
  */
+interface FunctionResult {
+  count?: number;
+  total?: number;
+}
+
 function extractDataAccessSummary(
   functionsCalled: string[],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  functionResults: any[]
+  functionResults: FunctionResult[]
 ): DataAccessSummary {
   const entityTypes = new Set<string>();
   let recordCount = 0;
@@ -116,9 +120,9 @@ function extractDataAccessSummary(
     if (Array.isArray(result)) {
       recordCount += result.length;
     } else if (result && typeof result === 'object') {
-      if ('count' in result) {
+      if ('count' in result && typeof result.count === 'number') {
         recordCount += result.count;
-      } else if ('total' in result) {
+      } else if ('total' in result && typeof result.total === 'number') {
         recordCount += result.total;
       } else {
         recordCount += 1;
@@ -205,7 +209,7 @@ export function createAuditEntry(
     conversationId,
     query,
     functionsCalled,
-    dataAccessed: extractDataAccessSummary(functionsCalled, functionResults),
+    dataAccessed: extractDataAccessSummary(functionsCalled, functionResults as FunctionResult[]),
     tokensUsed,
     responseTimeMs,
     ipAddress: request?.ipAddress,

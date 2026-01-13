@@ -35,7 +35,6 @@ import {
   getAssignmentPeriods,
   getAssetUtilization,
   getMemberAssetHistory,
-  AssignmentPeriod,
 } from '@/features/assets';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
@@ -300,7 +299,7 @@ describe('Asset Lifecycle Management', () => {
 
     it('should calculate 100% utilization for always-assigned asset', async () => {
       const purchaseDate = createDate(2024, 1, 1);
-      const currentDate = new Date(2024, 5, 15); // June 15
+      // Note: System time is mocked to June 15, 2024 in beforeEach
 
       (mockPrisma.asset.findFirst as jest.Mock)
         .mockResolvedValueOnce({

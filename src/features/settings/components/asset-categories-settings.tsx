@@ -68,7 +68,6 @@ interface AssetCategoriesSettingsProps {
 }
 
 export function AssetCategoriesSettings({
-  organizationId,
   codePrefix,
   isAdmin = true,
 }: AssetCategoriesSettingsProps) {

@@ -19,7 +19,6 @@ async function getPurchaseRequestHandler(request: NextRequest, context: APIConte
       return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
     const db = tenantPrisma as TenantPrismaClient;
-    const tenantId = tenant.tenantId;
     const userId = tenant.userId;
 
     const id = context.params?.id;
@@ -149,7 +148,7 @@ async function updatePurchaseRequestHandler(request: NextRequest, context: APICo
     }
 
     // Build update data
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
 
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined) updateData.description = data.description;

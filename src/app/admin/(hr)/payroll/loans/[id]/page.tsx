@@ -4,7 +4,6 @@ import { redirect, notFound } from 'next/navigation';
 
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -18,7 +17,6 @@ import { Progress } from '@/components/ui/progress';
 import {
   User,
   CreditCard,
-  Calendar,
   CheckCircle,
   PauseCircle,
   XCircle,
@@ -113,7 +111,6 @@ export default async function LoanDetailPage({ params }: PageProps) {
   const estimatedRemainingMonths = monthlyDeduction > 0 ? Math.ceil(remainingAmount / monthlyDeduction) : 0;
 
   const status = statusConfig[loan.status as keyof typeof statusConfig] || statusConfig.ACTIVE;
-  const StatusIcon = status.icon;
 
   const statusBadgeVariant = loan.status === 'ACTIVE' ? 'success' :
     loan.status === 'PAUSED' ? 'warning' :

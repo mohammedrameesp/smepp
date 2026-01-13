@@ -30,7 +30,6 @@ import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { EmployeeAssetListTableServerSearch } from '@/features/assets';
 import { Inbox } from 'lucide-react';
-import Link from 'next/link';
 
 /**
  * Employee all assets page component

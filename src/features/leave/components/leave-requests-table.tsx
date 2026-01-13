@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -56,7 +56,6 @@ interface LeaveRequestsTableProps {
 }
 
 export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/admin/leave/requests' }: LeaveRequestsTableProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [requests, setRequests] = useState<LeaveRequest[]>([]);

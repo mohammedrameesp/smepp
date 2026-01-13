@@ -257,21 +257,10 @@ describe('Payroll Preview', () => {
     });
 
     it('should not deduct loans that start after period end', async () => {
-      const mockLoan = {
-        id: 'loan-1',
-        loanNumber: 'LOAN-001',
-        memberId: 'user-1',
-        tenantId,
-        type: 'PERSONAL',
-        description: 'Future Loan',
-        status: LoanStatus.ACTIVE,
-        monthlyDeduction: new Decimal(2000),
-        remainingAmount: new Decimal(10000),
-        startDate: new Date(2024, 5, 1), // June 2024 - after January period
-      };
-
+      // A loan starting in June 2024 would be after our January period,
+      // so the query should filter it out and return an empty array
       (mockPrisma.salaryStructure.findMany as jest.Mock).mockResolvedValue([mockSalaryStructure]);
-      (mockPrisma.employeeLoan.findMany as jest.Mock).mockResolvedValue([]); // Query should filter this out
+      (mockPrisma.employeeLoan.findMany as jest.Mock).mockResolvedValue([]); // Query filters out future loans
 
       const result = await calculatePayrollPreview(year, month, periodEnd, tenantId);
 

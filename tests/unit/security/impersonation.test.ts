@@ -3,6 +3,7 @@
  * @description Tests for impersonation token management and security
  */
 
+import crypto from 'crypto';
 import { prisma } from '@/lib/core/prisma';
 import { logAction } from '@/lib/core/activity';
 import {
@@ -354,8 +355,6 @@ describe('Impersonation Security Tests', () => {
       });
 
       it('should generate cryptographically secure random identifiers', () => {
-        const crypto = require('crypto');
-
         generateJti();
 
         expect(crypto.randomBytes).toHaveBeenCalledWith(16);

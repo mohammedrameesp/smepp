@@ -8,7 +8,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, FileText, Users, Settings } from 'lucide-react';
 import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays } from '@/features/leave/lib/leave-utils';
-import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function AdminLeavePage() {
@@ -37,7 +37,7 @@ export default async function AdminLeavePage() {
   const [
     pendingCount,
     approvedThisYear,
-    rejectedThisYear,
+    ,
     activeLeaveTypes,
     pendingRequests,
     upcomingLeaves,

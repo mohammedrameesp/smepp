@@ -25,7 +25,6 @@ import {
   CheckCircle,
   XCircle,
   Package,
-  FileText,
   AlertTriangle,
   Bell,
   CheckCheck,
@@ -89,7 +88,6 @@ function getTypeBadgeVariant(
 export function NotificationsPageClient({
   initialNotifications,
   totalCount,
-  unreadCount: initialUnreadCount,
 }: NotificationsPageClientProps) {
   const [notifications, setNotifications] = useState(initialNotifications);
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');

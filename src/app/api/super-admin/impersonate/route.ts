@@ -64,7 +64,6 @@ export async function GET(request: NextRequest) {
     const clientIp = request.headers.get('x-forwarded-for') ||
                      request.headers.get('x-real-ip') ||
                      'unknown';
-    const userAgent = request.headers.get('user-agent') || 'unknown';
 
     logger.info({
       event: 'IMPERSONATION_START',

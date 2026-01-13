@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -116,13 +116,13 @@ interface LineItem {
 
 export default function NewPurchaseRequestPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  useSession();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form state - Request Information
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [description, ] = useState('');
   const [priority, setPriority] = useState<'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'>('MEDIUM');
   const [neededByDate, setNeededByDate] = useState('');
 
@@ -241,7 +241,7 @@ export default function NewPurchaseRequestPage() {
   };
 
   // Update line item
-  const updateItem = (id: string, field: keyof LineItem, value: any) => {
+  const updateItem = (id: string, field: keyof LineItem, value: LineItem[keyof LineItem]) => {
     setItems(
       items.map((item) =>
         item.id === id ? { ...item, [field]: value } : item
@@ -394,7 +394,7 @@ export default function NewPurchaseRequestPage() {
     }
   };
 
-  const { totalOneTime, totalMonthly, totalContractValue } = calculateTotals();
+  const { totalMonthly, totalContractValue } = calculateTotals();
 
   return (
     <>
@@ -445,7 +445,7 @@ export default function NewPurchaseRequestPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="priority">Priority</Label>
-                  <Select value={priority} onValueChange={(v) => setPriority(v as any)}>
+                  <Select value={priority} onValueChange={(v) => setPriority(v as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT')}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -627,7 +627,7 @@ export default function NewPurchaseRequestPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {items.map((item, index) => (
+                    {items.map((item) => (
                       <tr key={item.id} className="border-t">
                         <td className="px-3 py-2">
                           <Input

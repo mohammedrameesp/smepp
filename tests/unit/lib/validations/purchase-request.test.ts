@@ -279,7 +279,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail when title is missing', () => {
-      const { title, ...withoutTitle } = validRequest;
+      const { title: _title, ...withoutTitle } = validRequest;
       const result = createPurchaseRequestSchema.safeParse(withoutTitle);
       expect(result.success).toBe(false);
     });
@@ -309,7 +309,7 @@ describe('Purchase Request Validation Schemas', () => {
     });
 
     it('should fail when items is missing', () => {
-      const { items, ...withoutItems } = validRequest;
+      const { items: _items, ...withoutItems } = validRequest;
       const result = createPurchaseRequestSchema.safeParse(withoutItems);
       expect(result.success).toBe(false);
     });

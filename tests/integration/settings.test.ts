@@ -9,6 +9,32 @@ import { prisma } from '@/lib/core/prisma';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  updateMany: jest.Mock;
+  delete: jest.Mock;
+  deleteMany: jest.Mock;
+  count: jest.Mock;
+  upsert: jest.Mock;
+  aggregate: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
+// Type for activity log entries in tests
+interface ActivityLogEntry {
+  id: string;
+  entityType: string;
+  action?: string;
+  userId?: string;
+}
+
 describe('Settings API Tests', () => {
   const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 
@@ -31,7 +57,7 @@ describe('Settings API Tests', () => {
 
   describe('GET /api/settings/exchange-rate', () => {
     it('should return current exchange rates', async () => {
-      const mockSettings = prisma.systemSettings as any;
+      const mockSettings = getMockedModel(prisma.systemSettings);
       mockSettings.findFirst.mockResolvedValue({
         id: 'settings-1',
         key: 'exchange_rates',
@@ -52,7 +78,7 @@ describe('Settings API Tests', () => {
     });
 
     it('should return default rates if not set', async () => {
-      const mockSettings = prisma.systemSettings as any;
+      const mockSettings = getMockedModel(prisma.systemSettings);
       mockSettings.findFirst.mockResolvedValue(null);
 
       const settings = await mockSettings.findFirst({
@@ -69,7 +95,7 @@ describe('Settings API Tests', () => {
 
   describe('POST /api/settings/exchange-rate', () => {
     it('should update exchange rates', async () => {
-      const mockSettings = prisma.systemSettings as any;
+      const mockSettings = getMockedModel(prisma.systemSettings);
       mockSettings.upsert.mockResolvedValue({
         id: 'settings-1',
         key: 'exchange_rates',
@@ -120,7 +146,7 @@ describe('Settings API Tests', () => {
 
   describe('GET /api/settings/payroll-percentages', () => {
     it('should return payroll percentage settings', async () => {
-      const mockSettings = prisma.systemSettings as any;
+      const mockSettings = getMockedModel(prisma.systemSettings);
       mockSettings.findFirst.mockResolvedValue({
         id: 'settings-2',
         key: 'payroll_percentages',
@@ -144,7 +170,7 @@ describe('Settings API Tests', () => {
 
   describe('POST /api/settings/payroll-percentages', () => {
     it('should update payroll percentages', async () => {
-      const mockSettings = prisma.systemSettings as any;
+      const mockSettings = getMockedModel(prisma.systemSettings);
       mockSettings.upsert.mockResolvedValue({
         id: 'settings-2',
         key: 'payroll_percentages',
@@ -184,7 +210,7 @@ describe('Settings API Tests', () => {
 
   describe('Tenant Isolation', () => {
     it('should only access settings for current tenant', async () => {
-      const mockSettings = prisma.systemSettings as any;
+      const mockSettings = getMockedModel(prisma.systemSettings);
       mockSettings.findFirst.mockResolvedValue({
         id: 'settings-1',
         tenantId: 'org-123',
@@ -245,7 +271,7 @@ describe('Modules API Tests', () => {
     });
 
     it('should include enabled status for organization', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findUnique.mockResolvedValue({
         id: 'org-123',
         enabledModules: ['assets', 'subscriptions', 'suppliers', 'employees'],
@@ -263,7 +289,7 @@ describe('Modules API Tests', () => {
 
   describe('GET /api/modules/[moduleId]/data-count', () => {
     it('should return data count for module', async () => {
-      const mockAsset = prisma.asset as any;
+      const mockAsset = getMockedModel(prisma.asset);
       mockAsset.count.mockResolvedValue(150);
 
       const count = await mockAsset.count({
@@ -275,14 +301,14 @@ describe('Modules API Tests', () => {
 
     it('should return count for different modules', async () => {
       const getModuleDataCount = async (moduleId: string): Promise<number> => {
-        const mockModel = (prisma as any)[moduleId];
+        const mockModel = (prisma as unknown as Record<string, MockPrismaModel>)[moduleId];
         if (mockModel) {
           return mockModel.count({ where: { tenantId: 'org-123' } });
         }
         return 0;
       };
 
-      (prisma.subscription as any).count.mockResolvedValue(25);
+      getMockedModel(prisma.subscription).count.mockResolvedValue(25);
       const count = await getModuleDataCount('subscription');
       expect(count).toBe(25);
     });
@@ -290,7 +316,7 @@ describe('Modules API Tests', () => {
 
   describe('POST /api/modules (Enable/Disable)', () => {
     it('should enable module for organization', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.update.mockResolvedValue({
         id: 'org-123',
         enabledModules: ['assets', 'subscriptions', 'suppliers', 'payroll'],
@@ -338,7 +364,7 @@ describe('Modules API Tests', () => {
 describe('Activity API Tests', () => {
   describe('GET /api/activity', () => {
     it('should return activity logs', async () => {
-      const mockActivityLog = prisma.activityLog as any;
+      const mockActivityLog = getMockedModel(prisma.activityLog);
       mockActivityLog.findMany.mockResolvedValue([
         {
           id: 'log-1',
@@ -361,7 +387,7 @@ describe('Activity API Tests', () => {
     });
 
     it('should filter by entity type', async () => {
-      const mockActivityLog = prisma.activityLog as any;
+      const mockActivityLog = getMockedModel(prisma.activityLog);
       mockActivityLog.findMany.mockResolvedValue([
         { id: 'log-1', entityType: 'Asset', action: 'ASSET_CREATED' },
         { id: 'log-2', entityType: 'Asset', action: 'ASSET_UPDATED' },
@@ -371,11 +397,11 @@ describe('Activity API Tests', () => {
         where: { tenantId: 'org-123', entityType: 'Asset' },
       });
 
-      expect(logs.every((l: any) => l.entityType === 'Asset')).toBe(true);
+      expect(logs.every((l: ActivityLogEntry) => l.entityType === 'Asset')).toBe(true);
     });
 
     it('should filter by user', async () => {
-      const mockActivityLog = prisma.activityLog as any;
+      const mockActivityLog = getMockedModel(prisma.activityLog);
       mockActivityLog.findMany.mockResolvedValue([
         { id: 'log-1', userId: 'user-123', action: 'LOGIN' },
       ]);
@@ -384,11 +410,11 @@ describe('Activity API Tests', () => {
         where: { tenantId: 'org-123', userId: 'user-123' },
       });
 
-      expect(logs.every((l: any) => l.userId === 'user-123')).toBe(true);
+      expect(logs.every((l: ActivityLogEntry) => l.userId === 'user-123')).toBe(true);
     });
 
     it('should support date range filtering', async () => {
-      const mockActivityLog = prisma.activityLog as any;
+      const mockActivityLog = getMockedModel(prisma.activityLog);
       const startDate = new Date('2024-01-01');
       const endDate = new Date('2024-01-31');
 
@@ -418,7 +444,7 @@ describe('Activity API Tests', () => {
 describe('Permissions API Tests', () => {
   describe('GET /api/permissions/check', () => {
     it('should check user permissions', async () => {
-      const mockRolePermission = prisma.rolePermission as any;
+      const mockRolePermission = getMockedModel(prisma.rolePermission);
       mockRolePermission.findFirst.mockResolvedValue({
         id: 'perm-1',
         role: 'ADMIN',
@@ -438,7 +464,7 @@ describe('Permissions API Tests', () => {
     });
 
     it('should return false for missing permission', async () => {
-      const mockRolePermission = prisma.rolePermission as any;
+      const mockRolePermission = getMockedModel(prisma.rolePermission);
       mockRolePermission.findFirst.mockResolvedValue(null);
 
       const permission = await mockRolePermission.findFirst({
@@ -473,7 +499,7 @@ describe('Feedback API Tests', () => {
 
   describe('GET /api/feedback', () => {
     it('should return feedback list for admins', async () => {
-      const mockFeedback = prisma.feedback as any;
+      const mockFeedback = getMockedModel(prisma.feedback);
       mockFeedback.findMany.mockResolvedValue([
         {
           id: 'feedback-1',
@@ -495,7 +521,7 @@ describe('Feedback API Tests', () => {
 
   describe('POST /api/feedback', () => {
     it('should create new feedback', async () => {
-      const mockFeedback = prisma.feedback as any;
+      const mockFeedback = getMockedModel(prisma.feedback);
       mockFeedback.create.mockResolvedValue({
         id: 'feedback-new',
         tenantId: 'org-123',
@@ -523,7 +549,7 @@ describe('Feedback API Tests', () => {
 
   describe('PATCH /api/feedback/[id]', () => {
     it('should update feedback status', async () => {
-      const mockFeedback = prisma.feedback as any;
+      const mockFeedback = getMockedModel(prisma.feedback);
       mockFeedback.update.mockResolvedValue({
         id: 'feedback-1',
         status: 'IN_PROGRESS',
@@ -586,7 +612,7 @@ describe('Upload API Tests', () => {
 describe('Public API Tests', () => {
   describe('GET /api/public/tenant-branding', () => {
     it('should return tenant branding info', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findFirst.mockResolvedValue({
         id: 'org-123',
         name: 'Test Company',
@@ -637,7 +663,7 @@ describe('Webhooks API Tests', () => {
     });
 
     it('should process incoming messages', async () => {
-      const mockMessageLog = prisma.whatsAppMessageLog as any;
+      const mockMessageLog = getMockedModel(prisma.whatsAppMessageLog);
       mockMessageLog.create.mockResolvedValue({
         id: 'msg-1',
         direction: 'INCOMING',
@@ -659,7 +685,7 @@ describe('Webhooks API Tests', () => {
     });
 
     it('should handle action tokens', async () => {
-      const mockActionToken = prisma.whatsAppActionToken as any;
+      const mockActionToken = getMockedModel(prisma.whatsAppActionToken);
       mockActionToken.findFirst.mockResolvedValue({
         id: 'token-1',
         token: 'approve-leave-123',
@@ -690,8 +716,8 @@ describe('Cron API Tests', () => {
     });
 
     it('should calculate depreciation for all assets', async () => {
-      const mockAsset = prisma.asset as any;
-      const mockDepreciationRecord = prisma.depreciationRecord as any;
+      const mockAsset = getMockedModel(prisma.asset);
+      const mockDepreciationRecord = getMockedModel(prisma.depreciationRecord);
 
       mockAsset.findMany.mockResolvedValue([
         {
@@ -722,7 +748,7 @@ describe('Cron API Tests', () => {
 
   describe('POST /api/cron/cleanup-deleted-users', () => {
     it('should clean up users scheduled for deletion', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
       mockTeamMember.deleteMany.mockResolvedValue({ count: 5 });
@@ -740,7 +766,7 @@ describe('Cron API Tests', () => {
 
   describe('POST /api/cron/chat-cleanup', () => {
     it('should clean up old chat conversations', async () => {
-      const mockConversation = prisma.chatConversation as any;
+      const mockConversation = getMockedModel(prisma.chatConversation);
       const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
       mockConversation.deleteMany.mockResolvedValue({ count: 100 });

@@ -94,7 +94,7 @@ export function UserProfileCard({
   name,
   email,
   avatar,
-  size = 'lg',
+  size: _size = 'lg',
   showEmail = true,
   children,
   className,

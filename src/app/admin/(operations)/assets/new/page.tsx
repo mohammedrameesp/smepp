@@ -64,7 +64,7 @@ export default function NewAssetPage() {
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(DEFAULT_RATES_TO_QAR);
   const [suggestedTag, setSuggestedTag] = useState<string>('');
   const [isTagManuallyEdited, setIsTagManuallyEdited] = useState(false);
-  const [selectedCategoryCode, setSelectedCategoryCode] = useState<string | null>(null);
+  const [, setSelectedCategoryCode] = useState<string | null>(null);
   const [hasMultipleLocations, setHasMultipleLocations] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
   const [usingFallbackRates, setUsingFallbackRates] = useState(false);

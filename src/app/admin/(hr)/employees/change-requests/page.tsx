@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -59,11 +59,7 @@ export default function ChangeRequestsPage() {
   const [resolverNotes, setResolverNotes] = useState('');
   const [isResolving, setIsResolving] = useState(false);
 
-  useEffect(() => {
-    fetchRequests();
-  }, [statusFilter]);
-
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch(`/api/admin/change-requests?status=${statusFilter}`);
@@ -71,12 +67,16 @@ export default function ChangeRequestsPage() {
       const data = await response.json();
       setRequests(data.requests);
       setStats(data.stats);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load change requests');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
 
   const handleResolve = async (status: 'APPROVED' | 'REJECTED') => {
     if (!selectedRequest) return;

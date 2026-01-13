@@ -136,7 +136,6 @@ export async function GET() {
 
     // Organizations created over time (last 12 months)
     const now = new Date();
-    const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
     const monthlyOrgs: { month: string; count: number }[] = [];
     for (let i = 11; i >= 0; i--) {

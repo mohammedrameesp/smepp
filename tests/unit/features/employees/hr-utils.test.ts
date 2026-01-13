@@ -13,7 +13,6 @@ import {
   getDaysRemaining,
   getOverallExpiryStatus,
   calculateProfileCompletion,
-  calculateTeamMemberProfileCompletion,
   parseJsonArray,
   formatDateForPicker,
   calculateTenure,

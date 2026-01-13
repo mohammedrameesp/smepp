@@ -9,6 +9,29 @@ import { prisma } from '@/lib/core/prisma';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  createMany: jest.Mock;
+  update: jest.Mock;
+  updateMany: jest.Mock;
+  delete: jest.Mock;
+  deleteMany: jest.Mock;
+  count: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
+// Type for notification with tenant info
+interface TenantNotification {
+  recipientId: string;
+  tenantId: string;
+}
+
 describe('Notifications API Tests', () => {
   const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 
@@ -56,7 +79,7 @@ describe('Notifications API Tests', () => {
 
   describe('GET /api/notifications', () => {
     it('should return paginated notifications for authenticated user', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.findMany.mockResolvedValue(mockNotifications);
       mockNotification.count.mockResolvedValue(2);
 
@@ -76,7 +99,7 @@ describe('Notifications API Tests', () => {
     });
 
     it('should filter notifications by read status', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       const unreadNotifications = mockNotifications.filter((n) => !n.isRead);
       mockNotification.findMany.mockResolvedValue(unreadNotifications);
       mockNotification.count.mockResolvedValue(1);
@@ -90,7 +113,7 @@ describe('Notifications API Tests', () => {
     });
 
     it('should only return notifications for current user (tenant isolation)', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.findMany.mockResolvedValue(mockNotifications);
 
       const notifications = await mockNotification.findMany({
@@ -100,14 +123,14 @@ describe('Notifications API Tests', () => {
         },
       });
 
-      notifications.forEach((notif: any) => {
+      notifications.forEach((notif: TenantNotification) => {
         expect(notif.recipientId).toBe('user-123');
         expect(notif.tenantId).toBe('org-123');
       });
     });
 
     it('should support pagination parameters', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.findMany.mockResolvedValue([mockNotifications[1]]);
       mockNotification.count.mockResolvedValue(2);
 
@@ -152,7 +175,7 @@ describe('Notifications API Tests', () => {
 
   describe('POST /api/notifications (Mark All Read)', () => {
     it('should mark all unread notifications as read', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.updateMany.mockResolvedValue({ count: 5 });
 
       const result = await mockNotification.updateMany({
@@ -170,7 +193,7 @@ describe('Notifications API Tests', () => {
     });
 
     it('should return count of marked notifications', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.updateMany.mockResolvedValue({ count: 3 });
 
       const result = await mockNotification.updateMany({
@@ -182,7 +205,7 @@ describe('Notifications API Tests', () => {
     });
 
     it('should only affect notifications for current user', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.updateMany.mockResolvedValue({ count: 2 });
 
       await mockNotification.updateMany({
@@ -205,7 +228,7 @@ describe('Notifications API Tests', () => {
 
   describe('POST /api/notifications/[id]/read', () => {
     it('should mark a single notification as read', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.update.mockResolvedValue({
         ...mockNotifications[0],
         isRead: true,
@@ -222,7 +245,7 @@ describe('Notifications API Tests', () => {
     });
 
     it('should verify notification belongs to user before marking read', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.findFirst.mockResolvedValue(mockNotifications[0]);
 
       const notification = await mockNotification.findFirst({
@@ -237,7 +260,7 @@ describe('Notifications API Tests', () => {
     });
 
     it('should return 404 for notification not found', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.findFirst.mockResolvedValue(null);
 
       const notification = await mockNotification.findFirst({
@@ -251,7 +274,7 @@ describe('Notifications API Tests', () => {
     });
 
     it('should prevent marking another user\'s notification', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.findFirst.mockResolvedValue(null); // Not found because of wrong recipientId
 
       const notification = await mockNotification.findFirst({
@@ -267,7 +290,7 @@ describe('Notifications API Tests', () => {
 
   describe('GET /api/notifications/unread-count', () => {
     it('should return count of unread notifications', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.count.mockResolvedValue(5);
 
       const unreadCount = await mockNotification.count({
@@ -281,7 +304,7 @@ describe('Notifications API Tests', () => {
     });
 
     it('should return 0 when no unread notifications', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.count.mockResolvedValue(0);
 
       const unreadCount = await mockNotification.count({
@@ -295,7 +318,7 @@ describe('Notifications API Tests', () => {
     });
 
     it('should only count notifications for current user', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.count.mockResolvedValue(3);
 
       await mockNotification.count({
@@ -350,7 +373,7 @@ describe('Notifications API Tests', () => {
 
   describe('Tenant Isolation', () => {
     it('should not access notifications from other tenants', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       const otherTenantNotification = {
         ...mockNotifications[0],
         tenantId: 'other-org-456',
@@ -370,7 +393,7 @@ describe('Notifications API Tests', () => {
     });
 
     it('should filter all queries by tenant context', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.findMany.mockResolvedValue(mockNotifications);
 
       await mockNotification.findMany({
@@ -392,7 +415,7 @@ describe('Notifications API Tests', () => {
 
   describe('Notification Creation (Internal)', () => {
     it('should create notification with required fields', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       const newNotification = {
         id: 'notif-new',
         tenantId: 'org-123',
@@ -421,7 +444,7 @@ describe('Notifications API Tests', () => {
     });
 
     it('should support optional entity linking', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       const linkedNotification = {
         id: 'notif-linked',
         tenantId: 'org-123',
@@ -459,7 +482,7 @@ describe('Notifications API Tests', () => {
 
   describe('Bulk Operations', () => {
     it('should support deleting old notifications', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
       mockNotification.deleteMany.mockResolvedValue({ count: 50 });
@@ -476,7 +499,7 @@ describe('Notifications API Tests', () => {
     });
 
     it('should support batch notification creation', async () => {
-      const mockNotification = prisma.notification as any;
+      const mockNotification = getMockedModel(prisma.notification);
       mockNotification.createMany.mockResolvedValue({ count: 10 });
 
       const recipients = ['user-1', 'user-2', 'user-3'];

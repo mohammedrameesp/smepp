@@ -6,8 +6,10 @@
 import { test, expect } from '@playwright/test';
 import { loginAs, TEST_USERS } from './utils/auth';
 
+import type { Page } from '@playwright/test';
+
 // Helper function to login as admin
-async function loginAsAdmin(page: any) {
+async function loginAsAdmin(page: Page) {
   await loginAs(page, TEST_USERS.admin);
 }
 

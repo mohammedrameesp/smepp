@@ -5,7 +5,7 @@
 
 describe('Approval Delegation Tests', () => {
   describe('Delegation Structure', () => {
-    type Role = 'ADMIN' | 'MANAGER' | 'HR' | 'FINANCE' | 'EMPLOYEE';
+    type _Role = 'ADMIN' | 'MANAGER' | 'HR' | 'FINANCE' | 'EMPLOYEE';
 
     interface ApproverDelegation {
       id: string;

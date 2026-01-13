@@ -5,7 +5,7 @@
  */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -54,14 +54,10 @@ export function AssetAssignDialog({ asset, trigger }: AssetAssignDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch users when dialog opens
-  useEffect(() => {
-    if (open && users.length === 0) {
-      fetchUsers();
-    }
-  }, [open]);
+  // Track if users have been fetched
+  const hasFetchedUsersRef = useRef(false);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/users?active=true');
@@ -74,7 +70,15 @@ export function AssetAssignDialog({ asset, trigger }: AssetAssignDialogProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Fetch users when dialog opens
+  useEffect(() => {
+    if (open && !hasFetchedUsersRef.current) {
+      hasFetchedUsersRef.current = true;
+      fetchUsers();
+    }
+  }, [open, fetchUsers]);
 
   const handleSubmit = async () => {
     if (!selectedUserId) {

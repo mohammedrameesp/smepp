@@ -6,7 +6,7 @@
  * @module setup/components
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -354,7 +354,6 @@ export function SetupWizardClient() {
       case 3:
         return (
           <LogoStep
-            file={logoFile}
             preview={logoPreview}
             onFileSelect={setLogoFile}
             onPreviewChange={setLogoPreview}

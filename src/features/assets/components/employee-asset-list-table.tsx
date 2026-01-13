@@ -45,7 +45,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatDate } from '@/lib/core/datetime';
 import { AssetStatusBadge, type EmployeeAsset } from './asset-shared';
 import { Search } from 'lucide-react';
 
@@ -112,8 +111,8 @@ export function EmployeeAssetListTable({ assets, currentUserId }: EmployeeAssetL
 
     // Apply sorting
     const sorted = [...filtered].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: string;
+      let bValue: string;
 
       switch (sortBy) {
         case 'model':

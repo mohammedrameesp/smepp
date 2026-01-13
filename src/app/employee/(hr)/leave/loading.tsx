@@ -1,6 +1,6 @@
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Calendar, Clock, FileText } from 'lucide-react';
+import { Clock, FileText } from 'lucide-react';
 
 export default function LeaveLoading() {
   return (

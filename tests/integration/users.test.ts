@@ -10,6 +10,20 @@ import { prisma } from '@/lib/core/prisma';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+  count: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
 describe('Users API Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -69,7 +83,7 @@ describe('Users API Tests', () => {
         },
       ];
 
-      const mockPrismaUser = prisma.user as any;
+      const mockPrismaUser = getMockedModel(prisma.user);
       mockPrismaUser.findMany.mockResolvedValue(mockUsers);
       mockPrismaUser.count.mockResolvedValue(mockUsers.length);
 
@@ -147,7 +161,7 @@ describe('Users API Tests', () => {
         role: Role.EMPLOYEE,
       };
 
-      const mockPrismaUser = prisma.user as any;
+      const mockPrismaUser = getMockedModel(prisma.user);
       mockPrismaUser.create.mockResolvedValue({
         id: 'user-new',
         ...validUserData,
@@ -174,7 +188,7 @@ describe('Users API Tests', () => {
     });
 
     it('should validate email uniqueness', async () => {
-      const mockPrismaUser = prisma.user as any;
+      const mockPrismaUser = getMockedModel(prisma.user);
       mockPrismaUser.findUnique.mockResolvedValue({
         id: 'user-1',
         email: 'existing@example.com',
@@ -252,7 +266,7 @@ describe('Users API Tests', () => {
         role: Role.EMPLOYEE,
       };
 
-      const mockPrismaUser = prisma.user as any;
+      const mockPrismaUser = getMockedModel(prisma.user);
       mockPrismaUser.findUnique.mockResolvedValue(mockUser);
 
       const session = await mockGetServerSession();
@@ -282,7 +296,7 @@ describe('Users API Tests', () => {
         role: Role.EMPLOYEE,
       };
 
-      const mockPrismaUser = prisma.user as any;
+      const mockPrismaUser = getMockedModel(prisma.user);
       mockPrismaUser.findUnique.mockResolvedValue(mockUser);
 
       const result = await mockPrismaUser.findUnique({ where: { id: 'user-456' } });
@@ -290,7 +304,7 @@ describe('Users API Tests', () => {
     });
 
     it('should return 404 if user not found', async () => {
-      const mockPrismaUser = prisma.user as any;
+      const mockPrismaUser = getMockedModel(prisma.user);
       mockPrismaUser.findUnique.mockResolvedValue(null);
 
       const result = await mockPrismaUser.findUnique({ where: { id: 'nonexistent' } });
@@ -342,7 +356,7 @@ describe('Users API Tests', () => {
         role: Role.EMPLOYEE,
       };
 
-      const mockPrismaUser = prisma.user as any;
+      const mockPrismaUser = getMockedModel(prisma.user);
       mockPrismaUser.update.mockResolvedValue({
         id: 'user-456',
         ...updateData,
@@ -375,7 +389,7 @@ describe('Users API Tests', () => {
     });
 
     it('should prevent admin from demoting themselves if they are last admin', async () => {
-      const mockPrismaUser = prisma.user as any;
+      const mockPrismaUser = getMockedModel(prisma.user);
 
       // Count admins - only 1
       mockPrismaUser.count.mockResolvedValue(1);
@@ -426,7 +440,7 @@ describe('Users API Tests', () => {
 
       mockGetServerSession.mockResolvedValue(mockSession);
 
-      const mockPrismaUser = prisma.user as any;
+      const mockPrismaUser = getMockedModel(prisma.user);
       mockPrismaUser.delete.mockResolvedValue({
         id: 'user-456',
       });
@@ -456,7 +470,7 @@ describe('Users API Tests', () => {
     });
 
     it('should prevent deleting system accounts', async () => {
-      const mockPrismaUser = prisma.user as any;
+      const mockPrismaUser = getMockedModel(prisma.user);
       mockPrismaUser.findUnique.mockResolvedValue({
         id: 'system-user',
         isSystemAccount: true,

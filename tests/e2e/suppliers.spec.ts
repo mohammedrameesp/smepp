@@ -311,7 +311,7 @@ test.describe('Suppliers Module', () => {
       await page.goto('/employee/suppliers');
 
       // Employee should only see approved suppliers
-      const pendingBadge = page.getByText(/pending/i).first();
+      const _pendingBadge = page.getByText(/pending/i).first();
 
       // If there are any suppliers, they should not show pending status
       // (This is a soft check - depends on actual data)

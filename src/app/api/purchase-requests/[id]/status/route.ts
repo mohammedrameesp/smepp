@@ -74,7 +74,7 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
     }
 
     // Build update data
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       status,
       reviewedById: userId,
       reviewedAt: new Date(),

@@ -171,11 +171,11 @@ export interface ApprovalHandlerConfig<TEntity, TBody = unknown, TResult = TEnti
    * @param tx - Prisma transaction client (has all model methods)
    * @returns Updated entity/result
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   performUpdate: (
     entity: TEntity,
     body: TBody | undefined,
     context: ApprovalContext,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma transaction client types are complex intersection types that cannot be expressed generically
     tx: any
   ) => Promise<TResult>;
 

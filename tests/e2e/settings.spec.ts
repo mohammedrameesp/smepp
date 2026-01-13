@@ -132,7 +132,7 @@ test.describe('Settings & Configuration', () => {
       // Look for module toggles
       const moduleToggle = page.locator('input[type="checkbox"], button[role="switch"], [data-testid="module-toggle"]').first();
       if (await moduleToggle.count() > 0) {
-        const wasChecked = await moduleToggle.isChecked?.() || false;
+        const _wasChecked = await moduleToggle.isChecked?.() || false;
         await moduleToggle.click();
         await page.waitForTimeout(1000);
 

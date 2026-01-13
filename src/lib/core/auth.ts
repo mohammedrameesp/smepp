@@ -70,20 +70,29 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   );
 }
 
-// Microsoft/Azure AD (for enterprise customers - any tenant)
+// Microsoft/Azure AD (for enterprise customers)
+// SECURITY: In production, always set AZURE_AD_TENANT_ID to restrict to your organization
+// Using 'common' allows ANY Microsoft account - only use for testing/development
 if (process.env.AZURE_AD_CLIENT_ID && process.env.AZURE_AD_CLIENT_SECRET) {
-  providers.push(
-    AzureADProvider({
-      clientId: process.env.AZURE_AD_CLIENT_ID,
-      clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
-      tenantId: process.env.AZURE_AD_TENANT_ID || 'common', // 'common' allows any Microsoft account
-      authorization: {
-        params: {
-          prompt: 'select_account',
+  const azureTenantId = process.env.AZURE_AD_TENANT_ID;
+  if (!azureTenantId && process.env.NODE_ENV === 'production') {
+    console.warn('[Auth] WARNING: AZURE_AD_TENANT_ID not set - Azure AD login disabled in production for security');
+  }
+
+  if (azureTenantId || process.env.NODE_ENV !== 'production') {
+    providers.push(
+      AzureADProvider({
+        clientId: process.env.AZURE_AD_CLIENT_ID,
+        clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
+        tenantId: azureTenantId || 'common', // 'common' only allowed in non-production
+        authorization: {
+          params: {
+            prompt: 'select_account',
+          },
         },
-      },
-    })
-  );
+      })
+    );
+  }
 }
 
 // Email/Password credentials (for users who signed up with email)
@@ -396,7 +405,7 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
  * Get the user's primary organization membership (legacy - for super admin OAuth)
  * Now uses TeamMember table instead of deprecated OrganizationUser
  */
-async function getUserOrganization(userId: string): Promise<OrganizationInfo | null> {
+async function _getUserOrganization(userId: string): Promise<OrganizationInfo | null> {
   // Find TeamMember by matching User email
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -552,8 +561,11 @@ export const authOptions: NextAuthOptions = {
               });
             }
 
-            // Auto-promote to super admin if matching email
+            // SECURITY: Auto-promote to super admin if matching SUPER_ADMIN_EMAIL env var
+            // This is a bootstrapping mechanism for initial setup only
+            // In production, consider removing this after initial super admin is created
             if (isSuperAdmin && !existingUser.isSuperAdmin) {
+              console.warn(`[Auth] SECURITY: Auto-promoting user ${existingUser.id} to super admin (matched SUPER_ADMIN_EMAIL)`);
               await prisma.user.update({
                 where: { id: existingUser.id },
                 data: { isSuperAdmin: true },
@@ -576,7 +588,7 @@ export const authOptions: NextAuthOptions = {
       }
     },
 
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user, trigger, session: _session }) {
       try {
         // SECURITY: Check if password was changed after token was issued
         // This invalidates all existing sessions when password is reset

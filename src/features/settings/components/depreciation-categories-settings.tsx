@@ -18,7 +18,7 @@
  * - Electrical Equipment: 20% (5 years)
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -86,7 +86,6 @@ interface DepreciationCategoriesSettingsProps {
 }
 
 export function DepreciationCategoriesSettings({
-  organizationId,
   isAdmin = true,
 }: DepreciationCategoriesSettingsProps) {
   const [categories, setCategories] = useState<DepreciationCategory[]>([]);
@@ -116,11 +115,24 @@ export function DepreciationCategoriesSettings({
   const [deleteCategory, setDeleteCategory] = useState<DepreciationCategory | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchCategories();
+  const seedDefaultCategories = useCallback(async () => {
+    try {
+      const response = await fetch('/api/depreciation/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'seed' }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories || []);
+      }
+    } catch (error) {
+      console.error('Error seeding default categories:', error);
+    }
   }, []);
 
-  async function fetchCategories() {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch('/api/depreciation/categories?includeInactive=true');
       if (response.ok) {
@@ -141,24 +153,11 @@ export function DepreciationCategoriesSettings({
     } finally {
       setLoading(false);
     }
-  }
+  }, [isAdmin, seedDefaultCategories]);
 
-  async function seedDefaultCategories() {
-    try {
-      const response = await fetch('/api/depreciation/categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'seed' }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data.categories || []);
-      }
-    } catch (error) {
-      console.error('Error seeding default categories:', error);
-    }
-  }
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   async function handleSeedDefaults() {
     setSeeding(true);

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ShieldAlert, X, ExternalLink, Loader2 } from 'lucide-react';
 
@@ -30,7 +29,6 @@ const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
  * Provides context about who is impersonating and allows exiting impersonation.
  */
 export function ImpersonationBanner() {
-  const router = useRouter();
   const [info, setInfo] = useState<ImpersonationInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [exiting, setExiting] = useState(false);

@@ -456,7 +456,7 @@ describe('Activity Logging Tests', () => {
   describe('Error Handling', () => {
     const safeLogActivity = (
       tenantId: string | null | undefined,
-      action: string
+      _action: string
     ): { success: boolean; error?: string } => {
       if (!tenantId) {
         return {

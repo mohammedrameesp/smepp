@@ -68,8 +68,8 @@ export function EmployeeSupplierListTable({ suppliers }: EmployeeSupplierListTab
 
     // Apply sorting
     const sorted = [...filtered].sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+      let aValue: string | number;
+      let bValue: string | number;
 
       switch (sortBy) {
         case 'name':

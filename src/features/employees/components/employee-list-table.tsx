@@ -70,7 +70,7 @@ interface PaginationInfo {
 
 export function EmployeeListTable() {
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [stats, setStats] = useState<Stats>({ total: 0, incomplete: 0, expiringSoon: 0, expired: 0 });
+  const [, setStats] = useState<Stats>({ total: 0, incomplete: 0, expiringSoon: 0, expired: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');

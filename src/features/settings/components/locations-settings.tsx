@@ -70,7 +70,6 @@ interface LocationsSettingsProps {
 }
 
 export function LocationsSettings({
-  organizationId,
   isAdmin = true,
 }: LocationsSettingsProps) {
   const [locations, setLocations] = useState<Location[]>([]);

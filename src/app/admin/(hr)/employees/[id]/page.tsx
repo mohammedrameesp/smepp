@@ -18,8 +18,9 @@ import {
   UserAssetHistory,
   DeleteUserButton,
   ExportUserPDFButton,
-  RestoreUserButton
+  RestoreUserButton,
 } from '@/features/users/components';
+import type { UserAssetHistoryItem, UserSubscriptionHistoryItem } from '@/features/users/components';
 import { EmployeeLeaveSection } from '@/features/employees/components';
 
 interface Props {
@@ -245,11 +246,11 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
           </TabsContent>
 
           <TabsContent value="assets" className="m-0 p-5">
-            <UserAssetHistory assets={assetHistory as any} />
+            <UserAssetHistory assets={assetHistory as UserAssetHistoryItem[]} />
           </TabsContent>
 
           <TabsContent value="subscriptions" className="m-0 p-5">
-            <UserSubscriptionHistory subscriptions={subscriptionHistory as any} />
+            <UserSubscriptionHistory subscriptions={subscriptionHistory as UserSubscriptionHistoryItem[]} />
           </TabsContent>
 
           <TabsContent value="leave" className="m-0 p-5">

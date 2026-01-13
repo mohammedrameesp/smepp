@@ -9,6 +9,20 @@ import { prisma } from '@/lib/core/prisma';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+  count: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
 describe('Organizations API Tests', () => {
   const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 
@@ -70,7 +84,7 @@ describe('Organizations API Tests', () => {
 
   describe('GET /api/organizations', () => {
     it('should return user\'s organizations', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findMany.mockResolvedValue(mockMemberships);
 
       const memberships = await mockTeamMember.findMany({
@@ -89,7 +103,7 @@ describe('Organizations API Tests', () => {
     });
 
     it('should include organization details', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findMany.mockResolvedValue(mockMemberships);
 
       const memberships = await mockTeamMember.findMany({
@@ -114,9 +128,9 @@ describe('Organizations API Tests', () => {
 
   describe('POST /api/organizations', () => {
     it('should create new organization', async () => {
-      const mockOrg = prisma.organization as any;
-      const mockTeamMember = prisma.teamMember as any;
-      const mockSetupProgress = prisma.organizationSetupProgress as any;
+      const mockOrg = getMockedModel(prisma.organization);
+      const mockTeamMember = getMockedModel(prisma.teamMember);
+      const mockSetupProgress = getMockedModel(prisma.organizationSetupProgress);
 
       mockOrg.findUnique.mockResolvedValue(null); // Slug available
       mockOrg.create.mockResolvedValue({
@@ -189,7 +203,7 @@ describe('Organizations API Tests', () => {
     });
 
     it('should reject duplicate slug', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findUnique.mockResolvedValue(mockOrganization);
 
       const existing = await mockOrg.findUnique({
@@ -200,7 +214,7 @@ describe('Organizations API Tests', () => {
     });
 
     it('should create owner as TeamMember', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.create.mockResolvedValue({
         id: 'member-owner',
         tenantId: 'org-new',
@@ -229,7 +243,7 @@ describe('Organizations API Tests', () => {
     });
 
     it('should initialize setup progress', async () => {
-      const mockSetupProgress = prisma.organizationSetupProgress as any;
+      const mockSetupProgress = getMockedModel(prisma.organizationSetupProgress);
       mockSetupProgress.create.mockResolvedValue({
         id: 'progress-1',
         organizationId: 'org-new',
@@ -255,7 +269,7 @@ describe('Organizations API Tests', () => {
 
   describe('GET /api/organizations/[id]', () => {
     it('should return organization details', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findUnique.mockResolvedValue(mockOrganization);
 
       const org = await mockOrg.findUnique({
@@ -267,7 +281,7 @@ describe('Organizations API Tests', () => {
     });
 
     it('should return 404 for non-existent organization', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findUnique.mockResolvedValue(null);
 
       const org = await mockOrg.findUnique({
@@ -280,7 +294,7 @@ describe('Organizations API Tests', () => {
 
   describe('PATCH /api/organizations/[id]', () => {
     it('should update organization details', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.update.mockResolvedValue({
         ...mockOrganization,
         name: 'Updated Organization',
@@ -310,7 +324,7 @@ describe('Organizations API Tests', () => {
 
   describe('DELETE /api/organizations/[id]', () => {
     it('should require owner role for deletion', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findFirst.mockResolvedValue({
         id: 'member-1',
         isOwner: true,
@@ -328,7 +342,7 @@ describe('Organizations API Tests', () => {
     });
 
     it('should soft delete or schedule for deletion', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.update.mockResolvedValue({
         ...mockOrganization,
         scheduledForDeletionAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -347,7 +361,7 @@ describe('Organizations API Tests', () => {
 
   describe('GET /api/organizations/[id]/members/[memberId]', () => {
     it('should return member details', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findFirst.mockResolvedValue({
         id: 'member-1',
         tenantId: 'org-123',
@@ -370,7 +384,7 @@ describe('Organizations API Tests', () => {
 
   describe('PATCH /api/organizations/[id]/members/[memberId]', () => {
     it('should update member role', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.update.mockResolvedValue({
         id: 'member-1',
         role: 'ADMIN',
@@ -385,7 +399,7 @@ describe('Organizations API Tests', () => {
     });
 
     it('should prevent removing last admin', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.count.mockResolvedValue(1);
 
       const adminCount = await mockTeamMember.count({
@@ -403,7 +417,7 @@ describe('Organizations API Tests', () => {
 
   describe('DELETE /api/organizations/[id]/members/[memberId]', () => {
     it('should remove member from organization', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.update.mockResolvedValue({
         id: 'member-2',
         isDeleted: true,
@@ -419,7 +433,7 @@ describe('Organizations API Tests', () => {
     });
 
     it('should prevent owner from removing themselves', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findFirst.mockResolvedValue({
         id: 'member-1',
         isOwner: true,
@@ -436,7 +450,7 @@ describe('Organizations API Tests', () => {
 
   describe('GET /api/organizations/[id]/invitations', () => {
     it('should return pending invitations', async () => {
-      const mockInvitation = prisma.organizationInvitation as any;
+      const mockInvitation = getMockedModel(prisma.organizationInvitation);
       mockInvitation.findMany.mockResolvedValue([
         {
           id: 'inv-1',
@@ -462,7 +476,7 @@ describe('Organizations API Tests', () => {
 
   describe('POST /api/organizations/[id]/invitations', () => {
     it('should create invitation', async () => {
-      const mockInvitation = prisma.organizationInvitation as any;
+      const mockInvitation = getMockedModel(prisma.organizationInvitation);
       mockInvitation.create.mockResolvedValue({
         id: 'inv-new',
         organizationId: 'org-123',
@@ -488,7 +502,7 @@ describe('Organizations API Tests', () => {
     });
 
     it('should reject if user already member', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findFirst.mockResolvedValue({
         id: 'member-existing',
         email: 'existing@example.com',
@@ -506,8 +520,8 @@ describe('Organizations API Tests', () => {
     });
 
     it('should check user limit for tier', async () => {
-      const mockTeamMember = prisma.teamMember as any;
-      const mockOrg = prisma.organization as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
+      const mockOrg = getMockedModel(prisma.organization);
 
       mockTeamMember.count.mockResolvedValue(5);
       mockOrg.findUnique.mockResolvedValue({
@@ -528,7 +542,7 @@ describe('Organizations API Tests', () => {
 
   describe('GET /api/organizations/[id]/code-formats', () => {
     it('should return organization code formats', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findUnique.mockResolvedValue({
         id: 'org-123',
         assetCodePrefix: 'AST',
@@ -554,7 +568,7 @@ describe('Organizations API Tests', () => {
 
   describe('PATCH /api/organizations/[id]/code-formats', () => {
     it('should update code format settings', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.update.mockResolvedValue({
         id: 'org-123',
         assetCodePrefix: 'ASSET',
@@ -575,7 +589,7 @@ describe('Organizations API Tests', () => {
 
   describe('GET /api/organizations/settings', () => {
     it('should return organization settings', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findUnique.mockResolvedValue({
         ...mockOrganization,
         aiChatEnabled: true,
@@ -593,7 +607,7 @@ describe('Organizations API Tests', () => {
 
   describe('POST /api/organizations/logo', () => {
     it('should upload organization logo', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.update.mockResolvedValue({
         ...mockOrganization,
         logoUrl: 'https://storage.example.com/logos/org-123.png',
@@ -610,7 +624,7 @@ describe('Organizations API Tests', () => {
 
   describe('GET /api/organizations/setup-progress', () => {
     it('should return onboarding progress', async () => {
-      const mockSetupProgress = prisma.organizationSetupProgress as any;
+      const mockSetupProgress = getMockedModel(prisma.organizationSetupProgress);
       mockSetupProgress.findUnique.mockResolvedValue({
         id: 'progress-1',
         organizationId: 'org-123',
@@ -631,8 +645,8 @@ describe('Organizations API Tests', () => {
 
   describe('POST /api/organizations/signup', () => {
     it('should create organization during signup flow', async () => {
-      const mockOrg = prisma.organization as any;
-      const mockTeamMember = prisma.teamMember as any;
+      const mockOrg = getMockedModel(prisma.organization);
+      const mockTeamMember = getMockedModel(prisma.teamMember);
 
       mockOrg.findUnique.mockResolvedValue(null);
       mockOrg.create.mockResolvedValue({
@@ -661,7 +675,7 @@ describe('Organizations API Tests', () => {
 
   describe('Tenant Isolation', () => {
     it('should only access own organization data', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
 
       // User should only be able to access organizations they're a member of
       mockOrg.findFirst.mockResolvedValue(null);
@@ -682,7 +696,7 @@ describe('Organizations API Tests', () => {
     });
 
     it('should verify membership before organization access', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findFirst.mockResolvedValue({
         id: 'member-1',
         tenantId: 'org-123',

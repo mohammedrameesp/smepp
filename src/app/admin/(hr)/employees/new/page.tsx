@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,10 +52,10 @@ interface AuthConfig {
 export default function NewEmployeePage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [nextEmployeeCode, setNextEmployeeCode] = useState<string>('');
+  const [, setNextEmployeeCode] = useState<string>('');
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
   const [authConfig, setAuthConfig] = useState<AuthConfig | null>(null);
-  const [loadingModules, setLoadingModules] = useState(true);
+  const [, setLoadingModules] = useState(true);
 
   // Email availability check state
   const [emailCheckResult, setEmailCheckResult] = useState<EmailCheckResult | null>(null);
@@ -68,7 +68,7 @@ export default function NewEmployeePage() {
     watch,
     setValue,
   } = useForm<CreateUserInput>({
-    resolver: zodResolver(createUserSchema) as any,
+    resolver: zodResolver(createUserSchema) as Resolver<CreateUserInput>,
     defaultValues: {
       name: '',
       email: '',
@@ -153,14 +153,7 @@ export default function NewEmployeePage() {
     fetchOrgSettings();
   }, [setValue]);
 
-  // Generate next employee code when isEmployee is enabled
-  useEffect(() => {
-    if (isEmployee && !nextEmployeeCode) {
-      generateNextEmployeeCode();
-    }
-  }, [isEmployee]);
-
-  const generateNextEmployeeCode = async () => {
+  const generateNextEmployeeCode = useCallback(async () => {
     try {
       const response = await fetch('/api/employees/next-code');
       if (response.ok) {
@@ -171,7 +164,18 @@ export default function NewEmployeePage() {
     } catch (err) {
       console.error('Failed to generate employee code:', err);
     }
-  };
+  }, [setValue]);
+
+  // Use ref to track if we've already generated the code
+  const hasGeneratedCodeRef = useRef(false);
+
+  // Generate next employee code when isEmployee is enabled
+  useEffect(() => {
+    if (isEmployee && !hasGeneratedCodeRef.current) {
+      hasGeneratedCodeRef.current = true;
+      generateNextEmployeeCode();
+    }
+  }, [isEmployee, generateNextEmployeeCode]);
 
   const onSubmit = async (data: CreateUserInput) => {
     setError(null);
@@ -479,7 +483,7 @@ export default function NewEmployeePage() {
                 <Label htmlFor="role">Approval Role</Label>
                 <Select
                   value={watch('role') || ''}
-                  onValueChange={(value) => setValue('role', value as any)}
+                  onValueChange={(value) => setValue('role', value as CreateUserInput['role'])}
                 >
                   <SelectTrigger id="role" className={errors.role ? 'border-red-500' : ''}>
                     <SelectValue placeholder="Select role" />

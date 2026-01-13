@@ -31,7 +31,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { useForm } from 'react-hook-form';
+import { useForm, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createSubscriptionSchema, type CreateSubscriptionRequest } from '@/features/subscriptions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,7 +66,7 @@ export default function NewSubscriptionPage() {
     watch,
     setValue,
   } = useForm<CreateSubscriptionRequest>({
-    resolver: zodResolver(createSubscriptionSchema) as any,
+    resolver: zodResolver(createSubscriptionSchema) as Resolver<CreateSubscriptionRequest>,
     defaultValues: {
       serviceName: '',
       category: undefined,

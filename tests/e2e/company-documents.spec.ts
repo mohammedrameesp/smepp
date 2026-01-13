@@ -277,7 +277,7 @@ test.describe('Company Document Management', () => {
 
       // Look for expiry alerts section or notification
       const bodyText = await page.textContent('body');
-      const hasExpiryAlerts = bodyText?.toLowerCase().includes('expir') ||
+      const _hasExpiryAlerts = bodyText?.toLowerCase().includes('expir') ||
         bodyText?.toLowerCase().includes('document') ||
         bodyText?.toLowerCase().includes('renew');
 

@@ -24,7 +24,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { recordAssetCreation } from '@/features/assets';

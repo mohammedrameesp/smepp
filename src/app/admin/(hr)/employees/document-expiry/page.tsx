@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -36,15 +36,7 @@ export default function DocumentExpiryPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [documentTypeFilter, setDocumentTypeFilter] = useState<string>('all');
 
-  useEffect(() => {
-    fetchExpiryAlerts();
-  }, []);
-
-  useEffect(() => {
-    filterAlerts();
-  }, [alerts, searchTerm, statusFilter, documentTypeFilter]);
-
-  const fetchExpiryAlerts = async () => {
+  const fetchExpiryAlerts = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch('/api/employees/expiry-alerts');
@@ -61,9 +53,9 @@ export default function DocumentExpiryPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const filterAlerts = () => {
+  const filterAlerts = useCallback(() => {
     let filtered = [...alerts];
 
     // Search filter
@@ -87,7 +79,15 @@ export default function DocumentExpiryPage() {
     }
 
     setFilteredAlerts(filtered);
-  };
+  }, [alerts, searchTerm, statusFilter, documentTypeFilter]);
+
+  useEffect(() => {
+    fetchExpiryAlerts();
+  }, [fetchExpiryAlerts]);
+
+  useEffect(() => {
+    filterAlerts();
+  }, [filterAlerts]);
 
   const getDocumentBadge = (type: string) => {
     const colors: Record<string, string> = {

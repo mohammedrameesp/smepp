@@ -10,7 +10,6 @@ import { useRef } from 'react';
 import { Image, Upload, X } from 'lucide-react';
 
 interface LogoStepProps {
-  file: File | null;
   preview: string | null;
   onFileSelect: (file: File | null) => void;
   onPreviewChange: (preview: string | null) => void;
@@ -19,7 +18,6 @@ interface LogoStepProps {
 }
 
 export function LogoStep({
-  file,
   preview,
   onFileSelect,
   onPreviewChange,

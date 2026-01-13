@@ -4,12 +4,11 @@ import { redirect, notFound } from 'next/navigation';
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Building, Calendar, CreditCard, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { ArrowLeft, Building, TrendingUp, TrendingDown, DollarSign, CreditCard } from 'lucide-react';
 import { formatCurrency, getMonthName } from '@/features/payroll/lib/utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
-import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
+import { InfoField } from '@/components/ui/info-field';
 
 interface PageProps {
   params: Promise<{ id: string }>;

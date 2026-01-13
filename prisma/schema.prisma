@@ -1293,6 +1293,9 @@ model SupplierEngagement {
   @@index([tenantId])
 }
 
+// SECURITY NOTE: AppSetting is intentionally NOT tenant-scoped
+// This is for platform-wide settings managed by super admins only
+// For tenant-specific settings, use SystemSettings model instead
 model AppSetting {
   key       String   @id
   value     String

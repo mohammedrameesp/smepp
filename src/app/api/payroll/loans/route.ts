@@ -5,7 +5,6 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { LoanStatus } from '@prisma/client';
-import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { createLoanSchema, loanQuerySchema } from '@/features/payroll/validations/payroll';
 import { logAction, ActivityActions } from '@/lib/core/activity';

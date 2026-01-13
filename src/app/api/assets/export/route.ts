@@ -33,7 +33,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { arrayToCSV } from '@/lib/core/csv-utils';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -96,7 +95,7 @@ async function exportAssetsHandler(_request: NextRequest, context: APIContext) {
   const csvBuffer = await arrayToCSV(csvData, ASSET_EXPORT_COLUMNS);
   const filename = getExportFilename();
 
-  return new NextResponse(csvBuffer as any, {
+  return new NextResponse(new Uint8Array(csvBuffer), {
     status: 200,
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

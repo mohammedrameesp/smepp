@@ -21,7 +21,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 import { AssetRequestStatus } from '@prisma/client';
@@ -47,11 +46,6 @@ import {
   FileText,
   Clock,
   AlertTriangle,
-  Wrench,
-  Tag,
-  Building2,
-  CheckCircle,
-  XCircle,
   TrendingUp,
   TrendingDown,
   Trash2,

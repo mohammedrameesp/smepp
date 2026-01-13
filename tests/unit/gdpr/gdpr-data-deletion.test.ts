@@ -85,8 +85,8 @@ describe('GDPR Data Deletion', () => {
       const newest = new Date('2024-06-20');
 
       mockPrismaConversation.findFirst
-        .mockResolvedValueOnce({ createdAt: oldest })
-        .mockResolvedValueOnce({ createdAt: newest });
+        .mockResolvedValueOnce({ id: 'conv-1', tenantId: 'tenant-456', memberId: 'user-123', createdAt: oldest, updatedAt: oldest, expiresAt: null, title: null })
+        .mockResolvedValueOnce({ id: 'conv-2', tenantId: 'tenant-456', memberId: 'user-123', createdAt: newest, updatedAt: newest, expiresAt: null, title: null });
 
       const oldestConv = await mockPrismaConversation.findFirst({
         orderBy: { createdAt: 'asc' },
@@ -248,8 +248,8 @@ describe('GDPR Data Deletion', () => {
     it('should prevent cross-user data deletion', () => {
       const requestingUserId = 'user-123';
       const dataOwnerId = 'user-456';
-      const canDelete = requestingUserId === dataOwnerId;
-      expect(canDelete).toBe(false);
+      // Different users should not be able to delete each other's data
+      expect(requestingUserId).not.toBe(dataOwnerId);
     });
 
     it('should scope deletion to current tenant', () => {
@@ -367,7 +367,7 @@ describe('GDPR Data Deletion', () => {
         await mockPrismaConversation.deleteMany({
           where: { memberId: 'user-123' },
         });
-      } catch (error) {
+      } catch {
         errorOccurred = true;
       }
 
@@ -425,24 +425,24 @@ describe('Data Export for GDPR', () => {
     ];
 
     it('should export user data', () => {
-      const module = exportableModules.find(m => m.key === 'users');
-      expect(module).toBeDefined();
-      expect(module?.title).toBe('Users');
+      const exportItem = exportableModules.find(m => m.key === 'users');
+      expect(exportItem).toBeDefined();
+      expect(exportItem?.title).toBe('Users');
     });
 
     it('should export asset data', () => {
-      const module = exportableModules.find(m => m.key === 'assets');
-      expect(module).toBeDefined();
+      const exportItem = exportableModules.find(m => m.key === 'assets');
+      expect(exportItem).toBeDefined();
     });
 
     it('should export subscription data', () => {
-      const module = exportableModules.find(m => m.key === 'subscriptions');
-      expect(module).toBeDefined();
+      const exportItem = exportableModules.find(m => m.key === 'subscriptions');
+      expect(exportItem).toBeDefined();
     });
 
     it('should export supplier data', () => {
-      const module = exportableModules.find(m => m.key === 'suppliers');
-      expect(module).toBeDefined();
+      const exportItem = exportableModules.find(m => m.key === 'suppliers');
+      expect(exportItem).toBeDefined();
     });
 
     it('should support full backup export', () => {

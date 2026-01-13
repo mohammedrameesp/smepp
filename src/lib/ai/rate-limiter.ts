@@ -168,7 +168,7 @@ async function checkHourlyRequestLimit(
  */
 export async function checkReadRateLimit(
   memberId: string,
-  tenantId: string
+  _tenantId: string
 ): Promise<RateLimitResult> {
   const hourStart = getStartOfHour();
   const hourEnd = new Date(hourStart.getTime() + 60 * 60 * 1000);

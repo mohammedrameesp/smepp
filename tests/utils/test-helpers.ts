@@ -16,7 +16,7 @@ export const createMockSession = (role: Role = Role.ADMIN, userId: string = 'tes
   };
 };
 
-export const createMockAsset = (overrides: any = {}) => {
+export const createMockAsset = (overrides: Record<string, unknown> = {}) => {
   return {
     id: 'asset-test-123',
     assetTag: 'AST-TEST-001',
@@ -35,7 +35,7 @@ export const createMockAsset = (overrides: any = {}) => {
   };
 };
 
-export const createMockSubscription = (overrides: any = {}) => {
+export const createMockSubscription = (overrides: Record<string, unknown> = {}) => {
   return {
     id: 'sub-test-123',
     name: 'Adobe Creative Cloud',
@@ -54,7 +54,7 @@ export const createMockSubscription = (overrides: any = {}) => {
   };
 };
 
-export const createMockUser = (overrides: any = {}) => {
+export const createMockUser = (overrides: Record<string, unknown> = {}) => {
   return {
     id: 'user-test-123',
     name: 'Test User',
@@ -72,7 +72,7 @@ export const createMockUser = (overrides: any = {}) => {
 export const createMockRequest = (options: {
   method?: string;
   url?: string;
-  body?: any;
+  body?: unknown;
   headers?: Record<string, string>;
   ip?: string;
 } = {}) => {
@@ -102,9 +102,9 @@ export const createMockRequest = (options: {
 
 export const createMockResponse = () => {
   return {
-    json: jest.fn((data: any) => Promise.resolve(data)),
+    json: jest.fn((data: unknown) => Promise.resolve(data)),
     status: jest.fn((code: number) => ({
-      json: jest.fn((data: any) => Promise.resolve({ status: code, data })),
+      json: jest.fn((data: unknown) => Promise.resolve({ status: code, data })),
     })),
   };
 };
@@ -131,7 +131,7 @@ export const testForbiddenAccess = async (
 };
 
 // Data validation helpers
-export const validateRequiredFields = (data: any, requiredFields: string[]): boolean => {
+export const validateRequiredFields = (data: Record<string, unknown>, requiredFields: string[]): boolean => {
   return requiredFields.every(field => field in data && data[field] !== null && data[field] !== undefined);
 };
 

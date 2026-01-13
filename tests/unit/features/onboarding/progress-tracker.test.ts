@@ -124,7 +124,7 @@ describe('Setup Progress Tracker', () => {
         name: 'Test Company',
         logoUrl: 'https://example.com/logo.png',
         primaryColor: '#FF0000',
-      });
+      } as unknown as never);
       mockAsset.count.mockResolvedValue(5);
       mockTeamMember.count.mockResolvedValue(3);
       mockSetupProgress.findUnique.mockResolvedValue(null);
@@ -136,6 +136,8 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: true,
         firstAssetAdded: true,
         firstTeamMemberInvited: true,
+        firstEmployeeAdded: true,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -152,7 +154,7 @@ describe('Setup Progress Tracker', () => {
         name: 'AB', // Too short (< 3 chars)
         logoUrl: null,
         primaryColor: null,
-      });
+      } as unknown as never);
       mockAsset.count.mockResolvedValue(0);
       mockTeamMember.count.mockResolvedValue(1);
       mockSetupProgress.findUnique.mockResolvedValue(null);
@@ -164,11 +166,13 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: false,
         firstAssetAdded: false,
         firstTeamMemberInvited: false,
+        firstEmployeeAdded: false,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
 
-      const result = await getSetupProgress(tenantId);
+      const _result = await getSetupProgress(tenantId);
 
       // Verify upsert was called with profileComplete = false
       expect(mockSetupProgress.upsert).toHaveBeenCalledWith(
@@ -183,7 +187,7 @@ describe('Setup Progress Tracker', () => {
         name: 'Test Company',
         logoUrl: null,
         primaryColor: null,
-      });
+      } as unknown as never);
       mockAsset.count.mockResolvedValue(0);
       mockTeamMember.count.mockResolvedValue(1); // Only owner
       mockSetupProgress.findUnique.mockResolvedValue(null);
@@ -195,6 +199,8 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: false,
         firstAssetAdded: false,
         firstTeamMemberInvited: false,
+        firstEmployeeAdded: false,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -219,6 +225,8 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: false,
         firstAssetAdded: false, // Outdated
         firstTeamMemberInvited: false,
+        firstEmployeeAdded: false,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -227,14 +235,14 @@ describe('Setup Progress Tracker', () => {
         name: 'Test Company',
         logoUrl: null,
         primaryColor: null,
-      });
+      } as unknown as never);
       mockAsset.count.mockResolvedValue(1); // Now has 1 asset
       mockTeamMember.count.mockResolvedValue(1);
       mockSetupProgress.findUnique.mockResolvedValue(existingProgress);
       mockSetupProgress.upsert.mockResolvedValue({
         ...existingProgress,
         firstAssetAdded: true, // Updated
-      });
+      } as unknown as never);
 
       await getSetupProgress(tenantId);
 
@@ -257,6 +265,8 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: false,
         firstAssetAdded: false,
         firstTeamMemberInvited: false,
+        firstEmployeeAdded: false,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -277,7 +287,7 @@ describe('Setup Progress Tracker', () => {
     });
 
     it('should default value to true', async () => {
-      mockSetupProgress.upsert.mockResolvedValue({} as any);
+      mockSetupProgress.upsert.mockResolvedValue({} as unknown as never);
 
       await updateSetupProgress(tenantId, 'logoUploaded');
 
@@ -289,7 +299,7 @@ describe('Setup Progress Tracker', () => {
     });
 
     it('should allow setting field to false', async () => {
-      mockSetupProgress.upsert.mockResolvedValue({} as any);
+      mockSetupProgress.upsert.mockResolvedValue({} as unknown as never);
 
       await updateSetupProgress(tenantId, 'brandingConfigured', false);
 
@@ -307,7 +317,7 @@ describe('Setup Progress Tracker', () => {
 
   describe('updateSetupProgressBulk', () => {
     it('should upsert multiple fields at once', async () => {
-      mockSetupProgress.upsert.mockResolvedValue({} as any);
+      mockSetupProgress.upsert.mockResolvedValue({} as unknown as never);
 
       const updates: Partial<Record<SetupProgressField, boolean>> = {
         profileComplete: true,
@@ -335,7 +345,7 @@ describe('Setup Progress Tracker', () => {
         name: 'Complete Company',
         logoUrl: 'logo.png',
         primaryColor: '#FF0000',
-      });
+      } as unknown as never);
       mockAsset.count.mockResolvedValue(10);
       mockTeamMember.count.mockResolvedValue(5);
       mockSetupProgress.findUnique.mockResolvedValue({
@@ -346,6 +356,8 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: true,
         firstAssetAdded: true,
         firstTeamMemberInvited: true,
+        firstEmployeeAdded: true,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -359,7 +371,7 @@ describe('Setup Progress Tracker', () => {
         name: 'Partial Company',
         logoUrl: null, // No logo
         primaryColor: '#FF0000',
-      });
+      } as unknown as never);
       mockAsset.count.mockResolvedValue(10);
       mockTeamMember.count.mockResolvedValue(5);
       mockSetupProgress.findUnique.mockResolvedValue({
@@ -370,6 +382,8 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: true,
         firstAssetAdded: true,
         firstTeamMemberInvited: true,
+        firstEmployeeAdded: true,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -393,6 +407,8 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: false,
         firstAssetAdded: false,
         firstTeamMemberInvited: false,
+        firstEmployeeAdded: false,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -407,7 +423,7 @@ describe('Setup Progress Tracker', () => {
     });
 
     it('should create with initial values', async () => {
-      mockSetupProgress.create.mockResolvedValue({} as any);
+      mockSetupProgress.create.mockResolvedValue({} as unknown as never);
 
       await initializeSetupProgress(tenantId, {
         profileComplete: true,
@@ -451,6 +467,8 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: false,
         firstAssetAdded: false,
         firstTeamMemberInvited: true,
+        firstEmployeeAdded: false,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -472,6 +490,8 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: true,
         firstAssetAdded: true,
         firstTeamMemberInvited: true,
+        firstEmployeeAdded: true,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -492,7 +512,7 @@ describe('Setup Progress Tracker', () => {
         name: 'AB', // Too short
         logoUrl: null,
         primaryColor: null,
-      });
+      } as unknown as never);
       mockAsset.count.mockResolvedValue(0);
       mockTeamMember.count.mockResolvedValue(1);
       mockSetupProgress.findUnique.mockResolvedValue(null);
@@ -504,6 +524,8 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: false,
         firstAssetAdded: false,
         firstTeamMemberInvited: false,
+        firstEmployeeAdded: false,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -519,7 +541,7 @@ describe('Setup Progress Tracker', () => {
         name: 'Test Company',
         logoUrl: null,
         primaryColor: null,
-      });
+      } as unknown as never);
       mockAsset.count.mockResolvedValue(0);
       mockTeamMember.count.mockResolvedValue(1);
       mockSetupProgress.findUnique.mockResolvedValue(null);
@@ -531,6 +553,8 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: false,
         firstAssetAdded: false,
         firstTeamMemberInvited: false,
+        firstEmployeeAdded: false,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -546,7 +570,7 @@ describe('Setup Progress Tracker', () => {
         name: 'Test Company',
         logoUrl: 'logo.png',
         primaryColor: '#FF0000',
-      });
+      } as unknown as never);
       mockAsset.count.mockResolvedValue(0);
       mockTeamMember.count.mockResolvedValue(1);
       mockSetupProgress.findUnique.mockResolvedValue(null);
@@ -558,6 +582,8 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: true,
         firstAssetAdded: false,
         firstTeamMemberInvited: false,
+        firstEmployeeAdded: false,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -573,7 +599,7 @@ describe('Setup Progress Tracker', () => {
         name: 'Complete Company',
         logoUrl: 'logo.png',
         primaryColor: '#FF0000',
-      });
+      } as unknown as never);
       mockAsset.count.mockResolvedValue(5);
       mockTeamMember.count.mockResolvedValue(3);
       mockSetupProgress.findUnique.mockResolvedValue({
@@ -584,6 +610,8 @@ describe('Setup Progress Tracker', () => {
         brandingConfigured: true,
         firstAssetAdded: true,
         firstTeamMemberInvited: true,
+        firstEmployeeAdded: true,
+        isDismissed: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       });

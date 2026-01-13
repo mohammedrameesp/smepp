@@ -42,7 +42,6 @@ import {
   getLeaveStatusVariant,
   getLeaveStatusText,
 } from '@/features/leave/lib/leave-utils';
-import { LeaveRequestType, LeaveStatus } from '@prisma/client';
 
 describe('Leave Utilities', () => {
   // ═══════════════════════════════════════════════════════════════════════════════

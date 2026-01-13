@@ -6,7 +6,7 @@
  * - POST: Message delivery status & button click callbacks
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createHmac } from 'crypto';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 async function processButtonClick(
   senderPhone: string,
   tokenPayload: string,
-  phoneNumberId: string
+  _phoneNumberId: string
 ): Promise<void> {
   // Validate and consume the action token
   const result = await validateAndConsumeToken(tokenPayload);

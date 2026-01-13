@@ -3,6 +3,8 @@ export { ExportUserPDFButton } from './export-user-pdf-button';
 export { RestoreUserButton } from './restore-user-button';
 export { UserActions } from './user-actions';
 export { UserAssetHistory } from './user-asset-history';
+export type { UserAssetHistoryItem, UserAssetAssignmentPeriod } from './user-asset-history';
 export { UserDetailActions } from './user-detail-actions';
 export { UserListClient } from './user-list-client';
 export { UserSubscriptionHistory } from './user-subscription-history';
+export type { UserSubscriptionHistoryItem, UserSubscriptionActivePeriod } from './user-subscription-history';

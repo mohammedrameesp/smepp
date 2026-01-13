@@ -289,7 +289,7 @@ describe('Organization Configuration Tabs', () => {
         : [...currentCurrencies, code];
     }
 
-    const AVAILABLE_CURRENCIES = ['USD', 'EUR', 'GBP', 'SAR', 'AED', 'KWD'];
+    const _AVAILABLE_CURRENCIES = ['USD', 'EUR', 'GBP', 'SAR', 'AED', 'KWD'];
 
     it('should add currency when not present', () => {
       const current = ['USD', 'EUR'];

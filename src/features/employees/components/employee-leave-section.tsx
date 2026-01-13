@@ -20,7 +20,7 @@ import {
 import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { formatDate } from '@/lib/core/datetime';
-import { calculateRemainingBalance, getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
+import { getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
 
 interface LeaveBalance {
   id: string;

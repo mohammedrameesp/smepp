@@ -91,7 +91,7 @@ interface EmployeeProfileViewOnlyProps {
   workEmail: string;
 }
 
-function InfoRow({ label, value, masked = false }: { label: string; value: React.ReactNode; masked?: boolean }) {
+function InfoRow({ label, value }: { label: string; value: React.ReactNode; masked?: boolean }) {
   return (
     <div className="py-2">
       <dt className="text-sm font-medium text-gray-500">{label}</dt>

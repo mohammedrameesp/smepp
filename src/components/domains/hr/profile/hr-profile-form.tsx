@@ -105,6 +105,7 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
   });
 
   const form = useForm<HRProfileInput>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(hrProfileSchema) as any,
     mode: 'onChange',
     defaultValues: {
@@ -259,6 +260,7 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
   );
 
   return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
       {/* Section 1: Personal Information */}
       <SectionCard

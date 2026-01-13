@@ -539,7 +539,7 @@ export async function GET() {
     const excelBuffer = await arrayToCSV([], [], sheets);
     const filename = `full_backup_${new Date().toISOString().split('T')[0]}.xlsx`;
 
-    return new NextResponse(excelBuffer as any, {
+    return new NextResponse(new Uint8Array(excelBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

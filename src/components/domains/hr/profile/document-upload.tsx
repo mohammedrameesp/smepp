@@ -245,7 +245,7 @@ export function CompactDocumentUpload({
       const data = await response.json();
       onChange(data.url);
       toast.success('Uploaded');
-    } catch (error) {
+    } catch {
       toast.error('Upload failed');
     } finally {
       setIsUploading(false);

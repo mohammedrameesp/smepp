@@ -21,7 +21,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -89,7 +89,7 @@ export default function EditAssetPage() {
   const [depreciationCategories, setDepreciationCategories] = useState<DepreciationCategory[]>([]);
   const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(DEFAULT_RATES_TO_QAR);
-  const [selectedCategoryCode, setSelectedCategoryCode] = useState<string | null>(null);
+  const [, setSelectedCategoryCode] = useState<string | null>(null);
   const [suggestedTag, setSuggestedTag] = useState<string>('');
   const [isTagManuallyEdited, setIsTagManuallyEdited] = useState(false);
   const [hasMultipleLocations, setHasMultipleLocations] = useState(false);
@@ -154,6 +154,60 @@ export default function EditAssetPage() {
   // Disposal dialog state
   const [showDisposeDialog, setShowDisposeDialog] = useState(false);
 
+  const fetchAsset = useCallback(async (id: string) => {
+    try {
+      const response = await fetch(`/api/assets/${id}`);
+      if (response.ok) {
+        let assetData;
+        try {
+          assetData = await response.json();
+        } catch {
+          toast.error('Failed to load asset data', { duration: 10000 });
+          router.push('/admin/assets');
+          return;
+        }
+        setAsset(assetData);
+        reset({
+          assetTag: assetData.assetTag || '',
+          type: assetData.type || '',
+          categoryId: assetData.categoryId || '',
+          brand: assetData.brand || '',
+          model: assetData.model || '',
+          serial: assetData.serial || '',
+          configuration: assetData.configuration || '',
+          purchaseDate: toInputDateString(assetData.purchaseDate),
+          warrantyExpiry: toInputDateString(assetData.warrantyExpiry),
+          supplier: assetData.supplier || '',
+          invoiceNumber: assetData.invoiceNumber || '',
+          price: assetData.price || null,
+          priceCurrency: assetData.priceCurrency || 'QAR',
+          priceQAR: assetData.priceQAR || null,
+          status: (assetData.status || AssetStatus.IN_USE) as AssetStatus,
+          assignedMemberId: assetData.assignedMemberId || '',
+          assignmentDate: toInputDateString(assetData.assignmentDate),
+          statusChangeDate: '',
+          notes: assetData.notes || '',
+          locationId: assetData.locationId || '',
+          isShared: assetData.isShared || false,
+          depreciationCategoryId: assetData.depreciationCategoryId || '',
+        });
+        // If asset has a tag, mark as manually edited so we don't auto-generate
+        if (assetData.assetTag) {
+          setIsTagManuallyEdited(true);
+          setSuggestedTag(assetData.assetTag);
+        }
+        // Fetch maintenance records
+        fetchMaintenanceRecords(id);
+      } else {
+        toast.error('Asset not found', { duration: 10000 });
+        router.push('/admin/assets');
+      }
+    } catch (error) {
+      console.error('Error fetching asset:', error);
+      toast.error('Error loading asset', { duration: 10000 });
+    }
+  }, [router, reset]);
+
   useEffect(() => {
     if (params?.id) {
       fetchAsset(params.id as string);
@@ -161,7 +215,7 @@ export default function EditAssetPage() {
     fetchUsers();
     fetchDepreciationCategories();
     fetchOrgSettings();
-  }, [params?.id]);
+  }, [params?.id, fetchAsset]);
 
   // Fetch org settings to get available currencies, exchange rates, and location settings
   const fetchOrgSettings = async () => {
@@ -296,60 +350,6 @@ export default function EditAssetPage() {
       }
     } catch (error) {
       console.error('Error fetching depreciation categories:', error);
-    }
-  };
-
-  const fetchAsset = async (id: string) => {
-    try {
-      const response = await fetch(`/api/assets/${id}`);
-      if (response.ok) {
-        let assetData;
-        try {
-          assetData = await response.json();
-        } catch {
-          toast.error('Failed to load asset data', { duration: 10000 });
-          router.push('/admin/assets');
-          return;
-        }
-        setAsset(assetData);
-        reset({
-          assetTag: assetData.assetTag || '',
-          type: assetData.type || '',
-          categoryId: assetData.categoryId || '',
-          brand: assetData.brand || '',
-          model: assetData.model || '',
-          serial: assetData.serial || '',
-          configuration: assetData.configuration || '',
-          purchaseDate: toInputDateString(assetData.purchaseDate),
-          warrantyExpiry: toInputDateString(assetData.warrantyExpiry),
-          supplier: assetData.supplier || '',
-          invoiceNumber: assetData.invoiceNumber || '',
-          price: assetData.price || null,
-          priceCurrency: assetData.priceCurrency || 'QAR',
-          priceQAR: assetData.priceQAR || null,
-          status: (assetData.status || AssetStatus.IN_USE) as AssetStatus,
-          assignedMemberId: assetData.assignedMemberId || '',
-          assignmentDate: toInputDateString(assetData.assignmentDate),
-          statusChangeDate: '',
-          notes: assetData.notes || '',
-          locationId: assetData.locationId || '',
-          isShared: assetData.isShared || false,
-          depreciationCategoryId: assetData.depreciationCategoryId || '',
-        });
-        // If asset has a tag, mark as manually edited so we don't auto-generate
-        if (assetData.assetTag) {
-          setIsTagManuallyEdited(true);
-          setSuggestedTag(assetData.assetTag);
-        }
-        // Fetch maintenance records
-        fetchMaintenanceRecords(id);
-      } else {
-        toast.error('Asset not found', { duration: 10000 });
-        router.push('/admin/assets');
-      }
-    } catch (error) {
-      console.error('Error fetching asset:', error);
-      toast.error('Error loading asset', { duration: 10000 });
     }
   };
 
@@ -1026,7 +1026,7 @@ export default function EditAssetPage() {
                 ) : (
                   !showMaintenanceForm && (
                     <p className="text-sm text-gray-500 text-center py-4">
-                      No maintenance records yet. Click "+ Add Maintenance" to add one.
+                      No maintenance records yet. Click &ldquo;+ Add Maintenance&rdquo; to add one.
                     </p>
                   )
                 )}

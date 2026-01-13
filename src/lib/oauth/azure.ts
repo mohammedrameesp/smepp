@@ -5,7 +5,7 @@
  * @module oauth
  */
 
-import { getBaseUrl, validateEmailDomain } from './utils';
+import { getBaseUrl } from './utils';
 import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════

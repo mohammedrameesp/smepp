@@ -69,8 +69,6 @@ function formatSCRRecord(header: WPSFileHeader): string {
  * Format Salary Detail Record (Employee)
  */
 function formatSDRRecord(record: WPSEmployeeRecord, header: WPSFileHeader): string {
-  const totalEarnings = record.basicSalary + record.housingAllowance + record.otherAllowances;
-
   const fields = [
     'SDR', // Record Type (3 chars)
     padRight(record.qidNumber, 11), // Employee QID

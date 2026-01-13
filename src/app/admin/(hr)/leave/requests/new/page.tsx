@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, User } from 'lucide-react';
-import Link from 'next/link';
+import { Loader2, User } from 'lucide-react';
 import { LeaveRequestForm } from '@/features/leave/components';
 import { getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
@@ -59,7 +57,7 @@ export default function AdminNewLeavePage() {
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingBalances, setLoadingBalances] = useState(false);
-  const [dateOfJoining, setDateOfJoining] = useState<Date | null>(null);
+  const [, setDateOfJoining] = useState<Date | null>(null);
 
   // Fetch employees and leave types on mount
   useEffect(() => {

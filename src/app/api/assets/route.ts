@@ -42,7 +42,7 @@ import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 /**
  * Filter parameters for asset list queries
  */
-interface AssetFilters {
+interface _AssetFilters {
   /** Filter by asset status (AVAILABLE, IN_USE, MAINTENANCE, etc.) */
   status?: AssetStatus;
   /** Exclude assets with this status (e.g., DISPOSED for active-only view) */

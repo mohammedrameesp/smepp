@@ -55,7 +55,7 @@ export default function NewDelegationPage() {
         }
         const data = await response.json();
         setUsers(data.users || data);
-      } catch (error) {
+      } catch {
         toast.error('Failed to load users');
       } finally {
         setIsLoading(false);

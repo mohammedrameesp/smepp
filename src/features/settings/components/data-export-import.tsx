@@ -123,7 +123,7 @@ export function DataExportImport() {
       if (data.results) {
         description = `Created: ${data.results.success || 0}, Updated: ${data.results.updated || 0}, Skipped: ${data.results.skipped || 0}, Failed: ${data.results.failed || 0}`;
       } else if (data.imported) {
-        const totalRecords = Object.values(data.imported).reduce((sum: number, val: any) => sum + (Number(val) || 0), 0);
+        const totalRecords = Object.values(data.imported).reduce((sum: number, val: unknown) => sum + (Number(val) || 0), 0);
         description = `Total records imported: ${totalRecords}`;
       }
 

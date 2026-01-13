@@ -1,7 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { prisma } from '@/lib/core/prisma';
 import { ClipboardList, AlertTriangle, Calendar } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';

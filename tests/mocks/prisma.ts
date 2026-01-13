@@ -147,7 +147,7 @@ export const mockPrisma = {
   taskHistory: createModelMock(),
 
   // Transaction and connection methods
-  $transaction: jest.fn((callback: any) => callback(mockPrisma)),
+  $transaction: jest.fn((callback: (prisma: typeof mockPrisma) => unknown) => callback(mockPrisma)),
   $connect: jest.fn(),
   $disconnect: jest.fn(),
   $extends: jest.fn().mockReturnThis(),

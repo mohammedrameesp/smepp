@@ -510,10 +510,10 @@ describe('API Handler Wrapper', () => {
           return NextResponse.json({ success: true });
         }
       );
-      const contextWithoutParams = { params: Promise.resolve({}) };
+      const _contextWithoutParams = { params: Promise.resolve({}) };
 
       const wrappedHandler = withErrorHandler(handler);
-      await wrappedHandler(mockRequest, { params: undefined as any });
+      await wrappedHandler(mockRequest, { params: undefined as unknown as Promise<Record<string, string>> });
 
       expect(handler).toHaveBeenCalled();
     });

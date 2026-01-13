@@ -56,8 +56,8 @@ export function getModuleContent(category: string, module: string): HelpModule |
 export function getAllModuleContent(): HelpModule[] {
   const allContent: HelpModule[] = [];
   for (const category of Object.values(contentRegistry)) {
-    for (const module of Object.values(category)) {
-      allContent.push(module);
+    for (const moduleItem of Object.values(category)) {
+      allContent.push(moduleItem);
     }
   }
   return allContent;

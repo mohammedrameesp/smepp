@@ -1,7 +1,6 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
@@ -10,14 +9,12 @@ import {
   Laptop,
   Clock,
   AlertTriangle,
-  Bell,
 } from 'lucide-react';
 import { getMemberSubscriptionHistory, getNextRenewalDate, getDaysUntilRenewal } from '@/features/subscriptions';
 import { getMemberAssetHistory } from '@/features/assets';
 import { getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
 import { format } from 'date-fns';
 import {
-  StatCard,
   AlertBanner,
   AssetAssignmentAlert,
   CelebrationsCard,
@@ -185,11 +182,11 @@ export default async function EmployeeDashboard() {
     ]);
 
     // Calculate stats
-    const activeAssets = assetHistory.filter((a: any) => a.isCurrentlyAssigned);
-    const activeSubscriptions = subscriptionHistory.filter((s: any) => s.status === 'ACTIVE');
-    const pendingPurchaseRequests = purchaseRequests.filter((pr: any) => pr.status === 'PENDING');
-    const pendingLeaveRequests = leaveRequests.filter((lr: any) => lr.status === 'PENDING');
-    const pendingAssetRequests = assetRequests.filter((ar: any) => ar.status === 'PENDING');
+    const activeAssets = assetHistory.filter((a) => a && a.isCurrentlyAssigned);
+    const activeSubscriptions = subscriptionHistory.filter((s) => s.status === 'ACTIVE');
+    const pendingPurchaseRequests = purchaseRequests.filter((pr) => pr.status === 'PENDING');
+    const pendingLeaveRequests = leaveRequests.filter((lr) => lr.status === 'PENDING');
+    const pendingAssetRequests = assetRequests.filter((ar) => ar.status === 'PENDING_ADMIN_APPROVAL');
     const approvedLeaveRequests = leaveRequests.filter((lr) => lr.status === 'APPROVED');
 
     const totalPendingRequests = pendingPurchaseRequests.length + pendingLeaveRequests.length + pendingAssetRequests.length;
@@ -214,9 +211,17 @@ export default async function EmployeeDashboard() {
     const today = new Date();
     const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
 
+    interface CelebrationItem {
+      id: string;
+      name: string;
+      type: 'birthday' | 'anniversary';
+      date: Date;
+      years?: number;
+    }
+
     const processedCelebrations = celebrations
-      .map((member: any) => {
-        const results: any[] = [];
+      .map((member) => {
+        const results: CelebrationItem[] = [];
 
         // Check birthday
         if (member.dateOfBirth) {
@@ -253,8 +258,8 @@ export default async function EmployeeDashboard() {
         return results;
       })
       .flat()
-      .filter((c: any) => c.name !== session.user.name) // Exclude self
-      .sort((a: any, b: any) => a.date.getTime() - b.date.getTime());
+      .filter((c) => c.name !== session.user.name) // Exclude self
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
 
     // Document alerts
     const documentAlerts: { type: string; expiry: Date; daysLeft: number }[] = [];
@@ -275,7 +280,7 @@ export default async function EmployeeDashboard() {
 
     // Upcoming renewals
     const upcomingRenewals = activeSubscriptions
-      .map((sub: any) => {
+      .map((sub) => {
         if (!sub.currentPeriod?.renewalDate) return null;
         const nextRenewal = getNextRenewalDate(sub.currentPeriod.renewalDate, sub.billingCycle);
         const daysUntil = getDaysUntilRenewal(nextRenewal);
@@ -286,7 +291,7 @@ export default async function EmployeeDashboard() {
 
     // Transform data for components
     const unifiedRequests = [
-      ...purchaseRequests.slice(0, 3).map((pr: any) => ({
+      ...purchaseRequests.slice(0, 3).map((pr) => ({
         id: pr.id,
         type: 'purchase' as const,
         title: pr.title,
@@ -295,7 +300,7 @@ export default async function EmployeeDashboard() {
         subtitle: `${pr._count.items} item(s)`,
         createdAt: pr.createdAt,
       })),
-      ...leaveRequests.slice(0, 3).map((lr: any) => ({
+      ...leaveRequests.slice(0, 3).map((lr) => ({
         id: lr.id,
         type: 'leave' as const,
         title: lr.leaveType.name,
@@ -305,7 +310,7 @@ export default async function EmployeeDashboard() {
         createdAt: lr.createdAt,
         color: lr.leaveType.color,
       })),
-      ...assetRequests.slice(0, 2).map((ar: any) => ({
+      ...assetRequests.slice(0, 2).map((ar) => ({
         id: ar.id,
         type: 'asset' as const,
         title: ar.asset?.model || 'Asset Request',
@@ -337,10 +342,10 @@ export default async function EmployeeDashboard() {
         };
       });
 
-    const assetsData = activeAssets.map((a: any) => ({
+    const assetsData = activeAssets.filter((a): a is NonNullable<typeof a> => a !== null).map((a) => ({
       id: a.id,
       name: a.model,
-      code: a.assetTag,
+      code: a.assetTag || '',
       type: a.type,
     }));
 
@@ -357,12 +362,12 @@ export default async function EmployeeDashboard() {
           subtitle: `${Number(lr.totalDays)} days`,
           color: lr.leaveType.color,
         })),
-      ...upcomingRenewals.slice(0, 2).map((sub: any) => ({
+      ...upcomingRenewals.filter((sub): sub is NonNullable<typeof sub> => sub !== null && sub.nextRenewalDate !== null).slice(0, 2).map((sub) => ({
         id: sub.id,
         type: 'renewal' as const,
         title: sub.serviceName,
-        date: sub.nextRenewalDate,
-        subtitle: sub.costPerPeriod ? `QAR ${sub.costPerPeriod}/${sub.billingCycle?.toLowerCase()}` : undefined,
+        date: sub.nextRenewalDate!,
+        subtitle: sub.costPerCycle ? `QAR ${sub.costPerCycle}/${sub.billingCycle?.toLowerCase()}` : undefined,
       })),
     ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 

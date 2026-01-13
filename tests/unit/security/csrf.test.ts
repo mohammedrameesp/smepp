@@ -3,6 +3,8 @@
  * @description Tests for CSRF protection logic
  */
 
+import crypto from 'crypto';
+
 describe('CSRF Protection Tests', () => {
   const originalNodeEnv = process.env.NODE_ENV;
 
@@ -35,8 +37,6 @@ describe('CSRF Protection Tests', () => {
   });
 
   describe('signCSRFToken logic', () => {
-    const crypto = require('crypto');
-
     it('should return token with signature appended', () => {
       const token = 'test-token';
       const hmac = crypto.createHmac('sha256', 'test-secret');
@@ -50,25 +50,22 @@ describe('CSRF Protection Tests', () => {
     });
 
     it('should use HMAC-SHA256 for signing', () => {
-      const token = 'test-token';
       const hmac = crypto.createHmac('sha256', 'test-secret');
+      hmac.update('test-token');
 
       expect(hmac).toBeDefined();
     });
   });
 
   describe('verifyCSRFToken logic', () => {
-    const crypto = require('crypto');
-
     it('should return true for valid signed token', () => {
       const token = 'test-token';
       const secret = 'test-secret';
       const hmac = crypto.createHmac('sha256', secret);
       hmac.update(token);
       const signature = hmac.digest('hex');
-      const signedToken = `${token}.${signature}`;
 
-      // Verify by recreating signature
+      // Verify by recreating signature (simulates token.signature format verification)
       const verifyHmac = crypto.createHmac('sha256', secret);
       verifyHmac.update(token);
       const expectedSignature = verifyHmac.digest('hex');
@@ -95,9 +92,8 @@ describe('CSRF Protection Tests', () => {
     it('should return false for invalid signature', () => {
       const token = 'test-token';
       const invalidSignature = 'wrong-signature';
-      const signedToken = `${token}.${invalidSignature}`;
+      // A token with format `${token}.${invalidSignature}` should fail verification
 
-      const crypto = require('crypto');
       const hmac = crypto.createHmac('sha256', 'test-secret');
       hmac.update(token);
       const expectedSignature = hmac.digest('hex');

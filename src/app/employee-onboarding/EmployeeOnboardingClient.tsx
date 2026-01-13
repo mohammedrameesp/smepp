@@ -396,7 +396,7 @@ export function EmployeeOnboardingClient() {
             Onboarding Already Complete
           </h3>
           <p className="text-slate-600 mb-6">
-            You've already completed your employee onboarding.
+            You&apos;ve already completed your employee onboarding.
           </p>
           <Button
             onClick={() => router.push('/employee')}

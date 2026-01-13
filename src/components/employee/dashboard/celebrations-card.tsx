@@ -1,4 +1,3 @@
-import { Cake, Award } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 
 interface Celebration {

@@ -488,8 +488,9 @@ describe('HR Profile Validation', () => {
       });
       expect(result.success).toBe(true);
       if (result.success) {
-        expect((result.data as any).extraField).toBe('value');
-        expect((result.data as any).anotherField).toBe(123);
+        const data = result.data as unknown as { extraField: string; anotherField: number };
+        expect(data.extraField).toBe('value');
+        expect(data.anotherField).toBe(123);
       }
     });
   });

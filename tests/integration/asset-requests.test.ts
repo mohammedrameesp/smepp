@@ -9,6 +9,26 @@ import { prisma } from '@/lib/core/prisma';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+  count: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
+// Type for validation data
+interface RequestValidationData {
+  assetTypeId?: string;
+  reason?: string;
+}
+
 describe('Asset Requests API Tests', () => {
   const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 
@@ -59,7 +79,7 @@ describe('Asset Requests API Tests', () => {
 
   describe('GET /api/asset-requests', () => {
     it('should return user\'s asset requests', async () => {
-      const mockAssetRequest = prisma.assetRequest as any;
+      const mockAssetRequest = getMockedModel(prisma.assetRequest);
       mockAssetRequest.findMany.mockResolvedValue(mockAssetRequests);
       mockAssetRequest.count.mockResolvedValue(2);
 
@@ -73,7 +93,7 @@ describe('Asset Requests API Tests', () => {
 
     it('should return all requests for admin', async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession);
-      const mockAssetRequest = prisma.assetRequest as any;
+      const mockAssetRequest = getMockedModel(prisma.assetRequest);
       mockAssetRequest.findMany.mockResolvedValue(mockAssetRequests);
 
       const requests = await mockAssetRequest.findMany({
@@ -84,7 +104,7 @@ describe('Asset Requests API Tests', () => {
     });
 
     it('should filter by status', async () => {
-      const mockAssetRequest = prisma.assetRequest as any;
+      const mockAssetRequest = getMockedModel(prisma.assetRequest);
       mockAssetRequest.findMany.mockResolvedValue([mockAssetRequests[0]]);
 
       const requests = await mockAssetRequest.findMany({
@@ -98,7 +118,7 @@ describe('Asset Requests API Tests', () => {
 
   describe('POST /api/asset-requests', () => {
     it('should create asset request', async () => {
-      const mockAssetRequest = prisma.assetRequest as any;
+      const mockAssetRequest = getMockedModel(prisma.assetRequest);
       mockAssetRequest.create.mockResolvedValue({
         id: 'req-new',
         tenantId: 'org-123',
@@ -125,7 +145,7 @@ describe('Asset Requests API Tests', () => {
     });
 
     it('should validate required fields', () => {
-      const validateRequest = (data: any): boolean => {
+      const validateRequest = (data: RequestValidationData): boolean => {
         return !!(data.assetTypeId && data.reason);
       };
 
@@ -137,7 +157,7 @@ describe('Asset Requests API Tests', () => {
 
   describe('GET /api/asset-requests/[id]', () => {
     it('should return request details', async () => {
-      const mockAssetRequest = prisma.assetRequest as any;
+      const mockAssetRequest = getMockedModel(prisma.assetRequest);
       mockAssetRequest.findFirst.mockResolvedValue({
         ...mockAssetRequests[0],
         assetType: { id: 'type-laptop', name: 'Laptop' },
@@ -154,7 +174,7 @@ describe('Asset Requests API Tests', () => {
     });
 
     it('should verify request belongs to user', async () => {
-      const mockAssetRequest = prisma.assetRequest as any;
+      const mockAssetRequest = getMockedModel(prisma.assetRequest);
       mockAssetRequest.findFirst.mockResolvedValue(mockAssetRequests[0]);
 
       const request = await mockAssetRequest.findFirst({
@@ -172,8 +192,8 @@ describe('Asset Requests API Tests', () => {
   describe('POST /api/asset-requests/[id]/approve', () => {
     it('should approve request and optionally assign asset', async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession);
-      const mockAssetRequest = prisma.assetRequest as any;
-      const mockAsset = prisma.asset as any;
+      const mockAssetRequest = getMockedModel(prisma.assetRequest);
+      const mockAsset = getMockedModel(prisma.asset);
 
       mockAssetRequest.update.mockResolvedValue({
         ...mockAssetRequests[0],
@@ -213,7 +233,7 @@ describe('Asset Requests API Tests', () => {
   describe('POST /api/asset-requests/[id]/reject', () => {
     it('should reject request with reason', async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession);
-      const mockAssetRequest = prisma.assetRequest as any;
+      const mockAssetRequest = getMockedModel(prisma.assetRequest);
 
       mockAssetRequest.update.mockResolvedValue({
         ...mockAssetRequests[0],
@@ -239,7 +259,7 @@ describe('Asset Requests API Tests', () => {
 
   describe('POST /api/asset-requests/[id]/accept', () => {
     it('should allow requester to accept assigned asset', async () => {
-      const mockAssetRequest = prisma.assetRequest as any;
+      const mockAssetRequest = getMockedModel(prisma.assetRequest);
 
       mockAssetRequest.findFirst.mockResolvedValue({
         ...mockAssetRequests[0],
@@ -268,8 +288,8 @@ describe('Asset Requests API Tests', () => {
 
   describe('POST /api/asset-requests/[id]/decline', () => {
     it('should allow requester to decline assigned asset', async () => {
-      const mockAssetRequest = prisma.assetRequest as any;
-      const mockAsset = prisma.asset as any;
+      const mockAssetRequest = getMockedModel(prisma.assetRequest);
+      const mockAsset = getMockedModel(prisma.asset);
 
       mockAssetRequest.update.mockResolvedValue({
         ...mockAssetRequests[0],
@@ -301,7 +321,7 @@ describe('Asset Requests API Tests', () => {
 
   describe('Request History', () => {
     it('should track request status changes', async () => {
-      const mockHistory = prisma.assetRequestHistory as any;
+      const mockHistory = getMockedModel(prisma.assetRequestHistory);
       mockHistory.create.mockResolvedValue({
         id: 'hist-1',
         assetRequestId: 'req-1',
@@ -328,7 +348,7 @@ describe('Asset Requests API Tests', () => {
 
   describe('Tenant Isolation', () => {
     it('should only access requests from current tenant', async () => {
-      const mockAssetRequest = prisma.assetRequest as any;
+      const mockAssetRequest = getMockedModel(prisma.assetRequest);
       mockAssetRequest.findMany.mockResolvedValue(mockAssetRequests);
 
       await mockAssetRequest.findMany({
@@ -349,7 +369,7 @@ describe('Asset Requests API Tests', () => {
 describe('Asset Categories API Tests', () => {
   describe('GET /api/asset-categories', () => {
     it('should return all asset categories', async () => {
-      const mockCategory = prisma.assetCategory as any;
+      const mockCategory = getMockedModel(prisma.assetCategory);
       mockCategory.findMany.mockResolvedValue([
         { id: 'cat-1', tenantId: 'org-123', name: 'Electronics', description: 'Electronic devices' },
         { id: 'cat-2', tenantId: 'org-123', name: 'Furniture', description: 'Office furniture' },
@@ -364,7 +384,7 @@ describe('Asset Categories API Tests', () => {
     });
 
     it('should include asset count', async () => {
-      const mockCategory = prisma.assetCategory as any;
+      const mockCategory = getMockedModel(prisma.assetCategory);
       mockCategory.findMany.mockResolvedValue([
         { id: 'cat-1', name: 'Electronics', _count: { assets: 50 } },
       ]);
@@ -380,7 +400,7 @@ describe('Asset Categories API Tests', () => {
 
   describe('POST /api/asset-categories', () => {
     it('should create asset category', async () => {
-      const mockCategory = prisma.assetCategory as any;
+      const mockCategory = getMockedModel(prisma.assetCategory);
       mockCategory.create.mockResolvedValue({
         id: 'cat-new',
         tenantId: 'org-123',
@@ -406,7 +426,7 @@ describe('Asset Categories API Tests', () => {
 describe('Depreciation API Tests', () => {
   describe('GET /api/depreciation/categories', () => {
     it('should return depreciation categories', async () => {
-      const mockCategory = prisma.depreciationCategory as any;
+      const mockCategory = getMockedModel(prisma.depreciationCategory);
       mockCategory.findMany.mockResolvedValue([
         { id: 'dep-1', tenantId: 'org-123', name: 'IT Equipment', usefulLifeYears: 3, depreciationMethod: 'STRAIGHT_LINE' },
         { id: 'dep-2', tenantId: 'org-123', name: 'Furniture', usefulLifeYears: 7, depreciationMethod: 'STRAIGHT_LINE' },
@@ -457,7 +477,7 @@ describe('Depreciation API Tests', () => {
 describe('Delegations API Tests', () => {
   describe('GET /api/delegations', () => {
     it('should return active delegations', async () => {
-      const mockDelegation = prisma.approverDelegation as any;
+      const mockDelegation = getMockedModel(prisma.approverDelegation);
       mockDelegation.findMany.mockResolvedValue([
         {
           id: 'del-1',
@@ -481,7 +501,7 @@ describe('Delegations API Tests', () => {
 
   describe('POST /api/delegations', () => {
     it('should create delegation', async () => {
-      const mockDelegation = prisma.approverDelegation as any;
+      const mockDelegation = getMockedModel(prisma.approverDelegation);
       mockDelegation.create.mockResolvedValue({
         id: 'del-new',
         tenantId: 'org-123',
@@ -521,7 +541,7 @@ describe('Delegations API Tests', () => {
 describe('Subdomains API Tests', () => {
   describe('GET /api/subdomains/check', () => {
     it('should check subdomain availability', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findUnique.mockResolvedValue(null);
 
       const existing = await mockOrg.findUnique({
@@ -545,7 +565,7 @@ describe('Subdomains API Tests', () => {
     });
 
     it('should reject existing subdomains', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findUnique.mockResolvedValue({
         id: 'org-existing',
         slug: 'existing-company',
@@ -563,7 +583,7 @@ describe('Subdomains API Tests', () => {
 describe('Impersonate API Tests', () => {
   describe('POST /api/impersonate/verify', () => {
     it('should verify impersonation token', () => {
-      const verifyToken = (token: string, expectedPayload: any): boolean => {
+      const verifyToken = (token: string, _expectedPayload: unknown): boolean => {
         // Simulated JWT verification
         return token.startsWith('imp-') && token.length > 10;
       };
@@ -573,7 +593,7 @@ describe('Impersonate API Tests', () => {
     });
 
     it('should check if token is revoked', async () => {
-      const mockRevoked = prisma.revokedImpersonationToken as any;
+      const mockRevoked = getMockedModel(prisma.revokedImpersonationToken);
       mockRevoked.findUnique.mockResolvedValue(null);
 
       const revoked = await mockRevoked.findUnique({
@@ -589,7 +609,7 @@ describe('Impersonate API Tests', () => {
 describe('WhatsApp API Tests', () => {
   describe('GET /api/whatsapp/config', () => {
     it('should return organization WhatsApp config', async () => {
-      const mockConfig = prisma.whatsAppConfig as any;
+      const mockConfig = getMockedModel(prisma.whatsAppConfig);
       mockConfig.findFirst.mockResolvedValue({
         id: 'config-1',
         tenantId: 'org-123',
@@ -609,7 +629,7 @@ describe('WhatsApp API Tests', () => {
 
   describe('POST /api/whatsapp/send', () => {
     it('should send WhatsApp notification', async () => {
-      const mockMessageLog = prisma.whatsAppMessageLog as any;
+      const mockMessageLog = getMockedModel(prisma.whatsAppMessageLog);
       mockMessageLog.create.mockResolvedValue({
         id: 'msg-1',
         tenantId: 'org-123',
@@ -635,7 +655,7 @@ describe('WhatsApp API Tests', () => {
 
   describe('User Phone Verification', () => {
     it('should verify user phone number', async () => {
-      const mockUserPhone = prisma.whatsAppUserPhone as any;
+      const mockUserPhone = getMockedModel(prisma.whatsAppUserPhone);
       mockUserPhone.update.mockResolvedValue({
         id: 'phone-1',
         phoneNumber: '+1234567890',

@@ -6,7 +6,7 @@ describe('Rate Limiting Security Tests', () => {
   describe('Rate Limit Logic', () => {
     it('should simulate rate limit bucket logic', () => {
       const maxRequests = 60;
-      const _windowMs = 60000; // eslint-disable-line @typescript-eslint/no-unused-vars
+      const _windowMs = 60000;
 
       // Simulate request tracking
       const requestCount = 50;

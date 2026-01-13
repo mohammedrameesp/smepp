@@ -78,7 +78,7 @@ export function PayrollSettings() {
       }
 
       toast.success('Payroll settings saved successfully');
-    } catch (error) {
+    } catch {
       toast.error('Failed to save payroll settings');
     } finally {
       setIsSaving(false);

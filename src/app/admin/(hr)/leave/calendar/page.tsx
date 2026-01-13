@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getLeaveStatusVariant, formatLeaveDays } from '@/features/leave/lib/leave-utils';
+import { LeaveStatus } from '@prisma/client';
 import Link from 'next/link';
 
 interface CalendarEvent {
@@ -297,7 +298,7 @@ export default function AdminLeaveCalendarPage() {
                             <> - {new Date(event.end).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</>
                           )}
                         </div>
-                        <Badge variant={getLeaveStatusVariant(event.extendedProps.status as any)}>
+                        <Badge variant={getLeaveStatusVariant(event.extendedProps.status as LeaveStatus)}>
                           {event.extendedProps.status}
                         </Badge>
                       </div>

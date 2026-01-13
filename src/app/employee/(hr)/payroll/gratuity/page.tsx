@@ -10,7 +10,7 @@ import { formatCurrency } from '@/features/payroll/lib/utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { DetailCard } from '@/components/ui/detail-card';
-import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
+import { InfoField } from '@/components/ui/info-field';
 
 export default async function EmployeeGratuityPage() {
   const session = await getServerSession(authOptions);

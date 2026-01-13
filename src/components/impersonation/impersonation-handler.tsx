@@ -12,7 +12,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
  */
 export function ImpersonationHandler() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  useRouter();
   const pathname = usePathname();
   const [cleaned, setCleaned] = useState(false);
 

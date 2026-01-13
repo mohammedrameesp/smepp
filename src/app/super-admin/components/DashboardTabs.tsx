@@ -12,23 +12,20 @@ import {
   ArrowUp,
   Building2,
   CreditCard,
-  XCircle,
-  Lock,
-  AlertTriangle,
-  KeyRound,
   Mail,
   MessageCircle,
   Smartphone,
   Bell,
+  XCircle,
+  Lock,
+  AlertTriangle,
+  KeyRound,
   Server,
   Database,
   ListTodo,
   Bug,
   Clock,
 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-
 type TabType = 'overview' | 'communication' | 'security' | 'engagement' | 'health';
 
 interface DashboardTabsProps {
@@ -39,7 +36,7 @@ interface DashboardTabsProps {
   };
 }
 
-export function DashboardTabs({ stats }: DashboardTabsProps) {
+export function DashboardTabs({ stats: _stats }: DashboardTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
   const tabs: { id: TabType; label: string; icon: React.ElementType }[] = [

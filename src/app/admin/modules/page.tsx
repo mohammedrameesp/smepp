@@ -112,7 +112,7 @@ export default function ModulesPage() {
   const installParam = searchParams.get('install');
 
   const [modules, setModules] = useState<ModuleInfo[]>([]);
-  const [subscriptionTier, setSubscriptionTier] = useState<string>('FREE');
+  const [, setSubscriptionTier] = useState<string>('FREE');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 

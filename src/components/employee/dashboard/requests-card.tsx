@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ShoppingCart, Palmtree, Laptop, ArrowRight } from 'lucide-react';
+import { ShoppingCart, Palmtree, Laptop } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/core/utils';
 import { formatDate } from '@/lib/core/datetime';

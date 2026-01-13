@@ -4,8 +4,6 @@
  * @module tests/integration
  */
 
-import { NextRequest } from 'next/server';
-
 // Mock next-auth
 jest.mock('next-auth/next', () => ({
   getServerSession: jest.fn(),
@@ -64,6 +62,8 @@ const mockLocations = [
     name: 'Main Office',
     description: 'Headquarters',
     isActive: true,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
     _count: { assets: 5 },
   },
   {
@@ -72,6 +72,8 @@ const mockLocations = [
     name: 'Warehouse',
     description: 'Storage facility',
     isActive: true,
+    createdAt: new Date('2024-01-02'),
+    updatedAt: new Date('2024-01-02'),
     _count: { assets: 10 },
   },
   {
@@ -80,6 +82,8 @@ const mockLocations = [
     name: 'Old Office',
     description: 'Decommissioned',
     isActive: false,
+    createdAt: new Date('2024-01-03'),
+    updatedAt: new Date('2024-01-03'),
     _count: { assets: 0 },
   },
 ];
@@ -381,6 +385,8 @@ describe('Locations API', () => {
         name: 'Other Office',
         description: null,
         isActive: true,
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01'),
         _count: { assets: 0 },
       };
 

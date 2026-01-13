@@ -36,10 +36,8 @@ import {
 import {
   hasPermission,
   hasPermissions,
-  getPermissionsForRole,
   grantPermission,
   revokePermission,
-  setRolePermissions,
   isValidPermission,
 } from '@/lib/access-control/permission-service';
 import { prisma } from '@/lib/core/prisma';
@@ -152,7 +150,7 @@ describe('RBAC Permissions System', () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('Role Hierarchy', () => {
-    const roles: OrgRole[] = ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER'];
+    const _roles: OrgRole[] = ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER'];
     const tenantId = 'tenant-123';
     const enabledModules = ['assets', 'subscriptions', 'suppliers', 'employees', 'leave', 'payroll'];
 
@@ -173,6 +171,7 @@ describe('RBAC Permissions System', () => {
         role: 'MANAGER' as OrgRole,
         permission: 'assets:view',
         createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       const result = await hasPermission(tenantId, 'MANAGER', 'assets:view', enabledModules);
@@ -342,6 +341,7 @@ describe('RBAC Permissions System', () => {
           role: 'MANAGER' as OrgRole,
           permission: 'assets:view',
           createdAt: new Date(),
+          updatedAt: new Date(),
         });
 
         await hasPermission(tenantId, 'MANAGER', 'assets:view', enabledModules);
@@ -356,8 +356,8 @@ describe('RBAC Permissions System', () => {
     describe('hasPermissions (batch)', () => {
       it('should check multiple permissions efficiently', async () => {
         mockRolePermission.findMany.mockResolvedValue([
-          { permission: 'assets:view' },
-          { permission: 'assets:edit' },
+          { id: '1', tenantId, role: 'MANAGER' as OrgRole, permission: 'assets:view', createdAt: new Date(), updatedAt: new Date() },
+          { id: '2', tenantId, role: 'MANAGER' as OrgRole, permission: 'assets:edit', createdAt: new Date(), updatedAt: new Date() },
         ]);
 
         const result = await hasPermissions(
@@ -481,7 +481,7 @@ describe('RBAC Permissions System', () => {
       const enabledModules = ['assets'];
 
       mockRolePermission.findUnique
-        .mockResolvedValueOnce({ permission: 'assets:delete' }) // tenant1
+        .mockResolvedValueOnce({ id: '1', tenantId: tenant1, role: 'MANAGER' as OrgRole, permission: 'assets:delete', createdAt: new Date(), updatedAt: new Date() }) // tenant1
         .mockResolvedValueOnce(null); // tenant2
 
       const result1 = await hasPermission(tenant1, 'MANAGER', 'assets:delete', enabledModules);

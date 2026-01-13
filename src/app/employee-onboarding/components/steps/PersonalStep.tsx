@@ -33,7 +33,7 @@ export function PersonalStep({ formData, updateField, errors }: PersonalStepProp
         </div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Personal Information</h2>
         <p className="text-slate-600">
-          Let's start with your basic personal and employment details.
+          Let&apos;s start with your basic personal and employment details.
         </p>
       </div>
 

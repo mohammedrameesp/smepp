@@ -75,7 +75,6 @@ interface AssetTypeMappingsSettingsProps {
 }
 
 export function AssetTypeMappingsSettings({
-  organizationId,
   isAdmin = true,
 }: AssetTypeMappingsSettingsProps) {
   const [mappings, setMappings] = useState<AssetTypeMapping[]>([]);

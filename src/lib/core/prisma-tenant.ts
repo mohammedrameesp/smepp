@@ -187,8 +187,9 @@ export function createTenantPrismaClient(context: TenantContext) {
 
         async create({ model, args, query }) {
           if (isTenantModel(model)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (args.data as any).tenantId = tenantId;
+            // Prisma $allModels extension provides generic args.data that TypeScript
+            // cannot narrow to tenant models. Runtime check via isTenantModel ensures safety.
+            (args.data as Record<string, unknown>).tenantId = tenantId;
           }
           return query(args);
         },
@@ -196,14 +197,15 @@ export function createTenantPrismaClient(context: TenantContext) {
         async createMany({ model, args, query }) {
           if (isTenantModel(model)) {
             if (Array.isArray(args.data)) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              // Prisma $allModels extension provides generic args.data array that TypeScript
+              // cannot narrow. Runtime check via isTenantModel ensures these are tenant models.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic Prisma extension across all models
               args.data = args.data.map((item: any) => ({
                 ...item,
                 tenantId,
               }));
             } else {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (args.data as any).tenantId = tenantId;
+              (args.data as Record<string, unknown>).tenantId = tenantId;
             }
           }
           return query(args);
@@ -226,10 +228,10 @@ export function createTenantPrismaClient(context: TenantContext) {
 
         async upsert({ model, args, query }) {
           if (isTenantModel(model)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (args.where as any).tenantId = tenantId;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (args.create as any).tenantId = tenantId;
+            // Prisma $allModels extension provides generic args that TypeScript cannot narrow.
+            // Runtime check via isTenantModel ensures these are tenant models with tenantId field.
+            (args.where as Record<string, unknown>).tenantId = tenantId;
+            (args.create as Record<string, unknown>).tenantId = tenantId;
           }
           return query(args);
         },

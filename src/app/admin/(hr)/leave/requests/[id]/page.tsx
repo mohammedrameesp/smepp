@@ -1,16 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
-import { FileText, User, Calendar, Clock, Phone, Mail, ExternalLink, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { FileText, User, Calendar, Clock, Phone, Mail, ExternalLink, AlertCircle } from 'lucide-react';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 import Link from 'next/link';
 import {
-  getLeaveStatusVariant,
   getDateRangeText,
   formatLeaveDays,
   getRequestTypeText,
@@ -85,24 +83,15 @@ interface LeaveBalance {
   adjustment: number;
 }
 
-// Status badge styles
-const statusStyles: Record<LeaveStatus, { bg: string; text: string; icon: typeof CheckCircle }> = {
-  PENDING: { bg: 'bg-amber-100', text: 'text-amber-700', icon: Clock },
-  APPROVED: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: CheckCircle },
-  REJECTED: { bg: 'bg-rose-100', text: 'text-rose-700', icon: XCircle },
-  CANCELLED: { bg: 'bg-slate-100', text: 'text-slate-700', icon: XCircle },
-};
-
 export default function AdminLeaveRequestDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const [request, setRequest] = useState<LeaveRequest | null>(null);
   const [balance, setBalance] = useState<LeaveBalance | null>(null);
   const [accrued, setAccrued] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRequest = async () => {
+  const fetchRequest = useCallback(async () => {
     try {
       const response = await fetch(`/api/leave/requests/${params.id}`);
       if (!response.ok) {
@@ -144,11 +133,11 @@ export default function AdminLeaveRequestDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
 
   useEffect(() => {
     fetchRequest();
-  }, [params.id]);
+  }, [fetchRequest]);
 
   // Map status to badge variant
   const getStatusBadgeVariant = (status: LeaveStatus): 'success' | 'warning' | 'error' | 'default' => {
@@ -209,7 +198,6 @@ export default function AdminLeaveRequestDetailPage() {
   }
 
   const canCancel = canCancelLeaveRequest(request.status, new Date(request.startDate));
-  // Note: statusStyles is kept for potential future use in inline status displays within cards
 
   return (
     <>

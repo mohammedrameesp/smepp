@@ -3,7 +3,6 @@
  * @see src/lib/validations/leave.ts
  */
 
-import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 import {
   createLeaveTypeSchema,
   updateLeaveTypeSchema,

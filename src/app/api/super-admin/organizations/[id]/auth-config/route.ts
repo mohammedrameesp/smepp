@@ -91,7 +91,7 @@ function encrypt(text: string): string {
   return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
 }
 
-function decrypt(encryptedText: string): string {
+function _decrypt(encryptedText: string): string {
   if (!encryptedText || !encryptedText.includes(':')) return '';
   try {
     const [ivHex, authTagHex, encrypted] = encryptedText.split(':');

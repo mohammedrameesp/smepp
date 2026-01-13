@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, Check, AlertCircle } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import type { ValidationRule } from '@/lib/help/help-types';
 

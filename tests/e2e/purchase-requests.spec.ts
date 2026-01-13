@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { loginAs, TEST_USERS } from './utils/auth';
-import { generatePurchaseRequestData, generatePurchaseRequestItemData } from './utils/test-data';
+import { generatePurchaseRequestData } from './utils/test-data';
 
 /**
  * Purchase Requests E2E Tests
@@ -10,7 +10,7 @@ import { generatePurchaseRequestData, generatePurchaseRequestItemData } from './
 test.describe('Purchase Requests Workflow', () => {
   let requestData: ReturnType<typeof generatePurchaseRequestData>;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async () => {
     // Generate unique test data
     requestData = generatePurchaseRequestData();
   });

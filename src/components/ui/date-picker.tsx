@@ -78,13 +78,6 @@ export function DatePicker({
     return `${day}/${month}/${year}`;
   };
 
-  const formatDisplayDateShort = (date: Date): string => {
-    const day = date.getDate();
-    const month = MONTH_NAMES[date.getMonth()];
-    const year = date.getFullYear();
-    return `${day} ${month} ${year}`;
-  };
-
   const parseInputDate = (input: string): Date | null => {
     // Try different formats
     const cleaned = input.trim();

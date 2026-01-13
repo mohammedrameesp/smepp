@@ -16,7 +16,6 @@ async function getLeaveTypesHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
     const db = tenantPrisma as TenantPrismaClient;
-    const tenantId = tenant.tenantId;
 
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());

@@ -4,7 +4,6 @@
  * @module hr/payroll
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/core/prisma';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { payslipQuerySchema } from '@/features/payroll/validations/payroll';
 import { parseDecimal } from '@/features/payroll/lib/utils';

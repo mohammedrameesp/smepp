@@ -68,7 +68,7 @@ export async function GET() {
     const hasCredentials = allowedMethods.length === 0 || allowedMethods.includes('credentials');
 
     // Remove sensitive fields before returning
-    const { customGoogleClientId, customGoogleClientSecret, customAzureClientId, customAzureClientSecret, ...orgData } = organization;
+    const { customGoogleClientId: _customGoogleClientId, customGoogleClientSecret: _customGoogleClientSecret, customAzureClientId: _customAzureClientId, customAzureClientSecret: _customAzureClientSecret, ...orgData } = organization;
 
     return NextResponse.json({
       organization: orgData,

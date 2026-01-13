@@ -251,9 +251,6 @@ export function OnboardingWizard({
     });
   }, [validateField]);
 
-  // Check if there are any validation errors
-  const hasErrors = Object.keys(errors).length > 0;
-
   const saveProgress = async (data: Record<string, unknown>, step: number, validateRequired = true, stepToValidate?: number) => {
     // Validate format errors
     const formatErrors = validateAllFields(data);
@@ -560,7 +557,7 @@ function FieldError({ error }: { error?: string }) {
   return <p className="text-sm text-red-600 mt-1">{error}</p>;
 }
 
-function PersonalInfoStep({ formData, updateField, errors }: StepProps) {
+function PersonalInfoStep({ formData, updateField }: StepProps) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-600 mb-4">
@@ -1072,7 +1069,7 @@ function EducationStep({ formData, updateField, errors }: StepProps) {
   );
 }
 
-function DocumentsStep({ formData, updateField, errors }: StepProps) {
+function DocumentsStep({ formData, updateField }: StepProps) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-600 mb-4">
@@ -1122,7 +1119,7 @@ function DocumentsStep({ formData, updateField, errors }: StepProps) {
   );
 }
 
-function AdditionalInfoStep({ formData, updateField, errors }: StepProps) {
+function AdditionalInfoStep({ formData, updateField }: StepProps) {
   const hasDrivingLicense = (formData.hasDrivingLicense as boolean) || false;
   const languages = parseJsonArray(formData.languagesKnown as string);
   const skills = parseJsonArray(formData.skillsCertifications as string);
@@ -1197,7 +1194,7 @@ function AdditionalInfoStep({ formData, updateField, errors }: StepProps) {
           <div>
             <h4 className="font-semibold text-gray-900 mb-1">Almost Done!</h4>
             <p className="text-sm text-gray-600">
-              Click "Complete Profile" to finish your onboarding. Your profile will be submitted for review.
+              Click &ldquo;Complete Profile&rdquo; to finish your onboarding. Your profile will be submitted for review.
             </p>
           </div>
         </div>

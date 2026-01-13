@@ -358,7 +358,7 @@ describe('Asset Lifecycle Tests', () => {
       });
 
       expect(asset).not.toBeNull();
-      expect((asset as any)?.history).toEqual([]);
+      expect((asset as unknown as { history: unknown[] })?.history).toEqual([]);
     });
 
     it('should build periods from ASSIGNED history entries', async () => {
@@ -401,9 +401,10 @@ describe('Asset Lifecycle Tests', () => {
         where: { id: 'asset-123', tenantId: 'tenant-123' },
       });
 
-      expect((asset as any)?.history).toHaveLength(2);
-      expect((asset as any)?.history[0].action).toBe('ASSIGNED');
-      expect((asset as any)?.history[1].action).toBe('UNASSIGNED');
+      const assetWithHistory = asset as unknown as { history: Array<{ action: string }> };
+      expect(assetWithHistory?.history).toHaveLength(2);
+      expect(assetWithHistory?.history[0].action).toBe('ASSIGNED');
+      expect(assetWithHistory?.history[1].action).toBe('UNASSIGNED');
     });
 
     it('should handle currently assigned asset', async () => {
@@ -431,7 +432,7 @@ describe('Asset Lifecycle Tests', () => {
         where: { id: 'asset-123', tenantId: 'tenant-123' },
       });
 
-      expect((asset as any)?.assignedMember).not.toBeNull();
+      expect((asset as unknown as { assignedMember: unknown })?.assignedMember).not.toBeNull();
       expect(asset?.assignedMemberId).toBe('member-1');
     });
   });

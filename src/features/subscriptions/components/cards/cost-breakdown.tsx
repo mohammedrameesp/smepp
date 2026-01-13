@@ -29,7 +29,7 @@
  */
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -60,11 +60,7 @@ export function CostBreakdown({ subscriptionId }: CostBreakdownProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchCostData();
-  }, [subscriptionId]);
-
-  const fetchCostData = async () => {
+  const fetchCostData = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/subscriptions/${subscriptionId}/cost`);
@@ -81,7 +77,11 @@ export function CostBreakdown({ subscriptionId }: CostBreakdownProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [subscriptionId]);
+
+  useEffect(() => {
+    fetchCostData();
+  }, [fetchCostData]);
 
   if (isLoading) {
     return (

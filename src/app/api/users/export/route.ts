@@ -27,7 +27,7 @@ async function exportUsersHandler(request: NextRequest, context: APIContext) {
   });
 
   // Transform data for CSV
-  const csvData = members.map(member => ({
+  const csvData: Record<string, unknown>[] = members.map(member => ({
     id: member.id,
     name: member.name || '',
     email: member.email,
@@ -40,7 +40,7 @@ async function exportUsersHandler(request: NextRequest, context: APIContext) {
   }));
 
   // Define CSV headers
-  const headers = [
+  const headers: { key: string; header: string }[] = [
     { key: 'id', header: 'ID' },
     { key: 'name', header: 'Name' },
     { key: 'email', header: 'Email' },
@@ -53,7 +53,7 @@ async function exportUsersHandler(request: NextRequest, context: APIContext) {
   ];
 
   // Generate CSV
-  const csvBuffer = await arrayToCSV(csvData, headers as any);
+  const csvBuffer = await arrayToCSV(csvData, headers);
 
   // Return CSV file
   const filename = `users_export_${new Date().toISOString().split('T')[0]}.xlsx`;

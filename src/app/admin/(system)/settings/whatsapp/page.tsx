@@ -141,7 +141,7 @@ export default function WhatsAppSettingsPage() {
         const data = await res.json();
         toast.error(data.error || 'Failed to update WhatsApp source');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to update WhatsApp source');
     } finally {
       setSwitchingSource(false);
@@ -178,7 +178,7 @@ export default function WhatsAppSettingsPage() {
       } else {
         toast.error(data.error || 'Failed to save configuration');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to save configuration');
     } finally {
       setSaving(false);
@@ -197,7 +197,7 @@ export default function WhatsAppSettingsPage() {
         toast.success('Phone number verified');
         loadUserPhones();
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to verify phone');
     }
   };
@@ -572,7 +572,7 @@ export default function WhatsAppSettingsPage() {
                 >
                   business.facebook.com
                 </a>{' '}
-                and create a business account if you don't have one.
+                and create a business account if you don&apos;t have one.
               </p>
             </div>
 

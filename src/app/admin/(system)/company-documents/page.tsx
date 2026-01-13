@@ -85,7 +85,7 @@ function ExpiryBadge({ status, daysRemaining }: { status: string; daysRemaining:
 
 async function DocumentList({ tenantId }: { tenantId: string }) {
   const documents = await getCompanyDocuments(tenantId);
-  const stats = await getDocumentStats(tenantId);
+  await getDocumentStats(tenantId);
 
   return (
     <>

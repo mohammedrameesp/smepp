@@ -464,7 +464,7 @@ describe('WhatsApp Approval Integration Tests', () => {
           console.error('WhatsApp notification error:', error);
         });
         return { started: true };
-      } catch (error) {
+      } catch {
         return { started: false, error: 'Failed to start notification' };
       }
     };

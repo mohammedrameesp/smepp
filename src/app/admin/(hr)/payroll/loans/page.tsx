@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
-import { Role, LoanStatus } from '@prisma/client';
+import { LoanStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Eye, ChevronRight } from 'lucide-react';
+import { Plus, Eye } from 'lucide-react';
 import { formatCurrency } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';

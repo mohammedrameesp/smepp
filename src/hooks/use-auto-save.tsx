@@ -72,8 +72,6 @@ export function useAutoSave<T>({
 
   // Track if this is the first render (don't save on mount)
   const isFirstRender = useRef(true);
-  // Track the initial value to compare against
-  const initialValue = useRef(value);
   // Track the last saved value to avoid unnecessary saves
   const lastSavedValue = useRef(value);
   // Timeout ref for debounce

@@ -18,14 +18,6 @@ import {
   type SetupProgressField,
 } from '@/features/onboarding/lib';
 
-const VALID_FIELDS: SetupProgressField[] = [
-  'profileComplete',
-  'logoUploaded',
-  'brandingConfigured',
-  'firstAssetAdded',
-  'firstTeamMemberInvited',
-];
-
 const updateProgressSchema = z.object({
   field: z.enum([
     'profileComplete',

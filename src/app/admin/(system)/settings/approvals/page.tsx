@@ -7,7 +7,7 @@ import { prisma } from '@/lib/core/prisma';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil } from 'lucide-react';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
@@ -56,11 +56,11 @@ export default async function ApprovalPoliciesPage() {
 
   // Group policies by module
   const policyGroups = policies.reduce((groups, policy) => {
-    const module = policy.module;
-    if (!groups[module]) {
-      groups[module] = [];
+    const moduleKey = policy.module;
+    if (!groups[moduleKey]) {
+      groups[moduleKey] = [];
     }
-    groups[module].push(policy);
+    groups[moduleKey].push(policy);
     return groups;
   }, {} as Record<string, typeof policies>);
 

@@ -47,7 +47,6 @@ export function WizardProgress({ currentStep, totalSteps, steps }: WizardProgres
             const stepNum = index + 1;
             const isCompleted = stepNum < currentStep;
             const isCurrent = stepNum === currentStep;
-            const isUpcoming = stepNum > currentStep;
 
             return (
               <div key={stepNum} className="flex flex-col items-center flex-1">

@@ -24,17 +24,17 @@ function searchContent(query: string) {
 
   // Search through modules
   for (const category of helpCategories) {
-    for (const module of category.modules) {
+    for (const moduleItem of category.modules) {
       if (
-        module.name.toLowerCase().includes(normalizedQuery) ||
-        module.description.toLowerCase().includes(normalizedQuery)
+        moduleItem.name.toLowerCase().includes(normalizedQuery) ||
+        moduleItem.description.toLowerCase().includes(normalizedQuery)
       ) {
         results.push({
-          id: `${category.id}-${module.id}`,
-          title: module.name,
-          description: module.description,
+          id: `${category.id}-${moduleItem.id}`,
+          title: moduleItem.name,
+          description: moduleItem.description,
           category: category.name,
-          url: module.href,
+          url: moduleItem.href,
           type: 'module',
         });
       }

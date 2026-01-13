@@ -35,7 +35,7 @@
  */
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -85,7 +85,7 @@ export default function EditSubscriptionPage() {
   const [users, setUsers] = useState<Array<{ id: string; name: string | null; email: string }>>([]);
   const [categorySuggestions, setCategorySuggestions] = useState<string[]>([]);
   const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
-  const [lastAssignmentDate, setLastAssignmentDate] = useState<string>('');
+  const [, setLastAssignmentDate] = useState<string>('');
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['QAR', 'USD']);
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(DEFAULT_RATES);
@@ -130,6 +130,77 @@ export default function EditSubscriptionPage() {
   const watchedAssignedMemberId = watch('assignedMemberId');
   const watchedAssignmentDate = watch('assignmentDate');
 
+  const fetchSubscription = useCallback(async (id: string) => {
+    try {
+      const response = await fetch(`/api/subscriptions/${id}`);
+      if (response.ok) {
+        const subscriptionData = await response.json();
+        setSubscription(subscriptionData);
+
+        // Fetch assignment history to get the last assignment date
+        let assignmentDateValue = '';
+        if (subscriptionData.assignedMemberId) {
+          try {
+            // Fetch subscription history
+            const historyResponse = await fetch(`/api/subscriptions/${id}`);
+            if (historyResponse.ok) {
+              const data = await historyResponse.json();
+              // Find the most recent REASSIGNED or CREATED action for current user
+              const assignmentHistory = data.history
+                ?.filter((h: { action: string; newUserId?: string }) =>
+                  (h.action === 'REASSIGNED' || h.action === 'CREATED') &&
+                  h.newUserId === subscriptionData.assignedMemberId
+                )
+                .sort((a: { createdAt: string }, b: { createdAt: string }) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+              if (assignmentHistory && assignmentHistory.length > 0) {
+                const latestAssignment = assignmentHistory[0];
+                if (latestAssignment.assignmentDate) {
+                  assignmentDateValue = toInputDateString(latestAssignment.assignmentDate);
+                  setLastAssignmentDate(assignmentDateValue);
+                } else if (latestAssignment.createdAt) {
+                  assignmentDateValue = toInputDateString(latestAssignment.createdAt);
+                  setLastAssignmentDate(assignmentDateValue);
+                }
+              } else if (subscriptionData.purchaseDate) {
+                // If no assignment history, use purchase date
+                assignmentDateValue = toInputDateString(subscriptionData.purchaseDate);
+                setLastAssignmentDate(assignmentDateValue);
+              }
+            }
+          } catch (err) {
+            console.error('Error fetching assignment history:', err);
+          }
+        }
+
+        reset({
+          serviceName: subscriptionData.serviceName || '',
+          category: subscriptionData.category || '',
+          accountId: subscriptionData.accountId || '',
+          purchaseDate: toInputDateString(subscriptionData.purchaseDate),
+          renewalDate: toInputDateString(subscriptionData.renewalDate),
+          billingCycle: (subscriptionData.billingCycle || 'MONTHLY') as 'MONTHLY' | 'YEARLY' | 'ONE_TIME',
+          costPerCycle: subscriptionData.costPerCycle || null,
+          costCurrency: subscriptionData.costCurrency || 'QAR',
+          costQAR: subscriptionData.costQAR || null,
+          vendor: subscriptionData.vendor || '',
+          status: (subscriptionData.status || 'ACTIVE') as 'ACTIVE' | 'CANCELLED',
+          autoRenew: subscriptionData.autoRenew ?? true,
+          paymentMethod: subscriptionData.paymentMethod || '',
+          notes: subscriptionData.notes || '',
+          assignedMemberId: subscriptionData.assignedMemberId || '',
+          assignmentDate: assignmentDateValue
+        });
+      } else {
+        toast.error('Subscription not found', { duration: 10000 });
+        router.push('/admin/subscriptions');
+      }
+    } catch (error) {
+      console.error('Error fetching subscription:', error);
+      toast.error('Error loading subscription', { duration: 10000 });
+    }
+  }, [router, reset]);
+
   useEffect(() => {
     if (params?.id) {
       fetchSubscription(params.id as string);
@@ -137,7 +208,7 @@ export default function EditSubscriptionPage() {
     fetchUsers();
     fetchCategorySuggestions(); // Fetch all categories initially
     fetchOrgSettings(); // Fetch org currencies for dropdown
-  }, [params?.id]);
+  }, [params?.id, fetchSubscription]);
 
   // Auto-calculate currency conversion to QAR
   useEffect(() => {
@@ -287,77 +358,6 @@ export default function EditSubscriptionPage() {
     setShowCategorySuggestions(false);
   };
 
-  const fetchSubscription = async (id: string) => {
-    try {
-      const response = await fetch(`/api/subscriptions/${id}`);
-      if (response.ok) {
-        const subscriptionData = await response.json();
-        setSubscription(subscriptionData);
-
-        // Fetch assignment history to get the last assignment date
-        let assignmentDateValue = '';
-        if (subscriptionData.assignedMemberId) {
-          try {
-            // Fetch subscription history
-            const historyResponse = await fetch(`/api/subscriptions/${id}`);
-            if (historyResponse.ok) {
-              const data = await historyResponse.json();
-              // Find the most recent REASSIGNED or CREATED action for current user
-              const assignmentHistory = data.history
-                ?.filter((h: any) =>
-                  (h.action === 'REASSIGNED' || h.action === 'CREATED') &&
-                  h.newUserId === subscriptionData.assignedMemberId
-                )
-                .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-              if (assignmentHistory && assignmentHistory.length > 0) {
-                const latestAssignment = assignmentHistory[0];
-                if (latestAssignment.assignmentDate) {
-                  assignmentDateValue = toInputDateString(latestAssignment.assignmentDate);
-                  setLastAssignmentDate(assignmentDateValue);
-                } else if (latestAssignment.createdAt) {
-                  assignmentDateValue = toInputDateString(latestAssignment.createdAt);
-                  setLastAssignmentDate(assignmentDateValue);
-                }
-              } else if (subscriptionData.purchaseDate) {
-                // If no assignment history, use purchase date
-                assignmentDateValue = toInputDateString(subscriptionData.purchaseDate);
-                setLastAssignmentDate(assignmentDateValue);
-              }
-            }
-          } catch (err) {
-            console.error('Error fetching assignment history:', err);
-          }
-        }
-
-        reset({
-          serviceName: subscriptionData.serviceName || '',
-          category: subscriptionData.category || '',
-          accountId: subscriptionData.accountId || '',
-          purchaseDate: toInputDateString(subscriptionData.purchaseDate),
-          renewalDate: toInputDateString(subscriptionData.renewalDate),
-          billingCycle: (subscriptionData.billingCycle || 'MONTHLY') as 'MONTHLY' | 'YEARLY' | 'ONE_TIME',
-          costPerCycle: subscriptionData.costPerCycle || null,
-          costCurrency: subscriptionData.costCurrency || 'QAR',
-          costQAR: subscriptionData.costQAR || null,
-          vendor: subscriptionData.vendor || '',
-          status: (subscriptionData.status || 'ACTIVE') as 'ACTIVE' | 'CANCELLED',
-          autoRenew: subscriptionData.autoRenew ?? true,
-          paymentMethod: subscriptionData.paymentMethod || '',
-          notes: subscriptionData.notes || '',
-          assignedMemberId: subscriptionData.assignedMemberId || '',
-          assignmentDate: assignmentDateValue
-        });
-      } else {
-        toast.error('Subscription not found', { duration: 10000 });
-        router.push('/admin/subscriptions');
-      }
-    } catch (error) {
-      console.error('Error fetching subscription:', error);
-      toast.error('Error loading subscription', { duration: 10000 });
-    }
-  };
-
   const onSubmit = async (data: UpdateSubscriptionRequest) => {
     try {
       // Store cost in the currency selected by user
@@ -423,7 +423,6 @@ export default function EditSubscriptionPage() {
 
   const handleAssignedUserChange = (value: string) => {
     const newUserId = value === "__none__" ? '' : value;
-    const currentAssignmentDate = watch('assignmentDate');
 
     setValue('assignedMemberId', newUserId);
 

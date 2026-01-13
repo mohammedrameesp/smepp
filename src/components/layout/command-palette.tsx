@@ -202,7 +202,7 @@ export function CommandPalette({ open, onOpenChange, enabledModules = [] }: Comm
 
           {filteredItems.length === 0 && (
             <div className="p-8 text-center">
-              <p className="text-sm text-slate-500">No results found for "{search}"</p>
+              <p className="text-sm text-slate-500">No results found for &ldquo;{search}&rdquo;</p>
             </div>
           )}
         </div>

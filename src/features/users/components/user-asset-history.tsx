@@ -8,36 +8,33 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { Clock, Calendar } from 'lucide-react';
 import { formatDate as formatDateUtil } from '@/lib/core/datetime';
 
-interface AssignmentPeriod {
-  userId: string;
-  userName: string | null;
-  userEmail: string;
-  projectId: string | null;
-  projectName: string | null;
+export interface UserAssetAssignmentPeriod {
+  memberId: string;
+  memberName: string | null;
+  memberEmail: string;
   startDate: Date;
   endDate: Date | null;
   days: number;
   notes?: string;
 }
 
-interface Asset {
+export interface UserAssetHistoryItem {
   id: string;
   model: string;
   type: string;
   assetTag: string | null;
   status: string;
-  memberPeriods: AssignmentPeriod[];
+  memberPeriods: UserAssetAssignmentPeriod[];
   totalDays: number;
-  currentPeriod?: AssignmentPeriod | null;
+  currentPeriod?: UserAssetAssignmentPeriod | null;
   isCurrentlyAssigned: boolean;
 }
 
 interface UserAssetHistoryProps {
-  assets: Asset[];
+  assets: UserAssetHistoryItem[];
   viewMode?: 'admin' | 'employee';
 }
 

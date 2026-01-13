@@ -82,18 +82,26 @@ describe('Depreciation Cron Job', () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('Depreciation Processing', () => {
-    const mockOrganizations = [
+    interface MockOrganization {
+      id: string;
+      slug: string;
+      name: string;
+    }
+
+    const mockOrganizations: MockOrganization[] = [
       { id: 'org-1', slug: 'company-a', name: 'Company A' },
       { id: 'org-2', slug: 'company-b', name: 'Company B' },
     ];
 
     it('should process all organizations', async () => {
-      mockPrismaOrganization.findMany.mockResolvedValue(mockOrganizations);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Mock data with minimal fields
+      mockPrismaOrganization.findMany.mockResolvedValue(mockOrganizations as any);
       mockRunDepreciation.mockResolvedValue({
         totalAssets: 10,
         processed: 8,
         skipped: 2,
         failed: 0,
+        results: [],
       });
 
       const orgs = await mockPrismaOrganization.findMany({
@@ -112,12 +120,12 @@ describe('Depreciation Cron Job', () => {
     });
 
     it('should aggregate results across organizations', async () => {
-      const results = [
-        { totalAssets: 10, processed: 8, skipped: 2, failed: 0 },
-        { totalAssets: 5, processed: 5, skipped: 0, failed: 0 },
+      const orgResults = [
+        { totalAssets: 10, processed: 8, skipped: 2, failed: 0, results: [] },
+        { totalAssets: 5, processed: 5, skipped: 0, failed: 0, results: [] },
       ];
 
-      const totals = results.reduce(
+      const totals = orgResults.reduce(
         (acc, r) => ({
           organizations: acc.organizations + 1,
           totalAssets: acc.totalAssets + r.totalAssets,
@@ -136,16 +144,26 @@ describe('Depreciation Cron Job', () => {
     });
 
     it('should handle organization processing errors gracefully', async () => {
-      mockPrismaOrganization.findMany.mockResolvedValue(mockOrganizations);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Mock data with minimal fields
+      mockPrismaOrganization.findMany.mockResolvedValue(mockOrganizations as any);
       mockRunDepreciation
-        .mockResolvedValueOnce({ totalAssets: 10, processed: 8, skipped: 2, failed: 0 })
+        .mockResolvedValueOnce({ totalAssets: 10, processed: 8, skipped: 2, failed: 0, results: [] })
         .mockRejectedValueOnce(new Error('Database connection failed'));
 
       const orgs = await mockPrismaOrganization.findMany({
         select: { id: true, slug: true, name: true },
       });
 
-      const results: any[] = [];
+      interface DepreciationResult {
+        organizationSlug: string;
+        totalAssets: number;
+        processed: number;
+        skipped: number;
+        failed: number;
+        error?: string;
+      }
+
+      const results: DepreciationResult[] = [];
       for (const org of orgs) {
         try {
           const result = await mockRunDepreciation(org.id, new Date());
@@ -177,6 +195,7 @@ describe('Depreciation Cron Job', () => {
         processed: 5,
         skipped: 0,
         failed: 0,
+        results: [],
       });
 
       await mockRunDepreciation('org-1', customDate);
@@ -191,6 +210,7 @@ describe('Depreciation Cron Job', () => {
         processed: 5,
         skipped: 0,
         failed: 0,
+        results: [],
       });
 
       await mockRunDepreciation('org-1', now);
@@ -205,10 +225,15 @@ describe('Depreciation Cron Job', () => {
 
   describe('Health Check (GET)', () => {
     it('should return assets with depreciation configured', async () => {
+      interface GroupByResult {
+        tenantId: string;
+        _count: number;
+      }
+
       mockPrismaAsset.groupBy.mockResolvedValue([
         { tenantId: 'org-1', _count: 10 },
         { tenantId: 'org-2', _count: 5 },
-      ] as any);
+      ] as unknown as never);
 
       const stats = await mockPrismaAsset.groupBy({
         by: ['tenantId'],
@@ -220,8 +245,9 @@ describe('Depreciation Cron Job', () => {
         _count: true,
       });
 
-      expect(stats.length).toBe(2);
-      expect(stats.reduce((acc: number, s: any) => acc + s._count, 0)).toBe(15);
+      const typedStats = stats as unknown as GroupByResult[];
+      expect(typedStats.length).toBe(2);
+      expect(typedStats.reduce((acc: number, s: GroupByResult) => acc + s._count, 0)).toBe(15);
     });
 
     it('should return ready status', () => {
@@ -442,7 +468,7 @@ describe('Backup Cron Job', () => {
         'token',
       ];
 
-      const redactSensitiveData = (data: Record<string, any>): Record<string, any> => {
+      const redactSensitiveData = (data: Record<string, unknown>): Record<string, unknown> => {
         const redacted = { ...data };
         for (const key of Object.keys(redacted)) {
           if (sensitiveFields.some((f) => key.toLowerCase().includes(f.toLowerCase()))) {

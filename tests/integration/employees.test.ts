@@ -10,6 +10,20 @@ import { prisma } from '@/lib/core/prisma';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+  count: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
 describe('Employees API Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -94,7 +108,7 @@ describe('Employees API Tests', () => {
         createMockEmployee({ id: 'emp-2', name: 'Employee 2' }),
       ];
 
-      const mockPrismaUser = prisma.user as any;
+      const mockPrismaUser = getMockedModel(prisma.user);
       mockPrismaUser.findMany.mockResolvedValue(mockEmployees);
       mockPrismaUser.count.mockResolvedValue(mockEmployees.length);
 
@@ -299,7 +313,7 @@ describe('Employees API Tests', () => {
       const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
       mockGetServerSession.mockResolvedValue(createMockSession(Role.ADMIN, 'admin-123'));
 
-      const mockPrismaUser = prisma.user as any;
+      const mockPrismaUser = getMockedModel(prisma.user);
       mockPrismaUser.findUnique.mockResolvedValue(createMockEmployee());
 
       const result = await mockPrismaUser.findUnique({ where: { id: 'user-123' } });
@@ -307,7 +321,7 @@ describe('Employees API Tests', () => {
     });
 
     it('should return 404 if employee not found', async () => {
-      const mockPrismaUser = prisma.user as any;
+      const mockPrismaUser = getMockedModel(prisma.user);
       mockPrismaUser.findUnique.mockResolvedValue(null);
 
       const result = await mockPrismaUser.findUnique({ where: { id: 'nonexistent' } });
@@ -374,7 +388,7 @@ describe('Employees API Tests', () => {
         licenseExpiry: inTwoWeeks,
       });
 
-      const documentTypes = ['QID', 'Passport', 'Health Card', 'Driving License'];
+      const _documentTypes = ['QID', 'Passport', 'Health Card', 'Driving License'];
       const expiringDocs: string[] = [];
 
       if (hrProfile.qidExpiry && hrProfile.qidExpiry <= new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000)) {

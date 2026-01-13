@@ -40,32 +40,30 @@ export async function sendEmail({ to, subject, text, html, from }: EmailOptions)
   const toAddresses = Array.isArray(to) ? to : [to];
 
   try {
-    // Build email payload - at least text or html must be provided
-    const emailPayload: {
-      from: string;
-      to: string[];
-      subject: string;
-      text?: string;
-      html?: string;
-    } = {
+    const resend = getResend();
+    if (!resend) {
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    // Build email payload - Resend requires at least text or html
+    // We explicitly type the payload to match Resend's CreateEmailOptions
+    const basePayload = {
       from: fromAddress,
       to: toAddresses,
       subject,
     };
 
-    if (text) emailPayload.text = text;
-    if (html) emailPayload.html = html;
+    // Determine content: prefer html if provided, fallback to text, then subject
+    const emailContent = html
+      ? { html, text }  // Include both if html is provided
+      : text
+        ? { text }      // Just text if provided
+        : { text: subject }; // Fallback to subject as text
 
-    // Fallback to text if neither provided
-    if (!text && !html) {
-      emailPayload.text = subject;
-    }
-
-    const resend = getResend();
-    if (!resend) {
-      return { success: false, error: 'Email service not configured' };
-    }
-    const { data, error } = await resend.emails.send(emailPayload as any);
+    const { data, error } = await resend.emails.send({
+      ...basePayload,
+      ...emailContent,
+    });
 
     if (error) {
       console.error('[Email] Resend API error:', JSON.stringify(error));

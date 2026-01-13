@@ -22,8 +22,6 @@ import {
   Check,
   X,
   Calendar,
-  Clock,
-  ExternalLink,
   ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -46,14 +44,6 @@ interface MyApprovalsClientProps {
     ASSET_REQUEST: ApprovalItem[];
   };
 }
-
-const ROLE_LABELS: Record<string, string> = {
-  MANAGER: 'Manager',
-  HR_MANAGER: 'HR Manager',
-  FINANCE_MANAGER: 'Finance Manager',
-  DIRECTOR: 'Director',
-  ADMIN: 'Admin',
-};
 
 const MODULE_CONFIG = {
   LEAVE_REQUEST: {

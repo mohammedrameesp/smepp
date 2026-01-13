@@ -10,6 +10,24 @@ import { OrgRole } from '@prisma/client';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  updateMany: jest.Mock;
+  delete: jest.Mock;
+  deleteMany: jest.Mock;
+  count: jest.Mock;
+  upsert: jest.Mock;
+  aggregate: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
 describe('Admin API Tests', () => {
   const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 
@@ -51,7 +69,7 @@ describe('Admin API Tests', () => {
     it('should return organization details for admin', async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession);
 
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findUnique.mockResolvedValue({
         id: 'org-123',
         name: 'Test Organization',
@@ -70,7 +88,7 @@ describe('Admin API Tests', () => {
     it('should update organization settings', async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession);
 
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.update.mockResolvedValue({
         id: 'org-123',
         name: 'Updated Organization',
@@ -98,7 +116,7 @@ describe('Admin API Tests', () => {
     it('should return team members for authenticated admin', async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession);
 
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findMany.mockResolvedValue([
         { id: 'member-1', email: 'user1@example.com', role: 'ADMIN', status: 'ACTIVE' },
         { id: 'member-2', email: 'user2@example.com', role: 'MEMBER', status: 'ACTIVE' },
@@ -118,7 +136,7 @@ describe('Admin API Tests', () => {
     });
 
     it('should support role filtering', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findMany.mockResolvedValue([
         { id: 'member-1', email: 'admin@example.com', role: 'ADMIN' },
       ]);
@@ -134,7 +152,7 @@ describe('Admin API Tests', () => {
     it('should invite new team member', async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession);
 
-      const mockInvitation = prisma.organizationInvitation as any;
+      const mockInvitation = getMockedModel(prisma.organizationInvitation);
       mockInvitation.create.mockResolvedValue({
         id: 'invite-123',
         email: 'newmember@example.com',
@@ -155,7 +173,7 @@ describe('Admin API Tests', () => {
     });
 
     it('should reject duplicate invitations', async () => {
-      const mockInvitation = prisma.organizationInvitation as any;
+      const mockInvitation = getMockedModel(prisma.organizationInvitation);
       mockInvitation.findFirst.mockResolvedValue({
         id: 'invite-existing',
         email: 'existing@example.com',
@@ -168,7 +186,7 @@ describe('Admin API Tests', () => {
     });
 
     it('should check existing team members', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findFirst.mockResolvedValue({
         id: 'member-existing',
         email: 'existing@example.com',
@@ -185,7 +203,7 @@ describe('Admin API Tests', () => {
     it('should return team member details', async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession);
 
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findFirst.mockResolvedValue({
         id: 'member-123',
         email: 'member@example.com',
@@ -204,7 +222,7 @@ describe('Admin API Tests', () => {
     });
 
     it('should return 404 for non-existent member', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findFirst.mockResolvedValue(null);
 
       const member = await mockTeamMember.findFirst({
@@ -218,7 +236,7 @@ describe('Admin API Tests', () => {
     it('should update team member', async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession);
 
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.update.mockResolvedValue({
         id: 'member-123',
         role: 'ADMIN',
@@ -250,7 +268,7 @@ describe('Admin API Tests', () => {
     it('should remove team member (soft delete)', async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession);
 
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.update.mockResolvedValue({
         id: 'member-123',
         isDeleted: true,
@@ -271,7 +289,7 @@ describe('Admin API Tests', () => {
     });
 
     it('should prevent owner from being deleted', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findFirst.mockResolvedValue({
         id: 'owner-123',
         orgRole: 'OWNER',
@@ -285,7 +303,7 @@ describe('Admin API Tests', () => {
 
   describe('POST /api/admin/team/[memberId]/resend', () => {
     it('should resend invitation email', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findFirst.mockResolvedValue({
         id: 'member-123',
         email: 'pending@example.com',
@@ -305,7 +323,7 @@ describe('Admin API Tests', () => {
 
   describe('GET /api/admin/team/check-email', () => {
     it('should check if email is available', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findFirst.mockResolvedValue(null);
 
       const existing = await mockTeamMember.findFirst({
@@ -315,7 +333,7 @@ describe('Admin API Tests', () => {
     });
 
     it('should check pending invitations', async () => {
-      const mockInvitation = prisma.organizationInvitation as any;
+      const mockInvitation = getMockedModel(prisma.organizationInvitation);
       mockInvitation.findFirst.mockResolvedValue({
         id: 'invite-123',
         email: 'pending@example.com',
@@ -330,7 +348,7 @@ describe('Admin API Tests', () => {
 
   describe('GET /api/admin/team/invitations', () => {
     it('should list pending invitations', async () => {
-      const mockInvitation = prisma.organizationInvitation as any;
+      const mockInvitation = getMockedModel(prisma.organizationInvitation);
       mockInvitation.findMany.mockResolvedValue([
         { id: 'invite-1', email: 'pending1@example.com', status: 'PENDING' },
         { id: 'invite-2', email: 'pending2@example.com', status: 'PENDING' },
@@ -345,7 +363,7 @@ describe('Admin API Tests', () => {
 
   describe('DELETE /api/admin/team/invitations/[id]', () => {
     it('should cancel pending invitation', async () => {
-      const mockInvitation = prisma.organizationInvitation as any;
+      const mockInvitation = getMockedModel(prisma.organizationInvitation);
       mockInvitation.delete.mockResolvedValue({ id: 'invite-123' });
 
       const result = await mockInvitation.delete({ where: { id: 'invite-123' } });
@@ -355,7 +373,7 @@ describe('Admin API Tests', () => {
 
   describe('GET /api/admin/permissions', () => {
     it('should return role permissions', async () => {
-      const mockRolePermission = prisma.rolePermission as any;
+      const mockRolePermission = getMockedModel(prisma.rolePermission);
       mockRolePermission.findMany.mockResolvedValue([
         { role: 'MANAGER', permission: 'leave:approve' },
         { role: 'MANAGER', permission: 'assets:view' },
@@ -370,7 +388,7 @@ describe('Admin API Tests', () => {
 
   describe('POST /api/admin/permissions', () => {
     it('should update role permissions', async () => {
-      const mockRolePermission = prisma.rolePermission as any;
+      const mockRolePermission = getMockedModel(prisma.rolePermission);
       mockRolePermission.upsert.mockResolvedValue({
         role: 'MANAGER',
         permission: 'payroll:view',
@@ -394,7 +412,7 @@ describe('Admin API Tests', () => {
 
   describe('GET /api/admin/change-requests', () => {
     it('should list profile change requests', async () => {
-      const mockChangeRequest = prisma.profileChangeRequest as any;
+      const mockChangeRequest = getMockedModel(prisma.profileChangeRequest);
       mockChangeRequest.findMany.mockResolvedValue([
         {
           id: 'cr-1',
@@ -415,7 +433,7 @@ describe('Admin API Tests', () => {
 
   describe('POST /api/admin/change-requests/[id]', () => {
     it('should approve change request', async () => {
-      const mockChangeRequest = prisma.profileChangeRequest as any;
+      const mockChangeRequest = getMockedModel(prisma.profileChangeRequest);
       mockChangeRequest.update.mockResolvedValue({
         id: 'cr-123',
         status: 'APPROVED',
@@ -436,7 +454,7 @@ describe('Admin API Tests', () => {
     });
 
     it('should reject change request with reason', async () => {
-      const mockChangeRequest = prisma.profileChangeRequest as any;
+      const mockChangeRequest = getMockedModel(prisma.profileChangeRequest);
       mockChangeRequest.update.mockResolvedValue({
         id: 'cr-123',
         status: 'REJECTED',
@@ -457,7 +475,7 @@ describe('Admin API Tests', () => {
 
   describe('GET /api/admin/ai-usage', () => {
     it('should return AI usage statistics', async () => {
-      const mockAIChatUsage = prisma.aIChatUsage as any;
+      const mockAIChatUsage = getMockedModel(prisma.aIChatUsage);
       mockAIChatUsage.aggregate.mockResolvedValue({
         _sum: { promptTokens: 10000, completionTokens: 5000, costUsd: 0.5 },
       });
@@ -489,9 +507,9 @@ describe('Admin API Tests', () => {
     it('should export all organization data', async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession);
 
-      const mockAsset = prisma.asset as any;
-      const mockSubscription = prisma.subscription as any;
-      const mockTeamMember = prisma.teamMember as any;
+      const mockAsset = getMockedModel(prisma.asset);
+      const mockSubscription = getMockedModel(prisma.subscription);
+      const mockTeamMember = getMockedModel(prisma.teamMember);
 
       mockAsset.findMany.mockResolvedValue([{ id: 'asset-1' }]);
       mockSubscription.findMany.mockResolvedValue([{ id: 'sub-1' }]);
@@ -517,7 +535,7 @@ describe('Admin API Tests', () => {
 
   describe('POST /api/admin/sync-asset-dates', () => {
     it('should sync asset assignment dates', async () => {
-      const mockAsset = prisma.asset as any;
+      const mockAsset = getMockedModel(prisma.asset);
       mockAsset.findMany.mockResolvedValue([
         { id: 'asset-1', assignedMemberId: 'member-1', assignmentDate: null },
       ]);
@@ -532,7 +550,7 @@ describe('Admin API Tests', () => {
 
   describe('Multi-tenant Isolation', () => {
     it('should filter all queries by tenantId', async () => {
-      const mockTeamMember = prisma.teamMember as any;
+      const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findMany.mockResolvedValue([]);
 
       // Attempting to access another tenant's data should return empty

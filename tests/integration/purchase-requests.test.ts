@@ -10,6 +10,42 @@ import { prisma } from '@/lib/core/prisma';
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  createMany: jest.Mock;
+  update: jest.Mock;
+  delete: jest.Mock;
+  deleteMany: jest.Mock;
+  count: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
+// Type for mock implementation arguments
+interface MockFindManyArgs {
+  where?: {
+    requesterId?: string;
+    status?: string;
+  };
+}
+
+// Type for request with requesterId
+interface PurchaseRequestWithRequester {
+  id: string;
+  requesterId: string;
+}
+
+// Type for request with status
+interface PurchaseRequestWithStatus {
+  id: string;
+  status: string;
+}
+
 describe('Purchase Requests API Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -55,7 +91,7 @@ describe('Purchase Requests API Tests', () => {
         },
       ];
 
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
       mockPrismaPR.findMany.mockResolvedValue(mockRequests);
 
       const result = await mockPrismaPR.findMany();
@@ -76,14 +112,14 @@ describe('Purchase Requests API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       // Employee should only see their own requests
-      const mockPrismaPR = prisma.purchaseRequest as any;
-      mockPrismaPR.findMany.mockImplementation(async (args: any) => {
-        const requests = [
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
+      mockPrismaPR.findMany.mockImplementation(async (args: MockFindManyArgs) => {
+        const requests: PurchaseRequestWithRequester[] = [
           { id: 'pr-1', requesterId: 'user-123' },
           { id: 'pr-2', requesterId: 'user-456' },
         ];
         if (args?.where?.requesterId) {
-          return requests.filter(r => r.requesterId === args.where.requesterId);
+          return requests.filter(r => r.requesterId === args.where?.requesterId);
         }
         return requests;
       });
@@ -109,7 +145,7 @@ describe('Purchase Requests API Tests', () => {
 
       mockGetServerSession.mockResolvedValue(mockSession);
 
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
       mockPrismaPR.findMany.mockResolvedValue([
         { id: 'pr-1', requesterId: 'user-123' },
         { id: 'pr-2', requesterId: 'user-456' },
@@ -121,7 +157,7 @@ describe('Purchase Requests API Tests', () => {
     });
 
     it('should support status filtering', async () => {
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
 
       const allRequests = [
         { id: 'pr-1', status: 'PENDING' },
@@ -130,9 +166,9 @@ describe('Purchase Requests API Tests', () => {
         { id: 'pr-4', status: 'REJECTED' },
       ];
 
-      mockPrismaPR.findMany.mockImplementation(async (args: any) => {
+      mockPrismaPR.findMany.mockImplementation(async (args: MockFindManyArgs) => {
         if (args?.where?.status) {
-          return allRequests.filter(r => r.status === args.where.status);
+          return allRequests.filter((r: PurchaseRequestWithStatus) => r.status === args.where?.status);
         }
         return allRequests;
       });
@@ -164,7 +200,7 @@ describe('Purchase Requests API Tests', () => {
     });
 
     it('should include items in response', async () => {
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
 
       mockPrismaPR.findMany.mockResolvedValue([
         {
@@ -219,7 +255,7 @@ describe('Purchase Requests API Tests', () => {
         ],
       };
 
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
       mockPrismaPR.create.mockResolvedValue({
         id: 'pr-new',
         referenceNumber: 'BCE-PR-2412-001',
@@ -235,7 +271,7 @@ describe('Purchase Requests API Tests', () => {
     });
 
     it('should generate unique reference number', async () => {
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
 
       mockPrismaPR.count.mockResolvedValue(5);
 
@@ -281,7 +317,7 @@ describe('Purchase Requests API Tests', () => {
     });
 
     it('should create items with request', async () => {
-      const mockPrismaPRItem = prisma.purchaseRequestItem as any;
+      const mockPrismaPRItem = getMockedModel(prisma.purchaseRequestItem);
 
       mockPrismaPRItem.createMany.mockResolvedValue({ count: 3 });
 
@@ -323,7 +359,7 @@ describe('Purchase Requests API Tests', () => {
 
       mockGetServerSession.mockResolvedValue(mockSession);
 
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
       mockPrismaPR.findUnique.mockResolvedValue({
         id: 'pr-1',
         requesterId: 'user-123',
@@ -349,7 +385,7 @@ describe('Purchase Requests API Tests', () => {
 
       mockGetServerSession.mockResolvedValue(mockSession);
 
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
       mockPrismaPR.findUnique.mockResolvedValue({
         id: 'pr-1',
         requesterId: 'user-456', // Different user
@@ -381,7 +417,7 @@ describe('Purchase Requests API Tests', () => {
     });
 
     it('should return 404 if not found', async () => {
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
       mockPrismaPR.findUnique.mockResolvedValue(null);
 
       const result = await mockPrismaPR.findUnique({ where: { id: 'nonexistent' } });
@@ -392,7 +428,7 @@ describe('Purchase Requests API Tests', () => {
   // ===== PUT /api/purchase-requests/[id] =====
   describe('PUT /api/purchase-requests/[id]', () => {
     it('should only allow update when PENDING', async () => {
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
 
       mockPrismaPR.findUnique.mockResolvedValue({
         id: 'pr-1',
@@ -405,7 +441,7 @@ describe('Purchase Requests API Tests', () => {
     });
 
     it('should reject update when not PENDING', async () => {
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
 
       mockPrismaPR.findUnique.mockResolvedValue({
         id: 'pr-1',
@@ -430,7 +466,7 @@ describe('Purchase Requests API Tests', () => {
 
       mockGetServerSession.mockResolvedValue(mockSession);
 
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
       mockPrismaPR.findUnique.mockResolvedValue({
         id: 'pr-1',
         status: 'PENDING',
@@ -444,7 +480,7 @@ describe('Purchase Requests API Tests', () => {
     });
 
     it('should update request fields', async () => {
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
 
       mockPrismaPR.update.mockResolvedValue({
         id: 'pr-1',
@@ -462,7 +498,7 @@ describe('Purchase Requests API Tests', () => {
     });
 
     it('should update items', async () => {
-      const mockPrismaPRItem = prisma.purchaseRequestItem as any;
+      const mockPrismaPRItem = getMockedModel(prisma.purchaseRequestItem);
 
       mockPrismaPRItem.deleteMany.mockResolvedValue({ count: 2 });
       mockPrismaPRItem.createMany.mockResolvedValue({ count: 3 });
@@ -488,7 +524,7 @@ describe('Purchase Requests API Tests', () => {
   // ===== DELETE /api/purchase-requests/[id] =====
   describe('DELETE /api/purchase-requests/[id]', () => {
     it('should only allow delete when PENDING', async () => {
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
 
       mockPrismaPR.findUnique.mockResolvedValue({
         id: 'pr-1',
@@ -501,7 +537,7 @@ describe('Purchase Requests API Tests', () => {
     });
 
     it('should reject delete when not PENDING', async () => {
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
 
       mockPrismaPR.findUnique.mockResolvedValue({
         id: 'pr-1',
@@ -514,8 +550,8 @@ describe('Purchase Requests API Tests', () => {
     });
 
     it('should delete request and items', async () => {
-      const mockPrismaPR = prisma.purchaseRequest as any;
-      const mockPrismaPRItem = prisma.purchaseRequestItem as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
+      const mockPrismaPRItem = getMockedModel(prisma.purchaseRequestItem);
 
       mockPrismaPRItem.deleteMany.mockResolvedValue({ count: 3 });
       mockPrismaPR.delete.mockResolvedValue({ id: 'pr-1' });
@@ -564,7 +600,7 @@ describe('Purchase Requests API Tests', () => {
 
       mockGetServerSession.mockResolvedValue(mockSession);
 
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
       mockPrismaPR.update.mockResolvedValue({
         id: 'pr-1',
         status: 'APPROVED',
@@ -604,7 +640,7 @@ describe('Purchase Requests API Tests', () => {
     });
 
     it('should add review notes when rejecting', async () => {
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
 
       mockPrismaPR.update.mockResolvedValue({
         id: 'pr-1',
@@ -624,7 +660,7 @@ describe('Purchase Requests API Tests', () => {
     });
 
     it('should add completion notes when completing', async () => {
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
 
       mockPrismaPR.update.mockResolvedValue({
         id: 'pr-1',
@@ -665,7 +701,7 @@ describe('Purchase Requests API Tests', () => {
     });
 
     it('should export requests with items', async () => {
-      const mockPrismaPR = prisma.purchaseRequest as any;
+      const mockPrismaPR = getMockedModel(prisma.purchaseRequest);
 
       mockPrismaPR.findMany.mockResolvedValue([
         {

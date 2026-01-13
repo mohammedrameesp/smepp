@@ -40,9 +40,6 @@ import {
   User,
   Clock,
   FileText,
-  MapPin,
-  Settings,
-  Tag,
 } from 'lucide-react';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';

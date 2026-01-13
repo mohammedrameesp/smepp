@@ -14,6 +14,34 @@ jest.mock('@/lib/ai/input-sanitizer');
 jest.mock('@/lib/ai/audit-logger');
 jest.mock('@/lib/ai/budget-tracker');
 
+// Type for mocked Prisma model with common methods
+interface MockPrismaModel {
+  findUnique: jest.Mock;
+  findFirst: jest.Mock;
+  findMany: jest.Mock;
+  create: jest.Mock;
+  update: jest.Mock;
+  upsert: jest.Mock;
+  delete: jest.Mock;
+  deleteMany: jest.Mock;
+  count: jest.Mock;
+}
+
+// Helper to get mocked Prisma model
+const getMockedModel = (model: unknown): MockPrismaModel => model as MockPrismaModel;
+
+// Type for conversation in GDPR delete
+interface ConversationId {
+  id: string;
+}
+
+// Type for tenant-scoped result
+interface TenantScopedResult {
+  id: number;
+  tenantId: string;
+  name: string;
+}
+
 describe('Chat API Tests', () => {
   const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
 
@@ -89,7 +117,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should check if AI chat is enabled for organization', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findUnique.mockResolvedValue({
         id: 'org-123',
         aiChatEnabled: true,
@@ -105,7 +133,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should reject when AI chat is disabled', async () => {
-      const mockOrg = prisma.organization as any;
+      const mockOrg = getMockedModel(prisma.organization);
       mockOrg.findUnique.mockResolvedValue({
         id: 'org-123',
         aiChatEnabled: false,
@@ -131,7 +159,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should create new conversation for first message', async () => {
-      const mockConversation = prisma.chatConversation as any;
+      const mockConversation = getMockedModel(prisma.chatConversation);
       mockConversation.create.mockResolvedValue({
         id: 'conv-new',
         tenantId: 'org-123',
@@ -153,7 +181,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should store user message in conversation', async () => {
-      const mockMessage = prisma.chatMessage as any;
+      const mockMessage = getMockedModel(prisma.chatMessage);
       mockMessage.create.mockResolvedValue({
         id: 'msg-new',
         conversationId: 'conv-1',
@@ -174,7 +202,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should store assistant response in conversation', async () => {
-      const mockMessage = prisma.chatMessage as any;
+      const mockMessage = getMockedModel(prisma.chatMessage);
       mockMessage.create.mockResolvedValue({
         id: 'msg-response',
         conversationId: 'conv-1',
@@ -196,7 +224,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should record function calls from AI', async () => {
-      const mockMessage = prisma.chatMessage as any;
+      const mockMessage = getMockedModel(prisma.chatMessage);
       const functionCalls = [
         { name: 'getLeaveBalance', arguments: { userId: 'user-123' }, result: { balance: 15 } },
       ];
@@ -227,7 +255,7 @@ describe('Chat API Tests', () => {
 
   describe('GET /api/chat', () => {
     it('should return list of user\'s conversations', async () => {
-      const mockConversation = prisma.chatConversation as any;
+      const mockConversation = getMockedModel(prisma.chatConversation);
       mockConversation.findMany.mockResolvedValue(mockConversations);
 
       const conversations = await mockConversation.findMany({
@@ -243,7 +271,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should return messages for specific conversation', async () => {
-      const mockMessage = prisma.chatMessage as any;
+      const mockMessage = getMockedModel(prisma.chatMessage);
       mockMessage.findMany.mockResolvedValue(mockMessages);
 
       const messages = await mockMessage.findMany({
@@ -257,7 +285,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should verify conversation belongs to user', async () => {
-      const mockConversation = prisma.chatConversation as any;
+      const mockConversation = getMockedModel(prisma.chatConversation);
       mockConversation.findFirst.mockResolvedValue(mockConversations[0]);
 
       const conversation = await mockConversation.findFirst({
@@ -272,7 +300,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should return 404 for non-existent conversation', async () => {
-      const mockConversation = prisma.chatConversation as any;
+      const mockConversation = getMockedModel(prisma.chatConversation);
       mockConversation.findFirst.mockResolvedValue(null);
 
       const conversation = await mockConversation.findFirst({
@@ -286,7 +314,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should support pagination with cursor', async () => {
-      const mockMessage = prisma.chatMessage as any;
+      const mockMessage = getMockedModel(prisma.chatMessage);
       mockMessage.findMany.mockResolvedValue([mockMessages[1]]);
 
       const messages = await mockMessage.findMany({
@@ -303,8 +331,8 @@ describe('Chat API Tests', () => {
 
   describe('DELETE /api/chat', () => {
     it('should delete conversation and all messages', async () => {
-      const mockConversation = prisma.chatConversation as any;
-      const mockMessage = prisma.chatMessage as any;
+      const mockConversation = getMockedModel(prisma.chatConversation);
+      const mockMessage = getMockedModel(prisma.chatMessage);
 
       mockConversation.findFirst.mockResolvedValue(mockConversations[0]);
       mockMessage.deleteMany.mockResolvedValue({ count: 10 });
@@ -330,7 +358,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should prevent deleting another user\'s conversation', async () => {
-      const mockConversation = prisma.chatConversation as any;
+      const mockConversation = getMockedModel(prisma.chatConversation);
       mockConversation.findFirst.mockResolvedValue(null);
 
       const conversation = await mockConversation.findFirst({
@@ -356,8 +384,8 @@ describe('Chat API Tests', () => {
 
   describe('POST /api/chat/gdpr-delete', () => {
     it('should delete all user\'s chat data', async () => {
-      const mockConversation = prisma.chatConversation as any;
-      const mockMessage = prisma.chatMessage as any;
+      const mockConversation = getMockedModel(prisma.chatConversation);
+      const mockMessage = getMockedModel(prisma.chatMessage);
 
       mockConversation.findMany.mockResolvedValue(mockConversations);
       mockMessage.deleteMany.mockResolvedValue({ count: 50 });
@@ -372,7 +400,7 @@ describe('Chat API Tests', () => {
       // Delete all messages
       const deletedMessages = await mockMessage.deleteMany({
         where: {
-          conversationId: { in: conversations.map((c: any) => c.id) },
+          conversationId: { in: conversations.map((c: ConversationId) => c.id) },
         },
       });
 
@@ -386,7 +414,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should delete audit logs for GDPR compliance', async () => {
-      const mockAuditLog = prisma.aIChatAuditLog as any;
+      const mockAuditLog = getMockedModel(prisma.aIChatAuditLog);
       mockAuditLog.deleteMany.mockResolvedValue({ count: 100 });
 
       const result = await mockAuditLog.deleteMany({
@@ -495,7 +523,7 @@ describe('Chat API Tests', () => {
 
   describe('Audit Logging', () => {
     it('should log chat interactions for auditing', async () => {
-      const mockAuditLog = prisma.aIChatAuditLog as any;
+      const mockAuditLog = getMockedModel(prisma.aIChatAuditLog);
       mockAuditLog.create.mockResolvedValue({
         id: 'audit-1',
         tenantId: 'org-123',
@@ -523,7 +551,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should track function calls in audit', async () => {
-      const mockAuditLog = prisma.aIChatAuditLog as any;
+      const mockAuditLog = getMockedModel(prisma.aIChatAuditLog);
       mockAuditLog.create.mockResolvedValue({
         id: 'audit-2',
         tenantId: 'org-123',
@@ -545,7 +573,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should include IP and user agent for security', async () => {
-      const mockAuditLog = prisma.aIChatAuditLog as any;
+      const mockAuditLog = getMockedModel(prisma.aIChatAuditLog);
       mockAuditLog.create.mockResolvedValue({
         id: 'audit-3',
         tenantId: 'org-123',
@@ -571,7 +599,7 @@ describe('Chat API Tests', () => {
 
   describe('Token Budget Tracking', () => {
     it('should track token usage per organization', async () => {
-      const mockUsage = prisma.aIChatUsage as any;
+      const mockUsage = getMockedModel(prisma.aIChatUsage);
       mockUsage.upsert.mockResolvedValue({
         id: 'usage-1',
         tenantId: 'org-123',
@@ -624,7 +652,7 @@ describe('Chat API Tests', () => {
 
   describe('Tenant Isolation', () => {
     it('should only access conversations within tenant', async () => {
-      const mockConversation = prisma.chatConversation as any;
+      const mockConversation = getMockedModel(prisma.chatConversation);
       mockConversation.findMany.mockResolvedValue(mockConversations);
 
       await mockConversation.findMany({
@@ -644,7 +672,7 @@ describe('Chat API Tests', () => {
     });
 
     it('should filter AI function results by tenant', () => {
-      const filterResultsByTenant = (results: any[], tenantId: string): any[] => {
+      const filterResultsByTenant = (results: TenantScopedResult[], tenantId: string): TenantScopedResult[] => {
         return results.filter((r) => r.tenantId === tenantId);
       };
 

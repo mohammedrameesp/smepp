@@ -10,7 +10,7 @@ import { generateLeaveRequestData } from './utils/test-data';
 test.describe('Leave Management', () => {
   let leaveData: ReturnType<typeof generateLeaveRequestData>;
 
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async () => {
     leaveData = generateLeaveRequestData();
   });
 

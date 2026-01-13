@@ -6,7 +6,6 @@
  */
 
 import { test, expect, Page, ConsoleMessage } from '@playwright/test';
-import { loginAs, TEST_USERS } from './utils/auth';
 
 // Collect console errors during page navigation
 interface PageError {
@@ -65,7 +64,7 @@ async function visitPageAndCollectErrors(
     if (options.waitForSelector) {
       await page.waitForSelector(options.waitForSelector, { timeout: 5000 }).catch(() => {});
     }
-  } catch (e) {
+  } catch {
     // Navigation timeout or error - still check for console errors
   }
 }

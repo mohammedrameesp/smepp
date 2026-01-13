@@ -27,15 +27,15 @@
 
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { AssetRequestStatusBadge, AssetRequestTypeBadge, AssetAcceptDialog } from '@/features/asset-requests';
-import { formatDate, formatDateTime } from '@/lib/core/datetime';
-import { ArrowLeft, Package, User, Clock, FileText, CheckCircle, XCircle, AlertCircle, Info } from 'lucide-react';
+import { formatDateTime } from '@/lib/core/datetime';
+import Link from 'next/link';
+import { ArrowLeft, Package, User, Clock, FileText, XCircle, AlertCircle, CheckCircle } from 'lucide-react';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
@@ -102,11 +102,7 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
   const [dialogInitialMode, setDialogInitialMode] = useState<'view' | 'accept' | 'decline'>('view');
   const [isCancelling, setIsCancelling] = useState(false);
 
-  useEffect(() => {
-    fetchRequest();
-  }, [id]);
-
-  const fetchRequest = async () => {
+  const fetchRequest = useCallback(async () => {
     try {
       const response = await fetch(`/api/asset-requests/${id}`);
       if (!response.ok) {
@@ -122,7 +118,11 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchRequest();
+  }, [fetchRequest]);
 
   const handleCancel = async () => {
     if (!confirm('Are you sure you want to cancel this request?')) return;

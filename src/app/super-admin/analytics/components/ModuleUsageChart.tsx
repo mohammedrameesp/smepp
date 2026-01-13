@@ -28,7 +28,7 @@ const MODULE_COLORS: Record<string, string> = {
   Projects: 'bg-lime-500',
 };
 
-export function ModuleUsageChart({ data, totalOrgs }: ModuleUsageChartProps) {
+export function ModuleUsageChart({ data }: ModuleUsageChartProps) {
   const maxCount = Math.max(...data.map((d) => d.count), 1);
 
   return (

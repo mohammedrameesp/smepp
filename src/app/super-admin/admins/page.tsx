@@ -9,7 +9,6 @@ import {
   Calendar,
   ShieldCheck,
   ShieldAlert,
-  MoreHorizontal,
   X,
   Loader2,
   Trash2,
@@ -50,7 +49,7 @@ export default function SuperAdminsPage() {
       if (!response.ok) throw new Error('Failed to fetch admins');
       const data = await response.json();
       setAdmins(data.superAdmins);
-    } catch (err) {
+    } catch {
       setError('Failed to load super admins');
     } finally {
       setLoading(false);

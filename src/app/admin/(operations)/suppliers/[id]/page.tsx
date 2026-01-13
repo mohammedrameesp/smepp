@@ -1,10 +1,8 @@
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Button } from '@/components/ui/button';
 import { redirect, notFound } from 'next/navigation';
 
-import Link from 'next/link';
 import {
   Building2,
   Calendar,
@@ -102,7 +100,6 @@ export default async function SupplierDetailPage({ params }: Props) {
   };
 
   const status = statusConfig[supplier.status];
-  const StatusIcon = status.icon;
 
   const statusBadgeVariant = supplier.status === 'APPROVED' ? 'success' :
     supplier.status === 'REJECTED' ? 'error' :

@@ -25,7 +25,6 @@ async function getPurchaseRequestsHandler(request: NextRequest, context: APICont
       return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
     const db = tenantPrisma as TenantPrismaClient;
-    const tenantId = tenant.tenantId;
     const userId = tenant.userId;
 
     const { searchParams } = new URL(request.url);

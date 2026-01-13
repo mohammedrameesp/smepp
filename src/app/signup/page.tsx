@@ -59,6 +59,17 @@ function SignupForm() {
   const primaryColor = branding?.primaryColor || '#0f172a';
   const orgName = branding?.organizationName || invitation?.organization?.name || 'Durj';
 
+  // Form state - must be declared before any early returns
+  const [formData, setFormData] = useState({
+    name: prefilledName || '',
+    email: prefilledEmail || '',
+    password: '',
+    confirmPassword: '',
+  });
+
+  // Password strength
+  const [passwordStrength, setPasswordStrength] = useState(0);
+
   // Fetch invitation details to get auth config
   useEffect(() => {
     async function fetchInvitation() {
@@ -80,6 +91,27 @@ function SignupForm() {
 
     fetchInvitation();
   }, [inviteToken]);
+
+  // Update fields if prefilled from URL
+  useEffect(() => {
+    if (prefilledEmail) {
+      setFormData(prev => ({ ...prev, email: prefilledEmail }));
+    }
+    if (prefilledName) {
+      setFormData(prev => ({ ...prev, name: prefilledName }));
+    }
+  }, [prefilledEmail, prefilledName]);
+
+  // Calculate password strength
+  useEffect(() => {
+    const password = formData.password;
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+    if (password.match(/[0-9]/)) strength++;
+    if (password.match(/[^a-zA-Z0-9]/)) strength++;
+    setPasswordStrength(strength);
+  }, [formData.password]);
 
   // If no invite token, show invitation-only message
   if (!inviteToken) {
@@ -131,37 +163,6 @@ function SignupForm() {
       </div>
     );
   }
-
-  const [formData, setFormData] = useState({
-    name: prefilledName || '',
-    email: prefilledEmail || '',
-    password: '',
-    confirmPassword: '',
-  });
-
-  // Password strength
-  const [passwordStrength, setPasswordStrength] = useState(0);
-
-  // Update fields if prefilled from URL
-  useEffect(() => {
-    if (prefilledEmail) {
-      setFormData(prev => ({ ...prev, email: prefilledEmail }));
-    }
-    if (prefilledName) {
-      setFormData(prev => ({ ...prev, name: prefilledName }));
-    }
-  }, [prefilledEmail, prefilledName]);
-
-  // Calculate password strength
-  useEffect(() => {
-    const password = formData.password;
-    let strength = 0;
-    if (password.length >= 8) strength++;
-    if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
-    if (password.match(/[0-9]/)) strength++;
-    if (password.match(/[^a-zA-Z0-9]/)) strength++;
-    setPasswordStrength(strength);
-  }, [formData.password]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

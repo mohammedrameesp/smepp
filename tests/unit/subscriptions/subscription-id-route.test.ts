@@ -307,7 +307,7 @@ describe('Subscription [id] Route Tests', () => {
     });
 
     it('should not create history when member stays same and no date change', () => {
-      const currentMemberId = 'member-123';
+      const _currentMemberId = 'member-123';
       const data: { serviceName: string; assignedMemberId?: string } = { serviceName: 'New Name' }; // No assignment changes
       const hasAssignmentChange = data.assignedMemberId !== undefined;
       expect(hasAssignmentChange).toBe(false);

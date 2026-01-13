@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Mail, Shield, Calendar, Image as ImageIcon, FileText, Loader2, AlertTriangle } from 'lucide-react';
+import { User, Mail, Shield, Calendar, FileText, Loader2, AlertTriangle } from 'lucide-react';
 import { formatDate } from '@/lib/core/datetime';
 import { HRProfileForm } from '@/components/domains/hr/profile';
 import { EmployeeProfileViewOnly } from '@/features/employees/components';

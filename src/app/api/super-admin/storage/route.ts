@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
  * GET /api/super-admin/storage - Get storage statistics
  * Super-admin only
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     // Get upload activity logs grouped by tenant
     // ActivityLog has action 'UPLOAD_FILE' with metadata containing fileName, fileSize, mimeType
-    const uploadLogs = await prisma.activityLog.groupBy({
+    const _uploadLogs = await prisma.activityLog.groupBy({
       by: ['tenantId'],
       where: {
         action: 'UPLOAD_FILE',

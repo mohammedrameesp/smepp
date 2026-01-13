@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { AssetStatus, BillingCycle, SubscriptionStatus, Role } from '@prisma/client';
+import { AssetStatus, BillingCycle, SubscriptionStatus, Role, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import ExcelJS from 'exceljs';
 import logger from '@/lib/core/log';
@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
 
     // Load workbook
     const workbook = new ExcelJS.Workbook();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await workbook.xlsx.load(buffer as any);
 
     const results = {
@@ -136,7 +137,8 @@ export async function POST(request: NextRequest) {
             newUserId = member?.id || null;
           }
 
-          const assetData: any = {
+          // Dynamic asset data structure for both create and update operations
+          const assetData: Record<string, unknown> = {
             type: row.getCell(3).value?.toString() || '',
             category: row.getCell(4).value?.toString() || null,
             brand: row.getCell(5).value?.toString() || null,
@@ -170,15 +172,15 @@ export async function POST(request: NextRequest) {
             if (existing) {
               asset = await prisma.asset.update({
                 where: { id: existing.id },
-                data: assetData,
+                data: assetData as Prisma.AssetUpdateInput,
               });
             } else {
-              asset = await prisma.asset.create({ data: { ...assetData, tenantId } });
+              asset = await prisma.asset.create({ data: { ...assetData, tenantId } as Prisma.AssetUncheckedCreateInput });
             }
             results.assets.updated++;
           } else {
             // Create new asset without tag
-            asset = await prisma.asset.create({ data: { ...assetData, tenantId } });
+            asset = await prisma.asset.create({ data: { ...assetData, tenantId } as Prisma.AssetUncheckedCreateInput });
             results.assets.created++;
           }
 
@@ -218,7 +220,8 @@ export async function POST(request: NextRequest) {
             newUserId = member?.id || null;
           }
 
-          const subscriptionData: any = {
+          // Dynamic subscription data structure for both create and update operations
+          const subscriptionData: Record<string, unknown> = {
             serviceName: serviceName,
             category: row.getCell(3).value?.toString() || null,
             accountId: row.getCell(4).value?.toString() || null,
@@ -248,11 +251,11 @@ export async function POST(request: NextRequest) {
           if (existingSub) {
             subscription = await prisma.subscription.update({
               where: { id: existingSub.id },
-              data: subscriptionData,
+              data: subscriptionData as Prisma.SubscriptionUpdateInput,
             });
             results.subscriptions.updated++;
           } else {
-            subscription = await prisma.subscription.create({ data: { ...subscriptionData, tenantId } });
+            subscription = await prisma.subscription.create({ data: { ...subscriptionData, tenantId } as Prisma.SubscriptionUncheckedCreateInput });
             results.subscriptions.created++;
           }
 

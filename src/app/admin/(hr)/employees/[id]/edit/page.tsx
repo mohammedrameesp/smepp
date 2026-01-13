@@ -1,19 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { User, Loader2, Shield, Calendar, ArrowLeft, Banknote } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { HRProfileForm } from '@/components/domains/hr/profile';
 import { toast } from 'sonner';
-import Link from 'next/link';
 
 interface UserInfo {
   id: string;
@@ -93,7 +91,6 @@ export default function AdminEmployeeEditPage() {
   const router = useRouter();
   const [hrProfile, setHRProfile] = useState<HRProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
@@ -107,30 +104,9 @@ export default function AdminEmployeeEditPage() {
 
   const employeeId = params?.id as string;
 
-  useEffect(() => {
-    if (employeeId) {
-      fetchHRProfile();
-      fetchEnabledModules();
-    }
-  }, [employeeId]);
-
-  const fetchEnabledModules = async () => {
+  const fetchHRProfile = useCallback(async (showLoading = true) => {
     try {
-      const response = await fetch('/api/admin/organization');
-      if (response.ok) {
-        const data = await response.json();
-        setPayrollEnabled(data.organization?.enabledModules?.includes('payroll') ?? false);
-      }
-    } catch (err) {
-      // Ignore error - payroll toggle just won't show
-    }
-  };
-
-  const fetchHRProfile = async (isRefresh = false) => {
-    try {
-      if (isRefresh) {
-        setIsRefreshing(true);
-      } else {
+      if (showLoading) {
         setIsLoading(true);
       }
       setError(null);
@@ -158,9 +134,27 @@ export default function AdminEmployeeEditPage() {
       setError(err instanceof Error ? err.message : 'Failed to load HR profile');
     } finally {
       setIsLoading(false);
-      setIsRefreshing(false);
     }
-  };
+  }, [employeeId]);
+
+  const fetchEnabledModules = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/organization');
+      if (response.ok) {
+        const data = await response.json();
+        setPayrollEnabled(data.organization?.enabledModules?.includes('payroll') ?? false);
+      }
+    } catch {
+      // Ignore error - payroll toggle just won't show
+    }
+  }, []);
+
+  useEffect(() => {
+    if (employeeId) {
+      fetchHRProfile();
+      fetchEnabledModules();
+    }
+  }, [employeeId, fetchHRProfile, fetchEnabledModules]);
 
   const updateRole = async (newRole: string) => {
     if (!newRole || newRole === hrProfile?.user?.role) return;
@@ -179,7 +173,7 @@ export default function AdminEmployeeEditPage() {
       }
 
       toast.success(`Role updated to ${newRole}`);
-      fetchHRProfile(true); // Refresh the data without showing full loading state
+      fetchHRProfile(false); // Refresh the data without showing full loading state
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update role');
       // Reset to original role on error
@@ -328,7 +322,7 @@ export default function AdminEmployeeEditPage() {
           { label: hrProfile?.user?.name || 'Employee', href: `/admin/employees/${employeeId}` },
           { label: 'Edit' },
         ]}
-        badge={hrProfile?.user?.role ? { text: hrProfile.user.role, variant: getRoleBadgeVariant(hrProfile.user.role) as any } : undefined}
+        badge={hrProfile?.user?.role ? { text: hrProfile.user.role, variant: getRoleBadgeVariant(hrProfile.user.role) as 'default' | 'success' | 'warning' | 'destructive' | 'info' | 'error' } : undefined}
       />
 
       <PageContent className="max-w-5xl">
@@ -520,7 +514,7 @@ export default function AdminEmployeeEditPage() {
             userId={employeeId} // Pass the employee ID so form saves to correct user
             onSave={() => {
               toast.success('Profile saved');
-              fetchHRProfile(true); // Refresh without showing full loading state
+              fetchHRProfile(false); // Refresh without showing full loading state
             }}
           />
         )}

@@ -41,7 +41,7 @@ interface ExportUserPDFButtonProps {
   userEmail: string;
 }
 
-export function ExportUserPDFButton({ userId, userName, userEmail }: ExportUserPDFButtonProps) {
+export function ExportUserPDFButton({ userId, userName }: ExportUserPDFButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async () => {

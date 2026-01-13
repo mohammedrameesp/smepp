@@ -13,7 +13,7 @@ import { createHash } from 'crypto';
  * 2. Anonymizes audit logs (replaces memberId with hash)
  * 3. Returns confirmation of deleted data
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
 /**
  * GET /api/chat/gdpr-delete - Get a preview of data that would be deleted
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {

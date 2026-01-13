@@ -48,7 +48,6 @@ import { prisma } from '@/lib/core/prisma';
 import {
   findApplicablePolicy,
   initializeApprovalChain,
-  getApprovalChain,
   getCurrentPendingStep,
   canUserApprove,
   processApproval,
@@ -565,7 +564,7 @@ describe('Approval Engine', () => {
         { id: 'step-1', entityType: 'LEAVE_REQUEST', entityId: 'e1', levelOrder: 1 },
       ]);
 
-      const result = await getPendingApprovalsForUser('user-1');
+      const _result = await getPendingApprovalsForUser('user-1');
 
       expect(mockPrisma.approvalStep.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
         } else {
           results.assetHistories.skipped++;
         }
-      } catch (e) {
+      } catch {
         results.assetHistories.skipped++;
       }
     }
@@ -301,14 +301,14 @@ export async function POST(request: NextRequest) {
         } else {
           results.hrProfiles.skipped++;
         }
-      } catch (e) {
+      } catch {
         results.hrProfiles.skipped++;
       }
     }
 
     // 7. Import Purchase Requests
-    // Get valid supplier IDs for this tenant
-    const validSupplierIds = new Set(
+    // Get valid supplier IDs for this tenant (kept for potential future use)
+    const _validSupplierIds = new Set(
       (await prisma.supplier.findMany({ where: { tenantId }, select: { id: true } })).map(s => s.id)
     );
 
@@ -345,7 +345,7 @@ export async function POST(request: NextRequest) {
             },
           });
           results.purchaseRequests.created++;
-        } catch (e) {
+        } catch {
           results.purchaseRequests.skipped++;
         }
       } else {
@@ -389,7 +389,7 @@ export async function POST(request: NextRequest) {
         } else {
           results.purchaseRequestItems.skipped++;
         }
-      } catch (e) {
+      } catch {
         results.purchaseRequestItems.skipped++;
       }
     }

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     let payload: ImpersonationPayload;
     try {
       payload = jwt.verify(token, JWT_SECRET) as ImpersonationPayload;
-    } catch (err) {
+    } catch {
       return NextResponse.json(
         { error: 'Invalid or expired impersonation token' },
         { status: 401 }
@@ -222,7 +222,7 @@ export async function GET(request: NextRequest) {
       startedAt: new Date(payload.iat * 1000).toISOString(),
       expiresAt: new Date(payload.exp * 1000).toISOString(),
     });
-  } catch (err) {
+  } catch {
     // Invalid or expired cookie
     return NextResponse.json({ isImpersonating: false });
   }

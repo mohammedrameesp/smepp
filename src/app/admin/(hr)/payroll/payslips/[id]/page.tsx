@@ -4,16 +4,11 @@ import { redirect, notFound } from 'next/navigation';
 
 import { prisma } from '@/lib/core/prisma';
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   User,
   Wallet,
-  Calendar,
-  Building2,
-  CreditCard,
   CheckCircle,
-  Clock,
   TrendingUp,
   TrendingDown,
   Banknote,

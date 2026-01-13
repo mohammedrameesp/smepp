@@ -23,7 +23,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { NextRequest, NextResponse } from 'next/server';
-import { TeamMemberRole, AssetStatus, AssetRequestStatus, AssetRequestType } from '@prisma/client';
+import { AssetStatus, AssetRequestStatus, AssetRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { updateAssetSchema } from '@/features/assets';
 import { logAction, ActivityActions } from '@/lib/core/activity';

@@ -84,7 +84,7 @@ export default function EditApprovalPolicyPage() {
           levelOrder: l.levelOrder,
           approverRole: l.approverRole,
         })));
-      } catch (error) {
+      } catch {
         toast.error('Failed to load policy');
         router.push('/admin/settings/approvals');
       } finally {

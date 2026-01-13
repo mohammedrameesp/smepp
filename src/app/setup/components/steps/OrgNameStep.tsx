@@ -67,7 +67,7 @@ export function OrgNameStep({
           <Building2 className="w-6 h-6 text-slate-600" />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">
-          What's your organization called?
+          What&apos;s your organization called?
         </h1>
         <p className="text-sm text-slate-600">
           This will be the name shown throughout your workspace

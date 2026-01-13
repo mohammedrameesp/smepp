@@ -205,7 +205,6 @@ async function updateSubscriptionHandler(request: NextRequest, context: APIConte
 
     // Build update data object, transforming dates and excluding assignment-only fields
     // Using Record type for flexibility since we transform string dates to Date objects
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { assignmentDate: _assignmentDate, purchaseDate, renewalDate, ...restData } = data;
     const updateData: Record<string, unknown> = { ...restData };
 

@@ -20,7 +20,8 @@ interface InputWithErrorProps extends React.ComponentProps<'input'> {
 
 const InputWithError = React.forwardRef<HTMLInputElement, InputWithErrorProps>(
   ({ label, error, description, className, id, ...props }, ref) => {
-    const inputId = id || React.useId();
+    const generatedId = React.useId();
+    const inputId = id || generatedId;
     const errorId = `${inputId}-error`;
     const descriptionId = `${inputId}-description`;
 
