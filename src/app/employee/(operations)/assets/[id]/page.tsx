@@ -40,7 +40,7 @@ import {
   FileText,
   AlertTriangle,
 } from 'lucide-react';
-import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
@@ -140,13 +140,13 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
           <div className="flex gap-2 flex-wrap">
             {canRequest && <AssetRequestDialog asset={asset} />}
             {canReturn && <AssetReturnDialog asset={asset} />}
-            <Link href="/employee/assets">
-              <Button variant="outline" size="sm">Back to Assets</Button>
-            </Link>
+            <PageHeaderButton href="/employee/assets" variant="outline">
+              Back to Assets
+            </PageHeaderButton>
             {isAssignedToMe && (
-              <Link href="/employee/my-assets">
-                <Button variant="outline" size="sm">My Assets</Button>
-              </Link>
+              <PageHeaderButton href="/employee/my-assets" variant="outline">
+                My Assets
+              </PageHeaderButton>
             )}
           </div>
         }

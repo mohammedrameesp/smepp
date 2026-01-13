@@ -36,7 +36,7 @@ import { AssetRequestStatusBadge, AssetRequestTypeBadge, AssetAcceptDialog } fro
 import { formatDateTime } from '@/lib/core/datetime';
 import Link from 'next/link';
 import { ArrowLeft, Package, User, Clock, FileText, XCircle, AlertCircle, CheckCircle } from 'lucide-react';
-import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
@@ -211,48 +211,41 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-2">
             {isPendingAcceptance && (
               <>
-                <Button
+                <PageHeaderButton
                   variant="outline"
-                  size="default"
-                  className="border-2"
                   onClick={() => {
                     setDialogInitialMode('decline');
                     setShowAcceptDialog(true);
                   }}
                 >
-                  <XCircle className="h-4 w-4 mr-2" />
+                  <XCircle className="h-4 w-4" />
                   Decline
-                </Button>
-                <Button
-                  size="default"
-                  className="bg-emerald-700 hover:bg-emerald-800 text-white border-2 border-emerald-800 shadow-sm"
+                </PageHeaderButton>
+                <PageHeaderButton
+                  variant="success"
                   onClick={() => {
                     setDialogInitialMode('accept');
                     setShowAcceptDialog(true);
                   }}
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <CheckCircle className="h-4 w-4" />
                   Accept
-                </Button>
+                </PageHeaderButton>
               </>
             )}
             {canCancel && (
-              <Button
-                variant="outline"
-                size="sm"
+              <PageHeaderButton
+                variant="destructive"
                 onClick={handleCancel}
                 disabled={isCancelling}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
               >
                 {isCancelling ? 'Cancelling...' : 'Cancel Request'}
-              </Button>
+              </PageHeaderButton>
             )}
-            <Link href="/employee/asset-requests">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-            </Link>
+            <PageHeaderButton href="/employee/asset-requests" variant="outline">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </PageHeaderButton>
           </div>
         }
       >

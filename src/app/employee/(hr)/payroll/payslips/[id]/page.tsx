@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Building, TrendingUp, TrendingDown, DollarSign, CreditCard } from 'lucide-react';
 import { formatCurrency, getMonthName } from '@/features/payroll/lib/utils';
-import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField } from '@/components/ui/info-field';
 
@@ -81,12 +81,10 @@ export default async function EmployeePayslipDetailPage({ params }: PageProps) {
           variant: payslip.isPaid ? 'success' : 'default'
         }}
         actions={
-          <Link href="/employee/payroll/payslips">
-            <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Payslips
-            </Button>
-          </Link>
+          <PageHeaderButton href="/employee/payroll/payslips" variant="outline">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Payslips
+          </PageHeaderButton>
         }
       />
 

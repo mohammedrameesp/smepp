@@ -13,7 +13,7 @@ import {
   TrendingDown,
   Banknote,
 } from 'lucide-react';
-import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { formatCurrency, getMonthName } from '@/features/payroll/lib/utils';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
@@ -86,12 +86,10 @@ export default async function AdminPayslipDetailPage({ params }: PageProps) {
         ]}
         badge={{ text: payslip.isPaid ? 'Paid' : 'Pending', variant: statusBadgeVariant }}
         actions={
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/admin/employees/${payslip.memberId}`}>
-              <User className="mr-2 h-4 w-4" />
-              View Employee
-            </Link>
-          </Button>
+          <PageHeaderButton href={`/admin/employees/${payslip.memberId}`} variant="outline">
+            <User className="h-4 w-4" />
+            View Employee
+          </PageHeaderButton>
         }
       />
 

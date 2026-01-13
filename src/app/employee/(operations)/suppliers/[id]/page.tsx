@@ -19,7 +19,7 @@ import {
   FileText,
   CheckCircle,
 } from 'lucide-react';
-import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 
@@ -92,12 +92,10 @@ export default async function EmployeeSupplierDetailPage({ params }: Props) {
           { label: supplier.name }
         ]}
         actions={
-          <Link href="/employee/suppliers">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Suppliers
-            </Button>
-          </Link>
+          <PageHeaderButton href="/employee/suppliers" variant="outline">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Suppliers
+          </PageHeaderButton>
         }
       >
         <div className="flex flex-wrap items-center gap-3 mt-4">

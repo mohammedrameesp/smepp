@@ -25,7 +25,7 @@ import {
   FileText,
   Clock,
 } from 'lucide-react';
-import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { formatCurrency } from '@/features/payroll/lib/utils';
 import { LoanActions } from '@/features/payroll/components';
 import { DetailCard } from '@/components/ui/detail-card';
@@ -130,12 +130,10 @@ export default async function LoanDetailPage({ params }: PageProps) {
         badge={{ text: status.label, variant: statusBadgeVariant }}
         actions={
           <div className="flex gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/admin/employees/${loan.memberId}`}>
-                <User className="mr-2 h-4 w-4" />
-                View Employee
-              </Link>
-            </Button>
+            <PageHeaderButton href={`/admin/employees/${loan.memberId}`} variant="outline">
+              <User className="h-4 w-4" />
+              View Employee
+            </PageHeaderButton>
             <LoanActions
               loanId={loan.id}
               currentStatus={loan.status}

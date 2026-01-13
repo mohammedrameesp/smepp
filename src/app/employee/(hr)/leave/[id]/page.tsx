@@ -17,7 +17,7 @@ import {
 } from '@/features/leave/lib/leave-utils';
 import { LeaveRequestHistory, CancelLeaveDialog } from '@/features/leave/components';
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
-import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 
 interface LeaveBalance {
   id: string;
@@ -204,12 +204,10 @@ export default function EmployeeLeaveRequestDetailPage() {
                 onCancelled={handleCancelled}
               />
             )}
-            <Link href="/employee/leave">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to My Leave
-              </Button>
-            </Link>
+            <PageHeaderButton href="/employee/leave" variant="outline">
+              <ArrowLeft className="h-4 w-4" />
+              Back to My Leave
+            </PageHeaderButton>
           </div>
         }
       />

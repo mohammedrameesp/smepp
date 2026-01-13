@@ -2,7 +2,6 @@
 
 import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, Loader2, Clock, CheckCircle, XCircle, FileCheck, Trash2, Pencil, FileText, ShoppingCart } from 'lucide-react';
@@ -21,7 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 
 interface PurchaseRequestItem {
   id: string;
@@ -246,10 +245,10 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
             {canDeleteRequest(request.status) && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" disabled={deleting}>
-                    <Trash2 className="h-4 w-4 mr-2" />
+                  <PageHeaderButton variant="destructive" disabled={deleting}>
+                    <Trash2 className="h-4 w-4" />
                     Delete
-                  </Button>
+                  </PageHeaderButton>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -268,12 +267,10 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
                 </AlertDialogContent>
               </AlertDialog>
             )}
-            <Link href="/employee/purchase-requests">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Requests
-              </Button>
-            </Link>
+            <PageHeaderButton href="/employee/purchase-requests" variant="outline">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Requests
+            </PageHeaderButton>
           </div>
         }
       >

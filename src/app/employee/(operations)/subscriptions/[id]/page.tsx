@@ -66,7 +66,7 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { SubscriptionRenewalDisplay, formatBillingCycle, HistoryTimeline, CostBreakdown } from '@/features/subscriptions';
 import { formatDate, formatDateTime } from '@/lib/core/datetime';
-import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { Package, Calendar, DollarSign, User as UserIcon, FileText, Clock, ArrowLeft } from 'lucide-react';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
@@ -173,12 +173,10 @@ export default async function EmployeeSubscriptionDetailPage({ params }: Props) 
           { label: subscription.serviceName }
         ]}
         actions={
-          <Link href="/employee/subscriptions">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Subscriptions
-            </Button>
-          </Link>
+          <PageHeaderButton href="/employee/subscriptions" variant="outline">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Subscriptions
+          </PageHeaderButton>
         }
       >
         <div className="flex flex-wrap items-center gap-3 mt-4">
