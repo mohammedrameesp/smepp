@@ -331,28 +331,27 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
 
         // Override the assignedMember relation to disconnect
         updateData.assignedMember = { disconnect: true };
-
-        // Record unassignment in history
-        const { recordAssetAssignment } = await import('@/features/assets');
-        await recordAssetAssignment(
-          id,
-          currentAsset.assignedMemberId,
-          null,
-          tenant.userId,
-          `Asset automatically unassigned due to status change to ${data.status}`
-        );
       }
 
-      // Record status change in history with custom date
-      const { recordAssetStatusChange } = await import('@/features/assets');
+      // Record consolidated status change + unassignment in ONE history entry
+      const { recordAssetHistory } = await import('@/features/assets');
       const statusChangeDate = data.statusChangeDate ? new Date(data.statusChangeDate) : new Date();
-      await recordAssetStatusChange(
-        id,
-        currentAsset.status,
-        data.status as AssetStatus,
-        tenant.userId,
-        statusChangeDate
-      );
+      const memberName = unassignedMember?.name || unassignedMember?.email || '';
+
+      await recordAssetHistory({
+        assetId: id,
+        tenantId,
+        action: 'STATUS_CHANGED',
+        fromStatus: currentAsset.status,
+        toStatus: data.status as AssetStatus,
+        fromMemberId: currentAsset.assignedMemberId || null,
+        toMemberId: null,
+        performedById: tenant.userId,
+        statusChangeDate,
+        notes: unassignedMember
+          ? `Status changed to ${data.status}. Asset unassigned from ${memberName}.`
+          : `Status changed to ${data.status}`,
+      });
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -658,12 +657,13 @@ async function updateAssetHandler(request: NextRequest, context: APIContext) {
     // - assignmentDate: Not stored on asset model (used for history record only)
     // - assignedMemberId: Has ASSIGNED/UNASSIGNED entries
     // - status: Has STATUS_CHANGED entries
+    // - statusChangeDate: Part of STATUS_CHANGED entry
     // - locationId: Has LOCATION_CHANGED entries
     const changes = detectAssetChanges(
       data as Record<string, unknown>,
       currentAsset as unknown as Record<string, unknown>,
       memberMap,
-      ['assignmentDate', 'assignedMemberId', 'status', 'locationId']
+      ['assignmentDate', 'assignedMemberId', 'status', 'statusChangeDate', 'locationId']
     );
     const changeDetails = getFormattedChanges(changes);
 
