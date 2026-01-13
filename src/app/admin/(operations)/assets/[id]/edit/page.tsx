@@ -739,7 +739,7 @@ export default function EditAssetPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  {watchedPrice && watchedCurrency && (
+                  {typeof watchedPrice === 'number' && !isNaN(watchedPrice) && watchedPrice > 0 && watchedCurrency && (
                     <p className="text-xs text-muted-foreground">
                       {watchedCurrency === 'QAR' ? (
                         <>≈ USD {(watchedPrice / (exchangeRates['USD'] || 3.64)).toFixed(2)}</>
