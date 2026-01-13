@@ -902,8 +902,10 @@
                         <li><input type="checkbox" id="c258" onchange="updateProgress()"><label for="c258">Reassignment auto-unassigns from previous member</label></li>
                         <li><input type="checkbox" id="c259" onchange="updateProgress()"><label for="c259">Cannot assign if pending request exists (409 conflict)</label></li>
                         <li><input type="checkbox" id="c260" onchange="updateProgress()"><label for="c260">Assignment creates AssetHistory entry</label></li>
-                        <li><input type="checkbox" id="c261" onchange="updateProgress()"><label for="c261">Assignment sends email notification to assignee</label></li>
+                        <li><input type="checkbox" id="c261" onchange="updateProgress()"><label for="c261">Assignment sends email notification to assignee (awaited for serverless reliability)</label></li>
                         <li><input type="checkbox" id="c262" onchange="updateProgress()"><label for="c262">Assignment sends in-app notification to assignee</label></li>
+                        <li><input type="checkbox" id="c262a" onchange="updateProgress()"><label for="c262a">Reassignment notifies previous assignee (awaited for serverless reliability)</label></li>
+                        <li><input type="checkbox" id="c262b" onchange="updateProgress()"><label for="c262b">Default assignment reason: &quot;This asset has been assigned to you. Please review and accept...&quot;</label></li>
                         <li><input type="checkbox" id="c263" onchange="updateProgress()"><label for="c263">Email failure falls back to admin notification</label></li>
                     </ul>
                 </div>
@@ -917,7 +919,7 @@
                         <li><input type="checkbox" id="c265" onchange="updateProgress()"><label for="c265">Validates asset is currently assigned</label></li>
                         <li><input type="checkbox" id="c268" onchange="updateProgress()"><label for="c268">Unassignment sets status to SPARE</label></li>
                         <li><input type="checkbox" id="c269" onchange="updateProgress()"><label for="c269">Unassignment creates AssetHistory entry</label></li>
-                        <li><input type="checkbox" id="c270" onchange="updateProgress()"><label for="c270">Unassignment sends notification to previous assignee</label></li>
+                        <li><input type="checkbox" id="c270" onchange="updateProgress()"><label for="c270">Unassignment sends notification to previous assignee (awaited for reliability)</label></li>
                     </ul>
                 </div>
 
@@ -965,14 +967,26 @@
 
                 <div class="subsection">
                     <div class="subsection-header">
-                        <span>4.8 Asset Deletion</span>
+                        <span>4.8 Asset Soft Delete &amp; Trash</span>
                     </div>
                     <ul class="checklist">
-                        <li><input type="checkbox" id="c289" onchange="updateProgress()"><label for="c289">Admin can delete asset</label></li>
-                        <li><input type="checkbox" id="c290" onchange="updateProgress()"><label for="c290">Cascades to AssetHistory</label></li>
-                        <li><input type="checkbox" id="c291" onchange="updateProgress()"><label for="c291">Cascades to maintenance records</label></li>
-                        <li><input type="checkbox" id="c292" onchange="updateProgress()"><label for="c292">Deletion logged for audit</label></li>
-                        <li><input type="checkbox" id="c293" onchange="updateProgress()"><label for="c293">Cannot delete disposed assets (already finalized)</label></li>
+                        <li><input type="checkbox" id="c289" onchange="updateProgress()"><label for="c289">Admin can delete asset (soft delete - sets deletedAt timestamp)</label></li>
+                        <li class="critical"><input type="checkbox" id="c290" onchange="updateProgress()"><label for="c290">**Cannot delete assigned assets** - must unassign first (returns 400)</label></li>
+                        <li><input type="checkbox" id="c291" onchange="updateProgress()"><label for="c291">Deleted asset moved to trash with 7-day recovery window</label></li>
+                        <li><input type="checkbox" id="c292" onchange="updateProgress()"><label for="c292">deletedAt timestamp recorded on soft delete</label></li>
+                        <li><input type="checkbox" id="c293" onchange="updateProgress()"><label for="c293">deletedById tracks which admin deleted the asset</label></li>
+                        <li><input type="checkbox" id="c293a" onchange="updateProgress()"><label for="c293a">Soft-deleted assets excluded from normal asset list queries (deletedAt: null filter)</label></li>
+                        <li><input type="checkbox" id="c293b" onchange="updateProgress()"><label for="c293b">Trash button shows on admin assets page only when deleted items exist</label></li>
+                        <li><input type="checkbox" id="c293c" onchange="updateProgress()"><label for="c293c">Trash page lists all soft-deleted assets (/admin/assets/deleted)</label></li>
+                        <li><input type="checkbox" id="c293d" onchange="updateProgress()"><label for="c293d">Trash page shows days remaining before auto-purge (7-day countdown)</label></li>
+                        <li><input type="checkbox" id="c293e" onchange="updateProgress()"><label for="c293e">Urgent styling (red) when 2 or fewer days remaining</label></li>
+                        <li><input type="checkbox" id="c293f" onchange="updateProgress()"><label for="c293f">Admin can restore asset from trash (POST /api/assets/[id]/restore)</label></li>
+                        <li><input type="checkbox" id="c293g" onchange="updateProgress()"><label for="c293g">Restore clears deletedAt and deletedById fields</label></li>
+                        <li><input type="checkbox" id="c293h" onchange="updateProgress()"><label for="c293h">Admin can permanently delete asset from trash (DELETE /api/assets/[id]/permanent-delete)</label></li>
+                        <li><input type="checkbox" id="c293i" onchange="updateProgress()"><label for="c293i">Permanent delete only allowed on already soft-deleted assets</label></li>
+                        <li><input type="checkbox" id="c293j" onchange="updateProgress()"><label for="c293j">Permanent delete cascades to AssetHistory</label></li>
+                        <li><input type="checkbox" id="c293k" onchange="updateProgress()"><label for="c293k">Permanent delete cascades to maintenance records</label></li>
+                        <li><input type="checkbox" id="c293l" onchange="updateProgress()"><label for="c293l">Cannot delete disposed assets (already finalized)</label></li>
                     </ul>
                 </div>
 
@@ -4146,10 +4160,27 @@
                         <span>19.3 Expiry Alerts</span>
                     </div>
                     <ul class="checklist">
-                        <li><input type="checkbox" id="c1470" onchange="updateProgress()"><label for="c1470">Warranty expiry notifications</label></li>
+                        <li><input type="checkbox" id="c1470" onchange="updateProgress()"><label for="c1470">Warranty expiry notifications (30-day window before/after expiry only)</label></li>
                         <li><input type="checkbox" id="c1471" onchange="updateProgress()"><label for="c1471">Subscription renewal reminders</label></li>
                         <li><input type="checkbox" id="c1472" onchange="updateProgress()"><label for="c1472">Employee document expiry alerts</label></li>
                         <li><input type="checkbox" id="c1473" onchange="updateProgress()"><label for="c1473">Company document expiry alerts</label></li>
+                    </ul>
+                </div>
+
+                <div class="subsection">
+                    <div class="subsection-header">
+                        <span>19.4 Asset Trash Cleanup</span>
+                    </div>
+                    <ul class="checklist">
+                        <li><input type="checkbox" id="c1473a" onchange="updateProgress()"><label for="c1473a">Scheduled to run daily at 3 AM UTC</label></li>
+                        <li><input type="checkbox" id="c1473b" onchange="updateProgress()"><label for="c1473b">Requires CRON_SECRET authorization (Bearer token)</label></li>
+                        <li><input type="checkbox" id="c1473c" onchange="updateProgress()"><label for="c1473c">Returns 401 Unauthorized without valid CRON_SECRET</label></li>
+                        <li><input type="checkbox" id="c1473d" onchange="updateProgress()"><label for="c1473d">Finds assets with deletedAt older than 7 days (RETENTION_DAYS)</label></li>
+                        <li><input type="checkbox" id="c1473e" onchange="updateProgress()"><label for="c1473e">Permanently deletes expired soft-deleted assets</label></li>
+                        <li><input type="checkbox" id="c1473f" onchange="updateProgress()"><label for="c1473f">Logs each deletion with assetId, assetTag, tenantId</label></li>
+                        <li><input type="checkbox" id="c1473g" onchange="updateProgress()"><label for="c1473g">Returns deletedCount and failedCount in response</label></li>
+                        <li><input type="checkbox" id="c1473h" onchange="updateProgress()"><label for="c1473h">Handles individual deletion failures gracefully (continues processing)</label></li>
+                        <li><input type="checkbox" id="c1473i" onchange="updateProgress()"><label for="c1473i">Returns &quot;No assets to permanently delete&quot; when trash is empty</label></li>
                     </ul>
                 </div>
             </div>
@@ -4979,6 +5010,9 @@
                         <li><input type="checkbox" id="c1768" onchange="updateProgress()"><label for="c1768">**Description optional:** max 500 characters</label></li>
                         <li><input type="checkbox" id="c1769" onchange="updateProgress()"><label for="c1769">Description &gt; 500 chars rejected</label></li>
                         <li><input type="checkbox" id="c1770" onchange="updateProgress()"><label for="c1770">**isActive:** defaults to true</label></li>
+                        <li><input type="checkbox" id="c1770a" onchange="updateProgress()"><label for="c1770a">**Form edge case:** Annual rate of 0 prevents Infinity in usefulLifeYears calculation</label></li>
+                        <li><input type="checkbox" id="c1770b" onchange="updateProgress()"><label for="c1770b">**Form edge case:** isFinite() check prevents invalid usefulLifeYears (NaN/Infinity)</label></li>
+                        <li><input type="checkbox" id="c1770c" onchange="updateProgress()"><label for="c1770c">**Form auto-calculation:** usefulLifeYears = Math.round(100 / annualRate) when rate &gt; 0</label></li>
                     </ul>
                 </div>
 
