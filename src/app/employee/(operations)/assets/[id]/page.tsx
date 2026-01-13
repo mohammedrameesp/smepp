@@ -188,7 +188,9 @@ export default async function EmployeeAssetDetailPage({ params }: Props) {
             const isExpired = daysUntilExpiry < 0;
             const isExpiringSoon = daysUntilExpiry >= 0 && daysUntilExpiry <= 30;
 
-            if (!isExpired && !isExpiringSoon) return null;
+            // Only show expired alert for warranties expired within last 90 days
+            const isRecentlyExpired = isExpired && daysUntilExpiry >= -90;
+            if (!isRecentlyExpired && !isExpiringSoon) return null;
 
             return (
               <div className={`rounded-2xl p-4 flex items-start gap-3 ${

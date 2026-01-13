@@ -195,7 +195,7 @@ export default async function AssetDetailPage({ params }: Props) {
             </div>
           )}
 
-          {/* Warranty Expiry Alert */}
+          {/* Warranty Expiry Alert - only show for expiring soon or recently expired (within 90 days) */}
           {asset.warrantyExpiry && (() => {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -204,26 +204,28 @@ export default async function AssetDetailPage({ params }: Props) {
             const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
             const isExpired = daysUntilExpiry < 0;
             const isExpiringSoon = daysUntilExpiry >= 0 && daysUntilExpiry <= 30;
+            // Only show expired alert for warranties expired within last 90 days
+            const isRecentlyExpired = isExpired && daysUntilExpiry >= -90;
 
-            if (!isExpired && !isExpiringSoon) return null;
+            if (!isRecentlyExpired && !isExpiringSoon) return null;
 
             return (
               <div className={`rounded-2xl p-4 flex items-start gap-3 ${
-                isExpired
+                isRecentlyExpired
                   ? 'bg-rose-50 border border-rose-200'
                   : 'bg-amber-50 border border-amber-200'
               }`}>
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  isExpired ? 'bg-rose-100' : 'bg-amber-100'
+                  isRecentlyExpired ? 'bg-rose-100' : 'bg-amber-100'
                 }`}>
-                  <AlertTriangle className={`h-5 w-5 ${isExpired ? 'text-rose-600' : 'text-amber-600'}`} />
+                  <AlertTriangle className={`h-5 w-5 ${isRecentlyExpired ? 'text-rose-600' : 'text-amber-600'}`} />
                 </div>
                 <div>
-                  <h3 className={`font-semibold ${isExpired ? 'text-rose-800' : 'text-amber-800'}`}>
-                    {isExpired ? 'Warranty Expired' : 'Warranty Expiring Soon'}
+                  <h3 className={`font-semibold ${isRecentlyExpired ? 'text-rose-800' : 'text-amber-800'}`}>
+                    {isRecentlyExpired ? 'Warranty Expired' : 'Warranty Expiring Soon'}
                   </h3>
-                  <p className={`text-sm mt-1 ${isExpired ? 'text-rose-700' : 'text-amber-700'}`}>
-                    {isExpired
+                  <p className={`text-sm mt-1 ${isRecentlyExpired ? 'text-rose-700' : 'text-amber-700'}`}>
+                    {isRecentlyExpired
                       ? `Warranty expired on ${formatDate(asset.warrantyExpiry)}`
                       : `Warranty expires on ${formatDate(asset.warrantyExpiry)} (${daysUntilExpiry} day${daysUntilExpiry === 1 ? '' : 's'} remaining)`
                     }
