@@ -359,6 +359,8 @@ async function sendReassignmentUnassignNotification(
   reason: string
 ): Promise<void> {
   try {
+    logger.info({ assetId: asset.id, previousMemberId: previousMember.id, previousMemberEmail: previousMember.email, reason }, 'Starting reassignment notification to previous assignee');
+
     const org = await getOrgDetails(tenantId);
     const admin = await getAdminDetails(adminId, tenantId);
 
@@ -377,6 +379,8 @@ async function sendReassignmentUnassignNotification(
       primaryColor: org.primaryColor || undefined,
     });
 
+    logger.info({ to: previousMember.email, subject: emailData.subject }, 'Sending reassignment email to previous assignee');
+
     try {
       await sendEmail({
         to: previousMember.email,
@@ -384,7 +388,9 @@ async function sendReassignmentUnassignNotification(
         html: emailData.html,
         text: emailData.text,
       });
+      logger.info({ email: previousMember.email }, 'Reassignment email sent successfully');
     } catch (emailError) {
+      logger.error({ error: emailError instanceof Error ? emailError.message : 'Unknown error', email: previousMember.email }, 'Failed to send reassignment email');
       await notifyAdminsOfEmailFailure(tenantId, {
         action: 'reassignment',
         assetTag: asset.assetTag || asset.model,
@@ -397,7 +403,8 @@ async function sendReassignmentUnassignNotification(
     }
 
     // In-app notification
-    await createNotification(
+    logger.info({ recipientId: previousMember.id, assetTag: asset.assetTag }, 'Creating in-app notification for reassignment');
+    const notifResult = await createNotification(
       NotificationTemplates.assetUnassigned(
         previousMember.id,
         asset.assetTag || asset.model,
@@ -406,8 +413,9 @@ async function sendReassignmentUnassignNotification(
       ),
       tenantId
     );
+    logger.info({ success: notifResult, recipientId: previousMember.id }, 'Reassignment in-app notification result');
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', assetId: asset.id, previousMemberId: previousMember.id }, 'Error sending reassignment unassign notification');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined, assetId: asset.id, previousMemberId: previousMember.id }, 'Error sending reassignment unassign notification');
   }
 }
 
@@ -629,8 +637,11 @@ async function unassignForReassignment(
     reason,
   });
 
-  // Send notification to previous member (non-blocking)
-  sendReassignmentUnassignNotification(asset, previousMember, tenantId, adminId, reason).catch(() => {});
+  // Send notification to previous member (non-blocking but log errors)
+  logger.info({ assetId: asset.id, previousMemberId: previousMember.id }, 'Calling sendReassignmentUnassignNotification');
+  sendReassignmentUnassignNotification(asset, previousMember, tenantId, adminId, reason).catch((error) => {
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', assetId: asset.id, previousMemberId: previousMember.id }, 'Unhandled error in sendReassignmentUnassignNotification');
+  });
 }
 
 /**
@@ -678,6 +689,7 @@ async function handleAssign(
 
   // STEP 3: Handle reassignment - unassign from current member first
   if (asset.assignedMemberId && asset.assignedMember) {
+    logger.info({ assetId: asset.id, previousMemberId: asset.assignedMemberId, newMemberId: assignedMemberId }, 'Reassigning asset - will unassign from previous member first');
     await unassignForReassignment(
       asset,
       asset.assignedMember,
@@ -786,6 +798,8 @@ async function directUnassign(
 
   // Send email and in-app notifications (non-blocking)
   try {
+    logger.info({ assetId: updatedAsset.id, previousMemberId: previousMember.id, previousMemberEmail: previousMember.email }, 'Starting unassignment notifications');
+
     const org = await getOrgDetails(tenantId);
     const admin = await getAdminDetails(adminId, tenantId);
 
@@ -804,12 +818,15 @@ async function directUnassign(
       primaryColor: org.primaryColor || undefined,
     });
 
+    logger.info({ to: previousMember.email, subject: emailData.subject }, 'Sending unassignment email');
+
     await sendEmail({
       to: previousMember.email,
       subject: emailData.subject,
       html: emailData.html,
       text: emailData.text,
     }).catch((emailError) => {
+      logger.error({ error: emailError instanceof Error ? emailError.message : 'Unknown error', email: previousMember.email }, 'Failed to send unassignment email');
       notifyAdminsOfEmailFailure(tenantId, {
         action: 'unassignment',
         assetTag: updatedAsset.assetTag || updatedAsset.model,
@@ -822,12 +839,14 @@ async function directUnassign(
     });
 
     // In-app notification
-    await createNotification(
+    logger.info({ recipientId: previousMember.id, assetTag: updatedAsset.assetTag }, 'Creating in-app notification for unassignment');
+    const notifResult = await createNotification(
       NotificationTemplates.assetUnassigned(previousMember.id, updatedAsset.assetTag || '', updatedAsset.model, updatedAsset.id),
       tenantId
     );
+    logger.info({ success: notifResult, recipientId: previousMember.id }, 'In-app notification result');
   } catch (error) {
-    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', assetId: asset.id, previousMemberId: previousMember.id }, 'Error sending unassign notifications');
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined, assetId: asset.id, previousMemberId: previousMember.id }, 'Error sending unassign notifications');
   }
 
   return NextResponse.json({
