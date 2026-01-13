@@ -44,8 +44,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  ToggleLeft,
-  ToggleRight,
   Loader2,
 } from 'lucide-react';
 
@@ -73,7 +71,6 @@ export function AssetCategoriesSettings({
 }: AssetCategoriesSettingsProps) {
   const [categories, setCategories] = useState<AssetCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showInactive, setShowInactive] = useState(false);
 
   // Create form state
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -236,27 +233,6 @@ export function AssetCategoriesSettings({
     }
   }
 
-  async function handleToggleActive(category: AssetCategory) {
-    try {
-      const response = await fetch(`/api/asset-categories/${category.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !category.isActive }),
-      });
-
-      if (response.ok) {
-        toast.success(`Category ${category.isActive ? 'deactivated' : 'activated'}`);
-        fetchCategories();
-      } else {
-        const data = await response.json();
-        toast.error(data.error || 'Failed to toggle category');
-      }
-    } catch (error) {
-      console.error('Error toggling category:', error);
-      toast.error('Failed to toggle category');
-    }
-  }
-
   async function handleDelete() {
     if (!deleteCategory) return;
 
@@ -290,10 +266,6 @@ export function AssetCategoriesSettings({
     setEditErrors({});
   }
 
-  const activeCategories = categories.filter((c) => c.isActive);
-  const inactiveCategories = categories.filter((c) => !c.isActive);
-  const displayCategories = showInactive ? categories : activeCategories;
-
   return (
     <>
       <Card>
@@ -310,23 +282,12 @@ export function AssetCategoriesSettings({
                 </CardDescription>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {inactiveCategories.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowInactive(!showInactive)}
-                >
-                  {showInactive ? 'Hide' : 'Show'} Inactive ({inactiveCategories.length})
-                </Button>
-              )}
-              {isAdmin && (
-                <Button size="sm" onClick={() => setShowCreateDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Category
-                </Button>
-              )}
-            </div>
+            {isAdmin && (
+              <Button size="sm" onClick={() => setShowCreateDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Category
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -335,7 +296,7 @@ export function AssetCategoriesSettings({
               <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
               Loading categories...
             </div>
-          ) : displayCategories.length === 0 ? (
+          ) : categories.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
               No categories found. Add one to get started.
             </div>
@@ -348,12 +309,12 @@ export function AssetCategoriesSettings({
                     <TableHead>Name</TableHead>
                     <TableHead className="hidden md:table-cell">Description</TableHead>
                     <TableHead className="text-center w-20">Assets</TableHead>
-                    <TableHead className="text-right w-28">Actions</TableHead>
+                    <TableHead className="text-right w-24">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {displayCategories.map((category) => (
-                    <TableRow key={category.id} className={!category.isActive ? 'opacity-50' : ''}>
+                  {categories.map((category) => (
+                    <TableRow key={category.id}>
                       <TableCell>
                         <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
                           {category.code}
@@ -364,9 +325,6 @@ export function AssetCategoriesSettings({
                           <span className="font-medium">{category.name}</span>
                           {category.isDefault && (
                             <Badge variant="outline" className="text-xs">Default</Badge>
-                          )}
-                          {!category.isActive && (
-                            <Badge variant="secondary" className="text-xs">Inactive</Badge>
                           )}
                         </div>
                       </TableCell>
@@ -386,18 +344,6 @@ export function AssetCategoriesSettings({
                               title="Edit"
                             >
                               <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleToggleActive(category)}
-                              title={category.isActive ? 'Deactivate' : 'Activate'}
-                            >
-                              {category.isActive ? (
-                                <ToggleRight className="h-4 w-4 text-green-600" />
-                              ) : (
-                                <ToggleLeft className="h-4 w-4" />
-                              )}
                             </Button>
                             <Button
                               variant="ghost"
