@@ -23,25 +23,6 @@ export const assignDepreciationCategorySchema = z.object({
 export type AssignDepreciationCategoryInput = z.infer<typeof assignDepreciationCategorySchema>;
 
 /**
- * Schema for querying depreciation records
- */
-export const depreciationRecordsQuerySchema = z.object({
-  limit: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 50))
-    .pipe(z.number().min(1).max(200)),
-  offset: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val, 10) : 0))
-    .pipe(z.number().min(0)),
-  order: z.enum(['asc', 'desc']).optional().default('desc'),
-});
-
-export type DepreciationRecordsQuery = z.infer<typeof depreciationRecordsQuerySchema>;
-
-/**
  * Schema for creating a new depreciation category (admin only)
  */
 export const createDepreciationCategorySchema = z.object({

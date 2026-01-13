@@ -5,7 +5,6 @@
 
 import {
   assignDepreciationCategorySchema,
-  depreciationRecordsQuerySchema,
   createDepreciationCategorySchema,
   updateDepreciationCategorySchema,
 } from '@/features/assets';
@@ -121,92 +120,6 @@ describe('Depreciation Validation Schemas', () => {
 
       const result = assignDepreciationCategorySchema.safeParse(input);
       expect(result.success).toBe(true);
-    });
-  });
-
-  describe('depreciationRecordsQuerySchema', () => {
-    it('should accept empty input and use defaults', () => {
-      const result = depreciationRecordsQuerySchema.safeParse({});
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.limit).toBe(50);
-        expect(result.data.offset).toBe(0);
-        expect(result.data.order).toBe('desc');
-      }
-    });
-
-    it('should accept valid query parameters', () => {
-      const input = {
-        limit: '25',
-        offset: '10',
-        order: 'asc',
-      };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.limit).toBe(25);
-        expect(result.data.offset).toBe(10);
-        expect(result.data.order).toBe('asc');
-      }
-    });
-
-    it('should convert string limit to number', () => {
-      const input = {
-        limit: '100',
-      };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(typeof result.data.limit).toBe('number');
-        expect(result.data.limit).toBe(100);
-      }
-    });
-
-    it('should reject limit less than 1', () => {
-      const input = {
-        limit: '0',
-      };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject limit greater than 200', () => {
-      const input = {
-        limit: '201',
-      };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(false);
-    });
-
-    it('should accept limit at boundaries', () => {
-      const minResult = depreciationRecordsQuerySchema.safeParse({ limit: '1' });
-      const maxResult = depreciationRecordsQuerySchema.safeParse({ limit: '200' });
-
-      expect(minResult.success).toBe(true);
-      expect(maxResult.success).toBe(true);
-    });
-
-    it('should reject negative offset', () => {
-      const input = {
-        offset: '-1',
-      };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject invalid order value', () => {
-      const input = {
-        order: 'random',
-      };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(false);
     });
   });
 
@@ -477,17 +390,6 @@ describe('Depreciation Validation Schemas', () => {
       };
 
       const result = assignDepreciationCategorySchema.safeParse(input);
-      expect(result.success).toBe(true);
-    });
-
-    it('should handle pagination for large asset portfolios', () => {
-      const input = {
-        limit: '200',
-        offset: '1000',
-        order: 'asc',
-      };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
       expect(result.success).toBe(true);
     });
 

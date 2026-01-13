@@ -5,7 +5,6 @@
 
 import {
   assignDepreciationCategorySchema,
-  depreciationRecordsQuerySchema,
   createDepreciationCategorySchema,
   updateDepreciationCategorySchema,
 } from '@/features/assets/validations/depreciation';
@@ -126,88 +125,6 @@ describe('Depreciation Validation Tests', () => {
         expect(result.data.customUsefulLifeMonths).toBe(48);
         expect(result.data.depreciationStartDate).toBe('2024-01-01T00:00:00.000Z');
       }
-    });
-  });
-
-  describe('depreciationRecordsQuerySchema', () => {
-    it('should provide defaults when no params', () => {
-      const input = {};
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.limit).toBe(50);
-        expect(result.data.offset).toBe(0);
-        expect(result.data.order).toBe('desc');
-      }
-    });
-
-    it('should parse limit from string', () => {
-      const input = { limit: '25' };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.limit).toBe(25);
-      }
-    });
-
-    it('should parse offset from string', () => {
-      const input = { offset: '100' };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.offset).toBe(100);
-      }
-    });
-
-    it('should accept asc order', () => {
-      const input = { order: 'asc' };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.order).toBe('asc');
-      }
-    });
-
-    it('should accept desc order', () => {
-      const input = { order: 'desc' };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.order).toBe('desc');
-      }
-    });
-
-    it('should reject invalid order', () => {
-      const input = { order: 'random' };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject limit below 1', () => {
-      const input = { limit: '0' };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject limit above 200', () => {
-      const input = { limit: '250' };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject negative offset', () => {
-      const input = { offset: '-10' };
-
-      const result = depreciationRecordsQuerySchema.safeParse(input);
-      expect(result.success).toBe(false);
     });
   });
 

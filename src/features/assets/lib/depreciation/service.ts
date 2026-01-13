@@ -226,54 +226,6 @@ export async function runDepreciationForTenant(
 }
 
 /**
- * Get depreciation records for an asset
- */
-export async function getDepreciationRecords(
-  assetId: string,
-  tenantId: string,
-  options?: {
-    limit?: number;
-    offset?: number;
-    orderBy?: 'asc' | 'desc';
-  }
-) {
-  const { limit = 100, offset = 0, orderBy = 'desc' } = options || {};
-
-  const records = await prisma.depreciationRecord.findMany({
-    where: { assetId, tenantId },
-    orderBy: { periodEnd: orderBy },
-    take: limit,
-    skip: offset,
-    include: {
-      calculatedBy: {
-        select: { id: true, name: true, email: true },
-      },
-    },
-  });
-
-  const total = await prisma.depreciationRecord.count({
-    where: { assetId, tenantId },
-  });
-
-  return {
-    records: records.map((r) => ({
-      id: r.id,
-      periodStart: r.periodStart,
-      periodEnd: r.periodEnd,
-      depreciationAmount: Number(r.depreciationAmount),
-      accumulatedAmount: Number(r.accumulatedAmount),
-      netBookValue: Number(r.netBookValue),
-      calculationType: r.calculationType,
-      calculatedAt: r.calculatedAt,
-      calculatedBy: r.calculatedBy,
-      notes: r.notes,
-    })),
-    total,
-    hasMore: offset + records.length < total,
-  };
-}
-
-/**
  * Assign depreciation category to an asset
  */
 export async function assignDepreciationCategory(

@@ -33,14 +33,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import {
-  assignDepreciationCategorySchema,
-  depreciationRecordsQuerySchema,
-} from '@/features/assets';
-import {
-  getDepreciationRecords,
-  assignDepreciationCategory,
-} from '@/features/assets/lib/depreciation';
+import { assignDepreciationCategorySchema } from '@/features/assets';
+import { assignDepreciationCategory } from '@/features/assets/lib/depreciation';
 import { logAction } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 
@@ -49,22 +43,17 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Get depreciation status and history for an asset.
+ * Get depreciation status for an asset.
  *
  * Returns:
  * - Current depreciation settings (category, salvage value)
  * - Financial status (accumulated depreciation, net book value)
- * - Paginated list of monthly depreciation records
  *
  * @route GET /api/assets/[id]/depreciation
  *
  * @param {string} id - Asset ID (path parameter)
  *
- * @query {number} [limit=50] - Records per page (max 200)
- * @query {number} [offset=0] - Pagination offset
- * @query {string} [order=desc] - Sort order (asc/desc)
- *
- * @returns {Object} Depreciation info with records
+ * @returns {Object} Depreciation info
  *
  * @example Response:
  * {
@@ -77,11 +66,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
  *     "netBookValue": 7000,
  *     "isFullyDepreciated": false,
  *     "depreciationCategory": { "name": "IT Equipment", "annualRate": 33.33 }
- *   },
- *   "records": [
- *     { "periodEnd": "2025-01-31", "depreciationAmount": 250, "accumulatedAmount": 3000 }
- *   ],
- *   "pagination": { "total": 12, "limit": 50, "offset": 0, "hasMore": false }
+ *   }
  * }
  */
 async function getDepreciationHandler(request: NextRequest, context: APIContext) {
@@ -134,32 +119,7 @@ async function getDepreciationHandler(request: NextRequest, context: APIContext)
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // STEP 3: Parse and validate pagination parameters
-  // ─────────────────────────────────────────────────────────────────────────────
-  const { searchParams } = new URL(request.url);
-  const queryParams = Object.fromEntries(searchParams.entries());
-  const validation = depreciationRecordsQuerySchema.safeParse(queryParams);
-
-  if (!validation.success) {
-    return NextResponse.json(
-      { error: 'Invalid query parameters', details: validation.error.issues },
-      { status: 400 }
-    );
-  }
-
-  const { limit, offset, order } = validation.data;
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // STEP 4: Fetch depreciation records (tenant-scoped)
-  // ─────────────────────────────────────────────────────────────────────────────
-  const { records, total, hasMore } = await getDepreciationRecords(assetId, tenantId, {
-    limit,
-    offset,
-    orderBy: order,
-  });
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // STEP 5: Format and return response
+  // STEP 3: Format and return response
   // Convert Decimal fields to numbers for JSON serialization
   // ─────────────────────────────────────────────────────────────────────────────
   return NextResponse.json({
@@ -179,13 +139,6 @@ async function getDepreciationHandler(request: NextRequest, context: APIContext)
             annualRate: Number(asset.depreciationCategory.annualRate),
           }
         : null,
-    },
-    records,
-    pagination: {
-      total,
-      limit,
-      offset,
-      hasMore,
     },
   });
 }
