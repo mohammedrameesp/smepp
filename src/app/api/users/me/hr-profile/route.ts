@@ -15,6 +15,7 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { TeamMemberRole } from '@prisma/client';
 import { sendEmail } from '@/lib/core/email';
+import { emailWrapper, getTenantPortalUrl, escapeHtml } from '@/lib/core/email-utils';
 import { initializeMemberLeaveBalances } from '@/features/leave/lib/leave-balance-init';
 import logger from '@/lib/core/log';
 
@@ -264,12 +265,14 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
   // Send email notification to admins when onboarding is completed
   if (justCompletedOnboarding) {
     try {
-      // Get organization name (global model)
+      // Get organization info (global model)
       const org = await prisma.organization.findUnique({
         where: { id: tenantId },
-        select: { name: true },
+        select: { name: true, slug: true, primaryColor: true },
       });
       const orgName = org?.name || 'Durj';
+      const orgSlug = org?.slug || 'app';
+      const primaryColor = org?.primaryColor || undefined;
 
       // Get all admin members (tenant-scoped via extension)
       const admins = await db.teamMember.findMany({
@@ -282,34 +285,35 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
       });
 
       // Send email to each admin
-      const employeeName = updatedMember.name || updatedMember.email || 'An employee';
+      const employeeName = escapeHtml(updatedMember.name) || updatedMember.email || 'An employee';
       const employeeEmail = updatedMember.email;
+      const profileUrl = getTenantPortalUrl(orgSlug, `/admin/employees/${tenant.userId}`);
+
+      const emailContent = `
+        <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Employee Onboarding Completed</h2>
+        <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+          <strong>${employeeName}</strong> (${employeeEmail}) has completed their HR profile onboarding.
+        </p>
+        <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+          You can view their profile in the Employee Management section of the portal.
+        </p>
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
+          <tr>
+            <td align="center">
+              <a href="${profileUrl}" style="display: inline-block; padding: 14px 30px; background-color: ${primaryColor || '#0f172a'}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+                View Profile
+              </a>
+            </td>
+          </tr>
+        </table>
+      `;
 
       for (const admin of admins) {
         await sendEmail({
           to: admin.email,
           subject: `[HR] ${employeeName} has completed onboarding`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #1a1a1a;">Employee Onboarding Completed</h2>
-              <p style="color: #4b5563;">
-                <strong>${employeeName}</strong> (${employeeEmail}) has completed their HR profile onboarding.
-              </p>
-              <p style="color: #4b5563;">
-                You can view their profile in the Employee Management section of the portal.
-              </p>
-              <div style="margin-top: 24px;">
-                <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin/employees/${tenant.userId}"
-                   style="background-color: #0f172a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
-                  View Profile
-                </a>
-              </div>
-              <p style="margin-top: 32px; color: #9ca3af; font-size: 12px;">
-                This is an automated message from ${orgName}.
-              </p>
-            </div>
-          `,
-          text: `${employeeName} (${employeeEmail}) has completed their HR profile onboarding. View their profile at ${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin/employees/${tenant.userId}`,
+          html: emailWrapper(emailContent, orgName, primaryColor),
+          text: `${employeeName} (${employeeEmail}) has completed their HR profile onboarding. View their profile at ${profileUrl}`,
         });
       }
     } catch (emailError) {
