@@ -14,8 +14,6 @@ import {
   CheckCircle2,
   History,
   Sparkles,
-  Box,
-  Layers,
 } from 'lucide-react';
 import { formatDate } from '@/lib/core/datetime';
 import { formatCurrency } from '@/lib/core/currency';
@@ -68,58 +66,8 @@ export function MyHoldingsContent({
 }: MyHoldingsContentProps) {
   const [activeTab, setActiveTab] = useState<'assets' | 'subscriptions'>('assets');
 
-  const totalAssets = activeAssets.length + pastAssets.length;
-  const totalSubscriptions = activeSubscriptions.length + inactiveSubscriptions.length;
-
   return (
     <div className="space-y-6">
-      {/* Hero Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-lg shadow-blue-500/20">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <Laptop className="h-5 w-5" />
-            </div>
-            <span className="text-blue-100 text-xs font-medium uppercase tracking-wide">Active</span>
-          </div>
-          <div className="text-3xl font-bold">{activeAssets.length}</div>
-          <div className="text-blue-100 text-sm">Assets Assigned</div>
-        </div>
-
-        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg shadow-emerald-500/20">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <CreditCard className="h-5 w-5" />
-            </div>
-            <span className="text-emerald-100 text-xs font-medium uppercase tracking-wide">Active</span>
-          </div>
-          <div className="text-3xl font-bold">{activeSubscriptions.length}</div>
-          <div className="text-emerald-100 text-sm">Subscriptions</div>
-        </div>
-
-        <div className="bg-gradient-to-br from-slate-600 to-slate-700 rounded-2xl p-5 text-white shadow-lg shadow-slate-500/20">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <Box className="h-5 w-5" />
-            </div>
-            <span className="text-slate-300 text-xs font-medium uppercase tracking-wide">Total</span>
-          </div>
-          <div className="text-3xl font-bold">{totalAssets}</div>
-          <div className="text-slate-300 text-sm">All-time Assets</div>
-        </div>
-
-        <div className="bg-gradient-to-br from-violet-500 to-violet-600 rounded-2xl p-5 text-white shadow-lg shadow-violet-500/20">
-          <div className="flex items-center justify-between mb-3">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <Layers className="h-5 w-5" />
-            </div>
-            <span className="text-violet-100 text-xs font-medium uppercase tracking-wide">Total</span>
-          </div>
-          <div className="text-3xl font-bold">{totalSubscriptions}</div>
-          <div className="text-violet-100 text-sm">All-time Subs</div>
-        </div>
-      </div>
-
       {/* Tabs */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <div className="flex border-b border-slate-200">

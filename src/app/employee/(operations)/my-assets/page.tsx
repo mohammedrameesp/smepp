@@ -10,6 +10,7 @@ import { redirect } from 'next/navigation';
 import { getMemberSubscriptionHistory } from '@/features/subscriptions';
 import { getMemberAssetHistory } from '@/features/assets';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { MyHoldingsContent } from './holdings-content';
 
 export default async function MyHoldingsPage() {
@@ -36,6 +37,9 @@ export default async function MyHoldingsPage() {
     const activeSubscriptions = subscriptionHistory.filter(s => s.status === 'ACTIVE');
     const inactiveSubscriptions = subscriptionHistory.filter(s => s.status !== 'ACTIVE');
 
+    const totalAssets = activeAssets.length + pastAssets.length;
+    const totalSubscriptions = activeSubscriptions.length + inactiveSubscriptions.length;
+
     return (
       <>
         <PageHeader
@@ -45,7 +49,14 @@ export default async function MyHoldingsPage() {
             { label: 'Dashboard', href: '/employee' },
             { label: 'My Holdings' },
           ]}
-        />
+        >
+          <StatChipGroup>
+            <StatChip value={activeAssets.length} label="active assets" color="blue" />
+            <StatChip value={activeSubscriptions.length} label="active subscriptions" color="emerald" />
+            <StatChip value={totalAssets} label="total assets" color="slate" />
+            <StatChip value={totalSubscriptions} label="total subscriptions" color="slate" />
+          </StatChipGroup>
+        </PageHeader>
 
         <PageContent>
           <MyHoldingsContent
