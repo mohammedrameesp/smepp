@@ -243,7 +243,7 @@ export default function SupplierRegistrationPage() {
                     </ol>
                   </div>
 
-                  {branding?.website ? (
+                  {branding?.website && (
                     <Button
                       onClick={() => window.open(branding.website!, '_blank')}
                       style={{ backgroundColor: primaryColor }}
@@ -251,15 +251,11 @@ export default function SupplierRegistrationPage() {
                     >
                       Visit Our Website
                     </Button>
-                  ) : (
-                    <Button
-                      onClick={() => window.close()}
-                      style={{ backgroundColor: primaryColor }}
-                      className="mt-4 hover:opacity-90"
-                    >
-                      Close
-                    </Button>
                   )}
+
+                  <p className="text-sm text-green-700 mt-4">
+                    You can now safely close this tab.
+                  </p>
                 </div>
               </CardContent>
             </Card>
