@@ -363,7 +363,9 @@ export default function EditSupplierPage() {
                       type="number"
                       min="1800"
                       max={new Date().getFullYear()}
-                      {...register('establishmentYear', { valueAsNumber: true })}
+                      {...register('establishmentYear', {
+                        setValueAs: (v) => v === '' ? undefined : parseInt(v, 10)
+                      })}
                       placeholder="2020"
                     />
                   </div>
