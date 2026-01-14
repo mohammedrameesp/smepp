@@ -503,30 +503,34 @@ export default function OrganizationDetailPage() {
   const handleToggleAuthMethod = async (methodId: string, enabled: boolean) => {
     if (!authConfig) return;
 
+    let currentMethods = authConfig.allowedAuthMethods.length === 0
+      ? ['credentials'] // Default: only email/password
+      : [...authConfig.allowedAuthMethods];
+
     let newMethods: string[];
 
-    // If currently empty (all allowed), clicking a switch means:
-    // - If turning OFF: enable all OTHER methods (exclude this one)
-    // - If turning ON: this shouldn't happen since they all show as ON
-    if (authConfig.allowedAuthMethods.length === 0) {
-      if (!enabled) {
-        // User wants to disable this method - enable all others explicitly
-        newMethods = AUTH_METHODS.map(m => m.id).filter(id => id !== methodId);
-      } else {
-        // Shouldn't happen, but just in case - enable only this one
-        newMethods = [methodId];
+    if (enabled) {
+      // Adding a method
+      newMethods = [...currentMethods, methodId];
+
+      // Google and Microsoft SSO are mutually exclusive
+      if (methodId === 'google') {
+        newMethods = newMethods.filter(m => m !== 'azure-ad');
+      } else if (methodId === 'azure-ad') {
+        newMethods = newMethods.filter(m => m !== 'google');
       }
     } else {
-      // Normal toggle behavior
-      newMethods = enabled
-        ? [...authConfig.allowedAuthMethods, methodId]
-        : authConfig.allowedAuthMethods.filter((m) => m !== methodId);
+      // Removing a method
+      newMethods = currentMethods.filter((m) => m !== methodId);
     }
 
-    // If user disables all methods, reset to empty (allow all)
-    if (newMethods.length === 0) {
-      newMethods = []; // Empty = all allowed
+    // Must have at least credentials enabled
+    if (!newMethods.includes('credentials')) {
+      newMethods = ['credentials', ...newMethods];
     }
+
+    // Remove duplicates
+    newMethods = [...new Set(newMethods)];
 
     await updateAuthConfig({ allowedAuthMethods: newMethods });
   };
@@ -1560,23 +1564,31 @@ export default function OrganizationDetailPage() {
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Allowed Login Methods</Label>
                 <p className="text-xs text-muted-foreground">
-                  Empty selection means all methods are allowed
+                  Email & Password is always enabled. Google and Microsoft SSO are mutually exclusive.
                 </p>
                 <div className="space-y-2">
                   {AUTH_METHODS.map((method) => {
-                    const isEnabled = authConfig.allowedAuthMethods.length === 0 ||
-                      authConfig.allowedAuthMethods.includes(method.id);
+                    // Default to credentials only if empty
+                    const effectiveMethods = authConfig.allowedAuthMethods.length === 0
+                      ? ['credentials']
+                      : authConfig.allowedAuthMethods;
+                    const isEnabled = effectiveMethods.includes(method.id);
                     const IconComponent = method.icon;
+                    // Credentials cannot be disabled
+                    const isDisabled = savingAuthConfig || method.id === 'credentials';
                     return (
                       <div key={method.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center gap-3">
                           <IconComponent className="h-4 w-4 text-muted-foreground" />
                           <span>{method.label}</span>
+                          {method.id === 'credentials' && (
+                            <span className="text-xs text-muted-foreground">(Required)</span>
+                          )}
                         </div>
                         <Switch
                           checked={isEnabled}
                           onCheckedChange={(checked) => handleToggleAuthMethod(method.id, checked)}
-                          disabled={savingAuthConfig}
+                          disabled={isDisabled}
                         />
                       </div>
                     );
