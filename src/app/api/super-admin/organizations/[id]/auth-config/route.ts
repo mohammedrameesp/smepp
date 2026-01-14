@@ -69,45 +69,8 @@ const authConfigSchema = z.object({
   { message: 'When providing Azure OAuth client secret, client ID must also be provided', path: ['customAzureClientId'] }
 );
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ENCRYPTION HELPERS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// Simple encryption for storing OAuth secrets
-// In production, you might want to use a more robust solution like AWS KMS or HashiCorp Vault
-import crypto from 'crypto';
-
-const ENCRYPTION_KEY = process.env.OAUTH_ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || '';
-const ALGORITHM = 'aes-256-gcm';
-
-function encrypt(text: string): string {
-  if (!text) return '';
-  const iv = crypto.randomBytes(16);
-  const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
-  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
-  let encrypted = cipher.update(text, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  const authTag = cipher.getAuthTag();
-  return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
-}
-
-function _decrypt(encryptedText: string): string {
-  if (!encryptedText || !encryptedText.includes(':')) return '';
-  try {
-    const [ivHex, authTagHex, encrypted] = encryptedText.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const authTag = Buffer.from(authTagHex, 'hex');
-    const key = crypto.scryptSync(ENCRYPTION_KEY, 'salt', 32);
-    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
-    decipher.setAuthTag(authTag);
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
-  } catch {
-    logger.error({}, 'Failed to decrypt OAuth secret');
-    return '';
-  }
-}
+// Use the shared encryption from oauth/utils to ensure consistency
+import { encrypt } from '@/lib/oauth/utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/super-admin/organizations/[id]/auth-config
