@@ -220,6 +220,18 @@ function LoginForm() {
     }
   };
 
+  // Show loading state while resolving custom domain or fetching branding
+  if (subdomainLoading || (subdomain && brandingLoading)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400 mx-auto mb-4" />
+          <p className="text-sm text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Show branding error for invalid subdomain
   if (subdomain && brandingError && !brandingLoading) {
     const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
