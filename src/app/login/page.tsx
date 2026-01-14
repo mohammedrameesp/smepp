@@ -142,6 +142,15 @@ function LoginForm() {
     }
   }, [subdomain, brandingError, brandingLoading]);
 
+  // Set dynamic page title based on organization branding
+  useEffect(() => {
+    if (branding?.organizationName) {
+      document.title = `Login | ${branding.organizationName}`;
+    } else if (!subdomain) {
+      document.title = 'Login | Durj';
+    }
+  }, [branding?.organizationName, subdomain]);
+
   const handleCredentialsSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

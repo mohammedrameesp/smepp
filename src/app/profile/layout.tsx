@@ -3,6 +3,20 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { AdminLayoutClient } from '@/app/admin/layout-client';
+import type { Metadata } from 'next';
+
+// Dynamic page titles with organization name
+export async function generateMetadata(): Promise<Metadata> {
+  const session = await getServerSession(authOptions);
+  const orgName = session?.user?.organizationName || 'Durj';
+
+  return {
+    title: {
+      template: `%s | ${orgName}`,
+      default: `Profile | ${orgName}`,
+    },
+  };
+}
 
 async function getOrgSettings(tenantId: string): Promise<{ enabledModules: string[]; aiChatEnabled: boolean }> {
   const org = await prisma.organization.findUnique({

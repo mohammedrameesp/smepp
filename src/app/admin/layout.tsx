@@ -3,6 +3,20 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { AdminLayoutClient } from './layout-client';
+import type { Metadata } from 'next';
+
+// Dynamic page titles with organization name
+export async function generateMetadata(): Promise<Metadata> {
+  const session = await getServerSession(authOptions);
+  const orgName = session?.user?.organizationName || 'Durj';
+
+  return {
+    title: {
+      template: `%s | ${orgName}`,
+      default: `Dashboard | ${orgName}`,
+    },
+  };
+}
 
 // Get organization settings from database (fresh, not from session)
 // Returns null if organization doesn't exist (was deleted)

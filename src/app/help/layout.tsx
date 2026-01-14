@@ -5,6 +5,20 @@ import { prisma } from '@/lib/core/prisma';
 import { HelpLayoutClient } from './layout-client';
 import { isAdminRole } from '@/lib/help/help-types';
 import type { UserRole } from '@/lib/help/help-types';
+import type { Metadata } from 'next';
+
+// Dynamic page titles with organization name
+export async function generateMetadata(): Promise<Metadata> {
+  const session = await getServerSession(authOptions);
+  const orgName = session?.user?.organizationName || 'Durj';
+
+  return {
+    title: {
+      template: `%s | ${orgName}`,
+      default: `Help | ${orgName}`,
+    },
+  };
+}
 
 // Get enabled modules from database
 async function getEnabledModules(tenantId: string): Promise<string[]> {

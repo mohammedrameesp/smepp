@@ -4,6 +4,20 @@ import { cookies } from 'next/headers';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { EmployeeLayoutClient } from './layout-client';
+import type { Metadata } from 'next';
+
+// Dynamic page titles with organization name
+export async function generateMetadata(): Promise<Metadata> {
+  const session = await getServerSession(authOptions);
+  const orgName = session?.user?.organizationName || 'Durj';
+
+  return {
+    title: {
+      template: `%s | ${orgName}`,
+      default: `Employee Portal | ${orgName}`,
+    },
+  };
+}
 
 // Get organization settings from database (fresh, not from session)
 // Returns null if organization doesn't exist (was deleted)
