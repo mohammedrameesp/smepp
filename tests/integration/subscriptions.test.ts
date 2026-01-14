@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth/next';
-import { Role } from '@prisma/client';
+import { Role, Prisma, BillingCycle, SubscriptionStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
+import { createSubscriptionSchema } from '@/features/subscriptions';
 
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
@@ -260,6 +261,95 @@ describe('Subscriptions API Tests', () => {
       }
 
       expect(nextRenewal.getFullYear()).toBe(2026);
+    });
+  });
+
+  /**
+   * Schema Validation Tests
+   *
+   * These tests ensure that the Zod validation schema stays in sync with
+   * the Prisma model. They validate data shapes at compile time and runtime.
+   */
+  describe('Schema Validation', () => {
+    it('should validate subscription create data against Zod schema', () => {
+      const validData = {
+        serviceName: 'Test Subscription',
+        category: 'SaaS',
+        accountId: 'test@example.com',
+        vendor: 'Test Vendor',
+        costPerCycle: 100,
+        costCurrency: 'QAR',
+        costQAR: 100,
+        billingCycle: 'MONTHLY' as const,
+        purchaseDate: '2025-01-01',
+        renewalDate: '2025-02-01',
+        status: 'ACTIVE' as const,
+        autoRenew: true,
+        paymentMethod: 'Card *1234',
+        notes: 'Test notes',
+        assignedMemberId: 'user-123',
+        assignmentDate: '2025-01-01',
+      };
+
+      const result = createSubscriptionSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject invalid subscription data', () => {
+      const invalidData = {
+        // Missing required serviceName
+        category: 'SaaS',
+        billingCycle: 'MONTHLY',
+      };
+
+      const result = createSubscriptionSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+    });
+
+    it('should ensure create data shape matches Prisma input type', () => {
+      // This test validates at compile-time that our data shape matches Prisma
+      // If this test compiles, the data shape is correct
+      const subscriptionData: Prisma.SubscriptionUncheckedCreateInput = {
+        tenantId: 'tenant-123',
+        serviceName: 'Test Service',
+        subscriptionTag: 'TST-SUB-001',
+        category: 'SaaS',
+        accountId: 'test@example.com',
+        vendor: 'Test Vendor',
+        costPerCycle: 100,
+        costCurrency: 'QAR',
+        costQAR: 100,
+        billingCycle: BillingCycle.MONTHLY,
+        purchaseDate: new Date(),
+        renewalDate: new Date(),
+        status: SubscriptionStatus.ACTIVE,
+        autoRenew: true,
+        paymentMethod: 'Card *1234',
+        notes: 'Test notes',
+        assignedMemberId: 'user-123',
+      };
+
+      // Verify all required fields are present
+      expect(subscriptionData.tenantId).toBeDefined();
+      expect(subscriptionData.serviceName).toBeDefined();
+      expect(subscriptionData.subscriptionTag).toBeDefined();
+      expect(subscriptionData.billingCycle).toBeDefined();
+    });
+
+    it('should not allow fields that do not exist in Prisma schema', () => {
+      // This is a compile-time check - if projectId was added back to this
+      // object, TypeScript would error because it's not in the Prisma type
+      const subscriptionData: Prisma.SubscriptionUncheckedCreateInput = {
+        tenantId: 'tenant-123',
+        serviceName: 'Test Service',
+        subscriptionTag: 'TST-SUB-001',
+        billingCycle: BillingCycle.MONTHLY,
+        status: SubscriptionStatus.ACTIVE,
+        autoRenew: true,
+        // projectId: 'proj-123', // This would cause a compile error!
+      };
+
+      expect(subscriptionData).toBeDefined();
     });
   });
 });

@@ -21,6 +21,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { createSubscriptionSchema, subscriptionQuerySchema, generateSubscriptionTag, isUniqueConstraintError, MAX_TAG_GENERATION_RETRIES } from '@/features/subscriptions';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -264,10 +265,9 @@ async function createSubscriptionHandler(request: NextRequest, context: APIConte
         // Generate subscription tag with offset for retry attempts
         const subscriptionTag = await generateSubscriptionTag(tenantId, orgPrefix, attempt);
 
-        // Build subscription data with proper typing
-        // Note: tenantId is included explicitly for type safety, the tenant prisma
-        // extension also auto-injects it but TypeScript requires it at compile time
-        const subscriptionData = {
+        // Build subscription data with explicit Prisma typing
+        // This ensures TypeScript catches any schema mismatches at compile time
+        const subscriptionData: Prisma.SubscriptionUncheckedCreateInput = {
           tenantId,
           serviceName: data.serviceName,
           subscriptionTag,

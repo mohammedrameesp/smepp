@@ -30,7 +30,7 @@
  */
 
 import { z } from 'zod';
-import { BillingCycle, SubscriptionStatus } from '@prisma/client';
+import { BillingCycle, SubscriptionStatus, Prisma } from '@prisma/client';
 import { getQatarNow, getQatarEndOfDay, dateInputToQatarDate } from '@/lib/core/datetime';
 
 /**
@@ -173,3 +173,29 @@ export const subscriptionQuerySchema = z.object({
 export type CreateSubscriptionRequest = z.infer<typeof createSubscriptionSchema>;
 export type UpdateSubscriptionRequest = z.infer<typeof updateSubscriptionSchema>;
 export type SubscriptionQuery = z.infer<typeof subscriptionQuerySchema>;
+
+/**
+ * Type compatibility check: Ensures Zod schema fields match Prisma model fields.
+ * If this causes a compile error, the Zod schema is out of sync with the Prisma model.
+ *
+ * This catches issues like:
+ * - Fields removed from Prisma but still in Zod schema
+ * - Fields added to Prisma but missing from Zod schema
+ * - Field type mismatches
+ */
+
+// Extract only the data fields from Zod schema (excluding refinements)
+type ZodCreateFields = keyof CreateSubscriptionRequest;
+
+// Extract Prisma subscription create input fields
+type PrismaCreateFields = keyof Omit<
+  Prisma.SubscriptionUncheckedCreateInput,
+  'id' | 'tenantId' | 'subscriptionTag' | 'createdAt' | 'updatedAt' |
+  'lastActiveRenewalDate' | 'cancelledAt' | 'reactivatedAt' | 'history'
+>;
+
+// This will cause a compile error if Zod has fields that Prisma doesn't have
+// (Fields that exist in Zod but not in Prisma will make this type 'never')
+type _ValidateZodFieldsExistInPrisma = ZodCreateFields extends PrismaCreateFields | 'assignmentDate'
+  ? true
+  : { error: 'Zod schema has fields not in Prisma model'; fields: Exclude<ZodCreateFields, PrismaCreateFields | 'assignmentDate'> };

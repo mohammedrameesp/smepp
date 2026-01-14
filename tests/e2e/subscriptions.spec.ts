@@ -193,4 +193,124 @@ test.describe('Subscription Workflow', () => {
     const hasYearlySubscription = bodyText?.includes(yearlySubscription.serviceName);
     expect(hasYearlySubscription).toBeTruthy();
   });
+
+  /**
+   * API Schema Validation Tests
+   * These tests ensure the API accepts valid data and catches schema mismatches
+   */
+  test('Test 3.5: Create Subscription without optional cost - should succeed', async ({ page }) => {
+    // Go to new subscription form
+    await page.goto('/admin/subscriptions/new');
+
+    // Fill only required fields (no cost)
+    const subscriptionName = `TEST No Cost ${Date.now()}`;
+    await page.fill('input[id="serviceName"]', subscriptionName);
+
+    // Set purchase date
+    const purchaseDateInput = page.locator('input[id="purchaseDate"]');
+    if (await purchaseDateInput.count() > 0) {
+      const today = new Date().toISOString().split('T')[0];
+      await purchaseDateInput.fill(today);
+    }
+
+    // Select user (required field)
+    const assignedMemberSelect = page.locator('[data-testid="assignedMember-select"], button:has-text("Select user")');
+    if (await assignedMemberSelect.count() > 0) {
+      await assignedMemberSelect.click();
+      // Select first available user
+      await page.click('[role="option"]:not(:has-text("None"))');
+    }
+
+    // Submit form
+    await page.click('button[type="submit"]:has-text("Create")');
+
+    // Should not show API error (especially not "Unknown argument" errors)
+    await page.waitForTimeout(2000);
+    const pageContent = await page.textContent('body');
+    expect(pageContent).not.toContain('Unknown argument');
+    expect(pageContent).not.toContain('prisma');
+    expect(pageContent).not.toContain('500');
+
+    // Should redirect or show success
+    const currentUrl = page.url();
+    const isSuccess = currentUrl.includes('/admin/subscriptions') || pageContent?.includes('success') || pageContent?.includes('created');
+    expect(isSuccess).toBeTruthy();
+  });
+
+  test('Test 3.6: Delete Subscription - should delete successfully', async ({ page }) => {
+    // First create a subscription to delete
+    await page.goto('/admin/subscriptions/new');
+
+    const subscriptionName = `TEST Delete ${Date.now()}`;
+    await page.fill('input[id="serviceName"]', subscriptionName);
+
+    const purchaseDateInput = page.locator('input[id="purchaseDate"]');
+    if (await purchaseDateInput.count() > 0) {
+      const today = new Date().toISOString().split('T')[0];
+      await purchaseDateInput.fill(today);
+    }
+
+    const assignedMemberSelect = page.locator('[data-testid="assignedMember-select"], button:has-text("Select user")');
+    if (await assignedMemberSelect.count() > 0) {
+      await assignedMemberSelect.click();
+      await page.click('[role="option"]:not(:has-text("None"))');
+    }
+
+    await page.click('button[type="submit"]:has-text("Create")');
+    await page.waitForURL(/\/admin\/subscriptions/, { timeout: 10000 });
+
+    // Navigate to the subscription detail
+    await page.goto('/admin/subscriptions');
+    await page.click(`text=${subscriptionName}`);
+
+    // Look for delete button
+    const deleteButton = page.locator('button:has-text("Delete")');
+    if (await deleteButton.count() > 0) {
+      await deleteButton.click();
+
+      // Confirm deletion if there's a dialog
+      const confirmButton = page.locator('button:has-text("Confirm"), button:has-text("Yes"), button:has-text("Delete"):visible');
+      if (await confirmButton.count() > 0) {
+        await confirmButton.click();
+      }
+
+      // Should redirect to list
+      await page.waitForURL(/\/admin\/subscriptions/, { timeout: 10000 });
+
+      // Subscription should no longer appear
+      const pageContent = await page.textContent('body');
+      expect(pageContent).not.toContain(subscriptionName);
+    }
+  });
+
+  test('Test 3.7: API Error Handling - should show user-friendly errors not raw Prisma errors', async ({ page }) => {
+    // Navigate to subscriptions
+    await page.goto('/admin/subscriptions');
+
+    // Listen for console errors
+    const consoleErrors: string[] = [];
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+
+    // Listen for failed API requests
+    const failedRequests: string[] = [];
+    page.on('response', response => {
+      if (response.url().includes('/api/subscriptions') && response.status() >= 400) {
+        failedRequests.push(`${response.status()}: ${response.url()}`);
+      }
+    });
+
+    // Navigate around the subscriptions pages
+    await page.goto('/admin/subscriptions');
+    await page.waitForLoadState('networkidle');
+
+    // Check that no Prisma errors leak to the console
+    const hasPrismaError = consoleErrors.some(err =>
+      err.includes('Prisma') || err.includes('prisma') || err.includes('Unknown argument')
+    );
+    expect(hasPrismaError).toBe(false);
+  });
 });
