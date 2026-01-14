@@ -109,7 +109,7 @@ export function PageHeaderButton({
 }: {
   href?: string;
   onClick?: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'destructive' | 'success';
+  variant?: 'primary' | 'secondary' | 'outline' | 'destructive' | 'success' | 'warning';
   children: React.ReactNode;
   className?: string;
   disabled?: boolean;
@@ -123,6 +123,7 @@ export function PageHeaderButton({
     outline: 'bg-transparent text-slate-300 hover:text-white border border-slate-500 hover:border-slate-400 focus-visible:ring-slate-400',
     destructive: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500',
     success: 'bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-500',
+    warning: 'bg-amber-600 text-white hover:bg-amber-700 focus-visible:ring-amber-500',
   };
 
   const combinedClassName = cn(baseStyles, variantStyles[variant], className);

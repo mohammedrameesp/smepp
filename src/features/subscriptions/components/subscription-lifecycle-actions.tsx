@@ -125,11 +125,11 @@ export function SubscriptionLifecycleActions({
     <>
       {status === 'ACTIVE' && (
         <PageHeaderButton
-          variant="destructive"
+          variant="warning"
           onClick={() => setCancelDialogOpen(true)}
         >
           <Ban className="h-4 w-4" />
-          Cancel
+          Mark as Cancelled
         </PageHeaderButton>
       )}
 
