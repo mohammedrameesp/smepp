@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Eye } from 'lucide-react';
+import { Plus, Eye, Users, DollarSign, CreditCard } from 'lucide-react';
 import { formatCurrency, getMonthName, getPayrollStatusText, getPayrollStatusColor } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
@@ -76,10 +76,24 @@ export default async function PayrollRunsPage({ searchParams }: PageProps) {
           { label: 'Runs' },
         ]}
         actions={
-          <PageHeaderButton href="/admin/payroll/runs/new" variant="primary">
-            <Plus className="h-4 w-4" />
-            New Payroll Run
-          </PageHeaderButton>
+          <>
+            <PageHeaderButton href="/admin/payroll/runs/new" variant="primary">
+              <Plus className="h-4 w-4" />
+              New Payroll Run
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/salary-structures" variant="secondary">
+              <Users className="h-4 w-4" />
+              Salary Structures
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/payslips" variant="secondary">
+              <DollarSign className="h-4 w-4" />
+              Payslips
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/loans" variant="secondary">
+              <CreditCard className="h-4 w-4" />
+              Loans
+            </PageHeaderButton>
+          </>
         }
       >
         <StatChipGroup>

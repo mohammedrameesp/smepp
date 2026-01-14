@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Pencil } from 'lucide-react';
+import { Plus, Pencil, FileText, DollarSign, CreditCard } from 'lucide-react';
 import { formatCurrency } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
@@ -89,10 +89,24 @@ export default async function SalaryStructuresPage({ searchParams }: PageProps) 
           { label: 'Salary Structures' },
         ]}
         actions={
-          <PageHeaderButton href="/admin/payroll/salary-structures/new" variant="primary">
-            <Plus className="h-4 w-4" />
-            Add Salary Structure
-          </PageHeaderButton>
+          <>
+            <PageHeaderButton href="/admin/payroll/salary-structures/new" variant="primary">
+              <Plus className="h-4 w-4" />
+              Add Salary Structure
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/runs" variant="secondary">
+              <FileText className="h-4 w-4" />
+              Payroll Runs
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/payslips" variant="secondary">
+              <DollarSign className="h-4 w-4" />
+              Payslips
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/loans" variant="secondary">
+              <CreditCard className="h-4 w-4" />
+              Loans
+            </PageHeaderButton>
+          </>
         }
       >
         <StatChipGroup>

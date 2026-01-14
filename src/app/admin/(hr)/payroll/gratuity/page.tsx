@@ -14,7 +14,9 @@ import {
 } from '@/components/ui/table';
 import { calculateGratuity, getServiceDurationText } from '@/features/payroll/lib/gratuity';
 import { formatCurrency } from '@/features/payroll/lib/utils';
-import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { FileText, Users, DollarSign } from 'lucide-react';
 
 export default async function GratuityReportPage() {
   const session = await getServerSession(authOptions);
@@ -71,7 +73,28 @@ export default async function GratuityReportPage() {
           { label: 'Payroll', href: '/admin/payroll' },
           { label: 'Gratuity Report' },
         ]}
-      />
+        actions={
+          <>
+            <PageHeaderButton href="/admin/payroll/runs" variant="secondary">
+              <FileText className="h-4 w-4" />
+              Payroll Runs
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/salary-structures" variant="secondary">
+              <Users className="h-4 w-4" />
+              Salary Structures
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/payslips" variant="secondary">
+              <DollarSign className="h-4 w-4" />
+              Payslips
+            </PageHeaderButton>
+          </>
+        }
+      >
+        <StatChipGroup>
+          <StatChip value={gratuityData.length} label="employees" color="blue" />
+          <StatChip value={formatCurrency(totalGratuityLiability)} label="total liability" color="emerald" />
+        </StatChipGroup>
+      </PageHeader>
       <PageContent className="space-y-6">
 
       {/* Summary Card */}

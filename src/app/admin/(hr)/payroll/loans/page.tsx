@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Eye } from 'lucide-react';
+import { Plus, Eye, FileText, Users, DollarSign } from 'lucide-react';
 import { formatCurrency } from '@/features/payroll/lib/utils';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
@@ -121,10 +121,24 @@ export default async function LoansPage({ searchParams }: PageProps) {
           { label: 'Loans' },
         ]}
         actions={
-          <PageHeaderButton href="/admin/payroll/loans/new" variant="primary">
-            <Plus className="h-4 w-4" />
-            New Loan
-          </PageHeaderButton>
+          <>
+            <PageHeaderButton href="/admin/payroll/loans/new" variant="primary">
+              <Plus className="h-4 w-4" />
+              New Loan
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/runs" variant="secondary">
+              <FileText className="h-4 w-4" />
+              Payroll Runs
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/salary-structures" variant="secondary">
+              <Users className="h-4 w-4" />
+              Salary Structures
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/payslips" variant="secondary">
+              <DollarSign className="h-4 w-4" />
+              Payslips
+            </PageHeaderButton>
+          </>
         }
       >
         <StatChipGroup>

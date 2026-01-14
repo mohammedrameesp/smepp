@@ -24,9 +24,9 @@ import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { AssetRequestStatus } from '@prisma/client';
 import { AssetRequestListTable } from '@/features/asset-requests';
-import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
-import { Package, AlertTriangle } from 'lucide-react';
+import { Package, AlertTriangle, Layers } from 'lucide-react';
 
 /**
  * Admin asset requests list page component
@@ -101,6 +101,12 @@ export default async function AdminAssetRequestsPage() {
       <PageHeader
         title="Asset Requests"
         subtitle="Manage asset requests, assignments, and returns"
+        actions={
+          <PageHeaderButton href="/admin/assets" variant="secondary">
+            <Layers className="h-4 w-4" />
+            All Assets
+          </PageHeaderButton>
+        }
       >
         <StatChipGroup>
           <StatChip value={pendingApproval.length} label="pending approval" color="amber" hideWhenZero />

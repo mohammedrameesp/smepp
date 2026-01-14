@@ -15,9 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Eye, Search } from 'lucide-react';
+import { Eye, Search, FileText, Users, Calculator } from 'lucide-react';
 import { formatCurrency, getMonthName, getPayrollStatusColor } from '@/features/payroll/lib/utils';
-import { PageHeader, PageContent } from '@/components/ui/page-header';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 interface PageProps {
@@ -116,6 +116,22 @@ export default async function PayslipsSearchPage({ searchParams }: PageProps) {
           { label: 'Payroll', href: '/admin/payroll' },
           { label: 'Payslips' },
         ]}
+        actions={
+          <>
+            <PageHeaderButton href="/admin/payroll/runs" variant="secondary">
+              <FileText className="h-4 w-4" />
+              Payroll Runs
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/salary-structures" variant="secondary">
+              <Users className="h-4 w-4" />
+              Salary Structures
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/payroll/gratuity" variant="secondary">
+              <Calculator className="h-4 w-4" />
+              Gratuity
+            </PageHeaderButton>
+          </>
+        }
       >
         <StatChipGroup>
           <StatChip value={total} label="payslips found" color="slate" />

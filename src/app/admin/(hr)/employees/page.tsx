@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/core/prisma';
-import { ClipboardList, AlertTriangle, Calendar } from 'lucide-react';
+import { ClipboardList, AlertTriangle, Calendar, FileText } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 import { TeamClient } from './team-client';
@@ -84,15 +84,26 @@ export default async function AdminTeamPage() {
         title="Team"
         subtitle="Manage team members, employees, and invitations"
         actions={
-          <PageHeaderButton href="/admin/employees/change-requests" variant="secondary">
-            <ClipboardList className="h-4 w-4" />
-            Change Requests
-            {pendingChangeRequests > 0 && (
-              <span className="bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-                {pendingChangeRequests}
-              </span>
-            )}
-          </PageHeaderButton>
+          <>
+            <PageHeaderButton href="/admin/employees/change-requests" variant="secondary">
+              <ClipboardList className="h-4 w-4" />
+              Change Requests
+              {pendingChangeRequests > 0 && (
+                <span className="bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                  {pendingChangeRequests}
+                </span>
+              )}
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/employees/document-expiry" variant="secondary">
+              <FileText className="h-4 w-4" />
+              Document Expiry
+              {expiringDocumentsCount > 0 && (
+                <span className="bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                  {expiringDocumentsCount}
+                </span>
+              )}
+            </PageHeaderButton>
+          </>
         }
       >
         <StatChipGroup>
