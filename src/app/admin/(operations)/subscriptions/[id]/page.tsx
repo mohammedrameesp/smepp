@@ -182,23 +182,19 @@ export default async function SubscriptionDetailPage({ params }: Props) {
           {/* Billing Information */}
           <DetailCard icon={DollarSign} iconColor="emerald" title="Billing Information" subtitle="Cost and payment details">
             <InfoFieldGrid columns={2}>
-              <div className="p-4 bg-emerald-50 rounded-xl">
-                <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide mb-1">Cost per Cycle</p>
-                {subscription.costPerCycle ? (
-                  <>
-                    <p className="font-bold text-lg text-emerald-700">
-                      {formatCurrency(Number(subscription.costPerCycle), subscription.costCurrency)}
+              {subscription.costPerCycle && !isNaN(Number(subscription.costPerCycle)) && (
+                <div className="p-4 bg-emerald-50 rounded-xl">
+                  <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide mb-1">Cost per Cycle</p>
+                  <p className="font-bold text-lg text-emerald-700">
+                    {formatCurrency(Number(subscription.costPerCycle), subscription.costCurrency)}
+                  </p>
+                  {subscription.costCurrency !== 'QAR' && subscription.costQAR && !isNaN(Number(subscription.costQAR)) && (
+                    <p className="text-xs text-emerald-600">
+                      ≈ {formatCurrency(Number(subscription.costQAR), 'QAR')}
                     </p>
-                    {subscription.costCurrency !== 'QAR' && subscription.costQAR && (
-                      <p className="text-xs text-emerald-600">
-                        ≈ {formatCurrency(Number(subscription.costQAR), 'QAR')}
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <p className="font-semibold text-slate-900">Not specified</p>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
               <InfoField label="Billing Cycle" value={formatBillingCycle(subscription.billingCycle)} />
               <InfoField
                 label="Payment Method"

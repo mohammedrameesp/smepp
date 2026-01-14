@@ -114,7 +114,8 @@ export function CostBreakdown({ subscriptionId }: CostBreakdownProps) {
     );
   }
 
-  if (!costData) {
+  // Don't show anything if no cost data or no cost specified
+  if (!costData || (costData.totalCost === 0 && costData.activePeriods.length === 0)) {
     return null;
   }
 
@@ -170,10 +171,10 @@ export function CostBreakdown({ subscriptionId }: CostBreakdownProps) {
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-semibold text-gray-900">
-                          {formatCurrency(period.cost, costData.currency)}
+                          {period.cost > 0 ? formatCurrency(period.cost, costData.currency) : '—'}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {period.months.toFixed(1)} months
+                          {period.months > 0 ? `${period.months.toFixed(1)} months` : '—'}
                         </div>
                       </div>
                     </div>
