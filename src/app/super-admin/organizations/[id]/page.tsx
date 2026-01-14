@@ -156,6 +156,15 @@ interface WhatsAppStatus {
   };
 }
 
+interface CustomDomainStatus {
+  domain: string | null;
+  verified: boolean;
+  verifiedAt: string | null;
+  txtValue: string | null;
+  bypassVerification: boolean;
+  isActive: boolean;
+}
+
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 const AUTH_METHODS = [
   { id: 'credentials', label: 'Email & Password', icon: Mail },
@@ -230,6 +239,17 @@ export default function OrganizationDetailPage() {
   const [whatsAppStatus, setWhatsAppStatus] = useState<WhatsAppStatus | null>(null);
   const [togglingWhatsAppPlatform, setTogglingWhatsAppPlatform] = useState(false);
 
+  // Custom Domain state
+  const [customDomainStatus, setCustomDomainStatus] = useState<CustomDomainStatus | null>(null);
+  const [newCustomDomain, setNewCustomDomain] = useState('');
+  const [settingDomain, setSettingDomain] = useState(false);
+  const [verifyingDomain, setVerifyingDomain] = useState(false);
+  const [togglingBypass, setTogglingBypass] = useState(false);
+  const [removingDomain, setRemovingDomain] = useState(false);
+  const [domainError, setDomainError] = useState<string | null>(null);
+  const [domainSuccess, setDomainSuccess] = useState<string | null>(null);
+  const [verificationResult, setVerificationResult] = useState<{ verified: boolean; error?: string; txtRecordsFound?: string[] } | null>(null);
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -288,6 +308,13 @@ export default function OrganizationDetailPage() {
         if (whatsAppRes.ok) {
           const whatsAppData = await whatsAppRes.json();
           setWhatsAppStatus(whatsAppData.whatsApp);
+        }
+
+        // Fetch Custom Domain status
+        const customDomainRes = await fetch(`/api/super-admin/organizations/${orgId}/custom-domain`);
+        if (customDomainRes.ok) {
+          const customDomainData = await customDomainRes.json();
+          setCustomDomainStatus(customDomainData.customDomain);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load organization');
@@ -771,6 +798,151 @@ export default function OrganizationDetailPage() {
     }
   };
 
+  // Custom Domain handlers
+  const handleSetCustomDomain = async () => {
+    if (!newCustomDomain.trim()) return;
+
+    setSettingDomain(true);
+    setDomainError(null);
+    setDomainSuccess(null);
+    setVerificationResult(null);
+    try {
+      const response = await fetch(`/api/super-admin/organizations/${orgId}/custom-domain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customDomain: newCustomDomain.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to set custom domain');
+      }
+
+      setCustomDomainStatus({
+        domain: data.customDomain.domain,
+        verified: false,
+        verifiedAt: null,
+        txtValue: data.customDomain.txtValue,
+        bypassVerification: false,
+        isActive: false,
+      });
+      setNewCustomDomain('');
+      setDomainSuccess('Custom domain set. Add the TXT record to verify ownership.');
+      setTimeout(() => setDomainSuccess(null), 5000);
+    } catch (err) {
+      setDomainError(err instanceof Error ? err.message : 'Failed to set domain');
+    } finally {
+      setSettingDomain(false);
+    }
+  };
+
+  const handleVerifyDomain = async () => {
+    setVerifyingDomain(true);
+    setDomainError(null);
+    setVerificationResult(null);
+    try {
+      const response = await fetch(`/api/super-admin/organizations/${orgId}/custom-domain`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify' }),
+      });
+
+      const data = await response.json();
+
+      if (data.verified) {
+        setCustomDomainStatus(prev => prev ? {
+          ...prev,
+          verified: true,
+          verifiedAt: data.verifiedAt,
+          isActive: true,
+        } : null);
+        setVerificationResult({ verified: true });
+        setDomainSuccess('Domain verified successfully!');
+        setTimeout(() => setDomainSuccess(null), 5000);
+      } else {
+        setVerificationResult({
+          verified: false,
+          error: data.error,
+          txtRecordsFound: data.txtRecordsFound,
+        });
+      }
+    } catch (err) {
+      setDomainError(err instanceof Error ? err.message : 'Failed to verify domain');
+    } finally {
+      setVerifyingDomain(false);
+    }
+  };
+
+  const handleToggleBypass = async (enabled: boolean) => {
+    setTogglingBypass(true);
+    setDomainError(null);
+    try {
+      const response = await fetch(`/api/super-admin/organizations/${orgId}/custom-domain`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'bypass', bypass: enabled }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to toggle bypass');
+      }
+
+      setCustomDomainStatus(prev => prev ? {
+        ...prev,
+        bypassVerification: data.bypassVerification,
+        isActive: data.isActive,
+      } : null);
+    } catch (err) {
+      setDomainError(err instanceof Error ? err.message : 'Failed to toggle bypass');
+    } finally {
+      setTogglingBypass(false);
+    }
+  };
+
+  const handleRemoveCustomDomain = async () => {
+    setRemovingDomain(true);
+    setDomainError(null);
+    try {
+      const response = await fetch(`/api/super-admin/organizations/${orgId}/custom-domain`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to remove custom domain');
+      }
+
+      setCustomDomainStatus({
+        domain: null,
+        verified: false,
+        verifiedAt: null,
+        txtValue: null,
+        bypassVerification: false,
+        isActive: false,
+      });
+      setVerificationResult(null);
+      setDomainSuccess('Custom domain removed');
+      setTimeout(() => setDomainSuccess(null), 3000);
+    } catch (err) {
+      setDomainError(err instanceof Error ? err.message : 'Failed to remove domain');
+    } finally {
+      setRemovingDomain(false);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setDomainSuccess('Copied to clipboard!');
+      setTimeout(() => setDomainSuccess(null), 2000);
+    } catch {
+      setDomainError('Failed to copy');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -1157,6 +1329,261 @@ export default function OrganizationDetailPage() {
           ) : (
             <p className="text-sm text-muted-foreground">Loading WhatsApp status...</p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Custom Domain */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Custom Domain
+            {(settingDomain || verifyingDomain || togglingBypass || removingDomain) && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+          </CardTitle>
+          <CardDescription>
+            Configure a custom domain for this organization (e.g., app.company.com)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {domainError && (
+            <Alert variant="error">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{domainError}</AlertDescription>
+            </Alert>
+          )}
+
+          {domainSuccess && (
+            <Alert className="border-green-200 bg-green-50 text-green-800">
+              <Check className="h-4 w-4" />
+              <AlertDescription>{domainSuccess}</AlertDescription>
+            </Alert>
+          )}
+
+          {customDomainStatus?.domain ? (
+            <>
+              {/* Current Domain Status */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                    customDomainStatus.isActive ? 'bg-green-100' : 'bg-amber-100'
+                  }`}>
+                    <Globe className={`h-5 w-5 ${
+                      customDomainStatus.isActive ? 'text-green-600' : 'text-amber-600'
+                    }`} />
+                  </div>
+                  <div>
+                    <p className="font-medium font-mono">{customDomainStatus.domain}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {customDomainStatus.isActive ? 'Active and ready' : 'Pending verification'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={customDomainStatus.isActive ? 'default' : 'secondary'}>
+                    {customDomainStatus.verified
+                      ? 'Verified'
+                      : customDomainStatus.bypassVerification
+                        ? 'Bypassed'
+                        : 'Pending'}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveCustomDomain}
+                    disabled={removingDomain}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Verification Instructions */}
+              {!customDomainStatus.verified && !customDomainStatus.bypassVerification && customDomainStatus.txtValue && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-3">
+                  <h4 className="font-medium text-amber-900">DNS Verification Required</h4>
+                  <p className="text-sm text-amber-800">
+                    Add a TXT record to your DNS to verify domain ownership:
+                  </p>
+                  <div className="space-y-2">
+                    <div className="p-3 bg-white rounded border border-amber-200">
+                      <p className="text-xs text-amber-700 mb-1">Option 1: Root domain TXT record</p>
+                      <div className="flex items-center gap-2">
+                        <code className="text-sm font-mono flex-1 truncate">{customDomainStatus.domain}</code>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(customDomainStatus.domain || '')}
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-white rounded border border-amber-200">
+                      <p className="text-xs text-amber-700 mb-1">Option 2: Subdomain TXT record</p>
+                      <div className="flex items-center gap-2">
+                        <code className="text-sm font-mono flex-1 truncate">_durj-verification.{customDomainStatus.domain}</code>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(`_durj-verification.${customDomainStatus.domain}`)}
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-white rounded border border-amber-200">
+                      <p className="text-xs text-amber-700 mb-1">TXT Record Value</p>
+                      <div className="flex items-center gap-2">
+                        <code className="text-sm font-mono flex-1 truncate">{customDomainStatus.txtValue}</code>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(customDomainStatus.txtValue || '')}
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-amber-700">
+                    Note: DNS changes may take up to 48 hours to propagate.
+                  </p>
+                </div>
+              )}
+
+              {/* Verification Result */}
+              {verificationResult && !verificationResult.verified && (
+                <Alert variant="error">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <p className="font-medium">{verificationResult.error}</p>
+                    {verificationResult.txtRecordsFound && verificationResult.txtRecordsFound.length > 0 && (
+                      <div className="mt-2 text-sm">
+                        <p>TXT records found:</p>
+                        <ul className="list-disc list-inside mt-1">
+                          {verificationResult.txtRecordsFound.map((record, i) => (
+                            <li key={i} className="font-mono text-xs truncate">{record}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Actions */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <p className="font-medium">Verify Domain</p>
+                  <p className="text-sm text-muted-foreground">
+                    Check if TXT record is configured correctly
+                  </p>
+                </div>
+                <Button
+                  onClick={handleVerifyDomain}
+                  disabled={verifyingDomain || customDomainStatus.verified}
+                  variant="outline"
+                >
+                  {verifyingDomain ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : customDomainStatus.verified ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Verified
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Verify Now
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Bypass Verification (Super Admin Override) */}
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <p className="font-medium">Bypass DNS Verification</p>
+                  <p className="text-sm text-muted-foreground">
+                    Activate domain without DNS verification (super admin override)
+                  </p>
+                </div>
+                <Switch
+                  checked={customDomainStatus.bypassVerification}
+                  onCheckedChange={handleToggleBypass}
+                  disabled={togglingBypass || customDomainStatus.verified}
+                />
+              </div>
+
+              {/* SSL Setup Instructions */}
+              {customDomainStatus.isActive && (
+                <Alert className="border-blue-200 bg-blue-50 text-blue-800">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <p className="font-medium">Vercel Setup Required</p>
+                    <p className="text-sm mt-1">
+                      Add this domain to your Vercel project for SSL:
+                    </p>
+                    <ol className="list-decimal list-inside text-sm mt-2 space-y-1">
+                      <li>Go to Vercel Dashboard → Project → Settings → Domains</li>
+                      <li>Add domain: <code className="bg-blue-100 px-1 rounded">{customDomainStatus.domain}</code></li>
+                      <li>Add CNAME record: <code className="bg-blue-100 px-1 rounded">{customDomainStatus.domain}</code> → <code className="bg-blue-100 px-1 rounded">cname.vercel-dns.com</code></li>
+                    </ol>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Verified Info */}
+              {customDomainStatus.verified && customDomainStatus.verifiedAt && (
+                <p className="text-xs text-muted-foreground">
+                  Verified on {format(new Date(customDomainStatus.verifiedAt), 'MMM d, yyyy')}
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Set New Domain */}
+              <div className="space-y-3">
+                <Label>Custom Domain</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="app.company.com"
+                    value={newCustomDomain}
+                    onChange={(e) => setNewCustomDomain(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSetCustomDomain()}
+                    disabled={settingDomain}
+                    className="font-mono"
+                  />
+                  <Button
+                    onClick={handleSetCustomDomain}
+                    disabled={settingDomain || !newCustomDomain.trim()}
+                  >
+                    {settingDomain ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      'Set Domain'
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Enter the domain you want to use (e.g., app.company.com, hr.acme.qa)
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* Standard Subdomain Info */}
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              Standard subdomain: <code className="font-mono bg-gray-200 px-1 rounded">{org?.slug}.{APP_DOMAIN.split(':')[0]}</code>
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Both subdomain and custom domain will work simultaneously when configured.
+            </p>
+          </div>
         </CardContent>
       </Card>
 

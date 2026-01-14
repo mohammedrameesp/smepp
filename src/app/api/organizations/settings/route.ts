@@ -33,7 +33,7 @@ const emptyToUndefined = (val: string | undefined) => (val === '' ? undefined : 
 
 const updateSettingsSchema = z.object({
   name: z.string().min(2).max(100).optional(),
-  codePrefix: z.string().regex(/^[A-Z0-9]{3}$/, 'Code prefix must be exactly 3 uppercase letters/numbers').optional(),
+  codePrefix: z.string().regex(/^[A-Z0-9]{2,3}$/, 'Code prefix must be 2-3 uppercase letters/numbers').optional(),
   enabledModules: z.array(z.string()).optional(),
   primaryColor: z.preprocess(emptyToUndefined, z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional()),
   secondaryColor: z.preprocess(emptyToUndefined, z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional()),

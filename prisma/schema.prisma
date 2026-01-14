@@ -430,11 +430,19 @@ model Organization {
   whatsAppActionTokens    WhatsAppActionToken[]
   whatsAppMessageLogs     WhatsAppMessageLog[]
 
+  // Custom Domain Support (Super Admin only)
+  customDomain                   String?   @unique // e.g., "app.company.com"
+  customDomainVerified           Boolean   @default(false)
+  customDomainVerifiedAt         DateTime?
+  customDomainTxtValue           String? // DNS TXT verification value
+  customDomainBypassVerification Boolean   @default(false) // Super admin override
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([slug])
   @@index([stripeCustomerId])
+  @@index([customDomain])
 }
 
 // OrganizationUser model REMOVED - Use TeamMember instead

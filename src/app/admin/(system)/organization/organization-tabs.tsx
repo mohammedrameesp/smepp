@@ -144,7 +144,7 @@ export function OrganizationTabs({
 
   const codePrefixAutoSave = useAutoSave({
     value: codePrefix,
-    enabled: isAdmin && codePrefix !== org.codePrefix && codePrefix.length === 3,
+    enabled: isAdmin && codePrefix !== org.codePrefix && codePrefix.length >= 2 && codePrefix.length <= 3,
     onSave: async (value) => {
       const res = await fetch('/api/admin/organization', {
         method: 'PATCH',
@@ -555,7 +555,7 @@ export function OrganizationTabs({
                         <Settings2 className="h-5 w-5" />
                         Reference Code Prefix
                       </CardTitle>
-                      <CardDescription>3-letter prefix used for employee IDs, asset tags, and other codes</CardDescription>
+                      <CardDescription>2-3 character prefix used for employee IDs, asset tags, and other codes</CardDescription>
                     </div>
                     <AutoSaveIndicator status={codePrefixAutoSave.status} error={codePrefixAutoSave.error} />
                   </div>
@@ -572,8 +572,8 @@ export function OrganizationTabs({
                     />
                     <div className="text-sm text-muted-foreground">
                       <p>Example: <code className="px-2 py-1 bg-muted rounded">{codePrefix}-2024-001</code></p>
-                      {codePrefix.length !== 3 && (
-                        <p className="text-amber-600 mt-1">Must be exactly 3 characters</p>
+                      {(codePrefix.length < 2 || codePrefix.length > 3) && (
+                        <p className="text-amber-600 mt-1">Must be 2-3 characters</p>
                       )}
                     </div>
                   </div>

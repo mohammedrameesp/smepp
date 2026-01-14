@@ -14,7 +14,7 @@ const updateOrgSchema = z.object({
   name: z.string().min(2).max(100).optional(),
   logoUrl: z.string().url().nullable().optional(),
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  codePrefix: z.string().length(3).regex(/^[A-Z0-9]{3}$/).optional(),
+  codePrefix: z.string().min(2).max(3).regex(/^[A-Z0-9]{2,3}$/).optional(),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

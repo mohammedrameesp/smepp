@@ -101,7 +101,7 @@ const colorSchema = z.preprocess(
 
 const updateOrgSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(100).optional(),
-  codePrefix: z.string().length(3, 'Code prefix must be exactly 3 characters').regex(/^[A-Z0-9]+$/, 'Only uppercase letters and numbers allowed').optional(),
+  codePrefix: z.string().min(2, 'Code prefix must be at least 2 characters').max(3, 'Code prefix must be at most 3 characters').regex(/^[A-Z0-9]{2,3}$/, 'Only uppercase letters and numbers allowed').optional(),
   primaryColor: colorSchema,
   secondaryColor: colorSchema,
   website: z.string().url('Invalid URL format').nullable().optional().or(z.literal('')),

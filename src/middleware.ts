@@ -175,6 +175,51 @@ async function verifyImpersonationToken(token: string): Promise<{
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// CUSTOM DOMAIN RESOLUTION (Edge-compatible via internal API)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface CustomDomainTenant {
+  id: string;
+  slug: string;
+  name: string;
+  subscriptionTier: string;
+  enabledModules: string[];
+}
+
+/**
+ * Resolve a custom domain to tenant info by calling the internal API
+ * Returns null if domain is not registered or not verified
+ */
+async function resolveCustomDomain(
+  domain: string,
+  request: NextRequest
+): Promise<CustomDomainTenant | null> {
+  try {
+    // Build the internal API URL using the main domain
+    const protocol = request.nextUrl.protocol;
+    const internalUrl = new URL('/api/internal/resolve-domain', `${protocol}//${APP_DOMAIN}`);
+    internalUrl.searchParams.set('domain', domain);
+
+    const response = await fetch(internalUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    return data.tenant || null;
+  } catch {
+    // Log errors in development, silently fail in production
+    return null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // MODULE ROUTE PROTECTION
 // Route-to-module mapping is imported from @/lib/modules/routes
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -227,6 +272,7 @@ const PUBLIC_ROUTES = [
   '/api/subdomains', // Subdomain availability check
   '/api/suppliers/register', // Public supplier registration API
   '/api/suppliers/categories', // Public categories for supplier registration autocomplete
+  '/api/internal', // Internal APIs for edge middleware (custom domain resolution)
   '/verify',
   '/invite',
   '/pricing',
@@ -258,6 +304,8 @@ interface SubdomainInfo {
   subdomain: string | null;
   isMainDomain: boolean;
   isReserved: boolean;
+  isPotentialCustomDomain: boolean;
+  customDomainHost: string | null;
 }
 
 function extractSubdomain(host: string): SubdomainInfo {
@@ -270,7 +318,7 @@ function extractSubdomain(host: string): SubdomainInfo {
     host === APP_DOMAIN ||
     hostWithoutPort === `www.${appDomainWithoutPort}`
   ) {
-    return { subdomain: null, isMainDomain: true, isReserved: false };
+    return { subdomain: null, isMainDomain: true, isReserved: false, isPotentialCustomDomain: false, customDomainHost: null };
   }
 
   // Check if host ends with the app domain (subdomain.domain.com)
@@ -281,6 +329,8 @@ function extractSubdomain(host: string): SubdomainInfo {
       subdomain,
       isMainDomain: false,
       isReserved: RESERVED_SUBDOMAINS.has(subdomain.toLowerCase()),
+      isPotentialCustomDomain: false,
+      customDomainHost: null,
     };
   }
 
@@ -291,11 +341,19 @@ function extractSubdomain(host: string): SubdomainInfo {
       subdomain,
       isMainDomain: false,
       isReserved: RESERVED_SUBDOMAINS.has(subdomain.toLowerCase()),
+      isPotentialCustomDomain: false,
+      customDomainHost: null,
     };
   }
 
-  // Unknown domain - treat as main domain
-  return { subdomain: null, isMainDomain: true, isReserved: false };
+  // Unknown domain - could be a custom domain
+  return {
+    subdomain: null,
+    isMainDomain: false,
+    isReserved: false,
+    isPotentialCustomDomain: true,
+    customDomainHost: hostWithoutPort,
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -330,7 +388,152 @@ export async function middleware(request: NextRequest) {
   }
 
   // Extract subdomain info
-  const { subdomain, isMainDomain, isReserved } = extractSubdomain(host);
+  const { subdomain, isMainDomain, isReserved, isPotentialCustomDomain, customDomainHost } = extractSubdomain(host);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // CUSTOM DOMAIN ROUTING
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  if (isPotentialCustomDomain && customDomainHost) {
+    // This could be a custom domain - resolve it via internal API
+    const customDomainTenant = await resolveCustomDomain(customDomainHost, request);
+
+    if (customDomainTenant) {
+      // Valid custom domain - handle like subdomain routing
+      const tenantSlug = customDomainTenant.slug;
+
+      // Get token to verify user belongs to this tenant
+      const token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
+
+      // Custom domain root - redirect to /admin or /login
+      if (pathname === '/') {
+        // Check for impersonation first
+        const impersonation = await getImpersonationData(request);
+        if (impersonation && impersonation.organizationSlug.toLowerCase() === tenantSlug.toLowerCase()) {
+          return NextResponse.redirect(new URL('/admin', request.url));
+        }
+
+        if (token && token.organizationSlug?.toString().toLowerCase() === tenantSlug.toLowerCase()) {
+          return NextResponse.redirect(new URL('/admin', request.url));
+        } else {
+          return NextResponse.redirect(new URL('/login', request.url));
+        }
+      }
+
+      // Allow public routes on custom domains (for login redirects)
+      if (PUBLIC_ROUTES.some((route) => route !== '/' && pathname.startsWith(route))) {
+        const response = NextResponse.next();
+        response.headers.set('x-custom-domain', customDomainHost);
+        response.headers.set('x-tenant-slug', tenantSlug);
+        return response;
+      }
+
+      // Check for super admin impersonation
+      const impersonateToken = request.nextUrl.searchParams.get('impersonate');
+      if (impersonateToken) {
+        const tokenData = await verifyImpersonationToken(impersonateToken);
+        if (tokenData && tokenData.organizationSlug.toLowerCase() === tenantSlug.toLowerCase()) {
+          const cleanUrl = new URL(request.url);
+          cleanUrl.searchParams.delete('impersonate');
+          const response = NextResponse.redirect(cleanUrl);
+          response.cookies.set(IMPERSONATION_COOKIE, impersonateToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/',
+            maxAge: 15 * 60,
+          });
+          return response;
+        }
+      }
+
+      // Check for existing impersonation cookie
+      const impersonation = await getImpersonationData(request);
+      if (impersonation && impersonation.organizationSlug.toLowerCase() === tenantSlug.toLowerCase()) {
+        const enabledModules = impersonation.enabledModules || ['assets', 'subscriptions', 'suppliers'];
+        const subscriptionTier = impersonation.subscriptionTier || 'FREE';
+        const moduleAccess = checkModuleAccess(pathname, enabledModules);
+
+        if (!moduleAccess.allowed && moduleAccess.moduleId) {
+          const modulesUrl = new URL('/admin/modules', request.url);
+          modulesUrl.searchParams.set('install', moduleAccess.moduleId);
+          modulesUrl.searchParams.set('from', pathname);
+          return NextResponse.redirect(modulesUrl);
+        }
+
+        const response = NextResponse.next();
+        response.headers.set('x-custom-domain', customDomainHost);
+        response.headers.set('x-tenant-id', impersonation.organizationId);
+        response.headers.set('x-tenant-slug', impersonation.organizationSlug);
+        response.headers.set('x-user-id', impersonation.superAdminId);
+        response.headers.set('x-user-role', 'ADMIN');
+        response.headers.set('x-org-role', 'OWNER');
+        response.headers.set('x-subscription-tier', subscriptionTier);
+        response.headers.set('x-impersonating', 'true');
+        response.headers.set('x-impersonator-id', impersonation.superAdminId);
+        response.headers.set('x-impersonator-email', impersonation.superAdminEmail);
+        if (impersonation.jti) {
+          response.headers.set('x-impersonation-jti', impersonation.jti);
+        }
+        if (impersonation.iat) {
+          response.headers.set('x-impersonation-iat', impersonation.iat.toString());
+        }
+        return response;
+      }
+
+      // Unauthenticated on custom domain - redirect to login
+      if (!token) {
+        const loginUrl = new URL('/login', request.url);
+        loginUrl.searchParams.set('callbackUrl', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+
+      // Check if user's org slug matches the custom domain's tenant
+      const userOrgSlug = token.organizationSlug as string | undefined;
+
+      if (!userOrgSlug) {
+        // User has no org - redirect to pending page on main domain
+        const pendingUrl = new URL('/pending', `${request.nextUrl.protocol}//${APP_DOMAIN}`);
+        return NextResponse.redirect(pendingUrl);
+      }
+
+      if (userOrgSlug.toLowerCase() !== tenantSlug.toLowerCase()) {
+        // User doesn't belong to this custom domain's org
+        // Redirect to their own subdomain
+        const correctUrl = new URL(pathname, `${request.nextUrl.protocol}//${userOrgSlug}.${APP_DOMAIN}`);
+        return NextResponse.redirect(correctUrl);
+      }
+
+      // Module access check
+      const enabledModules = customDomainTenant.enabledModules || ['assets', 'subscriptions', 'suppliers'];
+      const moduleAccess = checkModuleAccess(pathname, enabledModules);
+
+      if (!moduleAccess.allowed && moduleAccess.moduleId) {
+        const modulesUrl = new URL('/admin/modules', request.url);
+        modulesUrl.searchParams.set('install', moduleAccess.moduleId);
+        modulesUrl.searchParams.set('from', pathname);
+        return NextResponse.redirect(modulesUrl);
+      }
+
+      // User belongs to this custom domain's tenant - allow access
+      const response = NextResponse.next();
+      response.headers.set('x-custom-domain', customDomainHost);
+      response.headers.set('x-tenant-id', customDomainTenant.id);
+      response.headers.set('x-tenant-slug', tenantSlug);
+      response.headers.set('x-user-id', token.id as string);
+      response.headers.set('x-user-role', token.role as string || '');
+      response.headers.set('x-org-role', token.orgRole as string || '');
+      response.headers.set('x-subscription-tier', customDomainTenant.subscriptionTier || 'FREE');
+      return response;
+    }
+
+    // Custom domain not found - redirect to main domain
+    const mainUrl = new URL('/', `${request.nextUrl.protocol}//${APP_DOMAIN}`);
+    return NextResponse.redirect(mainUrl);
+  }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // SUBDOMAIN ROUTING

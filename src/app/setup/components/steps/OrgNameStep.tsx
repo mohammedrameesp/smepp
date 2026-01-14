@@ -28,9 +28,9 @@ export function OrgNameStep({
   const [userEditedPrefix, setUserEditedPrefix] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Validate prefix format (3 uppercase alphanumeric)
-  const isValidPrefix = /^[A-Z0-9]{3}$/.test(codePrefix);
-  const isPartialPrefix = codePrefix.length > 0 && codePrefix.length < 3;
+  // Validate prefix format (2-3 uppercase alphanumeric)
+  const isValidPrefix = /^[A-Z0-9]{2,3}$/.test(codePrefix);
+  const isPartialPrefix = codePrefix.length > 0 && codePrefix.length < 2;
 
   // Auto-generate suggestion from org name (only if user hasn't manually edited)
   useEffect(() => {
@@ -90,7 +90,7 @@ export function OrgNameStep({
         <div className="pt-3 border-t border-slate-100">
           <label className="block text-sm font-medium text-slate-700 mb-2 text-center">
             Organization Code
-            <span className="text-slate-400 font-normal ml-1">(3 letters)</span>
+            <span className="text-slate-400 font-normal ml-1">(2-3 letters)</span>
           </label>
           <div className="relative">
             <Input
@@ -114,7 +114,7 @@ export function OrgNameStep({
             </div>
           </div>
           {isPartialPrefix && (
-            <p className="mt-1 text-sm text-amber-600 text-center">Must be 3 characters</p>
+            <p className="mt-1 text-sm text-amber-600 text-center">Must be 2-3 characters</p>
           )}
           {/* Preview */}
           {isValidPrefix && (

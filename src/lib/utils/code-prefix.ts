@@ -373,11 +373,11 @@ export function validateCodePrefix(prefix: string): {
     return { valid: false, error: 'Code prefix is required' };
   }
 
-  if (prefix.length !== 3) {
-    return { valid: false, error: 'Code prefix must be exactly 3 characters' };
+  if (prefix.length < 2 || prefix.length > 3) {
+    return { valid: false, error: 'Code prefix must be 2-3 characters' };
   }
 
-  if (!/^[A-Z0-9]{3}$/.test(prefix)) {
+  if (!/^[A-Z0-9]{2,3}$/.test(prefix)) {
     return {
       valid: false,
       error: 'Code prefix must contain only uppercase letters and numbers',
