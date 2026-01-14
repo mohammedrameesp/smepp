@@ -7,6 +7,7 @@ import { prisma } from '@/lib/core/prisma';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Plus, Pencil } from 'lucide-react';
 import Link from 'next/link';
 
@@ -65,22 +66,21 @@ export default async function ApprovalPoliciesPage() {
   }, {} as Record<string, typeof policies>);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Approval Policies</h1>
-          <p className="text-muted-foreground">
-            Configure multi-level approval chains for leave, purchase, and asset requests
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/admin/settings/approvals/new">
-            <Plus className="h-4 w-4 mr-2" />
-            New Policy
-          </Link>
-        </Button>
-      </div>
+    <>
+      <PageHeader
+        title="Approval Policies"
+        subtitle="Configure multi-level approval chains for leave, purchase, and asset requests"
+        actions={
+          <Button asChild>
+            <Link href="/admin/settings/approvals/new">
+              <Plus className="h-4 w-4 mr-2" />
+              New Policy
+            </Link>
+          </Button>
+        }
+      />
 
+      <PageContent>
       {policies.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -156,6 +156,7 @@ export default async function ApprovalPoliciesPage() {
           ))}
         </div>
       )}
-    </div>
+      </PageContent>
+    </>
   );
 }

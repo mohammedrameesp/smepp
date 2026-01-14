@@ -10,6 +10,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { OrganizationTabs } from './organization-tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { AlertCircle } from 'lucide-react';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
 
@@ -22,14 +23,14 @@ export default async function OrganizationPage() {
 
   if (!session.user.organizationId) {
     return (
-      <div className="max-w-6xl mx-auto px-6 py-6">
+      <PageContent>
         <Alert variant="error">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             You are not part of any organization. Please contact your administrator.
           </AlertDescription>
         </Alert>
-      </div>
+      </PageContent>
     );
   }
 
@@ -66,14 +67,14 @@ export default async function OrganizationPage() {
 
   if (!organization || !currentMembership) {
     return (
-      <div className="max-w-6xl mx-auto px-6 py-6">
+      <PageContent>
         <Alert variant="error">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Organization not found or you don&apos;t have access.
           </AlertDescription>
         </Alert>
-      </div>
+      </PageContent>
     );
   }
 
@@ -96,19 +97,18 @@ export default async function OrganizationPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Organization Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your organization profile and configuration
-        </p>
-      </div>
-
-      <OrganizationTabs
-        organization={orgData}
-        currentUserRole={currentMembership.role}
-        isOwner={currentMembership.isOwner}
+    <>
+      <PageHeader
+        title="Organization Settings"
+        subtitle="Manage your organization profile and configuration"
       />
-    </div>
+      <PageContent>
+        <OrganizationTabs
+          organization={orgData}
+          currentUserRole={currentMembership.role}
+          isOwner={currentMembership.isOwner}
+        />
+      </PageContent>
+    </>
   );
 }
