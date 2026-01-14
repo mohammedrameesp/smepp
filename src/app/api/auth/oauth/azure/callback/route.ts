@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { subdomain, orgId, inviteToken } = state;
+    const { subdomain, orgId, inviteToken, redirectUri } = state;
 
     // Get organization and its credentials
     const org = await prisma.organization.findUnique({
@@ -65,6 +65,8 @@ export async function GET(request: NextRequest) {
         customAzureTenantId: true,
         allowedEmailDomains: true,
         enforceDomainRestriction: true,
+        customDomain: true,
+        customDomainVerified: true,
       },
     });
 
@@ -152,19 +154,30 @@ export async function GET(request: NextRequest) {
       ? '__Secure-next-auth.session-token'
       : 'next-auth.session-token';
 
+    // Determine if using custom domain (check if redirectUri contains custom domain)
+    const hasVerifiedCustomDomain = org.customDomain && org.customDomainVerified;
+    const isUsingCustomDomain = hasVerifiedCustomDomain && redirectUri?.includes(org.customDomain!);
+
+    // For custom domains, don't set domain (cookie will be scoped to current host)
+    // For platform subdomains, use the platform domain for cross-subdomain sharing
     cookieStore.set(cookieName, sessionToken, {
       httpOnly: true,
       secure: isSecure,
       sameSite: 'lax',
       path: '/',
       maxAge: 30 * 24 * 60 * 60, // 30 days
-      domain: isSecure ? `.${process.env.NEXT_PUBLIC_APP_DOMAIN}` : undefined,
+      domain: isUsingCustomDomain ? undefined : (isSecure ? `.${process.env.NEXT_PUBLIC_APP_DOMAIN}` : undefined),
     });
 
     // Redirect based on flow
     // If invite token is present, redirect to invite page to complete invitation acceptance
     // Otherwise, redirect to admin dashboard
     const redirectPath = inviteToken ? `/invite/${inviteToken}` : '/admin';
+
+    // Use custom domain for redirect if available and verified
+    if (isUsingCustomDomain) {
+      return NextResponse.redirect(`https://${org.customDomain}${redirectPath}`);
+    }
     return NextResponse.redirect(getTenantUrl(subdomain, redirectPath));
   } catch (error) {
     logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Azure OAuth callback error');
