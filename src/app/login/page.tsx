@@ -343,16 +343,14 @@ function LoginForm() {
             </p>
           </div>
 
-          <div className={`w-full ${showAnyOAuth && !showCredentials ? 'max-w-lg' : ''}`}>
-            {/* Welcome Section - Larger when SSO only */}
-            <div className={`text-center ${showAnyOAuth && !showCredentials ? 'mb-10' : 'mb-8'}`}>
-              <h2 className={`font-bold text-gray-900 dark:text-white ${showAnyOAuth && !showCredentials ? 'text-4xl mb-4' : 'text-2xl'}`}>
-                {showAnyOAuth && !showCredentials ? 'Welcome Back' : welcomeTitle}
+          <div className="w-full max-w-lg">
+            {/* Welcome Section - Always large typography */}
+            <div className="text-center mb-10">
+              <h2 className="font-bold text-gray-900 dark:text-white text-4xl mb-4">
+                Welcome Back
               </h2>
-              <p className={`text-gray-600 dark:text-gray-400 ${showAnyOAuth && !showCredentials ? 'text-lg leading-relaxed' : 'mt-2'}`}>
-                {showAnyOAuth && !showCredentials
-                  ? 'Sign in to access your workspace and manage your digital resources seamlessly.'
-                  : welcomeSubtitle}
+              <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
+                Sign in to access your workspace and manage your digital resources seamlessly.
               </p>
             </div>
 
