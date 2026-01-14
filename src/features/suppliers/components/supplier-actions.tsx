@@ -47,7 +47,7 @@ export function SupplierActions({
   const router = useRouter();
 
   // Dialog states
-  const [approveDialog, setApproveDialog] = useState(false);
+  const [approveDialog, setApproveDialog] = useState({ open: false, isSubmitting: false });
   const [rejectDialog, setRejectDialog] = useState<{
     open: boolean;
     rejectionReason: string;
@@ -57,7 +57,7 @@ export function SupplierActions({
     rejectionReason: '',
     isSubmitting: false,
   });
-  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, isSubmitting: false });
   const [engagementDialog, setEngagementDialog] = useState({
     open: false,
     date: new Date().toISOString().split('T')[0],
@@ -67,6 +67,8 @@ export function SupplierActions({
   });
 
   const handleApproveConfirm = async () => {
+    setApproveDialog(prev => ({ ...prev, isSubmitting: true }));
+
     try {
       const response = await fetch(`/api/suppliers/${supplierId}/approve`, {
         method: 'PATCH',
@@ -77,11 +79,12 @@ export function SupplierActions({
         throw new Error(data.error || 'Failed to approve supplier');
       }
 
-      setApproveDialog(false);
+      toast.success('Supplier approved successfully');
+      setApproveDialog({ open: false, isSubmitting: false });
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to approve supplier', { duration: 10000 });
-      setApproveDialog(false);
+      setApproveDialog(prev => ({ ...prev, isSubmitting: false }));
     }
   };
 
@@ -120,6 +123,8 @@ export function SupplierActions({
   };
 
   const handleDeleteConfirm = async () => {
+    setDeleteDialog(prev => ({ ...prev, isSubmitting: true }));
+
     try {
       const response = await fetch(`/api/suppliers/${supplierId}`, {
         method: 'DELETE',
@@ -130,11 +135,12 @@ export function SupplierActions({
         throw new Error(data.error || 'Failed to delete supplier');
       }
 
-      setDeleteDialog(false);
+      toast.success('Supplier deleted successfully');
+      setDeleteDialog({ open: false, isSubmitting: false });
       router.push('/admin/suppliers');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to delete supplier', { duration: 10000 });
-      setDeleteDialog(false);
+      setDeleteDialog(prev => ({ ...prev, isSubmitting: false }));
     }
   };
 
@@ -182,7 +188,7 @@ export function SupplierActions({
         {status === 'PENDING' && (
           <>
             <Button
-              onClick={() => setApproveDialog(true)}
+              onClick={() => setApproveDialog({ open: true, isSubmitting: false })}
               className="bg-green-600 hover:bg-green-700"
             >
               <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -210,7 +216,7 @@ export function SupplierActions({
           </Button>
         </Link>
         <Button
-          onClick={() => setDeleteDialog(true)}
+          onClick={() => setDeleteDialog({ open: true, isSubmitting: false })}
           variant="outline"
           className="text-red-600 hover:text-red-700 hover:bg-red-50"
         >
@@ -220,7 +226,7 @@ export function SupplierActions({
       </div>
 
       {/* Approval Dialog */}
-      <Dialog open={approveDialog} onOpenChange={setApproveDialog}>
+      <Dialog open={approveDialog.open} onOpenChange={(open) => !approveDialog.isSubmitting && setApproveDialog({ open, isSubmitting: false })}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Approve Supplier</DialogTitle>
@@ -239,15 +245,20 @@ export function SupplierActions({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setApproveDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setApproveDialog({ open: false, isSubmitting: false })}
+              disabled={approveDialog.isSubmitting}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleApproveConfirm}
               className="bg-green-600 hover:bg-green-700"
+              disabled={approveDialog.isSubmitting}
             >
               <CheckCircle2 className="h-4 w-4 mr-2" />
-              Approve Supplier
+              {approveDialog.isSubmitting ? 'Approving...' : 'Approve Supplier'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -294,7 +305,7 @@ export function SupplierActions({
       </Dialog>
 
       {/* Delete Dialog */}
-      <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
+      <Dialog open={deleteDialog.open} onOpenChange={(open) => !deleteDialog.isSubmitting && setDeleteDialog({ open, isSubmitting: false })}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Supplier</DialogTitle>
@@ -319,12 +330,20 @@ export function SupplierActions({
             </p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialog({ open: false, isSubmitting: false })}
+              disabled={deleteDialog.isSubmitting}
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleteDialog.isSubmitting}
+            >
               <Trash2 className="h-4 w-4 mr-2" />
-              Delete Supplier
+              {deleteDialog.isSubmitting ? 'Deleting...' : 'Delete Supplier'}
             </Button>
           </DialogFooter>
         </DialogContent>
