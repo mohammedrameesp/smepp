@@ -46,6 +46,7 @@ import {
   CreditCard,
   DollarSign,
   User,
+  UserPlus,
   Calendar,
   Clock,
   FileText,
@@ -289,7 +290,13 @@ export default async function SubscriptionDetailPage({ params }: Props) {
                 <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <User className="h-6 w-6 text-slate-400" />
                 </div>
-                <p className="text-slate-500 text-sm">Unassigned</p>
+                <p className="text-slate-500 text-sm mb-3">Unassigned</p>
+                <Link href={`/admin/subscriptions/${subscription.id}/edit`}>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <UserPlus className="h-4 w-4" />
+                    Assign
+                  </Button>
+                </Link>
               </div>
             )}
           </DetailCard>
