@@ -424,11 +424,11 @@ export default function EditSubscriptionPage() {
   const handleAssignedUserChange = (value: string) => {
     const newUserId = value === "__none__" ? '' : value;
 
-    setValue('assignedMemberId', newUserId);
+    setValue('assignedMemberId', newUserId, { shouldValidate: true });
 
     // If user is being unassigned, clear assignment date
     if (!newUserId) {
-      setValue('assignmentDate', '');
+      setValue('assignmentDate', '', { shouldValidate: true });
     }
     // Otherwise, keep the existing assignment date (don't auto-set to today)
     // User must manually select a date
@@ -570,7 +570,7 @@ export default function EditSubscriptionPage() {
                     <DatePicker
                       id="purchaseDate"
                       value={watchedPurchaseDate || ''}
-                      onChange={(value) => setValue('purchaseDate', value)}
+                      onChange={(value) => setValue('purchaseDate', value, { shouldValidate: true })}
                     />
                     {errors.purchaseDate && (
                       <p className="text-sm text-red-500">{errors.purchaseDate.message}</p>
@@ -604,7 +604,7 @@ export default function EditSubscriptionPage() {
                     <DatePicker
                       id="renewalDate"
                       value={watchedRenewalDate || ''}
-                      onChange={(value) => setValue('renewalDate', value)}
+                      onChange={(value) => setValue('renewalDate', value, { shouldValidate: true })}
                       minDate={watchedPurchaseDate ? (() => {
                         const [y, m, d] = watchedPurchaseDate.split('-').map(Number);
                         return new Date(y, m - 1, d);
@@ -725,7 +725,7 @@ export default function EditSubscriptionPage() {
                       <DatePicker
                         id="assignmentDate"
                         value={watchedAssignmentDate || ''}
-                        onChange={(value) => setValue('assignmentDate', value || '')}
+                        onChange={(value) => setValue('assignmentDate', value || '', { shouldValidate: true })}
                         minDate={watchedPurchaseDate ? (() => {
                           const [y, m, d] = watchedPurchaseDate.split('-').map(Number);
                           return new Date(y, m - 1, d);

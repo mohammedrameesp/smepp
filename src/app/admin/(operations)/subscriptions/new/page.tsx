@@ -289,12 +289,12 @@ export default function NewSubscriptionPage() {
   const handleUserAssignment = (userId: string) => {
     if (userId) {
       // When assigning to a user, don't auto-set date - user must select manually
-      setValue('assignedMemberId', userId);
+      setValue('assignedMemberId', userId, { shouldValidate: true });
       // Keep existing assignment date if present, otherwise leave empty
     } else {
       // When unassigning, clear both user and assignment date
-      setValue('assignedMemberId', '');
-      setValue('assignmentDate', '');
+      setValue('assignedMemberId', '', { shouldValidate: true });
+      setValue('assignmentDate', '', { shouldValidate: true });
     }
   };
 
@@ -431,7 +431,7 @@ export default function NewSubscriptionPage() {
                     <DatePicker
                       id="purchaseDate"
                       value={watchedPurchaseDate || ''}
-                      onChange={(value) => setValue('purchaseDate', value || '')}
+                      onChange={(value) => setValue('purchaseDate', value || '', { shouldValidate: true })}
                     />
                     {errors.purchaseDate && (
                       <p className="text-sm text-red-500">{errors.purchaseDate.message}</p>
@@ -468,7 +468,11 @@ export default function NewSubscriptionPage() {
                     <DatePicker
                       id="renewalDate"
                       value={watchedRenewalDate || ''}
-                      onChange={(value) => setValue('renewalDate', value || null)}
+                      onChange={(value) => setValue('renewalDate', value || null, { shouldValidate: true })}
+                      minDate={watchedPurchaseDate ? (() => {
+                        const [y, m, d] = watchedPurchaseDate.split('-').map(Number);
+                        return new Date(y, m - 1, d);
+                      })() : undefined}
                     />
                     {errors.renewalDate && (
                       <p className="text-sm text-red-500">{errors.renewalDate.message}</p>
@@ -595,7 +599,7 @@ export default function NewSubscriptionPage() {
                       <DatePicker
                         id="assignmentDate"
                         value={watchedAssignmentDate || ''}
-                        onChange={(value) => setValue('assignmentDate', value || null)}
+                        onChange={(value) => setValue('assignmentDate', value || null, { shouldValidate: true })}
                         minDate={watchedPurchaseDate ? (() => {
                           const [y, m, d] = watchedPurchaseDate.split('-').map(Number);
                           return new Date(y, m - 1, d);
