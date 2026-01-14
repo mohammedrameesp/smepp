@@ -17,6 +17,8 @@ interface OrgNameStepProps {
   onChange: (value: string) => void;
   codePrefix: string;
   onCodePrefixChange: (value: string) => void;
+  website: string;
+  onWebsiteChange: (value: string) => void;
 }
 
 export function OrgNameStep({
@@ -24,6 +26,8 @@ export function OrgNameStep({
   onChange,
   codePrefix,
   onCodePrefixChange,
+  website,
+  onWebsiteChange,
 }: OrgNameStepProps) {
   const [userEditedPrefix, setUserEditedPrefix] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -83,6 +87,21 @@ export function OrgNameStep({
             placeholder="Enter organization name"
             className="h-12 text-base text-center bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
             autoFocus
+          />
+        </div>
+
+        {/* Website (optional) */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2 text-center">
+            Website
+            <span className="text-slate-400 font-normal ml-1">(optional)</span>
+          </label>
+          <Input
+            value={website}
+            onChange={(e) => onWebsiteChange(e.target.value)}
+            placeholder="https://yourcompany.com"
+            type="url"
+            className="h-12 text-base text-center bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
           />
         </div>
 

@@ -54,9 +54,10 @@ export function SetupWizardClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Step 1: Org name and code prefix
+  // Step 1: Org name, code prefix, and website
   const [orgName, setOrgName] = useState('');
   const [codePrefix, setCodePrefix] = useState('');
+  const [website, setWebsite] = useState('');
 
   // Step 2: Currencies
   const [primaryCurrency, setPrimaryCurrency] = useState('QAR');
@@ -188,6 +189,7 @@ export function SetupWizardClient() {
           enabledModules: selectedModules,
           ...(primaryColor && { primaryColor }),
           ...(secondaryColor && { secondaryColor }),
+          ...(website.trim() && { website: website.trim() }),
           currency: primaryCurrency,
           additionalCurrencies,
         }),
@@ -340,6 +342,8 @@ export function SetupWizardClient() {
             onChange={setOrgName}
             codePrefix={codePrefix}
             onCodePrefixChange={setCodePrefix}
+            website={website}
+            onWebsiteChange={setWebsite}
           />
         );
       case 2:

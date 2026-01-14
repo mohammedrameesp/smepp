@@ -37,6 +37,7 @@ const updateSettingsSchema = z.object({
   enabledModules: z.array(z.string()).optional(),
   primaryColor: z.preprocess(emptyToUndefined, z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional()),
   secondaryColor: z.preprocess(emptyToUndefined, z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional()),
+  website: z.string().url().max(255).optional().or(z.literal('')),
   currency: z.string().optional(), // Primary currency
   additionalCurrencies: z.array(z.string()).optional(),
 });
@@ -104,7 +105,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { name, codePrefix, enabledModules, primaryColor, secondaryColor, currency, additionalCurrencies } = result.data;
+    const { name, codePrefix, enabledModules, primaryColor, secondaryColor, website, currency, additionalCurrencies } = result.data;
 
     // Validate modules
     if (enabledModules) {
@@ -145,6 +146,7 @@ export async function PUT(request: NextRequest) {
         ...(enabledModules && { enabledModules }),
         ...(primaryColor && { primaryColor }),
         ...(secondaryColor && { secondaryColor }),
+        ...(website && { website }),
         ...(currency && { currency }),
         ...(additionalCurrencies && { additionalCurrencies }),
         // Mark onboarding as complete when settings are saved
@@ -157,6 +159,7 @@ export async function PUT(request: NextRequest) {
         enabledModules: true,
         primaryColor: true,
         secondaryColor: true,
+        website: true,
         currency: true,
         additionalCurrencies: true,
         onboardingCompleted: true,
