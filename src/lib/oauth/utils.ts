@@ -349,6 +349,7 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | n
 
     if (!teamMember) {
       // Create new TeamMember for this org
+      // SSO logins without invitation default to employee (admin can change later)
       teamMember = await prisma.teamMember.create({
         data: {
           email: normalizedEmail,
@@ -358,7 +359,7 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | n
           tenantId: orgId,
           role: 'MEMBER',
           isOwner: false,
-          isEmployee: false, // Default to non-employee, admin can upgrade later
+          isEmployee: true, // Default to employee for SSO self-signup
           canLogin: true,
         },
       });

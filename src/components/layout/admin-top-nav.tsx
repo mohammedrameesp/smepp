@@ -163,17 +163,19 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
                 <kbd className="hidden md:inline text-xs bg-slate-600 text-slate-400 px-1.5 py-0.5 rounded">⌘K</kbd>
               </button>
 
-              {/* Switch to Employee View */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSwitchToEmployeeView}
-                disabled={isSwitching}
-                className="text-emerald-400 hover:text-emerald-300 hover:bg-slate-700"
-              >
-                <Users className="h-4 w-4 mr-1.5" />
-                <span className="hidden sm:inline">{isSwitching ? 'Switching...' : 'My Portal'}</span>
-              </Button>
+              {/* Switch to Employee View - only for employees */}
+              {session?.user?.isEmployee && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSwitchToEmployeeView}
+                  disabled={isSwitching}
+                  className="text-emerald-400 hover:text-emerald-300 hover:bg-slate-700"
+                >
+                  <Users className="h-4 w-4 mr-1.5" />
+                  <span className="hidden sm:inline">{isSwitching ? 'Switching...' : 'My Portal'}</span>
+                </Button>
+              )}
 
               {/* Feedback */}
               <FeedbackTrigger />

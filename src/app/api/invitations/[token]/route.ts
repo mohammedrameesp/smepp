@@ -222,15 +222,52 @@ export async function POST(
           },
         });
 
-        // Update TeamMember with user data (profile image from SSO, etc.)
-        // Only update if TeamMember hasn't set these values yet
+        // Determine employee status from invitation (this is the authoritative source)
+        const shouldBeEmployee = invitation.isEmployee ?? true;
+        const shouldBeOnWps = shouldBeEmployee ? (invitation.isOnWps ?? false) : false;
+
+        // Generate employee code if becoming an employee and doesn't have one
+        let newEmployeeCode: string | null = existingTeamMember.employeeCode;
+        if (shouldBeEmployee && !existingTeamMember.employeeCode) {
+          const year = new Date().getFullYear();
+          const orgPrefix = await getOrganizationCodePrefix(invitation.organizationId);
+          const prefix = `${orgPrefix}-${year}`;
+          const count = await tx.teamMember.count({
+            where: {
+              tenantId: invitation.organizationId,
+              employeeCode: { startsWith: prefix },
+            },
+          });
+          newEmployeeCode = `${prefix}-${String(count + 1).padStart(3, '0')}`;
+        }
+
+        // Map OrgRole to TeamMemberRole from invitation
+        const newTeamMemberRole: TeamMemberRole =
+          invitation.role === OrgRole.OWNER || invitation.role === OrgRole.ADMIN
+            ? TeamMemberRole.ADMIN
+            : TeamMemberRole.MEMBER;
+        const newIsOwner = invitation.role === 'OWNER';
+
+        // Update TeamMember with user data AND invitation settings
+        // The invitation is the authoritative source for role and employee status
         await tx.teamMember.update({
           where: { id: existingTeamMember.id },
           data: {
+            // Update role from invitation
+            role: newTeamMemberRole,
+            isOwner: newIsOwner,
+            // Update employee status from invitation (critical fix for OAuth flow)
+            isEmployee: shouldBeEmployee,
+            isOnWps: shouldBeOnWps,
+            employeeCode: newEmployeeCode,
             // Update image from SSO if not already set (but only for employees)
             // Non-employees keep org logo as their image
-            ...(existingTeamMember.isEmployee && !existingTeamMember.image && userData?.image
+            ...(shouldBeEmployee && !existingTeamMember.image && userData?.image
               ? { image: userData.image }
+              : {}),
+            // For non-employees, set org logo as image if not set
+            ...(!shouldBeEmployee && !existingTeamMember.image && invitation.organization.logoUrl
+              ? { image: invitation.organization.logoUrl }
               : {}),
             // Copy password hash if available (for credentials fallback)
             ...(userData?.passwordHash && !existingTeamMember.passwordHash
@@ -260,6 +297,7 @@ export async function POST(
             name: invitation.organization.name,
             slug: invitation.organization.slug,
           },
+          isEmployee: shouldBeEmployee,
         };
       }
 

@@ -107,7 +107,8 @@ async function getHRProfileHandler(
     // Skills
     languagesKnown: member.languagesKnown,
     skillsCertifications: member.skillsCertifications,
-    // Payroll
+    // Employee status
+    isEmployee: member.isEmployee,
     isOnWps: member.isOnWps,
     // Onboarding
     onboardingStep: member.onboardingStep,

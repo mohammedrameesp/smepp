@@ -165,6 +165,10 @@ export const hrProfileSchema = z.object({
 
   // Leave settings
   bypassNoticeRequirement: z.boolean().optional(),
+
+  // Employee status
+  isEmployee: z.boolean().optional(),
+  isOnWps: z.boolean().optional(),
 }).passthrough();
 
 // Schema for admin update (includes employeeId)

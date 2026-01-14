@@ -62,6 +62,11 @@ export default async function EmployeeLayout({
     redirect('/login');
   }
 
+  // Non-employees cannot access employee portal
+  if (session?.user?.isEmployee === false) {
+    redirect('/admin');
+  }
+
   // Check onboarding status - no longer force redirect, allow employees to skip
   let onboardingComplete = true;
   const isAdmin = session?.user?.teamMemberRole === 'ADMIN' ||
