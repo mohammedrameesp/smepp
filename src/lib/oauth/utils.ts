@@ -96,6 +96,7 @@ interface OAuthState {
   timestamp: number;
   nonce: string;
   inviteToken?: string; // For invite signup flow
+  redirectUri?: string; // For custom domains
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

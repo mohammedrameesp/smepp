@@ -70,17 +70,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get the actual origin from request headers (for custom domains)
+    const host = request.headers.get('host') || '';
+    const protocol = request.headers.get('x-forwarded-proto') || 'https';
+    const origin = `${protocol}://${host}`;
+    const redirectUri = `${origin}/api/auth/oauth/google/callback`;
+
     // Create encrypted state for CSRF protection
     // Include invite token if present (for invite signup flow)
+    // Store the redirectUri in state so callback can use the same one
     const state = encryptState({
       subdomain: org.slug,
       orgId: org.id,
       provider: 'google',
       inviteToken: inviteToken || undefined,
+      redirectUri, // Store for callback to use
     });
 
-    // Build the Google OAuth URL
-    const authUrl = buildGoogleAuthUrl(clientId, state);
+    // Build the Google OAuth URL with the correct redirect URI
+    const authUrl = buildGoogleAuthUrl(clientId, state, redirectUri);
 
     // Redirect to Google
     return NextResponse.redirect(authUrl);

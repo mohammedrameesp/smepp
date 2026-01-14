@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { subdomain, orgId, inviteToken } = state;
+    const { subdomain, orgId, inviteToken, redirectUri } = state;
 
     // Get organization and its credentials
     const org = await prisma.organization.findUnique({
@@ -89,8 +89,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Exchange code for tokens
-    const tokens = await exchangeGoogleCodeForTokens(code, clientId, clientSecret);
+    // Exchange code for tokens (use same redirectUri from state)
+    const tokens = await exchangeGoogleCodeForTokens(code, clientId, clientSecret, redirectUri);
 
     // Get user info from Google
     const googleUser = await getGoogleUserInfo(tokens.access_token);
