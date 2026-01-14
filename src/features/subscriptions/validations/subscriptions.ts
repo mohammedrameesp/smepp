@@ -99,7 +99,6 @@ const subscriptionBaseSchema = z.object({
   costQAR: z.number().positive('QAR cost must be a positive number').optional().nullable(),
   vendor: z.string().max(255, 'Vendor name is too long').optional().nullable(),
   status: z.nativeEnum(SubscriptionStatus).default('ACTIVE'),
-  projectId: z.string().optional().nullable(),
   assignedMemberId: z.string().min(1, 'Assigned member is required'),
   assignmentDate: pastOrPresentDateSchema.optional().nullable().or(z.literal('')),
   autoRenew: z.boolean().default(true),
@@ -161,7 +160,6 @@ export const updateSubscriptionSchema = subscriptionBaseSchema
 
 export const subscriptionQuerySchema = z.object({
   q: z.string().optional(),
-  projectId: z.string().optional(),
   status: z.nativeEnum(SubscriptionStatus).optional(),
   category: z.string().optional(),
   billingCycle: z.nativeEnum(BillingCycle).optional(),

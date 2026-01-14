@@ -37,14 +37,13 @@ import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
  *
  * This handler provides a flexible subscription listing with:
  * - Full-text search across service name, account ID, vendor, and category
- * - Advanced filtering by status, category, billing cycle, project
+ * - Advanced filtering by status, category, billing cycle
  * - Renewal window filtering (e.g., "expiring in next 30 days")
  * - Pagination with configurable page size
  * - Sorting by any subscription field
  *
  * Query Parameters:
  * @param q - Search term (searches serviceName, accountId, vendor, category)
- * @param projectId - Filter by project ID
  * @param status - Filter by status (ACTIVE, CANCELLED, EXPIRED)
  * @param category - Filter by category
  * @param billingCycle - Filter by billing cycle (MONTHLY, YEARLY, etc.)
@@ -85,13 +84,12 @@ async function getSubscriptionsHandler(request: NextRequest, context: APIContext
       }, { status: 400 });
     }
 
-    const { q, projectId, status, category, billingCycle, renewalWindowDays, p, ps, sort, order } = validation.data;
+    const { q, status, category, billingCycle, renewalWindowDays, p, ps, sort, order } = validation.data;
 
     // Build where clause using reusable search filter
     // Note: tenantId filtering is handled automatically by tenant-scoped prisma client
     const filters: Record<string, unknown> = {};
 
-    if (projectId) filters.projectId = projectId;
     if (status) filters.status = status;
     if (category) filters.category = category;
     if (billingCycle) filters.billingCycle = billingCycle;
@@ -286,7 +284,6 @@ async function createSubscriptionHandler(request: NextRequest, context: APIConte
           autoRenew: data.autoRenew,
           paymentMethod: data.paymentMethod ?? null,
           notes: data.notes ?? null,
-          projectId: data.projectId ?? null,
           assignedMemberId: data.assignedMemberId,
         };
 
