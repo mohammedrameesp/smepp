@@ -87,7 +87,10 @@ async function getPurchaseRequestsHandler(request: NextRequest, context: APICont
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [
+          { status: 'asc' },  // PENDING first, then UNDER_REVIEW, APPROVED, REJECTED, COMPLETED
+          { createdAt: 'desc' },  // Within each status, newest first
+        ],
         skip: (page - 1) * limit,
         take: limit,
       }),
