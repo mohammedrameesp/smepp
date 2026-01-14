@@ -371,9 +371,9 @@ export function SubscriptionListTableServerSearch() {
                     {/* Column 4: Cost + Payment */}
                     <TableCell>
                       <div className="text-sm font-medium">
-                        {subscription.costPerCycle ? (
+                        {subscription.costPerCycle && !isNaN(Number(subscription.costPerCycle)) ? (
                           formatCurrency(Number(subscription.costPerCycle), subscription.costCurrency)
-                        ) : <span className="text-gray-400">N/A</span>}
+                        ) : <span className="text-gray-400">—</span>}
                       </div>
                       <div className="text-xs text-gray-500 mt-0.5">
                         {subscription.paymentMethod ? (
