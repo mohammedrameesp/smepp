@@ -27,7 +27,7 @@ import { z } from 'zod';
 import { optionalString } from '@/lib/validations/field-schemas';
 import { VALIDATION_PATTERNS, PATTERN_MESSAGES } from '@/lib/validations/patterns';
 import { createQuerySchema } from '@/lib/validations/pagination-schema';
-import { SupplierStatus } from '@prisma/client';
+import { SupplierStatus, Prisma } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // VALIDATION PATTERNS
@@ -232,3 +232,16 @@ export type ApproveSupplierRequest = z.infer<typeof approveSupplierSchema>;
 export type RejectSupplierRequest = z.infer<typeof rejectSupplierSchema>;
 export type CreateEngagementRequest = z.infer<typeof createEngagementSchema>;
 export type SupplierQuery = z.infer<typeof supplierQuerySchema>;
+
+/**
+ * Type compatibility check: Ensures Zod schema fields match Prisma model fields.
+ */
+type ZodSupplierFields = keyof CreateSupplierRequest;
+type PrismaSupplierFields = keyof Omit<
+  Prisma.SupplierUncheckedCreateInput,
+  'id' | 'tenantId' | 'suppCode' | 'status' | 'createdAt' | 'updatedAt' | 'createdById' |
+  'approvedById' | 'approvedAt' | 'rejectionReason'
+>;
+type _ValidateSupplierZodFieldsExistInPrisma = ZodSupplierFields extends PrismaSupplierFields
+  ? true
+  : { error: 'Zod schema has fields not in Prisma model'; fields: Exclude<ZodSupplierFields, PrismaSupplierFields> };

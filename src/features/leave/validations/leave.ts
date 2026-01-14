@@ -21,7 +21,7 @@
 import { z } from 'zod';
 import { approvalSchema, rejectionSchema, cancellationSchema } from '@/lib/validations/workflow-schemas';
 import { createQuerySchema } from '@/lib/validations/pagination-schema';
-import { LeaveStatus, LeaveRequestType, LeaveCategory } from '@prisma/client';
+import { LeaveStatus, LeaveRequestType, LeaveCategory, Prisma } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // LEAVE TYPE SCHEMAS
@@ -385,3 +385,26 @@ export type LeaveRequestQuery = z.infer<typeof leaveRequestQuerySchema>;
 export type LeaveBalanceQuery = z.infer<typeof leaveBalanceQuerySchema>;
 export type TeamCalendarQuery = z.infer<typeof teamCalendarQuerySchema>;
 export type LeaveTypeQuery = z.infer<typeof leaveTypeQuerySchema>;
+
+/**
+ * Type compatibility check: Ensures Zod schema fields match Prisma model fields.
+ */
+type ZodLeaveTypeFields = keyof CreateLeaveTypeRequest;
+type PrismaLeaveTypeFields = keyof Omit<
+  Prisma.LeaveTypeUncheckedCreateInput,
+  'id' | 'tenantId' | 'createdAt' | 'updatedAt'
+>;
+type _ValidateLeaveTypeZodFieldsExistInPrisma = ZodLeaveTypeFields extends PrismaLeaveTypeFields
+  ? true
+  : { error: 'Zod schema has fields not in Prisma model'; fields: Exclude<ZodLeaveTypeFields, PrismaLeaveTypeFields> };
+
+type ZodLeaveRequestFields = keyof CreateLeaveRequestRequest;
+type PrismaLeaveRequestFields = keyof Omit<
+  Prisma.LeaveRequestUncheckedCreateInput,
+  'id' | 'tenantId' | 'requestNumber' | 'memberId' | 'status' | 'totalDays' | 'createdAt' | 'updatedAt' |
+  'approvedById' | 'approvedAt' | 'rejectedById' | 'rejectedAt' | 'rejectionReason' | 'cancelledById' |
+  'cancelledAt' | 'cancellationReason'
+>;
+type _ValidateLeaveRequestZodFieldsExistInPrisma = ZodLeaveRequestFields extends PrismaLeaveRequestFields | 'adminOverrideNotice' | 'employeeId'
+  ? true
+  : { error: 'Zod schema has fields not in Prisma model'; fields: Exclude<ZodLeaveRequestFields, PrismaLeaveRequestFields | 'adminOverrideNotice' | 'employeeId'> };

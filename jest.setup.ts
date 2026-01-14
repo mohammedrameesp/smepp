@@ -41,7 +41,10 @@ if (typeof Response === 'undefined') {
 
 // Mock environment variables for testing
 // Note: NODE_ENV is typically set by Jest automatically to 'test'
-process.env.DATABASE_URL = process.env.TEST_DATABASE_URL || 'postgresql://test:test@localhost:5432/damp_test';
+// Preserve real Supabase DATABASE_URL for db integration tests, only mock if not set or localhost
+if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('localhost')) {
+  process.env.DATABASE_URL = process.env.TEST_DATABASE_URL || 'postgresql://test:test@localhost:5432/damp_test';
+}
 process.env.NEXTAUTH_SECRET = 'test-secret-key-for-testing-only';
 process.env.NEXTAUTH_URL = 'http://localhost:3000';
 

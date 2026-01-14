@@ -27,7 +27,7 @@
 import { z } from 'zod';
 import { approvalSchema, rejectionSchema } from '@/lib/validations/workflow-schemas';
 import { createQuerySchema } from '@/lib/validations/pagination-schema';
-import { AssetRequestType, AssetRequestStatus } from '@prisma/client';
+import { AssetRequestType, AssetRequestStatus, Prisma } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // EMPLOYEE REQUEST SCHEMAS
@@ -216,3 +216,17 @@ export type AcceptAssetAssignmentData = z.infer<typeof acceptAssetAssignmentSche
 export type DeclineAssetAssignmentData = z.infer<typeof declineAssetAssignmentSchema>;
 /** Inferred type for query parameters */
 export type AssetRequestQuery = z.infer<typeof assetRequestQuerySchema>;
+
+/**
+ * Type compatibility check: Ensures Zod schema fields match Prisma model fields.
+ */
+type ZodAssetRequestFields = keyof CreateAssetRequestData;
+type PrismaAssetRequestFields = keyof Omit<
+  Prisma.AssetRequestUncheckedCreateInput,
+  'id' | 'tenantId' | 'requestNumber' | 'requesterId' | 'type' | 'status' | 'createdAt' | 'updatedAt' |
+  'assignedToId' | 'approvedById' | 'approvedAt' | 'rejectedById' | 'rejectedAt' | 'rejectionReason' |
+  'acceptedAt' | 'declinedAt' | 'declineReason' | 'completedAt'
+>;
+type _ValidateAssetRequestZodFieldsExistInPrisma = ZodAssetRequestFields extends PrismaAssetRequestFields
+  ? true
+  : { error: 'Zod schema has fields not in Prisma model'; fields: Exclude<ZodAssetRequestFields, PrismaAssetRequestFields> };

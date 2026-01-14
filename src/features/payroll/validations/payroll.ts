@@ -19,7 +19,7 @@
 
 import { z } from 'zod';
 import { approvalSchema, rejectionSchema } from '@/lib/validations/workflow-schemas';
-import { PayrollStatus, LoanStatus, DeductionType } from '@prisma/client';
+import { PayrollStatus, LoanStatus, DeductionType, Prisma } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SALARY STRUCTURE SCHEMAS
@@ -315,3 +315,25 @@ export type PayslipQuery = z.infer<typeof payslipQuerySchema>;
 export type LoanQuery = z.infer<typeof loanQuerySchema>;
 export type SalaryStructureQuery = z.infer<typeof salaryStructureQuerySchema>;
 export type GratuityQuery = z.infer<typeof gratuityQuerySchema>;
+
+/**
+ * Type compatibility check: Ensures Zod schema fields match Prisma model fields.
+ */
+type ZodSalaryStructureFields = keyof CreateSalaryStructureRequest;
+type PrismaSalaryStructureFields = keyof Omit<
+  Prisma.SalaryStructureUncheckedCreateInput,
+  'id' | 'tenantId' | 'memberId' | 'grossSalary' | 'isActive' | 'effectiveTo' | 'createdAt' | 'updatedAt'
+>;
+type _ValidateSalaryStructureZodFieldsExistInPrisma = ZodSalaryStructureFields extends PrismaSalaryStructureFields | 'userId'
+  ? true
+  : { error: 'Zod schema has fields not in Prisma model'; fields: Exclude<ZodSalaryStructureFields, PrismaSalaryStructureFields | 'userId'> };
+
+type ZodLoanFields = keyof CreateLoanRequest;
+type PrismaLoanFields = keyof Omit<
+  Prisma.EmployeeLoanUncheckedCreateInput,
+  'id' | 'tenantId' | 'memberId' | 'status' | 'remainingBalance' | 'paidAmount' | 'createdAt' | 'updatedAt' |
+  'approvedById' | 'approvedAt'
+>;
+type _ValidateLoanZodFieldsExistInPrisma = ZodLoanFields extends PrismaLoanFields | 'userId'
+  ? true
+  : { error: 'Zod schema has fields not in Prisma model'; fields: Exclude<ZodLoanFields, PrismaLoanFields | 'userId'> };

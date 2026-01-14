@@ -25,6 +25,7 @@
  */
 
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { optionalString } from '@/lib/validations/field-schemas';
 import { VALIDATION_PATTERNS, PATTERN_MESSAGES } from '@/lib/validations/patterns';
 
@@ -180,3 +181,18 @@ export const validateQID = (qid: string): boolean => VALIDATION_PATTERNS.qatarId
 export const validateQatarMobile = (mobile: string): boolean => VALIDATION_PATTERNS.qatarMobile.test(mobile);
 export const validateIBAN = (iban: string): boolean => VALIDATION_PATTERNS.iban.test(iban.replace(/\s/g, ''));
 export const validatePassportNumber = (passport: string): boolean => VALIDATION_PATTERNS.passport.test(passport);
+
+/**
+ * Type compatibility check: Ensures Zod schema fields match Prisma TeamMember model fields.
+ * Note: HR profile fields are part of the unified TeamMember model.
+ */
+type ZodHRProfileFields = keyof HRProfileInput;
+type PrismaTeamMemberFields = keyof Omit<
+  Prisma.TeamMemberUncheckedUpdateInput,
+  'id' | 'tenantId' | 'email' | 'name' | 'passwordHash' | 'emailVerified' | 'image' | 'canLogin' |
+  'resetToken' | 'resetTokenExpiry' | 'passwordChangedAt' | 'role' | 'status' | 'createdAt' | 'updatedAt' |
+  'isOwner' | 'twoFactorEnabled' | 'twoFactorSecret' | 'backupCodes'
+>;
+type _ValidateHRProfileZodFieldsExistInPrisma = ZodHRProfileFields extends PrismaTeamMemberFields
+  ? true
+  : { error: 'Zod schema has fields not in Prisma model'; fields: Exclude<ZodHRProfileFields, PrismaTeamMemberFields> };

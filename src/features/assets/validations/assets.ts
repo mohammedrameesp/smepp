@@ -46,7 +46,7 @@
 import { z } from 'zod';
 import { optionalString, optionalStringToNull } from '@/lib/validations/field-schemas';
 import { createQuerySchema } from '@/lib/validations/pagination-schema';
-import { AssetStatus } from '@prisma/client';
+import { AssetStatus, Prisma } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE SCHEMA
@@ -311,3 +311,16 @@ export type CreateAssetRequest = z.infer<typeof createAssetSchema>;
 export type UpdateAssetRequest = z.infer<typeof updateAssetSchema>;
 /** Inferred type for query parameters */
 export type AssetQuery = z.infer<typeof assetQuerySchema>;
+
+/**
+ * Type compatibility check: Ensures Zod schema fields match Prisma model fields.
+ * If this causes a compile error, the Zod schema is out of sync with the Prisma model.
+ */
+type ZodAssetFields = keyof CreateAssetRequest;
+type PrismaAssetFields = keyof Omit<
+  Prisma.AssetUncheckedCreateInput,
+  'id' | 'tenantId' | 'createdAt' | 'updatedAt'
+>;
+type _ValidateAssetZodFieldsExistInPrisma = ZodAssetFields extends PrismaAssetFields
+  ? true
+  : { error: 'Zod schema has fields not in Prisma model'; fields: Exclude<ZodAssetFields, PrismaAssetFields> };

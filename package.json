@@ -24,6 +24,7 @@
     "test:ci": "jest --ci --coverage --maxWorkers=2",
     "test:security": "jest tests/security",
     "test:api": "jest tests/integration",
+    "test:db": "dotenv -e .env -- jest tests/integration/db --runInBand",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",

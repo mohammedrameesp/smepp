@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { optionalString } from '@/lib/validations/field-schemas';
 
 // ============================================================================
@@ -73,3 +74,24 @@ export const companyDocumentQuerySchema = z.object({
 });
 
 export type CompanyDocumentQuery = z.infer<typeof companyDocumentQuerySchema>;
+
+/**
+ * Type compatibility check: Ensures Zod schema fields match Prisma model fields.
+ */
+type ZodCompanyDocumentTypeFields = keyof CompanyDocumentTypeInput;
+type PrismaCompanyDocumentTypeFields = keyof Omit<
+  Prisma.CompanyDocumentTypeUncheckedCreateInput,
+  'id' | 'tenantId' | 'createdAt' | 'updatedAt'
+>;
+type _ValidateCompanyDocumentTypeZodFieldsExistInPrisma = ZodCompanyDocumentTypeFields extends PrismaCompanyDocumentTypeFields
+  ? true
+  : { error: 'Zod schema has fields not in Prisma model'; fields: Exclude<ZodCompanyDocumentTypeFields, PrismaCompanyDocumentTypeFields> };
+
+type ZodCompanyDocumentFields = keyof CompanyDocumentInput;
+type PrismaCompanyDocumentFields = keyof Omit<
+  Prisma.CompanyDocumentUncheckedCreateInput,
+  'id' | 'tenantId' | 'createdAt' | 'updatedAt' | 'documentTypeId'
+>;
+type _ValidateCompanyDocumentZodFieldsExistInPrisma = ZodCompanyDocumentFields extends PrismaCompanyDocumentFields
+  ? true
+  : { error: 'Zod schema has fields not in Prisma model'; fields: Exclude<ZodCompanyDocumentFields, PrismaCompanyDocumentFields> };

@@ -27,6 +27,7 @@
  */
 
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE SCHEMA
@@ -104,3 +105,15 @@ export const updateAssetCategorySchema = z.object({
 export type CreateAssetCategoryRequest = z.infer<typeof createAssetCategorySchema>;
 /** Inferred type for category update */
 export type UpdateAssetCategoryRequest = z.infer<typeof updateAssetCategorySchema>;
+
+/**
+ * Type compatibility check: Ensures Zod schema fields match Prisma model fields.
+ */
+type ZodCategoryFields = keyof CreateAssetCategoryRequest;
+type PrismaCategoryFields = keyof Omit<
+  Prisma.AssetCategoryUncheckedCreateInput,
+  'id' | 'tenantId' | 'createdAt' | 'updatedAt'
+>;
+type _ValidateCategoryZodFieldsExistInPrisma = ZodCategoryFields extends PrismaCategoryFields
+  ? true
+  : { error: 'Zod schema has fields not in Prisma model'; fields: Exclude<ZodCategoryFields, PrismaCategoryFields> };

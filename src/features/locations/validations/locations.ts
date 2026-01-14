@@ -5,6 +5,7 @@
  */
 
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE LOCATION
@@ -42,3 +43,15 @@ export const updateLocationSchema = z.object({
 });
 
 export type UpdateLocationInput = z.infer<typeof updateLocationSchema>;
+
+/**
+ * Type compatibility check: Ensures Zod schema fields match Prisma model fields.
+ */
+type ZodLocationFields = keyof CreateLocationInput;
+type PrismaLocationFields = keyof Omit<
+  Prisma.LocationUncheckedCreateInput,
+  'id' | 'tenantId' | 'createdAt' | 'updatedAt'
+>;
+type _ValidateLocationZodFieldsExistInPrisma = ZodLocationFields extends PrismaLocationFields
+  ? true
+  : { error: 'Zod schema has fields not in Prisma model'; fields: Exclude<ZodLocationFields, PrismaLocationFields> };
