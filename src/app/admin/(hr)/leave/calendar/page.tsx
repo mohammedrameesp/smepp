@@ -1,314 +1,75 @@
-'use client';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/core/auth';
+import { prisma } from '@/lib/core/prisma';
+import { redirect } from 'next/navigation';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { PageHeader, PageContent } from '@/components/ui/page-header';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getLeaveStatusVariant, formatLeaveDays } from '@/features/leave/lib/leave-utils';
-import { LeaveStatus } from '@prisma/client';
-import Link from 'next/link';
+import { Plus, Users, FileText } from 'lucide-react';
+import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
+import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
+import { LeaveCalendarClient } from './client';
 
-interface CalendarEvent {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  backgroundColor: string;
-  extendedProps: {
-    requestNumber: string;
-    userId: string;
-    userName: string;
-    userEmail: string;
-    leaveTypeId: string;
-    leaveTypeName: string;
-    status: string;
-    totalDays: number;
-    requestType: string;
-  };
-}
+export default async function AdminLeaveCalendarPage() {
+  const session = await getServerSession(authOptions);
 
-interface LeaveType {
-  id: string;
-  name: string;
-  color: string;
-}
+  if (!session) {
+    redirect('/login');
+  }
 
-export default function AdminLeaveCalendarPage() {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [statusFilter, setStatusFilter] = useState<string>('approved');
+  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
+    redirect('/forbidden');
+  }
 
-  const fetchEvents = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Get first and last day of the month
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
+  if (!session.user.organizationId) {
+    redirect('/login');
+  }
 
-      const params = new URLSearchParams();
-      params.set('startDate', firstDay.toISOString().split('T')[0]);
-      params.set('endDate', lastDay.toISOString().split('T')[0]);
-      if (statusFilter && statusFilter !== 'all') {
-        params.set('status', statusFilter.toUpperCase());
-      }
-
-      const response = await fetch(`/api/leave/calendar?${params}`);
-      if (response.ok) {
-        const data = await response.json();
-        setEvents(data.events);
-      }
-    } catch (error) {
-      console.error('Failed to fetch calendar events:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentDate, statusFilter]);
-
-  const fetchLeaveTypes = async () => {
-    try {
-      const response = await fetch('/api/leave/types');
-      if (response.ok) {
-        const data = await response.json();
-        setLeaveTypes(data.leaveTypes || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch leave types:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
-
-  useEffect(() => {
-    fetchLeaveTypes();
-  }, []);
-
-  const navigateMonth = (direction: number) => {
-    setCurrentDate(prev => {
-      const newDate = new Date(prev);
-      newDate.setMonth(newDate.getMonth() + direction);
-      return newDate;
-    });
-  };
-
-  const goToToday = () => {
-    setCurrentDate(new Date());
-  };
-
-  // Generate calendar days
-  const generateCalendarDays = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startingDayOfWeek = firstDay.getDay();
-
-    const days: Array<{ date: Date | null; events: CalendarEvent[] }> = [];
-
-    // Add empty days for the start of the month
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push({ date: null, events: [] });
-    }
-
-    // Add days of the month
-    for (let day = 1; day <= lastDay.getDate(); day++) {
-      const date = new Date(year, month, day);
-      const dateStr = date.toISOString().split('T')[0];
-
-      // Find events that include this day
-      const dayEvents = events.filter(event => {
-        const eventStart = new Date(event.start).toISOString().split('T')[0];
-        const eventEnd = new Date(event.end).toISOString().split('T')[0];
-        return dateStr >= eventStart && dateStr <= eventEnd;
-      });
-
-      days.push({ date, events: dayEvents });
-    }
-
-    return days;
-  };
-
-  const calendarDays = generateCalendarDays();
+  const tenantId = session.user.organizationId;
   const today = new Date();
-  const isCurrentMonth = currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear();
 
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const [pendingCount, approvedCount, onLeaveToday] = await Promise.all([
+    prisma.leaveRequest.count({ where: { tenantId, status: 'PENDING' } }),
+    prisma.leaveRequest.count({ where: { tenantId, status: 'APPROVED' } }),
+    prisma.leaveRequest.count({
+      where: {
+        tenantId,
+        status: 'APPROVED',
+        startDate: { lte: today },
+        endDate: { gte: today },
+      },
+    }),
+  ]);
 
   return (
     <>
       <PageHeader
         title="Team Calendar"
         subtitle="View all team leave schedules at a glance"
-      />
+        actions={
+          <>
+            <PageHeaderButton href="/admin/leave/requests/new" variant="primary">
+              <Plus className="h-4 w-4" />
+              Create Request
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/leave/requests" variant="secondary">
+              <FileText className="h-4 w-4" />
+              All Requests
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/leave/balances" variant="secondary">
+              <Users className="h-4 w-4" />
+              Leave Balances
+            </PageHeaderButton>
+          </>
+        }
+      >
+        <StatChipGroup>
+          <StatChip value={pendingCount} label="pending" color="amber" href="/admin/leave/requests?status=PENDING" hideWhenZero />
+          <StatChip value={approvedCount} label="approved" color="emerald" />
+          <StatChip value={onLeaveToday} label="on leave today" color="blue" hideWhenZero />
+        </StatChipGroup>
+      </PageHeader>
 
       <PageContent>
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" onClick={() => navigateMonth(-1)}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="font-semibold text-lg min-w-[180px] text-center">
-                    {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-                  </span>
-                  <Button variant="outline" size="icon" onClick={() => navigateMonth(1)}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-                <Button variant="outline" onClick={goToToday} disabled={isCurrentMonth}>
-                  Today
-                </Button>
-              </div>
-
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Legend */}
-            <div className="flex flex-wrap gap-4 mb-4 pb-4 border-b">
-              {leaveTypes.map(type => (
-                <div key={type.id} className="flex items-center gap-2 text-sm">
-                  <div
-                    className="w-3 h-3 rounded"
-                    style={{ backgroundColor: type.color }}
-                  />
-                  <span>{type.name}</span>
-                </div>
-              ))}
-            </div>
-
-            {loading ? (
-              <div className="text-center py-12">Loading...</div>
-            ) : (
-              <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden">
-                {/* Day headers */}
-                {dayNames.map(day => (
-                  <div
-                    key={day}
-                    className="bg-gray-50 p-2 text-center text-sm font-medium text-gray-500"
-                  >
-                    {day}
-                  </div>
-                ))}
-
-                {/* Calendar days */}
-                {calendarDays.map((day, index) => {
-                  const isToday = day.date?.toDateString() === today.toDateString();
-                  const isWeekend = day.date && (day.date.getDay() === 5 || day.date.getDay() === 6);
-
-                  return (
-                    <div
-                      key={index}
-                      className={`min-h-[120px] p-2 ${
-                        day.date ? 'bg-white' : 'bg-gray-50'
-                      } ${isWeekend ? 'bg-gray-50' : ''}`}
-                    >
-                      {day.date && (
-                        <>
-                          <div
-                            className={`text-sm mb-1 ${
-                              isToday
-                                ? 'bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center'
-                                : 'text-gray-500'
-                            } ${isWeekend ? 'text-gray-400' : ''}`}
-                          >
-                            {day.date.getDate()}
-                          </div>
-                          <div className="space-y-1">
-                            {day.events.slice(0, 3).map(event => (
-                              <Link
-                                key={event.id}
-                                href={`/admin/leave/requests/${event.id}`}
-                                className="block"
-                              >
-                                <div
-                                  className="text-xs p-1 rounded truncate text-white hover:opacity-80 transition-opacity"
-                                  style={{ backgroundColor: event.backgroundColor }}
-                                  title={`${event.extendedProps.userName} - ${event.extendedProps.leaveTypeName}`}
-                                >
-                                  {event.extendedProps.userName.split(' ')[0]}
-                                </div>
-                              </Link>
-                            ))}
-                            {day.events.length > 3 && (
-                              <div className="text-xs text-gray-500">
-                                +{day.events.length - 3} more
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Events List for the month */}
-            {events.length > 0 && (
-              <div className="mt-6 pt-6 border-t">
-                <h3 className="font-semibold mb-4">Leaves This Month ({events.length})</h3>
-                <div className="space-y-2">
-                  {events.map(event => (
-                    <Link
-                      key={event.id}
-                      href={`/admin/leave/requests/${event.id}`}
-                      className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: event.backgroundColor }}
-                        />
-                        <div>
-                          <div className="font-medium">{event.extendedProps.userName}</div>
-                          <div className="text-sm text-gray-500">
-                            {event.extendedProps.leaveTypeName} - {formatLeaveDays(event.extendedProps.totalDays)}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-sm text-gray-500">
-                          {new Date(event.start).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                          {event.start !== event.end && (
-                            <> - {new Date(event.end).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</>
-                          )}
-                        </div>
-                        <Badge variant={getLeaveStatusVariant(event.extendedProps.status as LeaveStatus)}>
-                          {event.extendedProps.status}
-                        </Badge>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <LeaveCalendarClient />
       </PageContent>
     </>
   );
