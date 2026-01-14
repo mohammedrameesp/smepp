@@ -4,7 +4,7 @@ import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 
 import { LeaveRequestsTable } from '@/features/leave/components';
-import { Calendar, Plus } from 'lucide-react';
+import { Calendar, Plus, Users } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
@@ -50,6 +50,10 @@ export default async function AdminLeaveRequestsPage() {
             <PageHeaderButton href="/admin/leave/requests/new" variant="primary">
               <Plus className="h-4 w-4" />
               Create Request
+            </PageHeaderButton>
+            <PageHeaderButton href="/admin/leave/balances" variant="secondary">
+              <Users className="h-4 w-4" />
+              Leave Balances
             </PageHeaderButton>
             <PageHeaderButton href="/admin/leave/calendar" variant="secondary">
               <Calendar className="h-4 w-4" />

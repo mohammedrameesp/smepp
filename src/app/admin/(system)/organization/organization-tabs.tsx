@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
-import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings, LocationsSettings, ExchangeRateSettings, PayrollSettings } from '@/features/settings/components';
+import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings, LocationsSettings, ExchangeRateSettings, PayrollSettings, LeaveTypesSettings } from '@/features/settings/components';
 import { CurrencySelector } from '@/components/currency-selector';
 import type { OrgRole } from '@prisma/client';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
@@ -737,11 +737,15 @@ export function OrganizationTabs({
 
             {/* HR Sub-Tab */}
             <TabsContent value="hr" className="space-y-6 mt-6">
-              {enabledModules.includes('payroll') ? (
+              {enabledModules.includes('leave') && (
+                <LeaveTypesSettings />
+              )}
+              {enabledModules.includes('payroll') && (
                 <PayrollSettings />
-              ) : (
+              )}
+              {!enabledModules.includes('leave') && !enabledModules.includes('payroll') && (
                 <ModuleRequiredPlaceholder
-                  moduleName="Payroll"
+                  moduleName="Leave or Payroll"
                   onEnableClick={() => setConfigTab('general')}
                 />
               )}
