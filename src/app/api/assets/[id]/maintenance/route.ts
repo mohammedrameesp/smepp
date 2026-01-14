@@ -41,8 +41,8 @@ const createMaintenanceSchema = z.object({
   maintenanceDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: 'Invalid date format',
   }),
-  /** Optional notes about the maintenance work */
-  notes: z.string().optional().nullable(),
+  /** Notes about the maintenance work (required) */
+  notes: z.string().min(1, 'Notes are required'),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -122,7 +122,7 @@ async function getMaintenanceHandler(request: NextRequest, context: APIContext) 
  * @param {string} id - Asset ID (path parameter)
  *
  * @body {string} maintenanceDate - Date of maintenance (ISO string)
- * @body {string} [notes] - Optional notes about the work performed
+ * @body {string} notes - Notes about the work performed (required)
  *
  * @returns {MaintenanceRecord} Created maintenance record (status 201)
  *
@@ -185,7 +185,7 @@ async function createMaintenanceHandler(request: NextRequest, context: APIContex
         tenantId: tenant.tenantId,
         assetId: id,
         maintenanceDate: new Date(maintenanceDate),
-        notes: notes || null,
+        notes,
         performedById: tenant.userId,
       },
     });

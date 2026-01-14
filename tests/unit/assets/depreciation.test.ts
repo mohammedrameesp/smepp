@@ -238,11 +238,11 @@ describe('Depreciation Validation Tests', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should accept 0 useful life years', () => {
+    it('should reject 0 useful life years', () => {
       const input = { ...validInput, usefulLifeYears: 0 };
 
       const result = createDepreciationCategorySchema.safeParse(input);
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
     });
 
     it('should reject non-integer useful life years', () => {

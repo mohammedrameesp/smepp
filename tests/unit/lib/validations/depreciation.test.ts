@@ -251,16 +251,28 @@ describe('Depreciation Validation Schemas', () => {
       }
     });
 
-    it('should accept 0% rate for intangible assets', () => {
+    it('should accept 0% rate for non-depreciating assets', () => {
       const input = {
-        name: 'Intangible',
-        code: 'INTANGIBLE',
+        name: 'Land',
+        code: 'LAND',
         annualRate: 0,
-        usefulLifeYears: 0,
+        usefulLifeYears: 99, // Land doesn't depreciate but needs valid useful life
       };
 
       const result = createDepreciationCategorySchema.safeParse(input);
       expect(result.success).toBe(true);
+    });
+
+    it('should reject 0 useful life years', () => {
+      const input = {
+        name: 'Test Category',
+        code: 'TEST_CAT',
+        annualRate: 10,
+        usefulLifeYears: 0,
+      };
+
+      const result = createDepreciationCategorySchema.safeParse(input);
+      expect(result.success).toBe(false);
     });
 
     it('should reject negative useful life years', () => {

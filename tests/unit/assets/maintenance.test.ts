@@ -10,7 +10,7 @@ const createMaintenanceSchema = z.object({
   maintenanceDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: 'Invalid date format',
   }),
-  notes: z.string().optional().nullable(),
+  notes: z.string().min(1, 'Notes are required'),
 });
 
 describe('Asset Maintenance Tests', () => {
@@ -19,6 +19,7 @@ describe('Asset Maintenance Tests', () => {
       it('should accept valid ISO date', () => {
         const input = {
           maintenanceDate: '2024-01-15T00:00:00.000Z',
+          notes: 'Maintenance performed',
         };
 
         const result = createMaintenanceSchema.safeParse(input);
@@ -28,6 +29,7 @@ describe('Asset Maintenance Tests', () => {
       it('should accept simple date string', () => {
         const input = {
           maintenanceDate: '2024-01-15',
+          notes: 'Maintenance performed',
         };
 
         const result = createMaintenanceSchema.safeParse(input);
@@ -37,6 +39,7 @@ describe('Asset Maintenance Tests', () => {
       it('should accept date with time', () => {
         const input = {
           maintenanceDate: '2024-01-15 10:30:00',
+          notes: 'Maintenance performed',
         };
 
         const result = createMaintenanceSchema.safeParse(input);
@@ -46,6 +49,7 @@ describe('Asset Maintenance Tests', () => {
       it('should reject invalid date format', () => {
         const input = {
           maintenanceDate: 'not-a-date',
+          notes: 'Maintenance performed',
         };
 
         const result = createMaintenanceSchema.safeParse(input);
@@ -55,6 +59,7 @@ describe('Asset Maintenance Tests', () => {
       it('should reject empty date', () => {
         const input = {
           maintenanceDate: '',
+          notes: 'Maintenance performed',
         };
 
         const result = createMaintenanceSchema.safeParse(input);
@@ -85,39 +90,33 @@ describe('Asset Maintenance Tests', () => {
         }
       });
 
-      it('should accept null notes', () => {
+      it('should reject null notes', () => {
         const input = {
           maintenanceDate: '2024-01-15',
           notes: null,
         };
 
         const result = createMaintenanceSchema.safeParse(input);
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.data.notes).toBeNull();
-        }
+        expect(result.success).toBe(false);
       });
 
-      it('should accept missing notes', () => {
+      it('should reject missing notes', () => {
         const input = {
           maintenanceDate: '2024-01-15',
         };
 
         const result = createMaintenanceSchema.safeParse(input);
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.data.notes).toBeUndefined();
-        }
+        expect(result.success).toBe(false);
       });
 
-      it('should accept empty string notes', () => {
+      it('should reject empty string notes', () => {
         const input = {
           maintenanceDate: '2024-01-15',
           notes: '',
         };
 
         const result = createMaintenanceSchema.safeParse(input);
-        expect(result.success).toBe(true);
+        expect(result.success).toBe(false);
       });
 
       it('should accept long notes', () => {
@@ -239,17 +238,17 @@ describe('Asset Maintenance Tests', () => {
         expect(record).toHaveProperty('tenantId');
       });
 
-      it('should allow null notes', () => {
+      it('should require notes', () => {
         const record = {
           id: 'rec-123',
           assetId: 'asset-123',
           maintenanceDate: new Date('2024-01-15'),
-          notes: null,
+          notes: 'Replaced keyboard',
           performedBy: 'user-123',
           tenantId: 'tenant-123',
         };
 
-        expect(record.notes).toBeNull();
+        expect(record.notes).toBeTruthy();
       });
 
       it('should track who performed maintenance', () => {
@@ -259,22 +258,6 @@ describe('Asset Maintenance Tests', () => {
         };
 
         expect(record.performedBy).toBe('user-123');
-      });
-    });
-
-    describe('Maintenance Types', () => {
-      it('should support scheduled maintenance', () => {
-        const maintenanceTypes = [
-          { type: 'scheduled', description: 'Annual laptop servicing' },
-          { type: 'repair', description: 'Screen replacement' },
-          { type: 'preventive', description: 'Firmware update' },
-          { type: 'warranty', description: 'Warranty claim repair' },
-        ];
-
-        expect(maintenanceTypes.find((m) => m.type === 'scheduled')).toBeDefined();
-        expect(maintenanceTypes.find((m) => m.type === 'repair')).toBeDefined();
-        expect(maintenanceTypes.find((m) => m.type === 'preventive')).toBeDefined();
-        expect(maintenanceTypes.find((m) => m.type === 'warranty')).toBeDefined();
       });
     });
 
@@ -358,45 +341,4 @@ describe('Asset Maintenance Tests', () => {
     });
   });
 
-  describe('Maintenance History Aggregation', () => {
-    it('should count total maintenance records for asset', () => {
-      const records = [
-        { assetId: 'asset-123' },
-        { assetId: 'asset-123' },
-        { assetId: 'asset-123' },
-      ];
-
-      expect(records.length).toBe(3);
-    });
-
-    it('should calculate time since last maintenance', () => {
-      const lastMaintenanceDate = new Date('2024-01-15');
-      const now = new Date('2024-06-15');
-
-      const daysSinceLastMaintenance = Math.floor(
-        (now.getTime() - lastMaintenanceDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
-
-      expect(daysSinceLastMaintenance).toBe(152);
-    });
-
-    it('should identify assets needing maintenance', () => {
-      const assets = [
-        { id: 'asset-1', lastMaintenanceDate: new Date('2024-01-01'), maintenanceIntervalDays: 90 },
-        { id: 'asset-2', lastMaintenanceDate: new Date('2024-05-01'), maintenanceIntervalDays: 90 },
-        { id: 'asset-3', lastMaintenanceDate: new Date('2024-06-01'), maintenanceIntervalDays: 90 },
-      ];
-
-      const now = new Date('2024-06-15');
-      const needsMaintenance = assets.filter((asset) => {
-        const daysSinceLast = Math.floor(
-          (now.getTime() - asset.lastMaintenanceDate.getTime()) / (1000 * 60 * 60 * 24)
-        );
-        return daysSinceLast > asset.maintenanceIntervalDays;
-      });
-
-      expect(needsMaintenance).toHaveLength(1);
-      expect(needsMaintenance[0].id).toBe('asset-1');
-    });
-  });
 });

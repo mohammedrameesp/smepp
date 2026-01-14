@@ -145,7 +145,7 @@ export function AssetMaintenanceRecords({ assetId, readOnly = false }: AssetMain
                 />
               </div>
               <div>
-                <Label htmlFor="notes">Notes / Description</Label>
+                <Label htmlFor="notes">Notes / Description <span className="text-red-500">*</span></Label>
                 <Textarea
                   id="notes"
                   placeholder="Describe the maintenance work performed..."
@@ -154,6 +154,7 @@ export function AssetMaintenanceRecords({ assetId, readOnly = false }: AssetMain
                     setFormData({ ...formData, notes: e.target.value })
                   }
                   rows={3}
+                  required
                 />
               </div>
               <Button type="submit" disabled={submitting}>
