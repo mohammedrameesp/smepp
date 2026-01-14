@@ -127,7 +127,10 @@ export default function NewPurchaseRequestPage() {
   const [neededByDate, setNeededByDate] = useState('');
 
   // Purchase Type & Payment Details
-  const [purchaseType, setPurchaseType] = useState<string>('SOFTWARE_SUBSCRIPTION');
+  const [purchaseType, setPurchaseType] = useState<string>('');
+
+  // Field-specific validation errors
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [otherPurchaseType, setOtherPurchaseType] = useState('');
   const [paymentMode, setPaymentMode] = useState<string>('BANK_TRANSFER');
 
@@ -297,53 +300,58 @@ export default function NewPurchaseRequestPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
 
+    const errors: Record<string, string> = {};
     const isSubscription = purchaseType === 'SOFTWARE_SUBSCRIPTION';
 
-    // Validate
+    // Validate required fields
     if (!title.trim()) {
-      setError('Title is required');
-      return;
+      errors.title = 'Title is required';
+    }
+
+    if (!purchaseType) {
+      errors.purchaseType = 'Purchase type is required';
     }
 
     if (!justification.trim()) {
-      setError('Business justification is required');
-      return;
+      errors.justification = 'Business justification is required';
     }
 
     const validItems = items.filter((item) => item.description.trim());
     if (validItems.length === 0) {
-      setError('At least one item with a description is required');
-      return;
+      errors.items = 'At least one item with a description is required';
     }
 
     // Validate prices based on type
-    if (isSubscription) {
+    if (purchaseType && isSubscription) {
       const hasZeroPriceItems = validItems.some((item) => item.amountPerCycle <= 0);
       if (hasZeroPriceItems) {
-        setError('All items must have an amount per cycle greater than 0');
-        return;
+        errors.items = 'All items must have an amount per cycle greater than 0';
       }
-    } else {
+    } else if (purchaseType && validItems.length > 0) {
       const hasZeroPriceItems = validItems.some((item) => item.unitPrice <= 0);
       if (hasZeroPriceItems) {
-        setError('All items must have a price greater than 0');
-        return;
+        errors.items = 'All items must have a price greater than 0';
       }
     }
 
     // Validate quantity for types that require it
-    if (typeConfig.showQty) {
+    if (purchaseType && typeConfig.showQty && validItems.length > 0) {
       const hasZeroQty = validItems.some((item) => item.quantity <= 0);
       if (hasZeroQty) {
-        setError('All items must have a quantity greater than 0');
-        return;
+        errors.items = 'All items must have a quantity greater than 0';
       }
     }
 
     // Validate email format if provided
     if (vendorEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vendorEmail)) {
-      setError('Please enter a valid vendor email address');
+      errors.vendorEmail = 'Please enter a valid email address';
+    }
+
+    // If there are any errors, set them and don't submit
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
@@ -436,10 +444,16 @@ export default function NewPurchaseRequestPage() {
                 <Input
                   id="title"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    if (fieldErrors.title) setFieldErrors(prev => ({ ...prev, title: '' }));
+                  }}
                   placeholder="e.g., Office Equipment Purchase"
-                  required
+                  className={fieldErrors.title ? 'border-red-500' : ''}
                 />
+                {fieldErrors.title && (
+                  <p className="text-sm text-red-500">{fieldErrors.title}</p>
+                )}
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
@@ -481,9 +495,15 @@ export default function NewPurchaseRequestPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="purchaseType">Purchase Type *</Label>
-                  <Select value={purchaseType} onValueChange={setPurchaseType}>
-                    <SelectTrigger>
-                      <SelectValue />
+                  <Select
+                    value={purchaseType}
+                    onValueChange={(v) => {
+                      setPurchaseType(v);
+                      if (fieldErrors.purchaseType) setFieldErrors(prev => ({ ...prev, purchaseType: '' }));
+                    }}
+                  >
+                    <SelectTrigger className={fieldErrors.purchaseType ? 'border-red-500' : ''}>
+                      <SelectValue placeholder="Select purchase type" />
                     </SelectTrigger>
                     <SelectContent>
                       {PURCHASE_TYPES.map((type) => (
@@ -493,6 +513,9 @@ export default function NewPurchaseRequestPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {fieldErrors.purchaseType && (
+                    <p className="text-sm text-red-500">{fieldErrors.purchaseType}</p>
+                  )}
                   {purchaseType === 'OTHER' && (
                     <Input
                       className="mt-2"
@@ -561,11 +584,17 @@ export default function NewPurchaseRequestPage() {
                 <Textarea
                   id="justification"
                   value={justification}
-                  onChange={(e) => setJustification(e.target.value)}
+                  onChange={(e) => {
+                    setJustification(e.target.value);
+                    if (fieldErrors.justification) setFieldErrors(prev => ({ ...prev, justification: '' }));
+                  }}
                   placeholder="Why is this purchase needed?"
                   rows={4}
-                  required
+                  className={fieldErrors.justification ? 'border-red-500' : ''}
                 />
+                {fieldErrors.justification && (
+                  <p className="text-sm text-red-500">{fieldErrors.justification}</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -581,8 +610,11 @@ export default function NewPurchaseRequestPage() {
               </div>
             </CardHeader>
             <CardContent>
+              {fieldErrors.items && (
+                <p className="text-sm text-red-500 mb-4">{fieldErrors.items}</p>
+              )}
               {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto border rounded-lg">
+              <div className={`hidden md:block overflow-x-auto border rounded-lg ${fieldErrors.items ? 'border-red-500' : ''}`}>
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50">
                     <tr>
@@ -948,9 +980,16 @@ export default function NewPurchaseRequestPage() {
                     id="vendorEmail"
                     type="email"
                     value={vendorEmail}
-                    onChange={(e) => setVendorEmail(e.target.value)}
+                    onChange={(e) => {
+                      setVendorEmail(e.target.value);
+                      if (fieldErrors.vendorEmail) setFieldErrors(prev => ({ ...prev, vendorEmail: '' }));
+                    }}
                     placeholder="e.g., sales@vendor.com"
+                    className={fieldErrors.vendorEmail ? 'border-red-500' : ''}
                   />
+                  {fieldErrors.vendorEmail && (
+                    <p className="text-sm text-red-500">{fieldErrors.vendorEmail}</p>
+                  )}
                 </div>
               </div>
             </CardContent>
