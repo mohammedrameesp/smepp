@@ -99,9 +99,9 @@ async function getCalendarHandler(request: NextRequest, context: APIContext) {
       borderColor: request.leaveType.color,
       extendedProps: {
         requestNumber: request.requestNumber,
-        memberId: request.memberId,
-        memberName: request.member.name,
-        memberEmail: request.member.email,
+        userId: request.memberId,
+        userName: request.member.name,
+        userEmail: request.member.email,
         leaveTypeId: request.leaveTypeId,
         leaveTypeName: request.leaveType.name,
         status: request.status,
