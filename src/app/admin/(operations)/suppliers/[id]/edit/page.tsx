@@ -116,7 +116,8 @@ export default function EditSupplierPage() {
         if (!response.ok) {
           throw new Error('Failed to fetch supplier');
         }
-        const data = await response.json();
+        const response_data = await response.json();
+        const data = response_data.supplier;
 
         // Extract mobile code from mobile number if it exists
         const extractMobileData = (mobile: string | null) => {
