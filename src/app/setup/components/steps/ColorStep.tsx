@@ -188,7 +188,7 @@ export function ColorStep({
                 type="color"
                 value={activeColor || PLATFORM_DEFAULT_PRIMARY}
                 onChange={(e) => onColorChange(e.target.value)}
-                className="w-9 h-9 rounded-lg cursor-pointer border-0 p-0"
+                className="w-9 h-9 rounded-lg cursor-pointer border-0 p-0 appearance-none [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded-lg [&::-webkit-color-swatch]:border-0 [&::-moz-color-swatch]:rounded-lg [&::-moz-color-swatch]:border-0"
                 style={{ backgroundColor: activeColor || '#e2e8f0' }}
               />
             </div>
