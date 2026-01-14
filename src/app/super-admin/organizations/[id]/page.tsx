@@ -1678,7 +1678,8 @@ export default function OrganizationDetailPage() {
                     </Alert>
                   )}
 
-                  {/* Google OAuth Configuration */}
+                  {/* Google OAuth Configuration - only show if Google SSO is enabled */}
+                  {authConfig.allowedAuthMethods.includes('google') && (
                   <div className="p-4 border rounded-lg space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -1761,8 +1762,10 @@ export default function OrganizationDetailPage() {
                       </Button>
                     </div>
                   </div>
+                  )}
 
-                  {/* Azure AD OAuth Configuration */}
+                  {/* Azure AD OAuth Configuration - only show if Microsoft SSO is enabled */}
+                  {authConfig.allowedAuthMethods.includes('azure-ad') && (
                   <div className="p-4 border rounded-lg space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -1859,6 +1862,14 @@ export default function OrganizationDetailPage() {
                       </Button>
                     </div>
                   </div>
+                  )}
+
+                  {/* Message when no SSO method is enabled */}
+                  {!authConfig.allowedAuthMethods.includes('google') && !authConfig.allowedAuthMethods.includes('azure-ad') && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Enable Google or Microsoft SSO in Authentication Settings above to configure custom OAuth credentials.
+                    </p>
+                  )}
                 </CollapsibleContent>
               </Collapsible>
             </>
