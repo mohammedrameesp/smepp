@@ -524,9 +524,9 @@ export default function OrganizationDetailPage() {
       newMethods = currentMethods.filter((m) => m !== methodId);
     }
 
-    // Must have at least credentials enabled
-    if (!newMethods.includes('credentials')) {
-      newMethods = ['credentials', ...newMethods];
+    // Must have at least one method enabled
+    if (newMethods.length === 0) {
+      return; // Don't allow disabling all methods
     }
 
     // Remove duplicates
@@ -1564,7 +1564,7 @@ export default function OrganizationDetailPage() {
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Allowed Login Methods</Label>
                 <p className="text-xs text-muted-foreground">
-                  Email & Password is always enabled. Google and Microsoft SSO are mutually exclusive.
+                  At least one method must be enabled. Google and Microsoft SSO are mutually exclusive.
                 </p>
                 <div className="space-y-2">
                   {AUTH_METHODS.map((method) => {
@@ -1574,16 +1574,14 @@ export default function OrganizationDetailPage() {
                       : authConfig.allowedAuthMethods;
                     const isEnabled = effectiveMethods.includes(method.id);
                     const IconComponent = method.icon;
-                    // Credentials cannot be disabled
-                    const isDisabled = savingAuthConfig || method.id === 'credentials';
+                    // Can't disable if it's the only method enabled
+                    const isOnlyMethod = effectiveMethods.length === 1 && effectiveMethods[0] === method.id;
+                    const isDisabled = savingAuthConfig || isOnlyMethod;
                     return (
                       <div key={method.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center gap-3">
                           <IconComponent className="h-4 w-4 text-muted-foreground" />
                           <span>{method.label}</span>
-                          {method.id === 'credentials' && (
-                            <span className="text-xs text-muted-foreground">(Required)</span>
-                          )}
                         </div>
                         <Switch
                           checked={isEnabled}
