@@ -459,8 +459,8 @@ export default function AdminEmployeeEditPage() {
             </Card>
           )}
 
-          {/* Leave Settings */}
-          {hrProfile && (
+          {/* Leave Settings - only for employees */}
+          {hrProfile && isEmployee && (
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -561,8 +561,8 @@ export default function AdminEmployeeEditPage() {
             </Card>
           )}
 
-        {/* HR Form */}
-        {hrProfile && (
+        {/* HR Form - only for employees */}
+        {hrProfile && isEmployee && (
           <HRProfileForm
             initialData={{
               ...hrProfile,
