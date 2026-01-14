@@ -28,8 +28,7 @@ const setDomainSchema = z.object({
 });
 
 const patchSchema = z.object({
-  action: z.enum(['verify', 'bypass']),
-  bypass: z.boolean().optional(),
+  action: z.enum(['verify']),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -58,7 +57,6 @@ export async function GET(
         customDomainVerified: true,
         customDomainVerifiedAt: true,
         customDomainTxtValue: true,
-        customDomainBypassVerification: true,
       },
     });
 
@@ -77,8 +75,7 @@ export async function GET(
         verified: org.customDomainVerified,
         verifiedAt: org.customDomainVerifiedAt,
         txtValue: org.customDomainTxtValue,
-        bypassVerification: org.customDomainBypassVerification,
-        isActive: org.customDomain && (org.customDomainVerified || org.customDomainBypassVerification),
+        isActive: org.customDomain && org.customDomainVerified,
       },
     });
   } catch (error) {
@@ -189,7 +186,7 @@ export async function POST(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PATCH - Verify domain or toggle bypass
+// PATCH - Verify domain
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export async function PATCH(
@@ -221,7 +218,6 @@ export async function PATCH(
         customDomain: true,
         customDomainTxtValue: true,
         customDomainVerified: true,
-        customDomainBypassVerification: true,
       },
     });
 
@@ -233,7 +229,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'No custom domain configured' }, { status: 400 });
     }
 
-    const { action, bypass } = result.data;
+    const { action } = result.data;
 
     // Handle verify action
     if (action === 'verify') {
@@ -273,33 +269,6 @@ export async function PATCH(
         error: verification.error,
         txtRecordsFound: verification.txtRecordsFound,
         expectedValue: org.customDomainTxtValue,
-      });
-    }
-
-    // Handle bypass toggle
-    if (action === 'bypass') {
-      if (bypass === undefined) {
-        return NextResponse.json({ error: 'bypass value is required' }, { status: 400 });
-      }
-
-      const updated = await prisma.organization.update({
-        where: { id },
-        data: {
-          customDomainBypassVerification: bypass,
-        },
-      });
-
-      clearDomainCache(org.customDomain);
-
-      logger.info({ orgId: id, domain: org.customDomain, bypass }, 'Custom domain bypass toggled');
-
-      return NextResponse.json({
-        success: true,
-        bypassVerification: updated.customDomainBypassVerification,
-        isActive: org.customDomainVerified || updated.customDomainBypassVerification,
-        message: bypass
-          ? 'Verification bypassed - domain is now active'
-          : 'Bypass disabled - DNS verification required',
       });
     }
 

@@ -161,7 +161,6 @@ interface CustomDomainStatus {
   verified: boolean;
   verifiedAt: string | null;
   txtValue: string | null;
-  bypassVerification: boolean;
   isActive: boolean;
 }
 
@@ -244,7 +243,6 @@ export default function OrganizationDetailPage() {
   const [newCustomDomain, setNewCustomDomain] = useState('');
   const [settingDomain, setSettingDomain] = useState(false);
   const [verifyingDomain, setVerifyingDomain] = useState(false);
-  const [togglingBypass, setTogglingBypass] = useState(false);
   const [removingDomain, setRemovingDomain] = useState(false);
   const [domainError, setDomainError] = useState<string | null>(null);
   const [domainSuccess, setDomainSuccess] = useState<string | null>(null);
@@ -824,7 +822,6 @@ export default function OrganizationDetailPage() {
         verified: false,
         verifiedAt: null,
         txtValue: data.customDomain.txtValue,
-        bypassVerification: false,
         isActive: false,
       });
       setNewCustomDomain('');
@@ -874,34 +871,6 @@ export default function OrganizationDetailPage() {
     }
   };
 
-  const handleToggleBypass = async (enabled: boolean) => {
-    setTogglingBypass(true);
-    setDomainError(null);
-    try {
-      const response = await fetch(`/api/super-admin/organizations/${orgId}/custom-domain`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'bypass', bypass: enabled }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to toggle bypass');
-      }
-
-      setCustomDomainStatus(prev => prev ? {
-        ...prev,
-        bypassVerification: data.bypassVerification,
-        isActive: data.isActive,
-      } : null);
-    } catch (err) {
-      setDomainError(err instanceof Error ? err.message : 'Failed to toggle bypass');
-    } finally {
-      setTogglingBypass(false);
-    }
-  };
-
   const handleRemoveCustomDomain = async () => {
     setRemovingDomain(true);
     setDomainError(null);
@@ -920,7 +889,6 @@ export default function OrganizationDetailPage() {
         verified: false,
         verifiedAt: null,
         txtValue: null,
-        bypassVerification: false,
         isActive: false,
       });
       setVerificationResult(null);
@@ -1338,7 +1306,7 @@ export default function OrganizationDetailPage() {
           <CardTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
             Custom Domain
-            {(settingDomain || verifyingDomain || togglingBypass || removingDomain) && (
+            {(settingDomain || verifyingDomain || removingDomain) && (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             )}
           </CardTitle>
@@ -1382,11 +1350,7 @@ export default function OrganizationDetailPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={customDomainStatus.isActive ? 'default' : 'secondary'}>
-                    {customDomainStatus.verified
-                      ? 'Verified'
-                      : customDomainStatus.bypassVerification
-                        ? 'Bypassed'
-                        : 'Pending'}
+                    {customDomainStatus.verified ? 'Verified' : 'Pending'}
                   </Badge>
                   <Button
                     variant="ghost"
@@ -1401,7 +1365,7 @@ export default function OrganizationDetailPage() {
               </div>
 
               {/* Verification Instructions */}
-              {!customDomainStatus.verified && !customDomainStatus.bypassVerification && customDomainStatus.txtValue && (
+              {!customDomainStatus.verified && customDomainStatus.txtValue && (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-3">
                   <h4 className="font-medium text-amber-900">DNS Verification Required</h4>
                   <p className="text-sm text-amber-800">
@@ -1506,21 +1470,6 @@ export default function OrganizationDetailPage() {
                     </>
                   )}
                 </Button>
-              </div>
-
-              {/* Bypass Verification (Super Admin Override) */}
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <p className="font-medium">Bypass DNS Verification</p>
-                  <p className="text-sm text-muted-foreground">
-                    Activate domain without DNS verification (super admin override)
-                  </p>
-                </div>
-                <Switch
-                  checked={customDomainStatus.bypassVerification}
-                  onCheckedChange={handleToggleBypass}
-                  disabled={togglingBypass || customDomainStatus.verified}
-                />
               </div>
 
               {/* SSL Setup Instructions */}
