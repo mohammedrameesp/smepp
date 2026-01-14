@@ -23,6 +23,9 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 
+// Default brand color (slate)
+const DEFAULT_BRAND_COLOR = '#0f172a';
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -78,9 +81,24 @@ export function ChatWidget() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [brandColor, setBrandColor] = useState(DEFAULT_BRAND_COLOR);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatPanelRef = useRef<HTMLDivElement>(null);
+
+  // Fetch organization brand color
+  useEffect(() => {
+    fetch('/api/settings/branding')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.primaryColor) {
+          setBrandColor(data.primaryColor);
+        }
+      })
+      .catch(() => {
+        // Keep default color on error
+      });
+  }, []);
 
   // Toast notification system
   const showToast = useCallback((message: string, type: Toast['type'] = 'info') => {
@@ -498,12 +516,12 @@ export function ChatWidget() {
         onClick={() => setIsOpen(true)}
         className={cn(
           'fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50',
-          'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700',
-          'dark:from-blue-500 dark:to-indigo-500 dark:hover:from-blue-600 dark:hover:to-indigo-600',
           'sm:bottom-6 sm:right-6',
           'max-sm:bottom-20 max-sm:right-4',
+          'hover:opacity-90 transition-opacity',
           isOpen && 'hidden'
         )}
+        style={{ backgroundColor: brandColor }}
         size="icon"
         aria-label="Open AI Assistant chat"
       >
@@ -532,7 +550,7 @@ export function ChatWidget() {
           </div>
 
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white safe-area-inset-top">
+          <div className="flex items-center justify-between px-4 py-3 text-white safe-area-inset-top" style={{ backgroundColor: brandColor }}>
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5" />
               <span className="font-semibold">AI Assistant</span>
@@ -802,9 +820,10 @@ export function ChatWidget() {
                           className={cn(
                             'rounded-2xl px-4 py-2',
                             msg.role === 'user'
-                              ? 'bg-blue-600 text-white dark:bg-blue-500'
+                              ? 'text-white'
                               : 'bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-gray-100'
                           )}
+                          style={msg.role === 'user' ? { backgroundColor: brandColor } : undefined}
                         >
                           {msg.role === 'assistant' ? (
                             <div className="text-sm prose prose-sm prose-gray dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-1 prose-code:bg-gray-200 dark:prose-code:bg-slate-700 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-pre:bg-gray-800 dark:prose-pre:bg-slate-900 prose-pre:text-gray-100 prose-pre:text-xs">
@@ -820,17 +839,17 @@ export function ChatWidget() {
                             <span
                               className={cn(
                                 'text-[10px]',
-                                msg.role === 'user' ? 'text-blue-200' : 'text-gray-400 dark:text-gray-500'
+                                msg.role === 'user' ? 'text-white/70' : 'text-gray-400 dark:text-gray-500'
                               )}
                               title={formatFullTime(msg.createdAt)}
                             >
                               {formatTime(msg.createdAt)}
                             </span>
                             {msg.role === 'user' && msg.status === 'sent' && (
-                              <Check className="h-3 w-3 text-blue-200" />
+                              <Check className="h-3 w-3 text-white/70" />
                             )}
                             {msg.role === 'user' && msg.status === 'error' && (
-                              <AlertCircle className="h-3 w-3 text-red-300" />
+                              <AlertCircle className="h-3 w-3 text-white/70" />
                             )}
                           </div>
                         </div>
@@ -950,7 +969,8 @@ export function ChatWidget() {
                 type="submit"
                 disabled={!message.trim() || isLoading}
                 size="icon"
-                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 shrink-0"
+                className="shrink-0 hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: brandColor }}
                 aria-label="Send message"
               >
                 {isLoading ? (

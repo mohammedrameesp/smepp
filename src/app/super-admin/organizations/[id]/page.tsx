@@ -1405,51 +1405,56 @@ export default function OrganizationDetailPage() {
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-3">
                   <h4 className="font-medium text-amber-900">DNS Verification Required</h4>
                   <p className="text-sm text-amber-800">
-                    Add a TXT record to your DNS to verify domain ownership:
+                    Add a TXT record in your DNS provider with these values:
                   </p>
-                  <div className="space-y-2">
-                    <div className="p-3 bg-white rounded border border-amber-200">
-                      <p className="text-xs text-amber-700 mb-1">Option 1: Root domain TXT record</p>
-                      <div className="flex items-center gap-2">
-                        <code className="text-sm font-mono flex-1 truncate">{customDomainStatus.domain}</code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(customDomainStatus.domain || '')}
-                        >
-                          Copy
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="p-3 bg-white rounded border border-amber-200">
-                      <p className="text-xs text-amber-700 mb-1">Option 2: Subdomain TXT record</p>
-                      <div className="flex items-center gap-2">
-                        <code className="text-sm font-mono flex-1 truncate">_durj-verification.{customDomainStatus.domain}</code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(`_durj-verification.${customDomainStatus.domain}`)}
-                        >
-                          Copy
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="p-3 bg-white rounded border border-amber-200">
-                      <p className="text-xs text-amber-700 mb-1">TXT Record Value</p>
-                      <div className="flex items-center gap-2">
-                        <code className="text-sm font-mono flex-1 truncate">{customDomainStatus.txtValue}</code>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(customDomainStatus.txtValue || '')}
-                        >
-                          Copy
-                        </Button>
-                      </div>
-                    </div>
+                  <div className="bg-white rounded border border-amber-200 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <tbody>
+                        <tr className="border-b border-amber-100">
+                          <td className="px-3 py-2 font-medium text-amber-800 w-20">Type</td>
+                          <td className="px-3 py-2 font-mono">TXT</td>
+                        </tr>
+                        <tr className="border-b border-amber-100">
+                          <td className="px-3 py-2 font-medium text-amber-800 w-20">Name</td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <code className="font-mono text-xs bg-amber-50 px-2 py-1 rounded flex-1 truncate">
+                                _durj-verification.{customDomainStatus.domain?.split('.')[0]}
+                              </code>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2"
+                                onClick={() => copyToClipboard(`_durj-verification.${customDomainStatus.domain?.split('.')[0]}`)}
+                              >
+                                Copy
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="px-3 py-2 font-medium text-amber-800 w-20">Value</td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <code className="font-mono text-xs bg-amber-50 px-2 py-1 rounded flex-1 truncate">
+                                {customDomainStatus.txtValue}
+                              </code>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2"
+                                onClick={() => copyToClipboard(customDomainStatus.txtValue || '')}
+                              >
+                                Copy
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                   <p className="text-xs text-amber-700">
-                    Note: DNS changes may take up to 48 hours to propagate.
+                    Note: DNS changes may take up to 48 hours to propagate. Your DNS provider will automatically append your domain.
                   </p>
                 </div>
               )}
