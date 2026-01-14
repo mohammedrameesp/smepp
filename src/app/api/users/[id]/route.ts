@@ -5,7 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Role, TeamMemberRole } from '@prisma/client';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
@@ -13,30 +12,20 @@ import { z } from 'zod';
 
 const updateUserSchema = z.object({
   name: z.string().optional(),
-  // role field updates approvalRole (for approval authority: EMPLOYEE, MANAGER, HR_MANAGER, etc.)
-  role: z.nativeEnum(Role).optional(),
-  // isAdmin field updates TeamMemberRole (for dashboard access: true = ADMIN, false = MEMBER)
+  // isAdmin field controls dashboard access (true = admin dashboard, false = employee dashboard)
   isAdmin: z.boolean().optional(),
 });
 
 // Transform the data for TeamMember updates
-function transformUpdateData(data: { name?: string; role?: Role; isAdmin?: boolean }) {
+function transformUpdateData(data: { name?: string; isAdmin?: boolean }) {
   const updates: Record<string, unknown> = {};
 
   if (data.name) {
     updates.name = data.name;
   }
 
-  if (data.role) {
-    updates.approvalRole = data.role; // Update approval authority
-  }
-
   if (data.isAdmin !== undefined) {
-    updates.role = (data.isAdmin ? 'ADMIN' : 'MEMBER') as TeamMemberRole;
-    // Admin should always have approval authority
-    if (data.isAdmin) {
-      updates.approvalRole = 'ADMIN' as Role;
-    }
+    updates.isAdmin = data.isAdmin;
   }
 
   return updates;
@@ -70,7 +59,7 @@ async function getUserHandler(
       name: true,
       email: true,
       image: true,
-      role: true,
+      isAdmin: true,
       isEmployee: true,
       dateOfJoining: true,
       gender: true,

@@ -120,7 +120,7 @@ async function exportEmployeesHandler(request: NextRequest, context: APIContext)
       employeeId: emp.employeeCode || '',
       name: emp.name || '',
       email: emp.email,
-      role: emp.role,
+      role: emp.isAdmin ? 'ADMIN' : 'MEMBER',
       designation: emp.designation || '',
       dateOfBirth: formatDate(emp.dateOfBirth || null),
       gender: emp.gender || '',

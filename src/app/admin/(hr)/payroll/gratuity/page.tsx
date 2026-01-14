@@ -20,7 +20,7 @@ import { FileText, Users, DollarSign } from 'lucide-react';
 
 export default async function GratuityReportPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.teamMemberRole !== 'ADMIN') {
+  if (!session || !session.user.isAdmin) {
     redirect('/');
   }
 

@@ -24,7 +24,7 @@ interface PageProps {
 
 export default async function AdminPayslipDetailPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.teamMemberRole !== 'ADMIN') {
+  if (!session || !session.user.isAdmin) {
     redirect('/');
   }
 

@@ -16,17 +16,16 @@ import { type BadgeCounts } from '@/components/layout/badge-types';
 interface MobileBottomNavProps {
   badgeCounts?: BadgeCounts;
   enabledModules?: string[];
-  userRole?: string;
+  isAdmin?: boolean;
+  canApprove?: boolean;
 }
 
-// Roles that can access approval workflows
-const APPROVER_ROLES = ['ADMIN', 'MANAGER', 'HR_MANAGER', 'FINANCE_MANAGER', 'DIRECTOR'];
-
-export function MobileBottomNav({ badgeCounts = {}, enabledModules = [], userRole }: MobileBottomNavProps) {
+export function MobileBottomNav({ badgeCounts = {}, enabledModules = [], isAdmin = false, canApprove = false }: MobileBottomNavProps) {
   const pathname = usePathname();
 
   const isModuleEnabled = (moduleId: string) => enabledModules.includes(moduleId);
-  const isApprover = userRole && APPROVER_ROLES.includes(userRole);
+  // Users with isAdmin or canApprove flags can access approval workflows
+  const isApprover = isAdmin || canApprove;
   const hasApprovalModules = isModuleEnabled('leave') || isModuleEnabled('assets') || isModuleEnabled('purchase-requests');
 
   const navItems = [

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   try {
     // Check authentication and authorization
     const session = await getServerSession(authOptions);
-    if (!session || session.user.teamMemberRole !== 'ADMIN') {
+    if (!session || !session.user.isAdmin) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 

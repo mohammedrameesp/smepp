@@ -18,7 +18,7 @@ async function main() {
     data: {
       name: 'Admin User',
       email: 'admin@yourdomain.com',
-      role: Role.ADMIN,
+      role: Role.DIRECTOR,
     },
   });
 

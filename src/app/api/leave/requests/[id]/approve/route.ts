@@ -5,7 +5,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Role } from '@prisma/client';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { approveLeaveRequestSchema } from '@/features/leave/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -173,8 +172,8 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
     return NextResponse.json(leaveRequest);
 }
 
-// Allow ADMIN, MANAGER, and HR_MANAGER to approve leave requests
+// Allow users with approval capability to approve leave requests
 export const POST = withErrorHandler(approveLeaveRequestHandler, {
-  requireApproverRole: [Role.ADMIN, Role.MANAGER, Role.HR_MANAGER],
+  requireCanApprove: true,
   requireModule: 'leave'
 });

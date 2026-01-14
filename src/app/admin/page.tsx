@@ -40,11 +40,11 @@ export default async function AdminDashboard() {
     redirect('/login');
   }
 
-  if (session.user.teamMemberRole !== 'ADMIN') {
+  if (!session.user.isAdmin) {
     redirect('/employee');
   }
 
-  const isAdmin = session.user.teamMemberRole === 'ADMIN';
+  const isAdmin = session.user.isAdmin;
 
   // Get enabled modules and org details from database
   let enabledModules: string[] = ['assets', 'subscriptions', 'suppliers'];

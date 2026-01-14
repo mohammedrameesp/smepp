@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         id: session.user.id,
         tenantId: organizationId,
         isDeleted: false,
-        OR: [{ isOwner: true }, { role: 'ADMIN' }],
+        OR: [{ isOwner: true }, { isAdmin: true }],
       },
     });
 

@@ -60,7 +60,7 @@ import { prisma } from '@/lib/core/prisma';
 import { hasModuleAccess, moduleNotInstalledResponse } from '@/lib/modules/access';
 import { MODULE_REGISTRY } from '@/lib/modules/registry';
 import { hasPermission as checkPermission } from '@/lib/access-control';
-import { OrgRole, Role } from '@prisma/client';
+import { OrgRole } from '@prisma/client';
 import { MAX_BODY_SIZE_BYTES } from '@/lib/constants/limits';
 import { isTokenRevoked } from '@/lib/security/impersonation';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -86,7 +86,7 @@ export type APIHandler = (
 export interface HandlerOptions {
   requireAuth?: boolean;
   requireAdmin?: boolean;
-  requireApproverRole?: Role[]; // Require one of these approval roles (checks session.user.role / approvalRole)
+  requireCanApprove?: boolean; // Require approval capability (isAdmin or canApprove flag)
   requireTenant?: boolean; // Require tenant context (default: true for auth routes)
   requireModule?: string; // Require a specific module to be installed (e.g., 'assets', 'payroll')
   requirePermission?: string; // Require a specific permission (e.g., 'payroll:run', 'assets:edit')
@@ -199,7 +199,7 @@ export function withErrorHandler(
       });
 
       // Authentication check
-      if (options.requireAuth || options.requireAdmin || options.requireApproverRole) {
+      if (options.requireAuth || options.requireAdmin || options.requireCanApprove) {
         const session = await getSession();
 
         if (!session) {
@@ -216,7 +216,8 @@ export function withErrorHandler(
           return response;
         }
 
-        if (options.requireAdmin && session.user.teamMemberRole !== 'ADMIN') {
+        // Check for admin access (new boolean-based system)
+        if (options.requireAdmin && !session.user.isAdmin) {
           const response = errorResponse('Forbidden', 403, {
             message: 'Admin access required',
             code: ErrorCodes.ADMIN_REQUIRED,
@@ -233,15 +234,13 @@ export function withErrorHandler(
           return response;
         }
 
-        // Check for approver role (uses approvalRole field exposed as session.user.role)
-        // ADMIN teamMemberRole always has access, otherwise check approvalRole
-        if (options.requireApproverRole && options.requireApproverRole.length > 0) {
-          const isTeamAdmin = session.user.teamMemberRole === 'ADMIN';
-          const hasApproverRole = session.user.role && options.requireApproverRole.includes(session.user.role as Role);
+        // Check for approval capability (isAdmin or canApprove flag)
+        if (options.requireCanApprove) {
+          const canApproveRequests = session.user.isAdmin || session.user.canApprove;
 
-          if (!isTeamAdmin && !hasApproverRole) {
+          if (!canApproveRequests) {
             const response = errorResponse('Forbidden', 403, {
-              message: `Requires one of these roles: ${options.requireApproverRole.join(', ')}`,
+              message: 'Approval access required',
               code: ErrorCodes.ADMIN_REQUIRED,
             });
             response.headers.set('x-request-id', requestId);
@@ -316,7 +315,7 @@ export function withErrorHandler(
       }
 
       // Check if tenant context is required (default: true for auth routes)
-      const requireTenant = options.requireTenant ?? (options.requireAuth || options.requireAdmin || options.requireApproverRole);
+      const requireTenant = options.requireTenant ?? (options.requireAuth || options.requireAdmin || options.requireCanApprove);
 
       if (requireTenant && !tenantContext) {
         const response = errorResponse('Forbidden', 403, {

@@ -34,7 +34,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
+  if (process.env.NODE_ENV !== 'development' && !session.user.isAdmin) {
     redirect('/forbidden');
   }
 
@@ -84,8 +84,8 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
   const completionPercentage = Math.round((filledFields / requiredFields.length) * 100);
 
   const isSelf = session.user.id === employee.id;
-  const roleBadgeVariant = employee.role === 'ADMIN' ? 'error' :
-    ['EMPLOYEE', 'EMPLOYEE'].includes(employee.role) ? 'info' : 'default';
+  const employeeRole = employee.isAdmin ? 'ADMIN' : 'MEMBER';
+  const roleBadgeVariant = employeeRole === 'ADMIN' ? 'error' : 'info';
 
   return (
     <>
@@ -96,7 +96,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
           { label: 'Team', href: '/admin/employees' },
           { label: employee.name || employee.email },
         ]}
-        badge={{ text: employee.role, variant: roleBadgeVariant }}
+        badge={{ text: employeeRole, variant: roleBadgeVariant }}
         actions={
           <div className="flex gap-2 flex-wrap">
             <ExportUserPDFButton

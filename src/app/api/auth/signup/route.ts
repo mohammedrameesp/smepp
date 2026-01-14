@@ -3,7 +3,7 @@ import { prisma } from '@/lib/core/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { validatePassword, DEFAULT_PASSWORD_REQUIREMENTS } from '@/lib/security/password-validation';
-import { TeamMemberRole, OrgRole } from '@prisma/client';
+import { OrgRole } from '@prisma/client';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import logger from '@/lib/core/log';
 
@@ -128,12 +128,13 @@ export async function POST(request: NextRequest) {
     // Create user and optionally accept invitation in a transaction
     const userWithOrg = await prisma.$transaction(async (tx) => {
       // Create user
+      // Note: User.role defaults to EMPLOYEE (used for approval hierarchy)
+      // Admin/member status is stored on TeamMember.isAdmin
       const user = await tx.user.create({
         data: {
           name,
           email: normalizedEmail,
           passwordHash,
-          role: invitation ? (invitation.role === 'OWNER' ? 'ADMIN' : 'EMPLOYEE') : 'ADMIN',
           isSuperAdmin,
         },
       });
@@ -146,11 +147,8 @@ export async function POST(request: NextRequest) {
         const finalIsEmployee = invitation.isEmployee ?? true;
         const finalIsOnWps = finalIsEmployee ? (invitation.isOnWps ?? false) : false;
 
-        // Map OrgRole to TeamMemberRole
-        const teamMemberRole: TeamMemberRole =
-          invitation.role === OrgRole.OWNER || invitation.role === OrgRole.ADMIN
-            ? TeamMemberRole.ADMIN
-            : TeamMemberRole.MEMBER;
+        // Determine if user should be admin based on their org role
+        const isAdmin = invitation.role === OrgRole.OWNER || invitation.role === OrgRole.ADMIN;
 
         // Generate employee code for employees using pre-fetched data
         let employeeCode: string | null = null;
@@ -165,7 +163,7 @@ export async function POST(request: NextRequest) {
             email: normalizedEmail,
             name: name,
             passwordHash: passwordHash,
-            role: teamMemberRole,
+            isAdmin,
             isOwner,
             isEmployee: finalIsEmployee,
             isOnWps: finalIsOnWps,

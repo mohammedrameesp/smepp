@@ -15,7 +15,7 @@ export default async function DocumentExpiryPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
+  if (process.env.NODE_ENV !== 'development' && !session.user.isAdmin) {
     redirect('/forbidden');
   }
 

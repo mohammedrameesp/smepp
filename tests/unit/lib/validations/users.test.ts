@@ -3,7 +3,6 @@
  * @see src/lib/validations/users.ts
  */
 
-import { Role } from '@prisma/client';
 import { createUserSchema, updateUserSchema } from '@/features/users/validations/users';
 
 describe('User Validation Schemas', () => {
@@ -12,7 +11,7 @@ describe('User Validation Schemas', () => {
       const validUser = {
         name: 'John Doe',
         email: 'john.doe@example.com',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
         password: 'SecurePass123!',
       };
 
@@ -24,7 +23,7 @@ describe('User Validation Schemas', () => {
       const minimalUser = {
         name: 'Jane Smith',
         email: 'jane@example.com',
-        role: Role.ADMIN,
+        isAdmin: true,
       };
 
       const result = createUserSchema.safeParse(minimalUser);
@@ -34,7 +33,7 @@ describe('User Validation Schemas', () => {
     it('should fail when name is missing', () => {
       const invalidUser = {
         email: 'test@example.com',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
       };
 
       const result = createUserSchema.safeParse(invalidUser);
@@ -48,7 +47,7 @@ describe('User Validation Schemas', () => {
       const invalidUser = {
         name: '',
         email: 'test@example.com',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
       };
 
       const result = createUserSchema.safeParse(invalidUser);
@@ -59,17 +58,18 @@ describe('User Validation Schemas', () => {
       const invalidUser = {
         name: 'A'.repeat(101),
         email: 'test@example.com',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
       };
 
       const result = createUserSchema.safeParse(invalidUser);
       expect(result.success).toBe(false);
     });
 
-    it('should fail when email is missing', () => {
+    it('should fail when email is missing for login user', () => {
       const invalidUser = {
         name: 'Test User',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
+        canLogin: true,
       };
 
       const result = createUserSchema.safeParse(invalidUser);
@@ -91,7 +91,7 @@ describe('User Validation Schemas', () => {
         const result = createUserSchema.safeParse({
           name: 'Test User',
           email,
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         });
         expect(result.success).toBe(false);
       });
@@ -110,45 +110,44 @@ describe('User Validation Schemas', () => {
         const result = createUserSchema.safeParse({
           name: 'Test User',
           email,
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         });
         expect(result.success).toBe(true);
       });
     });
 
-    it('should fail when role is missing', () => {
+    it('should use default isAdmin value when not provided', () => {
+      const user = {
+        name: 'Test User',
+        email: 'test@example.com',
+      };
+
+      const result = createUserSchema.safeParse(user);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.isAdmin).toBe(false);
+      }
+    });
+
+    it('should fail with invalid isAdmin type', () => {
       const invalidUser = {
         name: 'Test User',
         email: 'test@example.com',
+        isAdmin: 'yes', // should be boolean
       };
 
       const result = createUserSchema.safeParse(invalidUser);
       expect(result.success).toBe(false);
     });
 
-    it('should fail with invalid role', () => {
-      const invalidUser = {
-        name: 'Test User',
-        email: 'test@example.com',
-        role: 'SUPER_ADMIN',
-      };
+    it('should validate both isAdmin options', () => {
+      const adminValues = [true, false];
 
-      const result = createUserSchema.safeParse(invalidUser);
-      expect(result.success).toBe(false);
-    });
-
-    it('should validate all role options', () => {
-      const roles = [
-        Role.ADMIN,
-        Role.EMPLOYEE,
-        Role.EMPLOYEE,
-      ];
-
-      roles.forEach(role => {
+      adminValues.forEach(isAdmin => {
         const user = {
           name: 'Test User',
           email: 'test@example.com',
-          role,
+          isAdmin,
         };
 
         const result = createUserSchema.safeParse(user);
@@ -160,7 +159,7 @@ describe('User Validation Schemas', () => {
       const invalidUser = {
         name: 'Test User',
         email: 'test@example.com',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
         password: '1234567', // 7 characters
       };
 
@@ -172,7 +171,7 @@ describe('User Validation Schemas', () => {
       const validUser = {
         name: 'Test User',
         email: 'test@example.com',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
         password: '12345678',
       };
 
@@ -184,7 +183,7 @@ describe('User Validation Schemas', () => {
       const invalidUser = {
         name: 'Test User',
         email: 'test@example.com',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
         password: 'A'.repeat(101),
       };
 
@@ -196,7 +195,7 @@ describe('User Validation Schemas', () => {
       const validUser = {
         name: 'Test User',
         email: 'test@example.com',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
         password: 'A'.repeat(100),
       };
 
@@ -215,19 +214,19 @@ describe('User Validation Schemas', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should allow partial updates with only role', () => {
+    it('should allow partial updates with only isAdmin', () => {
       const partialUpdate = {
-        role: Role.ADMIN,
+        isAdmin: true,
       };
 
       const result = updateUserSchema.safeParse(partialUpdate);
       expect(result.success).toBe(true);
     });
 
-    it('should allow both name and role', () => {
+    it('should allow both name and isAdmin', () => {
       const update = {
         name: 'Updated Name',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
       };
 
       const result = updateUserSchema.safeParse(update);
@@ -257,9 +256,9 @@ describe('User Validation Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should validate role on update', () => {
+    it('should validate isAdmin type on update', () => {
       const invalidUpdate = {
-        role: 'INVALID_ROLE',
+        isAdmin: 'yes', // should be boolean
       };
 
       const result = updateUserSchema.safeParse(invalidUpdate);

@@ -12,7 +12,7 @@ import AzureADProvider from 'next-auth/providers/azure-ad';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from './prisma';
-import { Role, OrgRole, SubscriptionTier, TeamMemberRole } from '@prisma/client';
+import { OrgRole, SubscriptionTier } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import {
   isAccountLocked,
@@ -119,14 +119,18 @@ providers.push(
           id: true,
           email: true,
           name: true,
-          role: true,
-          approvalRole: true,
           passwordHash: true,
           canLogin: true,
           isDeleted: true,
           lockedUntil: true,
           isOwner: true,
           isEmployee: true,
+          // New boolean permission flags
+          isAdmin: true,
+          hasOperationsAccess: true,
+          hasHRAccess: true,
+          hasFinanceAccess: true,
+          canApprove: true,
           tenantId: true,
           tenant: {
             select: {
@@ -184,12 +188,17 @@ providers.push(
           id: teamMember.id,
           email: teamMember.email,
           name: teamMember.name,
-          role: teamMember.approvalRole, // Legacy role for compatibility
           // Custom fields for TeamMember auth
           isTeamMember: true,
-          teamMemberRole: teamMember.role,
           isOwner: teamMember.isOwner,
           isEmployee: teamMember.isEmployee,
+          // Permission flags (new boolean-based system)
+          isAdmin: teamMember.isAdmin,
+          hasOperationsAccess: teamMember.hasOperationsAccess,
+          hasHRAccess: teamMember.hasHRAccess,
+          hasFinanceAccess: teamMember.hasFinanceAccess,
+          canApprove: teamMember.canApprove,
+          // Organization context
           organizationId: teamMember.tenant.id,
           organizationSlug: teamMember.tenant.slug,
           organizationName: teamMember.tenant.name,
@@ -207,7 +216,6 @@ providers.push(
           id: true,
           email: true,
           name: true,
-          role: true,
           passwordHash: true,
           isDeleted: true,
           lockedUntil: true,
@@ -261,7 +269,6 @@ providers.push(
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
         isSuperAdmin: true,
         isTeamMember: false,
       };
@@ -308,7 +315,6 @@ providers.push(
             id: true,
             email: true,
             name: true,
-            role: true,
             isSuperAdmin: true,
             twoFactorEnabled: true,
           },
@@ -329,7 +335,8 @@ providers.push(
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role,
+          isSuperAdmin: true,
+          isTeamMember: false,
         };
       } catch (error) {
         console.error('Super admin login token verification failed:', error);
@@ -348,17 +355,24 @@ providers.push(
  */
 async function getTeamMemberOrganization(memberId: string): Promise<{
   organization: OrganizationInfo;
-  teamMemberRole: TeamMemberRole;
   isOwner: boolean;
   isEmployee: boolean;
+  isAdmin: boolean;
+  hasOperationsAccess: boolean;
+  hasHRAccess: boolean;
+  hasFinanceAccess: boolean;
+  canApprove: boolean;
 } | null> {
   const member = await prisma.teamMember.findUnique({
     where: { id: memberId },
     select: {
-      role: true,
-      approvalRole: true,
       isOwner: true,
       isEmployee: true,
+      isAdmin: true,
+      hasOperationsAccess: true,
+      hasHRAccess: true,
+      hasFinanceAccess: true,
+      canApprove: true,
       tenant: {
         select: {
           id: true,
@@ -377,10 +391,10 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
     return null;
   }
 
-  // Map TeamMemberRole to legacy OrgRole for backwards compatibility
+  // Map isAdmin/isOwner to legacy OrgRole for backwards compatibility
   const orgRole = member.isOwner
     ? OrgRole.OWNER
-    : member.role === TeamMemberRole.ADMIN
+    : member.isAdmin
       ? OrgRole.ADMIN
       : OrgRole.MEMBER;
 
@@ -395,9 +409,13 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
       tier: member.tenant.subscriptionTier,
       enabledModules: member.tenant.enabledModules,
     },
-    teamMemberRole: member.role,
     isOwner: member.isOwner,
     isEmployee: member.isEmployee,
+    isAdmin: member.isAdmin,
+    hasOperationsAccess: member.hasOperationsAccess,
+    hasHRAccess: member.hasHRAccess,
+    hasFinanceAccess: member.hasFinanceAccess,
+    canApprove: member.canApprove,
   };
 }
 
@@ -442,7 +460,7 @@ async function _getUserOrganization(userId: string): Promise<OrganizationInfo | 
     slug: membership.tenant.slug,
     logoUrl: membership.tenant.logoUrl,
     logoUrlInverse: membership.tenant.logoUrlInverse,
-    role: membership.isOwner ? OrgRole.OWNER : membership.role === 'ADMIN' ? OrgRole.ADMIN : OrgRole.MEMBER,
+    role: membership.isOwner ? OrgRole.OWNER : membership.isAdmin ? OrgRole.ADMIN : OrgRole.MEMBER,
     tier: membership.tenant.subscriptionTier,
     enabledModules: membership.tenant.enabledModules,
   };
@@ -659,10 +677,15 @@ export const authOptions: NextAuthOptions = {
             token.isTeamMember = true;
             token.isSuperAdmin = false;
             const userData = user as unknown as Record<string, unknown>;
-            token.role = userData.role as Role;
-            token.teamMemberRole = userData.teamMemberRole as TeamMemberRole;
             token.isOwner = userData.isOwner as boolean;
             token.isEmployee = userData.isEmployee as boolean;
+            // Permission flags (new boolean-based system)
+            token.isAdmin = userData.isAdmin as boolean;
+            token.hasOperationsAccess = userData.hasOperationsAccess as boolean;
+            token.hasHRAccess = userData.hasHRAccess as boolean;
+            token.hasFinanceAccess = userData.hasFinanceAccess as boolean;
+            token.canApprove = userData.canApprove as boolean;
+            // Organization context
             token.organizationId = userData.organizationId as string;
             token.organizationSlug = userData.organizationSlug as string;
             token.organizationName = userData.organizationName as string;
@@ -670,44 +693,46 @@ export const authOptions: NextAuthOptions = {
             token.organizationLogoUrlInverse = userData.organizationLogoUrlInverse as string | null;
             token.subscriptionTier = userData.subscriptionTier as SubscriptionTier;
             token.enabledModules = userData.enabledModules as string[];
-            // Map TeamMemberRole to legacy OrgRole - owners get OWNER role
+            // Map isAdmin/isOwner to legacy OrgRole for backwards compatibility
             token.orgRole = token.isOwner
               ? OrgRole.OWNER
-              : token.teamMemberRole === TeamMemberRole.ADMIN
+              : token.isAdmin
                 ? OrgRole.ADMIN
                 : OrgRole.MEMBER;
           } else {
             // Super admin or OAuth login
             token.isTeamMember = false;
 
-            // Get role and super admin status from database
+            // Get super admin status from database
             const dbUser = await prisma.user.findUnique({
               where: { email: user.email! },
-              select: { id: true, role: true, isSuperAdmin: true },
+              select: { id: true, isSuperAdmin: true },
             });
             if (dbUser) {
               token.id = dbUser.id;
-              token.role = dbUser.role;
               token.isSuperAdmin = dbUser.isSuperAdmin;
               // isEmployee is now on TeamMember, not User
               // Super admins are not employees (they're platform admins)
               token.isEmployee = false;
-            } else if ('role' in user && user.role) {
-              token.role = user.role;
+            } else {
               token.isSuperAdmin = false;
               token.isEmployee = true;
             }
 
-            // For super admins, check if they have an org via legacy path
+            // For non-super-admins, check if they have an org via TeamMember
             if (!token.isSuperAdmin) {
-              // Check TeamMember table first for OAuth users
+              // Check TeamMember table for OAuth users
               const teamMember = await prisma.teamMember.findFirst({
                 where: { email: user.email!.toLowerCase().trim() },
                 select: {
                   id: true,
-                  role: true,
                   isOwner: true,
                   isEmployee: true,
+                  isAdmin: true,
+                  hasOperationsAccess: true,
+                  hasHRAccess: true,
+                  hasFinanceAccess: true,
+                  canApprove: true,
                   tenant: {
                     select: {
                       id: true,
@@ -726,9 +751,15 @@ export const authOptions: NextAuthOptions = {
                 // Switch to TeamMember context
                 token.id = teamMember.id;
                 token.isTeamMember = true;
-                token.teamMemberRole = teamMember.role;
                 token.isOwner = teamMember.isOwner;
                 token.isEmployee = teamMember.isEmployee;
+                // Permission flags
+                token.isAdmin = teamMember.isAdmin;
+                token.hasOperationsAccess = teamMember.hasOperationsAccess;
+                token.hasHRAccess = teamMember.hasHRAccess;
+                token.hasFinanceAccess = teamMember.hasFinanceAccess;
+                token.canApprove = teamMember.canApprove;
+                // Organization context
                 token.organizationId = teamMember.tenant.id;
                 token.organizationSlug = teamMember.tenant.slug;
                 token.organizationName = teamMember.tenant.name;
@@ -736,10 +767,10 @@ export const authOptions: NextAuthOptions = {
                 token.organizationLogoUrlInverse = teamMember.tenant.logoUrlInverse;
                 token.subscriptionTier = teamMember.tenant.subscriptionTier;
                 token.enabledModules = teamMember.tenant.enabledModules;
-                // Owners get OWNER role, otherwise map from teamMemberRole
+                // Map isAdmin/isOwner to legacy OrgRole for backwards compatibility
                 token.orgRole = teamMember.isOwner
                   ? OrgRole.OWNER
-                  : teamMember.role === TeamMemberRole.ADMIN
+                  : teamMember.isAdmin
                     ? OrgRole.ADMIN
                     : OrgRole.MEMBER;
               }
@@ -772,9 +803,14 @@ export const authOptions: NextAuthOptions = {
             token.orgRole = memberData.organization.role;
             token.subscriptionTier = memberData.organization.tier;
             token.enabledModules = memberData.organization.enabledModules;
-            token.teamMemberRole = memberData.teamMemberRole;
             token.isOwner = memberData.isOwner;
             token.isEmployee = memberData.isEmployee;
+            // Permission flags
+            token.isAdmin = memberData.isAdmin;
+            token.hasOperationsAccess = memberData.hasOperationsAccess;
+            token.hasHRAccess = memberData.hasHRAccess;
+            token.hasFinanceAccess = memberData.hasFinanceAccess;
+            token.canApprove = memberData.canApprove;
           }
         }
 
@@ -791,15 +827,19 @@ export const authOptions: NextAuthOptions = {
           session.user.id = token.id as string;
           session.user.email = token.email as string;
           session.user.name = token.name as string;
-          session.user.role = token.role as Role;
           session.user.isSuperAdmin = token.isSuperAdmin as boolean || false;
           session.user.isEmployee = token.isEmployee as boolean ?? true;
 
           // TeamMember-specific fields
           session.user.isTeamMember = token.isTeamMember as boolean ?? false;
           if (token.isTeamMember) {
-            session.user.teamMemberRole = token.teamMemberRole as TeamMemberRole;
             session.user.isOwner = token.isOwner as boolean ?? false;
+            // Permission flags (new boolean-based system)
+            session.user.isAdmin = token.isAdmin as boolean ?? false;
+            session.user.hasOperationsAccess = token.hasOperationsAccess as boolean ?? false;
+            session.user.hasHRAccess = token.hasHRAccess as boolean ?? false;
+            session.user.hasFinanceAccess = token.hasFinanceAccess as boolean ?? false;
+            session.user.canApprove = token.canApprove as boolean ?? false;
           }
 
           // Organization info
@@ -901,13 +941,17 @@ declare module 'next-auth' {
       email: string;
       name?: string | null;
       image?: string | null;
-      role: Role;
       isSuperAdmin: boolean;
       isEmployee: boolean; // false = system/service account
       // TeamMember-specific fields
       isTeamMember: boolean; // true = org user (TeamMember), false = super admin (User)
-      teamMemberRole?: TeamMemberRole; // ADMIN | MEMBER (when isTeamMember=true)
       isOwner?: boolean; // Organization owner flag (when isTeamMember=true)
+      // Permission flags (new boolean-based system - when isTeamMember=true)
+      isAdmin?: boolean; // Full access to everything
+      hasOperationsAccess?: boolean; // Assets, Subscriptions, Suppliers
+      hasHRAccess?: boolean; // Employees, Leave modules
+      hasFinanceAccess?: boolean; // Payroll, Purchase Requests
+      canApprove?: boolean; // Approve direct reports + scoped read
       // Organization context
       organizationId?: string;
       organizationSlug?: string;
@@ -921,12 +965,18 @@ declare module 'next-auth' {
   }
 
   interface User {
-    role?: Role;
     // Extended fields from credentials provider
     isTeamMember?: boolean;
-    teamMemberRole?: TeamMemberRole;
+    isSuperAdmin?: boolean;
     isOwner?: boolean;
     isEmployee?: boolean;
+    // Permission flags (new boolean-based system)
+    isAdmin?: boolean;
+    hasOperationsAccess?: boolean;
+    hasHRAccess?: boolean;
+    hasFinanceAccess?: boolean;
+    canApprove?: boolean;
+    // Organization context
     organizationId?: string;
     organizationSlug?: string;
     organizationName?: string;
@@ -940,13 +990,17 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT {
     id?: string;
-    role?: Role;
     isSuperAdmin?: boolean;
     isEmployee?: boolean;
     // TeamMember-specific fields
     isTeamMember?: boolean;
-    teamMemberRole?: TeamMemberRole;
     isOwner?: boolean;
+    // Permission flags (new boolean-based system)
+    isAdmin?: boolean;
+    hasOperationsAccess?: boolean;
+    hasHRAccess?: boolean;
+    hasFinanceAccess?: boolean;
+    canApprove?: boolean;
     // Organization context
     organizationId?: string;
     organizationSlug?: string;

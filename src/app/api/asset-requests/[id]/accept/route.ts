@@ -31,7 +31,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { AssetRequestStatus, AssetStatus, AssetHistoryAction, TeamMemberRole } from '@prisma/client';
+import { AssetRequestStatus, AssetStatus, AssetHistoryAction } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { acceptAssetAssignmentSchema } from '@/features/asset-requests';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -238,7 +238,7 @@ async function acceptAssetAssignmentHandler(request: NextRequest, context: APICo
     const admins = await prisma.teamMember.findMany({
       where: {
         tenantId,
-        role: TeamMemberRole.ADMIN,
+        isAdmin: true,
       },
       select: { id: true, email: true, name: true },
     });

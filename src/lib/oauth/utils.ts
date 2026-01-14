@@ -357,7 +357,7 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | n
           image: userInfo.image,
           emailVerified: userInfo.emailVerified ? new Date() : null,
           tenantId: orgId,
-          role: 'MEMBER',
+          isAdmin: false,
           isOwner: false,
           isEmployee: true, // Default to employee for SSO self-signup
           canLogin: true,
@@ -494,24 +494,27 @@ export async function createTeamMemberSessionToken(memberId: string): Promise<st
   }
 
   // Build token payload for TeamMember
+  // Compute role from isAdmin boolean for backward compatibility with session
+  const computedRole = teamMember.isAdmin ? 'ADMIN' : 'MEMBER';
   const tokenPayload: Record<string, unknown> = {
     sub: teamMember.id,
     id: teamMember.id,
     email: teamMember.email,
     name: teamMember.name,
     picture: teamMember.image,
-    role: teamMember.role,
+    role: computedRole,
     isTeamMember: true,
-    teamMemberRole: teamMember.role,
+    teamMemberRole: computedRole,
     isOwner: teamMember.isOwner,
     isEmployee: teamMember.isEmployee,
+    isAdmin: teamMember.isAdmin,
     organizationId: teamMember.tenantId,
     organizationSlug: teamMember.tenant.slug,
     organizationName: teamMember.tenant.name,
     organizationLogoUrl: teamMember.tenant.logoUrl,
     subscriptionTier: teamMember.tenant.subscriptionTier,
     enabledModules: teamMember.tenant.enabledModules,
-    orgRole: teamMember.isOwner ? 'OWNER' : teamMember.role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+    orgRole: teamMember.isOwner ? 'OWNER' : teamMember.isAdmin ? 'ADMIN' : 'MEMBER',
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30 days
   };

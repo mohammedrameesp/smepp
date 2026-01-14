@@ -13,7 +13,6 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import { hrProfileSchema, hrProfileEmployeeSchema } from '@/features/employees/validations/hr-profile';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
-import { TeamMemberRole } from '@prisma/client';
 import { sendEmail } from '@/lib/core/email';
 import { emailWrapper, getTenantPortalUrl, escapeHtml } from '@/lib/core/email-utils';
 import { initializeMemberLeaveBalances } from '@/features/leave/lib/leave-balance-init';
@@ -117,7 +116,7 @@ async function getHRProfileHandler(request: NextRequest, context: APIContext) {
     updatedAt: member.updatedAt,
     // Computed fields
     workEmail: member.email,
-    isAdmin: member.role === TeamMemberRole.ADMIN,
+    isAdmin: member.isAdmin,
   });
 }
 
@@ -149,14 +148,14 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
     where: {
       id: tenant.userId,
     },
-    select: { role: true, onboardingComplete: true, dateOfJoining: true },
+    select: { isAdmin: true, onboardingComplete: true, dateOfJoining: true },
   });
 
   if (!member) {
     return NextResponse.json({ error: 'Team member not found' }, { status: 404 });
   }
 
-  const isAdmin = member.role === TeamMemberRole.ADMIN;
+  const isAdmin = member.isAdmin;
 
   // Use appropriate schema based on role
   const schema = isAdmin ? hrProfileSchema : hrProfileEmployeeSchema;
@@ -277,7 +276,7 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
       // Get all admin members (tenant-scoped via extension)
       const admins = await db.teamMember.findMany({
         where: {
-          role: TeamMemberRole.ADMIN,
+          isAdmin: true,
           isDeleted: false,
           id: { not: tenant.userId }, // Don't notify the user themselves
         },

@@ -13,7 +13,6 @@ import { requireRecent2FA } from '@/lib/two-factor';
 import logger from '@/lib/core/log';
 import {
   Role,
-  TeamMemberRole,
   Gender,
   MaritalStatus,
   AssetStatus,
@@ -76,7 +75,7 @@ function randomIBAN(): string {
 
 // Employee data for demo organization (all data is fictional)
 const EMPLOYEES = [
-  { name: 'John Smith', email: 'john.smith@example.com', role: Role.ADMIN, designation: 'CEO & Founder', gender: 'Male', nationality: 'United Kingdom', salary: 55000 },
+  { name: 'John Smith', email: 'john.smith@example.com', role: Role.DIRECTOR, designation: 'CEO & Founder', gender: 'Male', nationality: 'United Kingdom', salary: 55000 },
   { name: 'Sarah Johnson', email: 'sarah.johnson@example.com', role: Role.HR_MANAGER, designation: 'HR Director', gender: 'Female', nationality: 'United States', salary: 32000 },
   { name: 'Michael Brown', email: 'michael.brown@example.com', role: Role.FINANCE_MANAGER, designation: 'Finance Manager', gender: 'Male', nationality: 'Canada', salary: 35000 },
   { name: 'Emily Davis', email: 'emily.davis@example.com', role: Role.MANAGER, designation: 'Creative Director', gender: 'Female', nationality: 'Australia', salary: 28000 },
@@ -200,7 +199,7 @@ export async function POST(request: NextRequest) {
             email: emp.email,
             name: emp.name,
             canLogin: true,
-            role: (emp.role === Role.ADMIN || emp.role === Role.MANAGER || emp.role === Role.HR_MANAGER || emp.role === Role.FINANCE_MANAGER) ? TeamMemberRole.ADMIN : TeamMemberRole.MEMBER,
+            isAdmin: (emp.role === Role.DIRECTOR || emp.role === Role.MANAGER || emp.role === Role.HR_MANAGER || emp.role === Role.FINANCE_MANAGER),
             isOwner: i === 0,
             dateOfBirth,
             gender: emp.gender === 'Male' ? Gender.MALE : Gender.FEMALE,

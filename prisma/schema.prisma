@@ -18,7 +18,6 @@ datasource db {
 // LEGACY ROLE ENUM (For approval workflows - will be deprecated)
 // ═══════════════════════════════════════════════════════════════════════════════
 enum Role {
-  ADMIN
   EMPLOYEE
   MANAGER // First-level approver
   HR_MANAGER // HR approvals
@@ -548,13 +547,18 @@ model TeamMember {
   setupTokenExpiry DateTime?
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // ROLE & OWNERSHIP
+  // OWNERSHIP
   // ═══════════════════════════════════════════════════════════════════════════════
-  role    TeamMemberRole @default(MEMBER)
-  isOwner Boolean        @default(false) // Org creator, cannot be removed
+  isOwner Boolean @default(false) // Org creator, cannot be removed
 
-  // Legacy role for approval workflows (deprecated - use TeamMemberRole)
-  approvalRole Role @default(EMPLOYEE)
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // ACCESS & PERMISSIONS (Boolean flags - replaces old enum-based roles)
+  // ═══════════════════════════════════════════════════════════════════════════════
+  isAdmin             Boolean @default(false) // Full access, supersedes all other flags
+  hasOperationsAccess Boolean @default(false) // Assets, Subscriptions, Suppliers
+  hasHRAccess         Boolean @default(false) // Employees, Leave modules
+  hasFinanceAccess    Boolean @default(false) // Payroll, Purchase Requests
+  canApprove          Boolean @default(false) // Approve direct reports (via reportingToId)
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // EMPLOYEE FLAGS
@@ -780,7 +784,8 @@ model TeamMember {
   @@index([tenantId, isEmployee])
   @@index([tenantId, isOnWps])
   @@index([tenantId, status])
-  @@index([tenantId, role])
+  @@index([tenantId, isAdmin])
+  @@index([tenantId, canApprove])
   @@index([email])
   @@index([resetToken])
   @@index([setupToken])

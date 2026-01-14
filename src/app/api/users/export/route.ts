@@ -31,7 +31,7 @@ async function exportUsersHandler(request: NextRequest, context: APIContext) {
     id: member.id,
     name: member.name || '',
     email: member.email,
-    role: member.role,
+    role: member.isAdmin ? 'ADMIN' : 'MEMBER',
     isEmployee: member.isEmployee ? 'Yes' : 'No',
     emailVerified: member.emailVerified ? 'Yes' : 'No',
     image: member.image || '',

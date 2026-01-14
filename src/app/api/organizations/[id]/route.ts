@@ -75,7 +75,7 @@ export async function GET(
     return NextResponse.json({
       organization,
       membership: {
-        role: membership.role,
+        role: membership.isAdmin ? 'ADMIN' : 'MEMBER',
         isOwner: membership.isOwner,
       },
     });
@@ -114,7 +114,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
     }
 
-    if (!membership.isOwner && membership.role !== 'ADMIN') {
+    if (!membership.isOwner && !membership.isAdmin) {
       return NextResponse.json({ error: 'Only admins can update organization settings' }, { status: 403 });
     }
 

@@ -4,7 +4,7 @@
  */
 
 import { getServerSession } from 'next-auth/next';
-import { Role, SupplierStatus } from '@prisma/client';
+import { SupplierStatus } from '@prisma/client';
 
 // Mock next-auth
 jest.mock('next-auth/next');
@@ -52,7 +52,7 @@ describe('Suppliers API Tests', () => {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -153,7 +153,7 @@ describe('Suppliers API Tests', () => {
         user: {
           id: 'employee-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -161,8 +161,7 @@ describe('Suppliers API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).toBe(Role.EMPLOYEE);
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should create supplier with valid data', async () => {
@@ -284,7 +283,7 @@ describe('Suppliers API Tests', () => {
         user: {
           id: 'employee-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -292,7 +291,7 @@ describe('Suppliers API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should update supplier with valid data', async () => {
@@ -330,7 +329,7 @@ describe('Suppliers API Tests', () => {
         user: {
           id: 'employee-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -338,7 +337,7 @@ describe('Suppliers API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should approve supplier and generate suppCode', async () => {
@@ -386,7 +385,7 @@ describe('Suppliers API Tests', () => {
         user: {
           id: 'employee-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -394,7 +393,7 @@ describe('Suppliers API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should reject supplier with reason', async () => {
@@ -481,7 +480,7 @@ describe('Suppliers API Tests', () => {
         user: {
           id: 'employee-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -489,7 +488,7 @@ describe('Suppliers API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should delete supplier', async () => {

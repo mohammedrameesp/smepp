@@ -3,15 +3,13 @@ import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { Role, TeamMemberRole } from '@prisma/client';
 import { CheckCircle } from 'lucide-react';
 import { MyApprovalsClient } from './client';
 import Link from 'next/link';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
-// Approval roles that can approve requests (uses approvalRole field exposed as session.user.role)
-const APPROVER_ROLES: Role[] = [Role.ADMIN, Role.MANAGER, Role.HR_MANAGER, Role.FINANCE_MANAGER, Role.DIRECTOR];
+// Admins can approve requests (isAdmin boolean on TeamMember)
 
 export const metadata: Metadata = {
   title: 'My Approvals | Durj',
@@ -131,11 +129,8 @@ export default async function MyApprovalsPage() {
     redirect('/');
   }
 
-  // Allow access if user is an org admin OR has an approver role
-  const isOrgAdmin = session.user.teamMemberRole === TeamMemberRole.ADMIN;
-  const hasApproverRole = session.user.role && APPROVER_ROLES.includes(session.user.role as Role);
-
-  if (!isOrgAdmin && !hasApproverRole) {
+  // Allow access only if user is an admin
+  if (!session.user.isAdmin) {
     redirect('/admin');
   }
 

@@ -5,12 +5,14 @@ import { Role } from '@prisma/client';
  * Provides reusable functions for testing
  */
 
-export const createMockSession = (role: Role = Role.ADMIN, userId: string = 'test-user-123') => {
+export const createMockSession = (options: { role?: Role; isAdmin?: boolean; userId?: string } = {}) => {
+  const { role = Role.EMPLOYEE, isAdmin = false, userId = 'test-user-123' } = options;
   return {
     user: {
       id: userId,
       email: `${role.toLowerCase()}@example.com`,
       role: role,
+      isAdmin: isAdmin,
     },
     expires: new Date(Date.now() + 86400000).toISOString(),
   };
@@ -122,9 +124,9 @@ export const testUnauthorizedAccess = async (
 export const testForbiddenAccess = async (
   handler: () => Promise<unknown>,
   mockGetServerSession: jest.Mock,
-  role: Role = Role.EMPLOYEE
+  options: { role?: Role; isAdmin?: boolean } = {}
 ) => {
-  const session = createMockSession(role);
+  const session = createMockSession(options);
   mockGetServerSession.mockResolvedValue(session);
   const result = await handler();
   return result;
@@ -165,16 +167,16 @@ export const daysBetween = (date1: Date, date2: Date): number => {
 
 // Authorization helpers
 export const canAccessResource = (
-  userRole: Role,
+  isAdmin: boolean,
   userId: string,
   resourceOwnerId: string | null
 ): boolean => {
-  if (userRole === Role.ADMIN) return true;
+  if (isAdmin) return true;
   return userId === resourceOwnerId;
 };
 
-export const isAdmin = (role: Role): boolean => {
-  return role === Role.ADMIN;
+export const checkIsAdmin = (isAdmin: boolean): boolean => {
+  return isAdmin;
 };
 
 export const isEmployee = (role: Role): boolean => {
@@ -200,7 +202,7 @@ export const wait = (ms: number): Promise<void> => {
 };
 
 // Mock data arrays
-export const mockRoles = [Role.ADMIN, Role.EMPLOYEE, Role.EMPLOYEE];
+export const mockRoles = [Role.MANAGER, Role.EMPLOYEE, Role.EMPLOYEE];
 
 export const mockAssetStatuses = ['AVAILABLE', 'ASSIGNED', 'MAINTENANCE', 'RETIRED'];
 

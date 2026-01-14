@@ -8,7 +8,7 @@
 import { prisma } from './prisma';
 import { sendEmail } from './email';
 import { createBulkNotifications } from '@/features/notifications/lib/notification-service';
-import { NotificationType, TeamMemberRole } from '@prisma/client';
+import { NotificationType } from '@prisma/client';
 import logger from './log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -97,7 +97,7 @@ async function notifyTenantAdmins(context: EmailFailureContext): Promise<void> {
     const admins = await prisma.teamMember.findMany({
       where: {
         tenantId: context.tenantId,
-        role: TeamMemberRole.ADMIN,
+        isAdmin: true,
       },
       select: { id: true },
     });

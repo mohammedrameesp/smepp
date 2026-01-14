@@ -104,7 +104,7 @@ async function getTenantAdmins(tenantId: string): Promise<Array<{ id: string; em
   return prisma.teamMember.findMany({
     where: {
       tenantId,
-      role: 'ADMIN',
+      isAdmin: true,
       isDeleted: false,
     },
     select: { id: true, email: true },
@@ -152,11 +152,11 @@ async function sendEmployeeRequestNotifications(
     // Notify users with the first level's required role
     const firstStep = steps[0];
     if (firstStep) {
-      // Note: Role mapping - only ADMIN TeamMemberRole exists, other roles need custom handling
+      // Note: isAdmin grants full admin access, canApprove allows approving direct reports
       const approvers = await prisma.teamMember.findMany({
         where: {
           tenantId,
-          role: 'ADMIN', // For now, use ADMIN for all approver roles
+          isAdmin: true, // For now, use admins for all approver roles
           isDeleted: false,
         },
         select: { id: true, email: true },

@@ -105,7 +105,7 @@ export default async function OrganizationPage() {
       <PageContent>
         <OrganizationTabs
           organization={orgData}
-          currentUserRole={currentMembership.role}
+          currentUserRole={currentMembership.isOwner ? 'OWNER' : currentMembership.isAdmin ? 'ADMIN' : 'MEMBER'}
           isOwner={currentMembership.isOwner}
         />
       </PageContent>

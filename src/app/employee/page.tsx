@@ -76,7 +76,7 @@ export default async function EmployeeDashboard() {
   }
 
   // Redirect admins to the admin dashboard (unless they're in employee view mode)
-  if (session.user.teamMemberRole === 'ADMIN') {
+  if (session.user.isAdmin === true) {
     const cookieStore = await cookies();
     const viewModeCookie = cookieStore.get('durj-view-mode');
     const isEmployeeViewMode = viewModeCookie?.value === 'employee';

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { TeamMemberRole } from '@prisma/client';
 import { arrayToCSV, formatDateForCSV } from '@/lib/core/csv-utils';
 import logger from '@/lib/core/log';
 
@@ -12,7 +11,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.teamMemberRole !== TeamMemberRole.ADMIN) {
+    if (!session || !session.user.isAdmin) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
@@ -255,7 +254,7 @@ export async function GET() {
       id: m.id,
       name: m.name || '',
       email: m.email,
-      role: m.role,
+      role: m.isAdmin ? 'ADMIN' : 'MEMBER',
       isEmployee: m.isEmployee ? 'Yes' : 'No',
       isOnWps: m.isOnWps ? 'Yes' : 'No',
       employeeCode: m.employeeCode || '',

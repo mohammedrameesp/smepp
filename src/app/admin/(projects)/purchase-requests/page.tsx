@@ -14,7 +14,7 @@ export default async function AdminPurchaseRequestsPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
+  if (process.env.NODE_ENV !== 'development' && !session.user.isAdmin) {
     redirect('/forbidden');
   }
 

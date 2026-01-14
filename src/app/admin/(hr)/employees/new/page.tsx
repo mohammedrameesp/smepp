@@ -9,7 +9,6 @@ import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -72,7 +71,7 @@ export default function NewEmployeePage() {
     defaultValues: {
       name: '',
       email: '',
-      role: 'EMPLOYEE',
+      isAdmin: false,
       employeeId: '',
       designation: '',
       isEmployee: true,
@@ -82,7 +81,7 @@ export default function NewEmployeePage() {
     mode: 'onChange',
   });
 
-  const role = watch('role');
+  const isAdmin = watch('isAdmin');
   const isEmployee = watch('isEmployee');
   const canLogin = watch('canLogin');
   const isOnWps = watch('isOnWps');
@@ -203,15 +202,6 @@ export default function NewEmployeePage() {
     }
   };
 
-  // Role descriptions - simplified
-  const roleDescriptions: Record<string, string> = {
-    EMPLOYEE: 'Can submit requests but cannot approve',
-    MANAGER: 'Can approve team requests',
-    HR_MANAGER: 'Can approve leave and HR requests',
-    FINANCE_MANAGER: 'Can approve purchases and budgets',
-    DIRECTOR: 'Can approve high-value requests',
-    ADMIN: 'Full approval authority',
-  };
 
   return (
     <>
@@ -478,33 +468,24 @@ export default function NewEmployeePage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Approval Role */}
-              <div className="space-y-2">
-                <Label htmlFor="role">Approval Role</Label>
-                <Select
-                  value={watch('role') || ''}
-                  onValueChange={(value) => setValue('role', value as CreateUserInput['role'])}
-                >
-                  <SelectTrigger id="role" className={errors.role ? 'border-red-500' : ''}>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="EMPLOYEE">Employee</SelectItem>
-                    <SelectItem value="MANAGER">Manager</SelectItem>
-                    <SelectItem value="HR_MANAGER">HR Manager</SelectItem>
-                    <SelectItem value="FINANCE_MANAGER">Finance Manager</SelectItem>
-                    <SelectItem value="DIRECTOR">Director</SelectItem>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.role && (
-                  <p className="text-sm text-red-500">{errors.role.message}</p>
-                )}
-                {role && (
+              {/* Admin Access Toggle */}
+              <div className="flex items-start gap-3 py-2">
+                <Checkbox
+                  id="isAdmin"
+                  checked={isAdmin}
+                  onCheckedChange={(checked) => setValue('isAdmin', checked as boolean)}
+                  className="mt-0.5"
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="isAdmin" className="text-base font-medium cursor-pointer">
+                    Admin Access
+                  </Label>
                   <p className="text-sm text-muted-foreground">
-                    {roleDescriptions[role]}
+                    {isAdmin
+                      ? 'Full access to admin dashboard: manage team, assets, settings, and approve requests'
+                      : 'Employee self-service only: view own profile, submit leave requests, view payslips'}
                   </p>
-                )}
+                </div>
               </div>
             </CardContent>
           </Card>

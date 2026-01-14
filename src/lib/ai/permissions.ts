@@ -16,9 +16,9 @@ export function canAccessFunction(functionName: string, userRole: Role): boolean
   const fn = chatFunctions.find((f) => f.name === functionName);
   if (!fn) return false;
 
-  // Admin-only functions require ADMIN role
+  // Admin-only functions require DIRECTOR role (Dashboard ADMINs are mapped to DIRECTOR)
   if (fn.requiresAdmin || ADMIN_ONLY_FUNCTIONS.includes(functionName)) {
-    return userRole === Role.ADMIN;
+    return userRole === Role.DIRECTOR;
   }
 
   // All other functions are available to all authenticated users
@@ -36,7 +36,7 @@ export function getAvailableFunctions(userRole: Role) {
  * Check if user can view sensitive data
  */
 export function canViewSensitiveData(userRole: Role): boolean {
-  return userRole === Role.ADMIN;
+  return userRole === Role.DIRECTOR;
 }
 
 /**

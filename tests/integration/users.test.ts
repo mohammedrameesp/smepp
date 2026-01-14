@@ -4,7 +4,6 @@
  */
 
 import { getServerSession } from 'next-auth/next';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 
 jest.mock('next-auth/next');
@@ -44,7 +43,7 @@ describe('Users API Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -52,7 +51,7 @@ describe('Users API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should return users list for admin', async () => {
@@ -61,7 +60,7 @@ describe('Users API Tests', () => {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -73,13 +72,13 @@ describe('Users API Tests', () => {
           id: 'user-1',
           name: 'John Doe',
           email: 'john@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         {
           id: 'user-2',
           name: 'Jane Smith',
           email: 'jane@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
       ];
 
@@ -94,13 +93,13 @@ describe('Users API Tests', () => {
 
     it('should support role filtering', async () => {
       const mockUsers = [
-        { id: 'user-1', role: Role.ADMIN },
-        { id: 'user-2', role: Role.EMPLOYEE },
-        { id: 'user-3', role: Role.EMPLOYEE },
-        { id: 'user-4', role: Role.EMPLOYEE },
+        { id: 'user-1', isAdmin: true },
+        { id: 'user-2', isAdmin: false },
+        { id: 'user-3', isAdmin: false },
+        { id: 'user-4', isAdmin: false },
       ];
 
-      const filtered = mockUsers.filter(u => u.role === Role.EMPLOYEE);
+      const filtered = mockUsers.filter(u => !u.isAdmin);
       expect(filtered).toHaveLength(3);
     });
 
@@ -131,7 +130,7 @@ describe('Users API Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -139,7 +138,7 @@ describe('Users API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should create user with valid data', async () => {
@@ -148,7 +147,7 @@ describe('Users API Tests', () => {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -158,7 +157,7 @@ describe('Users API Tests', () => {
       const validUserData = {
         name: 'New Employee',
         email: 'newemployee@example.com',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
       };
 
       const mockPrismaUser = getMockedModel(prisma.user);
@@ -172,16 +171,16 @@ describe('Users API Tests', () => {
       const result = await mockPrismaUser.create({ data: validUserData });
       expect(result).toHaveProperty('id');
       expect(result.name).toBe('New Employee');
-      expect(result.role).toBe(Role.EMPLOYEE);
+      expect(result.isAdmin).toBe(false);
     });
 
     it('should validate required fields', () => {
       const invalidData = {
         // Missing name and email
-        role: Role.EMPLOYEE,
+        isAdmin: false,
       };
 
-      const requiredFields = ['name', 'email', 'role'];
+      const requiredFields = ['name', 'email', 'isAdmin'];
       const hasAllRequired = requiredFields.every(field => field in invalidData);
 
       expect(hasAllRequired).toBe(false);
@@ -202,18 +201,12 @@ describe('Users API Tests', () => {
       // In real implementation, this would prevent creation
     });
 
-    it('should validate role values', () => {
-      const validRoles = [
-        Role.ADMIN,
-        Role.EMPLOYEE,
-        Role.EMPLOYEE,
-      ];
+    it('should validate isAdmin values', () => {
+      const validIsAdminValues = [true, false];
 
-      validRoles.forEach(role => {
-        expect(Object.values(Role)).toContain(role);
+      validIsAdminValues.forEach(isAdmin => {
+        expect(typeof isAdmin).toBe('boolean');
       });
-
-      expect(Object.values(Role)).not.toContain('SUPER_ADMIN');
     });
   });
 
@@ -232,7 +225,7 @@ describe('Users API Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -243,7 +236,7 @@ describe('Users API Tests', () => {
       const session = await mockGetServerSession();
 
       expect(session?.user.id).not.toBe(requestedUserId);
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should allow user to view their own profile', async () => {
@@ -252,7 +245,7 @@ describe('Users API Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -263,7 +256,7 @@ describe('Users API Tests', () => {
         id: 'user-123',
         name: 'Employee User',
         email: 'employee@example.com',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
       };
 
       const mockPrismaUser = getMockedModel(prisma.user);
@@ -282,7 +275,7 @@ describe('Users API Tests', () => {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -293,7 +286,7 @@ describe('Users API Tests', () => {
         id: 'user-456',
         name: 'Other User',
         email: 'other@example.com',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
       };
 
       const mockPrismaUser = getMockedModel(prisma.user);
@@ -327,7 +320,7 @@ describe('Users API Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -335,7 +328,7 @@ describe('Users API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should update user with valid data', async () => {
@@ -344,7 +337,7 @@ describe('Users API Tests', () => {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -353,7 +346,7 @@ describe('Users API Tests', () => {
 
       const updateData = {
         name: 'Updated Name',
-        role: Role.EMPLOYEE,
+        isAdmin: false,
       };
 
       const mockPrismaUser = getMockedModel(prisma.user);
@@ -369,7 +362,7 @@ describe('Users API Tests', () => {
       });
 
       expect(result.name).toBe('Updated Name');
-      expect(result.role).toBe(Role.EMPLOYEE);
+      expect(result.isAdmin).toBe(false);
     });
 
     it('should not allow changing email', () => {
@@ -380,7 +373,7 @@ describe('Users API Tests', () => {
       };
 
       // In the actual validation, email should be stripped
-      const allowedFields = ['name', 'role'];
+      const allowedFields = ['name', 'isAdmin'];
       const filteredData = Object.fromEntries(
         Object.entries(updateData).filter(([key]) => allowedFields.includes(key))
       );
@@ -394,7 +387,7 @@ describe('Users API Tests', () => {
       // Count admins - only 1
       mockPrismaUser.count.mockResolvedValue(1);
 
-      const adminCount = await mockPrismaUser.count({ where: { role: Role.ADMIN } });
+      const adminCount = await mockPrismaUser.count({ where: { isAdmin: true } });
       expect(adminCount).toBe(1);
 
       // In real implementation, this would prevent the demotion
@@ -416,7 +409,7 @@ describe('Users API Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -424,7 +417,7 @@ describe('Users API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should delete user', async () => {
@@ -433,7 +426,7 @@ describe('Users API Tests', () => {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -455,7 +448,7 @@ describe('Users API Tests', () => {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };

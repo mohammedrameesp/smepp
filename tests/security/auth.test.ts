@@ -1,5 +1,4 @@
 import { getServerSession } from 'next-auth/next';
-import { Role } from '@prisma/client';
 
 // Mock NextAuth
 jest.mock('next-auth/next');
@@ -24,7 +23,7 @@ describe('Authentication Security Tests', () => {
         user: {
           id: 'user-123',
           email: 'test@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -33,7 +32,7 @@ describe('Authentication Security Tests', () => {
 
       const result = await mockGetServerSession();
       expect(result).toEqual(mockSession);
-      expect(result?.user.role).toBe(Role.ADMIN);
+      expect(result?.user.isAdmin).toBe(true);
     });
 
     it('should verify admin role for admin endpoints', async () => {
@@ -42,7 +41,7 @@ describe('Authentication Security Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -50,31 +49,31 @@ describe('Authentication Security Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const result = await mockGetServerSession();
-      expect(result?.user.role).toBe(Role.EMPLOYEE);
-      expect(result?.user.role).not.toBe(Role.ADMIN);
+      expect(result?.user.isAdmin).toBe(false);
+      expect(result?.user.isAdmin).not.toBe(true);
     });
   });
 
   describe('Role-Based Access Control', () => {
-    it('should allow ADMIN to access admin resources', () => {
-      const userRole = Role.ADMIN;
-      const requiredRole = Role.ADMIN;
+    it('should allow admin to access admin resources', () => {
+      const userIsAdmin = true;
+      const requiresAdmin = true;
 
-      expect(userRole).toBe(requiredRole);
+      expect(userIsAdmin).toBe(requiresAdmin);
     });
 
-    it('should deny EMPLOYEE access to admin resources', () => {
-      const userRole = Role.EMPLOYEE;
-      const requiredRole = Role.ADMIN;
+    it('should deny non-admin access to admin resources', () => {
+      const userIsAdmin = false;
+      const requiresAdmin = true;
 
-      expect(userRole).not.toBe(requiredRole);
+      expect(userIsAdmin).not.toBe(requiresAdmin);
     });
 
-    it('should allow EMPLOYEE to access their resources', () => {
-      const userRole = Role.EMPLOYEE;
-      const allowedRoles = [Role.ADMIN, Role.EMPLOYEE, Role.EMPLOYEE];
+    it('should allow non-admin to access general resources', () => {
+      const userIsAdmin = false;
+      const allowedIsAdmin = [true, false];
 
-      expect(allowedRoles).toContain(userRole);
+      expect(allowedIsAdmin).toContain(userIsAdmin);
     });
   });
 

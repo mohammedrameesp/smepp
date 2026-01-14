@@ -50,7 +50,7 @@ export async function GET() {
 
     const organizations = memberships.map((m) => ({
       ...m.tenant,
-      role: m.role,
+      role: m.isAdmin ? 'ADMIN' : 'MEMBER',
       isOwner: m.isOwner,
     }));
 
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
           tenantId: org.id,
           email: session.user.email!.toLowerCase(),
           name: session.user.name,
-          role: 'ADMIN', // ADMIN is highest TeamMemberRole
+          isAdmin: true,
           isOwner: true,
           canLogin: true,
           isEmployee: false, // Owner is not automatically an employee

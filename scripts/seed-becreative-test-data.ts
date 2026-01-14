@@ -34,7 +34,6 @@ import {
   AssetRequestType,
   AssetRequestStatus,
   NotificationType,
-  TeamMemberRole,
 } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -111,7 +110,7 @@ async function main() {
         tenantId,
         email: 'ahmed.hassan@becreative.qa',
         name: 'Ahmed Hassan',
-        role: TeamMemberRole.MEMBER,
+        isAdmin: false,
         isEmployee: true,
         isOnWps: true,
         employeeCode: 'EMP-001',
@@ -143,7 +142,7 @@ async function main() {
         tenantId,
         email: 'sara.mohamed@becreative.qa',
         name: 'Sara Mohamed',
-        role: TeamMemberRole.MEMBER,
+        isAdmin: false,
         isEmployee: true,
         isOnWps: true,
         employeeCode: 'EMP-002',
@@ -169,7 +168,7 @@ async function main() {
         tenantId,
         email: 'khalid.ibrahim@becreative.qa',
         name: 'Khalid Ibrahim',
-        role: TeamMemberRole.MEMBER,
+        isAdmin: false,
         isEmployee: true,
         isOnWps: true,
         employeeCode: 'EMP-003',
@@ -197,7 +196,7 @@ async function main() {
         tenantId,
         email: 'fatima.ali@becreative.qa',
         name: 'Fatima Ali',
-        role: TeamMemberRole.MEMBER,
+        isAdmin: false,
         isEmployee: true,
         isOnWps: true,
         employeeCode: 'EMP-004',
@@ -225,7 +224,7 @@ async function main() {
         tenantId,
         email: 'omar.youssef@becreative.qa',
         name: 'Omar Youssef',
-        role: TeamMemberRole.MEMBER,
+        isAdmin: false,
         isEmployee: true,
         isOnWps: true,
         employeeCode: 'EMP-005',
@@ -251,7 +250,7 @@ async function main() {
         tenantId,
         email: 'former.employee@becreative.qa',
         name: 'Nasser Abdullah',
-        role: TeamMemberRole.MEMBER,
+        isAdmin: false,
         isEmployee: true,
         isOnWps: false, // No longer on WPS
         employeeCode: 'EMP-006',
@@ -281,9 +280,9 @@ async function main() {
     process.exit(1);
   }
 
-  const admin = allMembers.find(m => m.role === 'ADMIN') || allMembers[0];
-  const employee1 = allMembers.find(m => m.email === 'ahmed.hassan@becreative.qa') || allMembers.find(m => m.role === 'MEMBER') || allMembers[1];
-  const employee2 = allMembers.find(m => m.email === 'sara.mohamed@becreative.qa') || allMembers.find(m => m.id !== employee1.id && m.role !== 'ADMIN') || employee1;
+  const admin = allMembers.find(m => m.isAdmin) || allMembers[0];
+  const employee1 = allMembers.find(m => m.email === 'ahmed.hassan@becreative.qa') || allMembers.find(m => !m.isAdmin) || allMembers[1];
+  const employee2 = allMembers.find(m => m.email === 'sara.mohamed@becreative.qa') || allMembers.find(m => m.id !== employee1.id && !m.isAdmin) || employee1;
   const employee3 = allMembers.find(m => m.email === 'khalid.ibrahim@becreative.qa') || employee1;
   const employee4 = allMembers.find(m => m.email === 'fatima.ali@becreative.qa') || employee1;
 

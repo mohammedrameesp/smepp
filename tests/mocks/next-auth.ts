@@ -12,6 +12,7 @@ export interface MockUser {
   email: string;
   name: string;
   role: Role;
+  isAdmin: boolean;
   image?: string | null;
 }
 
@@ -26,7 +27,8 @@ export const mockUsers: Record<string, MockUser> = {
     id: 'admin-user-123',
     email: 'admin@example.com',
     name: 'Admin User',
-    role: Role.ADMIN,
+    role: Role.MANAGER,
+    isAdmin: true,
     image: null,
   },
   employee: {
@@ -34,6 +36,7 @@ export const mockUsers: Record<string, MockUser> = {
     email: 'employee@example.com',
     name: 'Employee User',
     role: Role.EMPLOYEE,
+    isAdmin: false,
     image: null,
   },
   tempStaff: {
@@ -41,6 +44,7 @@ export const mockUsers: Record<string, MockUser> = {
     email: 'temp@example.com',
     name: 'Temp Staff User',
     role: Role.EMPLOYEE,
+    isAdmin: false,
     image: null,
   },
 };
@@ -63,14 +67,15 @@ export const mockSessions: Record<string, MockSession> = {
 
 // Helper to create a custom session
 export const createCustomSession = (
-  overrides: Partial<MockUser> & { role: Role },
+  overrides: Partial<MockUser> & { role?: Role; isAdmin?: boolean },
   expiresInMs?: number
 ): MockSession => {
   const user: MockUser = {
     id: overrides.id || `user-${Date.now()}`,
     email: overrides.email || `user-${Date.now()}@example.com`,
     name: overrides.name || 'Test User',
-    role: overrides.role,
+    role: overrides.role || Role.EMPLOYEE,
+    isAdmin: overrides.isAdmin ?? false,
     image: overrides.image || null,
   };
   return createMockSession(user, expiresInMs);

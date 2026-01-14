@@ -141,7 +141,7 @@ async function getAssetRequestHandler(request: NextRequest, context: APIContext)
     // STEP 2: Check access permissions
     // Non-admin users can only view their own requests
     // ─────────────────────────────────────────────────────────────────────────────
-    const isAdmin = session.user.teamMemberRole === 'ADMIN';
+    const isAdmin = session.user.isAdmin;
     if (!isAdmin && assetRequest.memberId !== session.user.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
@@ -209,7 +209,7 @@ async function deleteAssetRequestHandler(request: NextRequest, context: APIConte
     // STEP 2: Check if user can cancel this request
     // ─────────────────────────────────────────────────────────────────────────────
     const isRequester = assetRequest.memberId === session.user.id;
-    const isAdmin = session.user.teamMemberRole === 'ADMIN';
+    const isAdmin = session.user.isAdmin;
 
     if (!isAdmin && !canCancelRequest(assetRequest.status, assetRequest.type, isRequester)) {
       return NextResponse.json({ error: 'Cannot cancel this request' }, { status: 400 });

@@ -75,7 +75,7 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
   };
 
   const isModuleEnabled = (moduleId: string) => enabledModules.includes(moduleId);
-  const isApprover = session?.user?.role && APPROVER_ROLES.includes(session.user.role as string);
+  const isApprover = session?.user?.isAdmin === true;
 
   // Navigation items for the main nav
   // Note: Employees, Assets, Subscriptions are accessible via stats row on dashboard

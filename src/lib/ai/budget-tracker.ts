@@ -160,7 +160,7 @@ async function sendBudgetAlert(
   const admins = await prisma.teamMember.findMany({
     where: {
       tenantId,
-      role: 'ADMIN',
+      isAdmin: true,
       isDeleted: false,
     },
     select: {

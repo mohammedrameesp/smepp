@@ -82,6 +82,7 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
       const email = getRowValue(['Email', 'email', 'Email Address']);
       const name = getRowValue(['Name', 'name', 'Full Name']);
       const roleStr = getRowValue(['Role', 'role']);
+      const isAdminStr = getRowValue(['Is Admin', 'isAdmin', 'Admin']);
 
       // Validate required fields
       if (!email) {
@@ -94,21 +95,14 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
         continue;
       }
 
-      // Validate role
-      let role: Role = Role.EMPLOYEE;
-      if (roleStr) {
-        const roleUpper = roleStr.toUpperCase();
-        if (Object.values(Role).includes(roleUpper as Role)) {
-          role = roleUpper as Role;
-        } else {
-          results.errors.push({
-            row: rowNumber,
-            error: `Invalid role: ${roleStr}. Must be one of: ADMIN, EMPLOYEE, EMPLOYEE`,
-            data: row,
-          });
-          results.failed++;
-          continue;
-        }
+      // Determine admin status from either isAdmin column or role column
+      // 'ADMIN' in role column or 'true/yes/1' in isAdmin column means admin
+      let isAdmin = false;
+      if (isAdminStr) {
+        const lowerStr = isAdminStr.toLowerCase();
+        isAdmin = lowerStr === 'true' || lowerStr === 'yes' || lowerStr === '1';
+      } else if (roleStr) {
+        isAdmin = roleStr.toUpperCase() === 'ADMIN';
       }
 
       // If ID is provided, use upsert to preserve relationships
@@ -133,18 +127,19 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
         }
 
         // Use upsert with ID to preserve relationships
+        // Note: User.role is for the global user model (EMPLOYEE, MANAGER, etc.)
+        // TeamMember.isAdmin is for per-tenant admin access
         const user = await prisma.user.upsert({
           where: { id },
           create: {
             id,
             email,
             name,
-            role,
+            role: Role.EMPLOYEE, // Default role for global User model
             emailVerified: null,
           },
           update: {
             name: name || undefined,
-            role,
             email,
           },
         });
@@ -158,7 +153,7 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
               email: user.email,
               name: user.name,
               canLogin: true,
-              role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+              isAdmin,
             },
           });
         } else if (existingUserById) {
@@ -172,7 +167,7 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
                 email: user.email,
                 name: user.name,
                 canLogin: true,
-                role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+                isAdmin,
               },
             });
           }
@@ -185,7 +180,7 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
           existingUserById ? ActivityActions.USER_UPDATED : ActivityActions.USER_CREATED,
           'User',
           user.id,
-          { email: user.email, name: user.name, role: user.role, source: 'CSV Import' }
+          { email: user.email, name: user.name, isAdmin, source: 'CSV Import' }
         );
 
         if (existingUserById) {
@@ -194,7 +189,7 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
           results.created.push({
             email: user.email,
             name: user.name,
-            role: user.role,
+            role: isAdmin ? 'ADMIN' : 'MEMBER', // For backwards compatibility in response
           });
           results.success++;
         }
@@ -211,12 +206,11 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
           results.skipped++;
           continue;
         } else if (duplicateStrategy === 'update') {
-          // Update existing user
+          // Update existing user (global User model)
           await prisma.user.update({
             where: { email },
             data: {
               name: name || existingUser.name,
-              role,
             },
           });
 
@@ -231,7 +225,7 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
                 email,
                 name: name || existingUser.name,
                 canLogin: true,
-                role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+                isAdmin,
               },
             });
           }
@@ -243,7 +237,7 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
             ActivityActions.USER_UPDATED,
             'User',
             existingUser.id,
-            { email, name, role, source: 'CSV Import' }
+            { email, name, isAdmin, source: 'CSV Import' }
           );
 
           results.updated++;
@@ -256,7 +250,7 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
         data: {
           email,
           name,
-          role,
+          role: Role.EMPLOYEE, // Default role for global User model
           emailVerified: null,
         },
       });
@@ -268,7 +262,7 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
           email: user.email,
           name: user.name,
           canLogin: true,
-          role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+          isAdmin,
         },
       });
 
@@ -279,13 +273,13 @@ async function importUsersHandler(request: NextRequest, context: APIContext) {
         ActivityActions.USER_CREATED,
         'User',
         user.id,
-        { email: user.email, name: user.name, role: user.role, source: 'CSV Import' }
+        { email: user.email, name: user.name, isAdmin, source: 'CSV Import' }
       );
 
       results.created.push({
         email: user.email,
         name: user.name,
-        role: user.role,
+        role: isAdmin ? 'ADMIN' : 'MEMBER', // For backwards compatibility in response
       });
       results.success++;
     } catch (error) {

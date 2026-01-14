@@ -53,7 +53,7 @@ export async function PUT(request: NextRequest) {
     if (!session?.user?.organizationId) {
       return formatErrorResponse('Tenant context required', 403);
     }
-    if (session.user.teamMemberRole !== 'ADMIN') {
+    if (!session.user.isAdmin) {
       return formatErrorResponse('Admin access required', 403);
     }
 

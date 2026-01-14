@@ -22,7 +22,7 @@ import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
 export default async function PayrollDashboardPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.teamMemberRole !== 'ADMIN') {
+  if (!session || !session.user.isAdmin) {
     redirect('/');
   }
 

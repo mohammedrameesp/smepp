@@ -8,9 +8,9 @@
  * - Non-Login Users: Employee records for HR/payroll only (no email required)
  * - WPS Employees: Employees on Qatar's Wage Protection System
  *
- * ROLES:
- * - ADMIN: Full system access
- * - EMPLOYEE: Self-service access (leave, assets, profile)
+ * ACCESS LEVELS:
+ * - isAdmin: true = Full admin dashboard access
+ * - isAdmin: false = Employee self-service access only
  *
  * BUSINESS RULES:
  * - Email is required when canLogin is true
@@ -19,7 +19,6 @@
  */
 
 import { z } from 'zod';
-import { Role } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // USER SCHEMAS
@@ -34,21 +33,19 @@ import { Role } from '@prisma/client';
  * - Be included in WPS salary files (isOnWps)
  *
  * @example
- * // Login user (admin or employee)
- * { name: "John Doe", email: "john@company.com", role: "EMPLOYEE", canLogin: true }
+ * // Login user (admin)
+ * { name: "John Doe", email: "john@company.com", isAdmin: true, canLogin: true }
  *
  * // Non-login employee (HR record only)
- * { name: "Worker", role: "EMPLOYEE", canLogin: false, isEmployee: true }
+ * { name: "Worker", isAdmin: false, canLogin: false, isEmployee: true }
  */
 export const createUserSchema = z.object({
   /** Full name (required, max 100 chars) */
   name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
   /** Email address (required when canLogin is true) */
   email: z.string().email('Invalid email address').optional(),
-  /** System role (ADMIN or EMPLOYEE) */
-  role: z.nativeEnum(Role, {
-    message: 'Invalid role',
-  }),
+  /** Is this user an admin (full dashboard access)? */
+  isAdmin: z.boolean().default(false),
   /** Initial password (8-100 chars, optional for non-login users) */
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
@@ -76,8 +73,8 @@ export const createUserSchema = z.object({
 export const updateUserSchema = z.object({
   /** Updated name */
   name: z.string().min(1).max(100).optional(),
-  /** Updated role */
-  role: z.nativeEnum(Role).optional(),
+  /** Update admin status */
+  isAdmin: z.boolean().optional(),
   /** Update employee status */
   isEmployee: z.boolean().optional(),
   /** Update login capability */

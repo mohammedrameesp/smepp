@@ -88,9 +88,8 @@ export default async function AdminLayout({
   }
 
   // Redirect non-admin users
-  // Check TeamMember role (organization users) OR legacy role (super-admins)
-  const isAdmin = session?.user?.teamMemberRole === 'ADMIN' ||
-                  session?.user?.role === 'ADMIN';
+  // Check isAdmin flag (new boolean-based permission system)
+  const isAdmin = session?.user?.isAdmin === true;
   if (!isAdmin && !devAuthEnabled) {
     redirect('/employee');
   }
@@ -129,7 +128,8 @@ export default async function AdminLayout({
       badgeCounts={badgeCounts}
       enabledModules={orgSettings.enabledModules}
       aiChatEnabled={orgSettings.aiChatEnabled}
-      userRole={session?.user?.role as string | undefined}
+      isAdmin={session?.user?.isAdmin}
+      canApprove={session?.user?.canApprove}
     >
       {children}
     </AdminLayoutClient>

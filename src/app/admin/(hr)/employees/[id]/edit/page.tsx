@@ -84,7 +84,7 @@ const APPROVAL_ROLES = [
   { value: 'HR_MANAGER', label: 'HR Manager', description: 'Can approve leave and HR-related requests' },
   { value: 'FINANCE_MANAGER', label: 'Finance Manager', description: 'Can approve purchase requests and budget items' },
   { value: 'DIRECTOR', label: 'Director', description: 'Can approve high-value and executive-level requests' },
-  { value: 'ADMIN', label: 'Admin', description: 'Full approval authority for all request types' },
+  // Note: Dashboard ADMINs automatically have full approval authority
 ];
 
 export default function AdminEmployeeEditPage() {

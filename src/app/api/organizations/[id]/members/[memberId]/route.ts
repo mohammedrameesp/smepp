@@ -33,7 +33,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
     }
 
-    if (!currentMembership.isOwner && currentMembership.role !== 'ADMIN') {
+    if (!currentMembership.isOwner && !currentMembership.isAdmin) {
       return NextResponse.json({ error: 'Only admins can remove members' }, { status: 403 });
     }
 
@@ -61,12 +61,10 @@ export async function DELETE(
     }
 
     // Non-owners can only remove members with lower roles
+    // With isAdmin boolean: admins can remove non-admins, but not other admins
     if (!currentMembership.isOwner) {
-      const roleHierarchy = ['MEMBER', 'MANAGER', 'ADMIN', 'OWNER'];
-      const currentRoleIndex = roleHierarchy.indexOf(currentMembership.role);
-      const targetRoleIndex = roleHierarchy.indexOf(targetMember.role);
-
-      if (targetRoleIndex >= currentRoleIndex) {
+      // If target is an admin and current user is also admin (but not owner), deny
+      if (targetMember.isAdmin) {
         return NextResponse.json(
           { error: 'Cannot remove members with equal or higher role' },
           { status: 403 }

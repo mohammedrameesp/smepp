@@ -29,7 +29,7 @@ interface TeamMemberWithHR {
   id: string;
   name: string | null;
   email: string;
-  role: string;
+  isAdmin: boolean;
   // HR Profile fields (now directly on TeamMember)
   dateOfBirth: Date | null;
   gender: string | null;

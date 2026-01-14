@@ -122,10 +122,9 @@ async function getHRProfileHandler(
       id: member.id,
       name: member.name,
       email: member.email,
-      role: member.approvalRole, // Approval role for dropdown
     },
     workEmail: member.email,
-    isAdmin: member.role === 'ADMIN', // Dashboard access (TeamMemberRole)
+    isAdmin: member.isAdmin, // Dashboard access
   });
 }
 

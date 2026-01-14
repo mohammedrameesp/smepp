@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { TeamMemberRole } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import ExcelJS from 'exceljs';
 import logger from '@/lib/core/log';
@@ -9,7 +8,7 @@ import logger from '@/lib/core/log';
 export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.teamMemberRole !== TeamMemberRole.ADMIN) {
+    if (!session || !session.user.isAdmin) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
@@ -50,7 +49,7 @@ export async function GET(_request: NextRequest) {
           id: true,
           name: true,
           email: true,
-          role: true,
+          isAdmin: true,
           isEmployee: true,
           isOnWps: true,
           employeeCode: true,
@@ -165,7 +164,7 @@ export async function GET(_request: NextRequest) {
         id: member.id,
         name: member.name || '',
         email: member.email,
-        role: member.role,
+        role: member.isAdmin ? 'ADMIN' : 'MEMBER',
         isEmployee: member.isEmployee ? 'Yes' : 'No',
         isOnWps: member.isOnWps ? 'Yes' : 'No',
         employeeCode: member.employeeCode || '',

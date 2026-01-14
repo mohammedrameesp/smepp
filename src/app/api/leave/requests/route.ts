@@ -516,7 +516,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
         if (firstStep) {
           const approvers = await db.teamMember.findMany({
             where: {
-              approvalRole: firstStep.requiredRole,
+              canApprove: true,
               isDeleted: false,
             },
             select: { id: true },
@@ -539,7 +539,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
         // No policy - fall back to notifying all admins in the same organization
         const admins = await db.teamMember.findMany({
           where: {
-            role: 'ADMIN',
+            isAdmin: true,
             isDeleted: false,
           },
           select: { id: true },

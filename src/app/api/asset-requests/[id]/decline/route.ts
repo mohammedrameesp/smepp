@@ -33,7 +33,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
-import { AssetRequestStatus, TeamMemberRole } from '@prisma/client';
+import { AssetRequestStatus } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import { declineAssetAssignmentSchema } from '@/features/asset-requests';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -212,7 +212,7 @@ async function declineAssetAssignmentHandler(request: NextRequest, context: APIC
     const admins = await prisma.teamMember.findMany({
       where: {
         tenantId,
-        role: TeamMemberRole.ADMIN,
+        isAdmin: true,
       },
       select: { id: true, email: true, name: true },
     });

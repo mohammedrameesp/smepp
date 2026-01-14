@@ -444,7 +444,7 @@ describe('OAuth Utilities', () => {
         id: 'new-team-member',
         email: 'new@example.com',
         tenantId: 'org-123',
-        role: 'MEMBER',
+        isAdmin: false,
       });
       (clearTeamMemberFailedLogins as jest.Mock).mockResolvedValue(undefined);
 
@@ -457,7 +457,7 @@ describe('OAuth Utilities', () => {
         data: expect.objectContaining({
           email: 'new@example.com',
           tenantId: 'org-123',
-          role: 'MEMBER',
+          isAdmin: false,
           isOwner: false,
         }),
       });

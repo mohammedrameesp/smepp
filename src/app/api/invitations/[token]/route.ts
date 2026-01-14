@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { TeamMemberRole, OrgRole } from '@prisma/client';
+import { OrgRole } from '@prisma/client';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import logger from '@/lib/core/log';
 
@@ -194,11 +194,8 @@ export async function POST(
       const finalIsEmployee = invitation.isEmployee ?? true; // Default to employee if somehow null
       const finalIsOnWps = finalIsEmployee ? (invitation.isOnWps ?? false) : false;
 
-      // Map OrgRole to TeamMemberRole
-      const teamMemberRole: TeamMemberRole =
-        invitation.role === OrgRole.OWNER || invitation.role === OrgRole.ADMIN
-          ? TeamMemberRole.ADMIN
-          : TeamMemberRole.MEMBER;
+      // Determine if this user should be an admin based on OrgRole
+      const isAdmin = invitation.role === OrgRole.OWNER || invitation.role === OrgRole.ADMIN;
 
       // Check if TeamMember already exists for this email in this org
       // (This happens when admin creates member via Add Member form for SSO orgs)
@@ -241,11 +238,8 @@ export async function POST(
           newEmployeeCode = `${prefix}-${String(count + 1).padStart(3, '0')}`;
         }
 
-        // Map OrgRole to TeamMemberRole from invitation
-        const newTeamMemberRole: TeamMemberRole =
-          invitation.role === OrgRole.OWNER || invitation.role === OrgRole.ADMIN
-            ? TeamMemberRole.ADMIN
-            : TeamMemberRole.MEMBER;
+        // Determine admin status from invitation OrgRole
+        const newIsAdmin = invitation.role === OrgRole.OWNER || invitation.role === OrgRole.ADMIN;
         const newIsOwner = invitation.role === 'OWNER';
 
         // Update TeamMember with user data AND invitation settings
@@ -253,8 +247,8 @@ export async function POST(
         await tx.teamMember.update({
           where: { id: existingTeamMember.id },
           data: {
-            // Update role from invitation
-            role: newTeamMemberRole,
+            // Update admin status from invitation
+            isAdmin: newIsAdmin,
             isOwner: newIsOwner,
             // Update employee status from invitation (critical fix for OAuth flow)
             isEmployee: shouldBeEmployee,
@@ -339,7 +333,7 @@ export async function POST(
             : user?.image || null,
           passwordHash: user?.passwordHash || null,
           emailVerified: user?.emailVerified || null,
-          role: teamMemberRole,
+          isAdmin,
           isOwner,
           isEmployee: finalIsEmployee,
           isOnWps: finalIsOnWps,

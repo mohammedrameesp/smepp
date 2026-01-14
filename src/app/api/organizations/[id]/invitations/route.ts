@@ -43,7 +43,7 @@ export async function GET(
       },
     });
 
-    if (!membership || (!membership.isOwner && membership.role !== 'ADMIN')) {
+    if (!membership || (!membership.isOwner && !membership.isAdmin)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -90,7 +90,7 @@ export async function POST(
       },
     });
 
-    if (!membership || (!membership.isOwner && membership.role !== 'ADMIN')) {
+    if (!membership || (!membership.isOwner && !membership.isAdmin)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -243,7 +243,7 @@ export async function DELETE(
       },
     });
 
-    if (!membership || (!membership.isOwner && membership.role !== 'ADMIN')) {
+    if (!membership || (!membership.isOwner && !membership.isAdmin)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

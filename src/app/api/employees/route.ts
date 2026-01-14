@@ -91,7 +91,7 @@ export const GET = withErrorHandler(
         name: emp.name,
         email: emp.email,
         image: emp.image,
-        role: emp.role,
+        role: emp.isAdmin ? 'ADMIN' : 'MEMBER',
         canLogin: emp.canLogin,
         isEmployee: emp.isEmployee,
         isOnWps: emp.isOnWps,

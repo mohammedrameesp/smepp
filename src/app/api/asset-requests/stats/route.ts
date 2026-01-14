@@ -84,7 +84,7 @@ async function getAssetRequestStatsHandler(_request: NextRequest, _context: APIC
     }
 
     const tenantId = session.user.organizationId;
-    const isAdmin = session.user.teamMemberRole === 'ADMIN';
+    const isAdmin = session.user.isAdmin;
 
     if (isAdmin) {
       // ─────────────────────────────────────────────────────────────────────────────

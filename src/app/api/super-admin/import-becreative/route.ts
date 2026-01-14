@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
             email: existingUser.email,
             name: existingUser.name,
             canLogin: true,
-            role: user.role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+            isAdmin: user.role === 'ADMIN',
             isOwner: user.role === 'ADMIN' && user.email === 'ramees@becreative.qa',
           },
         });

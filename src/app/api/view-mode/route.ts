@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
   const viewModeCookie = request.cookies.get(VIEW_MODE_COOKIE);
   const isEmployeeView = viewModeCookie?.value === 'employee';
-  const isAdmin = session.user.teamMemberRole === 'ADMIN';
+  const isAdmin = session.user.isAdmin;
 
   return NextResponse.json({
     isEmployeeView,
@@ -45,7 +45,7 @@ export async function POST() {
   }
 
   // Only admins can toggle view mode
-  if (session.user.teamMemberRole !== 'ADMIN') {
+  if (!session.user.isAdmin) {
     return NextResponse.json(
       { error: 'Only administrators can switch view modes' },
       { status: 403 }

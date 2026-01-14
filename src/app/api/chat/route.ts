@@ -170,10 +170,11 @@ export async function POST(request: NextRequest) {
     // Track response time
     const startTime = Date.now();
 
-    // Map TeamMemberRole to Role for chat context
-    const userRole: Role = session.user.teamMemberRole === 'ADMIN'
-      ? Role.ADMIN
-      : session.user.role || Role.EMPLOYEE;
+    // Map isAdmin to Role for chat context
+    // ADMINs get DIRECTOR level (highest approval role) for AI permissions
+    const userRole: Role = session.user.isAdmin
+      ? Role.DIRECTOR
+      : Role.EMPLOYEE;
 
     const response = await processChat(sanitizationResult.sanitized, {
       userId: session.user.id,

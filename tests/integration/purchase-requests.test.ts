@@ -4,7 +4,6 @@
  */
 
 import { getServerSession } from 'next-auth/next';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 
 jest.mock('next-auth/next');
@@ -67,7 +66,7 @@ describe('Purchase Requests API Tests', () => {
         user: {
           id: 'user-123',
           email: 'user@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -104,7 +103,7 @@ describe('Purchase Requests API Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -138,7 +137,7 @@ describe('Purchase Requests API Tests', () => {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -236,7 +235,7 @@ describe('Purchase Requests API Tests', () => {
         user: {
           id: 'user-123',
           email: 'user@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -352,7 +351,7 @@ describe('Purchase Requests API Tests', () => {
         user: {
           id: 'user-123',
           email: 'user@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -378,7 +377,7 @@ describe('Purchase Requests API Tests', () => {
         user: {
           id: 'user-123',
           email: 'user@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -396,7 +395,7 @@ describe('Purchase Requests API Tests', () => {
       const session = await mockGetServerSession();
 
       expect(result.requesterId).not.toBe(session?.user.id);
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should return request for admin', async () => {
@@ -405,7 +404,7 @@ describe('Purchase Requests API Tests', () => {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -413,7 +412,7 @@ describe('Purchase Requests API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(true);
     });
 
     it('should return 404 if not found', async () => {
@@ -459,7 +458,7 @@ describe('Purchase Requests API Tests', () => {
         user: {
           id: 'user-123',
           email: 'user@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -576,7 +575,7 @@ describe('Purchase Requests API Tests', () => {
         user: {
           id: 'user-123',
           email: 'user@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -584,7 +583,7 @@ describe('Purchase Requests API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should update status for admin', async () => {
@@ -593,7 +592,7 @@ describe('Purchase Requests API Tests', () => {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -689,7 +688,7 @@ describe('Purchase Requests API Tests', () => {
         user: {
           id: 'user-123',
           email: 'user@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -697,7 +696,7 @@ describe('Purchase Requests API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should export requests with items', async () => {

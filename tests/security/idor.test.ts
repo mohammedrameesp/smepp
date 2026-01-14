@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth/next';
-import { Role, OrgRole } from '@prisma/client';
+import { OrgRole } from '@prisma/client';
 
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
@@ -21,7 +21,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
         organizationId: 'tenant-1',
         organizationSlug: 'tenant1',
         orgRole: 'ADMIN' as OrgRole,
-        role: Role.ADMIN,
+        isAdmin: true,
       },
       expires: new Date(Date.now() + 86400000).toISOString(),
     };
@@ -33,7 +33,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
         organizationId: 'tenant-2',
         organizationSlug: 'tenant2',
         orgRole: 'ADMIN' as OrgRole,
-        role: Role.ADMIN,
+        isAdmin: true,
       },
       expires: new Date(Date.now() + 86400000).toISOString(),
     };
@@ -95,7 +95,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
           email: 'admin@example.com',
           organizationId: 'tenant-1',
           orgRole: 'ADMIN' as OrgRole,
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -114,7 +114,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
           email: 'employee@example.com',
           organizationId: 'tenant-1',
           orgRole: 'MEMBER' as OrgRole,
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -138,7 +138,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
           email: 'employee@example.com',
           organizationId: 'tenant-1',
           orgRole: 'MEMBER' as OrgRole,
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -165,7 +165,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
           email: 'employee@example.com',
           organizationId: 'tenant-1',
           orgRole: 'MEMBER' as OrgRole,
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -186,7 +186,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
           email: 'admin@example.com',
           organizationId: 'tenant-1',
           orgRole: 'ADMIN' as OrgRole,
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };

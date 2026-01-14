@@ -7,10 +7,10 @@ async function main() {
 
   const members = await prisma.teamMember.findMany({
     where: { tenantId: org?.id },
-    select: { id: true, email: true, name: true, role: true, isEmployee: true }
+    select: { id: true, email: true, name: true, isAdmin: true, isEmployee: true }
   });
   console.log('\nTeam Members:');
-  members.forEach(m => console.log(' -', m.email, '|', m.name, '|', m.role, '| isEmployee:', m.isEmployee));
+  members.forEach(m => console.log(' -', m.email, '|', m.name, '|', m.isAdmin ? 'ADMIN' : 'MEMBER', '| isEmployee:', m.isEmployee));
 }
 
 main().finally(() => prisma.$disconnect());

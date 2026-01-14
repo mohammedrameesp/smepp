@@ -98,8 +98,7 @@ export function DepreciationCard({ assetId, onUpdate }: DepreciationCardProps) {
   const [salvageValue, setSalvageValue] = useState<string>('0');
   const [isAssigning, setIsAssigning] = useState(false);
 
-  const isAdmin = session?.user?.teamMemberRole === 'ADMIN' ||
-                  session?.user?.role === 'ADMIN';
+  const isAdmin = session?.user?.isAdmin === true;
 
   const fetchData = useCallback(async () => {
     try {

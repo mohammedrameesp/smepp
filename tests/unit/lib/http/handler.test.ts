@@ -204,7 +204,7 @@ describe('API Handler Wrapper', () => {
     it('should reject non-admin users when admin required', async () => {
       const handler = jest.fn();
       mockGetServerSession.mockResolvedValue({
-        user: { id: 'user-1', teamMemberRole: 'MEMBER' },
+        user: { id: 'user-1', isAdmin: false },
       });
 
       const wrappedHandler = withErrorHandler(handler, { requireAdmin: true });
@@ -219,7 +219,7 @@ describe('API Handler Wrapper', () => {
         NextResponse.json({ success: true })
       );
       mockGetServerSession.mockResolvedValue({
-        user: { id: 'user-1', teamMemberRole: 'ADMIN', organizationId: 'org-1' },
+        user: { id: 'user-1', isAdmin: true, organizationId: 'org-1' },
       });
 
       const wrappedHandler = withErrorHandler(handler, { requireAdmin: true });

@@ -127,15 +127,13 @@ async function findApproversForRole(
   tenantId: string,
   requiredRole: Role
 ): Promise<string[]> {
-  // Get team members with the required role or ADMIN (who can approve anything)
+  // Get team members with admin role (who can approve anything)
+  // Note: With the new permission model, only admins can approve requests
   const members = await prisma.teamMember.findMany({
     where: {
       tenantId,
       isDeleted: false,
-      OR: [
-        { role: requiredRole as 'ADMIN' | 'MEMBER' },
-        { role: 'ADMIN' },
-      ],
+      isAdmin: true,
     },
     select: { id: true },
   });

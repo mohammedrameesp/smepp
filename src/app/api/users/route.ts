@@ -36,7 +36,9 @@ async function getUsersHandler(request: NextRequest, context: APIContext) {
   // Query TeamMember instead of User (all HR data is now on TeamMember)
   // Note: tenantId filtering is handled automatically by tenant-scoped prisma client
   const where: Record<string, unknown> = {};
-  if (role) where.role = role;
+  // Filter by isAdmin if role query param is provided (ADMIN = isAdmin true, MEMBER = isAdmin false)
+  if (role === 'ADMIN') where.isAdmin = true;
+  else if (role === 'MEMBER') where.isAdmin = false;
 
   // By default, exclude soft-deleted users unless explicitly requested
   if (!includeDeleted) {
@@ -55,7 +57,7 @@ async function getUsersHandler(request: NextRequest, context: APIContext) {
     name: member.name,
     email: member.email,
     image: member.image,
-    role: member.role,
+    role: member.isAdmin ? 'ADMIN' : 'MEMBER',
     isEmployee: member.isEmployee,
     isOnWps: member.isOnWps,
     isDeleted: member.isDeleted,
@@ -98,7 +100,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     }, { status: 400 });
   }
 
-  const { name, email, role, employeeId, designation, isEmployee, canLogin, isOnWps } = validation.data;
+  const { name, email, isAdmin, employeeId, designation, isEmployee, canLogin, isOnWps } = validation.data;
 
   // Generate email for non-login users (use placeholder to satisfy unique constraint)
   // Format: nologin-{uuid}@{tenantSlug}.internal
@@ -151,8 +153,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
   }
 
   // Create TeamMember directly (replaces User + OrganizationUser + HRProfile)
-  // Note: TeamMemberRole (ADMIN/MEMBER) controls dashboard access
-  //       approvalRole controls who can approve requests
+  // Note: isAdmin boolean controls dashboard access (true = /admin, false = /employee)
   // Note: tenantId is included explicitly for type safety; the tenant prisma
   // extension also auto-injects it but TypeScript requires it at compile time
   const member = await db.teamMember.create({
@@ -160,8 +161,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
       tenantId,
       name,
       email: finalEmail,
-      role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER', // Dashboard access: ADMIN → /admin, MEMBER → /employee
-      approvalRole: role, // Approval authority: MANAGER, HR_MANAGER, FINANCE_MANAGER, etc.
+      isAdmin, // Dashboard access: true → /admin, false → /employee
       isEmployee,
       canLogin,
       isOnWps: isEmployee ? isOnWps : false, // Only set WPS for employees
@@ -181,7 +181,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     id: member.id,
     name: member.name,
     email: member.email,
-    role: member.role,
+    role: member.isAdmin ? 'ADMIN' : 'MEMBER',
     hrProfile: isEmployee ? {
       employeeId: member.employeeCode,
       designation: member.designation,
@@ -247,7 +247,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
             organizationId: tenantId,
             email: finalEmail,
             name: name,
-            role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+            role: isAdmin ? 'ADMIN' : 'MEMBER', // OrgRole enum for invitation
             token: inviteToken,
             isEmployee,
             isOnWps: isEmployee ? isOnWps : null,

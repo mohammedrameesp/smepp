@@ -9,7 +9,7 @@ import logger from '@/lib/core/log';
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.teamMemberRole !== 'ADMIN') {
+    if (!session || !session.user.isAdmin) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 

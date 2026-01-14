@@ -83,7 +83,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const emailContent = welcomeUserWithPasswordSetupEmail({
         userName: member.name || member.email,
         userEmail: member.email,
-        userRole: member.role,
+        userRole: member.isAdmin ? 'ADMIN' : 'MEMBER',
         orgSlug: org.slug,
         orgName: org.name,
         setupToken,
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           organizationId: session.user.organizationId,
           email: member.email,
           name: member.name,
-          role: member.role === 'ADMIN' ? 'ADMIN' : 'MEMBER',
+          role: member.isAdmin ? 'ADMIN' : 'MEMBER',
           token: inviteToken,
           isEmployee: member.isEmployee,
           isOnWps: member.isEmployee ? member.isOnWps : null,
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const emailContent = organizationInvitationEmail({
         userName: member.name || member.email,
         userEmail: member.email,
-        userRole: member.role,
+        userRole: member.isAdmin ? 'ADMIN' : 'MEMBER',
         orgSlug: org.slug,
         orgName: org.name,
         inviteToken,

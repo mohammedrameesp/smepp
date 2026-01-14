@@ -38,7 +38,7 @@ describe('Admin API Tests', () => {
       organizationId: 'org-123',
       organizationSlug: 'test-org',
       orgRole: 'ADMIN' as OrgRole,
-      teamMemberRole: 'ADMIN',
+      isAdmin: true,
     },
     expires: new Date(Date.now() + 86400000).toISOString(),
   };
@@ -50,7 +50,7 @@ describe('Admin API Tests', () => {
       organizationId: 'org-123',
       organizationSlug: 'test-org',
       orgRole: 'MEMBER' as OrgRole,
-      teamMemberRole: 'MEMBER',
+      isAdmin: false,
     },
     expires: new Date(Date.now() + 86400000).toISOString(),
   };
@@ -493,13 +493,13 @@ describe('Admin API Tests', () => {
     it('should require admin role', async () => {
       mockGetServerSession.mockResolvedValue(mockMemberSession);
       const session = await mockGetServerSession();
-      expect(session?.user.teamMemberRole).not.toBe('ADMIN');
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should create organization backup', async () => {
       mockGetServerSession.mockResolvedValue(mockAdminSession);
       // Backup logic would be tested here
-      expect(mockAdminSession.user.teamMemberRole).toBe('ADMIN');
+      expect(mockAdminSession.user.isAdmin).toBe(true);
     });
   });
 

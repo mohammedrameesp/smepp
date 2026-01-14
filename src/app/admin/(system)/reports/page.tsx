@@ -25,7 +25,7 @@ export default async function AdminReportsPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && session.user.teamMemberRole !== 'ADMIN') {
+  if (process.env.NODE_ENV !== 'development' && !session.user.isAdmin) {
     redirect('/forbidden');
   }
 
@@ -51,7 +51,7 @@ export default async function AdminReportsPage() {
     suppliersByCategory,
     ,
     ,
-    usersByRole,
+    usersByAdmin,
     ,
     ,
     purchaseRequestsByStatus,
@@ -128,9 +128,9 @@ export default async function AdminReportsPage() {
       where: { tenantId, isDeleted: false },
     }),
     prisma.teamMember.groupBy({
-      by: ['role'],
+      by: ['isAdmin'],
       where: { tenantId, isDeleted: false },
-      _count: { role: true },
+      _count: { isAdmin: true },
     }),
     prisma.teamMember.count({
       where: { tenantId, isDeleted: false },
@@ -494,10 +494,10 @@ export default async function AdminReportsPage() {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-4 gap-4">
-                {usersByRole.map((item) => (
-                  <div key={item.role} className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-900">{item._count.role}</div>
-                    <div className="text-sm text-gray-600 capitalize">{item.role.toLowerCase()}</div>
+                {usersByAdmin.map((item) => (
+                  <div key={String(item.isAdmin)} className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-2xl font-bold text-gray-900">{item._count.isAdmin}</div>
+                    <div className="text-sm text-gray-600 capitalize">{item.isAdmin ? 'admin' : 'member'}</div>
                   </div>
                 ))}
               </div>

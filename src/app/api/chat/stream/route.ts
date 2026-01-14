@@ -134,10 +134,11 @@ export async function POST(request: NextRequest) {
 
     const startTime = Date.now();
 
-    // Map TeamMemberRole to Role for chat context
-    const userRole: Role = session.user.teamMemberRole === 'ADMIN'
-      ? Role.ADMIN
-      : session.user.role || Role.EMPLOYEE;
+    // Map isAdmin to Role for chat context
+    // ADMINs get DIRECTOR level (highest approval role) for AI permissions
+    const userRole: Role = session.user.isAdmin
+      ? Role.DIRECTOR
+      : Role.EMPLOYEE;
 
     // Store values needed in the stream callback (TypeScript can't carry narrowed types into closures)
     const sessionUserId = session.user.id;

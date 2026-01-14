@@ -103,7 +103,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
     }
 
-    if (!membership.isOwner && membership.role !== 'ADMIN') {
+    if (!membership.isOwner && !membership.isAdmin) {
       return NextResponse.json({ error: 'Only admins can update code formats' }, { status: 403 });
     }
 

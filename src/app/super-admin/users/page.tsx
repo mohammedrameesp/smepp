@@ -77,7 +77,7 @@ export default async function SuperAdminUsersPage() {
                       )}
                     </div>
 
-                    <Badge variant="outline">{member.role}</Badge>
+                    <Badge variant="outline">{member.isAdmin ? 'Admin' : 'Member'}</Badge>
 
                     <div className="text-sm text-muted-foreground flex items-center gap-1">
                       <Calendar className="h-3 w-3" />

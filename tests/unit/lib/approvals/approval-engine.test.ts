@@ -96,7 +96,7 @@ describe('Approval Engine', () => {
       priority: 20,
       levels: [
         { id: 'level-1', levelOrder: 1, approverRole: 'MANAGER' },
-        { id: 'level-2', levelOrder: 2, approverRole: 'ADMIN' },
+        { id: 'level-2', levelOrder: 2, approverRole: 'DIRECTOR' },
       ],
     };
 
@@ -172,7 +172,7 @@ describe('Approval Engine', () => {
       priority: 10,
       levels: [
         { id: 'level-1', levelOrder: 1, approverRole: 'MANAGER' },
-        { id: 'level-2', levelOrder: 2, approverRole: 'ADMIN' },
+        { id: 'level-2', levelOrder: 2, approverRole: 'DIRECTOR' },
       ],
     };
 
@@ -180,7 +180,7 @@ describe('Approval Engine', () => {
       (mockPrisma.approvalStep.createMany as jest.Mock).mockResolvedValue({ count: 2 });
       (mockPrisma.approvalStep.findMany as jest.Mock).mockResolvedValue([
         { id: 'step-1', levelOrder: 1, requiredRole: 'MANAGER', status: 'PENDING' },
-        { id: 'step-2', levelOrder: 2, requiredRole: 'ADMIN', status: 'PENDING' },
+        { id: 'step-2', levelOrder: 2, requiredRole: 'DIRECTOR', status: 'PENDING' },
       ]);
 
       await initializeApprovalChain('LEAVE_REQUEST', 'entity-1', mockPolicy, 'tenant-1');
@@ -188,7 +188,7 @@ describe('Approval Engine', () => {
       expect(mockPrisma.approvalStep.createMany).toHaveBeenCalledWith({
         data: expect.arrayContaining([
           expect.objectContaining({ levelOrder: 1, requiredRole: 'MANAGER' }),
-          expect.objectContaining({ levelOrder: 2, requiredRole: 'ADMIN' }),
+          expect.objectContaining({ levelOrder: 2, requiredRole: 'DIRECTOR' }),
         ]),
       });
     });
@@ -243,32 +243,41 @@ describe('Approval Engine', () => {
       createdAt: new Date(),
     };
 
-    it('should allow ADMIN to approve any step', async () => {
-      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ role: 'ADMIN', approvalRole: null });
+    it('should allow admin (isAdmin=true) to approve any step', async () => {
+      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ id: 'member-1', isAdmin: true, canApprove: false });
 
-      const result = await canUserApprove('user-1', mockStep);
+      const result = await canUserApprove('member-1', mockStep);
       expect(result.canApprove).toBe(true);
     });
 
-    it('should allow user with matching role to approve', async () => {
-      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ role: 'EMPLOYEE', approvalRole: 'MANAGER' });
+    it('should allow member with canApprove permission to approve', async () => {
+      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ id: 'member-1', isAdmin: false, canApprove: true });
 
-      const result = await canUserApprove('user-1', mockStep);
+      const result = await canUserApprove('member-1', mockStep);
       expect(result.canApprove).toBe(true);
     });
 
-    it('should reject user without matching role', async () => {
-      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ role: 'EMPLOYEE', approvalRole: 'EMPLOYEE' });
+    it('should allow member with canApprove to approve direct reports', async () => {
+      (mockPrisma.teamMember.findUnique as jest.Mock)
+        .mockResolvedValueOnce({ id: 'manager-1', isAdmin: false, canApprove: true })
+        .mockResolvedValueOnce({ reportingToId: 'manager-1' });
 
-      const result = await canUserApprove('user-1', mockStep);
+      const result = await canUserApprove('manager-1', mockStep, 'requester-1');
+      expect(result.canApprove).toBe(true);
+    });
+
+    it('should reject member without approval permissions', async () => {
+      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ id: 'member-1', isAdmin: false, canApprove: false });
+
+      const result = await canUserApprove('member-1', mockStep);
       expect(result.canApprove).toBe(false);
-      expect(result.reason).toContain('MANAGER');
+      expect(result.reason).toBe('Not authorized to approve this request');
     });
 
-    it('should reject non-existent user', async () => {
+    it('should reject non-existent member', async () => {
       (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue(null);
 
-      const result = await canUserApprove('user-1', mockStep);
+      const result = await canUserApprove('member-1', mockStep);
       expect(result.canApprove).toBe(false);
       expect(result.reason).toBe('Member not found');
     });
@@ -287,7 +296,7 @@ describe('Approval Engine', () => {
 
     beforeEach(() => {
       (mockPrisma.approvalStep.findUnique as jest.Mock).mockResolvedValue(mockStep);
-      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ role: 'EMPLOYEE', approvalRole: 'MANAGER' });
+      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ id: 'member-1', isAdmin: false, canApprove: true });
     });
 
     it('should approve step and update status', async () => {
@@ -517,8 +526,8 @@ describe('Approval Engine', () => {
   // ═══════════════════════════════════════════════════════════════════════════════
 
   describe('getPendingApprovalsForUser', () => {
-    it('should return all pending for ADMIN', async () => {
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({ role: 'ADMIN' });
+    it('should return all pending for admin (isAdmin=true)', async () => {
+      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ id: 'admin-1', isAdmin: true, canApprove: false });
       (mockPrisma.approvalStep.findMany as jest.Mock).mockResolvedValue([
         { id: 'step-1', status: 'PENDING' },
         { id: 'step-2', status: 'PENDING' },
@@ -529,8 +538,8 @@ describe('Approval Engine', () => {
       expect(result).toHaveLength(2);
     });
 
-    it('should return empty array for non-existent user', async () => {
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+    it('should return empty array for non-existent member', async () => {
+      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue(null);
 
       const result = await getPendingApprovalsForUser('unknown');
 
@@ -538,7 +547,7 @@ describe('Approval Engine', () => {
     });
 
     it('should filter by tenantId when provided', async () => {
-      (mockPrisma.user.findUnique as jest.Mock).mockResolvedValue({ role: 'ADMIN' });
+      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ id: 'admin-1', isAdmin: true, canApprove: false });
       (mockPrisma.approvalStep.findMany as jest.Mock).mockResolvedValue([]);
 
       await getPendingApprovalsForUser('admin-1', 'tenant-1');
@@ -548,6 +557,14 @@ describe('Approval Engine', () => {
           where: expect.objectContaining({ tenantId: 'tenant-1' }),
         })
       );
+    });
+
+    it('should return empty for member without approval permissions', async () => {
+      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ id: 'member-1', isAdmin: false, canApprove: false });
+
+      const result = await getPendingApprovalsForUser('member-1');
+
+      expect(result).toEqual([]);
     });
   });
 });

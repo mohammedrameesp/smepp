@@ -4,7 +4,6 @@
  */
 
 import { getServerSession } from 'next-auth/next';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 
 jest.mock('next-auth/next');
@@ -30,11 +29,11 @@ describe('Employees API Tests', () => {
   });
 
   // Helper function to create mock session
-  const createMockSession = (role: Role, userId = 'user-123') => ({
+  const createMockSession = (isAdmin: boolean, userId = 'user-123') => ({
     user: {
       id: userId,
-      email: `${role.toLowerCase()}@example.com`,
-      role,
+      email: isAdmin ? 'admin@example.com' : 'employee@example.com',
+      isAdmin,
     },
     expires: new Date(Date.now() + 86400000).toISOString(),
   });
@@ -70,7 +69,7 @@ describe('Employees API Tests', () => {
     name: 'Test Employee',
     email: 'employee@example.com',
     image: null,
-    role: Role.EMPLOYEE,
+    isAdmin: false,
     isSystemAccount: false,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -93,15 +92,15 @@ describe('Employees API Tests', () => {
 
     it('should return 403 if not admin', async () => {
       const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
-      mockGetServerSession.mockResolvedValue(createMockSession(Role.EMPLOYEE));
+      mockGetServerSession.mockResolvedValue(createMockSession(false));
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should return employees list for admin', async () => {
       const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
-      mockGetServerSession.mockResolvedValue(createMockSession(Role.ADMIN, 'admin-123'));
+      mockGetServerSession.mockResolvedValue(createMockSession(true, 'admin-123'));
 
       const mockEmployees = [
         createMockEmployee({ id: 'emp-1', name: 'Employee 1' }),
@@ -311,7 +310,7 @@ describe('Employees API Tests', () => {
 
     it('should allow admin to view any employee', async () => {
       const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
-      mockGetServerSession.mockResolvedValue(createMockSession(Role.ADMIN, 'admin-123'));
+      mockGetServerSession.mockResolvedValue(createMockSession(true, 'admin-123'));
 
       const mockPrismaUser = getMockedModel(prisma.user);
       mockPrismaUser.findUnique.mockResolvedValue(createMockEmployee());
@@ -340,10 +339,10 @@ describe('Employees API Tests', () => {
 
     it('should return 403 if not admin', async () => {
       const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
-      mockGetServerSession.mockResolvedValue(createMockSession(Role.EMPLOYEE));
+      mockGetServerSession.mockResolvedValue(createMockSession(false));
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should mask sensitive data in export', () => {
@@ -467,10 +466,10 @@ describe('Employees API Tests', () => {
 
     it('should return 403 if not admin', async () => {
       const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>;
-      mockGetServerSession.mockResolvedValue(createMockSession(Role.EMPLOYEE));
+      mockGetServerSession.mockResolvedValue(createMockSession(false));
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should identify upcoming birthdays', () => {

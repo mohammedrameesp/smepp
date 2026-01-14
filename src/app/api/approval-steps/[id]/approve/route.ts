@@ -170,10 +170,9 @@ async function notifyNextApprover(
   tenantId: string
 ) {
   // Find team members with the required role to notify (tenant-scoped)
+  // Note: requiredRole can be 'ADMIN', 'MANAGER', etc. We map to isAdmin for ADMIN role
   const approvers = await db.teamMember.findMany({
-    where: {
-      role: requiredRole as never,
-    },
+    where: requiredRole === 'ADMIN' ? { isAdmin: true } : {},
     select: { id: true },
   });
 

@@ -4,7 +4,7 @@
  */
 
 import { getServerSession } from 'next-auth/next';
-import { Role, LeaveStatus, LeaveRequestType } from '@prisma/client';
+import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 import {
   createMockLeaveType,
@@ -58,7 +58,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'user-123',
             email: 'employee@example.com',
-            role: Role.EMPLOYEE,
+            isAdmin: false,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -105,7 +105,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'user-123',
             email: 'employee@example.com',
-            role: Role.EMPLOYEE,
+            isAdmin: false,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -113,7 +113,7 @@ describe('Leave Management API Tests', () => {
         mockGetServerSession.mockResolvedValue(mockSession);
 
         const session = await mockGetServerSession();
-        expect(session?.user.role).not.toBe(Role.ADMIN);
+        expect(session?.user.isAdmin).toBe(false);
       });
 
       it('should create leave type with valid data (admin)', async () => {
@@ -122,7 +122,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'admin-123',
             email: 'admin@example.com',
-            role: Role.ADMIN,
+            isAdmin: true,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -179,7 +179,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'admin-123',
             email: 'admin@example.com',
-            role: Role.ADMIN,
+            isAdmin: true,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -265,7 +265,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'admin-123',
             email: 'admin@example.com',
-            role: Role.ADMIN,
+            isAdmin: true,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -292,7 +292,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'user-123',
             email: 'employee@example.com',
-            role: Role.EMPLOYEE,
+            isAdmin: false,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -339,7 +339,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'user-123',
             email: 'employee@example.com',
-            role: Role.EMPLOYEE,
+            isAdmin: false,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -438,7 +438,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'admin-123',
             email: 'admin@example.com',
-            role: Role.ADMIN,
+            isAdmin: true,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -511,7 +511,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'admin-123',
             email: 'admin@example.com',
-            role: Role.ADMIN,
+            isAdmin: true,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -567,7 +567,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'user-123',
             email: 'employee@example.com',
-            role: Role.EMPLOYEE,
+            isAdmin: false,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -653,7 +653,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'admin-123',
             email: 'admin@example.com',
-            role: Role.ADMIN,
+            isAdmin: true,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -678,7 +678,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'user-123',
             email: 'employee@example.com',
-            role: Role.EMPLOYEE,
+            isAdmin: false,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -715,7 +715,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'admin-123',
             email: 'admin@example.com',
-            role: Role.ADMIN,
+            isAdmin: true,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -757,7 +757,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'admin-123',
             email: 'admin@example.com',
-            role: Role.ADMIN,
+            isAdmin: true,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -789,7 +789,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'user-123',
             email: 'employee@example.com',
-            role: Role.EMPLOYEE,
+            isAdmin: false,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -797,7 +797,7 @@ describe('Leave Management API Tests', () => {
         mockGetServerSession.mockResolvedValue(mockSession);
 
         const session = await mockGetServerSession();
-        expect(session?.user.role).not.toBe(Role.ADMIN);
+        expect(session?.user.isAdmin).toBe(false);
       });
     });
   });
@@ -813,7 +813,7 @@ describe('Leave Management API Tests', () => {
           user: {
             id: 'user-123',
             email: 'employee@example.com',
-            role: Role.EMPLOYEE,
+            isAdmin: false,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         };
@@ -910,7 +910,7 @@ describe('Leave Management API Tests', () => {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -929,7 +929,7 @@ describe('Leave Management API Tests', () => {
       const request = await mockPrismaLeaveRequest.findUnique({ where: { id: 'req-123' } });
 
       // Admin can access any request
-      expect(session?.user.role).toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(true);
       expect(request).not.toBeNull();
     });
 
@@ -939,7 +939,7 @@ describe('Leave Management API Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -958,7 +958,7 @@ describe('Leave Management API Tests', () => {
       const request = await mockPrismaLeaveRequest.findUnique({ where: { id: 'req-123' } });
 
       // Employee should not have access to other user's request
-      expect(session?.user.role).toBe(Role.EMPLOYEE);
+      expect(session?.user.isAdmin).toBe(false);
       expect(request.userId).not.toBe(session?.user.id);
       // API should return 403 in this case
     });
@@ -969,7 +969,7 @@ describe('Leave Management API Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };

@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { memberId, terminationDate } = validation.data;
-    const isAdmin = session.user.teamMemberRole === 'ADMIN';
+    const isAdmin = session.user.isAdmin;
 
     // Non-admin users can only view their own gratuity
     // session.user.id is the TeamMember ID when isTeamMember=true

@@ -14,7 +14,6 @@ import { z } from 'zod';
 import { sendBatchEmails } from '@/lib/core/email';
 import { handleEmailFailure } from '@/lib/core/email-failure-handler';
 import { changeRequestEmail } from '@/lib/core/email-templates';
-import { TeamMemberRole } from '@prisma/client';
 import logger from '@/lib/core/log';
 
 const createRequestSchema = z.object({
@@ -112,7 +111,7 @@ async function createChangeRequestHandler(request: NextRequest, context: APICont
   // Get admin TeamMembers in this organization (tenant-scoped via extension)
   const admins = await db.teamMember.findMany({
     where: {
-      role: TeamMemberRole.ADMIN,
+      isAdmin: true,
       isDeleted: false,
       id: { not: tenant.userId }, // Don't notify the user themselves
     },

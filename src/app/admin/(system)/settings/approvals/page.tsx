@@ -31,7 +31,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default async function ApprovalPoliciesPage() {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.teamMemberRole !== 'ADMIN') {
+  if (!session || !session.user.isAdmin) {
     redirect('/');
   }
 

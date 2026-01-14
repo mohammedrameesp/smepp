@@ -3,15 +3,22 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
-import { TeamMemberRole, TeamMemberStatus } from '@prisma/client';
+import { TeamMemberStatus } from '@prisma/client';
 import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PATCH /api/admin/team/[memberId] - Update member role
+// PATCH /api/admin/team/[memberId] - Update member permissions
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const updateMemberSchema = z.object({
-  role: z.enum(['ADMIN', 'MEMBER']),
+  // New boolean-based permission system
+  isAdmin: z.boolean().optional(),
+  hasOperationsAccess: z.boolean().optional(),
+  hasHRAccess: z.boolean().optional(),
+  hasFinanceAccess: z.boolean().optional(),
+  canApprove: z.boolean().optional(),
+  // Legacy role field for backwards compatibility
+  role: z.enum(['ADMIN', 'MEMBER']).optional(),
 });
 
 export async function PATCH(
@@ -50,28 +57,58 @@ export async function PATCH(
       return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
-    // Can't change own role
+    // Can't change own permissions
     if (member.id === session.user.id) {
       return NextResponse.json(
-        { error: 'Cannot change your own role' },
+        { error: 'Cannot change your own permissions' },
         { status: 400 }
       );
     }
 
-    // Update role
+    // Build update data from new boolean fields or legacy role
+    const updateData: {
+      isAdmin?: boolean;
+      hasOperationsAccess?: boolean;
+      hasHRAccess?: boolean;
+      hasFinanceAccess?: boolean;
+      canApprove?: boolean;
+    } = {};
+
+    // If legacy role is provided, map to isAdmin
+    if (result.data.role !== undefined) {
+      updateData.isAdmin = result.data.role === 'ADMIN';
+    }
+    // Otherwise, use the new boolean fields if provided
+    if (result.data.isAdmin !== undefined) updateData.isAdmin = result.data.isAdmin;
+    if (result.data.hasOperationsAccess !== undefined) updateData.hasOperationsAccess = result.data.hasOperationsAccess;
+    if (result.data.hasHRAccess !== undefined) updateData.hasHRAccess = result.data.hasHRAccess;
+    if (result.data.hasFinanceAccess !== undefined) updateData.hasFinanceAccess = result.data.hasFinanceAccess;
+    if (result.data.canApprove !== undefined) updateData.canApprove = result.data.canApprove;
+
+    // Update permissions
     const updated = await prisma.teamMember.update({
       where: { id: memberId },
-      data: { role: result.data.role as TeamMemberRole },
+      data: updateData,
       select: {
         id: true,
         name: true,
         email: true,
-        role: true,
+        isAdmin: true,
+        hasOperationsAccess: true,
+        hasHRAccess: true,
+        hasFinanceAccess: true,
+        canApprove: true,
         isOwner: true,
       },
     });
 
-    return NextResponse.json({ member: updated });
+    return NextResponse.json({
+      member: {
+        ...updated,
+        // Legacy role field for backwards compatibility
+        role: updated.isAdmin ? 'ADMIN' : 'MEMBER',
+      },
+    });
   } catch (error) {
     logger.error({ error: error instanceof Error ? error.message : String(error) }, 'Failed to update member');
     return NextResponse.json(
@@ -111,7 +148,7 @@ export async function DELETE(
         name: true,
         email: true,
         tenantId: true,
-        role: true,
+        isAdmin: true,
         isOwner: true,
       },
     });
@@ -137,7 +174,7 @@ export async function DELETE(
     }
 
     // Admins can't remove other admins (only owners can)
-    if (session.user.orgRole === 'ADMIN' && member.role === 'ADMIN') {
+    if (session.user.orgRole === 'ADMIN' && member.isAdmin) {
       return NextResponse.json(
         { error: 'Only owners can remove admins' },
         { status: 403 }

@@ -31,7 +31,11 @@ export async function GET() {
         name: true,
         email: true,
         image: true,
-        role: true,
+        isAdmin: true,
+        hasOperationsAccess: true,
+        hasHRAccess: true,
+        hasFinanceAccess: true,
+        canApprove: true,
         isOwner: true,
         joinedAt: true,
         createdAt: true,
@@ -43,7 +47,7 @@ export async function GET() {
       },
       orderBy: [
         { isOwner: 'desc' },
-        { role: 'asc' },
+        { isAdmin: 'desc' },
         { joinedAt: 'asc' },
       ],
     });
@@ -119,7 +123,14 @@ export async function GET() {
 
       return {
         id: m.id,
-        role: m.role,
+        // Permission flags (new boolean-based system)
+        isAdmin: m.isAdmin,
+        hasOperationsAccess: m.hasOperationsAccess,
+        hasHRAccess: m.hasHRAccess,
+        hasFinanceAccess: m.hasFinanceAccess,
+        canApprove: m.canApprove,
+        // Legacy role field for backwards compatibility
+        role: m.isAdmin ? 'ADMIN' : 'MEMBER',
         isOwner: m.isOwner,
         joinedAt: m.joinedAt,
         isEmployee: m.isEmployee,

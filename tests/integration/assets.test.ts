@@ -1,5 +1,4 @@
 import { getServerSession } from 'next-auth/next';
-import { Role } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
 
 jest.mock('next-auth/next');
@@ -39,7 +38,7 @@ describe('Assets API Tests', () => {
         user: {
           id: 'user-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -150,7 +149,7 @@ describe('Assets API Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -158,7 +157,7 @@ describe('Assets API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should create asset with valid data', async () => {
@@ -167,7 +166,7 @@ describe('Assets API Tests', () => {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -238,7 +237,7 @@ describe('Assets API Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -258,7 +257,7 @@ describe('Assets API Tests', () => {
       const session = await mockGetServerSession();
 
       // Should return 403
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
       expect(asset.assignedUserId).not.toBe(session?.user.id);
     });
 
@@ -268,7 +267,7 @@ describe('Assets API Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -297,7 +296,7 @@ describe('Assets API Tests', () => {
         user: {
           id: 'admin-123',
           email: 'admin@example.com',
-          role: Role.ADMIN,
+          isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -317,7 +316,7 @@ describe('Assets API Tests', () => {
       const session = await mockGetServerSession();
 
       // Should return 200 (admin can access any asset)
-      expect(session?.user.role).toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(true);
     });
 
     it('should return 404 if asset not found', async () => {
@@ -337,7 +336,7 @@ describe('Assets API Tests', () => {
         user: {
           id: 'user-123',
           email: 'employee@example.com',
-          role: Role.EMPLOYEE,
+          isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
       };
@@ -345,7 +344,7 @@ describe('Assets API Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.role).not.toBe(Role.ADMIN);
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should be rate limited', () => {

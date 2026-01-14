@@ -31,7 +31,7 @@ interface PageProps {
 
 export default async function PayslipsSearchPage({ searchParams }: PageProps) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user.teamMemberRole !== 'ADMIN') {
+  if (!session || !session.user.isAdmin) {
     redirect('/');
   }
 
