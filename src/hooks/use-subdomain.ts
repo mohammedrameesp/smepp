@@ -82,9 +82,9 @@ export function useSubdomain(): SubdomainState {
     // Unknown domain - could be a custom domain, try to resolve it
     const resolveCustomDomain = async () => {
       try {
-        // Call the main domain's internal API to resolve this custom domain
+        // Call the internal API on the current domain (same Vercel deployment)
         const response = await fetch(
-          `${window.location.protocol}//${APP_DOMAIN}/api/internal/resolve-domain?domain=${encodeURIComponent(hostWithoutPort)}`
+          `/api/internal/resolve-domain?domain=${encodeURIComponent(hostWithoutPort)}`
         );
 
         if (response.ok) {
