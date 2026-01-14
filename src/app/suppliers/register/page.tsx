@@ -494,7 +494,11 @@ export default function SupplierRegistrationPage() {
                         id="primaryContactMobile"
                         type="tel"
                         {...register('primaryContactMobile')}
-                        placeholder="1234 5678"
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          setValue('primaryContactMobile', value);
+                        }}
+                        placeholder="12345678"
                         className="flex-1"
                       />
                     </div>
@@ -578,7 +582,11 @@ export default function SupplierRegistrationPage() {
                         id="secondaryContactMobile"
                         type="tel"
                         {...register('secondaryContactMobile')}
-                        placeholder="1234 5678"
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          setValue('secondaryContactMobile', value);
+                        }}
+                        placeholder="12345678"
                         className="flex-1"
                       />
                     </div>

@@ -434,8 +434,13 @@ export default function EditSupplierPage() {
                     </Select>
                     <Input
                       id="primaryContactMobile"
+                      type="tel"
                       {...register('primaryContactMobile')}
-                      placeholder="5555 1234"
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        setValue('primaryContactMobile', value);
+                      }}
+                      placeholder="55551234"
                       className="flex-1"
                     />
                   </div>
@@ -504,8 +509,13 @@ export default function EditSupplierPage() {
                     </Select>
                     <Input
                       id="secondaryContactMobile"
+                      type="tel"
                       {...register('secondaryContactMobile')}
-                      placeholder="5555 5678"
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        setValue('secondaryContactMobile', value);
+                      }}
+                      placeholder="55555678"
                       className="flex-1"
                     />
                   </div>
