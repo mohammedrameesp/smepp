@@ -27,6 +27,7 @@ import {
   LayoutGrid,
   MapPin,
   Lock,
+  GitBranch,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
@@ -535,11 +536,12 @@ export function OrganizationTabs({
         {/* Configuration Tab */}
         <TabsContent value="config" className="space-y-6">
           <Tabs value={configTab} onValueChange={setConfigTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="general">General</TabsTrigger>
               <TabsTrigger value="assets">Assets</TabsTrigger>
               <TabsTrigger value="financial">Financial</TabsTrigger>
               <TabsTrigger value="hr">HR</TabsTrigger>
+              <TabsTrigger value="approvals">Approvals</TabsTrigger>
             </TabsList>
 
             {/* General Sub-Tab */}
@@ -740,6 +742,41 @@ export function OrganizationTabs({
               ) : (
                 <ModuleRequiredPlaceholder
                   moduleName="Payroll"
+                  onEnableClick={() => setConfigTab('general')}
+                />
+              )}
+            </TabsContent>
+
+            {/* Approvals Sub-Tab */}
+            <TabsContent value="approvals" className="space-y-6 mt-6">
+              {(enabledModules.includes('leave') || enabledModules.includes('assets') || enabledModules.includes('purchase-requests')) ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <GitBranch className="h-5 w-5" />
+                      Approval Policies
+                    </CardTitle>
+                    <CardDescription>
+                      Configure multi-level approval chains for leave, purchase, and asset requests
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Define approval workflows based on request type, amount thresholds, or leave duration.
+                      Requests matching a policy will follow the defined approval chain instead of going to all admins.
+                    </p>
+                    <div className="flex gap-2">
+                      <Button asChild>
+                        <a href="/admin/settings/approvals">
+                          Manage Approval Policies
+                        </a>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <ModuleRequiredPlaceholder
+                  moduleName="Leave, Assets, or Purchase Requests"
                   onEnableClick={() => setConfigTab('general')}
                 />
               )}
