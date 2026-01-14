@@ -343,14 +343,14 @@ function LoginForm() {
             </p>
           </div>
 
-          <div className="w-full max-w-lg">
-            {/* Welcome Section - Always large typography */}
-            <div className="text-center mb-10">
-              <h2 className="font-bold text-gray-900 dark:text-white text-4xl mb-4">
+          <div className="w-full max-w-md px-4 sm:px-0">
+            {/* Welcome Section - Responsive typography */}
+            <div className="text-center mb-8 sm:mb-10">
+              <h2 className="font-bold text-gray-900 dark:text-white text-2xl sm:text-4xl mb-3 sm:mb-4">
                 Welcome Back
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
-                Sign in to access your workspace and manage your digital resources seamlessly.
+              <p className="text-gray-600 dark:text-gray-400 text-base sm:text-lg leading-relaxed">
+                Sign in to access your workspace and manage your resources.
               </p>
             </div>
 
@@ -371,12 +371,12 @@ function LoginForm() {
 
             {/* SSO-Only Layout - Clean and prominent */}
             {showAnyOAuth && !showCredentials && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {showGoogle && (
                   <Button
                     onClick={() => handleOAuthSignIn('google')}
                     disabled={!!oauthLoading}
-                    className="w-full h-14 bg-[#2F2F2F] hover:bg-[#1a1a1a] text-white font-semibold text-base rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="w-full h-12 sm:h-14 bg-[#2F2F2F] hover:bg-[#1a1a1a] text-white font-semibold text-sm sm:text-base rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
                   >
                     {oauthLoading === 'google' ? (
                       <span className="flex items-center justify-center gap-3">
@@ -401,7 +401,7 @@ function LoginForm() {
                   <Button
                     onClick={() => handleOAuthSignIn('azure-ad')}
                     disabled={!!oauthLoading}
-                    className="w-full h-14 bg-[#2F2F2F] hover:bg-[#1a1a1a] text-white font-semibold text-base rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="w-full h-12 sm:h-14 bg-[#2F2F2F] hover:bg-[#1a1a1a] text-white font-semibold text-sm sm:text-base rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
                   >
                     {oauthLoading === 'azure-ad' ? (
                       <span className="flex items-center justify-center gap-3">
