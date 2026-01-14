@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -69,6 +70,7 @@ interface PaginationInfo {
 }
 
 export function EmployeeListTable() {
+  const router = useRouter();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [, setStats] = useState<Stats>({ total: 0, incomplete: 0, expiringSoon: 0, expired: 0 });
   const [loading, setLoading] = useState(true);
@@ -284,13 +286,14 @@ export function EmployeeListTable() {
               employees.map((employee) => (
                 <TableRow
                   key={employee.id}
-                  className={
+                  onClick={() => router.push(`/admin/employees/${employee.id}`)}
+                  className={`cursor-pointer hover:bg-gray-50 ${
                     employee.expiryStatus.overall === 'expired'
-                      ? 'bg-red-50'
+                      ? 'bg-red-50 hover:bg-red-100'
                       : employee.expiryStatus.overall === 'expiring'
-                      ? 'bg-yellow-50'
+                      ? 'bg-yellow-50 hover:bg-yellow-100'
                       : ''
-                  }
+                  }`}
                 >
                   <TableCell>
                     <Link href={`/admin/employees/${employee.id}`} className="flex items-center gap-3 hover:opacity-80">
@@ -356,7 +359,7 @@ export function EmployeeListTable() {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="text-center">
+                  <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                     <EmployeeActions employeeId={employee.id} />
                   </TableCell>
                 </TableRow>
