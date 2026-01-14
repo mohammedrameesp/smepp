@@ -188,7 +188,10 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
             },
           },
         },
-        orderBy: { [sort]: order },
+        orderBy: [
+          { status: 'asc' },  // Pending statuses first, then completed/rejected
+          { [sort]: order },
+        ],
         take: ps,
         skip,
       }),

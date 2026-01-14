@@ -122,7 +122,10 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
             },
           },
         },
-        orderBy: { [sort]: order },
+        orderBy: [
+          { status: 'asc' },  // PENDING first, then APPROVED, REJECTED, CANCELLED
+          { [sort]: order },
+        ],
         take: ps,
         skip,
       }),
