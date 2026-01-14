@@ -5,9 +5,9 @@ import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { getLimitsForTier } from '@/lib/ai/rate-limiter';
 import { getAuditSummary, getFlaggedQueries } from '@/lib/ai/audit-logger';
 
-interface MemberUsage {
-  memberId: string;
-  memberName: string;
+interface UserUsage {
+  userId: string;
+  userName: string;
   email: string;
   totalTokens: number;
   requestCount: number;
@@ -89,11 +89,11 @@ export const GET = withErrorHandler(async (request: NextRequest, context: APICon
 
   const memberMap = new Map(members.map(m => [m.id, m]));
 
-  const usageByMember: MemberUsage[] = memberUsageData.map(u => {
+  const usageByUser = memberUsageData.map(u => {
     const member = memberMap.get(u.memberId);
     return {
-      memberId: u.memberId,
-      memberName: member?.name || 'Unknown',
+      userId: u.memberId,
+      userName: member?.name || 'Unknown',
       email: member?.email || '',
       totalTokens: u._sum.totalTokens || 0,
       requestCount: u._count || 0,
@@ -140,18 +140,18 @@ export const GET = withErrorHandler(async (request: NextRequest, context: APICon
       estimatedCost: Math.round(estimatedCost * 100) / 100,
       tier: org.subscriptionTier,
     },
-    usageByMember,
+    usageByUser,
     dailyUsage,
     auditSummary: {
       totalQueries: auditSummary.totalQueries,
       flaggedQueries: auditSummary.flaggedQueries,
-      uniqueMembers: auditSummary.uniqueMembers,
+      uniqueUsers: auditSummary.uniqueMembers,
       avgRiskScore: auditSummary.avgRiskScore,
       topFunctions: auditSummary.topFunctions,
     },
     flaggedQueries: flaggedQueries.map(q => ({
       id: q.id,
-      memberId: q.memberId,
+      userId: q.memberId,
       riskScore: q.riskScore,
       flagReasons: q.flagReasons,
       createdAt: q.createdAt,
