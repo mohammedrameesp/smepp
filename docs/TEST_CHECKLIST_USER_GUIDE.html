@@ -3364,7 +3364,7 @@
                     </div>
                     <ul class="checklist">
                         <li><input type="checkbox" id="cs6" onchange="updateProgress()"><label for="cs6">Verify table shows: Service Name, Vendor, Cost, Billing Cycle, Status</label></li>
-                        <li><input type="checkbox" id="cs7" onchange="updateProgress()"><label for="cs7">Verify status badges (Active=green, Paused=amber, Cancelled=red)</label></li>
+                        <li><input type="checkbox" id="cs7" onchange="updateProgress()"><label for="cs7">Verify status badges (Active=green, Cancelled=red)</label></li>
                         <li><input type="checkbox" id="cs8" onchange="updateProgress()"><label for="cs8">Verify renewal date column shows next renewal</label></li>
                         <li><input type="checkbox" id="cs9" onchange="updateProgress()"><label for="cs9">Click row → verify navigates to detail page</label></li>
                     </ul>
@@ -3377,7 +3377,7 @@
                     <ul class="checklist">
                         <li><input type="checkbox" id="cs10" onchange="updateProgress()"><label for="cs10">Type in search box → verify real-time filtering</label></li>
                         <li><input type="checkbox" id="cs11" onchange="updateProgress()"><label for="cs11">Search by service name → verify matches</label></li>
-                        <li><input type="checkbox" id="cs12" onchange="updateProgress()"><label for="cs12">Filter by status (Active/Paused/Cancelled)</label></li>
+                        <li><input type="checkbox" id="cs12" onchange="updateProgress()"><label for="cs12">Filter by status (Active/Cancelled)</label></li>
                         <li><input type="checkbox" id="cs13" onchange="updateProgress()"><label for="cs13">Filter by billing cycle (Monthly/Yearly)</label></li>
                         <li><input type="checkbox" id="cs14" onchange="updateProgress()"><label for="cs14">Clear filters → verify all subscriptions appear</label></li>
                     </ul>
@@ -3427,23 +3427,10 @@
 
                 <div class="subsection">
                     <div class="subsection-header">
-                        <span>20.7 Pause/Resume</span>
+                        <span>20.7 Cancel/Reactivate</span>
                     </div>
                     <ul class="checklist">
-                        <li><input type="checkbox" id="cs33" onchange="updateProgress()"><label for="cs33">On active subscription → click "Pause"</label></li>
-                        <li><input type="checkbox" id="cs34" onchange="updateProgress()"><label for="cs34">Verify confirmation dialog</label></li>
-                        <li><input type="checkbox" id="cs35" onchange="updateProgress()"><label for="cs35">Confirm → verify status changes to PAUSED</label></li>
-                        <li><input type="checkbox" id="cs36" onchange="updateProgress()"><label for="cs36">On paused subscription → click "Resume"</label></li>
-                        <li><input type="checkbox" id="cs37" onchange="updateProgress()"><label for="cs37">Verify status changes back to ACTIVE</label></li>
-                    </ul>
-                </div>
-
-                <div class="subsection">
-                    <div class="subsection-header">
-                        <span>20.8 Cancel/Reactivate</span>
-                    </div>
-                    <ul class="checklist">
-                        <li><input type="checkbox" id="cs38" onchange="updateProgress()"><label for="cs38">On subscription → click "Cancel"</label></li>
+                        <li><input type="checkbox" id="cs38" onchange="updateProgress()"><label for="cs38">On subscription → click "Mark as Cancelled"</label></li>
                         <li><input type="checkbox" id="cs39" onchange="updateProgress()"><label for="cs39">Verify confirmation with warning</label></li>
                         <li><input type="checkbox" id="cs40" onchange="updateProgress()"><label for="cs40">Confirm → verify status changes to CANCELLED</label></li>
                         <li><input type="checkbox" id="cs41" onchange="updateProgress()"><label for="cs41">On cancelled → click "Reactivate"</label></li>
@@ -3453,7 +3440,7 @@
 
                 <div class="subsection">
                     <div class="subsection-header">
-                        <span>20.9 Renewal Alerts</span>
+                        <span>20.8 Renewal Alerts</span>
                     </div>
                     <ul class="checklist">
                         <li><input type="checkbox" id="cs43" onchange="updateProgress()"><label for="cs43">Create subscription renewing in 7 days</label></li>
@@ -3465,7 +3452,7 @@
 
                 <div class="subsection">
                     <div class="subsection-header">
-                        <span>20.10 Validations</span>
+                        <span>20.9 Validations</span>
                     </div>
                     <ul class="checklist">
                         <li><input type="checkbox" id="cs47" onchange="updateProgress()"><label for="cs47">Submit without service name → verify error</label></li>
@@ -3487,7 +3474,7 @@
 
                 <div class="subsection">
                     <div class="subsection-header">
-                        <span>20.11 Permissions</span>
+                        <span>20.10 Permissions</span>
                     </div>
                     <ul class="checklist">
                         <li><input type="checkbox" id="cs51" onchange="updateProgress()"><label for="cs51">Login as MEMBER → verify read-only access</label></li>
