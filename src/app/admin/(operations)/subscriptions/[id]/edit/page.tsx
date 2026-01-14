@@ -675,7 +675,7 @@ export default function EditSubscriptionPage() {
                       {...register('costPerCycle', { valueAsNumber: true })}
                       placeholder="0.00"
                     />
-                    {watchedCostPerCycle && !isNaN(watchedCostPerCycle) && watchedCostPerCycle > 0 && watchedCostCurrency && (
+                    {typeof watchedCostPerCycle === 'number' && !isNaN(watchedCostPerCycle) && watchedCostPerCycle > 0 && watchedCostCurrency && (
                       <p className="text-xs text-muted-foreground">
                         {watchedCostCurrency === 'QAR' ? (
                           // QAR selected: show USD equivalent

@@ -542,7 +542,7 @@ export default function NewSubscriptionPage() {
                       placeholder="0.00"
                       className={errors.costPerCycle ? 'border-red-500' : ''}
                     />
-                    {watchedCostPerCycle && !isNaN(watchedCostPerCycle) && watchedCostPerCycle > 0 && watchedCostCurrency && (
+                    {typeof watchedCostPerCycle === 'number' && !isNaN(watchedCostPerCycle) && watchedCostPerCycle > 0 && watchedCostCurrency && (
                       <p className="text-xs text-muted-foreground">
                         {watchedCostCurrency === 'QAR' ? (
                           // QAR selected: show USD equivalent
