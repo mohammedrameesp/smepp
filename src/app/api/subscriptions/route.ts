@@ -117,12 +117,12 @@ async function getSubscriptionsHandler(request: NextRequest, context: APIContext
 
     // Build orderBy clause
     // When sorting by renewalDate, show ACTIVE subscriptions first (by nearest renewal),
-    // then push CANCELLED and PAUSED to the bottom
+    // then push CANCELLED to the bottom
     let orderBy: Record<string, string>[] | Record<string, string>;
 
     if (sort === 'renewalDate') {
-      // Alphabetically: ACTIVE < CANCELLED < PAUSED
-      // Sort by status 'asc' puts ACTIVE first, inactive statuses at bottom
+      // Alphabetically: ACTIVE < CANCELLED
+      // Sort by status 'asc' puts ACTIVE first, CANCELLED at bottom
       orderBy = [
         { status: 'asc' },
         { renewalDate: order }

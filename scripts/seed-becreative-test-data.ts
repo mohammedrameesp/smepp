@@ -1730,7 +1730,7 @@ async function main() {
     }),
 
     // ───────────────────────────────────────────────────────────────────────────
-    // SUB 5: PAUSED - Was active, now paused for evaluation
+    // SUB 5: CANCELLED - Was active, now cancelled for evaluation
     // Overdue renewal, considering alternatives
     // ───────────────────────────────────────────────────────────────────────────
     () => prisma.subscription.create({
@@ -1747,12 +1747,13 @@ async function main() {
         costPerCycle: 2160, // 3 editors * $15/month * 12 * 4 (QAR)
         costCurrency: 'QAR',
         costQAR: 2160,
-        status: SubscriptionStatus.PAUSED,
+        status: SubscriptionStatus.CANCELLED,
         assignedMemberId: null,
         autoRenew: false,
         paymentMethod: 'Corporate Credit Card - **** 4532',
-        notes: 'PAUSED: Evaluating Penpot as free alternative. 3 editor seats. Grace period expires in 15 days.',
+        notes: 'CANCELLED: Evaluating Penpot as free alternative. 3 editor seats.',
         lastActiveRenewalDate: monthsAgo(6),
+        cancelledAt: daysAgo(45),
         createdAt: monthsAgo(18),
       },
     }),
@@ -1979,7 +1980,7 @@ async function main() {
     }),
 
     // ───────────────────────────────────────────────────────────────────────────
-    // SUB 14: PAUSED - Trial expired, deciding on purchase
+    // SUB 14: CANCELLED - Trial expired, deciding on purchase
     // ───────────────────────────────────────────────────────────────────────────
     () => prisma.subscription.create({
       data: {
@@ -1995,11 +1996,12 @@ async function main() {
         costPerCycle: 2700, // Estimated after trial
         costCurrency: 'QAR',
         costQAR: 2700,
-        status: SubscriptionStatus.PAUSED,
+        status: SubscriptionStatus.CANCELLED,
         assignedMemberId: null,
         autoRenew: false,
         paymentMethod: null, // Trial - no payment yet
         notes: 'TRIAL ENDED: Evaluating vs CloudWatch. Full APM + Infrastructure monitoring. Decision pending.',
+        cancelledAt: daysAgo(15),
         createdAt: monthsAgo(1),
       },
     }),
@@ -3169,7 +3171,7 @@ async function main() {
   console.log('  Disposal: SOLD (with gain), SCRAPPED, DONATED (with loss)');
   console.log('');
   console.log('SUBSCRIPTIONS:');
-  console.log('  Status: ACTIVE, PAUSED, CANCELLED');
+  console.log('  Status: ACTIVE, CANCELLED');
   console.log('  Billing: YEARLY, MONTHLY, ONE_TIME');
   console.log('  Renewal: Urgent (3 days), soon (12-60 days), later (90+ days), overdue');
   console.log('  Assignment: Org-wide, individual');

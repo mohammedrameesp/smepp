@@ -29,7 +29,7 @@ describe('Subscription [id] Route Tests', () => {
       it('should accept valid partial update', () => {
         const update = {
           serviceName: 'Updated Service',
-          status: SubscriptionStatus.PAUSED,
+          status: SubscriptionStatus.CANCELLED,
         };
 
         const result = updateSubscriptionSchema.safeParse(update);
@@ -145,7 +145,6 @@ describe('Subscription [id] Route Tests', () => {
       it('should accept all valid status values in update', () => {
         const statuses = [
           SubscriptionStatus.ACTIVE,
-          SubscriptionStatus.PAUSED,
           SubscriptionStatus.CANCELLED,
         ];
 

@@ -208,7 +208,6 @@ export function SubscriptionListTableServerSearch() {
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="ACTIVE">Active</SelectItem>
-            <SelectItem value="PAUSED">Paused</SelectItem>
             <SelectItem value="CANCELLED">Cancelled</SelectItem>
           </SelectContent>
         </Select>
@@ -300,7 +299,7 @@ export function SubscriptionListTableServerSearch() {
                 let daysText = '';
                 let nextRenewal: Date | null = null;
 
-                if (subscription.status !== 'CANCELLED' && subscription.status !== 'PAUSED' && subscription.renewalDate) {
+                if (subscription.status !== 'CANCELLED' && subscription.renewalDate) {
                   nextRenewal = getNextRenewalDate(subscription.renewalDate, subscription.billingCycle);
                   const daysUntil = getDaysUntilRenewal(nextRenewal);
 
@@ -330,8 +329,6 @@ export function SubscriptionListTableServerSearch() {
                       return <Badge className="bg-green-100 text-green-800 border-green-300 text-xs">Active</Badge>;
                     case 'CANCELLED':
                       return <Badge className="bg-red-100 text-red-800 border-red-300 text-xs">Cancelled</Badge>;
-                    case 'PAUSED':
-                      return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">Paused</Badge>;
                     default:
                       return <Badge variant="secondary" className="text-xs">{subscription.status}</Badge>;
                   }

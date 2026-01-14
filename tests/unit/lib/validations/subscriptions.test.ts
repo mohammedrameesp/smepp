@@ -202,7 +202,7 @@ describe('Subscription Validation Schemas', () => {
     });
 
     it('should validate all status options', () => {
-      const statuses = [SubscriptionStatus.ACTIVE, SubscriptionStatus.PAUSED, SubscriptionStatus.CANCELLED];
+      const statuses = [SubscriptionStatus.ACTIVE, SubscriptionStatus.CANCELLED];
 
       statuses.forEach(status => {
         const subscription = {
@@ -318,7 +318,7 @@ describe('Subscription Validation Schemas', () => {
 
     it('should allow updating only status', () => {
       const statusUpdate = {
-        status: SubscriptionStatus.PAUSED,
+        status: SubscriptionStatus.CANCELLED,
       };
 
       const result = updateSubscriptionSchema.safeParse(statusUpdate);

@@ -116,7 +116,7 @@ export const chatFunctions: ChatFunction[] = [
       properties: {
         status: {
           type: 'string',
-          description: 'Filter by status (ACTIVE, PAUSED, CANCELLED)',
+          description: 'Filter by status (ACTIVE, CANCELLED)',
         },
       },
     },

@@ -60,7 +60,7 @@ describe('Subscription Lifecycle Tests', () => {
     });
 
     it('should throw error when subscription is not cancelled', async () => {
-      const subscription = { id: 'sub-123', status: 'PAUSED' };
+      const subscription = { id: 'sub-123', status: 'ACTIVE' };
       const canReactivate = subscription.status === 'CANCELLED';
 
       expect(canReactivate).toBe(false);
@@ -145,7 +145,7 @@ describe('Subscription Lifecycle Tests', () => {
     });
 
     it('should throw error when subscription is not active', () => {
-      const subscription = { status: 'PAUSED' };
+      const subscription = { status: 'CANCELLED' };
       const canCancel = subscription.status === 'ACTIVE';
 
       expect(canCancel).toBe(false);
@@ -558,9 +558,8 @@ describe('Subscription Lifecycle Tests', () => {
   describe('Subscription State Transitions', () => {
     it('should allow ACTIVE -> CANCELLED transition', () => {
       const validTransitions = {
-        ACTIVE: ['CANCELLED', 'PAUSED'],
+        ACTIVE: ['CANCELLED'],
         CANCELLED: ['ACTIVE'],
-        PAUSED: ['ACTIVE', 'CANCELLED'],
       };
 
       expect(validTransitions.ACTIVE.includes('CANCELLED')).toBe(true);
@@ -568,9 +567,8 @@ describe('Subscription Lifecycle Tests', () => {
 
     it('should allow CANCELLED -> ACTIVE transition (reactivation)', () => {
       const validTransitions = {
-        ACTIVE: ['CANCELLED', 'PAUSED'],
+        ACTIVE: ['CANCELLED'],
         CANCELLED: ['ACTIVE'],
-        PAUSED: ['ACTIVE', 'CANCELLED'],
       };
 
       expect(validTransitions.CANCELLED.includes('ACTIVE')).toBe(true);

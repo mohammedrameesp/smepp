@@ -204,6 +204,6 @@ export const mockRoles = [Role.ADMIN, Role.EMPLOYEE, Role.EMPLOYEE];
 
 export const mockAssetStatuses = ['AVAILABLE', 'ASSIGNED', 'MAINTENANCE', 'RETIRED'];
 
-export const mockSubscriptionStatuses = ['ACTIVE', 'PAUSED', 'CANCELLED'];
+export const mockSubscriptionStatuses = ['ACTIVE', 'CANCELLED'];
 
 export const mockBillingCycles = ['MONTHLY', 'YEARLY'];

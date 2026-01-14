@@ -213,12 +213,12 @@ describe('Subscription Database Integration Tests', () => {
         where: { id: subscription.id },
         data: {
           costPerCycle: 200,
-          status: SubscriptionStatus.PAUSED,
+          status: SubscriptionStatus.CANCELLED,
         },
       });
 
       expect(updated.costPerCycle?.toNumber()).toBe(200);
-      expect(updated.status).toBe(SubscriptionStatus.PAUSED);
+      expect(updated.status).toBe(SubscriptionStatus.CANCELLED);
     });
 
     itIfDb('should delete subscription', async () => {
@@ -289,7 +289,7 @@ describe('Subscription Database Integration Tests', () => {
       const subscriptions = await getPrisma().subscription.findMany({
         where: { tenantId: TEST_TENANT_ID },
         orderBy: [
-          { status: 'asc' }, // ACTIVE < CANCELLED < PAUSED
+          { status: 'asc' }, // ACTIVE < CANCELLED
           { renewalDate: 'asc' },
         ],
         take: 10,

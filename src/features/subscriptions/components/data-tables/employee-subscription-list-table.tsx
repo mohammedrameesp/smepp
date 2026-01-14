@@ -196,15 +196,13 @@ export function EmployeeSubscriptionListTable({ subscriptions, currentUserId }: 
         return <Badge className="bg-green-100 text-green-800 border-green-300">Active</Badge>;
       case 'CANCELLED':
         return <Badge className="bg-red-100 text-red-800 border-red-300">Cancelled</Badge>;
-      case 'PAUSED':
-        return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">Paused</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
   const getRenewalBadge = (subscription: Subscription) => {
-    if (subscription.status === 'CANCELLED' || subscription.status === 'PAUSED') {
+    if (subscription.status === 'CANCELLED') {
       return null;
     }
 
@@ -405,7 +403,7 @@ export function EmployeeSubscriptionListTable({ subscriptions, currentUserId }: 
                     </div>
                   </TableCell>
                   <TableCell>
-                    {subscription.renewalDate && subscription.status !== 'CANCELLED' && subscription.status !== 'PAUSED' ? (
+                    {subscription.renewalDate && subscription.status !== 'CANCELLED' ? (
                       formatDate(getNextRenewalDate(subscription.renewalDate, subscription.billingCycle))
                     ) : (
                       '-'

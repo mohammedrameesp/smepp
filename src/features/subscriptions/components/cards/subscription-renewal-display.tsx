@@ -7,7 +7,7 @@
  * - Calculates next renewal date based on billing cycle
  * - Shows days until renewal with color coding
  * - Urgency badges for overdue/upcoming renewals
- * - Status-aware display (hides for CANCELLED/PAUSED)
+ * - Status-aware display (hides for CANCELLED)
  * - Handles missing renewal dates gracefully
  *
  * Props:
@@ -26,7 +26,7 @@
  *
  * Display Logic:
  * - No renewal date: Shows "Not specified"
- * - CANCELLED/PAUSED status: Shows "Not applicable"
+ * - CANCELLED status: Shows "Not applicable"
  * - Active subscription: Shows formatted date with badge
  *
  * Color Coding:
@@ -58,9 +58,9 @@ export function SubscriptionRenewalDisplay({ renewalDate, billingCycle, status }
     return <div>Not specified</div>;
   }
 
-  // Don't show renewal information for cancelled or paused subscriptions
-  if (status === 'CANCELLED' || status === 'PAUSED') {
-    return <div className="text-gray-500">Not applicable ({status.toLowerCase()})</div>;
+  // Don't show renewal information for cancelled subscriptions
+  if (status === 'CANCELLED') {
+    return <div className="text-gray-500">Not applicable (cancelled)</div>;
   }
 
   const nextRenewal = getNextRenewalDate(renewalDate, billingCycle);

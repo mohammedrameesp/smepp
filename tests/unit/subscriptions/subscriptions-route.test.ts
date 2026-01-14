@@ -113,7 +113,7 @@ describe('Subscriptions Route Tests', () => {
       });
 
       it('should accept all valid status values', () => {
-        const statuses = [SubscriptionStatus.ACTIVE, SubscriptionStatus.PAUSED, SubscriptionStatus.CANCELLED];
+        const statuses = [SubscriptionStatus.ACTIVE, SubscriptionStatus.CANCELLED];
         for (const status of statuses) {
           const result = subscriptionQuerySchema.safeParse({ status });
           expect(result.success).toBe(true);
