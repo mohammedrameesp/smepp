@@ -45,17 +45,19 @@ export default function EmployeeNewLeavePage() {
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [weekendDays, setWeekendDays] = useState<number[]>([5, 6]); // Default Friday-Saturday
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const currentYear = new Date().getFullYear();
 
-        // Fetch leave types, balances, and user profile in parallel
-        const [typesRes, balancesRes, profileRes] = await Promise.all([
+        // Fetch leave types, balances, user profile, and organization settings in parallel
+        const [typesRes, balancesRes, profileRes, orgRes] = await Promise.all([
           fetch('/api/leave/types'),
           fetch(`/api/leave/balances?year=${currentYear}&ps=100`),
           fetch('/api/users/me'),
+          fetch('/api/admin/organization'),
         ]);
 
         let leaveTypesData: LeaveType[] = [];
@@ -87,6 +89,14 @@ export default function EmployeeNewLeavePage() {
           // Check if user is admin
           if (profileData.role === 'ADMIN') {
             setIsAdmin(true);
+          }
+        }
+
+        // Get organization's weekend days setting
+        if (orgRes.ok) {
+          const orgData = await orgRes.json();
+          if (orgData.organization?.weekendDays?.length > 0) {
+            setWeekendDays(orgData.organization.weekendDays);
           }
         }
 
@@ -176,6 +186,7 @@ export default function EmployeeNewLeavePage() {
                 balances={balances}
                 onSuccess={handleSuccess}
                 isAdmin={isAdmin}
+                weekendDays={weekendDays}
               />
             )}
           </div>

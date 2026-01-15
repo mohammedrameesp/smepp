@@ -51,6 +51,7 @@ interface Organization {
   additionalCurrencies: string[];
   enabledModules: string[];
   hasMultipleLocations: boolean;
+  weekendDays: number[]; // Weekend days: 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
   _count: { teamMembers: number };
 }
 
@@ -118,6 +119,7 @@ export function OrganizationTabs({
   const [additionalCurrencies, setAdditionalCurrencies] = useState<string[]>(org.additionalCurrencies || []);
   const [enabledModules, setEnabledModules] = useState<string[]>(org.enabledModules || ['assets', 'subscriptions', 'suppliers']);
   const [hasMultipleLocations, setHasMultipleLocations] = useState(org.hasMultipleLocations || false);
+  const [weekendDays, setWeekendDays] = useState<number[]>(org.weekendDays || [5, 6]);
 
   // Logo upload state
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -225,6 +227,20 @@ export function OrganizationTabs({
     },
   });
 
+  const weekendDaysAutoSave = useAutoSave({
+    value: weekendDays,
+    enabled: isAdmin && weekendDays.length >= 1,
+    onSave: async (value) => {
+      const res = await fetch('/api/admin/organization', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ weekendDays: value }),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      setOrg(prev => ({ ...prev, weekendDays: value }));
+    },
+  });
+
   // Logo upload handler
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -285,6 +301,17 @@ export function OrganizationTabs({
     setEnabledModules(prev =>
       prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
     );
+  }
+
+  function toggleWeekendDay(day: number) {
+    setWeekendDays(prev => {
+      if (prev.includes(day)) {
+        // Don't allow removing if it's the only day
+        if (prev.length <= 1) return prev;
+        return prev.filter(d => d !== day);
+      }
+      return [...prev, day].sort((a, b) => a - b);
+    });
   }
 
   return (
@@ -736,6 +763,55 @@ export function OrganizationTabs({
 
             {/* HR Sub-Tab */}
             <TabsContent value="hr" className="space-y-6 mt-6">
+              {/* Weekend Days Configuration */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Settings2 className="h-5 w-5" />
+                        Weekend Days
+                      </CardTitle>
+                      <CardDescription>
+                        Select which days are considered weekends for leave calculations
+                      </CardDescription>
+                    </div>
+                    <AutoSaveIndicator status={weekendDaysAutoSave.status} error={weekendDaysAutoSave.error} />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((dayName, index) => (
+                      <label
+                        key={index}
+                        className={`flex items-center gap-2 px-4 py-2 border rounded-lg cursor-pointer transition-colors ${
+                          weekendDays.includes(index)
+                            ? 'border-blue-500 bg-blue-50 text-blue-700'
+                            : 'hover:bg-muted'
+                        } ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={weekendDays.includes(index)}
+                          onChange={() => toggleWeekendDay(index)}
+                          disabled={!isAdmin || (weekendDays.includes(index) && weekendDays.length <= 1)}
+                          className="sr-only"
+                        />
+                        <span className="font-medium">{dayName}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Selected weekends are excluded from leave day calculations (except for accrual-based leave like Annual Leave which includes all calendar days).
+                  </p>
+                  {weekendDays.length <= 1 && (
+                    <p className="text-sm text-amber-600">
+                      At least one weekend day is required.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
               {enabledModules.includes('leave') && (
                 <LeaveTypesSettings />
               )}

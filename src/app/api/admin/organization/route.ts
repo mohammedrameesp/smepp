@@ -37,6 +37,8 @@ export async function GET() {
         website: true,
         // Currency settings
         additionalCurrencies: true,
+        // Weekend settings
+        weekendDays: true,
         // Module settings
         enabledModules: true,
         // Location settings
@@ -106,6 +108,7 @@ const updateOrgSchema = z.object({
   secondaryColor: colorSchema,
   website: z.string().url('Invalid URL format').nullable().optional().or(z.literal('')),
   additionalCurrencies: z.array(z.string()).optional(),
+  weekendDays: z.array(z.number().min(0).max(6)).min(1, 'At least one weekend day required').optional(),
   enabledModules: z.array(z.string()).optional(),
   hasMultipleLocations: z.boolean().optional(),
 });
@@ -133,7 +136,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const { name, codePrefix, primaryColor, secondaryColor, website, additionalCurrencies, enabledModules, hasMultipleLocations } = result.data;
+    const { name, codePrefix, primaryColor, secondaryColor, website, additionalCurrencies, weekendDays, enabledModules, hasMultipleLocations } = result.data;
 
     // Normalize colors: empty/null resets to default for primaryColor, null for secondaryColor
     const DEFAULT_PRIMARY_COLOR = '#0f172a';
@@ -152,6 +155,7 @@ export async function PATCH(request: NextRequest) {
         ...(secondaryColor !== undefined && { secondaryColor: normalizedSecondaryColor }),
         ...(website !== undefined && { website: normalizedWebsite }),
         ...(additionalCurrencies !== undefined && { additionalCurrencies }),
+        ...(weekendDays !== undefined && { weekendDays }),
         ...(enabledModules !== undefined && { enabledModules }),
         ...(hasMultipleLocations !== undefined && { hasMultipleLocations }),
       },
@@ -165,6 +169,7 @@ export async function PATCH(request: NextRequest) {
         secondaryColor: true,
         website: true,
         additionalCurrencies: true,
+        weekendDays: true,
         enabledModules: true,
         hasMultipleLocations: true,
       },

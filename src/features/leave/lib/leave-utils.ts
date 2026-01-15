@@ -403,11 +403,17 @@ export function shouldAutoInitializeBalance(
 }
 
 /**
- * Check if a date is a weekend (Qatar: Friday and Saturday)
+ * Default weekend days (Qatar: Friday and Saturday)
  */
-export function isWeekend(date: Date): boolean {
-  const day = date.getDay();
-  return day === 5 || day === 6; // Friday = 5, Saturday = 6
+export const DEFAULT_WEEKEND_DAYS = [5, 6] as const; // Friday = 5, Saturday = 6
+
+/**
+ * Check if a date is a weekend
+ * @param date Date to check
+ * @param weekendDays Array of weekend day numbers (0=Sun, 1=Mon, ..., 5=Fri, 6=Sat)
+ */
+export function isWeekend(date: Date, weekendDays: number[] = [5, 6]): boolean {
+  return weekendDays.includes(date.getDay());
 }
 
 /**
@@ -430,23 +436,25 @@ export function calculateCalendarDays(startDate: Date, endDate: Date): number {
 }
 
 /**
- * Calculate working days between two dates, excluding Fri/Sat (Qatar weekend)
+ * Calculate working days between two dates, excluding configured weekend days
  * @param startDate Start date
  * @param endDate End date
  * @param requestType Type of leave request
  * @param includeWeekends If true, counts all calendar days (for Annual Leave)
+ * @param weekendDays Array of weekend day numbers (0=Sun, 1=Mon, ..., 5=Fri, 6=Sat)
  * @returns Number of days
  */
 export function calculateWorkingDays(
   startDate: Date,
   endDate: Date,
   requestType: LeaveRequestType = 'FULL_DAY',
-  includeWeekends: boolean = false
+  includeWeekends: boolean = false,
+  weekendDays: number[] = [5, 6]
 ): number {
   // For half-day requests, return 0.5
   if (requestType === 'HALF_DAY_AM' || requestType === 'HALF_DAY_PM') {
     // Half day should be on a working day (unless including weekends)
-    if (!includeWeekends && isWeekend(startDate)) {
+    if (!includeWeekends && isWeekend(startDate, weekendDays)) {
       return 0;
     }
     return 0.5;
@@ -466,7 +474,7 @@ export function calculateWorkingDays(
   end.setHours(0, 0, 0, 0);
 
   while (current <= end) {
-    if (!isWeekend(current)) {
+    if (!isWeekend(current, weekendDays)) {
       count++;
     }
     current.setDate(current.getDate() + 1);

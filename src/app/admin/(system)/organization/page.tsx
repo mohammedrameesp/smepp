@@ -53,6 +53,7 @@ export default async function OrganizationPage() {
         additionalCurrencies: true,
         enabledModules: true,
         hasMultipleLocations: true,
+        weekendDays: true,
         _count: { select: { teamMembers: true } },
       },
     }),
@@ -93,6 +94,7 @@ export default async function OrganizationPage() {
     additionalCurrencies: organization.additionalCurrencies,
     enabledModules: organization.enabledModules,
     hasMultipleLocations: organization.hasMultipleLocations,
+    weekendDays: organization.weekendDays,
     _count: organization._count,
   };
 

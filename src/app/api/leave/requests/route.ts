@@ -237,6 +237,13 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
     // Use memberData as hrProfile for compatibility with existing validation functions
     const hrProfile = memberData;
 
+    // Fetch organization's weekend days configuration
+    const organization = await db.organization.findUnique({
+      where: { id: tenantId },
+      select: { weekendDays: true },
+    });
+    const weekendDays = organization?.weekendDays ?? [5, 6]; // Default to Friday-Saturday
+
     // Check if member has existing balance for admin-assigned leave types
     const existingBalance = await db.leaveBalance.findFirst({
       where: {
@@ -282,6 +289,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       isAdmin,
       adminOverrideNotice: data.adminOverrideNotice,
       bypassNoticeRequirement: hrProfile?.bypassNoticeRequirement,
+      weekendDays,
     });
 
     if (dateValidation.error) {

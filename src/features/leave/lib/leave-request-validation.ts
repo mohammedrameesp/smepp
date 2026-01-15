@@ -51,6 +51,7 @@ export interface LeaveRequestDateParams {
   isAdmin: boolean;
   adminOverrideNotice?: boolean;
   bypassNoticeRequirement?: boolean;
+  weekendDays?: number[]; // Organization's configured weekend days (0=Sun, 6=Sat)
 }
 
 export interface OverlapCheckParams {
@@ -179,11 +180,12 @@ export function validateLeaveRequestDates(params: LeaveRequestDateParams): {
     isAdmin,
     adminOverrideNotice,
     bypassNoticeRequirement,
+    weekendDays = [5, 6], // Default to Friday-Saturday
   } = params;
 
   // Calculate days - Accrual-based leave (Annual Leave) includes weekends
   const includeWeekends = leaveType.accrualBased === true;
-  const totalDays = calculateWorkingDays(startDate, endDate, requestType, includeWeekends);
+  const totalDays = calculateWorkingDays(startDate, endDate, requestType, includeWeekends, weekendDays);
 
   if (totalDays === 0) {
     return { totalDays: 0, error: 'No working days in the selected date range' };

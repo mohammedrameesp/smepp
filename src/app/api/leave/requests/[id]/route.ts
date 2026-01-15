@@ -161,6 +161,13 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
       }
     }
 
+    // Fetch organization's weekend days configuration
+    const organization = await db.organization.findUnique({
+      where: { id: tenantId },
+      select: { weekendDays: true },
+    });
+    const weekendDays = organization?.weekendDays ?? [5, 6]; // Default to Friday-Saturday
+
     // Check for overlapping requests (excluding current request) within tenant
     const overlappingRequests = await db.leaveRequest.findMany({
       where: {
@@ -178,7 +185,7 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
 
     // Calculate new working days (include weekends for accrual-based leave like Annual Leave)
     const includeWeekends = existing.leaveType.accrualBased === true;
-    const newTotalDays = calculateWorkingDays(startDate, endDate, requestType, includeWeekends);
+    const newTotalDays = calculateWorkingDays(startDate, endDate, requestType, includeWeekends, weekendDays);
     const oldTotalDays = Number(existing.totalDays);
     const daysDiff = newTotalDays - oldTotalDays;
 

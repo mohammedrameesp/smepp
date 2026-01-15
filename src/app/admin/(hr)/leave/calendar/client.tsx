@@ -41,6 +41,7 @@ export function LeaveCalendarClient() {
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [statusFilter, setStatusFilter] = useState<string>('approved');
+  const [weekendDays, setWeekendDays] = useState<number[]>([5, 6]); // Default Friday-Saturday
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -88,6 +89,24 @@ export function LeaveCalendarClient() {
 
   useEffect(() => {
     fetchLeaveTypes();
+  }, []);
+
+  // Fetch organization settings for weekend days
+  useEffect(() => {
+    const fetchOrgSettings = async () => {
+      try {
+        const response = await fetch('/api/admin/organization');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.organization?.weekendDays?.length > 0) {
+            setWeekendDays(data.organization.weekendDays);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch organization settings:', error);
+      }
+    };
+    fetchOrgSettings();
   }, []);
 
   const navigateMonth = (direction: number) => {
@@ -210,7 +229,7 @@ export function LeaveCalendarClient() {
             {/* Calendar days */}
             {calendarDays.map((day, index) => {
               const isToday = day.date?.toDateString() === today.toDateString();
-              const isWeekend = day.date && (day.date.getDay() === 5 || day.date.getDay() === 6);
+              const isWeekend = day.date && weekendDays.includes(day.date.getDay());
 
               return (
                 <div

@@ -305,8 +305,9 @@ model Organization {
   website            String? // Organization's public website URL
 
   // Settings
-  timezone String @default("Asia/Qatar") // Hardcoded to Qatar timezone (UTC+3)
-  currency String @default("QAR") // Primary currency always QAR
+  timezone    String @default("Asia/Qatar") // Hardcoded to Qatar timezone (UTC+3)
+  currency    String @default("QAR") // Primary currency always QAR
+  weekendDays Int[]  @default([5, 6]) // Weekend days: 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat (default: Fri-Sat)
 
   // Reference Code Prefix (auto-generated from org name, customizable by admin)
   // Used for employee IDs, asset tags, purchase requests, etc.

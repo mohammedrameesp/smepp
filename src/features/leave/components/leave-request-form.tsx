@@ -68,9 +68,18 @@ interface LeaveRequestFormProps {
   isAdmin?: boolean;
   // For admin to create leave request on behalf of an employee
   employeeId?: string;
+  // Organization's configured weekend days (0=Sun, 6=Sat)
+  weekendDays?: number[];
 }
 
-export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = false, employeeId }: LeaveRequestFormProps) {
+// Helper to format weekend day names
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function formatWeekendDays(days: number[]): string {
+  if (days.length === 0) return 'no weekends';
+  return days.map(d => DAY_NAMES[d]).join('/');
+}
+
+export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = false, employeeId, weekendDays = [5, 6] }: LeaveRequestFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [calculatedDays, setCalculatedDays] = useState<number | null>(null);
@@ -123,7 +132,7 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
       const end = new Date(watchEndDate);
       if (start <= end) {
         const includeWeekends = selectedLeaveType?.accrualBased === true;
-        const days = calculateWorkingDays(start, end, watchRequestType as LeaveRequestType, includeWeekends);
+        const days = calculateWorkingDays(start, end, watchRequestType as LeaveRequestType, includeWeekends, weekendDays);
         setCalculatedDays(days);
       } else {
         setCalculatedDays(null);
@@ -131,7 +140,7 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
     } else {
       setCalculatedDays(null);
     }
-  }, [watchStartDate, watchEndDate, watchRequestType, selectedLeaveType]);
+  }, [watchStartDate, watchEndDate, watchRequestType, selectedLeaveType, weekendDays]);
 
   // Calculate available balance for selected leave type
   const getAvailableBalance = (): number => {
@@ -422,7 +431,7 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
                 ? `Exceeds max consecutive days (${selectedLeaveType?.maxConsecutiveDays} days)`
                 : selectedLeaveType?.accrualBased
                   ? '(includes weekends)'
-                  : '(excludes Fri/Sat weekends)'}
+                  : `(excludes ${formatWeekendDays(weekendDays)} weekends)`}
           </span>
         </div>
       )}

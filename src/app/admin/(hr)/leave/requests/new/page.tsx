@@ -58,14 +58,16 @@ export default function AdminNewLeavePage() {
   const [loading, setLoading] = useState(true);
   const [loadingBalances, setLoadingBalances] = useState(false);
   const [, setDateOfJoining] = useState<Date | null>(null);
+  const [weekendDays, setWeekendDays] = useState<number[]>([5, 6]); // Default Friday-Saturday
 
   // Fetch employees and leave types on mount
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [employeesRes, typesRes] = await Promise.all([
+        const [employeesRes, typesRes, orgRes] = await Promise.all([
           fetch('/api/users?includeHrProfile=true'),
           fetch('/api/leave/types'),
+          fetch('/api/admin/organization'),
         ]);
 
         if (employeesRes.ok) {
@@ -81,6 +83,14 @@ export default function AdminNewLeavePage() {
         if (typesRes.ok) {
           const data = await typesRes.json();
           setLeaveTypes(data.leaveTypes || []);
+        }
+
+        // Get organization's weekend days setting
+        if (orgRes.ok) {
+          const orgData = await orgRes.json();
+          if (orgData.organization?.weekendDays?.length > 0) {
+            setWeekendDays(orgData.organization.weekendDays);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -246,6 +256,7 @@ export default function AdminNewLeavePage() {
                   onSuccess={handleSuccess}
                   isAdmin={true}
                   employeeId={selectedEmployeeId}
+                  weekendDays={weekendDays}
                 />
               )}
             </CardContent>
