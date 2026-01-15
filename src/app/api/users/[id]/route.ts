@@ -10,15 +10,37 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { z } from 'zod';
 
+// Role types for simplified access control
+type Role = 'OWNER' | 'ADMIN' | 'MANAGER' | 'HR' | 'FINANCE' | 'OPERATIONS' | 'EMPLOYEE';
+
+// Role to permission flags mapping
+const ROLE_PERMISSIONS: Record<Role, {
+  isAdmin: boolean;
+  canApprove: boolean;
+  hasHRAccess: boolean;
+  hasFinanceAccess: boolean;
+  hasOperationsAccess: boolean;
+}> = {
+  OWNER: { isAdmin: true, canApprove: true, hasHRAccess: true, hasFinanceAccess: true, hasOperationsAccess: true },
+  ADMIN: { isAdmin: true, canApprove: true, hasHRAccess: true, hasFinanceAccess: true, hasOperationsAccess: true },
+  MANAGER: { isAdmin: false, canApprove: true, hasHRAccess: false, hasFinanceAccess: false, hasOperationsAccess: false },
+  HR: { isAdmin: false, canApprove: false, hasHRAccess: true, hasFinanceAccess: false, hasOperationsAccess: false },
+  FINANCE: { isAdmin: false, canApprove: false, hasHRAccess: false, hasFinanceAccess: true, hasOperationsAccess: false },
+  OPERATIONS: { isAdmin: false, canApprove: false, hasHRAccess: false, hasFinanceAccess: false, hasOperationsAccess: true },
+  EMPLOYEE: { isAdmin: false, canApprove: false, hasHRAccess: false, hasFinanceAccess: false, hasOperationsAccess: false },
+};
+
 const updateUserSchema = z.object({
   name: z.string().optional(),
-  // Permission flags (new boolean-based system)
+  // Simplified role-based access (preferred)
+  role: z.enum(['ADMIN', 'MANAGER', 'HR', 'FINANCE', 'OPERATIONS', 'EMPLOYEE']).optional(),
+  // Legacy permission flags (for backwards compatibility)
   isAdmin: z.boolean().optional(),
-  isManager: z.boolean().optional(), // Maps to canApprove in database
+  isManager: z.boolean().optional(),
   hasOperationsAccess: z.boolean().optional(),
   hasHRAccess: z.boolean().optional(),
   hasFinanceAccess: z.boolean().optional(),
-  canApprove: z.boolean().optional(), // Legacy, use isManager instead
+  canApprove: z.boolean().optional(),
   // Manager relationship for approval routing
   reportingToId: z.string().nullable().optional(),
 });
@@ -26,6 +48,7 @@ const updateUserSchema = z.object({
 // Transform the data for TeamMember updates
 function transformUpdateData(data: {
   name?: string;
+  role?: Role;
   isAdmin?: boolean;
   isManager?: boolean;
   hasOperationsAccess?: boolean;
@@ -40,30 +63,39 @@ function transformUpdateData(data: {
     updates.name = data.name;
   }
 
-  if (data.isAdmin !== undefined) {
-    updates.isAdmin = data.isAdmin;
-  }
+  // If role is provided, use the role-based permission mapping
+  if (data.role) {
+    const permissions = ROLE_PERMISSIONS[data.role];
+    updates.isAdmin = permissions.isAdmin;
+    updates.canApprove = permissions.canApprove;
+    updates.hasHRAccess = permissions.hasHRAccess;
+    updates.hasFinanceAccess = permissions.hasFinanceAccess;
+    updates.hasOperationsAccess = permissions.hasOperationsAccess;
+  } else {
+    // Legacy: handle individual permission flags
+    if (data.isAdmin !== undefined) {
+      updates.isAdmin = data.isAdmin;
+    }
 
-  // isManager maps to canApprove in database
-  if (data.isManager !== undefined) {
-    updates.canApprove = data.isManager;
-  }
+    if (data.isManager !== undefined) {
+      updates.canApprove = data.isManager;
+    }
 
-  if (data.hasOperationsAccess !== undefined) {
-    updates.hasOperationsAccess = data.hasOperationsAccess;
-  }
+    if (data.hasOperationsAccess !== undefined) {
+      updates.hasOperationsAccess = data.hasOperationsAccess;
+    }
 
-  if (data.hasHRAccess !== undefined) {
-    updates.hasHRAccess = data.hasHRAccess;
-  }
+    if (data.hasHRAccess !== undefined) {
+      updates.hasHRAccess = data.hasHRAccess;
+    }
 
-  if (data.hasFinanceAccess !== undefined) {
-    updates.hasFinanceAccess = data.hasFinanceAccess;
-  }
+    if (data.hasFinanceAccess !== undefined) {
+      updates.hasFinanceAccess = data.hasFinanceAccess;
+    }
 
-  // Legacy support for canApprove
-  if (data.canApprove !== undefined && data.isManager === undefined) {
-    updates.canApprove = data.canApprove;
+    if (data.canApprove !== undefined && data.isManager === undefined) {
+      updates.canApprove = data.canApprove;
+    }
   }
 
   if (data.reportingToId !== undefined) {

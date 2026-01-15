@@ -3,12 +3,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ShieldCheck, Users, Briefcase, UserCog, CircleDollarSign, Search, Loader2, Crown, UserCheck } from 'lucide-react';
+import { ShieldCheck, Users, Search, Loader2, Crown, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TYPES & CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+type Role = 'OWNER' | 'ADMIN' | 'MANAGER' | 'HR' | 'FINANCE' | 'OPERATIONS' | 'EMPLOYEE';
 
 interface TeamMember {
   id: string;
@@ -24,30 +29,51 @@ interface TeamMember {
   reportingTo: { id: string; name: string } | null;
 }
 
-interface PermissionStats {
+interface RoleStats {
   total: number;
   admins: number;
   managers: number;
-  operations: number;
-  hr: number;
-  finance: number;
+  employees: number;
 }
+
+// Role display configuration
+const ROLE_CONFIG: Record<Role, { label: string; color: string; description: string }> = {
+  OWNER: { label: 'Owner', color: 'bg-amber-500', description: 'Organization owner with full access' },
+  ADMIN: { label: 'Admin', color: 'bg-red-500', description: 'Full access to all modules' },
+  MANAGER: { label: 'Manager', color: 'bg-purple-500', description: 'Can approve direct reports' },
+  HR: { label: 'HR', color: 'bg-green-500', description: 'HR module access' },
+  FINANCE: { label: 'Finance', color: 'bg-yellow-500', description: 'Finance module access' },
+  OPERATIONS: { label: 'Operations', color: 'bg-blue-500', description: 'Operations module access' },
+  EMPLOYEE: { label: 'Employee', color: 'bg-gray-400', description: 'Basic self-service access' },
+};
+
+// Derive role from permission flags
+function deriveRole(member: TeamMember): Role {
+  if (member.isOwner) return 'OWNER';
+  if (member.isAdmin) return 'ADMIN';
+  if (member.isManager) return 'MANAGER';
+  if (member.hasHRAccess) return 'HR';
+  if (member.hasFinanceAccess) return 'FINANCE';
+  if (member.hasOperationsAccess) return 'OPERATIONS';
+  return 'EMPLOYEE';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
 
 export function AccessControlClient() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [filteredMembers, setFilteredMembers] = useState<TeamMember[]>([]);
-  const [managers, setManagers] = useState<TeamMember[]>([]);
+  const [potentialManagers, setPotentialManagers] = useState<TeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<string>('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [stats, setStats] = useState<PermissionStats>({
+  const [stats, setStats] = useState<RoleStats>({
     total: 0,
     admins: 0,
     managers: 0,
-    operations: 0,
-    hr: 0,
-    finance: 0,
+    employees: 0,
   });
 
   const fetchMembers = useCallback(async () => {
@@ -61,19 +87,21 @@ export function AccessControlClient() {
       setMembers(membersList);
       setFilteredMembers(membersList);
 
-      // Calculate stats
+      // Calculate stats by derived role
+      const adminCount = membersList.filter((m: TeamMember) => m.isOwner || m.isAdmin).length;
+      const managerCount = membersList.filter((m: TeamMember) => !m.isOwner && !m.isAdmin && m.isManager).length;
+      const employeeCount = membersList.length - adminCount - managerCount;
+
       setStats({
         total: membersList.length,
-        admins: membersList.filter((m: TeamMember) => m.isAdmin).length,
-        managers: membersList.filter((m: TeamMember) => m.isManager).length,
-        operations: membersList.filter((m: TeamMember) => m.hasOperationsAccess).length,
-        hr: membersList.filter((m: TeamMember) => m.hasHRAccess).length,
-        finance: membersList.filter((m: TeamMember) => m.hasFinanceAccess).length,
+        admins: adminCount,
+        managers: managerCount,
+        employees: employeeCount,
       });
 
-      // Get managers for the "Reports To" dropdown (admins and managers can be selected)
-      const managersList = membersList.filter((m: TeamMember) => m.isAdmin || m.isManager);
-      setManagers(managersList);
+      // Get potential managers for the "Reports To" dropdown
+      const managersList = membersList.filter((m: TeamMember) => m.isOwner || m.isAdmin || m.isManager);
+      setPotentialManagers(managersList);
     } catch (error) {
       toast.error('Failed to load team members');
       console.error(error);
@@ -86,72 +114,44 @@ export function AccessControlClient() {
     fetchMembers();
   }, [fetchMembers]);
 
-  // Filter members based on search and filter
+  // Filter members based on search
   useEffect(() => {
-    let result = members;
+    if (!search) {
+      setFilteredMembers(members);
+      return;
+    }
 
-    // Apply search
-    if (search) {
-      const searchLower = search.toLowerCase();
-      result = result.filter(
+    const searchLower = search.toLowerCase();
+    setFilteredMembers(
+      members.filter(
         (m) =>
           m.name?.toLowerCase().includes(searchLower) ||
           m.email.toLowerCase().includes(searchLower)
-      );
-    }
+      )
+    );
+  }, [members, search]);
 
-    // Apply filter
-    if (filter !== 'all') {
-      switch (filter) {
-        case 'admins':
-          result = result.filter((m) => m.isAdmin);
-          break;
-        case 'managers':
-          result = result.filter((m) => m.isManager);
-          break;
-        case 'operations':
-          result = result.filter((m) => m.hasOperationsAccess);
-          break;
-        case 'hr':
-          result = result.filter((m) => m.hasHRAccess);
-          break;
-        case 'finance':
-          result = result.filter((m) => m.hasFinanceAccess);
-          break;
-      }
-    }
+  const updateRole = async (memberId: string, newRole: Role) => {
+    if (newRole === 'OWNER') return; // Cannot set someone as owner
 
-    setFilteredMembers(result);
-  }, [members, search, filter]);
-
-  const updatePermission = async (
-    memberId: string,
-    field: 'isAdmin' | 'isManager' | 'hasOperationsAccess' | 'hasHRAccess' | 'hasFinanceAccess',
-    value: boolean
-  ) => {
     setUpdatingId(memberId);
     try {
       const response = await fetch(`/api/users/${memberId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: value }),
+        body: JSON.stringify({ role: newRole }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to update permission');
+        throw new Error(data.error || 'Failed to update role');
       }
 
-      // Update local state
-      setMembers((prev) =>
-        prev.map((m) =>
-          m.id === memberId ? { ...m, [field]: value } : m
-        )
-      );
-
-      toast.success('Permission updated');
+      // Refresh the data to get updated permissions
+      await fetchMembers();
+      toast.success(`Role updated to ${ROLE_CONFIG[newRole].label}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to update permission');
+      toast.error(error instanceof Error ? error.message : 'Failed to update role');
     } finally {
       setUpdatingId(null);
     }
@@ -172,7 +172,7 @@ export function AccessControlClient() {
       }
 
       // Update local state
-      const manager = managers.find((m) => m.id === reportingToId);
+      const manager = potentialManagers.find((m) => m.id === reportingToId);
       setMembers((prev) =>
         prev.map((m) =>
           m.id === memberId
@@ -215,8 +215,8 @@ export function AccessControlClient() {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card className="cursor-pointer hover:border-gray-400 transition-colors" onClick={() => setFilter('all')}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-gray-500" />
@@ -226,7 +226,7 @@ export function AccessControlClient() {
           </CardContent>
         </Card>
 
-        <Card className={`cursor-pointer hover:border-red-400 transition-colors ${filter === 'admins' ? 'border-red-500' : ''}`} onClick={() => setFilter(filter === 'admins' ? 'all' : 'admins')}>
+        <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-red-500" />
@@ -236,7 +236,7 @@ export function AccessControlClient() {
           </CardContent>
         </Card>
 
-        <Card className={`cursor-pointer hover:border-purple-400 transition-colors ${filter === 'managers' ? 'border-purple-500' : ''}`} onClick={() => setFilter(filter === 'managers' ? 'all' : 'managers')}>
+        <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
               <UserCheck className="h-4 w-4 text-purple-500" />
@@ -246,57 +246,35 @@ export function AccessControlClient() {
           </CardContent>
         </Card>
 
-        <Card className={`cursor-pointer hover:border-blue-400 transition-colors ${filter === 'operations' ? 'border-blue-500' : ''}`} onClick={() => setFilter(filter === 'operations' ? 'all' : 'operations')}>
+        <Card>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
-              <Briefcase className="h-4 w-4 text-blue-500" />
-              <span className="text-sm text-gray-600">Operations</span>
+              <Users className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-gray-600">Employees</span>
             </div>
-            <p className="text-2xl font-bold mt-1">{stats.operations}</p>
-          </CardContent>
-        </Card>
-
-        <Card className={`cursor-pointer hover:border-green-400 transition-colors ${filter === 'hr' ? 'border-green-500' : ''}`} onClick={() => setFilter(filter === 'hr' ? 'all' : 'hr')}>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center gap-2">
-              <UserCog className="h-4 w-4 text-green-500" />
-              <span className="text-sm text-gray-600">HR</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{stats.hr}</p>
-          </CardContent>
-        </Card>
-
-        <Card className={`cursor-pointer hover:border-yellow-400 transition-colors ${filter === 'finance' ? 'border-yellow-500' : ''}`} onClick={() => setFilter(filter === 'finance' ? 'all' : 'finance')}>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center gap-2">
-              <CircleDollarSign className="h-4 w-4 text-yellow-600" />
-              <span className="text-sm text-gray-600">Finance</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{stats.finance}</p>
+            <p className="text-2xl font-bold mt-1">{stats.employees}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Permissions Table */}
+      {/* Team Roles Table */}
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <CardTitle>Team Permissions</CardTitle>
+              <CardTitle>Team Roles</CardTitle>
               <CardDescription>
-                Toggle permissions for each team member. Admins have full access to all modules.
+                Assign roles to team members. Each role grants specific access.
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search by name or email..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 w-[250px]"
-                />
-              </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search by name or email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 w-full md:w-[250px]"
+              />
             </div>
           </div>
         </CardHeader>
@@ -305,151 +283,183 @@ export function AccessControlClient() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[250px]">Member</TableHead>
-                  <TableHead className="text-center w-[80px]">Admin</TableHead>
-                  <TableHead className="text-center w-[80px]">Manager</TableHead>
-                  <TableHead className="text-center w-[100px] hidden md:table-cell">Operations</TableHead>
-                  <TableHead className="text-center w-[80px] hidden md:table-cell">HR</TableHead>
-                  <TableHead className="text-center w-[80px] hidden md:table-cell">Finance</TableHead>
-                  <TableHead className="w-[180px]">Reports To</TableHead>
+                  <TableHead className="w-[300px]">Member</TableHead>
+                  <TableHead className="w-[180px]">Role</TableHead>
+                  <TableHead className="w-[200px]">Reports To</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredMembers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={3} className="text-center py-8 text-gray-500">
                       No team members found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredMembers.map((member) => (
-                    <TableRow key={member.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
-                            {member.image ? (
-                              <img
-                                src={member.image}
-                                alt={member.name || member.email}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-xs font-medium text-gray-600">
-                                {getInitials(member.name, member.email)}
-                              </span>
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium truncate">{member.name || member.email}</p>
-                              {member.isOwner && (
-                                <Crown className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                  filteredMembers.map((member) => {
+                    const currentRole = deriveRole(member);
+                    const isOwner = member.isOwner;
+
+                    return (
+                      <TableRow key={member.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                              {member.image ? (
+                                <img
+                                  src={member.image}
+                                  alt={member.name || member.email}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-sm font-medium text-gray-600">
+                                  {getInitials(member.name, member.email)}
+                                </span>
                               )}
                             </div>
-                            {member.name && (
-                              <p className="text-sm text-gray-500 truncate">{member.email}</p>
-                            )}
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium truncate">{member.name || member.email}</p>
+                                {isOwner && (
+                                  <Crown className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                                )}
+                              </div>
+                              {member.name && (
+                                <p className="text-sm text-gray-500 truncate">{member.email}</p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center">
-                          {member.isOwner ? (
-                            <Badge variant="default" className="bg-amber-500">Owner</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {isOwner ? (
+                            <Badge className={ROLE_CONFIG.OWNER.color}>
+                              {ROLE_CONFIG.OWNER.label}
+                            </Badge>
                           ) : (
-                            <Switch
-                              checked={member.isAdmin}
-                              onCheckedChange={(checked) => updatePermission(member.id, 'isAdmin', checked)}
+                            <Select
+                              value={currentRole}
+                              onValueChange={(value) => updateRole(member.id, value as Role)}
                               disabled={updatingId === member.id}
-                            />
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center">
-                          <Switch
-                            checked={member.isManager}
-                            onCheckedChange={(checked) => updatePermission(member.id, 'isManager', checked)}
-                            disabled={updatingId === member.id || member.isAdmin || member.isOwner}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center hidden md:table-cell">
-                        <div className="flex justify-center">
-                          <Switch
-                            checked={member.hasOperationsAccess}
-                            onCheckedChange={(checked) => updatePermission(member.id, 'hasOperationsAccess', checked)}
-                            disabled={updatingId === member.id || member.isAdmin || member.isOwner}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center hidden md:table-cell">
-                        <div className="flex justify-center">
-                          <Switch
-                            checked={member.hasHRAccess}
-                            onCheckedChange={(checked) => updatePermission(member.id, 'hasHRAccess', checked)}
-                            disabled={updatingId === member.id || member.isAdmin || member.isOwner}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center hidden md:table-cell">
-                        <div className="flex justify-center">
-                          <Switch
-                            checked={member.hasFinanceAccess}
-                            onCheckedChange={(checked) => updatePermission(member.id, 'hasFinanceAccess', checked)}
-                            disabled={updatingId === member.id || member.isAdmin || member.isOwner}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={member.reportingTo?.id || 'none'}
-                          onValueChange={(value) => updateReportingTo(member.id, value === 'none' ? null : value)}
-                          disabled={updatingId === member.id}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select manager" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">No manager</SelectItem>
-                            {managers
-                              .filter((m) => m.id !== member.id)
-                              .map((manager) => (
-                                <SelectItem key={manager.id} value={manager.id}>
-                                  {manager.name || manager.email}
+                            >
+                              <SelectTrigger className="w-[150px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="ADMIN">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-2 w-2 rounded-full bg-red-500" />
+                                    Admin
+                                  </div>
                                 </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                                <SelectItem value="MANAGER">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-2 w-2 rounded-full bg-purple-500" />
+                                    Manager
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="HR">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-2 w-2 rounded-full bg-green-500" />
+                                    HR
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="FINANCE">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                                    Finance
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="OPERATIONS">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-2 w-2 rounded-full bg-blue-500" />
+                                    Operations
+                                  </div>
+                                </SelectItem>
+                                <SelectItem value="EMPLOYEE">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-2 w-2 rounded-full bg-gray-400" />
+                                    Employee
+                                  </div>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={member.reportingTo?.id || 'none'}
+                            onValueChange={(value) => updateReportingTo(member.id, value === 'none' ? null : value)}
+                            disabled={updatingId === member.id || isOwner}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="No manager" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">No manager</SelectItem>
+                              {potentialManagers
+                                .filter((m) => m.id !== member.id)
+                                .map((manager) => (
+                                  <SelectItem key={manager.id} value={manager.id}>
+                                    {manager.name || manager.email}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
           </div>
 
-          {/* Legend */}
-          <div className="mt-4 flex flex-wrap gap-4 text-sm text-gray-500">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-red-500" />
-              <span>Admin = Full access to all modules</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <UserCheck className="h-4 w-4 text-purple-500" />
-              <span>Manager = Can approve direct reports</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Briefcase className="h-4 w-4 text-blue-500" />
-              <span>Operations = Assets, Subscriptions, Suppliers</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <UserCog className="h-4 w-4 text-green-500" />
-              <span>HR = Employees, Leave</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CircleDollarSign className="h-4 w-4 text-yellow-600" />
-              <span>Finance = Payroll, Purchase Requests</span>
+          {/* Role Legend */}
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">Role Descriptions</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+              <div className="flex items-start gap-2">
+                <div className="h-2 w-2 rounded-full bg-red-500 mt-1.5 flex-shrink-0" />
+                <div>
+                  <span className="font-medium">Admin</span>
+                  <span className="text-gray-500"> - Full access to all modules</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="h-2 w-2 rounded-full bg-purple-500 mt-1.5 flex-shrink-0" />
+                <div>
+                  <span className="font-medium">Manager</span>
+                  <span className="text-gray-500"> - Can approve direct reports</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+                <div>
+                  <span className="font-medium">HR</span>
+                  <span className="text-gray-500"> - Employees, Leave, Payroll</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="h-2 w-2 rounded-full bg-yellow-500 mt-1.5 flex-shrink-0" />
+                <div>
+                  <span className="font-medium">Finance</span>
+                  <span className="text-gray-500"> - Purchase Requests, Billing</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="h-2 w-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
+                <div>
+                  <span className="font-medium">Operations</span>
+                  <span className="text-gray-500"> - Assets, Subscriptions, Suppliers</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="h-2 w-2 rounded-full bg-gray-400 mt-1.5 flex-shrink-0" />
+                <div>
+                  <span className="font-medium">Employee</span>
+                  <span className="text-gray-500"> - Self-service access only</span>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>

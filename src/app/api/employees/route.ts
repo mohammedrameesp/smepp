@@ -125,6 +125,7 @@ export const GET = withErrorHandler(
         isOnWps: emp.isOnWps,
         // Permission flags
         isAdmin: emp.isAdmin,
+        isManager: emp.canApprove, // Map canApprove to isManager for role derivation
         hasOperationsAccess: emp.hasOperationsAccess,
         hasHRAccess: emp.hasHRAccess,
         hasFinanceAccess: emp.hasFinanceAccess,

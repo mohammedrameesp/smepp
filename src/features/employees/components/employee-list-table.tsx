@@ -19,6 +19,33 @@ import { EmployeeActions } from './employee-actions';
 import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
 import { calculateTenure } from '@/features/employees/lib/hr-utils';
 
+// Role derivation for simplified access control display
+type AccessRole = 'Admin' | 'Manager' | 'HR' | 'Finance' | 'Operations' | 'Employee';
+
+function deriveAccessRole(employee: {
+  isAdmin?: boolean;
+  isManager?: boolean;
+  hasHRAccess?: boolean;
+  hasFinanceAccess?: boolean;
+  hasOperationsAccess?: boolean;
+}): AccessRole {
+  if (employee.isAdmin) return 'Admin';
+  if (employee.isManager) return 'Manager';
+  if (employee.hasHRAccess) return 'HR';
+  if (employee.hasFinanceAccess) return 'Finance';
+  if (employee.hasOperationsAccess) return 'Operations';
+  return 'Employee';
+}
+
+const ROLE_STYLES: Record<AccessRole, { bg: string; text: string; icon: typeof ShieldCheck }> = {
+  Admin: { bg: 'bg-red-100', text: 'text-red-700', icon: ShieldCheck },
+  Manager: { bg: 'bg-purple-100', text: 'text-purple-700', icon: UserCog },
+  HR: { bg: 'bg-green-100', text: 'text-green-700', icon: UserCog },
+  Finance: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: CircleDollarSign },
+  Operations: { bg: 'bg-blue-100', text: 'text-blue-700', icon: Briefcase },
+  Employee: { bg: 'bg-gray-100', text: 'text-gray-600', icon: User },
+};
+
 interface Employee {
   id: string;
   name: string | null;
@@ -28,6 +55,7 @@ interface Employee {
   createdAt: string;
   // Permission flags
   isAdmin?: boolean;
+  isManager?: boolean;
   hasOperationsAccess?: boolean;
   hasHRAccess?: boolean;
   hasFinanceAccess?: boolean;
@@ -330,38 +358,17 @@ export function EmployeeListTable() {
                     {employee.hrProfile?.designation || <span className="text-gray-400">-</span>}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    <div className="flex flex-wrap gap-1">
-                      {employee.isAdmin ? (
-                        <Badge variant="destructive" className="gap-1 text-xs">
-                          <ShieldCheck className="h-3 w-3" />
-                          Admin
+                    {(() => {
+                      const role = deriveAccessRole(employee);
+                      const style = ROLE_STYLES[role];
+                      const Icon = style.icon;
+                      return (
+                        <Badge variant="secondary" className={`gap-1 text-xs ${style.bg} ${style.text} hover:${style.bg}`}>
+                          <Icon className="h-3 w-3" />
+                          {role}
                         </Badge>
-                      ) : (
-                        <>
-                          {employee.hasOperationsAccess && (
-                            <Badge variant="secondary" className="gap-1 text-xs bg-blue-100 text-blue-700 hover:bg-blue-100">
-                              <Briefcase className="h-3 w-3" />
-                              Ops
-                            </Badge>
-                          )}
-                          {employee.hasHRAccess && (
-                            <Badge variant="secondary" className="gap-1 text-xs bg-green-100 text-green-700 hover:bg-green-100">
-                              <UserCog className="h-3 w-3" />
-                              HR
-                            </Badge>
-                          )}
-                          {employee.hasFinanceAccess && (
-                            <Badge variant="secondary" className="gap-1 text-xs bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
-                              <CircleDollarSign className="h-3 w-3" />
-                              Fin
-                            </Badge>
-                          )}
-                        </>
-                      )}
-                      {!employee.isAdmin && !employee.hasOperationsAccess && !employee.hasHRAccess && !employee.hasFinanceAccess && (
-                        <span className="text-gray-400 text-xs">-</span>
-                      )}
-                    </div>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell className="text-center">
                     <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 text-blue-700">
