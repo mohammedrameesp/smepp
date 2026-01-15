@@ -550,6 +550,10 @@ export function withErrorHandler(
           ...tenantContext,
           isOwner: session?.user.isOwner ?? false,
           isAdmin: session?.user.isAdmin ?? false,
+          // Department access flags
+          hasHRAccess: session?.user.hasHRAccess ?? false,
+          hasFinanceAccess: session?.user.hasFinanceAccess ?? false,
+          hasOperationsAccess: session?.user.hasOperationsAccess ?? false,
         };
       }
 

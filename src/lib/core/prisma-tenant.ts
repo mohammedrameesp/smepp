@@ -42,6 +42,10 @@ export interface TenantContext {
   subscriptionTier?: string;
   isOwner?: boolean; // TeamMember boolean flag
   isAdmin?: boolean; // TeamMember boolean flag
+  // Department access flags
+  hasHRAccess?: boolean;
+  hasFinanceAccess?: boolean;
+  hasOperationsAccess?: boolean;
 }
 
 // Models that have tenantId field and need tenant isolation
