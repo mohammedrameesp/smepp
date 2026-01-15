@@ -1972,7 +1972,7 @@ export default function OrganizationDetailPage() {
                 </Alert>
               )}
               {emailError && (
-                <Alert variant="destructive">
+                <Alert variant="error">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{emailError}</AlertDescription>
                 </Alert>

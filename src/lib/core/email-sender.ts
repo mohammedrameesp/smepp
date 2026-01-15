@@ -92,6 +92,7 @@ export async function sendEmailWithFailureHandling(
       subject,
       html,
       text,
+      tenantId, // Use org-specific SMTP if configured
     });
 
     // sendEmail returns { success, messageId?, error? } instead of throwing

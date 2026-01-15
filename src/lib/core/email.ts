@@ -1,10 +1,15 @@
 /**
  * @file email.ts
- * @description Email sending service using Resend - handles single and batch email sending
+ * @description Email sending service using Resend or custom SMTP - handles single and batch email sending
  * @module lib/core
  */
 
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
+import type { Transporter } from 'nodemailer';
+import { prisma } from '@/lib/core/prisma';
+import { decrypt } from '@/lib/oauth/utils';
+import logger from '@/lib/core/log';
 
 // Lazy initialization to avoid throwing at module load time when API key is missing
 let resendInstance: Resend | null = null;
@@ -28,16 +33,96 @@ export interface EmailOptions {
   text?: string;
   html?: string;
   from?: string;
+  /** Organization ID - if provided, will check for custom SMTP config */
+  tenantId?: string;
 }
 
-export async function sendEmail({ to, subject, text, html, from }: EmailOptions) {
+/**
+ * Get custom SMTP transporter for an organization if configured
+ */
+async function getCustomSmtpTransporter(tenantId: string): Promise<{ transporter: Transporter; from: string } | null> {
+  try {
+    const org = await prisma.organization.findUnique({
+      where: { id: tenantId },
+      select: {
+        customSmtpHost: true,
+        customSmtpPort: true,
+        customSmtpUser: true,
+        customSmtpPassword: true,
+        customSmtpSecure: true,
+        customEmailFrom: true,
+        customEmailName: true,
+      },
+    });
+
+    if (!org?.customSmtpHost || !org?.customSmtpPort || !org?.customSmtpUser ||
+        !org?.customSmtpPassword || !org?.customEmailFrom) {
+      return null;
+    }
+
+    const smtpPassword = decrypt(org.customSmtpPassword);
+    if (!smtpPassword) {
+      logger.error({ tenantId }, 'Failed to decrypt SMTP password for organization');
+      return null;
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: org.customSmtpHost,
+      port: org.customSmtpPort,
+      secure: org.customSmtpSecure,
+      auth: {
+        user: org.customSmtpUser,
+        pass: smtpPassword,
+      },
+    });
+
+    const from = org.customEmailName
+      ? `"${org.customEmailName}" <${org.customEmailFrom}>`
+      : org.customEmailFrom;
+
+    return { transporter, from };
+  } catch (error) {
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', tenantId },
+      'Failed to get custom SMTP transporter');
+    return null;
+  }
+}
+
+export async function sendEmail({ to, subject, text, html, from, tenantId }: EmailOptions) {
+  const toAddresses = Array.isArray(to) ? to : [to];
+
+  // Check for custom SMTP first if tenantId is provided
+  if (tenantId) {
+    const customSmtp = await getCustomSmtpTransporter(tenantId);
+    if (customSmtp) {
+      try {
+        const info = await customSmtp.transporter.sendMail({
+          from: customSmtp.from,
+          to: toAddresses.join(', '),
+          subject,
+          text: text || subject,
+          html,
+        });
+
+        logger.info({ tenantId, messageId: info.messageId }, 'Email sent via custom SMTP');
+        return { success: true, messageId: info.messageId };
+      } catch (error) {
+        logger.error({
+          error: error instanceof Error ? error.message : 'Unknown error',
+          tenantId,
+        }, 'Custom SMTP email failed');
+        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      }
+    }
+  }
+
+  // Fallback to Resend (platform default)
   // Skip sending if no API key configured (development mode)
   if (!process.env.RESEND_API_KEY) {
     return { success: true, messageId: 'dev-mode-skipped' };
   }
 
   const fromAddress = from || DEFAULT_FROM;
-  const toAddresses = Array.isArray(to) ? to : [to];
 
   try {
     const resend = getResend();
