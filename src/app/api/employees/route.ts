@@ -24,6 +24,7 @@ export const GET = withErrorHandler(
     const sponsorshipType = searchParams.get('sponsorshipType') || 'all';
     const sortBy = searchParams.get('sort') || 'createdAt';
     const sortOrder = searchParams.get('order') || 'desc';
+    const canApproveFilter = searchParams.get('canApprove');
 
     // Build where clause for employees (filter by organization and isEmployee flag)
     const where: Record<string, unknown> = {
@@ -32,14 +33,34 @@ export const GET = withErrorHandler(
       isDeleted: false,
     };
 
+    // Build AND conditions for combining filters
+    const andConditions: Record<string, unknown>[] = [];
+
+    // Filter for users who can approve (managers/admins)
+    if (canApproveFilter === 'true') {
+      andConditions.push({
+        OR: [
+          { canApprove: true },
+          { isAdmin: true },
+        ],
+      });
+    }
+
     // Search by name, email, employee code, or QID
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { employeeCode: { contains: search, mode: 'insensitive' } },
-        { qidNumber: { contains: search, mode: 'insensitive' } },
-      ];
+      andConditions.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { employeeCode: { contains: search, mode: 'insensitive' } },
+          { qidNumber: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    // Apply AND conditions if any
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
     }
 
     // Filter by sponsorship type
