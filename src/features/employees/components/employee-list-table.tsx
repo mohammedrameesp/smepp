@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, AlertTriangle, Download, User, Package, Clock, RefreshCw, CheckCircle2, Circle, ShieldCheck, Briefcase, UserCog, CircleDollarSign, Shield } from 'lucide-react';
+import { Loader2, AlertTriangle, Download, User, Package, Clock, RefreshCw, CheckCircle2, Circle, ShieldCheck, Briefcase, UserCog, CircleDollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { EmployeeActions } from './employee-actions';
 import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
@@ -31,7 +31,6 @@ interface Employee {
   hasOperationsAccess?: boolean;
   hasHRAccess?: boolean;
   hasFinanceAccess?: boolean;
-  canApprove?: boolean;
   reportingTo?: { id: string; name: string } | null;
   _count: {
     assets: number;
@@ -357,15 +356,9 @@ export function EmployeeListTable() {
                               Fin
                             </Badge>
                           )}
-                          {employee.canApprove && (
-                            <Badge variant="secondary" className="gap-1 text-xs bg-purple-100 text-purple-700 hover:bg-purple-100">
-                              <Shield className="h-3 w-3" />
-                              Approver
-                            </Badge>
-                          )}
                         </>
                       )}
-                      {!employee.isAdmin && !employee.hasOperationsAccess && !employee.hasHRAccess && !employee.hasFinanceAccess && !employee.canApprove && (
+                      {!employee.isAdmin && !employee.hasOperationsAccess && !employee.hasHRAccess && !employee.hasFinanceAccess && (
                         <span className="text-gray-400 text-xs">-</span>
                       )}
                     </div>

@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, ShieldCheck, Users, Briefcase, UserCog, CircleDollarSign, Search, Loader2, Crown, User } from 'lucide-react';
+import { ShieldCheck, Users, Briefcase, UserCog, CircleDollarSign, Search, Loader2, Crown } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface TeamMember {
@@ -20,7 +20,6 @@ interface TeamMember {
   hasOperationsAccess: boolean;
   hasHRAccess: boolean;
   hasFinanceAccess: boolean;
-  canApprove: boolean;
   reportingTo: { id: string; name: string } | null;
 }
 
@@ -30,7 +29,6 @@ interface PermissionStats {
   operations: number;
   hr: number;
   finance: number;
-  approvers: number;
 }
 
 export function AccessControlClient() {
@@ -47,7 +45,6 @@ export function AccessControlClient() {
     operations: 0,
     hr: 0,
     finance: 0,
-    approvers: 0,
   });
 
   const fetchMembers = useCallback(async () => {
@@ -68,11 +65,10 @@ export function AccessControlClient() {
         operations: membersList.filter((m: TeamMember) => m.hasOperationsAccess).length,
         hr: membersList.filter((m: TeamMember) => m.hasHRAccess).length,
         finance: membersList.filter((m: TeamMember) => m.hasFinanceAccess).length,
-        approvers: membersList.filter((m: TeamMember) => m.canApprove).length,
       });
 
-      // Get managers for the "Reports To" dropdown
-      const managersList = membersList.filter((m: TeamMember) => m.isAdmin || m.canApprove);
+      // Get managers for the "Reports To" dropdown (admins can be managers)
+      const managersList = membersList.filter((m: TeamMember) => m.isAdmin);
       setManagers(managersList);
     } catch (error) {
       toast.error('Failed to load team members');
@@ -115,9 +111,6 @@ export function AccessControlClient() {
         case 'finance':
           result = result.filter((m) => m.hasFinanceAccess);
           break;
-        case 'approvers':
-          result = result.filter((m) => m.canApprove);
-          break;
       }
     }
 
@@ -126,7 +119,7 @@ export function AccessControlClient() {
 
   const updatePermission = async (
     memberId: string,
-    field: 'isAdmin' | 'hasOperationsAccess' | 'hasHRAccess' | 'hasFinanceAccess' | 'canApprove',
+    field: 'isAdmin' | 'hasOperationsAccess' | 'hasHRAccess' | 'hasFinanceAccess',
     value: boolean
   ) => {
     setUpdatingId(memberId);
@@ -215,7 +208,7 @@ export function AccessControlClient() {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <Card className="cursor-pointer hover:border-gray-400 transition-colors" onClick={() => setFilter('all')}>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
@@ -265,16 +258,6 @@ export function AccessControlClient() {
             <p className="text-2xl font-bold mt-1">{stats.finance}</p>
           </CardContent>
         </Card>
-
-        <Card className={`cursor-pointer hover:border-purple-400 transition-colors ${filter === 'approvers' ? 'border-purple-500' : ''}`} onClick={() => setFilter(filter === 'approvers' ? 'all' : 'approvers')}>
-          <CardContent className="pt-4 pb-3">
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-purple-500" />
-              <span className="text-sm text-gray-600">Approvers</span>
-            </div>
-            <p className="text-2xl font-bold mt-1">{stats.approvers}</p>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Permissions Table */}
@@ -310,14 +293,13 @@ export function AccessControlClient() {
                   <TableHead className="text-center w-[100px] hidden md:table-cell">Operations</TableHead>
                   <TableHead className="text-center w-[80px] hidden md:table-cell">HR</TableHead>
                   <TableHead className="text-center w-[80px] hidden md:table-cell">Finance</TableHead>
-                  <TableHead className="text-center w-[80px]">Approver</TableHead>
-                  <TableHead className="w-[180px] hidden lg:table-cell">Reports To</TableHead>
+                  <TableHead className="w-[180px]">Reports To</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredMembers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                       No team members found
                     </TableCell>
                   </TableRow>
@@ -392,16 +374,7 @@ export function AccessControlClient() {
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center">
-                          <Switch
-                            checked={member.canApprove}
-                            onCheckedChange={(checked) => updatePermission(member.id, 'canApprove', checked)}
-                            disabled={updatingId === member.id || member.isAdmin || member.isOwner}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
+                      <TableCell>
                         <Select
                           value={member.reportingTo?.id || 'none'}
                           onValueChange={(value) => updateReportingTo(member.id, value === 'none' ? null : value)}
@@ -446,10 +419,6 @@ export function AccessControlClient() {
             <div className="flex items-center gap-2">
               <CircleDollarSign className="h-4 w-4 text-yellow-600" />
               <span>Finance = Payroll, Purchase Requests</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-purple-500" />
-              <span>Approver = Can approve requests from reports</span>
             </div>
           </div>
         </CardContent>
