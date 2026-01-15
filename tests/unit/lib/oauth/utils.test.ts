@@ -12,6 +12,10 @@
  * - URL utility functions
  */
 
+// Unmock the OAuth utils module so we can test the real implementation
+// (it's mocked globally in jest.setup.ts for integration tests)
+jest.unmock('@/lib/oauth/utils');
+
 // Mock environment variables before importing
 const originalEnv = process.env;
 beforeAll(() => {

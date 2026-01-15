@@ -61,6 +61,24 @@ jest.mock('next-auth/next', () => ({
   getServerSession: mockGetServerSession,
 }));
 
+// Mock next-auth/jwt to avoid ESM issues with jose
+jest.mock('next-auth/jwt', () => ({
+  encode: jest.fn().mockResolvedValue('mock-jwt-token'),
+  decode: jest.fn().mockResolvedValue({ sub: 'user-123' }),
+  getToken: jest.fn().mockResolvedValue(null),
+}));
+
+// Mock OAuth utils to avoid Node.js crypto issues in jsdom environment
+jest.mock('@/lib/oauth/utils', () => ({
+  encrypt: jest.fn((text: string) => `encrypted:${text}`),
+  decrypt: jest.fn((text: string) => text.replace('encrypted:', '')),
+  generateState: jest.fn(() => 'mock-state'),
+  verifyState: jest.fn(() => true),
+  createOAuthSession: jest.fn(),
+  getOAuthSession: jest.fn(),
+  clearOAuthSession: jest.fn(),
+}));
+
 // Mock Prisma Client for unit tests
 const createModelMock = () => ({
   findUnique: jest.fn(),
