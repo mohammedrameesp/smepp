@@ -17,7 +17,12 @@ interface UserInfo {
   id: string;
   name: string | null;
   email: string;
-  role: string;
+}
+
+interface ManagerOption {
+  id: string;
+  name: string | null;
+  email: string;
 }
 
 interface HRProfileData {
@@ -72,20 +77,18 @@ interface HRProfileData {
   languagesKnown: string | null;
   skillsCertifications: string | null;
   workEmail?: string;
+  // Permission flags
   isAdmin?: boolean;
+  hasOperationsAccess?: boolean;
+  hasHRAccess?: boolean;
+  hasFinanceAccess?: boolean;
+  canApprove?: boolean;
+  reportingToId?: string | null;
+  // Other settings
   bypassNoticeRequirement?: boolean;
   isOnWps?: boolean;
   isEmployee?: boolean;
 }
-
-const APPROVAL_ROLES = [
-  { value: 'EMPLOYEE', label: 'Employee', description: 'No approval authority - can only submit requests' },
-  { value: 'MANAGER', label: 'Manager', description: 'Can approve leave and general requests for their team' },
-  { value: 'HR_MANAGER', label: 'HR Manager', description: 'Can approve leave and HR-related requests' },
-  { value: 'FINANCE_MANAGER', label: 'Finance Manager', description: 'Can approve purchase requests and budget items' },
-  { value: 'DIRECTOR', label: 'Director', description: 'Can approve high-value and executive-level requests' },
-  // Note: Dashboard ADMINs automatically have full approval authority
-];
 
 export default function AdminEmployeeEditPage() {
   const params = useParams();
@@ -93,8 +96,6 @@ export default function AdminEmployeeEditPage() {
   const [hrProfile, setHRProfile] = useState<HRProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedRole, setSelectedRole] = useState<string>('');
-  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
   const [bypassNotice, setBypassNotice] = useState(false);
   const [isUpdatingBypass, setIsUpdatingBypass] = useState(false);
   const [isOnWps, setIsOnWps] = useState(false);
@@ -102,8 +103,18 @@ export default function AdminEmployeeEditPage() {
   const [isEmployee, setIsEmployee] = useState(true);
   const [isUpdatingEmployee, setIsUpdatingEmployee] = useState(false);
   const [payrollEnabled, setPayrollEnabled] = useState(false);
+
+  // Permission flags
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isUpdatingAdmin, setIsUpdatingAdmin] = useState(false);
+  const [hasOperationsAccess, setHasOperationsAccess] = useState(false);
+  const [hasHRAccess, setHasHRAccess] = useState(false);
+  const [hasFinanceAccess, setHasFinanceAccess] = useState(false);
+  const [canApprove, setCanApprove] = useState(false);
+  const [reportingToId, setReportingToId] = useState<string | null>(null);
+  const [isUpdatingPermission, setIsUpdatingPermission] = useState(false);
+
+  // Manager options for "Reports To" dropdown
+  const [managers, setManagers] = useState<ManagerOption[]>([]);
 
   const employeeId = params?.id as string;
 
@@ -127,13 +138,16 @@ export default function AdminEmployeeEditPage() {
 
       const data = await response.json();
       setHRProfile(data);
-      if (data.user?.role) {
-        setSelectedRole(data.user.role);
-      }
       setBypassNotice(data.bypassNoticeRequirement === true);
       setIsOnWps(data.isOnWps === true);
       setIsEmployee(data.isEmployee !== false); // Default to true
+      // Permission flags
       setIsAdmin(data.isAdmin === true);
+      setHasOperationsAccess(data.hasOperationsAccess === true);
+      setHasHRAccess(data.hasHRAccess === true);
+      setHasFinanceAccess(data.hasFinanceAccess === true);
+      setCanApprove(data.canApprove === true);
+      setReportingToId(data.reportingToId || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load HR profile');
     } finally {
@@ -153,39 +167,84 @@ export default function AdminEmployeeEditPage() {
     }
   }, []);
 
+  const fetchManagers = useCallback(async () => {
+    try {
+      const response = await fetch('/api/employees?canApprove=true');
+      if (response.ok) {
+        const data = await response.json();
+        // Filter out the current employee from the list
+        const filteredManagers = (data.employees || [])
+          .filter((m: ManagerOption) => m.id !== employeeId)
+          .map((m: ManagerOption) => ({
+            id: m.id,
+            name: m.name,
+            email: m.email,
+          }));
+        setManagers(filteredManagers);
+      }
+    } catch {
+      // Ignore error - dropdown just won't have options
+    }
+  }, [employeeId]);
+
   useEffect(() => {
     if (employeeId) {
       fetchHRProfile();
       fetchEnabledModules();
+      fetchManagers();
     }
-  }, [employeeId, fetchHRProfile, fetchEnabledModules]);
+  }, [employeeId, fetchHRProfile, fetchEnabledModules, fetchManagers]);
 
-  const updateRole = async (newRole: string) => {
-    if (!newRole || newRole === hrProfile?.user?.role) return;
-
-    setIsUpdatingRole(true);
+  const updateBooleanPermission = async (
+    field: 'isAdmin' | 'hasOperationsAccess' | 'hasHRAccess' | 'hasFinanceAccess' | 'canApprove',
+    value: boolean,
+    setter: (val: boolean) => void,
+    successMessage: string
+  ) => {
+    setIsUpdatingPermission(true);
     try {
       const response = await fetch(`/api/users/${employeeId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: newRole }),
+        body: JSON.stringify({ [field]: value }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to update role');
+        throw new Error(data.error || 'Failed to update permission');
       }
 
-      toast.success(`Role updated to ${newRole}`);
-      fetchHRProfile(false); // Refresh the data without showing full loading state
+      setter(value);
+      toast.success(successMessage);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to update role');
-      // Reset to original role on error
-      if (hrProfile?.user?.role) {
-        setSelectedRole(hrProfile.user.role);
-      }
+      toast.error(err instanceof Error ? err.message : 'Failed to update permission');
+      fetchHRProfile(false);
     } finally {
-      setIsUpdatingRole(false);
+      setIsUpdatingPermission(false);
+    }
+  };
+
+  const updateReportingTo = async (value: string | null, successMessage: string) => {
+    setIsUpdatingPermission(true);
+    try {
+      const response = await fetch(`/api/users/${employeeId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reportingToId: value }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update manager');
+      }
+
+      setReportingToId(value);
+      toast.success(successMessage);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update manager');
+      fetchHRProfile(false);
+    } finally {
+      setIsUpdatingPermission(false);
     }
   };
 
@@ -274,44 +333,6 @@ export default function AdminEmployeeEditPage() {
     }
   };
 
-  const updateAdminAccess = async (enabled: boolean) => {
-    setIsUpdatingAdmin(true);
-    try {
-      const response = await fetch(`/api/users/${employeeId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isAdmin: enabled }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to update admin access');
-      }
-
-      setIsAdmin(enabled);
-      toast.success(enabled
-        ? 'Admin access granted - user must log out and back in'
-        : 'Admin access revoked - user must log out and back in'
-      );
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to update admin access');
-      setIsAdmin(!enabled); // Revert on error
-    } finally {
-      setIsUpdatingAdmin(false);
-    }
-  };
-
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'ADMIN':
-        return 'destructive';
-      case 'EMPLOYEE':
-        return 'default';
-      default:
-        return 'secondary';
-    }
-  };
-
   if (isLoading) {
     return (
       <>
@@ -357,104 +378,157 @@ export default function AdminEmployeeEditPage() {
           { label: hrProfile?.user?.name || 'Employee', href: `/admin/employees/${employeeId}` },
           { label: 'Edit' },
         ]}
-        badge={hrProfile?.user?.role ? { text: hrProfile.user.role, variant: getRoleBadgeVariant(hrProfile.user.role) as 'default' | 'success' | 'warning' | 'destructive' | 'info' | 'error' } : undefined}
+        badge={isAdmin ? { text: 'Admin', variant: 'error' } : undefined}
       />
 
       <PageContent className="max-w-5xl">
 
-          {/* Admin Access */}
-          {hrProfile?.user && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Dashboard Access
-                </CardTitle>
-                <CardDescription>
-                  Control whether this user can access the admin dashboard or only the employee portal
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="admin-access">Admin Access</Label>
-                    <p className="text-sm text-gray-500">
-                      Enable to grant access to the admin dashboard (/admin). Disable for employee-only access (/employee).
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {isUpdatingAdmin && (
-                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                    )}
-                    <Switch
-                      id="admin-access"
-                      checked={isAdmin}
-                      onCheckedChange={updateAdminAccess}
-                      disabled={isUpdatingAdmin}
-                    />
-                  </div>
-                </div>
-                {isAdmin && (
-                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                    <p className="text-sm text-blue-800">
-                      This user has admin access. They can manage assets, employees, and organization settings. The user must log out and log back in for changes to take effect.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Approval Role Management */}
+          {/* Permissions */}
           {hrProfile?.user && (
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
-                  Approval Role
+                  Permissions
                 </CardTitle>
                 <CardDescription>
-                  Assign an approval role to allow this employee to approve requests (leave, purchases, etc.)
+                  Control what this user can access and manage. Changes take effect on next login.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Approval Role</Label>
-                    <Select
-                      value={selectedRole}
-                      onValueChange={(value) => {
-                        setSelectedRole(value);
-                        updateRole(value);
-                      }}
-                      disabled={isUpdatingRole}
-                    >
-                      <SelectTrigger id="role" className="w-full md:w-[300px]">
-                        <SelectValue placeholder="Select approval role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {APPROVAL_ROLES.map((role) => (
-                          <SelectItem key={role.value} value={role.value}>
-                            {role.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {isUpdatingRole && (
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Updating role...
-                      </div>
-                    )}
+              <CardContent className="space-y-6">
+                {/* Full Admin Access */}
+                <div className="flex items-center justify-between pb-4 border-b">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="is-admin" className="text-base font-medium">Full Admin Access</Label>
+                    <p className="text-sm text-gray-500">
+                      Complete access to all modules and settings. Can approve any request.
+                    </p>
                   </div>
-                  <div className="text-sm text-gray-500 space-y-1 bg-gray-50 p-3 rounded-md">
-                    {APPROVAL_ROLES.map((role) => (
-                      <div key={role.value} className={selectedRole === role.value ? 'font-medium text-gray-700' : ''}>
-                        <span className="font-semibold">{role.label}:</span> {role.description}
-                      </div>
-                    ))}
+                  <div className="flex items-center gap-2">
+                    {isUpdatingPermission && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+                    <Switch
+                      id="is-admin"
+                      checked={isAdmin}
+                      onCheckedChange={(checked) => updateBooleanPermission('isAdmin', checked, setIsAdmin, checked ? 'Admin access granted' : 'Admin access revoked')}
+                      disabled={isUpdatingPermission}
+                    />
                   </div>
                 </div>
+
+                {/* Module Access - only show if not admin */}
+                {!isAdmin && (
+                  <>
+                    <div className="space-y-4">
+                      <h4 className="text-sm font-medium text-gray-700">Module Access</h4>
+
+                      {/* Operations Access */}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="ops-access">Operations</Label>
+                          <p className="text-sm text-gray-500">
+                            Assets, Subscriptions, Suppliers
+                          </p>
+                        </div>
+                        <Switch
+                          id="ops-access"
+                          checked={hasOperationsAccess}
+                          onCheckedChange={(checked) => updateBooleanPermission('hasOperationsAccess', checked, setHasOperationsAccess, checked ? 'Operations access granted' : 'Operations access revoked')}
+                          disabled={isUpdatingPermission}
+                        />
+                      </div>
+
+                      {/* HR Access */}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="hr-access">HR</Label>
+                          <p className="text-sm text-gray-500">
+                            Employees, Leave management
+                          </p>
+                        </div>
+                        <Switch
+                          id="hr-access"
+                          checked={hasHRAccess}
+                          onCheckedChange={(checked) => updateBooleanPermission('hasHRAccess', checked, setHasHRAccess, checked ? 'HR access granted' : 'HR access revoked')}
+                          disabled={isUpdatingPermission}
+                        />
+                      </div>
+
+                      {/* Finance Access */}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="finance-access">Finance</Label>
+                          <p className="text-sm text-gray-500">
+                            Payroll, Purchase Requests
+                          </p>
+                        </div>
+                        <Switch
+                          id="finance-access"
+                          checked={hasFinanceAccess}
+                          onCheckedChange={(checked) => updateBooleanPermission('hasFinanceAccess', checked, setHasFinanceAccess, checked ? 'Finance access granted' : 'Finance access revoked')}
+                          disabled={isUpdatingPermission}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Approval Authority */}
+                    <div className="space-y-4 pt-4 border-t">
+                      <h4 className="text-sm font-medium text-gray-700">Approval Authority</h4>
+
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="can-approve">Can Approve Requests</Label>
+                          <p className="text-sm text-gray-500">
+                            Can approve leave, purchase requests, etc. from direct reports
+                          </p>
+                        </div>
+                        <Switch
+                          id="can-approve"
+                          checked={canApprove}
+                          onCheckedChange={(checked) => updateBooleanPermission('canApprove', checked, setCanApprove, checked ? 'Approval authority granted' : 'Approval authority revoked')}
+                          disabled={isUpdatingPermission}
+                        />
+                      </div>
+
+                      {/* Reports To - only show if canApprove is enabled */}
+                      {canApprove && managers.length > 0 && (
+                        <div className="space-y-2">
+                          <Label htmlFor="reports-to">Reports To (Optional)</Label>
+                          <Select
+                            value={reportingToId || 'none'}
+                            onValueChange={(value) => {
+                              const newValue = value === 'none' ? null : value;
+                              updateReportingTo(newValue, 'Manager updated');
+                            }}
+                            disabled={isUpdatingPermission}
+                          >
+                            <SelectTrigger id="reports-to" className="w-full md:w-[300px]">
+                              <SelectValue placeholder="Select manager" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">No manager</SelectItem>
+                              {managers.map((manager) => (
+                                <SelectItem key={manager.id} value={manager.id}>
+                                  {manager.name || manager.email}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-gray-500">
+                            Who does this person report to? Their manager can also approve their requests.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {isAdmin && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-sm text-blue-800">
+                      Full admin access is enabled. This user has complete access to all modules and can approve any request.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

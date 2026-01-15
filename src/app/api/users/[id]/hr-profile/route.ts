@@ -124,7 +124,13 @@ async function getHRProfileHandler(
       email: member.email,
     },
     workEmail: member.email,
-    isAdmin: member.isAdmin, // Dashboard access
+    // Permission flags
+    isAdmin: member.isAdmin,
+    hasOperationsAccess: member.hasOperationsAccess,
+    hasHRAccess: member.hasHRAccess,
+    hasFinanceAccess: member.hasFinanceAccess,
+    canApprove: member.canApprove,
+    reportingToId: member.reportingToId,
   });
 }
 

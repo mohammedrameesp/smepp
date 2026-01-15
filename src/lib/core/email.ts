@@ -5,11 +5,12 @@
  */
 
 import { Resend } from 'resend';
-import nodemailer from 'nodemailer';
-import type { Transporter } from 'nodemailer';
 import { prisma } from '@/lib/core/prisma';
 import { decrypt } from '@/lib/oauth/utils';
 import logger from '@/lib/core/log';
+
+// Nodemailer types (dynamically imported to avoid Edge Runtime issues)
+type Transporter = Awaited<ReturnType<typeof import('nodemailer')['createTransport']>>;
 
 // Lazy initialization to avoid throwing at module load time when API key is missing
 let resendInstance: Resend | null = null;
@@ -39,6 +40,7 @@ export interface EmailOptions {
 
 /**
  * Get custom SMTP transporter for an organization if configured
+ * Uses dynamic import for nodemailer to avoid Edge Runtime bundling issues
  */
 async function getCustomSmtpTransporter(tenantId: string): Promise<{ transporter: Transporter; from: string } | null> {
   try {
@@ -66,6 +68,8 @@ async function getCustomSmtpTransporter(tenantId: string): Promise<{ transporter
       return null;
     }
 
+    // Dynamic import to avoid Edge Runtime bundling issues
+    const nodemailer = await import('nodemailer');
     const transporter = nodemailer.createTransport({
       host: org.customSmtpHost,
       port: org.customSmtpPort,

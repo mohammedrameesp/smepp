@@ -12,12 +12,26 @@ import { z } from 'zod';
 
 const updateUserSchema = z.object({
   name: z.string().optional(),
-  // isAdmin field controls dashboard access (true = admin dashboard, false = employee dashboard)
+  // Permission flags (new boolean-based system)
   isAdmin: z.boolean().optional(),
+  hasOperationsAccess: z.boolean().optional(),
+  hasHRAccess: z.boolean().optional(),
+  hasFinanceAccess: z.boolean().optional(),
+  canApprove: z.boolean().optional(),
+  // Manager relationship for approval routing
+  reportingToId: z.string().nullable().optional(),
 });
 
 // Transform the data for TeamMember updates
-function transformUpdateData(data: { name?: string; isAdmin?: boolean }) {
+function transformUpdateData(data: {
+  name?: string;
+  isAdmin?: boolean;
+  hasOperationsAccess?: boolean;
+  hasHRAccess?: boolean;
+  hasFinanceAccess?: boolean;
+  canApprove?: boolean;
+  reportingToId?: string | null;
+}) {
   const updates: Record<string, unknown> = {};
 
   if (data.name) {
@@ -26,6 +40,26 @@ function transformUpdateData(data: { name?: string; isAdmin?: boolean }) {
 
   if (data.isAdmin !== undefined) {
     updates.isAdmin = data.isAdmin;
+  }
+
+  if (data.hasOperationsAccess !== undefined) {
+    updates.hasOperationsAccess = data.hasOperationsAccess;
+  }
+
+  if (data.hasHRAccess !== undefined) {
+    updates.hasHRAccess = data.hasHRAccess;
+  }
+
+  if (data.hasFinanceAccess !== undefined) {
+    updates.hasFinanceAccess = data.hasFinanceAccess;
+  }
+
+  if (data.canApprove !== undefined) {
+    updates.canApprove = data.canApprove;
+  }
+
+  if (data.reportingToId !== undefined) {
+    updates.reportingToId = data.reportingToId;
   }
 
   return updates;
@@ -60,6 +94,11 @@ async function getUserHandler(
       email: true,
       image: true,
       isAdmin: true,
+      hasOperationsAccess: true,
+      hasHRAccess: true,
+      hasFinanceAccess: true,
+      canApprove: true,
+      reportingToId: true,
       isEmployee: true,
       dateOfJoining: true,
       gender: true,
