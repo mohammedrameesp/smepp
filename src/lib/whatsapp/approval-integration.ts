@@ -159,6 +159,9 @@ export async function notifyApproversViaWhatsApp(
   entityId: string,
   firstStepRole: Role
 ): Promise<void> {
+  // Debug: Ensure function is called
+  console.log('>>> WhatsApp notifyApproversViaWhatsApp CALLED', { tenantId, entityType, entityId, firstStepRole });
+
   const logContext = { tenantId, entityType, entityId, firstStepRole };
   logger.info(logContext, 'WhatsApp Integration: Starting notifyApproversViaWhatsApp');
 

@@ -568,6 +568,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       } else {
         // No policy - fall back to notifying all admins in the same organization
         logger.info({ tenantId, leaveRequestId: leaveRequest.id }, 'No approval policy - using fallback notification path');
+        console.log('>>> LEAVE REQUEST: About to call notifyApproversViaWhatsApp');
 
         // Send WhatsApp notifications (non-blocking)
         notifyApproversViaWhatsApp(
