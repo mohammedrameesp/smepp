@@ -511,10 +511,18 @@ export async function middleware(request: NextRequest) {
       const moduleAccess = checkModuleAccess(pathname, enabledModules);
 
       if (!moduleAccess.allowed && moduleAccess.moduleId) {
-        const modulesUrl = new URL('/admin/modules', request.url);
-        modulesUrl.searchParams.set('install', moduleAccess.moduleId);
-        modulesUrl.searchParams.set('from', pathname);
-        return NextResponse.redirect(modulesUrl);
+        // Module not installed - only admins can see the modules page
+        const isAdmin = token.isOwner || token.isAdmin;
+        if (isAdmin) {
+          // Admin: redirect to modules page to install
+          const modulesUrl = new URL('/admin/modules', request.url);
+          modulesUrl.searchParams.set('install', moduleAccess.moduleId);
+          modulesUrl.searchParams.set('from', pathname);
+          return NextResponse.redirect(modulesUrl);
+        } else {
+          // Non-admin: redirect to forbidden (can't install modules)
+          return NextResponse.redirect(new URL('/forbidden', request.url));
+        }
       }
 
       // User belongs to this custom domain's tenant - allow access
@@ -679,11 +687,18 @@ export async function middleware(request: NextRequest) {
     const moduleAccess = checkModuleAccess(pathname, enabledModules);
 
     if (!moduleAccess.allowed && moduleAccess.moduleId) {
-      // Module not installed - redirect to modules page
-      const modulesUrl = new URL('/admin/modules', request.url);
-      modulesUrl.searchParams.set('install', moduleAccess.moduleId);
-      modulesUrl.searchParams.set('from', pathname);
-      return NextResponse.redirect(modulesUrl);
+      // Module not installed - only admins can see the modules page
+      const isAdmin = token.isOwner || token.isAdmin;
+      if (isAdmin) {
+        // Admin: redirect to modules page to install
+        const modulesUrl = new URL('/admin/modules', request.url);
+        modulesUrl.searchParams.set('install', moduleAccess.moduleId);
+        modulesUrl.searchParams.set('from', pathname);
+        return NextResponse.redirect(modulesUrl);
+      } else {
+        // Non-admin: redirect to forbidden (can't install modules)
+        return NextResponse.redirect(new URL('/forbidden', request.url));
+      }
     }
 
     // User belongs to this subdomain - allow access
