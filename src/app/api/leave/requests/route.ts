@@ -10,6 +10,8 @@ import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { createLeaveRequestSchema, leaveRequestQuerySchema } from '@/features/leave/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { createBulkNotifications, createNotification, NotificationTemplates } from '@/features/notifications/lib';
+import { sendEmail } from '@/lib/core/email';
+import { leaveRequestSubmittedEmail } from '@/lib/core/email-templates';
 import { findApplicablePolicy, initializeApprovalChain } from '@/features/approvals/lib';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 import {
@@ -519,10 +521,38 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
               canApprove: true,
               isDeleted: false,
             },
-            select: { id: true },
+            select: { id: true, email: true },
           });
 
           if (approvers.length > 0) {
+            // Send email notifications
+            const org = await db.organization.findUnique({
+              where: { id: tenantId },
+              select: { slug: true, name: true, primaryColor: true },
+            });
+            if (org) {
+              const emailContent = leaveRequestSubmittedEmail({
+                requestNumber: leaveRequest.requestNumber,
+                requesterName: leaveRequest.member?.name || leaveRequest.member?.email || 'Employee',
+                leaveType: leaveType.name,
+                startDate: leaveRequest.startDate,
+                endDate: leaveRequest.endDate,
+                totalDays,
+                reason: leaveRequest.reason,
+                orgSlug: org.slug,
+                orgName: org.name,
+                primaryColor: org.primaryColor || undefined,
+              });
+              sendEmail({
+                to: approvers.map(a => a.email),
+                subject: emailContent.subject,
+                html: emailContent.html,
+                text: emailContent.text,
+                tenantId,
+              }).catch(err => logger.error({ error: err instanceof Error ? err.message : 'Unknown error' }, 'Failed to send leave request email'));
+            }
+
+            // In-app notifications
             const notifications = approvers.map(approver => ({
               recipientId: approver.id,
               type: 'APPROVAL_PENDING' as const,
@@ -542,10 +572,38 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
             isAdmin: true,
             isDeleted: false,
           },
-          select: { id: true },
+          select: { id: true, email: true },
         });
 
         if (admins.length > 0) {
+          // Send email notifications
+          const org = await db.organization.findUnique({
+            where: { id: tenantId },
+            select: { slug: true, name: true, primaryColor: true },
+          });
+          if (org) {
+            const emailContent = leaveRequestSubmittedEmail({
+              requestNumber: leaveRequest.requestNumber,
+              requesterName: leaveRequest.member?.name || leaveRequest.member?.email || 'Employee',
+              leaveType: leaveType.name,
+              startDate: leaveRequest.startDate,
+              endDate: leaveRequest.endDate,
+              totalDays,
+              reason: leaveRequest.reason,
+              orgSlug: org.slug,
+              orgName: org.name,
+              primaryColor: org.primaryColor || undefined,
+            });
+            sendEmail({
+              to: admins.map(a => a.email),
+              subject: emailContent.subject,
+              html: emailContent.html,
+              text: emailContent.text,
+              tenantId,
+            }).catch(err => logger.error({ error: err instanceof Error ? err.message : 'Unknown error' }, 'Failed to send leave request email'));
+          }
+
+          // In-app notifications
           const notifications = admins.map(admin =>
             NotificationTemplates.leaveSubmitted(
               admin.id,

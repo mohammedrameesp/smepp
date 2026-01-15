@@ -1700,6 +1700,140 @@ ${data.orgName}
 }
 
 // ============================================================================
+// LEAVE REQUEST SUBMITTED EMAIL (To Admins/Approvers)
+// ============================================================================
+
+interface LeaveRequestSubmittedData {
+  requestNumber: string;
+  requesterName: string;
+  leaveType: string;
+  startDate: Date;
+  endDate: Date;
+  totalDays: number;
+  reason?: string | null;
+  orgSlug: string;
+  orgName: string;
+  primaryColor?: string;
+}
+
+export function leaveRequestSubmittedEmail(data: LeaveRequestSubmittedData): { subject: string; html: string; text: string } {
+  const subject = `Leave Request: ${data.requestNumber} - ${data.requesterName} (${data.leaveType})`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
+
+  const html = emailWrapper(`
+    <!-- Alert Banner -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-left: 4px solid ${brandColor}; border-radius: 4px; margin: 0 0 25px 0;">
+      <tr>
+        <td style="padding: 15px 20px;">
+          <p style="color: #0c5460; font-size: 14px; margin: 0; font-weight: bold;">
+            New Leave Request Pending Approval
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Leave Request Submitted</h2>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      A new leave request has been submitted and requires your approval.
+    </p>
+
+    <!-- Request Details Box -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
+      <tr>
+        <td style="padding: 25px;">
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Request Details</h3>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Request Number:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${data.requestNumber}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Employee:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.requesterName)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Leave Type:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.leaveType)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Start Date:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${formatDate(data.startDate)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">End Date:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${formatDate(data.endDate)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Total Days:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 16px; font-weight: bold;">${data.totalDays} day${data.totalDays === 1 ? '' : 's'}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    ${data.reason ? `
+    <!-- Reason Box -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 0 0 25px 0;">
+      <tr>
+        <td style="padding: 20px;">
+          <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Reason:</h4>
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">
+            ${escapeHtml(data.reason)}
+          </p>
+        </td>
+      </tr>
+    </table>
+    ` : ''}
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      Please review this request and approve or reject it as appropriate.
+    </p>
+
+    <!-- CTA Button -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
+      <tr>
+        <td align="center">
+          <a href="${getTenantPortalUrl(data.orgSlug, '/admin/leave/requests')}"
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+            Review Request
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
+      Best regards,<br>
+      <strong>${data.orgName}</strong>
+    </p>
+  `, data.orgName, brandColor);
+
+  const text = `
+Leave Request - ${data.requestNumber}
+
+A new leave request has been submitted and requires your approval.
+
+Request Details:
+- Request Number: ${data.requestNumber}
+- Employee: ${data.requesterName}
+- Leave Type: ${data.leaveType}
+- Start Date: ${formatDate(data.startDate)}
+- End Date: ${formatDate(data.endDate)}
+- Total Days: ${data.totalDays} day${data.totalDays === 1 ? '' : 's'}
+${data.reason ? `\nReason:\n${data.reason}` : ''}
+
+Please log in to the portal to review and approve or reject this request.
+${getTenantPortalUrl(data.orgSlug, '/admin/leave/requests')}
+
+Best regards,
+${data.orgName}
+`.trim();
+
+  return { subject, html, text };
+}
+
+// ============================================================================
 // NEW ORGANIZATION SIGNUP NOTIFICATION (Super Admin)
 // ============================================================================
 
