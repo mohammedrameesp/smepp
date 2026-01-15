@@ -1,5 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { AdminLayoutClient } from './layout-client';
@@ -96,6 +97,16 @@ export default async function AdminLayout({
                          session?.user?.hasOperationsAccess;
   if (!hasAdminAccess && !devAuthEnabled) {
     redirect('/employee');
+  }
+
+  // SEC-CRIT-1: Enforce view-mode cookie for admins who switched to employee view
+  // This prevents admins from bypassing employee view by manually navigating to /admin
+  if (isAdmin) {
+    const cookieStore = await cookies();
+    const viewModeCookie = cookieStore.get('durj-view-mode');
+    if (viewModeCookie?.value === 'employee') {
+      redirect('/employee');
+    }
   }
 
   // Get tenant-scoped data

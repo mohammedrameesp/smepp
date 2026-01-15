@@ -9,7 +9,8 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 
 const VIEW_MODE_COOKIE = 'durj-view-mode';
-const VIEW_MODE_MAX_AGE = 8 * 60 * 60; // 8 hours
+// SEC-HIGH-1: Reduced TTL from 8 hours to 1 hour for security
+const VIEW_MODE_MAX_AGE = 60 * 60; // 1 hour
 
 /**
  * GET /api/view-mode
@@ -58,10 +59,11 @@ export async function POST() {
   });
 
   // Set the view mode cookie
+  // SEC-HIGH-1: Using 'strict' sameSite to prevent CSRF attacks
   response.cookies.set(VIEW_MODE_COOKIE, 'employee', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     path: '/',
     maxAge: VIEW_MODE_MAX_AGE,
   });

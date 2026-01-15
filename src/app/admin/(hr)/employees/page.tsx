@@ -14,7 +14,9 @@ export default async function AdminTeamPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && !session.user.isAdmin) {
+  // Allow access for admins OR users with HR access
+  const hasAccess = session.user.isAdmin || session.user.hasHRAccess;
+  if (process.env.NODE_ENV !== 'development' && !hasAccess) {
     redirect('/forbidden');
   }
 

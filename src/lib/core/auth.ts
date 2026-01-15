@@ -22,6 +22,7 @@ import {
   recordTeamMemberFailedLogin,
   clearTeamMemberFailedLogins,
 } from '@/lib/security/account-lockout';
+import logger from '@/lib/core/log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -569,15 +570,16 @@ export const authOptions: NextAuthOptions = {
               });
             }
 
-            // SECURITY: Auto-promote to super admin if matching SUPER_ADMIN_EMAIL env var
-            // This is a bootstrapping mechanism for initial setup only
-            // In production, consider removing this after initial super admin is created
+            // SEC-CRIT-3: Removed auto-promotion to super admin
+            // Auto-promotion via SUPER_ADMIN_EMAIL was a security vulnerability
+            // Super admin status must be set explicitly via database migration or CLI
+            // If you need to bootstrap a super admin, use: npx prisma db seed --super-admin
             if (isSuperAdmin && !existingUser.isSuperAdmin) {
-              console.warn(`[Auth] SECURITY: Auto-promoting user ${existingUser.id} to super admin (matched SUPER_ADMIN_EMAIL)`);
-              await prisma.user.update({
-                where: { id: existingUser.id },
-                data: { isSuperAdmin: true },
-              });
+              logger.warn({
+                userId: existingUser.id,
+                email: normalizedEmail,
+                event: 'SUPER_ADMIN_ATTEMPT_BLOCKED',
+              }, 'Blocked auto-promotion to super admin - must be set explicitly in database');
             }
           }
         }
@@ -600,8 +602,8 @@ export const authOptions: NextAuthOptions = {
       try {
         // SECURITY: Check if password was changed after token was issued
         // This invalidates all existing sessions when password is reset
-        // OPTIMIZATION: Check every 2 minutes to balance security (deactivated user access window) vs performance
-        const SECURITY_CHECK_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes (reduced from 5 for tighter security)
+        // SEC-CRIT-2: Reduced to 30 seconds for tighter permission revocation window
+        const SECURITY_CHECK_INTERVAL_MS = 30 * 1000; // 30 seconds (reduced from 2 min for security)
         const now = Date.now();
         const lastSecurityCheck = (token.lastSecurityCheck as number) || 0;
         const shouldCheckSecurity = !user && token.id && token.iat && (now - lastSecurityCheck > SECURITY_CHECK_INTERVAL_MS);
@@ -611,7 +613,19 @@ export const authOptions: NextAuthOptions = {
           if (token.isTeamMember) {
             const securityCheck = await prisma.teamMember.findUnique({
               where: { id: token.id as string },
-              select: { passwordChangedAt: true, canLogin: true, isDeleted: true },
+              select: {
+                passwordChangedAt: true,
+                canLogin: true,
+                isDeleted: true,
+                // SEC-CRIT-2: Also verify permission flags haven't changed
+                isAdmin: true,
+                isOwner: true,
+                hasFinanceAccess: true,
+                hasHRAccess: true,
+                hasOperationsAccess: true,
+                canApprove: true,
+                isEmployee: true,
+              },
             });
 
             if (securityCheck) {
@@ -627,6 +641,15 @@ export const authOptions: NextAuthOptions = {
                   return { ...token, id: undefined };
                 }
               }
+
+              // SEC-CRIT-2: Update permission flags from database (ensures revoked permissions take effect)
+              token.isAdmin = securityCheck.isAdmin;
+              token.isOwner = securityCheck.isOwner;
+              token.hasFinanceAccess = securityCheck.hasFinanceAccess;
+              token.hasHRAccess = securityCheck.hasHRAccess;
+              token.hasOperationsAccess = securityCheck.hasOperationsAccess;
+              token.canApprove = securityCheck.canApprove;
+              token.isEmployee = securityCheck.isEmployee;
             }
           } else {
             // Super admin - check User table
@@ -857,8 +880,9 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: 'jwt',
-    // SEC-006: Reduced from 30 to 7 days for security (further reduced from 14 days)
-    maxAge: 7 * 24 * 60 * 60, // 7 days
+    // SEC-HIGH-5: Reduced from 7 days to 1 day for tighter security
+    // Combined with 30-second permission refresh, this limits exposure window
+    maxAge: 24 * 60 * 60, // 1 day
   },
 
   // Share cookies across subdomains for multi-tenant support
