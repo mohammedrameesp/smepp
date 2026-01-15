@@ -102,3 +102,7 @@ nul
 .env*.local
 vercel-env-vars.txt
 tmpclaude-*
+
+# Sensitive credentials docs
+docs/ic-whatsapp-credentials.md
+docs/*-credentials.md

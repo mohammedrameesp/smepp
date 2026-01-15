@@ -39,6 +39,12 @@ function formatAmount(amount: number, currency: string = 'QAR'): string {
 
 /**
  * Build leave approval request template message
+ * Template: "New leave request requires your approval.
+ *            Employee: {{1}}
+ *            Leave Type: {{2}}
+ *            Dates: {{3}}
+ *            Reason: {{4}}
+ *            Please tap a button below to respond to this request."
  */
 export function buildLeaveApprovalTemplate(
   to: string,
@@ -46,14 +52,18 @@ export function buildLeaveApprovalTemplate(
   approveToken: string,
   rejectToken: string
 ): WhatsAppTemplateMessage {
+  // Format dates as a single string "15 Jan - 20 Jan 2026"
+  const dateRange = details.startDate && details.endDate
+    ? `${formatDate(details.startDate)} - ${formatDate(details.endDate)}`
+    : 'N/A';
+
   const components: WhatsAppTemplateComponent[] = [
     {
       type: 'body',
       parameters: [
         { type: 'text', text: details.requesterName },
         { type: 'text', text: details.leaveType || 'Leave' },
-        { type: 'text', text: details.startDate ? formatDate(details.startDate) : 'N/A' },
-        { type: 'text', text: details.endDate ? formatDate(details.endDate) : 'N/A' },
+        { type: 'text', text: dateRange },
         { type: 'text', text: details.reason || 'No reason provided' },
       ],
     },
@@ -81,6 +91,11 @@ export function buildLeaveApprovalTemplate(
 
 /**
  * Build purchase request approval template message
+ * Template: "New purchase request requires your approval.
+ *            Requested by: {{1}}
+ *            Title: {{2}}
+ *            Amount: {{3}}
+ *            Please tap a button below to respond to this request."
  */
 export function buildPurchaseApprovalTemplate(
   to: string,
@@ -121,6 +136,11 @@ export function buildPurchaseApprovalTemplate(
 
 /**
  * Build asset request approval template message
+ * Template: "New asset request requires your approval.
+ *            Requested by: {{1}}
+ *            Asset: {{2}}
+ *            Justification: {{3}}
+ *            Please tap a button below to respond to this request."
  */
 export function buildAssetApprovalTemplate(
   to: string,
