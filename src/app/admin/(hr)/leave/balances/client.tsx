@@ -54,6 +54,7 @@ interface User {
   id: string;
   name: string | null;
   email: string;
+  isEmployee?: boolean;
   hrProfile?: {
     dateOfJoining?: string | null;
   } | null;
@@ -140,7 +141,9 @@ export function LeaveBalancesClient() {
       const response = await fetch('/api/users?ps=1000&includeHrProfile=true');
       if (response.ok) {
         const data = await response.json();
-        setUsers(data.users || []);
+        // Filter to only show employees (isEmployee: true)
+        const employees = (data.users || []).filter((u: User) => u.isEmployee);
+        setUsers(employees);
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);

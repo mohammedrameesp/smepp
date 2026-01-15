@@ -128,15 +128,17 @@ async function createLeaveBalanceHandler(request: NextRequest, context: APIConte
 
     const { memberId, leaveTypeId, year, entitlement, carriedForward } = validation.data;
 
-    // Check if team member exists and belongs to this tenant
+    // Check if team member exists, belongs to this tenant, and is an employee
     const teamMember = await db.teamMember.findFirst({
       where: {
         id: memberId,
+        isEmployee: true,
+        isDeleted: false,
       },
     });
 
     if (!teamMember) {
-      return NextResponse.json({ error: 'Team member not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
     }
 
     // Check if leave type exists and belongs to this tenant

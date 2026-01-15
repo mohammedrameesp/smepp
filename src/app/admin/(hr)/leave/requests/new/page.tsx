@@ -72,10 +72,10 @@ export default function AdminNewLeavePage() {
 
         if (employeesRes.ok) {
           const data = await employeesRes.json();
-          // Filter to show users who are employees (have hrProfile with correct tenant)
-          // The API already filters hrProfile by tenantId
+          // Filter to show only users flagged as employees (isEmployee: true)
+          // These are HR employees who can have leave balances
           const employeeList = (data.users || data || []).filter(
-            (u: Employee) => u.hrProfile
+            (u: Employee & { isEmployee?: boolean }) => u.isEmployee && u.hrProfile
           );
           setEmployees(employeeList);
         }
