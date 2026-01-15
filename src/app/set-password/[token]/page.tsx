@@ -174,13 +174,13 @@ export default function SetPasswordPage() {
     );
   };
 
-  // Loading state
-  if (isValidating) {
+  // Loading state - wait for both token validation and branding
+  if (isValidating || subdomainLoading || brandingLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Validating your link...</p>
+          <p className="text-muted-foreground">{isValidating ? 'Validating your link...' : 'Loading...'}</p>
         </div>
       </div>
     );

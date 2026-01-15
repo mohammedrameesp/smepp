@@ -52,6 +52,18 @@ export default function ForgotPasswordPage() {
 
   const orgName = branding?.organizationName || 'Durj';
 
+  // Loading state - wait for branding to prevent flash
+  if (subdomainLoading || brandingLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex">
       {/* Left Column - Dynamic Branding */}
