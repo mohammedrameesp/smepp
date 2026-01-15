@@ -32,6 +32,8 @@ export async function GET(request: NextRequest) {
         allowedAuthMethods: true,
         allowedEmailDomains: true,
         enforceDomainRestriction: true,
+        customDomain: true,
+        customDomainVerified: true,
       },
     });
 
@@ -70,10 +72,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get the actual origin from request headers (for custom domains)
-    const host = request.headers.get('host') || '';
+    // Determine the correct origin for redirect URI
+    // Priority: 1) Verified custom domain, 2) Request host header
     const protocol = request.headers.get('x-forwarded-proto') || 'https';
-    const origin = `${protocol}://${host}`;
+    let origin: string;
+
+    if (org.customDomain && org.customDomainVerified) {
+      // Use the verified custom domain
+      origin = `${protocol}://${org.customDomain}`;
+    } else {
+      // Fall back to request host header
+      const host = request.headers.get('host') || '';
+      origin = `${protocol}://${host}`;
+    }
+
     const redirectUri = `${origin}/api/auth/oauth/google/callback`;
 
     // Create encrypted state for CSRF protection

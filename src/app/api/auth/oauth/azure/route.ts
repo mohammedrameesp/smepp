@@ -33,6 +33,8 @@ export async function GET(request: NextRequest) {
         allowedAuthMethods: true,
         allowedEmailDomains: true,
         enforceDomainRestriction: true,
+        customDomain: true,
+        customDomainVerified: true,
       },
     });
 
@@ -75,6 +77,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Determine the correct origin for redirect URI
+    // Priority: 1) Verified custom domain, 2) Request host header
+    const protocol = request.headers.get('x-forwarded-proto') || 'https';
+    let origin: string;
+
+    if (org.customDomain && org.customDomainVerified) {
+      // Use the verified custom domain
+      origin = `${protocol}://${org.customDomain}`;
+    } else {
+      // Fall back to request host header
+      const host = request.headers.get('host') || '';
+      origin = `${protocol}://${host}`;
+    }
+
+    const redirectUri = `${origin}/api/auth/oauth/azure/callback`;
+
     // Create encrypted state for CSRF protection
     // Include invite token if present (for invite signup flow)
     const state = encryptState({
@@ -82,10 +100,11 @@ export async function GET(request: NextRequest) {
       orgId: org.id,
       provider: 'azure',
       inviteToken: inviteToken || undefined,
+      redirectUri, // Store for callback to use
     });
 
     // Build the Azure OAuth URL
-    const authUrl = buildAzureAuthUrl(clientId, state, tenantId);
+    const authUrl = buildAzureAuthUrl(clientId, state, tenantId, redirectUri);
 
     // Redirect to Azure
     return NextResponse.redirect(authUrl);
