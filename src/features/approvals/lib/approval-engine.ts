@@ -687,6 +687,64 @@ export async function deleteApprovalChain(
 }
 
 /**
+ * Get team members who can approve a specific role level.
+ * Used for sequential notification - notify only the approvers for the current level.
+ *
+ * @param role - The role required for approval
+ * @param tenantId - The tenant ID
+ * @param requesterId - The requester's ID (needed for MANAGER role check)
+ * @returns Array of team members who can approve this role
+ */
+export async function getApproversForRole(
+  role: Role,
+  tenantId: string,
+  requesterId?: string
+): Promise<{ id: string; email: string; name: string | null }[]> {
+  switch (role) {
+    case 'MANAGER':
+      // Get the requester's direct manager
+      if (requesterId) {
+        const requester = await prisma.teamMember.findUnique({
+          where: { id: requesterId },
+          select: {
+            reportingTo: {
+              select: { id: true, email: true, name: true },
+            },
+          },
+        });
+        if (requester?.reportingTo) {
+          return [requester.reportingTo];
+        }
+      }
+      return [];
+
+    case 'HR_MANAGER':
+      // Get all team members with HR access
+      return prisma.teamMember.findMany({
+        where: { tenantId, hasHRAccess: true, isDeleted: false },
+        select: { id: true, email: true, name: true },
+      });
+
+    case 'FINANCE_MANAGER':
+      // Get all team members with Finance access
+      return prisma.teamMember.findMany({
+        where: { tenantId, hasFinanceAccess: true, isDeleted: false },
+        select: { id: true, email: true, name: true },
+      });
+
+    case 'DIRECTOR':
+      // Get all admins
+      return prisma.teamMember.findMany({
+        where: { tenantId, isAdmin: true, isDeleted: false },
+        select: { id: true, email: true, name: true },
+      });
+
+    default:
+      return [];
+  }
+}
+
+/**
  * Get approval chain summary for display.
  */
 export async function getApprovalChainSummary(

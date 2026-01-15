@@ -6,3 +6,4 @@
  */
 
 export * from './approval-engine';
+export * from './default-policies';

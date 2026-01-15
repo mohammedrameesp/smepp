@@ -15,6 +15,11 @@ import {
 import { validateNoOverlap } from '@/features/leave/lib/leave-request-validation';
 import { cleanupStorageFile } from '@/lib/storage/cleanup';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import {
+  getApprovalChain,
+  getApprovalChainSummary,
+  hasApprovalChain,
+} from '@/features/approvals/lib';
 
 async function getLeaveRequestHandler(request: NextRequest, context: APIContext) {
     const { tenant, params, prisma: tenantPrisma } = context;
@@ -99,7 +104,21 @@ async function getLeaveRequestHandler(request: NextRequest, context: APIContext)
       }
     }
 
-    return NextResponse.json(leaveRequest);
+    // Include approval chain if it exists
+    const chainExists = await hasApprovalChain('LEAVE_REQUEST', id);
+    let approvalChain = null;
+    let approvalSummary = null;
+
+    if (chainExists) {
+      approvalChain = await getApprovalChain('LEAVE_REQUEST', id);
+      approvalSummary = await getApprovalChainSummary('LEAVE_REQUEST', id);
+    }
+
+    return NextResponse.json({
+      ...leaveRequest,
+      approvalChain,
+      approvalSummary,
+    });
 }
 
 export const GET = withErrorHandler(getLeaveRequestHandler, { requireAuth: true, requireModule: 'leave' });

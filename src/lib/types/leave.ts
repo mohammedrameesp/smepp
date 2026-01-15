@@ -206,10 +206,34 @@ export interface LeaveRequestFormProps {
   isAdmin?: boolean;
 }
 
+export interface ApprovalStep {
+  id: string;
+  levelOrder: number;
+  requiredRole: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SKIPPED';
+  approverId: string | null;
+  approver: {
+    id: string;
+    name: string | null;
+    email: string;
+  } | null;
+  actionAt: string | null;
+  notes: string | null;
+}
+
+export interface ApprovalSummary {
+  totalSteps: number;
+  completedSteps: number;
+  currentStep: number | null;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_STARTED';
+}
+
 export interface LeaveApprovalActionsProps {
   requestId: string;
   onApproved?: () => void;
   onRejected?: () => void;
+  approvalChain?: ApprovalStep[] | null;
+  approvalSummary?: ApprovalSummary | null;
 }
 
 export interface CancelLeaveDialogProps {

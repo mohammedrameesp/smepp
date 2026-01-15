@@ -12,7 +12,7 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import { createBulkNotifications, createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { sendEmail } from '@/lib/core/email';
 import { leaveRequestSubmittedEmail } from '@/lib/core/email-templates';
-import { findApplicablePolicy, initializeApprovalChain } from '@/features/approvals/lib';
+import { findApplicablePolicy, initializeApprovalChain, ensureDefaultApprovalPolicies, getApproversForRole, ApprovalPolicyWithLevels } from '@/features/approvals/lib';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 import {
   getServiceBasedEntitlement,
@@ -529,47 +529,48 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       }
     );
 
-    // Check for multi-level approval policy
+    // Initialize multi-level approval chain and notify all approvers
     try {
-      console.log('>>> LEAVE: Starting notification section');
+      // Ensure default approval policies exist for this tenant (lazy initialization)
+      await ensureDefaultApprovalPolicies(tenantId!, 'LEAVE_REQUEST');
+
+      // Find applicable policy (should always exist now after ensuring defaults)
       const approvalPolicy = await findApplicablePolicy('LEAVE_REQUEST', { days: totalDays, tenantId: tenantId! });
-      console.log('>>> LEAVE: approvalPolicy =', approvalPolicy ? `Found with ${approvalPolicy.levels.length} levels` : 'null');
 
       if (approvalPolicy && approvalPolicy.levels.length > 0) {
-        console.log('>>> LEAVE: Taking POLICY path');
         // Initialize approval chain (pass memberId to check manager relationship)
+        // This will auto-skip levels where no approver exists (e.g., no manager assigned)
         const steps = await initializeApprovalChain('LEAVE_REQUEST', leaveRequest.id, approvalPolicy, tenantId!, memberId);
 
-        // Send WhatsApp notifications to approvers (non-blocking)
+        // Get organization info for emails
+        const org = await db.organization.findUnique({
+          where: { id: tenantId },
+          select: { slug: true, name: true, primaryColor: true },
+        });
+
+        // Sequential notifications: Only notify the first level approvers
+        // Next levels will be notified when previous level approves
         if (steps.length > 0) {
-          console.log('>>> LEAVE: Calling notifyApproversViaWhatsApp (POLICY path)');
-          notifyApproversViaWhatsApp(
+          const firstStep = steps[0];
+          const firstLevelApprovers = await getApproversForRole(
+            firstStep.requiredRole,
             tenantId!,
-            'LEAVE_REQUEST',
-            leaveRequest.id,
-            steps[0].requiredRole
+            memberId
           );
-        } else {
-          console.log('>>> LEAVE: No steps in approval chain');
-        }
 
-        // Notify users with the first level's required role
-        const firstStep = steps[0];
-        if (firstStep) {
-          const approvers = await db.teamMember.findMany({
-            where: {
-              canApprove: true,
-              isDeleted: false,
-            },
-            select: { id: true, email: true },
-          });
+          // Filter out the requester themselves if they happen to be an approver
+          const filteredApprovers = firstLevelApprovers.filter(a => a.id !== memberId);
 
-          if (approvers.length > 0) {
-            // Send email notifications
-            const org = await db.organization.findUnique({
-              where: { id: tenantId },
-              select: { slug: true, name: true, primaryColor: true },
-            });
+          if (filteredApprovers.length > 0) {
+            // Send WhatsApp notifications to first level approvers (non-blocking)
+            notifyApproversViaWhatsApp(
+              tenantId!,
+              'LEAVE_REQUEST',
+              leaveRequest.id,
+              firstStep.requiredRole
+            );
+
+            // Send email notifications to first level approvers only
             if (org) {
               const emailContent = leaveRequestSubmittedEmail({
                 requestNumber: leaveRequest.requestNumber,
@@ -584,7 +585,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
                 primaryColor: org.primaryColor || undefined,
               });
               sendEmail({
-                to: approvers.map(a => a.email),
+                to: filteredApprovers.map(a => a.email),
                 subject: emailContent.subject,
                 html: emailContent.html,
                 text: emailContent.text,
@@ -592,12 +593,12 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
               }).catch(err => logger.error({ error: err instanceof Error ? err.message : 'Unknown error' }, 'Failed to send leave request email'));
             }
 
-            // In-app notifications
-            const notifications = approvers.map(approver => ({
+            // In-app notifications to first level approvers only
+            const notifications = filteredApprovers.map(approver => ({
               recipientId: approver.id,
               type: 'APPROVAL_PENDING' as const,
-              title: 'Leave Request Approval Required',
-              message: `${leaveRequest.member?.name || leaveRequest.member?.email || 'Employee'} submitted a ${leaveType.name} request (${leaveRequest.requestNumber}) for ${totalDays} day${totalDays === 1 ? '' : 's'}. Your approval is required.`,
+              title: 'Leave Request Pending Your Approval',
+              message: `${leaveRequest.member?.name || leaveRequest.member?.email || 'Employee'} submitted a ${leaveType.name} request (${leaveRequest.requestNumber}) for ${totalDays} day${totalDays === 1 ? '' : 's'}.`,
               link: `/admin/leave/requests/${leaveRequest.id}`,
               entityType: 'LeaveRequest',
               entityId: leaveRequest.id,
@@ -606,17 +607,8 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
           }
         }
       } else {
-        // No policy - fall back to notifying all admins in the same organization
-        logger.info({ tenantId, leaveRequestId: leaveRequest.id }, 'No approval policy - using fallback notification path');
-        console.log('>>> LEAVE REQUEST: About to call notifyApproversViaWhatsApp');
-
-        // Send WhatsApp notifications (non-blocking)
-        notifyApproversViaWhatsApp(
-          tenantId!,
-          'LEAVE_REQUEST',
-          leaveRequest.id,
-          'MANAGER' // Default role for fallback
-        );
+        // Fallback: No policy even after ensuring defaults - notify admins
+        logger.warn({ tenantId, leaveRequestId: leaveRequest.id }, 'No approval policy found even after ensuring defaults');
 
         const admins = await db.teamMember.findMany({
           where: {
@@ -627,7 +619,6 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
         });
 
         if (admins.length > 0) {
-          // Send email notifications
           const org = await db.organization.findUnique({
             where: { id: tenantId },
             select: { slug: true, name: true, primaryColor: true },
@@ -654,7 +645,6 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
             }).catch(err => logger.error({ error: err instanceof Error ? err.message : 'Unknown error' }, 'Failed to send leave request email'));
           }
 
-          // In-app notifications
           const notifications = admins.map(admin =>
             NotificationTemplates.leaveSubmitted(
               admin.id,

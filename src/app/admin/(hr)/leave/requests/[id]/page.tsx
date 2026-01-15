@@ -16,6 +16,7 @@ import {
   getAnnualLeaveDetails,
 } from '@/features/leave/lib/leave-utils';
 import { LeaveApprovalActions, LeaveRequestHistory, CancelLeaveDialog } from '@/features/leave/components';
+import { ApprovalChainStatus } from '@/features/leave/components/approval-chain-status';
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 
 interface LeaveRequest {
@@ -72,6 +73,26 @@ interface LeaveRequest {
       name: string | null;
     };
   }>;
+  approvalChain?: Array<{
+    id: string;
+    levelOrder: number;
+    requiredRole: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SKIPPED';
+    approverId: string | null;
+    approver: {
+      id: string;
+      name: string | null;
+      email: string;
+    } | null;
+    actionAt: string | null;
+    notes: string | null;
+  }> | null;
+  approvalSummary?: {
+    totalSteps: number;
+    completedSteps: number;
+    currentStep: number | null;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_STARTED';
+  } | null;
 }
 
 interface LeaveBalance {
@@ -224,6 +245,8 @@ export default function AdminLeaveRequestDetailPage() {
                 requestId={request.id}
                 onApproved={fetchRequest}
                 onRejected={fetchRequest}
+                approvalChain={request.approvalChain || null}
+                approvalSummary={request.approvalSummary || null}
               />
             )}
             {canCancel && (
@@ -299,6 +322,14 @@ export default function AdminLeaveRequestDetailPage() {
               )}
             </div>
           </DetailCard>
+
+          {/* Approval Chain Card */}
+          {request.approvalChain && request.approvalChain.length > 0 && (
+            <ApprovalChainStatus
+              approvalChain={request.approvalChain}
+              approvalSummary={request.approvalSummary || null}
+            />
+          )}
 
           {/* Status Details Card */}
           {(request.approverNotes || request.rejectionReason || request.cancellationReason) && (
