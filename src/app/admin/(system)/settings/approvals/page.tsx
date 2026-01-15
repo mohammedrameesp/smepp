@@ -27,14 +27,14 @@ const ROLE_LABELS: Record<string, string> = {
   MANAGER: 'Line Manager',
   HR_MANAGER: 'HR Team',
   FINANCE_MANAGER: 'Finance Team',
-  DIRECTOR: 'Admin',
+  DIRECTOR: 'Director',
 };
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   MANAGER: 'Person set as "Reports To"',
   HR_MANAGER: 'Anyone with HR access',
   FINANCE_MANAGER: 'Anyone with Finance access',
-  DIRECTOR: 'Any Admin',
+  DIRECTOR: 'Any Admin user',
 };
 
 export default async function ApprovalPoliciesPage() {
