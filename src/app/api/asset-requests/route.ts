@@ -116,10 +116,37 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 2: Apply role-based access control
-    // Admin/Operations access can see all requests, others only their own
+    // Admin/Operations access can see all requests, managers can see direct reports
     // ─────────────────────────────────────────────────────────────────────────────
     const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasOperationsAccess;
-    const effectiveMemberId = hasFullAccess ? filterMemberId : currentUserId;
+    let effectiveMemberId: string | undefined = undefined;
+    let memberIdFilter: { in: string[] } | undefined = undefined;
+
+    if (hasFullAccess) {
+      // Full access: can see all or filter by specific member
+      effectiveMemberId = filterMemberId;
+    } else if (tenant?.canApprove) {
+      // Manager: can see own requests + direct reports' requests
+      const directReports = await db.teamMember.findMany({
+        where: { reportingToId: currentUserId },
+        select: { id: true },
+      });
+      const directReportIds = directReports.map(r => r.id);
+      const allowedMemberIds = [currentUserId, ...directReportIds];
+
+      if (filterMemberId) {
+        if (allowedMemberIds.includes(filterMemberId)) {
+          effectiveMemberId = filterMemberId;
+        } else {
+          effectiveMemberId = currentUserId;
+        }
+      } else {
+        memberIdFilter = { in: allowedMemberIds };
+      }
+    } else {
+      // Regular user: only their own requests
+      effectiveMemberId = currentUserId;
+    }
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 3: Build where clause with filters
@@ -128,6 +155,8 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
 
     if (effectiveMemberId) {
       where.memberId = effectiveMemberId;
+    } else if (memberIdFilter) {
+      where.memberId = memberIdFilter;
     }
     if (type) {
       where.type = type;

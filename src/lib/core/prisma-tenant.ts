@@ -46,6 +46,8 @@ export interface TenantContext {
   hasHRAccess?: boolean;
   hasFinanceAccess?: boolean;
   hasOperationsAccess?: boolean;
+  // Manager flag - can approve and see direct reports' data
+  canApprove?: boolean;
 }
 
 // Models that have tenantId field and need tenant isolation

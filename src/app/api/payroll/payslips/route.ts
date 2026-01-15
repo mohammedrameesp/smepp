@@ -31,17 +31,38 @@ async function getPayslipsHandler(request: NextRequest, context: APIContext) {
     const { payrollRunId, userId, year, month, p, ps } = validation.data;
     const page = p;
     const pageSize = ps;
-    // Users with admin or Finance access can see all payslips, others only see their own
+    // Users with admin or Finance access can see all payslips
     const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasFinanceAccess;
 
     // Build where clause with tenant filter
     const where: Record<string, unknown> = { tenantId };
 
-    // Users without full access can only see their own payslips
-    if (!hasFullAccess) {
+    if (hasFullAccess) {
+      // Full access: can see all or filter by specific user
+      if (userId) {
+        where.memberId = userId;
+      }
+    } else if (tenant?.canApprove) {
+      // Manager: can see own payslips + direct reports' payslips
+      const directReports = await db.teamMember.findMany({
+        where: { reportingToId: tenant.userId },
+        select: { id: true },
+      });
+      const directReportIds = directReports.map(r => r.id);
+      const allowedMemberIds = [tenant.userId, ...directReportIds];
+
+      if (userId) {
+        if (allowedMemberIds.includes(userId)) {
+          where.memberId = userId;
+        } else {
+          where.memberId = tenant.userId;
+        }
+      } else {
+        where.memberId = { in: allowedMemberIds };
+      }
+    } else {
+      // Regular user: only their own payslips
       where.memberId = tenant.userId;
-    } else if (userId) {
-      where.memberId = userId;
     }
 
     if (payrollRunId) {

@@ -111,11 +111,26 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 2: Authorization check
-    // Admin/Operations access can view any asset, members can only view their assigned assets
+    // Admin/Operations access can view any asset, managers can view their direct reports' assets
     // ─────────────────────────────────────────────────────────────────────────────
     const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasOperationsAccess;
-    if (!hasFullAccess && asset.assignedMemberId !== tenant.userId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!hasFullAccess) {
+      // Check if user is assigned this asset
+      if (asset.assignedMemberId === tenant.userId) {
+        // OK - user's own asset
+      } else if (tenant?.canApprove) {
+        // Manager: can view direct reports' assets
+        const directReports = await db.teamMember.findMany({
+          where: { reportingToId: tenant.userId },
+          select: { id: true },
+        });
+        const directReportIds = directReports.map(r => r.id);
+        if (!asset.assignedMemberId || !directReportIds.includes(asset.assignedMemberId)) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      } else {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
     // ─────────────────────────────────────────────────────────────────────────────

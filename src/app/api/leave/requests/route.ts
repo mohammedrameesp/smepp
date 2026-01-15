@@ -51,18 +51,44 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
 
     const { q, status, userId, memberId, leaveTypeId, year, startDate, endDate, p, ps, sort, order } = validation.data;
 
-    // Users with admin or HR access can see all requests, others only see their own
-    // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole, NOT the approval role
+    // Users with admin or HR access can see all requests
     const hasFullAccess = !!(tenant?.isOwner || tenant?.isAdmin || tenant?.hasHRAccess);
     // Support both memberId and legacy userId parameter
     const filterMemberId = memberId || userId;
-    const effectiveMemberId = hasFullAccess ? filterMemberId : tenant.userId;
 
     // Build where clause (tenant filtering is automatic via db)
     const where: Record<string, unknown> = {};
 
-    if (effectiveMemberId) {
-      where.memberId = effectiveMemberId;
+    if (hasFullAccess) {
+      // Full access: can see all or filter by specific member
+      if (filterMemberId) {
+        where.memberId = filterMemberId;
+      }
+    } else if (tenant?.canApprove) {
+      // Manager: can see own requests + direct reports' requests
+      const directReports = await db.teamMember.findMany({
+        where: { reportingToId: tenant.userId },
+        select: { id: true },
+      });
+      const directReportIds = directReports.map(r => r.id);
+
+      // Include own ID + direct reports
+      const allowedMemberIds = [tenant.userId, ...directReportIds];
+
+      // If filtering by specific member, ensure they're in allowed list
+      if (filterMemberId) {
+        if (allowedMemberIds.includes(filterMemberId)) {
+          where.memberId = filterMemberId;
+        } else {
+          // Trying to access someone they don't manage - return empty
+          where.memberId = tenant.userId;
+        }
+      } else {
+        where.memberId = { in: allowedMemberIds };
+      }
+    } else {
+      // Regular user: can only see their own requests
+      where.memberId = tenant.userId;
     }
     if (status) {
       where.status = status;

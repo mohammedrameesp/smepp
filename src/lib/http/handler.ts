@@ -554,6 +554,8 @@ export function withErrorHandler(
           hasHRAccess: session?.user.hasHRAccess ?? false,
           hasFinanceAccess: session?.user.hasFinanceAccess ?? false,
           hasOperationsAccess: session?.user.hasOperationsAccess ?? false,
+          // Manager flag
+          canApprove: session?.user.canApprove ?? false,
         };
       }
 

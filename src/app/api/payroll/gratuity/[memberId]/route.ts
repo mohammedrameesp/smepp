@@ -21,13 +21,29 @@ async function getGratuityHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
     }
 
-    // Users with admin or Finance access can view any gratuity, others only their own
+    // Users with admin or Finance access can view any gratuity
     const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasFinanceAccess;
 
-    // Users without full access can only view their own gratuity
-    // tenant.userId is the TeamMember ID of the current user
-    if (!hasFullAccess && memberId !== tenant.userId) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    // Check access permissions
+    if (!hasFullAccess) {
+      if (tenant?.canApprove) {
+        // Manager: can view own gratuity + direct reports' gratuity
+        const directReports = await db.teamMember.findMany({
+          where: { reportingToId: tenant.userId },
+          select: { id: true },
+        });
+        const directReportIds = directReports.map(r => r.id);
+        const allowedMemberIds = [tenant.userId, ...directReportIds];
+
+        if (!allowedMemberIds.includes(memberId)) {
+          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        }
+      } else {
+        // Regular user: only their own gratuity
+        if (memberId !== tenant.userId) {
+          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        }
+      }
     }
 
     // Get member's salary structure and HR fields - verify member belongs to same org
