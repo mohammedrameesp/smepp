@@ -1,4 +1,4 @@
 // Asset Request Business Logic
 export * from './utils';
-export * from './notifications';
-// Email templates are in @/lib/core/asset-request-emails
+// Note: notifications.ts is server-only (uses nodemailer)
+// Import directly: import { sendAssetRequestNotifications } from '@/features/asset-requests/lib/notifications';

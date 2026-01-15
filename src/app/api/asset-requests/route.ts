@@ -47,7 +47,7 @@ import {
   canRequestAsset,
   canReturnAsset,
 } from '@/features/asset-requests';
-import { sendAssetRequestNotifications } from '@/features/asset-requests';
+import { sendAssetRequestNotifications } from '@/features/asset-requests/lib/notifications';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import logger from '@/lib/core/log';
 
