@@ -97,16 +97,16 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
             <Link href="/admin" className="flex items-center gap-3">
               {isSessionLoading ? (
                 /* Show placeholder while session loads to prevent logo flash */
-                <div className="h-8 w-24 bg-slate-700 rounded animate-pulse" />
+                <div className="h-9 w-28 bg-slate-700 rounded animate-pulse" />
               ) : session?.user?.organizationLogoUrl ? (
                 <img
                   src={session.user.organizationLogoUrlInverse || session.user.organizationLogoUrl}
                   alt={session.user.organizationName || 'Organization'}
-                  className="h-8 w-auto max-w-[140px] object-contain"
+                  className="h-9 w-auto max-w-[160px] object-contain"
                   style={!session.user.organizationLogoUrlInverse ? { filter: 'brightness(0) invert(1)' } : undefined}
                 />
               ) : (
-                <img src="/sme-wordmark-white.png" alt="Durj" className="h-8 w-auto" />
+                <img src="/sme-wordmark-white.png" alt="Durj" className="h-9 w-auto" />
               )}
               <span className="text-slate-500 hidden sm:inline">|</span>
               <span className="text-sm font-medium text-slate-200 hidden sm:inline">
