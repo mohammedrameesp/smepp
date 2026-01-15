@@ -134,6 +134,17 @@ interface AuthConfig {
   customAzureTenantId: string | null;
 }
 
+interface EmailConfig {
+  customSmtpHost: string | null;
+  customSmtpPort: number | null;
+  customSmtpUser: string | null;
+  customSmtpSecure: boolean;
+  customEmailFrom: string | null;
+  customEmailName: string | null;
+  hasSmtpPassword: boolean;
+  isConfigured: boolean;
+}
+
 interface AIUsageStats {
   organizationId: string;
   promptTokens: number;
@@ -223,6 +234,23 @@ export default function OrganizationDetailPage() {
   const [showAzureSecret, setShowAzureSecret] = useState(false);
   const [oauthSuccess, setOauthSuccess] = useState<string | null>(null);
 
+  // Email config state
+  const [emailConfig, setEmailConfig] = useState<EmailConfig | null>(null);
+  const [emailSectionOpen, setEmailSectionOpen] = useState(false);
+  const [smtpHost, setSmtpHost] = useState('');
+  const [smtpPort, setSmtpPort] = useState('587');
+  const [smtpUser, setSmtpUser] = useState('');
+  const [smtpPassword, setSmtpPassword] = useState('');
+  const [smtpSecure, setSmtpSecure] = useState(true);
+  const [emailFrom, setEmailFrom] = useState('');
+  const [emailName, setEmailName] = useState('');
+  const [savingEmailConfig, setSavingEmailConfig] = useState(false);
+  const [testingEmail, setTestingEmail] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
+  const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [showSmtpPassword, setShowSmtpPassword] = useState(false);
+
   // AI Chat toggle state
   const [togglingAiChat, setTogglingAiChat] = useState(false);
 
@@ -251,10 +279,11 @@ export default function OrganizationDetailPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [orgRes, invRes, authRes] = await Promise.all([
+        const [orgRes, invRes, authRes, emailRes] = await Promise.all([
           fetch(`/api/super-admin/organizations/${orgId}`),
           fetch(`/api/super-admin/organizations/${orgId}/invitations`),
           fetch(`/api/super-admin/organizations/${orgId}/auth-config`),
+          fetch(`/api/super-admin/organizations/${orgId}/email-config`),
         ]);
 
         if (!orgRes.ok) {
@@ -287,6 +316,30 @@ export default function OrganizationDetailPage() {
           }
           if (authData.authConfig?.customAzureTenantId) {
             setAzureTenantId(authData.authConfig.customAzureTenantId);
+          }
+        }
+
+        if (emailRes.ok) {
+          const emailData = await emailRes.json();
+          setEmailConfig(emailData.emailConfig);
+          // Initialize email form fields from config
+          if (emailData.emailConfig?.customSmtpHost) {
+            setSmtpHost(emailData.emailConfig.customSmtpHost);
+          }
+          if (emailData.emailConfig?.customSmtpPort) {
+            setSmtpPort(emailData.emailConfig.customSmtpPort.toString());
+          }
+          if (emailData.emailConfig?.customSmtpUser) {
+            setSmtpUser(emailData.emailConfig.customSmtpUser);
+          }
+          if (emailData.emailConfig?.customSmtpSecure !== undefined) {
+            setSmtpSecure(emailData.emailConfig.customSmtpSecure);
+          }
+          if (emailData.emailConfig?.customEmailFrom) {
+            setEmailFrom(emailData.emailConfig.customEmailFrom);
+          }
+          if (emailData.emailConfig?.customEmailName) {
+            setEmailName(emailData.emailConfig.customEmailName);
           }
         }
 
@@ -1878,6 +1931,266 @@ export default function OrganizationDetailPage() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Email Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Email Configuration
+          </CardTitle>
+          <CardDescription>
+            Configure custom SMTP for white-label emails from organization&apos;s own domain
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Collapsible open={emailSectionOpen} onOpenChange={setEmailSectionOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  <span>Custom SMTP Settings</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {emailConfig?.isConfigured && (
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      <Check className="h-3 w-3 mr-1" />
+                      Configured
+                    </Badge>
+                  )}
+                  <ChevronDown className={`h-4 w-4 transition-transform ${emailSectionOpen ? 'rotate-180' : ''}`} />
+                </div>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-4 space-y-4">
+              {emailSuccess && (
+                <Alert className="bg-green-50 border-green-200">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">{emailSuccess}</AlertDescription>
+                </Alert>
+              )}
+              {emailError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{emailError}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="smtpHost">SMTP Host</Label>
+                  <Input
+                    id="smtpHost"
+                    placeholder="smtp.gmail.com"
+                    value={smtpHost}
+                    onChange={(e) => setSmtpHost(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">e.g., smtp.gmail.com, smtp.office365.com</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="smtpPort">SMTP Port</Label>
+                  <Input
+                    id="smtpPort"
+                    type="number"
+                    placeholder="587"
+                    value={smtpPort}
+                    onChange={(e) => setSmtpPort(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">Common: 587 (TLS), 465 (SSL)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="smtpUser">SMTP Username</Label>
+                  <Input
+                    id="smtpUser"
+                    placeholder="notifications@company.com"
+                    value={smtpUser}
+                    onChange={(e) => setSmtpUser(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="smtpPassword">SMTP Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="smtpPassword"
+                      type={showSmtpPassword ? 'text' : 'password'}
+                      placeholder={emailConfig?.hasSmtpPassword ? '••••••••••••' : 'Enter password or app password'}
+                      value={smtpPassword}
+                      onChange={(e) => setSmtpPassword(e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                      onClick={() => setShowSmtpPassword(!showSmtpPassword)}
+                    >
+                      {showSmtpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">For Gmail, use an App Password</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="emailFrom">From Email</Label>
+                  <Input
+                    id="emailFrom"
+                    type="email"
+                    placeholder="notifications@company.com"
+                    value={emailFrom}
+                    onChange={(e) => setEmailFrom(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="emailName">From Name (optional)</Label>
+                  <Input
+                    id="emailName"
+                    placeholder="Company Notifications"
+                    value={emailName}
+                    onChange={(e) => setEmailName(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 md:col-span-2">
+                  <Switch
+                    id="smtpSecure"
+                    checked={smtpSecure}
+                    onCheckedChange={setSmtpSecure}
+                  />
+                  <Label htmlFor="smtpSecure">Use TLS/SSL</Label>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  onClick={async () => {
+                    setSavingEmailConfig(true);
+                    setEmailSuccess(null);
+                    setEmailError(null);
+                    try {
+                      const response = await fetch(`/api/super-admin/organizations/${orgId}/email-config`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          customSmtpHost: smtpHost || null,
+                          customSmtpPort: smtpPort ? parseInt(smtpPort) : null,
+                          customSmtpUser: smtpUser || null,
+                          customSmtpPassword: smtpPassword || undefined,
+                          customSmtpSecure: smtpSecure,
+                          customEmailFrom: emailFrom || null,
+                          customEmailName: emailName || null,
+                        }),
+                      });
+                      const data = await response.json();
+                      if (!response.ok) throw new Error(data.error || 'Failed to save');
+                      setEmailConfig(data.emailConfig);
+                      setSmtpPassword(''); // Clear password field after save
+                      setEmailSuccess('Email configuration saved successfully');
+                      setTimeout(() => setEmailSuccess(null), 3000);
+                    } catch (err) {
+                      setEmailError(err instanceof Error ? err.message : 'Failed to save');
+                    } finally {
+                      setSavingEmailConfig(false);
+                    }
+                  }}
+                  disabled={savingEmailConfig || !smtpHost || !smtpPort || !smtpUser || !emailFrom}
+                >
+                  {savingEmailConfig ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Configuration'
+                  )}
+                </Button>
+
+                {emailConfig?.isConfigured && (
+                  <>
+                    <div className="flex-1" />
+                    <Input
+                      placeholder="test@email.com"
+                      value={testEmailAddress}
+                      onChange={(e) => setTestEmailAddress(e.target.value)}
+                      className="w-48"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        setTestingEmail(true);
+                        setEmailSuccess(null);
+                        setEmailError(null);
+                        try {
+                          const response = await fetch(`/api/super-admin/organizations/${orgId}/email-config`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ testEmail: testEmailAddress }),
+                          });
+                          const data = await response.json();
+                          if (!response.ok) throw new Error(data.details || data.error || 'Failed to send');
+                          setEmailSuccess(data.message);
+                          setTimeout(() => setEmailSuccess(null), 5000);
+                        } catch (err) {
+                          setEmailError(err instanceof Error ? err.message : 'Failed to send test email');
+                        } finally {
+                          setTestingEmail(false);
+                        }
+                      }}
+                      disabled={testingEmail || !testEmailAddress}
+                    >
+                      {testingEmail ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        'Send Test Email'
+                      )}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={async () => {
+                        if (!confirm('Clear email configuration?')) return;
+                        try {
+                          const response = await fetch(`/api/super-admin/organizations/${orgId}/email-config`, {
+                            method: 'DELETE',
+                          });
+                          if (!response.ok) throw new Error('Failed to clear');
+                          setEmailConfig(null);
+                          setSmtpHost('');
+                          setSmtpPort('587');
+                          setSmtpUser('');
+                          setSmtpPassword('');
+                          setEmailFrom('');
+                          setEmailName('');
+                          setEmailSuccess('Email configuration cleared');
+                          setTimeout(() => setEmailSuccess(null), 3000);
+                        } catch (err) {
+                          setEmailError(err instanceof Error ? err.message : 'Failed to clear');
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {emailConfig?.isConfigured && (
+                <div className="bg-green-50 p-3 rounded-lg border border-green-200 text-sm">
+                  <p className="text-green-800">
+                    <strong>Emails will be sent from:</strong> {emailConfig.customEmailName ? `"${emailConfig.customEmailName}" <${emailConfig.customEmailFrom}>` : emailConfig.customEmailFrom}
+                  </p>
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
       </Card>
 

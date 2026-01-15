@@ -380,6 +380,16 @@ model Organization {
   customAzureClientSecret  String? // Encrypted at rest
   customAzureTenantId      String? // For Azure AD directory restriction
 
+  // Custom Email Configuration (Enterprise feature - for white-label emails)
+  // When configured, emails are sent from organization's own domain
+  customSmtpHost     String? // e.g., "smtp.gmail.com", "smtp.office365.com"
+  customSmtpPort     Int? // e.g., 587, 465
+  customSmtpUser     String? // SMTP username/email
+  customSmtpPassword String? // Encrypted at rest
+  customSmtpSecure   Boolean @default(true) // Use TLS/SSL
+  customEmailFrom    String? // e.g., "notifications@company.com"
+  customEmailName    String? // e.g., "Company Notifications"
+
   // Core Relations
   teamMembers   TeamMember[] // Unified model for all organization members
   invitations   OrganizationInvitation[]

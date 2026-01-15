@@ -89,7 +89,8 @@ export default async function AdminLayout({
 
   // Redirect non-admin users
   // Check isAdmin flag (new boolean-based permission system)
-  const isAdmin = session?.user?.isAdmin === true;
+  // Also check legacy orgRole for backwards compatibility with existing sessions
+  const isAdmin = session?.user?.isAdmin === true || session?.user?.orgRole === 'OWNER' || session?.user?.orgRole === 'ADMIN';
   if (!isAdmin && !devAuthEnabled) {
     redirect('/employee');
   }
