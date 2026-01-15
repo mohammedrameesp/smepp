@@ -14,6 +14,7 @@ import {
   sendApprovalNotification,
   canSendWhatsAppNotification,
 } from './send-notification';
+import logger from '@/lib/core/log';
 import { invalidateTokensForEntity } from './action-tokens';
 import type { ApprovalEntityType, ApprovalDetails } from './types';
 
@@ -158,26 +159,40 @@ export async function notifyApproversViaWhatsApp(
   entityId: string,
   firstStepRole: Role
 ): Promise<void> {
+  const logContext = { tenantId, entityType, entityId, firstStepRole };
+  logger.info(logContext, 'WhatsApp Integration: Starting notifyApproversViaWhatsApp');
+
   try {
     // Get approval details for the notification
     const entityTypeMapped = toEntityType(entityType);
     const details = await getApprovalDetails(entityTypeMapped, entityId);
 
     if (!details) {
-      console.log(`WhatsApp: No details found for ${entityType}:${entityId}`);
+      logger.warn(logContext, 'WhatsApp Integration: No details found for entity');
       return;
     }
+    logger.debug({ ...logContext, details }, 'WhatsApp Integration: Got approval details');
 
     // Find all users who can approve this step
     const approverIds = await findApproversForRole(tenantId, firstStepRole);
+    logger.info({ ...logContext, approverCount: approverIds.length, approverIds }, 'WhatsApp Integration: Found approvers');
+
+    if (approverIds.length === 0) {
+      logger.warn(logContext, 'WhatsApp Integration: No approvers found');
+      return;
+    }
 
     // Send notifications to each approver (non-blocking)
     const notificationPromises = approverIds.map(async (approverId) => {
       const canSend = await canSendWhatsAppNotification(tenantId, approverId);
+      logger.debug({ ...logContext, approverId, canSend: canSend.canSend, reason: canSend.reason }, 'WhatsApp Integration: canSend check');
+
       if (!canSend.canSend) {
-        return; // Skip if user doesn't have WhatsApp configured
+        logger.warn({ ...logContext, approverId, reason: canSend.reason }, 'WhatsApp Integration: Skipping approver');
+        return;
       }
 
+      logger.info({ ...logContext, approverId }, 'WhatsApp Integration: Sending notification to approver');
       await sendApprovalNotification({
         tenantId,
         approverId,
@@ -189,11 +204,11 @@ export async function notifyApproversViaWhatsApp(
 
     // Execute all notifications in parallel (don't await)
     Promise.all(notificationPromises).catch((error) => {
-      console.error('WhatsApp: Error sending notifications:', error);
+      logger.error({ ...logContext, error: error instanceof Error ? error.message : 'Unknown error' }, 'WhatsApp Integration: Error sending notifications');
     });
   } catch (error) {
     // Log but don't throw - WhatsApp notifications are non-critical
-    console.error('WhatsApp: Error in notifyApproversViaWhatsApp:', error);
+    logger.error({ ...logContext, error: error instanceof Error ? error.message : 'Unknown error' }, 'WhatsApp Integration: Error in notifyApproversViaWhatsApp');
   }
 }
 
