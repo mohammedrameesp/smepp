@@ -30,10 +30,13 @@ export class WhatsAppClient {
   ): Promise<MetaSendMessageResponse> {
     const url = `${META_API_BASE}/${this.config.phoneNumberId}/messages`;
 
+    // Meta API requires phone number without + prefix
+    const toNumber = message.to.replace(/^\+/, '');
+
     const body = {
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
-      to: message.to,
+      to: toNumber,
       type: 'template',
       template: {
         name: message.templateName,
@@ -71,10 +74,13 @@ export class WhatsAppClient {
   async sendTextMessage(to: string, text: string): Promise<MetaSendMessageResponse> {
     const url = `${META_API_BASE}/${this.config.phoneNumberId}/messages`;
 
+    // Meta API requires phone number without + prefix
+    const toNumber = to.replace(/^\+/, '');
+
     const body = {
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
-      to,
+      to: toNumber,
       type: 'text',
       text: {
         preview_url: false,
