@@ -53,7 +53,8 @@ describe('Payroll API Tests', () => {
       email: 'admin@example.com',
       organizationId: 'org-123',
       organizationSlug: 'test-org',
-      orgRole: 'ADMIN',
+      isAdmin: true,
+      isOwner: false,
       subscriptionTier: 'PROFESSIONAL',
     },
     expires: new Date(Date.now() + 86400000).toISOString(),
@@ -164,11 +165,11 @@ describe('Payroll API Tests', () => {
     });
 
     it('should require admin role', async () => {
-      const memberSession = { ...mockAdminSession, user: { ...mockAdminSession.user, orgRole: 'MEMBER' } };
+      const memberSession = { ...mockAdminSession, user: { ...mockAdminSession.user, isAdmin: false } };
       mockGetServerSession.mockResolvedValue(memberSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.orgRole).toBe('MEMBER');
+      expect(session?.user.isAdmin).toBe(false);
       // Handler would reject non-admin requests
     });
 

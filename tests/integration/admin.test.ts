@@ -5,7 +5,7 @@
 
 import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/core/prisma';
-import { OrgRole } from '@prisma/client';
+// OrgRole enum removed - now using boolean flags (isOwner, isAdmin)
 
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
@@ -37,7 +37,6 @@ describe('Admin API Tests', () => {
       email: 'admin@example.com',
       organizationId: 'org-123',
       organizationSlug: 'test-org',
-      orgRole: 'ADMIN' as OrgRole,
       isAdmin: true,
     },
     expires: new Date(Date.now() + 86400000).toISOString(),
@@ -49,7 +48,6 @@ describe('Admin API Tests', () => {
       email: 'member@example.com',
       organizationId: 'org-123',
       organizationSlug: 'test-org',
-      orgRole: 'MEMBER' as OrgRole,
       isAdmin: false,
     },
     expires: new Date(Date.now() + 86400000).toISOString(),
@@ -107,8 +105,7 @@ describe('Admin API Tests', () => {
     it('should reject non-admin updates', async () => {
       mockGetServerSession.mockResolvedValue(mockMemberSession);
       const session = await mockGetServerSession();
-      expect(session?.user.orgRole).not.toBe('ADMIN');
-      expect(session?.user.orgRole).not.toBe('OWNER');
+      expect(session?.user.isAdmin).toBe(false);
     });
   });
 
@@ -254,13 +251,13 @@ describe('Admin API Tests', () => {
     it('should prevent self-demotion for owner', async () => {
       const ownerSession = {
         ...mockAdminSession,
-        user: { ...mockAdminSession.user, id: 'owner-123', orgRole: 'OWNER' as OrgRole },
+        user: { ...mockAdminSession.user, id: 'owner-123', isOwner: true },
       };
       mockGetServerSession.mockResolvedValue(ownerSession);
 
       // Cannot demote yourself if you're the owner
       const session = await mockGetServerSession();
-      expect(session?.user.orgRole).toBe('OWNER');
+      expect(session?.user.isOwner).toBe(true);
     });
   });
 
@@ -292,11 +289,11 @@ describe('Admin API Tests', () => {
       const mockTeamMember = getMockedModel(prisma.teamMember);
       mockTeamMember.findFirst.mockResolvedValue({
         id: 'owner-123',
-        orgRole: 'OWNER',
+        isOwner: true,
       });
 
       const member = await mockTeamMember.findFirst({ where: { id: 'owner-123' } });
-      expect(member.orgRole).toBe('OWNER');
+      expect(member.isOwner).toBe(true);
       // Should return 403
     });
   });
@@ -529,7 +526,7 @@ describe('Admin API Tests', () => {
     it('should require admin role', async () => {
       mockGetServerSession.mockResolvedValue(mockMemberSession);
       const session = await mockGetServerSession();
-      expect(session?.user.orgRole).not.toBe('ADMIN');
+      expect(session?.user.isAdmin).toBe(false);
     });
   });
 

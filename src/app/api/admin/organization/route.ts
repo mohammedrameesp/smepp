@@ -119,7 +119,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Only owners/admins can update org
-    if (session.user.orgRole !== 'OWNER' && session.user.orgRole !== 'ADMIN') {
+    if (!session.user.isOwner && !session.user.isAdmin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

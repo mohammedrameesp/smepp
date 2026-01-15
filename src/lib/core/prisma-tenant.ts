@@ -39,8 +39,9 @@ export interface TenantContext {
   tenantId: string;
   userId: string;
   userRole?: string; // User's app role (ADMIN/USER)
-  orgRole?: string;  // User's organization role (OWNER/ADMIN/MANAGER/MEMBER)
   subscriptionTier?: string;
+  isOwner?: boolean; // TeamMember boolean flag
+  isAdmin?: boolean; // TeamMember boolean flag
 }
 
 // Models that have tenantId field and need tenant isolation
@@ -300,7 +301,6 @@ export function getTenantContextFromHeaders(headers: Headers): TenantContext | n
     tenantId,
     userId,
     userRole: headers.get('x-user-role') || undefined,
-    orgRole: headers.get('x-org-role') || undefined,
     subscriptionTier: headers.get('x-subscription-tier') || undefined,
   };
 }

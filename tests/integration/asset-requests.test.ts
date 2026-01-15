@@ -38,7 +38,8 @@ describe('Asset Requests API Tests', () => {
       email: 'employee@example.com',
       organizationId: 'org-123',
       organizationSlug: 'test-org',
-      orgRole: 'MEMBER',
+      isAdmin: false,
+      isOwner: false,
       subscriptionTier: 'PROFESSIONAL',
     },
     expires: new Date(Date.now() + 86400000).toISOString(),
@@ -46,7 +47,7 @@ describe('Asset Requests API Tests', () => {
 
   const mockAdminSession = {
     ...mockSession,
-    user: { ...mockSession.user, orgRole: 'ADMIN' },
+    user: { ...mockSession.user, isAdmin: true },
   };
 
   const mockAssetRequests = [
@@ -225,7 +226,7 @@ describe('Asset Requests API Tests', () => {
 
     it('should require admin role', async () => {
       const session = await mockGetServerSession();
-      expect(session?.user.orgRole).toBe('MEMBER');
+      expect(session?.user.isAdmin).toBe(false);
       // Would reject non-admin
     });
   });

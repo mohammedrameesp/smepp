@@ -5,7 +5,8 @@
  * @module tests/unit/subscriptions
  */
 
-import { BillingCycle, SubscriptionStatus, OrgRole } from '@prisma/client';
+import { BillingCycle, SubscriptionStatus } from '@prisma/client';
+// OrgRole enum removed - now using boolean flags (isOwner, isAdmin)
 import { updateSubscriptionSchema } from '@/features/subscriptions/validations';
 
 // Mock datetime for consistent test dates
@@ -208,33 +209,40 @@ describe('Subscription [id] Route Tests', () => {
 
     describe('GET authorization', () => {
       it('should document that OWNER can view any subscription', () => {
-        // From route: tenant.orgRole === 'OWNER' allows access
-        const orgRole: OrgRole = 'OWNER';
-        const isOwnerOrAdmin = orgRole === 'OWNER' || orgRole === 'ADMIN';
-        expect(isOwnerOrAdmin).toBe(true);
+        // From route: session.user.isOwner === true allows access
+        const isOwner = true;
+        const isAdmin = false;
+        const hasAccess = isOwner || isAdmin;
+        expect(hasAccess).toBe(true);
       });
 
       it('should document that ADMIN can view any subscription', () => {
-        // From route: tenant.orgRole === 'ADMIN' allows access
-        const orgRole = 'ADMIN' as OrgRole;
-        const isOwnerOrAdmin = ['OWNER', 'ADMIN'].includes(orgRole);
-        expect(isOwnerOrAdmin).toBe(true);
+        // From route: session.user.isAdmin === true allows access
+        const isOwner = false;
+        const isAdmin = true;
+        const hasAccess = isOwner || isAdmin;
+        expect(hasAccess).toBe(true);
       });
 
-      it('should document that MEMBER can only view assigned subscriptions', () => {
+      it('should document that regular member can only view assigned subscriptions', () => {
         // From route: non-admin users need assignedMemberId === userId
-        const orgRole = 'MEMBER' as OrgRole;
-        const isOwnerOrAdmin = ['OWNER', 'ADMIN'].includes(orgRole);
-        expect(isOwnerOrAdmin).toBe(false);
-        // MEMBER must be the assigned member to view
+        const isOwner = false;
+        const isAdmin = false;
+        const hasAccess = isOwner || isAdmin;
+        expect(hasAccess).toBe(false);
+        // Regular member must be the assigned member to view
       });
 
-      it('should document that MANAGER can only view assigned subscriptions', () => {
-        // Note: MANAGER is NOT included in admin check (may be intentional)
-        const orgRole = 'MANAGER' as OrgRole;
-        const isOwnerOrAdmin = ['OWNER', 'ADMIN'].includes(orgRole);
-        expect(isOwnerOrAdmin).toBe(false);
-        // MANAGER must be the assigned member to view (per current implementation)
+      it('should document that user with canApprove can only view assigned subscriptions', () => {
+        // Note: canApprove flag is NOT sufficient for full access
+        const isOwner = false;
+        const isAdmin = false;
+        const canApprove = true;
+        const hasFullAccess = isOwner || isAdmin;
+        expect(hasFullAccess).toBe(false);
+        // User must be the assigned member to view (per current implementation)
+        // canApprove is only for approval workflows, not full resource access
+        expect(canApprove).toBe(true); // Just to use the variable
       });
     });
 

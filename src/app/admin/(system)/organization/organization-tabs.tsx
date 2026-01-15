@@ -33,7 +33,6 @@ import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
 import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings, LocationsSettings, ExchangeRateSettings, PayrollSettings, LeaveTypesSettings } from '@/features/settings/components';
 import { CurrencySelector } from '@/components/currency-selector';
-import type { OrgRole } from '@prisma/client';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
 
 // Types
@@ -57,7 +56,7 @@ interface Organization {
 
 interface OrganizationTabsProps {
   organization: Organization;
-  currentUserRole: OrgRole;
+  currentUserRole: string;
   isOwner: boolean;
 }
 

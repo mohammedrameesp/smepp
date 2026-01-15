@@ -118,7 +118,7 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
     // STEP 2: Apply role-based access control
     // Non-admin users can only see their own requests
     // ─────────────────────────────────────────────────────────────────────────────
-    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
     const effectiveMemberId = isAdmin ? filterMemberId : currentUserId;
 
     // ─────────────────────────────────────────────────────────────────────────────

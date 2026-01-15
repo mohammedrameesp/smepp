@@ -7,8 +7,8 @@
  * ```typescript
  * import { hasPermission, PERMISSIONS } from '@/lib/access-control';
  *
- * // Check a permission
- * const canRun = await hasPermission(tenantId, 'MANAGER', PERMISSIONS.PAYROLL_RUN, enabledModules);
+ * // Check a permission (using boolean flags)
+ * const canRun = await hasPermission(tenantId, isOwner, isAdmin, PERMISSIONS.PAYROLL_RUN, enabledModules);
  *
  * // In API handler
  * export const POST = withErrorHandler(handler, { requirePermission: 'payroll:run' });
@@ -34,10 +34,11 @@ export {
 export {
   hasPermission,
   hasPermissions,
+  getPermissionsForUser,
   getPermissionsForRole,
-  grantPermission,
-  revokePermission,
-  setRolePermissions,
+  grantMemberPermission,
+  revokeMemberPermission,
+  setMemberPermissions,
   isValidPermission,
 } from './permission-service';
 

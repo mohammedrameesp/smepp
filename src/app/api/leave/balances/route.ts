@@ -32,7 +32,7 @@ async function getLeaveBalancesHandler(request: NextRequest, context: APIContext
     const { memberId, leaveTypeId, year, p, ps } = validation.data;
 
     // Non-admin users can only see their own balances
-    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
 
     // For non-admin users, we need to look up their TeamMember ID
     let effectiveMemberId = memberId;

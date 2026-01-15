@@ -190,13 +190,6 @@ enum SubscriptionTier {
   PLUS
 }
 
-enum OrgRole {
-  OWNER // Full control, billing access
-  ADMIN // Manage users, settings
-  MANAGER // Approve requests, view reports
-  MEMBER // Basic access
-}
-
 enum WhatsAppSource {
   NONE // WhatsApp disabled
   PLATFORM // Use platform-wide config
@@ -464,7 +457,7 @@ model OrganizationInvitation {
 
   email String
   name  String? // Optional name for the invitee (pre-filled in signup)
-  role  OrgRole @default(MEMBER)
+  role  String  @default("MEMBER") // Legacy: kept for backwards compatibility
   token String  @unique @default(cuid())
 
   // Employee classification - null means user will confirm during signup
@@ -484,13 +477,13 @@ model OrganizationInvitation {
 }
 
 // Custom role permissions per organization
-// OWNER and ADMIN have all permissions by default (not stored)
-// MANAGER and MEMBER get custom permissions stored here
+// OWNER and ADMIN (isOwner/isAdmin flags) have all permissions by default (not stored)
+// Non-admin users get custom permissions stored here with role='MEMBER'
 model RolePermission {
   id         String       @id @default(cuid())
   tenantId   String
   tenant     Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  role       OrgRole // MANAGER or MEMBER (OWNER/ADMIN have all by default)
+  role       String // 'MEMBER' for non-admin users (OWNER/ADMIN have all by default)
   permission String // e.g., "assets:view", "payroll:run"
 
   createdAt DateTime @default(now())

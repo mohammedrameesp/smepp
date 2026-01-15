@@ -12,7 +12,7 @@ import AzureADProvider from 'next-auth/providers/azure-ad';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from './prisma';
-import { OrgRole, SubscriptionTier } from '@prisma/client';
+import { SubscriptionTier } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import {
   isAccountLocked,
@@ -33,7 +33,6 @@ export interface OrganizationInfo {
   slug: string;
   logoUrl: string | null;
   logoUrlInverse: string | null;
-  role: OrgRole;
   tier: SubscriptionTier;
   enabledModules: string[];
 }
@@ -391,13 +390,6 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
     return null;
   }
 
-  // Map isAdmin/isOwner to legacy OrgRole for backwards compatibility
-  const orgRole = member.isOwner
-    ? OrgRole.OWNER
-    : member.isAdmin
-      ? OrgRole.ADMIN
-      : OrgRole.MEMBER;
-
   return {
     organization: {
       id: member.tenant.id,
@@ -405,7 +397,6 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
       slug: member.tenant.slug,
       logoUrl: member.tenant.logoUrl,
       logoUrlInverse: member.tenant.logoUrlInverse,
-      role: orgRole,
       tier: member.tenant.subscriptionTier,
       enabledModules: member.tenant.enabledModules,
     },
@@ -460,7 +451,6 @@ async function _getUserOrganization(userId: string): Promise<OrganizationInfo | 
     slug: membership.tenant.slug,
     logoUrl: membership.tenant.logoUrl,
     logoUrlInverse: membership.tenant.logoUrlInverse,
-    role: membership.isOwner ? OrgRole.OWNER : membership.isAdmin ? OrgRole.ADMIN : OrgRole.MEMBER,
     tier: membership.tenant.subscriptionTier,
     enabledModules: membership.tenant.enabledModules,
   };
@@ -693,12 +683,6 @@ export const authOptions: NextAuthOptions = {
             token.organizationLogoUrlInverse = userData.organizationLogoUrlInverse as string | null;
             token.subscriptionTier = userData.subscriptionTier as SubscriptionTier;
             token.enabledModules = userData.enabledModules as string[];
-            // Map isAdmin/isOwner to legacy OrgRole for backwards compatibility
-            token.orgRole = token.isOwner
-              ? OrgRole.OWNER
-              : token.isAdmin
-                ? OrgRole.ADMIN
-                : OrgRole.MEMBER;
           } else {
             // Super admin or OAuth login
             token.isTeamMember = false;
@@ -767,12 +751,6 @@ export const authOptions: NextAuthOptions = {
                 token.organizationLogoUrlInverse = teamMember.tenant.logoUrlInverse;
                 token.subscriptionTier = teamMember.tenant.subscriptionTier;
                 token.enabledModules = teamMember.tenant.enabledModules;
-                // Map isAdmin/isOwner to legacy OrgRole for backwards compatibility
-                token.orgRole = teamMember.isOwner
-                  ? OrgRole.OWNER
-                  : teamMember.isAdmin
-                    ? OrgRole.ADMIN
-                    : OrgRole.MEMBER;
               }
             }
 
@@ -783,7 +761,6 @@ export const authOptions: NextAuthOptions = {
               token.organizationName = undefined;
               token.organizationLogoUrl = undefined;
               token.organizationLogoUrlInverse = undefined;
-              token.orgRole = undefined;
               token.subscriptionTier = undefined;
               token.enabledModules = undefined;
             }
@@ -800,7 +777,6 @@ export const authOptions: NextAuthOptions = {
             token.organizationName = memberData.organization.name;
             token.organizationLogoUrl = memberData.organization.logoUrl;
             token.organizationLogoUrlInverse = memberData.organization.logoUrlInverse;
-            token.orgRole = memberData.organization.role;
             token.subscriptionTier = memberData.organization.tier;
             token.enabledModules = memberData.organization.enabledModules;
             token.isOwner = memberData.isOwner;
@@ -849,7 +825,6 @@ export const authOptions: NextAuthOptions = {
             session.user.organizationName = token.organizationName as string;
             session.user.organizationLogoUrl = token.organizationLogoUrl as string | undefined;
             session.user.organizationLogoUrlInverse = token.organizationLogoUrlInverse as string | undefined;
-            session.user.orgRole = token.orgRole as OrgRole;
             session.user.subscriptionTier = token.subscriptionTier as SubscriptionTier;
             session.user.enabledModules = token.enabledModules as string[] | undefined;
           }
@@ -958,7 +933,6 @@ declare module 'next-auth' {
       organizationName?: string;
       organizationLogoUrl?: string;
       organizationLogoUrlInverse?: string;
-      orgRole?: OrgRole; // Legacy role for backwards compatibility
       subscriptionTier?: SubscriptionTier;
       enabledModules?: string[];
     };
@@ -1007,7 +981,6 @@ declare module 'next-auth/jwt' {
     organizationName?: string;
     organizationLogoUrl?: string | null;
     organizationLogoUrlInverse?: string | null;
-    orgRole?: OrgRole;
     subscriptionTier?: SubscriptionTier;
     enabledModules?: string[];
   }

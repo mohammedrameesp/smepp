@@ -33,7 +33,8 @@ describe('Organizations API Tests', () => {
       name: 'Test User',
       organizationId: 'org-123',
       organizationSlug: 'test-org',
-      orgRole: 'ADMIN',
+      isAdmin: true,
+      isOwner: false,
       subscriptionTier: 'PROFESSIONAL',
     },
     expires: new Date(Date.now() + 86400000).toISOString(),
@@ -314,11 +315,11 @@ describe('Organizations API Tests', () => {
     });
 
     it('should require admin role', async () => {
-      const memberSession = { ...mockSession, user: { ...mockSession.user, orgRole: 'MEMBER' } };
+      const memberSession = { ...mockSession, user: { ...mockSession.user, isAdmin: false } };
       mockGetServerSession.mockResolvedValue(memberSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.orgRole).toBe('MEMBER');
+      expect(session?.user.isAdmin).toBe(false);
     });
   });
 

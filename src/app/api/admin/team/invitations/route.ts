@@ -21,7 +21,7 @@ export async function GET() {
     }
 
     // Only admins/owners can view invitations
-    if (session.user.orgRole !== 'OWNER' && session.user.orgRole !== 'ADMIN') {
+    if (!session.user.isOwner && !session.user.isAdmin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only admins/owners can invite
-    if (session.user.orgRole !== 'OWNER' && session.user.orgRole !== 'ADMIN') {
+    if (!session.user.isOwner && !session.user.isAdmin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

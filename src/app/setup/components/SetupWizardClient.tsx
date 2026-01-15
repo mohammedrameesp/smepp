@@ -117,13 +117,13 @@ export function SetupWizardClient() {
 
   // Redirect non-admins to employee dashboard
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.orgRole) {
-      const role = session.user.orgRole;
-      if (role !== 'ADMIN' && role !== 'OWNER') {
+    if (status === 'authenticated') {
+      const isAdmin = session?.user?.isOwner || session?.user?.isAdmin;
+      if (!isAdmin) {
         router.push('/employee');
       }
     }
-  }, [status, session?.user?.orgRole, router]);
+  }, [status, session?.user?.isOwner, session?.user?.isAdmin, router]);
 
   // Navigation functions
   const goNext = useCallback(() => {

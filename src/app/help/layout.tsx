@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { HelpLayoutClient } from './layout-client';
-import { isAdminRole } from '@/lib/help/help-types';
 import type { UserRole } from '@/lib/help/help-types';
 import type { Metadata } from 'next';
 
@@ -75,8 +74,8 @@ export default async function HelpLayout({
   }
 
   // Determine user role for content filtering
-  const userRole: UserRole = isAdminRole(session?.user?.orgRole) ? 'ADMIN' : 'USER';
-  const isAdmin = session?.user?.isAdmin === true;
+  const isAdmin = !!(session?.user?.isOwner || session?.user?.isAdmin);
+  const userRole: UserRole = isAdmin ? 'ADMIN' : 'USER';
 
   // Get tenant-scoped data
   const tenantId = session?.user?.organizationId;

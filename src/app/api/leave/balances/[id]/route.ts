@@ -48,7 +48,7 @@ async function getLeaveBalanceHandler(request: NextRequest, context: APIContext)
     }
 
     // Non-admin users can only see their own balance
-    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
     if (!isOwnerOrAdmin) {
       const currentMember = await db.teamMember.findFirst({
         where: { id: tenant.userId },

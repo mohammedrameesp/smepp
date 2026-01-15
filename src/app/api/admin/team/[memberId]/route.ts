@@ -33,7 +33,7 @@ export async function PATCH(
     }
 
     // Only owners can change roles
-    if (session.user.orgRole !== 'OWNER') {
+    if (!session.user.isOwner) {
       return NextResponse.json({ error: 'Owner access required' }, { status: 403 });
     }
 
@@ -134,7 +134,7 @@ export async function DELETE(
     }
 
     // Only admins/owners can remove members
-    if (session.user.orgRole !== 'OWNER' && session.user.orgRole !== 'ADMIN') {
+    if (!session.user.isOwner && !session.user.isAdmin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
@@ -174,7 +174,7 @@ export async function DELETE(
     }
 
     // Admins can't remove other admins (only owners can)
-    if (session.user.orgRole === 'ADMIN' && member.isAdmin) {
+    if (!session.user.isOwner && member.isAdmin) {
       return NextResponse.json(
         { error: 'Only owners can remove admins' },
         { status: 403 }

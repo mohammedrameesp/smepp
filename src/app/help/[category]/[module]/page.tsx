@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { isAdminRole, type UserRole } from '@/lib/help/help-types';
+import type { UserRole } from '@/lib/help/help-types';
 import { getModuleByPath } from '@/lib/help/help-categories';
 import { getModuleContent } from '@/lib/help/content';
 import { ModuleHelpContent } from './module-content';
@@ -29,7 +29,7 @@ export default async function ModuleHelpPage({ params }: PageProps) {
 
   // Get session for role-based content
   const session = await getServerSession(authOptions);
-  const userRole: UserRole = isAdminRole(session?.user?.orgRole) ? 'ADMIN' : 'USER';
+  const userRole: UserRole = (session?.user?.isOwner || session?.user?.isAdmin) ? 'ADMIN' : 'USER';
 
   // Get enabled modules
   const tenantId = session?.user?.organizationId;

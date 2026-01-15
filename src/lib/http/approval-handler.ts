@@ -313,7 +313,8 @@ export function createApprovalHandler<TEntity, TBody = unknown, TResult = TEntit
     const db = tenantPrisma as TenantPrismaClient;
     const tenantId = tenant.tenantId;
     const userId = tenant.userId;
-    const orgRole = tenant.orgRole || 'MEMBER';
+    // Derive legacy orgRole for backwards compatibility
+    const orgRole = tenant.isOwner ? 'OWNER' : tenant.isAdmin ? 'ADMIN' : 'MEMBER';
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 2: Validate ID parameter

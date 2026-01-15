@@ -141,7 +141,8 @@ export function createListHandler<TEntity, TQuery extends BasePaginationParams>(
     const ctx = {
       tenantId: tenant.tenantId,
       userId: tenant.userId,
-      orgRole: tenant.orgRole || 'MEMBER',
+      // Derive legacy orgRole for backwards compatibility
+      orgRole: tenant.isOwner ? 'OWNER' : tenant.isAdmin ? 'ADMIN' : 'MEMBER',
     };
 
     // Build where clause

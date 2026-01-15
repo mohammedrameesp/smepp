@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth/next';
-import { OrgRole } from '@prisma/client';
+// OrgRole enum removed - now using boolean flags (isOwner, isAdmin) and role strings
 
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
@@ -20,7 +20,6 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
         email: 'admin@tenant1.com',
         organizationId: 'tenant-1',
         organizationSlug: 'tenant1',
-        orgRole: 'ADMIN' as OrgRole,
         isAdmin: true,
       },
       expires: new Date(Date.now() + 86400000).toISOString(),
@@ -32,7 +31,6 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
         email: 'admin@tenant2.com',
         organizationId: 'tenant-2',
         organizationSlug: 'tenant2',
-        orgRole: 'ADMIN' as OrgRole,
         isAdmin: true,
       },
       expires: new Date(Date.now() + 86400000).toISOString(),
@@ -94,7 +92,6 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
           id: 'admin-123',
           email: 'admin@example.com',
           organizationId: 'tenant-1',
-          orgRole: 'ADMIN' as OrgRole,
           isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
@@ -103,7 +100,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
       mockGetServerSession.mockResolvedValue(mockSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.orgRole).toBe('ADMIN');
+      expect(session?.user.isAdmin).toBe(true);
     });
 
     it('should prevent employee from modifying asset they do not own', async () => {
@@ -113,7 +110,6 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
           id: 'user-123',
           email: 'employee@example.com',
           organizationId: 'tenant-1',
-          orgRole: 'MEMBER' as OrgRole,
           isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
@@ -126,7 +122,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
       const currentUserId = session?.user.id;
 
       expect(currentUserId).not.toBe(assetAssignedMemberId);
-      expect(session?.user.orgRole).not.toBe('ADMIN');
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should allow employee to view their assigned asset', async () => {
@@ -137,7 +133,6 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
           memberId: 'member-123',
           email: 'employee@example.com',
           organizationId: 'tenant-1',
-          orgRole: 'MEMBER' as OrgRole,
           isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
@@ -164,7 +159,6 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
           id: 'user-123',
           email: 'employee@example.com',
           organizationId: 'tenant-1',
-          orgRole: 'MEMBER' as OrgRole,
           isAdmin: false,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
@@ -185,7 +179,6 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
           id: 'admin-123',
           email: 'admin@example.com',
           organizationId: 'tenant-1',
-          orgRole: 'ADMIN' as OrgRole,
           isAdmin: true,
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
@@ -197,7 +190,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
       const userTenantId = mockSession.user.organizationId;
 
       expect(userTenantId).toBe(subscriptionTenantId);
-      expect(mockSession.user.orgRole).toBe('ADMIN');
+      expect(mockSession.user.isAdmin).toBe(true);
     });
   });
 
@@ -209,7 +202,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
     it('should prevent employee from viewing another employee leave request', () => {
       const checkLeaveAccess = (
         userId: string,
-        orgRole: OrgRole,
+        orgRole: string,
         leaveRequestMemberId: string,
         userMemberId: string
       ): boolean => {
@@ -231,7 +224,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
       const canApproveLeave = (
         approverTenantId: string,
         leaveTenantId: string,
-        approverRole: OrgRole
+        approverRole: string
       ): boolean => {
         if (approverTenantId !== leaveTenantId) return false;
         return ['ADMIN', 'OWNER', 'MANAGER'].includes(approverRole);
@@ -249,7 +242,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
 
   describe('Payroll Access Control', () => {
     it('should restrict payroll access to admin only', () => {
-      const canAccessPayroll = (orgRole: OrgRole): boolean => {
+      const canAccessPayroll = (orgRole: string): boolean => {
         return ['ADMIN', 'OWNER'].includes(orgRole);
       };
 
@@ -263,7 +256,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
       const canViewPayslip = (
         requesterId: string,
         payslipMemberId: string,
-        requesterRole: OrgRole
+        requesterRole: string
       ): boolean => {
         if (['ADMIN', 'OWNER'].includes(requesterRole)) return true;
         return requesterId === payslipMemberId;
@@ -283,7 +276,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
     it('should show only approved suppliers to non-admin users', () => {
       const filterSuppliersForRole = (
         suppliers: Array<{ status: string }>,
-        orgRole: OrgRole
+        orgRole: string
       ) => {
         if (['ADMIN', 'OWNER'].includes(orgRole)) {
           return suppliers;
@@ -323,7 +316,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
       const canViewPR = (
         requesterId: string,
         prRequesterId: string,
-        orgRole: OrgRole
+        orgRole: string
       ): boolean => {
         if (['ADMIN', 'OWNER', 'MANAGER'].includes(orgRole)) return true;
         return requesterId === prRequesterId;
@@ -335,7 +328,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
     });
 
     it('should prevent PR modification after approval', () => {
-      const canModifyPR = (status: string, _orgRole: OrgRole): boolean => {
+      const canModifyPR = (status: string, _orgRole: string): boolean => {
         // Only draft PRs can be modified
         if (status !== 'DRAFT') return false;
         return true;
@@ -354,7 +347,7 @@ describe('IDOR (Insecure Direct Object Reference) Security Tests', () => {
   describe('Authorization Logic', () => {
     it('should correctly implement multi-level authorization check', () => {
       const checkAuthorization = (
-        userRole: OrgRole,
+        userRole: string,
         userId: string,
         resourceOwnerId: string | null,
         resourceTenantId: string,

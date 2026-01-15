@@ -113,7 +113,7 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
     // STEP 2: Authorization check
     // Admins can view any asset, members can only view their assigned assets
     // ─────────────────────────────────────────────────────────────────────────────
-    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
     if (!isAdmin && asset.assignedMemberId !== tenant.userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

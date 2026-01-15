@@ -20,7 +20,7 @@ export async function POST(
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    if (session.user.orgRole !== 'OWNER' && session.user.orgRole !== 'ADMIN') {
+    if (!session.user.isOwner && !session.user.isAdmin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
@@ -99,7 +99,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    if (session.user.orgRole !== 'OWNER' && session.user.orgRole !== 'ADMIN') {
+    if (!session.user.isOwner && !session.user.isAdmin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

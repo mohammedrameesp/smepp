@@ -75,8 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only admins/owners can install modules
-    const orgRole = session.user.orgRole;
-    if (!orgRole || !['OWNER', 'ADMIN'].includes(orgRole)) {
+    if (!session.user.isOwner && !session.user.isAdmin) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
@@ -178,8 +177,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Only admins/owners can uninstall modules
-    const orgRole = session.user.orgRole;
-    if (!orgRole || !['OWNER', 'ADMIN'].includes(orgRole)) {
+    if (!session.user.isOwner && !session.user.isAdmin) {
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 

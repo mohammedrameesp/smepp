@@ -34,7 +34,7 @@ async function getLoansHandler(request: NextRequest, context: APIContext) {
     const { userId, status, type, p, ps } = validation.data;
     const page = p;
     const pageSize = ps;
-    const isAdmin = tenant!.orgRole === 'OWNER' || tenant!.orgRole === 'ADMIN';
+    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
 
     // Build where clause with tenant filter
     const where: Record<string, unknown> = { tenantId };

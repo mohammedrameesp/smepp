@@ -69,8 +69,8 @@ export default async function EmployeeLayout({
 
   // Check onboarding status - no longer force redirect, allow employees to skip
   let onboardingComplete = true;
-  // Check isAdmin with backwards compatibility for existing sessions
-  const isAdmin = session?.user?.isAdmin === true || session?.user?.orgRole === 'OWNER' || session?.user?.orgRole === 'ADMIN';
+  // Check isAdmin using boolean flags
+  const isAdmin = session?.user?.isOwner || session?.user?.isAdmin;
   if (session?.user?.id && !isAdmin) {
     onboardingComplete = await checkOnboardingComplete(session.user.id);
   }

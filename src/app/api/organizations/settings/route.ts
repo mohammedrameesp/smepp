@@ -90,8 +90,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Only admins/owners can update settings
-    const orgRole = session.user.orgRole;
-    if (!orgRole || !['OWNER', 'ADMIN'].includes(orgRole)) {
+    if (!session.user.isOwner && !session.user.isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

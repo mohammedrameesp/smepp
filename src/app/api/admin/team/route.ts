@@ -17,7 +17,7 @@ export async function GET() {
     }
 
     // Only org admins/owners can view team
-    if (session.user.orgRole !== 'OWNER' && session.user.orgRole !== 'ADMIN') {
+    if (!session.user.isOwner && !session.user.isAdmin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 

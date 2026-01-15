@@ -54,7 +54,7 @@ async function getSupplierHandler(request: NextRequest, context: APIContext) {
     }
 
     // Non-admin users can only view APPROVED suppliers
-    if (tenant.orgRole !== 'ADMIN' && tenant.orgRole !== 'OWNER' && supplier.status !== 'APPROVED') {
+    if (!tenant?.isOwner && !tenant?.isAdmin && supplier.status !== 'APPROVED') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

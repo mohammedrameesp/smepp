@@ -1,12 +1,12 @@
 /**
  * Permission Seeding Utilities
  *
- * Functions to seed default permissions for new organizations
+ * Functions to seed default permissions for new organizations.
+ * Uses 'MEMBER' role string for non-admin users (owners and admins have all permissions automatically).
  */
 
-import { OrgRole } from '@prisma/client';
 import { prisma } from '@/lib/core/prisma';
-import { DEFAULT_MANAGER_PERMISSIONS, DEFAULT_MEMBER_PERMISSIONS } from './permissions';
+import { DEFAULT_MEMBER_PERMISSIONS } from './permissions';
 
 /**
  * Seed default permissions for a new organization
@@ -14,23 +14,16 @@ import { DEFAULT_MANAGER_PERMISSIONS, DEFAULT_MEMBER_PERMISSIONS } from './permi
  * @param tenantId - The organization ID
  */
 export async function seedDefaultPermissions(tenantId: string): Promise<void> {
-  // Create default MANAGER permissions
-  const managerPermissions = DEFAULT_MANAGER_PERMISSIONS.map((permission) => ({
-    tenantId,
-    role: 'MANAGER' as OrgRole,
-    permission,
-  }));
-
-  // Create default MEMBER permissions
+  // Create default MEMBER permissions (for non-admin users)
   const memberPermissions = DEFAULT_MEMBER_PERMISSIONS.map((permission) => ({
     tenantId,
-    role: 'MEMBER' as OrgRole,
+    role: 'MEMBER',
     permission,
   }));
 
   // Batch insert (skip duplicates in case of re-run)
   await prisma.rolePermission.createMany({
-    data: [...managerPermissions, ...memberPermissions],
+    data: memberPermissions,
     skipDuplicates: true,
   });
 }
@@ -39,35 +32,20 @@ export async function seedDefaultPermissions(tenantId: string): Promise<void> {
  * Reset permissions to defaults for an organization
  *
  * @param tenantId - The organization ID
- * @param roles - Optional specific roles to reset (defaults to both MANAGER and MEMBER)
  */
-export async function resetToDefaultPermissions(
-  tenantId: string,
-  roles: OrgRole[] = ['MANAGER', 'MEMBER']
-): Promise<void> {
+export async function resetToDefaultPermissions(tenantId: string): Promise<void> {
   await prisma.$transaction(async (tx) => {
-    // Delete existing permissions for specified roles
+    // Delete existing permissions
     await tx.rolePermission.deleteMany({
-      where: {
-        tenantId,
-        role: { in: roles },
-      },
+      where: { tenantId },
     });
 
-    // Re-seed defaults
-    const permissionsToCreate: { tenantId: string; role: OrgRole; permission: string }[] = [];
-
-    if (roles.includes('MANAGER')) {
-      for (const permission of DEFAULT_MANAGER_PERMISSIONS) {
-        permissionsToCreate.push({ tenantId, role: 'MANAGER', permission });
-      }
-    }
-
-    if (roles.includes('MEMBER')) {
-      for (const permission of DEFAULT_MEMBER_PERMISSIONS) {
-        permissionsToCreate.push({ tenantId, role: 'MEMBER', permission });
-      }
-    }
+    // Re-seed defaults for MEMBER role
+    const permissionsToCreate = DEFAULT_MEMBER_PERMISSIONS.map((permission) => ({
+      tenantId,
+      role: 'MEMBER',
+      permission,
+    }));
 
     if (permissionsToCreate.length > 0) {
       await tx.rolePermission.createMany({

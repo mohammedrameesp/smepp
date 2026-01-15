@@ -4,7 +4,7 @@
  * @module tests/unit/lib/access-control
  */
 
-import { OrgRole } from '@prisma/client';
+// OrgRole enum removed - now using boolean flags (isOwner, isAdmin)
 
 // Mock Prisma
 jest.mock('@/lib/core/prisma', () => ({
@@ -36,8 +36,8 @@ import {
 import {
   hasPermission,
   hasPermissions,
-  grantPermission,
-  revokePermission,
+  grantMemberPermission,
+  revokeMemberPermission,
   isValidPermission,
 } from '@/lib/access-control/permission-service';
 import { prisma } from '@/lib/core/prisma';
@@ -149,57 +149,57 @@ describe('RBAC Permissions System', () => {
   // ROLE HIERARCHY
   // ═══════════════════════════════════════════════════════════════════════════
 
-  describe('Role Hierarchy', () => {
-    const _roles: OrgRole[] = ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER'];
+  describe('Boolean Flag Permission Hierarchy', () => {
     const tenantId = 'tenant-123';
     const enabledModules = ['assets', 'subscriptions', 'suppliers', 'employees', 'leave', 'payroll'];
 
-    it('should grant OWNER all permissions', async () => {
-      const result = await hasPermission(tenantId, 'OWNER', 'assets:delete', enabledModules);
+    it('should grant OWNER (isOwner=true) all permissions', async () => {
+      // isOwner=true, isAdmin=true (owner is also admin)
+      const result = await hasPermission(tenantId, true, true, 'assets:delete', enabledModules);
       expect(result).toBe(true);
     });
 
-    it('should grant ADMIN all permissions', async () => {
-      const result = await hasPermission(tenantId, 'ADMIN', 'settings:permissions', enabledModules);
+    it('should grant ADMIN (isAdmin=true) all permissions', async () => {
+      // isOwner=false, isAdmin=true
+      const result = await hasPermission(tenantId, false, true, 'settings:permissions', enabledModules);
       expect(result).toBe(true);
     });
 
-    it('should check database for MANAGER permissions', async () => {
+    it('should check database for regular members (isOwner=false, isAdmin=false)', async () => {
       mockRolePermission.findUnique.mockResolvedValue({
         id: '1',
         tenantId,
-        role: 'MANAGER' as OrgRole,
+        role: 'MEMBER',
         permission: 'assets:view',
         createdAt: new Date(),
         updatedAt: new Date(),
       });
 
-      const result = await hasPermission(tenantId, 'MANAGER', 'assets:view', enabledModules);
+      // isOwner=false, isAdmin=false - checks DB for MEMBER permissions
+      const result = await hasPermission(tenantId, false, false, 'assets:view', enabledModules);
       expect(mockRolePermission.findUnique).toHaveBeenCalled();
       expect(result).toBe(true);
     });
 
-    it('should check database for MEMBER permissions', async () => {
+    it('should deny member permission if not in database', async () => {
       mockRolePermission.findUnique.mockResolvedValue(null);
 
-      const result = await hasPermission(tenantId, 'MEMBER', 'assets:delete', enabledModules);
+      const result = await hasPermission(tenantId, false, false, 'assets:delete', enabledModules);
       expect(mockRolePermission.findUnique).toHaveBeenCalled();
       expect(result).toBe(false);
     });
 
-    it('should respect role hierarchy: OWNER > ADMIN > MANAGER > MEMBER', () => {
-      // OWNER and ADMIN have all permissions by default
-      // MANAGER and MEMBER have custom permissions
+    it('should respect boolean flag hierarchy: isOwner > isAdmin > member', () => {
+      // isOwner and isAdmin have all permissions by default
+      // Regular members have custom permissions from DB
       const hierarchy = {
-        OWNER: 4,
-        ADMIN: 3,
-        MANAGER: 2,
-        MEMBER: 1,
+        isOwner: 3,    // Full control
+        isAdmin: 2,    // Full access
+        member: 1,     // DB-controlled
       };
 
-      expect(hierarchy.OWNER).toBeGreaterThan(hierarchy.ADMIN);
-      expect(hierarchy.ADMIN).toBeGreaterThan(hierarchy.MANAGER);
-      expect(hierarchy.MANAGER).toBeGreaterThan(hierarchy.MEMBER);
+      expect(hierarchy.isOwner).toBeGreaterThan(hierarchy.isAdmin);
+      expect(hierarchy.isAdmin).toBeGreaterThan(hierarchy.member);
     });
   });
 
@@ -303,12 +303,12 @@ describe('RBAC Permissions System', () => {
       const tenantId = 'tenant-123';
       const enabledModules = ['assets']; // Only assets enabled, not payroll
 
-      // OWNER should have payroll permission blocked if module disabled
-      const hasPayroll = await hasPermission(tenantId, 'OWNER', 'payroll:view', enabledModules);
+      // Owner/Admin should have payroll permission blocked if module disabled
+      const hasPayroll = await hasPermission(tenantId, true, true, 'payroll:view', enabledModules);
       expect(hasPayroll).toBe(false);
 
-      // OWNER should have assets permission when module enabled
-      const hasAssets = await hasPermission(tenantId, 'OWNER', 'assets:view', enabledModules);
+      // Owner/Admin should have assets permission when module enabled
+      const hasAssets = await hasPermission(tenantId, true, true, 'assets:view', enabledModules);
       expect(hasAssets).toBe(true);
     });
   });
@@ -322,47 +322,48 @@ describe('RBAC Permissions System', () => {
     const enabledModules = ['assets', 'subscriptions'];
 
     describe('hasPermission', () => {
-      it('should return true for OWNER without DB check', async () => {
-        const result = await hasPermission(tenantId, 'OWNER', 'assets:view', enabledModules);
+      it('should return true for owner (isOwner=true) without DB check', async () => {
+        const result = await hasPermission(tenantId, true, true, 'assets:view', enabledModules);
         expect(result).toBe(true);
         expect(mockRolePermission.findUnique).not.toHaveBeenCalled();
       });
 
-      it('should return true for ADMIN without DB check', async () => {
-        const result = await hasPermission(tenantId, 'ADMIN', 'settings:manage', enabledModules);
+      it('should return true for admin (isAdmin=true) without DB check', async () => {
+        const result = await hasPermission(tenantId, false, true, 'settings:manage', enabledModules);
         expect(result).toBe(true);
         expect(mockRolePermission.findUnique).not.toHaveBeenCalled();
       });
 
-      it('should check DB for MANAGER', async () => {
+      it('should check DB for regular members', async () => {
         mockRolePermission.findUnique.mockResolvedValue({
           id: '1',
           tenantId,
-          role: 'MANAGER' as OrgRole,
+          role: 'MEMBER',
           permission: 'assets:view',
           createdAt: new Date(),
           updatedAt: new Date(),
         });
 
-        await hasPermission(tenantId, 'MANAGER', 'assets:view', enabledModules);
+        await hasPermission(tenantId, false, false, 'assets:view', enabledModules);
         expect(mockRolePermission.findUnique).toHaveBeenCalledWith({
           where: {
-            tenantId_role_permission: { tenantId, role: 'MANAGER', permission: 'assets:view' },
+            tenantId_role_permission: { tenantId, role: 'MEMBER', permission: 'assets:view' },
           },
         });
       });
     });
 
     describe('hasPermissions (batch)', () => {
-      it('should check multiple permissions efficiently', async () => {
+      it('should check multiple permissions efficiently for members', async () => {
         mockRolePermission.findMany.mockResolvedValue([
-          { id: '1', tenantId, role: 'MANAGER' as OrgRole, permission: 'assets:view', createdAt: new Date(), updatedAt: new Date() },
-          { id: '2', tenantId, role: 'MANAGER' as OrgRole, permission: 'assets:edit', createdAt: new Date(), updatedAt: new Date() },
+          { id: '1', tenantId, role: 'MEMBER', permission: 'assets:view', createdAt: new Date(), updatedAt: new Date() },
+          { id: '2', tenantId, role: 'MEMBER', permission: 'assets:edit', createdAt: new Date(), updatedAt: new Date() },
         ]);
 
         const result = await hasPermissions(
           tenantId,
-          'MANAGER',
+          false, // isOwner
+          false, // isAdmin
           ['assets:view', 'assets:edit', 'assets:delete'],
           enabledModules
         );
@@ -372,10 +373,11 @@ describe('RBAC Permissions System', () => {
         expect(result['assets:delete']).toBe(false);
       });
 
-      it('should return all true for OWNER', async () => {
+      it('should return all true for owner', async () => {
         const result = await hasPermissions(
           tenantId,
-          'OWNER',
+          true, // isOwner
+          true, // isAdmin
           ['assets:view', 'assets:edit', 'assets:delete'],
           enabledModules
         );
@@ -386,36 +388,26 @@ describe('RBAC Permissions System', () => {
       });
     });
 
-    describe('grantPermission', () => {
-      it('should upsert permission for MANAGER', async () => {
-        await grantPermission(tenantId, 'MANAGER', 'assets:delete');
+    describe('grantMemberPermission', () => {
+      it('should upsert permission for MEMBER role', async () => {
+        await grantMemberPermission(tenantId, 'assets:delete');
 
         expect(mockRolePermission.upsert).toHaveBeenCalledWith({
           where: {
-            tenantId_role_permission: { tenantId, role: 'MANAGER', permission: 'assets:delete' },
+            tenantId_role_permission: { tenantId, role: 'MEMBER', permission: 'assets:delete' },
           },
-          create: { tenantId, role: 'MANAGER', permission: 'assets:delete' },
+          create: { tenantId, role: 'MEMBER', permission: 'assets:delete' },
           update: {},
         });
       });
-
-      it('should NOT store permission for OWNER', async () => {
-        await grantPermission(tenantId, 'OWNER', 'assets:delete');
-        expect(mockRolePermission.upsert).not.toHaveBeenCalled();
-      });
-
-      it('should NOT store permission for ADMIN', async () => {
-        await grantPermission(tenantId, 'ADMIN', 'assets:delete');
-        expect(mockRolePermission.upsert).not.toHaveBeenCalled();
-      });
     });
 
-    describe('revokePermission', () => {
+    describe('revokeMemberPermission', () => {
       it('should delete permission from database', async () => {
-        await revokePermission(tenantId, 'MANAGER', 'assets:delete');
+        await revokeMemberPermission(tenantId, 'assets:delete');
 
         expect(mockRolePermission.deleteMany).toHaveBeenCalledWith({
-          where: { tenantId, role: 'MANAGER', permission: 'assets:delete' },
+          where: { tenantId, role: 'MEMBER', permission: 'assets:delete' },
         });
       });
     });
@@ -444,28 +436,28 @@ describe('RBAC Permissions System', () => {
     // Empty enabled modules - only core should work
     const enabledModules: string[] = [];
 
-    it('should always allow settings permissions', async () => {
-      const result = await hasPermission(tenantId, 'OWNER', 'settings:view', enabledModules);
+    it('should always allow settings permissions for owner/admin', async () => {
+      const result = await hasPermission(tenantId, true, true, 'settings:view', enabledModules);
       expect(result).toBe(true);
     });
 
-    it('should always allow users permissions', async () => {
-      const result = await hasPermission(tenantId, 'OWNER', 'users:view', enabledModules);
+    it('should always allow users permissions for owner/admin', async () => {
+      const result = await hasPermission(tenantId, true, true, 'users:view', enabledModules);
       expect(result).toBe(true);
     });
 
-    it('should always allow reports permissions', async () => {
-      const result = await hasPermission(tenantId, 'OWNER', 'reports:view', enabledModules);
+    it('should always allow reports permissions for owner/admin', async () => {
+      const result = await hasPermission(tenantId, true, true, 'reports:view', enabledModules);
       expect(result).toBe(true);
     });
 
-    it('should always allow activity permissions', async () => {
-      const result = await hasPermission(tenantId, 'OWNER', 'activity:view', enabledModules);
+    it('should always allow activity permissions for owner/admin', async () => {
+      const result = await hasPermission(tenantId, true, true, 'activity:view', enabledModules);
       expect(result).toBe(true);
     });
 
-    it('should always allow approvals permissions', async () => {
-      const result = await hasPermission(tenantId, 'OWNER', 'approvals:view', enabledModules);
+    it('should always allow approvals permissions for owner/admin', async () => {
+      const result = await hasPermission(tenantId, true, true, 'approvals:view', enabledModules);
       expect(result).toBe(true);
     });
   });
@@ -481,11 +473,12 @@ describe('RBAC Permissions System', () => {
       const enabledModules = ['assets'];
 
       mockRolePermission.findUnique
-        .mockResolvedValueOnce({ id: '1', tenantId: tenant1, role: 'MANAGER' as OrgRole, permission: 'assets:delete', createdAt: new Date(), updatedAt: new Date() }) // tenant1
+        .mockResolvedValueOnce({ id: '1', tenantId: tenant1, role: 'MEMBER', permission: 'assets:delete', createdAt: new Date(), updatedAt: new Date() }) // tenant1
         .mockResolvedValueOnce(null); // tenant2
 
-      const result1 = await hasPermission(tenant1, 'MANAGER', 'assets:delete', enabledModules);
-      const result2 = await hasPermission(tenant2, 'MANAGER', 'assets:delete', enabledModules);
+      // Check for regular members (isOwner=false, isAdmin=false)
+      const result1 = await hasPermission(tenant1, false, false, 'assets:delete', enabledModules);
+      const result2 = await hasPermission(tenant2, false, false, 'assets:delete', enabledModules);
 
       expect(result1).toBe(true);
       expect(result2).toBe(false);
@@ -495,13 +488,13 @@ describe('RBAC Permissions System', () => {
       const tenantId = 'tenant-123';
       mockRolePermission.findUnique.mockResolvedValue(null);
 
-      await hasPermission(tenantId, 'MANAGER', 'assets:view', ['assets']);
+      await hasPermission(tenantId, false, false, 'assets:view', ['assets']);
 
       expect(mockRolePermission.findUnique).toHaveBeenCalledWith({
         where: {
           tenantId_role_permission: {
             tenantId,
-            role: 'MANAGER',
+            role: 'MEMBER',
             permission: 'assets:view',
           },
         },

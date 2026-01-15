@@ -72,7 +72,8 @@ describe('Prisma Tenant Isolation', () => {
       expect(result!.tenantId).toBe('tenant-123');
       expect(result!.userId).toBe('user-456');
       expect(result!.userRole).toBeUndefined();
-      expect(result!.orgRole).toBeUndefined();
+      expect(result!.isAdmin).toBeUndefined();
+      expect(result!.isOwner).toBeUndefined();
       expect(result!.subscriptionTier).toBeUndefined();
     });
 
@@ -81,7 +82,6 @@ describe('Prisma Tenant Isolation', () => {
       headers.set('x-tenant-id', 'tenant-123');
       headers.set('x-user-id', 'user-456');
       headers.set('x-user-role', 'ADMIN');
-      headers.set('x-org-role', 'OWNER');
       headers.set('x-subscription-tier', 'PROFESSIONAL');
 
       const result = getTenantContextFromHeaders(headers);
@@ -90,7 +90,9 @@ describe('Prisma Tenant Isolation', () => {
       expect(result!.tenantId).toBe('tenant-123');
       expect(result!.userId).toBe('user-456');
       expect(result!.userRole).toBe('ADMIN');
-      expect(result!.orgRole).toBe('OWNER');
+      // Note: isAdmin and isOwner are added by handler.ts from session, not headers
+      expect(result!.isAdmin).toBeUndefined();
+      expect(result!.isOwner).toBeUndefined();
       expect(result!.subscriptionTier).toBe('PROFESSIONAL');
     });
 
@@ -159,7 +161,8 @@ describe('Prisma Tenant Isolation', () => {
         tenantId: 'tenant-123',
         userId: 'user-456',
         userRole: 'ADMIN',
-        orgRole: 'OWNER',
+        isAdmin: true,
+        isOwner: true,
         subscriptionTier: 'PROFESSIONAL',
       };
 
@@ -269,18 +272,22 @@ describe('Prisma Tenant Isolation', () => {
       }
     });
 
-    it('should handle all expected org roles', () => {
-      const orgRoles = ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER'];
+    it('should not read isAdmin and isOwner from headers (they are added by handler)', () => {
+      // Note: isAdmin and isOwner are added by handler.ts from the session,
+      // not parsed from headers by getTenantContextFromHeaders.
+      // The headers are set by middleware which doesn't have access to session boolean flags.
+      const headers = new Headers();
+      headers.set('x-tenant-id', 'tenant-123');
+      headers.set('x-user-id', 'user-456');
 
-      for (const role of orgRoles) {
-        const headers = new Headers();
-        headers.set('x-tenant-id', 'tenant-123');
-        headers.set('x-user-id', 'user-456');
-        headers.set('x-org-role', role);
+      const result = getTenantContextFromHeaders(headers);
 
-        const result = getTenantContextFromHeaders(headers);
-        expect(result?.orgRole).toBe(role);
-      }
+      // isAdmin and isOwner should be undefined when parsed from headers
+      expect(result?.isAdmin).toBeUndefined();
+      expect(result?.isOwner).toBeUndefined();
+
+      // The TenantContext interface allows these fields to be set,
+      // but they are populated later in the handler after getting the session
     });
 
     it('should handle all expected subscription tiers', () => {

@@ -21,7 +21,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { OrgRole } from '@prisma/client';
 
 // Mock all dependencies before importing the handler
 jest.mock('next-auth', () => ({
@@ -146,11 +145,10 @@ describe('API Handler Wrapper', () => {
       },
     });
 
-    // Default tenant context
+    // Default tenant context (orgRole removed - now using boolean flags on session)
     mockGetTenantContext.mockReturnValue({
       tenantId: 'org-1',
       userId: 'user-1',
-      orgRole: 'MEMBER',
     });
   });
 
@@ -352,7 +350,6 @@ describe('API Handler Wrapper', () => {
       const mockTenant = {
         tenantId: 'org-1',
         userId: 'user-1',
-        orgRole: 'ADMIN',
       };
       mockGetTenantContext.mockReturnValue(mockTenant);
 
@@ -405,21 +402,18 @@ describe('API Handler Wrapper', () => {
   });
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // ORG ROLE TESTS
+  // OWNER ROLE TESTS (using boolean flags)
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  describe('Organization role check', () => {
-    it('should reject when user lacks required org role', async () => {
+  describe('Owner role check (boolean flags)', () => {
+    it('should reject non-owner when owner required', async () => {
       const handler = jest.fn();
-      mockGetTenantContext.mockReturnValue({
-        tenantId: 'org-1',
-        userId: 'user-1',
-        orgRole: 'MEMBER',
+      mockGetServerSession.mockResolvedValue({
+        user: { id: 'user-1', isOwner: false, organizationId: 'org-1' },
       });
 
       const wrappedHandler = withErrorHandler(handler, {
-        requireAuth: true,
-        requireOrgRole: [OrgRole.OWNER, OrgRole.ADMIN],
+        requireOwner: true,
       });
       const response = await wrappedHandler(mockRequest, mockRouteContext);
 
@@ -427,19 +421,33 @@ describe('API Handler Wrapper', () => {
       expect(handler).not.toHaveBeenCalled();
     });
 
-    it('should allow when user has required org role', async () => {
+    it('should allow owner when owner required', async () => {
       const handler = jest.fn().mockResolvedValue(
         NextResponse.json({ success: true })
       );
-      mockGetTenantContext.mockReturnValue({
-        tenantId: 'org-1',
-        userId: 'user-1',
-        orgRole: 'ADMIN',
+      mockGetServerSession.mockResolvedValue({
+        user: { id: 'user-1', isOwner: true, organizationId: 'org-1' },
       });
 
       const wrappedHandler = withErrorHandler(handler, {
-        requireAuth: true,
-        requireOrgRole: [OrgRole.OWNER, OrgRole.ADMIN],
+        requireOwner: true,
+      });
+      const response = await wrappedHandler(mockRequest, mockRouteContext);
+
+      expect(response.status).toBe(200);
+      expect(handler).toHaveBeenCalled();
+    });
+
+    it('should allow owner when admin required (owner implies admin)', async () => {
+      const handler = jest.fn().mockResolvedValue(
+        NextResponse.json({ success: true })
+      );
+      mockGetServerSession.mockResolvedValue({
+        user: { id: 'user-1', isOwner: true, isAdmin: false, organizationId: 'org-1' },
+      });
+
+      const wrappedHandler = withErrorHandler(handler, {
+        requireAdmin: true,
       });
       const response = await wrappedHandler(mockRequest, mockRouteContext);
 

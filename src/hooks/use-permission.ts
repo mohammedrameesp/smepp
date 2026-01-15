@@ -51,7 +51,7 @@ export function usePermission(permission: string): {
   const fetchedRef = useRef(false);
 
   // OWNER and ADMIN always have all permissions
-  const isPrivilegedRole = session?.user?.orgRole === 'OWNER' || session?.user?.orgRole === 'ADMIN';
+  const isPrivilegedRole = session?.user?.isOwner || session?.user?.isAdmin;
 
   useEffect(() => {
     // Reset when permission changes
@@ -143,7 +143,7 @@ export function usePermissions(permissions: string[]): {
   const fetchedRef = useRef(false);
 
   // OWNER and ADMIN always have all permissions
-  const isPrivilegedRole = session?.user?.orgRole === 'OWNER' || session?.user?.orgRole === 'ADMIN';
+  const isPrivilegedRole = session?.user?.isOwner || session?.user?.isAdmin;
 
   // Create stable key for the permissions array
   const permissionsKey = useMemo(() => permissions.sort().join(','), [permissions]);

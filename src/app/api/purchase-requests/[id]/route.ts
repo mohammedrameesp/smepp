@@ -66,7 +66,7 @@ async function getPurchaseRequestHandler(request: NextRequest, context: APIConte
     }
 
     // Non-admin users can only view their own requests
-    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
     if (!isOwnerOrAdmin && purchaseRequest.requesterId !== userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -100,7 +100,7 @@ async function updatePurchaseRequestHandler(request: NextRequest, context: APICo
     }
 
     // Only requester can update (or admin)
-    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
     if (!isOwnerOrAdmin && currentRequest.requesterId !== userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -269,7 +269,7 @@ async function deletePurchaseRequestHandler(request: NextRequest, context: APICo
     }
 
     // Only requester or admin can delete
-    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
     if (!isOwnerOrAdmin && currentRequest.requesterId !== userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

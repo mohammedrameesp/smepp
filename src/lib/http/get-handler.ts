@@ -92,7 +92,8 @@ export function createGetEntityHandler<TEntity, TResult = TEntity>(
     const ctx = {
       tenantId: tenant.tenantId,
       userId: tenant.userId,
-      orgRole: tenant.orgRole || 'MEMBER',
+      // Derive legacy orgRole for backwards compatibility
+      orgRole: tenant.isOwner ? 'OWNER' : tenant.isAdmin ? 'ADMIN' : 'MEMBER',
     };
 
     const entity = await fetchEntity(id, db, ctx);

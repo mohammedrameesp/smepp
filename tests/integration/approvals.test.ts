@@ -5,7 +5,7 @@
 
 import { getServerSession } from 'next-auth/next';
 import { prisma } from '@/lib/core/prisma';
-import { OrgRole } from '@prisma/client';
+// OrgRole enum removed - now using boolean flags (isOwner, isAdmin)
 
 jest.mock('next-auth/next');
 jest.mock('@/lib/core/prisma');
@@ -38,7 +38,7 @@ describe('Approval Workflow API Tests', () => {
       id: 'admin-123',
       email: 'admin@example.com',
       organizationId: 'org-123',
-      orgRole: 'ADMIN' as OrgRole,
+      isAdmin: true,
     },
     expires: new Date(Date.now() + 86400000).toISOString(),
   };
@@ -48,7 +48,7 @@ describe('Approval Workflow API Tests', () => {
       id: 'manager-123',
       email: 'manager@example.com',
       organizationId: 'org-123',
-      orgRole: 'MANAGER' as OrgRole,
+      canApprove: true,
     },
     expires: new Date(Date.now() + 86400000).toISOString(),
   };
@@ -138,7 +138,7 @@ describe('Approval Workflow API Tests', () => {
       it('should require admin role', async () => {
         mockGetServerSession.mockResolvedValue(mockManagerSession);
         const session = await mockGetServerSession();
-        expect(session?.user.orgRole).not.toBe('ADMIN');
+        expect(session?.user.isAdmin).not.toBe(true);
       });
 
       it('should validate module type', () => {

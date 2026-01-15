@@ -29,7 +29,7 @@ async function getLeaveTypesHandler(request: NextRequest, context: APIContext) {
     }
 
     const { isActive, includeInactive } = validation.data;
-    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
 
     // Build where clause (tenant filtering is automatic via db)
     const where: Record<string, unknown> = {};

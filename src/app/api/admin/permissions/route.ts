@@ -2,21 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { prisma } from '@/lib/core/prisma';
 import {
-  getPermissionsForRole,
-  setRolePermissions,
+  getPermissionsForUser,
+  setMemberPermissions,
   PERMISSION_GROUPS,
   getAllPermissions,
   isValidPermission,
   resetToDefaultPermissions,
 } from '@/lib/access-control';
-import { OrgRole } from '@prisma/client';
 import { z } from 'zod';
 
 /**
  * GET /api/admin/permissions
  *
  * Get current permission configuration for the organization
- * Returns permissions for MANAGER and MEMBER roles
+ * Returns permissions for non-admin members
  */
 export const GET = withErrorHandler(
   async (request: NextRequest, context: APIContext) => {
@@ -34,15 +33,11 @@ export const GET = withErrorHandler(
 
     const enabledModules = org?.enabledModules || [];
 
-    // Get permissions for each role
-    const [managerPermissions, memberPermissions] = await Promise.all([
-      getPermissionsForRole(tenant.tenantId, 'MANAGER', enabledModules),
-      getPermissionsForRole(tenant.tenantId, 'MEMBER', enabledModules),
-    ]);
+    // Get permissions for non-admin members (isOwner=false, isAdmin=false)
+    const memberPermissions = await getPermissionsForUser(tenant.tenantId, false, false, enabledModules);
 
     return NextResponse.json({
       roles: {
-        MANAGER: managerPermissions,
         MEMBER: memberPermissions,
       },
       permissionGroups: PERMISSION_GROUPS,
@@ -50,18 +45,17 @@ export const GET = withErrorHandler(
       enabledModules,
     });
   },
-  { requireAuth: true, requireOrgRole: ['OWNER', 'ADMIN'] }
+  { requireAdmin: true }
 );
 
 const updatePermissionsSchema = z.object({
-  role: z.enum(['MANAGER', 'MEMBER']),
   permissions: z.array(z.string()),
 });
 
 /**
  * PUT /api/admin/permissions
  *
- * Update permissions for a specific role
+ * Update permissions for non-admin members
  */
 export const PUT = withErrorHandler(
   async (request: NextRequest, context: APIContext) => {
@@ -81,7 +75,7 @@ export const PUT = withErrorHandler(
       );
     }
 
-    const { role, permissions } = parsed.data;
+    const { permissions } = parsed.data;
 
     // Validate all permissions are valid
     const invalidPermissions = permissions.filter((p) => !isValidPermission(p));
@@ -92,21 +86,16 @@ export const PUT = withErrorHandler(
       );
     }
 
-    // Set permissions for the role
-    await setRolePermissions(tenant.tenantId, role as OrgRole, permissions);
+    // Set permissions for non-admin members
+    await setMemberPermissions(tenant.tenantId, permissions);
 
     return NextResponse.json({
       success: true,
-      role,
       permissions,
     });
   },
-  { requireAuth: true, requireOrgRole: ['OWNER', 'ADMIN'] }
+  { requireAdmin: true }
 );
-
-const resetPermissionsSchema = z.object({
-  roles: z.array(z.enum(['MANAGER', 'MEMBER'])).optional(),
-});
 
 /**
  * POST /api/admin/permissions/reset
@@ -121,25 +110,12 @@ export const POST = withErrorHandler(
       return NextResponse.json({ error: 'Tenant context required' }, { status: 403 });
     }
 
-    const body = await request.json();
-    const parsed = resetPermissionsSchema.safeParse(body);
-
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid request body', details: parsed.error.issues },
-        { status: 400 }
-      );
-    }
-
-    const { roles } = parsed.data;
-    const rolesToReset: OrgRole[] = roles || ['MANAGER', 'MEMBER'];
-
-    await resetToDefaultPermissions(tenant.tenantId, rolesToReset);
+    await resetToDefaultPermissions(tenant.tenantId);
 
     return NextResponse.json({
       success: true,
-      message: `Permissions reset to defaults for: ${rolesToReset.join(', ')}`,
+      message: 'Permissions reset to defaults',
     });
   },
-  { requireAuth: true, requireOrgRole: ['OWNER', 'ADMIN'] }
+  { requireAdmin: true }
 );

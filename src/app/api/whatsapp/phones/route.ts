@@ -28,7 +28,7 @@ export const GET = withErrorHandler(async (request: NextRequest, { tenant }) => 
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
-  const isAdmin = tenant.orgRole === 'ADMIN' || tenant.orgRole === 'OWNER';
+  const isAdmin = tenant?.isOwner || tenant?.isAdmin;
   const searchParams = request.nextUrl.searchParams;
   const targetMemberId = searchParams.get('memberId');
 
@@ -80,7 +80,7 @@ export const POST = withErrorHandler(async (request: NextRequest, { tenant }) =>
   const body = await request.json();
   const { memberId, phoneNumber } = phoneSchema.parse(body);
 
-  const isAdmin = tenant.orgRole === 'ADMIN' || tenant.orgRole === 'OWNER';
+  const isAdmin = tenant?.isOwner || tenant?.isAdmin;
   const targetMemberId = memberId || tenant.userId;
 
   // Non-admins can only set their own phone
@@ -152,7 +152,7 @@ export const DELETE = withErrorHandler(async (request: NextRequest, { tenant }) 
   const searchParams = request.nextUrl.searchParams;
   const targetMemberId = searchParams.get('memberId') || tenant.userId;
 
-  const isAdmin = tenant.orgRole === 'ADMIN' || tenant.orgRole === 'OWNER';
+  const isAdmin = tenant?.isOwner || tenant?.isAdmin;
 
   // Non-admins can only delete their own phone
   if (!isAdmin && targetMemberId !== tenant.userId) {

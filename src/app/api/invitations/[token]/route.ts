@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { OrgRole } from '@prisma/client';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import logger from '@/lib/core/log';
 
@@ -194,8 +193,8 @@ export async function POST(
       const finalIsEmployee = invitation.isEmployee ?? true; // Default to employee if somehow null
       const finalIsOnWps = finalIsEmployee ? (invitation.isOnWps ?? false) : false;
 
-      // Determine if this user should be an admin based on OrgRole
-      const isAdmin = invitation.role === OrgRole.OWNER || invitation.role === OrgRole.ADMIN;
+      // Determine if this user should be an admin based on role string
+      const isAdmin = invitation.role === 'OWNER' || invitation.role === 'ADMIN';
 
       // Check if TeamMember already exists for this email in this org
       // (This happens when admin creates member via Add Member form for SSO orgs)
@@ -238,8 +237,8 @@ export async function POST(
           newEmployeeCode = `${prefix}-${String(count + 1).padStart(3, '0')}`;
         }
 
-        // Determine admin status from invitation OrgRole
-        const newIsAdmin = invitation.role === OrgRole.OWNER || invitation.role === OrgRole.ADMIN;
+        // Determine admin status from invitation role string
+        const newIsAdmin = invitation.role === 'OWNER' || invitation.role === 'ADMIN';
         const newIsOwner = invitation.role === 'OWNER';
 
         // Update TeamMember with user data AND invitation settings

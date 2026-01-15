@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { isAdminRole, type UserRole } from '@/lib/help/help-types';
+import type { UserRole } from '@/lib/help/help-types';
 import {
   helpCategories,
   filterCategoriesByRole,
@@ -32,7 +32,7 @@ export default async function HelpPage() {
   const session = await getServerSession(authOptions);
 
   // Determine user role for content filtering
-  const userRole: UserRole = isAdminRole(session?.user?.orgRole) ? 'ADMIN' : 'USER';
+  const userRole: UserRole = (session?.user?.isOwner || session?.user?.isAdmin) ? 'ADMIN' : 'USER';
 
   // Get tenant-scoped enabled modules
   const tenantId = session?.user?.organizationId;

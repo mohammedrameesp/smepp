@@ -39,7 +39,7 @@ async function getPurchaseRequestsHandler(request: NextRequest, context: APICont
 
     // Non-admin users can only see their own requests
     // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole
-    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
     if (!isOwnerOrAdmin) {
       where.requesterId = userId;
     }

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/core/auth';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { hasPermission, hasPermissions, isValidPermission } from '@/lib/access-control';
-import { OrgRole } from '@prisma/client';
 
 /**
  * GET /api/permissions/check
@@ -30,7 +31,15 @@ export const GET = withErrorHandler(
     }
 
     const orgId = tenant!.tenantId;
-    const orgRole = tenant!.orgRole as OrgRole;
+
+    // Get session to access isOwner and isAdmin flags
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Session not found' }, { status: 401 });
+    }
+
+    const isOwner = session.user.isOwner ?? false;
+    const isAdmin = session.user.isAdmin ?? false;
 
     // Get enabled modules from organization
     const { prisma: rawPrisma } = await import('@/lib/core/prisma');
@@ -47,7 +56,7 @@ export const GET = withErrorHandler(
         return NextResponse.json({ error: `Invalid permission: ${singlePermission}` }, { status: 400 });
       }
 
-      const allowed = await hasPermission(orgId, orgRole, singlePermission, enabledModules);
+      const allowed = await hasPermission(orgId, isOwner, isAdmin, singlePermission, enabledModules);
 
       return NextResponse.json({ allowed });
     }
@@ -65,7 +74,7 @@ export const GET = withErrorHandler(
         );
       }
 
-      const permissions = await hasPermissions(orgId, orgRole, permissionList, enabledModules);
+      const permissions = await hasPermissions(orgId, isOwner, isAdmin, permissionList, enabledModules);
 
       return NextResponse.json({ permissions });
     }

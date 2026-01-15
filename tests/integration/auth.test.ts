@@ -426,7 +426,8 @@ describe('Authentication API Tests', () => {
           email: 'user@example.com',
           organizationId: 'org-123',
           organizationSlug: 'test-org',
-          orgRole: 'ADMIN',
+          isAdmin: true,
+          isOwner: false,
           subscriptionTier: 'PROFESSIONAL',
         },
         expires: new Date(Date.now() + 86400000).toISOString(),
@@ -436,7 +437,7 @@ describe('Authentication API Tests', () => {
       const session = await mockGetServerSession();
 
       expect(session?.user.organizationId).toBe('org-123');
-      expect(session?.user.orgRole).toBe('ADMIN');
+      expect(session?.user.isAdmin).toBe(true);
     });
   });
 

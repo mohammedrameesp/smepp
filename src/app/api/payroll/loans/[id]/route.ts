@@ -41,7 +41,7 @@ async function getLoanHandler(request: NextRequest, context: APIContext) {
     }
 
     // Non-admin users can only view their own loans
-    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
     if (!isOwnerOrAdmin && loan.memberId !== tenant.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }

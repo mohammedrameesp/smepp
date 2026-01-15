@@ -14,8 +14,7 @@ export default async function PermissionsSettingsPage() {
   }
 
   // Only OWNER and ADMIN can manage permissions
-  const orgRole = session.user.orgRole;
-  if (orgRole !== 'OWNER' && orgRole !== 'ADMIN') {
+  if (!session.user.isOwner && !session.user.isAdmin) {
     redirect('/admin');
   }
 

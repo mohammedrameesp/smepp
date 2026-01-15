@@ -3,7 +3,6 @@ import { prisma } from '@/lib/core/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { validatePassword, DEFAULT_PASSWORD_REQUIREMENTS } from '@/lib/security/password-validation';
-import { OrgRole } from '@prisma/client';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import logger from '@/lib/core/log';
 
@@ -148,7 +147,7 @@ export async function POST(request: NextRequest) {
         const finalIsOnWps = finalIsEmployee ? (invitation.isOnWps ?? false) : false;
 
         // Determine if user should be admin based on their org role
-        const isAdmin = invitation.role === OrgRole.OWNER || invitation.role === OrgRole.ADMIN;
+        const isAdmin = invitation.role === 'OWNER' || invitation.role === 'ADMIN';
 
         // Generate employee code for employees using pre-fetched data
         let employeeCode: string | null = null;

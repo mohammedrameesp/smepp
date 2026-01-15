@@ -51,7 +51,7 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
 
     // Non-admin users can only see their own requests
     // Note: orgRole contains ADMIN/MEMBER based on TeamMemberRole, NOT the approval role
-    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isAdmin = !!(tenant?.isOwner || tenant?.isAdmin);
     // Support both memberId and legacy userId parameter
     const filterMemberId = memberId || userId;
     const effectiveMemberId = isAdmin ? filterMemberId : tenant.userId;
@@ -154,7 +154,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
     const db = tenantPrisma as TenantPrismaClient;
     const tenantId = tenant.tenantId;
     const sessionMemberId = tenant.userId; // Now refers to TeamMember.id
-    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isAdmin = !!(tenant?.isOwner || tenant?.isAdmin);
 
     const body = await request.json();
     const validation = createLeaveRequestSchema.safeParse(body);

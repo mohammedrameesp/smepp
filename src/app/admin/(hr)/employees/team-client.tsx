@@ -132,8 +132,8 @@ export function TeamClient({ initialStats }: TeamClientProps) {
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null);
 
-  const isOwner = session?.user?.orgRole === 'OWNER';
-  const isAdmin = session?.user?.orgRole === 'ADMIN' || isOwner;
+  const isOwner = session?.user?.isOwner;
+  const isAdmin = session?.user?.isOwner || session?.user?.isAdmin;
 
   // Filter non-employees
   const nonEmployees = useMemo(() =>

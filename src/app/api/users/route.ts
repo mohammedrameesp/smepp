@@ -247,7 +247,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
             organizationId: tenantId,
             email: finalEmail,
             name: name,
-            role: isAdmin ? 'ADMIN' : 'MEMBER', // OrgRole enum for invitation
+            role: isAdmin ? 'ADMIN' : 'MEMBER', // Role string for invitation
             token: inviteToken,
             isEmployee,
             isOnWps: isEmployee ? isOnWps : null,

@@ -44,7 +44,8 @@ describe('Settings API Tests', () => {
       email: 'admin@example.com',
       organizationId: 'org-123',
       organizationSlug: 'test-org',
-      orgRole: 'ADMIN',
+      isAdmin: true,
+      isOwner: false,
       subscriptionTier: 'PROFESSIONAL',
     },
     expires: new Date(Date.now() + 86400000).toISOString(),
@@ -124,12 +125,12 @@ describe('Settings API Tests', () => {
     it('should require admin role', async () => {
       const memberSession = {
         ...mockAdminSession,
-        user: { ...mockAdminSession.user, orgRole: 'MEMBER' },
+        user: { ...mockAdminSession.user, isAdmin: false },
       };
       mockGetServerSession.mockResolvedValue(memberSession);
 
       const session = await mockGetServerSession();
-      expect(session?.user.orgRole).toBe('MEMBER');
+      expect(session?.user.isAdmin).toBe(false);
     });
 
     it('should validate rate values', () => {
@@ -243,7 +244,8 @@ describe('Modules API Tests', () => {
       id: 'admin-123',
       email: 'admin@example.com',
       organizationId: 'org-123',
-      orgRole: 'ADMIN',
+      isAdmin: true,
+      isOwner: false,
       subscriptionTier: 'PROFESSIONAL',
     },
     expires: new Date(Date.now() + 86400000).toISOString(),

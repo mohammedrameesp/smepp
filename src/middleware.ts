@@ -470,7 +470,6 @@ export async function middleware(request: NextRequest) {
         response.headers.set('x-tenant-slug', impersonation.organizationSlug);
         response.headers.set('x-user-id', impersonation.superAdminId);
         response.headers.set('x-user-role', 'ADMIN');
-        response.headers.set('x-org-role', 'OWNER');
         response.headers.set('x-subscription-tier', subscriptionTier);
         response.headers.set('x-impersonating', 'true');
         response.headers.set('x-impersonator-id', impersonation.superAdminId);
@@ -525,7 +524,6 @@ export async function middleware(request: NextRequest) {
       response.headers.set('x-tenant-slug', tenantSlug);
       response.headers.set('x-user-id', token.id as string);
       response.headers.set('x-user-role', token.role as string || '');
-      response.headers.set('x-org-role', token.orgRole as string || '');
       response.headers.set('x-subscription-tier', customDomainTenant.subscriptionTier || 'FREE');
       return response;
     }
@@ -632,7 +630,6 @@ export async function middleware(request: NextRequest) {
       response.headers.set('x-tenant-slug', impersonation.organizationSlug);
       response.headers.set('x-user-id', impersonation.superAdminId);
       response.headers.set('x-user-role', 'ADMIN'); // Super admin acts as admin when impersonating
-      response.headers.set('x-org-role', 'OWNER'); // Full access when impersonating
       response.headers.set('x-subscription-tier', subscriptionTier);
       response.headers.set('x-impersonating', 'true'); // Flag for impersonation
       response.headers.set('x-impersonator-id', impersonation.superAdminId);
@@ -696,7 +693,6 @@ export async function middleware(request: NextRequest) {
     response.headers.set('x-tenant-slug', userOrgSlug);
     response.headers.set('x-user-id', token.id as string);
     response.headers.set('x-user-role', token.role as string || '');
-    response.headers.set('x-org-role', token.orgRole as string || '');
     response.headers.set('x-subscription-tier', token.subscriptionTier as string || 'FREE');
     return response;
   }
@@ -789,7 +785,6 @@ export async function middleware(request: NextRequest) {
     response.headers.set('x-tenant-slug', orgSlug);
     response.headers.set('x-user-id', token.id as string);
     response.headers.set('x-user-role', token.role as string || '');
-    response.headers.set('x-org-role', token.orgRole as string || '');
     response.headers.set('x-subscription-tier', token.subscriptionTier as string || 'FREE');
   }
 

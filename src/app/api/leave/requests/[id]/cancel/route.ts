@@ -56,7 +56,7 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
 
     // Only owner or admin can cancel
     const isOwner = existing.memberId === currentUserId;
-    const isAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
 
     if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });

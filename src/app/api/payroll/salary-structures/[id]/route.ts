@@ -55,7 +55,7 @@ async function getSalaryStructureHandler(request: NextRequest, context: APIConte
     }
 
     // Non-admin users can only view their own salary structure
-    const isOwnerOrAdmin = tenant.orgRole === 'OWNER' || tenant.orgRole === 'ADMIN';
+    const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
     if (!isOwnerOrAdmin && salaryStructure.memberId !== tenant.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }

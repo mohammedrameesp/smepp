@@ -60,7 +60,6 @@ import { prisma } from '@/lib/core/prisma';
 import { hasModuleAccess, moduleNotInstalledResponse } from '@/lib/modules/access';
 import { MODULE_REGISTRY } from '@/lib/modules/registry';
 import { hasPermission as checkPermission } from '@/lib/access-control';
-import { OrgRole } from '@prisma/client';
 import { MAX_BODY_SIZE_BYTES } from '@/lib/constants/limits';
 import { isTokenRevoked } from '@/lib/security/impersonation';
 import { logAction, ActivityActions } from '@/lib/core/activity';
@@ -86,11 +85,14 @@ export type APIHandler = (
 export interface HandlerOptions {
   requireAuth?: boolean;
   requireAdmin?: boolean;
+  requireOwner?: boolean; // Require organization owner (isOwner flag)
   requireCanApprove?: boolean; // Require approval capability (isAdmin or canApprove flag)
+  requireOperationsAccess?: boolean; // Require Operations module access (Assets, Subscriptions, Suppliers)
+  requireHRAccess?: boolean; // Require HR module access (Employees, Leave)
+  requireFinanceAccess?: boolean; // Require Finance module access (Payroll, Purchase Requests)
   requireTenant?: boolean; // Require tenant context (default: true for auth routes)
   requireModule?: string; // Require a specific module to be installed (e.g., 'assets', 'payroll')
   requirePermission?: string; // Require a specific permission (e.g., 'payroll:run', 'assets:edit')
-  requireOrgRole?: OrgRole[]; // Require one of these organization roles
   skipLogging?: boolean;
   rateLimit?: boolean; // Enable rate limiting (default: true for POST/PUT/PATCH/DELETE)
   skipRateLimit?: boolean; // Explicitly skip rate limiting even for mutations
@@ -199,7 +201,8 @@ export function withErrorHandler(
       });
 
       // Authentication check
-      if (options.requireAuth || options.requireAdmin || options.requireCanApprove) {
+      if (options.requireAuth || options.requireAdmin || options.requireOwner || options.requireCanApprove ||
+          options.requireOperationsAccess || options.requireHRAccess || options.requireFinanceAccess) {
         const session = await getSession();
 
         if (!session) {
@@ -216,11 +219,90 @@ export function withErrorHandler(
           return response;
         }
 
+        // Check for owner access
+        if (options.requireOwner && !session.user.isOwner) {
+          const response = errorResponse('Forbidden', 403, {
+            message: 'Organization owner access required',
+            code: ErrorCodes.ADMIN_REQUIRED,
+          });
+          response.headers.set('x-request-id', requestId);
+
+          if (!options.skipLogging) {
+            logRequest(
+              request.method, request.url, 403, Date.now() - startTime,
+              requestId, session.user.id, session.user.email
+            );
+          }
+
+          return response;
+        }
+
         // Check for admin access (new boolean-based system)
-        if (options.requireAdmin && !session.user.isAdmin) {
+        // Note: isOwner implies admin access
+        if (options.requireAdmin && !session.user.isAdmin && !session.user.isOwner) {
           const response = errorResponse('Forbidden', 403, {
             message: 'Admin access required',
             code: ErrorCodes.ADMIN_REQUIRED,
+          });
+          response.headers.set('x-request-id', requestId);
+
+          if (!options.skipLogging) {
+            logRequest(
+              request.method, request.url, 403, Date.now() - startTime,
+              requestId, session.user.id, session.user.email
+            );
+          }
+
+          return response;
+        }
+
+        // Check for Operations module access (Assets, Subscriptions, Suppliers)
+        // Admin/Owner bypass this check
+        if (options.requireOperationsAccess &&
+            !session.user.isAdmin && !session.user.isOwner && !session.user.hasOperationsAccess) {
+          const response = errorResponse('Forbidden', 403, {
+            message: 'Operations module access required',
+            code: ErrorCodes.PERMISSION_DENIED,
+          });
+          response.headers.set('x-request-id', requestId);
+
+          if (!options.skipLogging) {
+            logRequest(
+              request.method, request.url, 403, Date.now() - startTime,
+              requestId, session.user.id, session.user.email
+            );
+          }
+
+          return response;
+        }
+
+        // Check for HR module access (Employees, Leave)
+        // Admin/Owner bypass this check
+        if (options.requireHRAccess &&
+            !session.user.isAdmin && !session.user.isOwner && !session.user.hasHRAccess) {
+          const response = errorResponse('Forbidden', 403, {
+            message: 'HR module access required',
+            code: ErrorCodes.PERMISSION_DENIED,
+          });
+          response.headers.set('x-request-id', requestId);
+
+          if (!options.skipLogging) {
+            logRequest(
+              request.method, request.url, 403, Date.now() - startTime,
+              requestId, session.user.id, session.user.email
+            );
+          }
+
+          return response;
+        }
+
+        // Check for Finance module access (Payroll, Purchase Requests)
+        // Admin/Owner bypass this check
+        if (options.requireFinanceAccess &&
+            !session.user.isAdmin && !session.user.isOwner && !session.user.hasFinanceAccess) {
+          const response = errorResponse('Forbidden', 403, {
+            message: 'Finance module access required',
+            code: ErrorCodes.PERMISSION_DENIED,
           });
           response.headers.set('x-request-id', requestId);
 
@@ -315,7 +397,9 @@ export function withErrorHandler(
       }
 
       // Check if tenant context is required (default: true for auth routes)
-      const requireTenant = options.requireTenant ?? (options.requireAuth || options.requireAdmin || options.requireCanApprove);
+      const requireTenant = options.requireTenant ?? (options.requireAuth || options.requireAdmin ||
+        options.requireOwner || options.requireCanApprove || options.requireOperationsAccess ||
+        options.requireHRAccess || options.requireFinanceAccess);
 
       if (requireTenant && !tenantContext) {
         const response = errorResponse('Forbidden', 403, {
@@ -395,33 +479,11 @@ export function withErrorHandler(
         }
       }
 
-      // Organization role check
-      if (options.requireOrgRole && options.requireOrgRole.length > 0) {
-        if (!tenantContext?.orgRole || !options.requireOrgRole.includes(tenantContext.orgRole as OrgRole)) {
-          const response = errorResponse('Forbidden', 403, {
-            message: `This action requires one of the following roles: ${options.requireOrgRole.join(', ')}`,
-            code: ErrorCodes.INSUFFICIENT_ROLE,
-            details: { requiredRoles: options.requireOrgRole },
-          });
-          response.headers.set('x-request-id', requestId);
-
-          if (!options.skipLogging) {
-            const session = await getSession();
-            logRequest(
-              request.method, request.url, 403, Date.now() - startTime,
-              requestId, session?.user.id, session?.user.email
-            );
-          }
-
-          return response;
-        }
-      }
-
       // Permission check
       if (options.requirePermission) {
         const session = await getSession();
 
-        if (!tenantContext?.tenantId || !tenantContext?.orgRole) {
+        if (!tenantContext?.tenantId) {
           const response = errorResponse('Forbidden', 403, {
             message: 'Permission check requires organization context',
             code: ErrorCodes.TENANT_REQUIRED,
@@ -446,9 +508,14 @@ export function withErrorHandler(
           enabledModules = org.enabledModules || [];
         }
 
+        // Use boolean flags for permission check
+        const isOwner = session?.user.isOwner ?? false;
+        const isAdmin = session?.user.isAdmin ?? false;
+
         const hasRequiredPermission = await checkPermission(
           tenantContext.tenantId,
-          tenantContext.orgRole as OrgRole,
+          isOwner,
+          isAdmin,
           options.requirePermission,
           enabledModules
         );
@@ -475,10 +542,21 @@ export function withErrorHandler(
       // Await params from Next.js 15 route context
       const params = routeContext?.params ? await routeContext.params : undefined;
 
+      // Enhance tenant context with boolean flags from session
+      let enhancedTenantContext = tenantContext;
+      if (tenantContext) {
+        const session = await getSession();
+        enhancedTenantContext = {
+          ...tenantContext,
+          isOwner: session?.user.isOwner ?? false,
+          isAdmin: session?.user.isAdmin ?? false,
+        };
+      }
+
       // Build API context
       const apiContext: APIContext = {
         params,
-        tenant: tenantContext || undefined,
+        tenant: enhancedTenantContext || undefined,
         prisma: tenantPrisma,
       };
 
@@ -544,7 +622,7 @@ export function getRequestId(request: NextRequest): string {
  *
  * @example
  * export const GET = withErrorHandler(async (request, context) => {
- *   const { db, tenantId, userId, orgRole } = extractTenantContext(context);
+ *   const { db, tenantId, userId } = extractTenantContext(context);
  *   const assets = await db.asset.findMany();
  *   return NextResponse.json(assets);
  * }, { requireAuth: true });
@@ -553,7 +631,6 @@ export function extractTenantContext(context: APIContext): {
   db: TenantPrismaClient;
   tenantId: string;
   userId: string;
-  orgRole: string;
   tenant: TenantContext;
 } {
   const { tenant, prisma } = context;
@@ -566,7 +643,6 @@ export function extractTenantContext(context: APIContext): {
     db: prisma as TenantPrismaClient,
     tenantId: tenant.tenantId,
     userId: tenant.userId,
-    orgRole: tenant.orgRole || 'MEMBER',
     tenant,
   };
 }
