@@ -208,10 +208,16 @@ export async function getCurrentPendingStep(
 }
 
 /**
- * Check if a member can approve a specific step.
- * Member can approve if:
- * 1. They are an admin (isAdmin = true) - can approve anyone
- * 2. They have canApprove = true and the requester reports to them
+ * Check if a member can approve a specific step based on the required role.
+ *
+ * Role to Permission Mapping:
+ * - MANAGER: Member must be the requester's direct manager (via reportingToId)
+ * - HR_MANAGER: Member must have hasHRAccess=true
+ * - FINANCE_MANAGER: Member must have hasFinanceAccess=true
+ * - DIRECTOR: Member must have isAdmin=true
+ * - EMPLOYEE: Cannot approve (this role is for requesters only)
+ *
+ * Note: Admins (isAdmin=true) can approve ANY step regardless of required role.
  */
 export async function canMemberApprove(
   memberId: string,
@@ -220,41 +226,62 @@ export async function canMemberApprove(
 ): Promise<{ canApprove: boolean; reason?: string }> {
   const member = await prisma.teamMember.findUnique({
     where: { id: memberId },
-    select: { id: true, isAdmin: true, canApprove: true },
+    select: {
+      id: true,
+      isAdmin: true,
+      hasHRAccess: true,
+      hasFinanceAccess: true,
+      hasOperationsAccess: true,
+    },
   });
 
   if (!member) {
     return { canApprove: false, reason: 'Member not found' };
   }
 
-  // Admin can approve anything
+  // Admin can approve anything (bypass)
   if (member.isAdmin) {
     return { canApprove: true };
   }
 
-  // If member has canApprove permission, check if they can approve this specific request
-  if (member.canApprove) {
-    // If we have a requesterId, verify the requester reports to this member
-    if (requesterId) {
-      const requester = await prisma.teamMember.findUnique({
-        where: { id: requesterId },
-        select: { reportingToId: true },
-      });
+  // Check based on required role
+  switch (step.requiredRole) {
+    case 'MANAGER':
+      // Must be the requester's direct manager
+      if (requesterId) {
+        const requester = await prisma.teamMember.findUnique({
+          where: { id: requesterId },
+          select: { reportingToId: true },
+        });
+        if (requester?.reportingToId === member.id) {
+          return { canApprove: true };
+        }
+      }
+      return { canApprove: false, reason: 'You are not the direct manager of this employee' };
 
-      if (requester?.reportingToId === member.id) {
+    case 'HR_MANAGER':
+      if (member.hasHRAccess) {
         return { canApprove: true };
       }
-    } else {
-      // If no requesterId provided, allow approval (backwards compatibility)
-      // The caller should ideally always provide requesterId for proper authorization
-      return { canApprove: true };
-    }
-  }
+      return { canApprove: false, reason: 'HR access required to approve this step' };
 
-  return {
-    canApprove: false,
-    reason: 'Not authorized to approve this request',
-  };
+    case 'FINANCE_MANAGER':
+      if (member.hasFinanceAccess) {
+        return { canApprove: true };
+      }
+      return { canApprove: false, reason: 'Finance access required to approve this step' };
+
+    case 'DIRECTOR':
+      // Only admins can approve director-level steps (already handled above)
+      return { canApprove: false, reason: 'Admin access required to approve this step' };
+
+    case 'EMPLOYEE':
+      // EMPLOYEE role cannot approve anything
+      return { canApprove: false, reason: 'This role cannot approve requests' };
+
+    default:
+      return { canApprove: false, reason: 'Unknown approval role' };
+  }
 }
 
 // Backwards compatibility alias
@@ -401,6 +428,12 @@ export async function adminBypassApproval(
  * Get all pending approval steps for a team member based on their permissions.
  * IMPORTANT: tenantId is required for proper tenant isolation.
  *
+ * Returns steps where the member can potentially approve based on:
+ * - Admin: Can see all pending approvals
+ * - hasHRAccess: Can see HR_MANAGER steps
+ * - hasFinanceAccess: Can see FINANCE_MANAGER steps
+ * - Has direct reports: Can see MANAGER steps for their reports
+ *
  * @param memberId - The TeamMember ID (not User ID)
  * @param tenantId - The tenant ID for proper isolation
  */
@@ -410,7 +443,13 @@ export async function getPendingApprovalsForUser(
 ): Promise<ApprovalStepWithApprover[]> {
   const member = await prisma.teamMember.findUnique({
     where: { id: memberId },
-    select: { id: true, isAdmin: true, canApprove: true },
+    select: {
+      id: true,
+      isAdmin: true,
+      hasHRAccess: true,
+      hasFinanceAccess: true,
+      hasOperationsAccess: true,
+    },
   });
 
   if (!member) return [];
@@ -434,59 +473,69 @@ export async function getPendingApprovalsForUser(
     });
   }
 
-  // If member has canApprove permission, get approvals from their direct reports
-  if (member.canApprove) {
-    // Get all team members who report to this member
-    const directReports = await prisma.teamMember.findMany({
-      where: {
-        reportingToId: member.id,
-        ...(tenantId ? { tenantId } : {}),
-      },
-      select: { id: true },
-    });
+  // Build list of roles this member can approve
+  const approvableRoles: Role[] = [];
 
-    const directReportIds = directReports.map((r) => r.id);
-
-    if (directReportIds.length === 0) {
-      return [];
-    }
-
-    // Get all pending approval steps and filter to those from direct reports
-    const allPendingSteps = await prisma.approvalStep.findMany({
-      where: baseWhere,
-      include: {
-        approver: {
-          select: { id: true, name: true, email: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    // Filter to only include steps that are the current pending step for their entity
-    // and where the requester is a direct report
-    const stepsByEntity = new Map<string, ApprovalStepWithApprover[]>();
-    for (const step of allPendingSteps) {
-      const key = `${step.entityType}:${step.entityId}`;
-      if (!stepsByEntity.has(key)) {
-        stepsByEntity.set(key, []);
-      }
-      stepsByEntity.get(key)!.push(step);
-    }
-
-    const result: ApprovalStepWithApprover[] = [];
-    for (const steps of stepsByEntity.values()) {
-      // Get the step with lowest levelOrder (current step)
-      const currentStep = steps.reduce((min, step) =>
-        step.levelOrder < min.levelOrder ? step : min
-      );
-      result.push(currentStep);
-    }
-
-    return result;
+  // Check if member has direct reports (can approve MANAGER steps)
+  const directReportsCount = await prisma.teamMember.count({
+    where: {
+      reportingToId: member.id,
+      ...(tenantId ? { tenantId } : {}),
+    },
+  });
+  if (directReportsCount > 0) {
+    approvableRoles.push('MANAGER');
   }
 
-  // Member has no approval permissions
-  return [];
+  // HR access can approve HR_MANAGER steps
+  if (member.hasHRAccess) {
+    approvableRoles.push('HR_MANAGER');
+  }
+
+  // Finance access can approve FINANCE_MANAGER steps
+  if (member.hasFinanceAccess) {
+    approvableRoles.push('FINANCE_MANAGER');
+  }
+
+  // If no approvable roles, return empty
+  if (approvableRoles.length === 0) {
+    return [];
+  }
+
+  // Get pending steps for roles this member can approve
+  const pendingSteps = await prisma.approvalStep.findMany({
+    where: {
+      ...baseWhere,
+      requiredRole: { in: approvableRoles },
+    },
+    include: {
+      approver: {
+        select: { id: true, name: true, email: true },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  // Filter to only include the current pending step for each entity
+  const stepsByEntity = new Map<string, ApprovalStepWithApprover[]>();
+  for (const step of pendingSteps) {
+    const key = `${step.entityType}:${step.entityId}`;
+    if (!stepsByEntity.has(key)) {
+      stepsByEntity.set(key, []);
+    }
+    stepsByEntity.get(key)!.push(step);
+  }
+
+  const result: ApprovalStepWithApprover[] = [];
+  for (const steps of stepsByEntity.values()) {
+    // Get the step with lowest levelOrder (current step)
+    const currentStep = steps.reduce((min, step) =>
+      step.levelOrder < min.levelOrder ? step : min
+    );
+    result.push(currentStep);
+  }
+
+  return result;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
