@@ -98,12 +98,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Exchange code for tokens
+    // Exchange code for tokens - must use same redirectUri from authorization request
     const tokens = await exchangeAzureCodeForTokens(
       code,
       clientId,
       clientSecret,
-      tenantId
+      tenantId,
+      redirectUri
     );
 
     // Get user info from Microsoft Graph
