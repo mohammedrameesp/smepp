@@ -9,6 +9,7 @@ import { WhatsAppClient, logWhatsAppMessage } from './client';
 import { getEffectiveWhatsAppConfig, getMemberWhatsAppPhone } from './config';
 import { generateActionTokenPair } from './action-tokens';
 import { buildApprovalTemplate, buildActionConfirmationText } from './templates';
+import logger from '@/lib/core/log';
 import type {
   ApprovalNotificationData,
   SendNotificationResult,
@@ -30,25 +31,38 @@ import type {
 export async function sendApprovalNotification(
   data: ApprovalNotificationData
 ): Promise<SendNotificationResult> {
+  const logContext = {
+    tenantId: data.tenantId,
+    approverId: data.approverId,
+    entityType: data.entityType,
+    entityId: data.entityId,
+  };
+
+  logger.info(logContext, 'WhatsApp: Starting approval notification');
+
   try {
     // 1. Get effective WhatsApp configuration (platform or custom)
     const configResult = await getEffectiveWhatsAppConfig(data.tenantId);
     if (!configResult) {
+      logger.warn(logContext, 'WhatsApp: No configuration found for tenant');
       return {
         success: false,
         error: 'WhatsApp not configured for this organization',
       };
     }
     const { config, source } = configResult;
+    logger.debug({ ...logContext, source, phoneNumberId: config.phoneNumberId }, 'WhatsApp: Config found');
 
     // 2. Get approver's WhatsApp phone number
     const approverPhone = await getMemberWhatsAppPhone(data.approverId);
     if (!approverPhone) {
+      logger.warn(logContext, 'WhatsApp: No phone number found for approver');
       return {
         success: false,
-        error: 'Approver does not have a verified WhatsApp number',
+        error: 'Approver does not have a WhatsApp number (check HR profile)',
       };
     }
+    logger.debug({ ...logContext, phone: approverPhone.slice(0, 6) + '****' }, 'WhatsApp: Phone found');
 
     // 3. Generate action tokens for approve/reject buttons
     const { approveToken, rejectToken } = await generateActionTokenPair({
@@ -57,6 +71,7 @@ export async function sendApprovalNotification(
       entityId: data.entityId,
       approverId: data.approverId,
     });
+    logger.debug(logContext, 'WhatsApp: Action tokens generated');
 
     // 4. Build the template message
     const message = buildApprovalTemplate(
@@ -66,8 +81,10 @@ export async function sendApprovalNotification(
       approveToken,
       rejectToken
     );
+    logger.debug({ ...logContext, template: message.templateName }, 'WhatsApp: Template built');
 
     // 5. Send via Meta API
+    logger.info({ ...logContext, template: message.templateName, to: approverPhone.slice(0, 6) + '****' }, 'WhatsApp: Sending message via Meta API');
     const client = new WhatsAppClient(config);
     const response = await client.sendTemplateMessage(message);
     const messageId = response.messages[0]?.id;
@@ -84,14 +101,19 @@ export async function sendApprovalNotification(
       configSource: source,
     });
 
+    logger.info({ ...logContext, messageId }, 'WhatsApp: Message sent successfully');
+
     return {
       success: true,
       messageId,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetails = error instanceof Error && 'details' in error ? (error as { details?: unknown }).details : undefined;
 
-    // Log the failure
+    logger.error({ ...logContext, error: errorMessage, details: errorDetails }, 'WhatsApp: Failed to send notification');
+
+    // Log the failure to database
     try {
       const approverPhone = await getMemberWhatsAppPhone(data.approverId);
       if (approverPhone) {
