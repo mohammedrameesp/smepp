@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // If invitation exists, accept it (create TeamMember and mark as accepted)
+      // If invitation exists, accept it (create or update TeamMember and mark as accepted)
       if (invitation) {
         const isOwner = invitation.role === 'OWNER';
 
@@ -149,30 +149,54 @@ export async function POST(request: NextRequest) {
         // Determine if user should be admin based on their org role
         const isAdmin = invitation.role === 'OWNER' || invitation.role === 'ADMIN';
 
-        // Generate employee code for employees using pre-fetched data
-        let employeeCode: string | null = null;
-        if (finalIsEmployee && employeeCodePrefix) {
-          employeeCode = `${employeeCodePrefix}-${String(employeeCount + 1).padStart(3, '0')}`;
-        }
-
-        // Create TeamMember (the unified model for org users)
-        await tx.teamMember.create({
-          data: {
-            tenantId: invitation.organizationId,
-            email: normalizedEmail,
-            name: name,
-            passwordHash: passwordHash,
-            isAdmin,
-            isOwner,
-            isEmployee: finalIsEmployee,
-            isOnWps: finalIsOnWps,
-            employeeCode,
-            canLogin: true,
-            image: !finalIsEmployee && invitation.organization.logoUrl
-              ? invitation.organization.logoUrl
-              : null,
+        // Check if TeamMember already exists (created by admin via /api/users)
+        const existingMember = await tx.teamMember.findUnique({
+          where: {
+            tenantId_email: {
+              tenantId: invitation.organizationId,
+              email: normalizedEmail,
+            },
           },
         });
+
+        if (existingMember) {
+          // Update existing TeamMember with password and email verification
+          await tx.teamMember.update({
+            where: { id: existingMember.id },
+            data: {
+              name: name,
+              passwordHash: passwordHash,
+              emailVerified: new Date(),
+              setupToken: null,
+              setupTokenExpiry: null,
+            },
+          });
+        } else {
+          // Generate employee code for employees using pre-fetched data
+          let employeeCode: string | null = null;
+          if (finalIsEmployee && employeeCodePrefix) {
+            employeeCode = `${employeeCodePrefix}-${String(employeeCount + 1).padStart(3, '0')}`;
+          }
+
+          // Create new TeamMember (the unified model for org users)
+          await tx.teamMember.create({
+            data: {
+              tenantId: invitation.organizationId,
+              email: normalizedEmail,
+              name: name,
+              passwordHash: passwordHash,
+              isAdmin,
+              isOwner,
+              isEmployee: finalIsEmployee,
+              isOnWps: finalIsOnWps,
+              employeeCode,
+              canLogin: true,
+              image: !finalIsEmployee && invitation.organization.logoUrl
+                ? invitation.organization.logoUrl
+                : null,
+            },
+          });
+        }
 
         await tx.organizationInvitation.update({
           where: { id: invitation.id },

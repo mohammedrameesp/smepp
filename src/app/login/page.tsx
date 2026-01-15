@@ -236,7 +236,8 @@ function LoginForm() {
   };
 
   // Show loading state while resolving custom domain or fetching branding
-  if (subdomainLoading || (subdomain && brandingLoading)) {
+  // Always wait for branding to load to prevent flash of wrong auth methods
+  if (subdomainLoading || brandingLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
