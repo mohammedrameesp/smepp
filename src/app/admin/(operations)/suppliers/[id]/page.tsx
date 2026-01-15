@@ -35,7 +35,9 @@ export default async function SupplierDetailPage({ params }: Props) {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && !session.user.isAdmin) {
+  // Allow access for admins OR users with Operations access
+  const hasAccess = session.user.isAdmin || session.user.hasOperationsAccess;
+  if (process.env.NODE_ENV !== 'development' && !hasAccess) {
     redirect('/forbidden');
   }
 

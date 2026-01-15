@@ -28,7 +28,9 @@ interface PageProps {
 
 export default async function PayrollRunDetailPage({ params }: PageProps) {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user.isAdmin) {
+  // Allow access for admins OR users with Finance access
+  const hasAccess = session?.user?.isAdmin || session?.user?.hasFinanceAccess;
+  if (!session || !hasAccess) {
     redirect('/');
   }
 
