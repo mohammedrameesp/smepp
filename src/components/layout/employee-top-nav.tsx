@@ -52,7 +52,8 @@ interface EmployeeTopNavProps {
 }
 
 export function EmployeeTopNav({ enabledModules = [], isAdminInEmployeeView = false }: EmployeeTopNavProps) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const isSessionLoading = status === 'loading';
   const pathname = usePathname();
   const [isSwitching, setIsSwitching] = React.useState(false);
 
@@ -90,7 +91,10 @@ export function EmployeeTopNav({ enabledModules = [], isAdminInEmployeeView = fa
           <div className="flex items-center gap-6">
             <Link href="/employee" className="flex items-center gap-3">
               {/* Use inverted logo for dark background, with CSS filter fallback */}
-              {session?.user?.organizationLogoUrl ? (
+              {isSessionLoading ? (
+                /* Show placeholder while session loads to prevent logo flash */
+                <div className="h-8 w-24 bg-slate-700 rounded animate-pulse" />
+              ) : session?.user?.organizationLogoUrl ? (
                 <img
                   src={session.user.organizationLogoUrlInverse || session.user.organizationLogoUrl}
                   alt={session.user.organizationName || 'Organization'}
@@ -102,7 +106,11 @@ export function EmployeeTopNav({ enabledModules = [], isAdminInEmployeeView = fa
               )}
               <span className="text-slate-500 hidden sm:inline">|</span>
               <span className="text-sm font-medium text-slate-200 hidden sm:inline">
-                {session?.user?.organizationName || 'Organization'}
+                {isSessionLoading ? (
+                  <span className="inline-block h-4 w-20 bg-slate-700 rounded animate-pulse" />
+                ) : (
+                  session?.user?.organizationName || 'Organization'
+                )}
               </span>
             </Link>
 
