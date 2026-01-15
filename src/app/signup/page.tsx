@@ -268,9 +268,12 @@ function SignupForm() {
   const showOAuthOptions = showGoogleOAuth || showAzureOAuth;
 
   // Check if credentials (email/password) are allowed
+  // Only determine this AFTER invitation is loaded to prevent flash of wrong UI
   // Empty array means all methods allowed, otherwise check if 'credentials' is in the list
-  const allowedMethods = invitation?.authConfig?.allowedAuthMethods || [];
-  const showCredentials = allowedMethods.length === 0 || allowedMethods.includes('credentials');
+  const allowedMethods = invitation?.authConfig?.allowedAuthMethods;
+  const showCredentials = !loadingInvite && invitation && (
+    !allowedMethods || allowedMethods.length === 0 || allowedMethods.includes('credentials')
+  );
 
   return (
     <div className="min-h-screen flex">
@@ -320,8 +323,16 @@ function SignupForm() {
               </p>
             </div>
 
+            {/* Loading state while fetching invitation */}
+            {loadingInvite && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-4" />
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              </div>
+            )}
+
             {/* Error Alert */}
-            {error && (
+            {error && !loadingInvite && (
               <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
                 <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
