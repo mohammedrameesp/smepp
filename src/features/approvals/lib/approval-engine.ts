@@ -126,8 +126,11 @@ export async function findApplicablePolicy(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Check if someone can approve a specific role level within the tenant.
- * Used to skip levels where no approver exists.
+ * Check if someone OTHER than the requester can approve a specific role level.
+ * Used to skip levels where no approver exists or where the requester is the only approver.
+ *
+ * Self-approval prevention: If the requester is the only person who can approve at a level,
+ * that level is skipped and approval goes to the next level.
  */
 async function hasApproverForRole(
   role: Role,
@@ -147,22 +150,40 @@ async function hasApproverForRole(
       return false;
 
     case 'HR_MANAGER':
-      // Check if anyone has HR access
+      // Check if anyone OTHER than the requester has HR access
       const hrCount = await prisma.teamMember.count({
-        where: { tenantId, hasHRAccess: true, isDeleted: false },
+        where: {
+          tenantId,
+          hasHRAccess: true,
+          isDeleted: false,
+          ...(requesterId && { id: { not: requesterId } }), // Exclude requester
+        },
       });
       return hrCount > 0;
 
     case 'FINANCE_MANAGER':
-      // Check if anyone has Finance access
+      // Check if anyone OTHER than the requester has Finance access
       const financeCount = await prisma.teamMember.count({
-        where: { tenantId, hasFinanceAccess: true, isDeleted: false },
+        where: {
+          tenantId,
+          hasFinanceAccess: true,
+          isDeleted: false,
+          ...(requesterId && { id: { not: requesterId } }), // Exclude requester
+        },
       });
       return financeCount > 0;
 
     case 'DIRECTOR':
-      // Admins always exist (owner is always admin)
-      return true;
+      // Check if any admin OTHER than the requester exists
+      const adminCount = await prisma.teamMember.count({
+        where: {
+          tenantId,
+          isAdmin: true,
+          isDeleted: false,
+          ...(requesterId && { id: { not: requesterId } }), // Exclude requester
+        },
+      });
+      return adminCount > 0;
 
     case 'EMPLOYEE':
       // EMPLOYEE role cannot approve
