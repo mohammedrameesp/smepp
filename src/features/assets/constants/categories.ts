@@ -46,8 +46,6 @@ export interface DefaultAssetCategory {
   name: string;
   /** Description with example assets */
   description: string;
-  /** Optional icon identifier for UI */
-  icon?: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

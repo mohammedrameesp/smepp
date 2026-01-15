@@ -57,6 +57,11 @@ export async function GET() {
               name: true,
             },
           },
+          assetCategory: {
+            select: {
+              name: true,
+            },
+          },
         },
       }),
       prisma.subscription.findMany({
@@ -268,7 +273,7 @@ export async function GET() {
       id: a.id,
       assetTag: a.assetTag || '',
       type: a.type,
-      category: a.category || '',
+      category: a.assetCategory?.name || '',
       brand: a.brand || '',
       model: a.model,
       serial: a.serial || '',

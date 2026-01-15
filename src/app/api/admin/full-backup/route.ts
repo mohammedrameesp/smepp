@@ -63,6 +63,7 @@ export async function GET(_request: NextRequest) {
         where: { tenantId },
         include: {
           assignedMember: { select: { email: true, name: true } },
+          assetCategory: { select: { name: true } },
         },
       }),
       prisma.assetHistory.findMany({
@@ -205,7 +206,7 @@ export async function GET(_request: NextRequest) {
         id: asset.id,
         assetTag: asset.assetTag || '',
         type: asset.type,
-        category: asset.category || '',
+        category: asset.assetCategory?.name || '',
         brand: asset.brand || '',
         model: asset.model,
         serial: asset.serial || '',

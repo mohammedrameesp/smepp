@@ -84,6 +84,9 @@ async function exportAssetsHandler(_request: NextRequest, context: APIContext) {
       location: {
         select: { name: true },
       },
+      assetCategory: {
+        select: { name: true },
+      },
     },
     orderBy: { createdAt: 'desc' },
   });

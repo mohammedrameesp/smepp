@@ -30,7 +30,6 @@ export interface ParsedAssetData {
   id?: string;
   assetTag?: string;
   type: string;
-  category: string | null;
   brand: string | null;
   model: string;
   serial: string | null;
@@ -44,7 +43,7 @@ export interface ParsedAssetData {
   status: AssetStatus;
   assignedMemberId: string | null;
   assignmentDate: string | null;
-  // Note: Location is now a relationship (locationId) - must be assigned manually after import
+  // Note: Location and Category are now relationships - must be assigned manually after import
 }
 
 export type AssetParseResult =
@@ -60,7 +59,7 @@ const ASSET_COLUMN_MAPPINGS: Record<string, string[]> = {
   id: ['ID', 'id', 'Asset ID'],
   assetTag: ['Asset Tag', 'asset_tag', 'assetTag', 'Tag'],
   type: ['Asset Type', 'Type', 'type', 'asset_type'],
-  category: ['Category', 'category', 'Category / Department', 'Department'],
+  // Note: category column removed - use AssetCategory relation via UI after import
   model: ['Model', 'model', 'Model / Version'],
   brand: ['Brand', 'brand', 'Brand / Manufacturer'],
   serial: ['Serial', 'serial', 'Serial Number'],
@@ -100,7 +99,7 @@ export function parseAssetRow(row: ImportRow): AssetParseResult {
   const id = getRowValue(ASSET_COLUMN_MAPPINGS.id);
   const assetTag = getRowValue(ASSET_COLUMN_MAPPINGS.assetTag);
   const type = getRowValue(ASSET_COLUMN_MAPPINGS.type);
-  const category = getRowValue(ASSET_COLUMN_MAPPINGS.category);
+  // Note: category removed - use AssetCategory relation via UI after import
   const model = getRowValue(ASSET_COLUMN_MAPPINGS.model);
   const brand = getRowValue(ASSET_COLUMN_MAPPINGS.brand);
   const serial = getRowValue(ASSET_COLUMN_MAPPINGS.serial);
@@ -155,7 +154,6 @@ export function parseAssetRow(row: ImportRow): AssetParseResult {
       id: id || undefined,
       assetTag: assetTag || undefined,
       type,
-      category: category || null,
       brand: brand || null,
       model,
       serial: serial || null,
@@ -175,11 +173,10 @@ export function parseAssetRow(row: ImportRow): AssetParseResult {
 
 /**
  * Asset data ready for Prisma create/update operations
- * Note: Location is a relationship (locationId) - must be assigned manually after import
+ * Note: Location and Category are relationships - must be assigned manually after import
  */
 export interface AssetDbData {
   type: string;
-  category: string | null;
   brand: string | null;
   model: string;
   serial: string | null;
@@ -205,7 +202,6 @@ export interface AssetDbData {
 export function buildAssetDbData(data: ParsedAssetData): AssetDbData {
   return {
     type: data.type,
-    category: data.category,
     brand: data.brand,
     model: data.model,
     serial: data.serial,

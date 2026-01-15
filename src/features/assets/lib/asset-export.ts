@@ -14,7 +14,7 @@
  * - Supports assigned member and location relations
  */
 
-import { Asset, Location, TeamMember } from '@prisma/client';
+import { Asset, AssetCategory, Location, TeamMember } from '@prisma/client';
 import { formatDateForCSV, formatCurrencyForCSV } from '@/lib/core/csv-utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -27,6 +27,7 @@ import { formatDateForCSV, formatCurrencyForCSV } from '@/lib/core/csv-utils';
 export type AssetWithExportRelations = Asset & {
   assignedMember: Pick<TeamMember, 'name' | 'email'> | null;
   location: Pick<Location, 'name'> | null;
+  assetCategory: Pick<AssetCategory, 'name'> | null;
 };
 
 /**
@@ -114,7 +115,7 @@ export function transformAssetForExport(asset: AssetWithExportRelations): AssetE
     id: asset.id,
     assetTag: asset.assetTag || '',
     type: asset.type,
-    category: asset.category || '',
+    category: asset.assetCategory?.name || '',
     brand: asset.brand || '',
     model: asset.model,
     serial: asset.serial || '',

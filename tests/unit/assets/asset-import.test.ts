@@ -320,15 +320,7 @@ describe('Asset Import Tests', () => {
         }
       });
 
-      it('should parse category', () => {
-        const row = { 'Type': 'Laptop', 'Model': 'Test', 'Category': 'IT Equipment' };
-        const result = parseAssetRow(row);
-
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.data.category).toBe('IT Equipment');
-        }
-      });
+      // Note: category field removed - use AssetCategory relation via UI after import
 
       it('should parse serial number', () => {
         const row = { 'Type': 'Laptop', 'Model': 'Test', 'Serial': 'ABC123' };
@@ -367,7 +359,6 @@ describe('Asset Import Tests', () => {
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.data.brand).toBeNull();
-          expect(result.data.category).toBeNull();
           expect(result.data.serial).toBeNull();
           expect(result.data.supplier).toBeNull();
           expect(result.data.configuration).toBeNull();
@@ -433,7 +424,6 @@ describe('Asset Import Tests', () => {
           expect(result.data.id).toBe('asset-123');
           expect(result.data.assetTag).toBe('BCE-CP-25001');
           expect(result.data.type).toBe('Laptop');
-          expect(result.data.category).toBe('IT Equipment');
           expect(result.data.brand).toBe('Lenovo');
           expect(result.data.model).toBe('ThinkPad X1');
           expect(result.data.serial).toBe('SN123456');
@@ -451,7 +441,6 @@ describe('Asset Import Tests', () => {
         id: 'asset-123',
         assetTag: 'BCE-CP-25001',
         type: 'Laptop',
-        category: 'IT Equipment',
         brand: 'Lenovo',
         model: 'ThinkPad X1',
         serial: 'SN123456',
@@ -470,7 +459,6 @@ describe('Asset Import Tests', () => {
       const dbData = buildAssetDbData(parsedData);
 
       expect(dbData.type).toBe('Laptop');
-      expect(dbData.category).toBe('IT Equipment');
       expect(dbData.brand).toBe('Lenovo');
       expect(dbData.model).toBe('ThinkPad X1');
       expect(dbData.serial).toBe('SN123456');
@@ -488,7 +476,6 @@ describe('Asset Import Tests', () => {
     it('should handle null optional fields', () => {
       const parsedData: ParsedAssetData = {
         type: 'Laptop',
-        category: null,
         brand: null,
         model: 'Test',
         serial: null,
@@ -506,7 +493,6 @@ describe('Asset Import Tests', () => {
 
       const dbData = buildAssetDbData(parsedData);
 
-      expect(dbData.category).toBeNull();
       expect(dbData.brand).toBeNull();
       expect(dbData.serial).toBeNull();
       expect(dbData.configuration).toBeNull();
@@ -521,7 +507,6 @@ describe('Asset Import Tests', () => {
       const parsedData: ParsedAssetData = {
         id: 'asset-123',
         type: 'Laptop',
-        category: null,
         brand: null,
         model: 'Test',
         serial: null,

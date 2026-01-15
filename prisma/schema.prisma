@@ -847,7 +847,6 @@ model Asset {
   type             String // #2 Asset Type (Laptop, Mouse, Monitor, etc.) - sub-type within category
   categoryId       String? // FK to AssetCategory
   assetCategory    AssetCategory? @relation(fields: [categoryId], references: [id])
-  category         String? // #3 Category/Department - DEPRECATED: use categoryId
   brand            String? // #4 Brand/Manufacturer (Apple, Dell, HP, etc.)
   model            String // #5 Model/Version (MacBook Pro 16", Dell XPS 15, etc.)
   serial           String? // #6 Serial Number
@@ -935,7 +934,6 @@ model AssetCategory {
   code        String // 2-letter code (e.g., "CP", "MO", "DP")
   name        String // Human-readable name (e.g., "Computing")
   description String?
-  icon        String? // Optional icon identifier for UI
   isActive    Boolean @default(true)
   isDefault   Boolean @default(false) // True for seeded categories
   sortOrder   Int     @default(0)

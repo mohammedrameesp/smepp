@@ -390,9 +390,7 @@ export async function POST(request: NextRequest) {
             tenantId,
             assetTag: asset.tag,
             type: asset.type,
-            category: asset.type === 'Laptop' || asset.type === 'Monitor' || asset.type === 'Tablet' ? 'IT Equipment' :
-                     asset.type === 'Camera' ? 'Production Equipment' :
-                     asset.type === 'Mobile Phone' ? 'Communications' : 'Office Equipment',
+            // Note: category field removed - use categoryId relation instead
             brand: asset.brand,
             model: asset.model,
             serial: `SN-${asset.tag}-${randomInt(1000, 9999)}`,

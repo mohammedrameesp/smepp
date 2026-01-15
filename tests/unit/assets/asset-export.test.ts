@@ -98,7 +98,6 @@ describe('Asset Export Tests', () => {
       id: 'asset-123',
       assetTag: 'BCE-CP-25001',
       type: 'Laptop',
-      category: 'IT Equipment',
       categoryId: null,
       brand: 'Lenovo',
       model: 'ThinkPad X1',
@@ -121,6 +120,9 @@ describe('Asset Export Tests', () => {
       },
       location: {
         name: 'Main Office',
+      },
+      assetCategory: {
+        name: 'IT Equipment',
       },
       tenantId: 'tenant-123',
       locationId: 'loc-123',
@@ -243,7 +245,7 @@ describe('Asset Export Tests', () => {
     it('should handle null optional fields', () => {
       const asset = createMockAsset({
         assetTag: null,
-        category: null,
+        assetCategory: null,
         brand: null,
         serial: null,
         configuration: null,
@@ -287,7 +289,6 @@ describe('Asset Export Tests', () => {
       id,
       assetTag: `TAG-${id}`,
       type: 'Laptop',
-      category: 'IT',
       categoryId: null,
       brand: 'Brand',
       model: 'Model',
@@ -306,6 +307,7 @@ describe('Asset Export Tests', () => {
       assignedMemberId: null,
       assignedMember: null,
       location: null,
+      assetCategory: { name: 'IT' },
       tenantId: 'tenant-123',
       locationId: null,
       isShared: false,
@@ -406,7 +408,6 @@ describe('Asset Export Tests', () => {
         id: 'asset-123',
         assetTag: 'TAG-001',
         type: 'Laptop',
-        category: 'IT',
         categoryId: null,
         brand: 'Brand',
         model: 'Model',
@@ -425,6 +426,7 @@ describe('Asset Export Tests', () => {
         assignedMemberId: 'member-123',
         assignedMember: { name: 'John', email: 'john@example.com' },
         location: { name: 'Office' },
+        assetCategory: { name: 'IT' },
         tenantId: 'tenant-123',
         locationId: 'loc-123',
         isShared: false,

@@ -136,7 +136,6 @@ export async function POST(request: NextRequest) {
             tenantId,
             assetTag: asset.assetTag,
             type: asset.type,
-            category: asset.category,
             brand: asset.brand,
             model: asset.model,
             serial: asset.serial,

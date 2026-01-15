@@ -71,7 +71,6 @@ export async function seedDefaultAssetCategories(organizationId: string): Promis
         code: cat.code,
         name: cat.name,
         description: cat.description,
-        icon: cat.icon,
         isDefault: true,
         isActive: true,
         sortOrder: index,
