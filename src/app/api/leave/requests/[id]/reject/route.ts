@@ -33,6 +33,7 @@ async function getUserApprovalRole(
     select: {
       id: true,
       isAdmin: true,
+      isOwner: true,
       hasHRAccess: true,
       hasFinanceAccess: true,
     },
@@ -40,8 +41,8 @@ async function getUserApprovalRole(
 
   if (!member) return null;
 
-  // Admin/Director is highest level (3)
-  if (member.isAdmin) {
+  // Admin or Owner = Director (highest level)
+  if (member.isAdmin || member.isOwner) {
     return { role: 'DIRECTOR', levelOrder: 3 };
   }
 
