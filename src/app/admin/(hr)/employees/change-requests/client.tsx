@@ -47,7 +47,7 @@ interface ChangeRequest {
 export function ChangeRequestsClient() {
   const [requests, setRequests] = useState<ChangeRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('PENDING');
   const [selectedRequest, setSelectedRequest] = useState<ChangeRequest | null>(null);
   const [resolverNotes, setResolverNotes] = useState('');
   const [isResolving, setIsResolving] = useState(false);

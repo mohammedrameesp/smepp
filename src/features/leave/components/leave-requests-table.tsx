@@ -68,7 +68,7 @@ export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/adm
   });
 
   const [search, setSearch] = useState(searchParams.get('q') || '');
-  const [statusFilter, setStatusFilter] = useState<string>(searchParams.get('status') || 'all');
+  const [statusFilter, setStatusFilter] = useState<string>(searchParams.get('status') || 'PENDING');
   const [yearFilter, setYearFilter] = useState<string>(searchParams.get('year') || 'all');
 
   const fetchRequests = useCallback(async () => {

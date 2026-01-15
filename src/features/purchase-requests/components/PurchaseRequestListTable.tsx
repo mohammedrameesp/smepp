@@ -54,7 +54,7 @@ export function PurchaseRequestListTable({ isAdmin = false }: PurchaseRequestLis
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('PENDING');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
