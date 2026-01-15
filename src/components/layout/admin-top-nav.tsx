@@ -20,6 +20,10 @@ import {
   Building2,
   Activity,
   Users,
+  ShieldCheck,
+  Briefcase,
+  UserCog,
+  CircleDollarSign,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -34,6 +38,7 @@ import { ClientOnly } from '@/components/ui/client-only';
 import { type BadgeCounts } from '@/components/layout/badge-types';
 import { cn } from '@/lib/core/utils';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 // Fallback avatar button shown during SSR to prevent layout shift
 function UserAvatarFallback({ initials }: { initials: string }) {
@@ -61,6 +66,30 @@ interface AdminTopNavProps {
 
 // Roles that can access approval workflows
 const APPROVER_ROLES = ['ADMIN', 'MANAGER', 'HR_MANAGER', 'FINANCE_MANAGER', 'DIRECTOR'];
+
+// Access role derivation for display in user menu
+type AccessRole = 'Admin' | 'HR' | 'Finance' | 'Operations' | 'Member';
+
+function deriveAccessRole(flags: {
+  isAdmin?: boolean;
+  hasHRAccess?: boolean;
+  hasFinanceAccess?: boolean;
+  hasOperationsAccess?: boolean;
+}): AccessRole {
+  if (flags.isAdmin) return 'Admin';
+  if (flags.hasHRAccess) return 'HR';
+  if (flags.hasFinanceAccess) return 'Finance';
+  if (flags.hasOperationsAccess) return 'Operations';
+  return 'Member';
+}
+
+const ACCESS_ROLE_STYLES: Record<AccessRole, { bg: string; text: string; icon: typeof ShieldCheck }> = {
+  Admin: { bg: 'bg-red-100', text: 'text-red-700', icon: ShieldCheck },
+  HR: { bg: 'bg-green-100', text: 'text-green-700', icon: UserCog },
+  Finance: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: CircleDollarSign },
+  Operations: { bg: 'bg-blue-100', text: 'text-blue-700', icon: Briefcase },
+  Member: { bg: 'bg-gray-100', text: 'text-gray-600', icon: User },
+};
 
 export function AdminTopNav({
   badgeCounts = {},
@@ -234,6 +263,22 @@ export function AdminTopNav({
                     <div className="px-2 py-2">
                       <p className="font-medium text-slate-900 text-sm">{session?.user?.name || 'User'}</p>
                       <p className="text-xs text-slate-500">{session?.user?.email}</p>
+                      {(() => {
+                        const accessRole = deriveAccessRole({
+                          isAdmin,
+                          hasHRAccess,
+                          hasFinanceAccess,
+                          hasOperationsAccess,
+                        });
+                        const style = ACCESS_ROLE_STYLES[accessRole];
+                        const Icon = style.icon;
+                        return (
+                          <Badge variant="secondary" className={`mt-1.5 gap-1 text-xs ${style.bg} ${style.text}`}>
+                            <Icon className="h-3 w-3" />
+                            {accessRole}
+                          </Badge>
+                        );
+                      })()}
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
