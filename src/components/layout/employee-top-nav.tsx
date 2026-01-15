@@ -49,9 +49,14 @@ function UserAvatarFallback({ initials }: { initials: string }) {
 interface EmployeeTopNavProps {
   enabledModules?: string[];
   isAdminInEmployeeView?: boolean;
+  hasPartialAdminAccess?: boolean;
 }
 
-export function EmployeeTopNav({ enabledModules = [], isAdminInEmployeeView = false }: EmployeeTopNavProps) {
+export function EmployeeTopNav({
+  enabledModules = [],
+  isAdminInEmployeeView = false,
+  hasPartialAdminAccess = false,
+}: EmployeeTopNavProps) {
   const { data: session, status } = useSession();
   const isSessionLoading = status === 'loading';
   const pathname = usePathname();
@@ -62,7 +67,11 @@ export function EmployeeTopNav({ enabledModules = [], isAdminInEmployeeView = fa
   const handleReturnToAdmin = async () => {
     setIsSwitching(true);
     try {
-      await fetch('/api/view-mode', { method: 'DELETE' });
+      // Only clear view-mode cookie for full admins in employee view
+      // Partial-access users just navigate directly
+      if (isAdminInEmployeeView) {
+        await fetch('/api/view-mode', { method: 'DELETE' });
+      }
       window.location.href = '/admin';
     } catch (error) {
       console.error('Failed to return to admin view:', error);
@@ -135,8 +144,8 @@ export function EmployeeTopNav({ enabledModules = [], isAdminInEmployeeView = fa
 
           {/* Right: Feedback + Notifications + User */}
           <div className="flex items-center gap-3 pl-4 border-l border-slate-600">
-            {/* Return to Admin (only for admins in employee view) */}
-            {isAdminInEmployeeView && (
+            {/* Return to Admin (for admins in employee view OR partial-access users) */}
+            {(isAdminInEmployeeView || hasPartialAdminAccess) && (
               <Button
                 variant="ghost"
                 size="sm"

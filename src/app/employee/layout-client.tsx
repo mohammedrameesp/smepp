@@ -12,6 +12,7 @@ interface EmployeeLayoutClientProps {
   aiChatEnabled: boolean;
   onboardingComplete?: boolean;
   isAdminInEmployeeView?: boolean;
+  hasPartialAdminAccess?: boolean;
 }
 
 export function EmployeeLayoutClient({
@@ -19,12 +20,17 @@ export function EmployeeLayoutClient({
   enabledModules,
   aiChatEnabled,
   onboardingComplete = true,
-  isAdminInEmployeeView = false
+  isAdminInEmployeeView = false,
+  hasPartialAdminAccess = false,
 }: EmployeeLayoutClientProps) {
   return (
     <>
       {/* Top Navigation Header */}
-      <EmployeeTopNav enabledModules={enabledModules} isAdminInEmployeeView={isAdminInEmployeeView} />
+      <EmployeeTopNav
+        enabledModules={enabledModules}
+        isAdminInEmployeeView={isAdminInEmployeeView}
+        hasPartialAdminAccess={hasPartialAdminAccess}
+      />
 
       {/* Admin in Employee View Banner */}
       <EmployeeViewBanner isVisible={isAdminInEmployeeView} />

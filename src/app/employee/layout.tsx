@@ -95,12 +95,20 @@ export default async function EmployeeLayout({
   const viewModeCookie = cookieStore.get('durj-view-mode');
   const isAdminInEmployeeView = isAdmin && viewModeCookie?.value === 'employee';
 
+  // Check if user has partial admin access (Finance/HR/Operations)
+  const hasPartialAdminAccess = !isAdmin && (
+    session?.user?.hasFinanceAccess ||
+    session?.user?.hasHRAccess ||
+    session?.user?.hasOperationsAccess
+  );
+
   return (
     <EmployeeLayoutClient
       enabledModules={orgSettings.enabledModules}
       aiChatEnabled={orgSettings.aiChatEnabled}
       onboardingComplete={onboardingComplete}
       isAdminInEmployeeView={isAdminInEmployeeView}
+      hasPartialAdminAccess={hasPartialAdminAccess}
     >
       {children}
     </EmployeeLayoutClient>
