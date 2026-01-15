@@ -23,9 +23,22 @@ interface AdminLayoutClientProps {
   aiChatEnabled: boolean;
   isAdmin?: boolean;
   canApprove?: boolean;
+  hasFinanceAccess?: boolean;
+  hasHRAccess?: boolean;
+  hasOperationsAccess?: boolean;
 }
 
-export function AdminLayoutClient({ children, badgeCounts, enabledModules, aiChatEnabled, isAdmin = false, canApprove = false }: AdminLayoutClientProps) {
+export function AdminLayoutClient({
+  children,
+  badgeCounts,
+  enabledModules,
+  aiChatEnabled,
+  isAdmin = false,
+  canApprove = false,
+  hasFinanceAccess = false,
+  hasHRAccess = false,
+  hasOperationsAccess = false,
+}: AdminLayoutClientProps) {
   const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
 
   // Keyboard shortcut for command palette (Cmd/Ctrl + K)
@@ -56,6 +69,10 @@ export function AdminLayoutClient({ children, badgeCounts, enabledModules, aiCha
         badgeCounts={badgeCounts}
         enabledModules={enabledModules}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+        isAdmin={isAdmin}
+        hasFinanceAccess={hasFinanceAccess}
+        hasHRAccess={hasHRAccess}
+        hasOperationsAccess={hasOperationsAccess}
       />
 
       {/* Command Palette */}
@@ -71,7 +88,15 @@ export function AdminLayoutClient({ children, badgeCounts, enabledModules, aiCha
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <MobileBottomNav badgeCounts={badgeCounts} enabledModules={enabledModules} isAdmin={isAdmin} canApprove={canApprove} />
+      <MobileBottomNav
+        badgeCounts={badgeCounts}
+        enabledModules={enabledModules}
+        isAdmin={isAdmin}
+        canApprove={canApprove}
+        hasFinanceAccess={hasFinanceAccess}
+        hasHRAccess={hasHRAccess}
+        hasOperationsAccess={hasOperationsAccess}
+      />
 
       {/* AI Chat Widget - only shown if enabled for organization */}
       {aiChatEnabled && <ChatWidget />}

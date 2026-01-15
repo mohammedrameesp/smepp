@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
-import { createUserSchema } from '@/features/users/validations/users';
+import { createUserSchema, ROLE_PERMISSIONS, type UserRole } from '@/features/users/validations/users';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
@@ -100,7 +100,12 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     }, { status: 400 });
   }
 
-  const { name, email, isAdmin, employeeId, designation, isEmployee, canLogin, isOnWps } = validation.data;
+  const { name, email, role, isAdmin: legacyIsAdmin, employeeId, designation, isEmployee, canLogin, isOnWps } = validation.data;
+
+  // Get permission flags from role (or use legacy isAdmin for backwards compatibility)
+  const rolePermissions = ROLE_PERMISSIONS[role as UserRole] || ROLE_PERMISSIONS.EMPLOYEE;
+  const isAdmin = legacyIsAdmin ?? rolePermissions.isAdmin;
+  const { canApprove, hasHRAccess, hasFinanceAccess, hasOperationsAccess } = rolePermissions;
 
   // Generate email for non-login users (use placeholder to satisfy unique constraint)
   // Format: nologin-{uuid}@{tenantSlug}.internal
@@ -153,7 +158,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
   }
 
   // Create TeamMember directly (replaces User + OrganizationUser + HRProfile)
-  // Note: isAdmin boolean controls dashboard access (true = /admin, false = /employee)
+  // Permission flags from role determine access to different modules
   // Note: tenantId is included explicitly for type safety; the tenant prisma
   // extension also auto-injects it but TypeScript requires it at compile time
   const member = await db.teamMember.create({
@@ -161,7 +166,13 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
       tenantId,
       name,
       email: finalEmail,
-      isAdmin, // Dashboard access: true → /admin, false → /employee
+      // Permission flags from role
+      isAdmin,
+      canApprove,
+      hasHRAccess,
+      hasFinanceAccess,
+      hasOperationsAccess,
+      // Employee settings
       isEmployee,
       canLogin,
       isOnWps: isEmployee ? isOnWps : false, // Only set WPS for employees

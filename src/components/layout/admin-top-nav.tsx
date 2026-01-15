@@ -53,12 +53,24 @@ interface AdminTopNavProps {
   badgeCounts?: BadgeCounts;
   enabledModules?: string[];
   onOpenCommandPalette?: () => void;
+  isAdmin?: boolean;
+  hasFinanceAccess?: boolean;
+  hasHRAccess?: boolean;
+  hasOperationsAccess?: boolean;
 }
 
 // Roles that can access approval workflows
 const APPROVER_ROLES = ['ADMIN', 'MANAGER', 'HR_MANAGER', 'FINANCE_MANAGER', 'DIRECTOR'];
 
-export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenCommandPalette }: AdminTopNavProps) {
+export function AdminTopNav({
+  badgeCounts = {},
+  enabledModules = [],
+  onOpenCommandPalette,
+  isAdmin = false,
+  hasFinanceAccess = false,
+  hasHRAccess = false,
+  hasOperationsAccess = false,
+}: AdminTopNavProps) {
   const { data: session, status } = useSession();
   const isSessionLoading = status === 'loading';
   const pathname = usePathname();
@@ -76,15 +88,25 @@ export function AdminTopNav({ badgeCounts = {}, enabledModules = [], onOpenComma
   };
 
   const isModuleEnabled = (moduleId: string) => enabledModules.includes(moduleId);
-  const isApprover = session?.user?.isAdmin === true;
 
-  // Navigation items for the main nav
-  // Note: Employees, Assets, Subscriptions are accessible via stats row on dashboard
-  // Note: Leave is accessed via Employees module or direct URL
+  // Check if user has access based on role or specific department access
+  const hasAccess = (requiredAccess?: 'finance' | 'hr' | 'operations') => {
+    if (isAdmin) return true; // Admins see everything
+    if (!requiredAccess) return true; // No specific access required
+    if (requiredAccess === 'finance' && hasFinanceAccess) return true;
+    if (requiredAccess === 'hr' && hasHRAccess) return true;
+    if (requiredAccess === 'operations' && hasOperationsAccess) return true;
+    return false;
+  };
+
+  // Can approve if admin, or has any department access (managers with department access can approve)
+  const isApprover = isAdmin || session?.user?.canApprove;
+
+  // Navigation items for the main nav - filtered by module AND department access
   const mainNavItems = [
-    { label: 'Company Documents', href: '/admin/company-documents', moduleId: 'documents' },
-    { label: 'Payroll', href: '/admin/payroll', moduleId: 'payroll' },
-  ].filter(item => isModuleEnabled(item.moduleId));
+    { label: 'Company Documents', href: '/admin/company-documents', moduleId: 'documents', requiredAccess: undefined },
+    { label: 'Payroll', href: '/admin/payroll', moduleId: 'payroll', requiredAccess: 'finance' as const },
+  ].filter(item => isModuleEnabled(item.moduleId) && hasAccess(item.requiredAccess));
 
 
 

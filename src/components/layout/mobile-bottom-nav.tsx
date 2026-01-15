@@ -18,12 +18,34 @@ interface MobileBottomNavProps {
   enabledModules?: string[];
   isAdmin?: boolean;
   canApprove?: boolean;
+  hasFinanceAccess?: boolean;
+  hasHRAccess?: boolean;
+  hasOperationsAccess?: boolean;
 }
 
-export function MobileBottomNav({ badgeCounts = {}, enabledModules = [], isAdmin = false, canApprove = false }: MobileBottomNavProps) {
+export function MobileBottomNav({
+  badgeCounts = {},
+  enabledModules = [],
+  isAdmin = false,
+  canApprove = false,
+  hasFinanceAccess = false,
+  hasHRAccess = false,
+  hasOperationsAccess = false,
+}: MobileBottomNavProps) {
   const pathname = usePathname();
 
   const isModuleEnabled = (moduleId: string) => enabledModules.includes(moduleId);
+
+  // Check if user has access based on role or department access
+  const hasAccess = (requiredAccess?: 'finance' | 'hr' | 'operations') => {
+    if (isAdmin) return true;
+    if (!requiredAccess) return true;
+    if (requiredAccess === 'finance' && hasFinanceAccess) return true;
+    if (requiredAccess === 'hr' && hasHRAccess) return true;
+    if (requiredAccess === 'operations' && hasOperationsAccess) return true;
+    return false;
+  };
+
   // Users with isAdmin or canApprove flags can access approval workflows
   const isApprover = isAdmin || canApprove;
   const hasApprovalModules = isModuleEnabled('leave') || isModuleEnabled('assets') || isModuleEnabled('purchase-requests');
@@ -43,7 +65,7 @@ export function MobileBottomNav({ badgeCounts = {}, enabledModules = [], isAdmin
       href: '/admin/employees',
       icon: Users,
       isActive: pathname?.startsWith('/admin/employees'),
-      show: true, // Team management is always available
+      show: hasAccess('hr'), // Only HR access users see Team
     },
     {
       id: 'assets',
@@ -51,7 +73,7 @@ export function MobileBottomNav({ badgeCounts = {}, enabledModules = [], isAdmin
       href: '/admin/assets',
       icon: Box,
       isActive: pathname?.startsWith('/admin/assets'),
-      show: isModuleEnabled('assets'),
+      show: isModuleEnabled('assets') && hasAccess('operations'),
     },
     {
       id: 'approvals',

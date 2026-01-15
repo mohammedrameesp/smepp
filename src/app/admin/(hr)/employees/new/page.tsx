@@ -12,8 +12,9 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RefreshCw, AlertTriangle, User, Briefcase, Shield, Mail, Building2, Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { createUserSchema, type CreateUserInput } from '@/features/users/validations/users';
+import { createUserSchema, type CreateUserInput, USER_ROLES, ROLE_CONFIG, type UserRole } from '@/features/users/validations/users';
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -71,7 +72,7 @@ export default function NewEmployeePage() {
     defaultValues: {
       name: '',
       email: '',
-      isAdmin: false,
+      role: 'EMPLOYEE',
       employeeId: '',
       designation: '',
       isEmployee: true,
@@ -81,7 +82,7 @@ export default function NewEmployeePage() {
     mode: 'onChange',
   });
 
-  const isAdmin = watch('isAdmin');
+  const role = watch('role');
   const isEmployee = watch('isEmployee');
   const canLogin = watch('canLogin');
   const isOnWps = watch('isOnWps');
@@ -468,24 +469,32 @@ export default function NewEmployeePage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Admin Access Toggle */}
-              <div className="flex items-start gap-3 py-2">
-                <Checkbox
-                  id="isAdmin"
-                  checked={isAdmin}
-                  onCheckedChange={(checked) => setValue('isAdmin', checked as boolean)}
-                  className="mt-0.5"
-                />
-                <div className="space-y-1">
-                  <Label htmlFor="isAdmin" className="text-base font-medium cursor-pointer">
-                    Admin Access
-                  </Label>
+              {/* Role Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Select
+                  value={role}
+                  onValueChange={(value) => setValue('role', value as UserRole)}
+                >
+                  <SelectTrigger id="role">
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {USER_ROLES.map((roleOption) => (
+                      <SelectItem key={roleOption} value={roleOption}>
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${ROLE_CONFIG[roleOption].color}`} />
+                          <span>{ROLE_CONFIG[roleOption].label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {role && (
                   <p className="text-sm text-muted-foreground">
-                    {isAdmin
-                      ? 'Full access to admin dashboard: manage team, assets, settings, and approve requests'
-                      : 'Employee self-service only: view own profile, submit leave requests, view payslips'}
+                    {ROLE_CONFIG[role as UserRole]?.description}
                   </p>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>

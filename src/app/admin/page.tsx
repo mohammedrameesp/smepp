@@ -40,11 +40,27 @@ export default async function AdminDashboard() {
     redirect('/login');
   }
 
-  if (!session.user.isAdmin) {
+  // Check for admin or department-level access
+  const isAdmin = session.user.isOwner || session.user.isAdmin;
+  const hasFinanceAccess = session.user.hasFinanceAccess || false;
+  const hasHRAccess = session.user.hasHRAccess || false;
+  const hasOperationsAccess = session.user.hasOperationsAccess || false;
+
+  // Redirect if no admin access at all
+  const hasAnyAdminAccess = isAdmin || hasFinanceAccess || hasHRAccess || hasOperationsAccess;
+  if (!hasAnyAdminAccess) {
     redirect('/employee');
   }
 
-  const isAdmin = session.user.isAdmin;
+  // Helper to check department access
+  const canAccessModule = (requiredAccess?: 'finance' | 'hr' | 'operations') => {
+    if (isAdmin) return true;
+    if (!requiredAccess) return true;
+    if (requiredAccess === 'finance' && hasFinanceAccess) return true;
+    if (requiredAccess === 'hr' && hasHRAccess) return true;
+    if (requiredAccess === 'operations' && hasOperationsAccess) return true;
+    return false;
+  };
 
   // Get enabled modules and org details from database
   let enabledModules: string[] = ['assets', 'subscriptions', 'suppliers'];
@@ -64,7 +80,7 @@ export default async function AdminDashboard() {
   // Dashboard data
   let dashboardData = null;
 
-  if (isAdmin && session.user.organizationId) {
+  if (hasAnyAdminAccess && session.user.organizationId) {
     const tenantId = session.user.organizationId;
     const today = new Date();
     // Start of today (midnight) for date-only comparisons (e.g., leave requests)
@@ -298,7 +314,7 @@ export default async function AdminDashboard() {
   // Calculate total attention items
   const attentionItems = (dashboardData?.totalPendingApprovals || 0) + (dashboardData?.expiringDocsCount || 0);
 
-  // Module cards configuration
+  // Module cards configuration - filtered by module AND department access
   const moduleCards = [
     {
       id: 'assets',
@@ -310,6 +326,7 @@ export default async function AdminDashboard() {
       badge: dashboardData?.stats.totalPendingAssets ? `${dashboardData.stats.totalPendingAssets} pending` : null,
       badgeColor: 'bg-red-500',
       enabled: isModuleEnabled('assets'),
+      requiredAccess: 'operations' as const,
     },
     {
       id: 'subscriptions',
@@ -319,6 +336,7 @@ export default async function AdminDashboard() {
       description: 'Software licenses and renewals',
       count: dashboardData?.stats.subscriptions,
       enabled: isModuleEnabled('subscriptions'),
+      requiredAccess: 'operations' as const,
     },
     {
       id: 'suppliers',
@@ -330,6 +348,7 @@ export default async function AdminDashboard() {
       badge: dashboardData?.stats.pendingSuppliers ? `${dashboardData.stats.pendingSuppliers} pending` : null,
       badgeColor: 'bg-red-500',
       enabled: isModuleEnabled('suppliers'),
+      requiredAccess: 'operations' as const,
     },
     {
       id: 'team',
@@ -341,6 +360,7 @@ export default async function AdminDashboard() {
       badge: dashboardData?.stats.pendingChangeRequests ? `${dashboardData.stats.pendingChangeRequests} change req` : null,
       badgeColor: 'bg-orange-500',
       enabled: true,  // Always enabled - core feature
+      requiredAccess: 'hr' as const,
     },
     {
       id: 'leave',
@@ -350,6 +370,7 @@ export default async function AdminDashboard() {
       description: 'Requests and balances',
       status: dashboardData?.stats.pendingLeave ? { text: `${dashboardData.stats.pendingLeave} pending`, color: 'text-red-600 bg-red-50' } : { text: 'Up to date', color: 'text-emerald-600 bg-emerald-50' },
       enabled: isModuleEnabled('leave'),
+      requiredAccess: 'hr' as const,
     },
     {
       id: 'payroll',
@@ -359,6 +380,7 @@ export default async function AdminDashboard() {
       description: 'Salaries, runs, and loans',
       status: { text: 'Up to date', color: 'text-emerald-600 bg-emerald-50' },
       enabled: isModuleEnabled('payroll'),
+      requiredAccess: 'finance' as const,
     },
     {
       id: 'purchase-requests',
@@ -370,6 +392,7 @@ export default async function AdminDashboard() {
       badge: dashboardData?.stats.pendingPurchaseRequests ? `${dashboardData.stats.pendingPurchaseRequests} pending` : null,
       badgeColor: 'bg-red-500',
       enabled: isModuleEnabled('purchase-requests'),
+      requiredAccess: 'finance' as const,
     },
     {
       id: 'company-documents',
@@ -381,6 +404,7 @@ export default async function AdminDashboard() {
       badge: (dashboardData?.expiringCompanyDocs?.length || 0) > 0 ? `${dashboardData?.expiringCompanyDocs?.length} expiring` : null,
       badgeColor: 'bg-red-500',
       enabled: isModuleEnabled('documents'),
+      requiredAccess: undefined, // All department users can see documents
     },
     {
       id: 'reports',
@@ -389,8 +413,9 @@ export default async function AdminDashboard() {
       title: 'Reports',
       description: 'Analytics and exports',
       enabled: true, // Always enabled
+      requiredAccess: undefined, // All department users can see reports
     },
-  ].filter(card => card.enabled);
+  ].filter(card => card.enabled && canAccessModule(card.requiredAccess));
 
   return (
     <>

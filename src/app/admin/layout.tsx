@@ -87,10 +87,14 @@ export default async function AdminLayout({
     redirect('/login');
   }
 
-  // Redirect non-admin users
-  // Check isAdmin flag (boolean-based permission system)
+  // Redirect users without any admin/department access
+  // Check isAdmin flag OR department access flags (boolean-based permission system)
   const isAdmin = session?.user?.isOwner || session?.user?.isAdmin;
-  if (!isAdmin && !devAuthEnabled) {
+  const hasAdminAccess = isAdmin ||
+                         session?.user?.hasFinanceAccess ||
+                         session?.user?.hasHRAccess ||
+                         session?.user?.hasOperationsAccess;
+  if (!hasAdminAccess && !devAuthEnabled) {
     redirect('/employee');
   }
 
@@ -128,8 +132,11 @@ export default async function AdminLayout({
       badgeCounts={badgeCounts}
       enabledModules={orgSettings.enabledModules}
       aiChatEnabled={orgSettings.aiChatEnabled}
-      isAdmin={session?.user?.isAdmin}
+      isAdmin={isAdmin}
       canApprove={session?.user?.canApprove}
+      hasFinanceAccess={session?.user?.hasFinanceAccess}
+      hasHRAccess={session?.user?.hasHRAccess}
+      hasOperationsAccess={session?.user?.hasOperationsAccess}
     >
       {children}
     </AdminLayoutClient>

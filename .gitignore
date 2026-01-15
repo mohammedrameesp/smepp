@@ -106,3 +106,4 @@ tmpclaude-*
 # Sensitive credentials docs
 docs/ic-whatsapp-credentials.md
 docs/*-credentials.md
+*-credentials.txt
