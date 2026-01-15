@@ -214,6 +214,18 @@ export default function SupplierRegistrationPage() {
     </header>
   );
 
+  // Loading state - wait for branding to prevent flash
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-gray-400" />
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Success state
   if (success) {
     return (
