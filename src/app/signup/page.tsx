@@ -221,8 +221,10 @@ function SignupForm() {
       } else if (data.organization?.slug) {
         await new Promise(resolve => setTimeout(resolve, 500));
         const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
-        // Redirect to setup wizard for first-time organization setup
-        window.location.href = `${window.location.protocol}//${data.organization.slug}.${appDomain}/setup`;
+        // Invited users go to admin (middleware will redirect to employee if needed)
+        // New org owners go to setup wizard
+        const redirectPath = inviteToken ? '/admin' : '/setup';
+        window.location.href = `${window.location.protocol}//${data.organization.slug}.${appDomain}${redirectPath}`;
       } else if (inviteToken) {
         router.push(`/invite/${inviteToken}`);
       } else {

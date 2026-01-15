@@ -109,12 +109,12 @@ export default function InvitePage() {
         await update({ organizationId: data.organization.id });
       }
 
-      // Redirect to the organization's subdomain - setup wizard for first-time users
+      // Redirect to the organization's subdomain - admin portal (middleware handles role-based access)
       setTimeout(() => {
         const orgSlug = data.organization?.slug;
         if (orgSlug) {
-          // Redirect to setup wizard for first-time organization setup
-          window.location.href = `${window.location.protocol}//${orgSlug}.${APP_DOMAIN}/setup`;
+          // Redirect to admin - middleware will redirect to /employee if user lacks admin access
+          window.location.href = `${window.location.protocol}//${orgSlug}.${APP_DOMAIN}/admin`;
         } else {
           // Fallback - just go to home which will redirect properly
           window.location.href = APP_URL;
