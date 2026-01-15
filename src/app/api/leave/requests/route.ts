@@ -497,20 +497,26 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
 
     // Check for multi-level approval policy
     try {
+      console.log('>>> LEAVE: Starting notification section');
       const approvalPolicy = await findApplicablePolicy('LEAVE_REQUEST', { days: totalDays, tenantId: tenantId! });
+      console.log('>>> LEAVE: approvalPolicy =', approvalPolicy ? `Found with ${approvalPolicy.levels.length} levels` : 'null');
 
       if (approvalPolicy && approvalPolicy.levels.length > 0) {
+        console.log('>>> LEAVE: Taking POLICY path');
         // Initialize approval chain (pass memberId to check manager relationship)
         const steps = await initializeApprovalChain('LEAVE_REQUEST', leaveRequest.id, approvalPolicy, tenantId!, memberId);
 
         // Send WhatsApp notifications to approvers (non-blocking)
         if (steps.length > 0) {
+          console.log('>>> LEAVE: Calling notifyApproversViaWhatsApp (POLICY path)');
           notifyApproversViaWhatsApp(
             tenantId!,
             'LEAVE_REQUEST',
             leaveRequest.id,
             steps[0].requiredRole
           );
+        } else {
+          console.log('>>> LEAVE: No steps in approval chain');
         }
 
         // Notify users with the first level's required role
