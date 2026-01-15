@@ -66,8 +66,9 @@ export interface WhatsAppTemplateComponent {
 }
 
 export interface WhatsAppParameter {
-  type: 'text' | 'currency' | 'date_time' | 'image' | 'document' | 'video';
+  type: 'text' | 'currency' | 'date_time' | 'image' | 'document' | 'video' | 'payload';
   text?: string;
+  payload?: string;
   currency?: {
     fallback_value: string;
     code: string;

@@ -70,13 +70,13 @@ export function buildLeaveApprovalTemplate(
     {
       type: 'button',
       sub_type: 'quick_reply',
-      index: '0',
+      index: 0,
       parameters: [{ type: 'payload', payload: approveToken }],
     },
     {
       type: 'button',
       sub_type: 'quick_reply',
-      index: '1',
+      index: 1,
       parameters: [{ type: 'payload', payload: rejectToken }],
     },
   ];
@@ -115,13 +115,13 @@ export function buildPurchaseApprovalTemplate(
     {
       type: 'button',
       sub_type: 'quick_reply',
-      index: '0',
+      index: 0,
       parameters: [{ type: 'payload', payload: approveToken }],
     },
     {
       type: 'button',
       sub_type: 'quick_reply',
-      index: '1',
+      index: 1,
       parameters: [{ type: 'payload', payload: rejectToken }],
     },
   ];
@@ -160,13 +160,13 @@ export function buildAssetApprovalTemplate(
     {
       type: 'button',
       sub_type: 'quick_reply',
-      index: '0',
+      index: 0,
       parameters: [{ type: 'payload', payload: approveToken }],
     },
     {
       type: 'button',
       sub_type: 'quick_reply',
-      index: '1',
+      index: 1,
       parameters: [{ type: 'payload', payload: rejectToken }],
     },
   ];
