@@ -143,20 +143,57 @@ export async function disableWhatsApp(tenantId: string): Promise<void> {
 
 /**
  * Get a member's WhatsApp phone number
+ *
+ * Priority:
+ * 1. Verified WhatsAppUserPhone record (explicit registration)
+ * 2. TeamMember.qatarMobile (HR profile - Qatar number)
+ * 3. TeamMember.phone (HR profile - general phone)
+ *
+ * This allows using HR phone numbers without separate WhatsApp registration.
  */
 export async function getMemberWhatsAppPhone(
   memberId: string
 ): Promise<string | null> {
-  const phone = await prisma.whatsAppUserPhone.findUnique({
+  // First check explicit WhatsApp registration
+  const whatsAppPhone = await prisma.whatsAppUserPhone.findUnique({
     where: { memberId },
     select: { phoneNumber: true, isVerified: true },
   });
 
-  if (!phone || !phone.isVerified) {
+  if (whatsAppPhone?.isVerified) {
+    return whatsAppPhone.phoneNumber;
+  }
+
+  // Fall back to HR profile phone numbers
+  const member = await prisma.teamMember.findUnique({
+    where: { id: memberId },
+    select: {
+      qatarMobile: true,
+      phone: true,
+      otherMobileCode: true,
+      otherMobileNumber: true,
+    },
+  });
+
+  if (!member) {
     return null;
   }
 
-  return phone.phoneNumber;
+  // Priority: qatarMobile > phone > otherMobile
+  if (member.qatarMobile) {
+    return normalizePhoneNumber(member.qatarMobile);
+  }
+
+  if (member.phone) {
+    return normalizePhoneNumber(member.phone);
+  }
+
+  if (member.otherMobileNumber) {
+    const code = member.otherMobileCode || '+91';
+    return normalizePhoneNumber(`${code}${member.otherMobileNumber}`);
+  }
+
+  return null;
 }
 
 /**
