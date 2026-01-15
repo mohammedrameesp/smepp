@@ -23,6 +23,7 @@ enum Role {
   HR_MANAGER // HR approvals
   FINANCE_MANAGER // Finance/budget approvals
   DIRECTOR // High-value approvals
+  ADMIN // Legacy - kept for backwards compatibility
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
