@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
-import { Plus, Pencil } from 'lucide-react';
+import { Plus, Pencil, Info } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
@@ -23,10 +24,17 @@ const MODULE_LABELS = {
 };
 
 const ROLE_LABELS: Record<string, string> = {
-  MANAGER: 'Manager',
-  HR_MANAGER: 'HR Manager',
-  FINANCE_MANAGER: 'Finance Manager',
-  DIRECTOR: 'Director',
+  MANAGER: 'Line Manager',
+  HR_MANAGER: 'HR Team',
+  FINANCE_MANAGER: 'Finance Team',
+  DIRECTOR: 'Admin',
+};
+
+const ROLE_DESCRIPTIONS: Record<string, string> = {
+  MANAGER: 'Person set as "Reports To"',
+  HR_MANAGER: 'Anyone with HR access',
+  FINANCE_MANAGER: 'Anyone with Finance access',
+  DIRECTOR: 'Any Admin',
 };
 
 export default async function ApprovalPoliciesPage() {
@@ -96,7 +104,15 @@ export default async function ApprovalPoliciesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6">
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Smart routing:</strong> Steps are automatically skipped if no one can approve them.
+              For example, if an employee has no Line Manager set, the request goes directly to HR or Admin.
+            </AlertDescription>
+          </Alert>
+
           {Object.entries(policyGroups).map(([module, modulePolicies]) => (
             <div key={module}>
               <h2 className="text-lg font-semibold mb-4">
@@ -142,7 +158,11 @@ export default async function ApprovalPoliciesPage() {
                         {policy.levels.map((level, index) => (
                           <div key={level.id} className="flex items-center">
                             {index > 0 && <span className="mx-2 text-muted-foreground">→</span>}
-                            <Badge variant="outline">
+                            <Badge
+                              variant="outline"
+                              title={ROLE_DESCRIPTIONS[level.approverRole]}
+                              className="cursor-help"
+                            >
                               {ROLE_LABELS[level.approverRole] || level.approverRole}
                             </Badge>
                           </div>
