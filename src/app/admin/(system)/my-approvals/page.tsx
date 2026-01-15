@@ -9,17 +9,42 @@ import Link from 'next/link';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
-// Admins can approve requests (isAdmin boolean on TeamMember)
+// Admins and Managers can approve requests
+// - isAdmin: Full access to all approvals
+// - canApprove (isManager): Can approve direct reports' requests
 
 export const metadata: Metadata = {
   title: 'My Approvals | Durj',
   description: 'Pending approval requests',
 };
 
-async function getPendingApprovals(tenantId: string) {
+async function getPendingApprovals(tenantId: string, userId: string, isAdmin: boolean) {
+  // For managers (non-admins), get their direct reports' IDs
+  let directReportIds: string[] = [];
+  if (!isAdmin) {
+    const directReports = await prisma.teamMember.findMany({
+      where: { tenantId, reportingToId: userId },
+      select: { id: true },
+    });
+    directReportIds = directReports.map(r => r.id);
+
+    // If manager has no direct reports, return empty
+    if (directReportIds.length === 0) {
+      return {
+        all: [],
+        grouped: { LEAVE_REQUEST: [], PURCHASE_REQUEST: [], ASSET_REQUEST: [] },
+        counts: { LEAVE_REQUEST: 0, PURCHASE_REQUEST: 0, ASSET_REQUEST: 0, total: 0 },
+      };
+    }
+  }
+
+  // Build where clause - admins see all, managers see only direct reports
+  const memberFilter = isAdmin ? {} : { memberId: { in: directReportIds } };
+  const requesterFilter = isAdmin ? {} : { requesterId: { in: directReportIds } };
+
   // Fetch pending leave requests
   const pendingLeaveRequests = await prisma.leaveRequest.findMany({
-    where: { tenantId, status: 'PENDING' },
+    where: { tenantId, status: 'PENDING', ...memberFilter },
     orderBy: { createdAt: 'desc' },
     include: {
       member: { select: { id: true, name: true, email: true } },
@@ -32,6 +57,7 @@ async function getPendingApprovals(tenantId: string) {
     where: {
       tenantId,
       status: { in: ['PENDING_ADMIN_APPROVAL', 'PENDING_RETURN_APPROVAL'] },
+      ...memberFilter,
     },
     orderBy: { createdAt: 'desc' },
     include: {
@@ -42,7 +68,7 @@ async function getPendingApprovals(tenantId: string) {
 
   // Fetch pending purchase requests
   const pendingPurchaseRequests = await prisma.purchaseRequest.findMany({
-    where: { tenantId, status: 'PENDING' },
+    where: { tenantId, status: 'PENDING', ...requesterFilter },
     orderBy: { createdAt: 'desc' },
     include: {
       requester: { select: { id: true, name: true, email: true } },
@@ -129,12 +155,17 @@ export default async function MyApprovalsPage() {
     redirect('/');
   }
 
-  // Allow access only if user is an admin
-  if (!session.user.isAdmin) {
+  // Allow access if user is an admin OR a manager (canApprove)
+  const canAccessApprovals = session.user.isAdmin || session.user.canApprove;
+  if (!canAccessApprovals) {
     redirect('/admin');
   }
 
-  const approvals = await getPendingApprovals(session.user.organizationId);
+  const approvals = await getPendingApprovals(
+    session.user.organizationId,
+    session.user.id,
+    session.user.isAdmin || false
+  );
 
   return (
     <>
