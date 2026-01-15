@@ -24,6 +24,7 @@ import { useSubdomain } from '@/hooks/use-subdomain';
 interface InvitationAuthConfig {
   hasCustomGoogleOAuth: boolean;
   hasCustomAzureOAuth: boolean;
+  allowedAuthMethods: string[];
 }
 
 interface InvitationData {
@@ -266,6 +267,11 @@ function SignupForm() {
   const showAzureOAuth = invitation?.authConfig?.hasCustomAzureOAuth;
   const showOAuthOptions = showGoogleOAuth || showAzureOAuth;
 
+  // Check if credentials (email/password) are allowed
+  // Empty array means all methods allowed, otherwise check if 'credentials' is in the list
+  const allowedMethods = invitation?.authConfig?.allowedAuthMethods || [];
+  const showCredentials = allowedMethods.length === 0 || allowedMethods.includes('credentials');
+
   return (
     <div className="min-h-screen flex">
       {/* Left Panel - Branding */}
@@ -305,8 +311,10 @@ function SignupForm() {
                 Complete your signup
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                {showOAuthOptions
+                {showOAuthOptions && showCredentials
                   ? 'Choose how to create your account'
+                  : showOAuthOptions
+                  ? 'Sign in with your organization account'
                   : 'Set your password to join the organization'
                 }
               </p>
@@ -365,16 +373,18 @@ function SignupForm() {
                   )}
                 </div>
 
-                <div className="relative mb-6">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
+                {showCredentials && (
+                  <div className="relative mb-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white dark:bg-gray-800 px-2 text-muted-foreground">
+                        Or continue with email
+                      </span>
+                    </div>
                   </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white dark:bg-gray-800 px-2 text-muted-foreground">
-                      Or continue with email
-                    </span>
-                  </div>
-                </div>
+                )}
               </>
             )}
 
@@ -386,7 +396,8 @@ function SignupForm() {
               </div>
             )}
 
-            {/* Form */}
+            {/* Form - Only show if credentials are allowed */}
+            {showCredentials && (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
@@ -514,6 +525,7 @@ function SignupForm() {
                 )}
               </Button>
             </form>
+            )}
 
             {/* Login Link */}
             <p className="mt-6 text-center text-sm text-muted-foreground">

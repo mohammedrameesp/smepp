@@ -92,6 +92,7 @@ export async function GET(
         authConfig: {
           hasCustomGoogleOAuth: hasCustomGoogleOAuth && isGoogleAllowed,
           hasCustomAzureOAuth: hasCustomAzureOAuth && isAzureAllowed,
+          allowedAuthMethods: allowedMethods,
         },
       },
     });
