@@ -144,7 +144,7 @@ export default function PendingPage() {
               </Button>
               <Button
                 variant="ghost"
-                onClick={() => signOut({ callbackUrl: '/login' })}
+                onClick={() => signOut({ callbackUrl: '/login?signedOut=true' })}
                 className="w-full text-muted-foreground"
               >
                 <LogOut className="h-4 w-4 mr-2" />

@@ -91,6 +91,12 @@ function LoginForm() {
       setError('Your organization has been deleted. Please contact support if you believe this is an error.');
     }
 
+    // If user explicitly signed out, don't auto-redirect - let them choose which account to use
+    const signedOut = searchParams.get('signedOut');
+    if (signedOut === 'true') {
+      return;
+    }
+
     // Check if user is already logged in
     getSession().then((session) => {
       if (session) {

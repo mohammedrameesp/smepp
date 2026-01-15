@@ -207,7 +207,7 @@ export function EmployeeTopNav({ enabledModules = [], isAdminInEmployeeView = fa
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    onClick={() => signOut({ callbackUrl: '/login?signedOut=true' })}
                     className="flex items-center gap-2 cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
                   >
                     <LogOut className="h-4 w-4" />
