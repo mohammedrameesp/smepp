@@ -198,6 +198,14 @@ async function sendEmployeeRequestNotifications(
     }
   } else {
     // No policy - fall back to notifying all admins
+    // Send WhatsApp notifications (non-blocking)
+    notifyApproversViaWhatsApp(
+      tenantId,
+      'ASSET_REQUEST',
+      assetRequest.id,
+      'ADMIN'
+    );
+
     const admins = await getTenantAdmins(tenantId);
 
     const emailData = assetRequestSubmittedEmail({

@@ -318,6 +318,14 @@ export async function sendPurchaseRequestNotifications(
     }
   } else {
     // No policy - fall back to notifying all admins
+    // Send WhatsApp notifications (non-blocking)
+    notifyApproversViaWhatsApp(
+      tenantId,
+      'PURCHASE_REQUEST',
+      purchaseRequest.id,
+      'ADMIN'
+    );
+
     const admins = await prisma.teamMember.findMany({
       where: {
         tenantId,
