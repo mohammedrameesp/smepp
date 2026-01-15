@@ -323,7 +323,7 @@ export async function sendPurchaseRequestNotifications(
       tenantId,
       'PURCHASE_REQUEST',
       purchaseRequest.id,
-      'ADMIN'
+      'MANAGER'
     );
 
     const admins = await prisma.teamMember.findMany({

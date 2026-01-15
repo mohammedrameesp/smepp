@@ -203,7 +203,7 @@ async function sendEmployeeRequestNotifications(
       tenantId,
       'ASSET_REQUEST',
       assetRequest.id,
-      'ADMIN'
+      'MANAGER'
     );
 
     const admins = await getTenantAdmins(tenantId);

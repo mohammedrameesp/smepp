@@ -574,7 +574,7 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
           tenantId!,
           'LEAVE_REQUEST',
           leaveRequest.id,
-          'ADMIN' // Default role for fallback
+          'MANAGER' // Default role for fallback
         );
 
         const admins = await db.teamMember.findMany({
