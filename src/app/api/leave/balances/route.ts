@@ -31,12 +31,12 @@ async function getLeaveBalancesHandler(request: NextRequest, context: APIContext
 
     const { memberId, leaveTypeId, year, p, ps } = validation.data;
 
-    // Non-admin users can only see their own balances
-    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
+    // Users with admin or HR access can see all balances, others only see their own
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasHRAccess;
 
-    // For non-admin users, we need to look up their TeamMember ID
+    // For users without full access, we need to look up their TeamMember ID
     let effectiveMemberId = memberId;
-    if (!isAdmin) {
+    if (!hasFullAccess) {
       const currentMember = await db.teamMember.findFirst({
         where: { id: tenant.userId },
         select: { id: true },

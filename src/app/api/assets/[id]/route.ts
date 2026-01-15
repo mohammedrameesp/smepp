@@ -111,10 +111,10 @@ async function getAssetHandler(request: NextRequest, context: APIContext) {
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 2: Authorization check
-    // Admins can view any asset, members can only view their assigned assets
+    // Admin/Operations access can view any asset, members can only view their assigned assets
     // ─────────────────────────────────────────────────────────────────────────────
-    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
-    if (!isAdmin && asset.assignedMemberId !== tenant.userId) {
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasOperationsAccess;
+    if (!hasFullAccess && asset.assignedMemberId !== tenant.userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

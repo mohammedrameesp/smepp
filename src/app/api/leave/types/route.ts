@@ -29,7 +29,8 @@ async function getLeaveTypesHandler(request: NextRequest, context: APIContext) {
     }
 
     const { isActive, includeInactive } = validation.data;
-    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
+    // HR access users can also see all leave types (they manage leave for others)
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasHRAccess;
 
     // Build where clause (tenant filtering is automatic via db)
     const where: Record<string, unknown> = {};
@@ -46,9 +47,9 @@ async function getLeaveTypesHandler(request: NextRequest, context: APIContext) {
       orderBy: { name: 'asc' },
     });
 
-    // For non-admin users, filter out PARENTAL and RELIGIOUS leave types
+    // For non-admin/non-HR users, filter out PARENTAL and RELIGIOUS leave types
     // unless they have an assigned balance for them
-    if (!isAdmin) {
+    if (!hasFullAccess) {
       const currentYear = new Date().getFullYear();
 
       // Look up the current user's TeamMember ID

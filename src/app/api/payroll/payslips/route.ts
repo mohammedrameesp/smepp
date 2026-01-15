@@ -31,13 +31,14 @@ async function getPayslipsHandler(request: NextRequest, context: APIContext) {
     const { payrollRunId, userId, year, month, p, ps } = validation.data;
     const page = p;
     const pageSize = ps;
-    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
+    // Users with admin or Finance access can see all payslips, others only see their own
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasFinanceAccess;
 
     // Build where clause with tenant filter
     const where: Record<string, unknown> = { tenantId };
 
-    // Non-admin users can only see their own payslips
-    if (!isAdmin) {
+    // Users without full access can only see their own payslips
+    if (!hasFullAccess) {
       where.memberId = tenant.userId;
     } else if (userId) {
       where.memberId = userId;

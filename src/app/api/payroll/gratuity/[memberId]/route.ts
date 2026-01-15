@@ -21,11 +21,12 @@ async function getGratuityHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'Member ID is required' }, { status: 400 });
     }
 
-    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
+    // Users with admin or Finance access can view any gratuity, others only their own
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasFinanceAccess;
 
-    // Non-admin users can only view their own gratuity
+    // Users without full access can only view their own gratuity
     // tenant.userId is the TeamMember ID of the current user
-    if (!isAdmin && memberId !== tenant.userId) {
+    if (!hasFullAccess && memberId !== tenant.userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 

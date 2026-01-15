@@ -54,11 +54,11 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
       return NextResponse.json({ error: 'Leave request not found' }, { status: 404 });
     }
 
-    // Only owner or admin can cancel
+    // Owner, admin, or HR access can cancel
     const isOwner = existing.memberId === currentUserId;
-    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasHRAccess;
 
-    if (!isOwner && !isAdmin) {
+    if (!isOwner && !hasFullAccess) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
@@ -168,8 +168,8 @@ async function cancelLeaveRequestHandler(request: NextRequest, context: APIConte
       }
     );
 
-    // If admin cancelled someone else's leave, notify the employee
-    if (isAdmin && !isOwner) {
+    // If admin/HR cancelled someone else's leave, notify the employee
+    if (hasFullAccess && !isOwner) {
       await createNotification(
         NotificationTemplates.leaveCancelled(
           existing.memberId,

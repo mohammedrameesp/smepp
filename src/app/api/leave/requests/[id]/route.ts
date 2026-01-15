@@ -299,11 +299,11 @@ async function deleteLeaveRequestHandler(request: NextRequest, context: APIConte
       return NextResponse.json({ error: 'Leave request not found' }, { status: 404 });
     }
 
-    // Only admin can delete requests (or owner if draft/pending)
+    // Admin or HR access can delete requests (or owner if draft/pending)
     const isOwner = existing.memberId === currentUserId;
-    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasHRAccess;
 
-    if (!isAdmin && (!isOwner || existing.status !== 'PENDING')) {
+    if (!hasFullAccess && (!isOwner || existing.status !== 'PENDING')) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 

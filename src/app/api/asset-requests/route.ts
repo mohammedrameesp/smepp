@@ -116,10 +116,10 @@ async function getAssetRequestsHandler(request: NextRequest, context: APIContext
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 2: Apply role-based access control
-    // Non-admin users can only see their own requests
+    // Admin/Operations access can see all requests, others only their own
     // ─────────────────────────────────────────────────────────────────────────────
-    const isAdmin = tenant?.isOwner || tenant?.isAdmin;
-    const effectiveMemberId = isAdmin ? filterMemberId : currentUserId;
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasOperationsAccess;
+    const effectiveMemberId = hasFullAccess ? filterMemberId : currentUserId;
 
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 3: Build where clause with filters
