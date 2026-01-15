@@ -39,6 +39,7 @@ async function getUserApprovalRole(
     where: { id: userId },
     select: {
       id: true,
+      tenantId: true,
       isAdmin: true,
       isOwner: true,
       hasHRAccess: true,
@@ -48,9 +49,23 @@ async function getUserApprovalRole(
 
   if (!member) return null;
 
-  // Admin or Owner = Director (highest level)
-  if (member.isAdmin || member.isOwner) {
+  // Admin = Director (highest level)
+  if (member.isAdmin) {
     return { role: 'DIRECTOR', levelOrder: 3 };
+  }
+
+  // Owner = Director only if no other admins exist
+  if (member.isOwner) {
+    const otherAdminCount = await db.teamMember.count({
+      where: {
+        isAdmin: true,
+        isDeleted: false,
+        id: { not: userId },
+      },
+    });
+    if (otherAdminCount === 0) {
+      return { role: 'DIRECTOR', levelOrder: 3 };
+    }
   }
 
   // HR Manager is level 2

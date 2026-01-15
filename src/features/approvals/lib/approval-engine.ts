@@ -174,20 +174,27 @@ async function hasApproverForRole(
       return financeCount > 0;
 
     case 'DIRECTOR':
-      // Check if any admin/owner OTHER than the requester exists
-      // isOwner is also considered as Director for approval purposes
+      // First check if any admin (non-owner) OTHER than the requester exists
       const adminCount = await prisma.teamMember.count({
         where: {
           tenantId,
-          OR: [
-            { isAdmin: true },
-            { isOwner: true },
-          ],
+          isAdmin: true,
           isDeleted: false,
           ...(requesterId && { id: { not: requesterId } }), // Exclude requester
         },
       });
-      return adminCount > 0;
+      if (adminCount > 0) return true;
+
+      // If no admins, check if owner (as fallback Director) exists OTHER than the requester
+      const ownerCount = await prisma.teamMember.count({
+        where: {
+          tenantId,
+          isOwner: true,
+          isDeleted: false,
+          ...(requesterId && { id: { not: requesterId } }), // Exclude requester
+        },
+      });
+      return ownerCount > 0;
 
     case 'EMPLOYEE':
       // EMPLOYEE role cannot approve
@@ -758,16 +765,16 @@ export async function getApproversForRole(
       });
 
     case 'DIRECTOR':
-      // Get all admins and owners (isOwner is also considered Director)
+      // Get all admins first
+      const admins = await prisma.teamMember.findMany({
+        where: { tenantId, isAdmin: true, isDeleted: false },
+        select: { id: true, email: true, name: true },
+      });
+      if (admins.length > 0) return admins;
+
+      // If no admins, get owner as fallback Director
       return prisma.teamMember.findMany({
-        where: {
-          tenantId,
-          OR: [
-            { isAdmin: true },
-            { isOwner: true },
-          ],
-          isDeleted: false,
-        },
+        where: { tenantId, isOwner: true, isDeleted: false },
         select: { id: true, email: true, name: true },
       });
 
