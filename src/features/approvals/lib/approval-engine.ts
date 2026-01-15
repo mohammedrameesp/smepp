@@ -126,23 +126,108 @@ export async function findApplicablePolicy(
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * Check if someone can approve a specific role level within the tenant.
+ * Used to skip levels where no approver exists.
+ */
+async function hasApproverForRole(
+  role: Role,
+  tenantId: string,
+  requesterId?: string
+): Promise<boolean> {
+  switch (role) {
+    case 'MANAGER':
+      // Check if the requester has a manager assigned
+      if (requesterId) {
+        const requester = await prisma.teamMember.findUnique({
+          where: { id: requesterId },
+          select: { reportingToId: true },
+        });
+        return !!requester?.reportingToId;
+      }
+      return false;
+
+    case 'HR_MANAGER':
+      // Check if anyone has HR access
+      const hrCount = await prisma.teamMember.count({
+        where: { tenantId, hasHRAccess: true, isDeleted: false },
+      });
+      return hrCount > 0;
+
+    case 'FINANCE_MANAGER':
+      // Check if anyone has Finance access
+      const financeCount = await prisma.teamMember.count({
+        where: { tenantId, hasFinanceAccess: true, isDeleted: false },
+      });
+      return financeCount > 0;
+
+    case 'DIRECTOR':
+      // Admins always exist (owner is always admin)
+      return true;
+
+    case 'EMPLOYEE':
+      // EMPLOYEE role cannot approve
+      return false;
+
+    default:
+      return false;
+  }
+}
+
+/**
  * Initialize an approval chain for an entity based on a policy.
  * Creates ApprovalStep records for each level in the policy.
+ *
+ * Smart skipping: Levels are automatically skipped if no one can approve them.
+ * - MANAGER: Skipped if requester has no reportingTo set
+ * - HR_MANAGER: Skipped if no one has hasHRAccess=true
+ * - FINANCE_MANAGER: Skipped if no one has hasFinanceAccess=true
+ * - DIRECTOR: Never skipped (admins always exist)
+ *
+ * @param entityType - The type of entity (LEAVE_REQUEST, PURCHASE_REQUEST, etc.)
+ * @param entityId - The ID of the entity being approved
+ * @param policy - The approval policy with levels
+ * @param tenantId - The tenant ID
+ * @param requesterId - The ID of the team member making the request (for manager check)
  */
 export async function initializeApprovalChain(
   entityType: ApprovalModule,
   entityId: string,
   policy: ApprovalPolicyWithLevels,
-  tenantId?: string
+  tenantId?: string,
+  requesterId?: string
 ): Promise<ApprovalStepWithApprover[]> {
-  // Create approval steps for each level
-  const stepsData = policy.levels.map((level) => ({
+  const effectiveTenantId = tenantId || 'SYSTEM';
+
+  // Filter out levels where no one can approve
+  const validLevels: typeof policy.levels = [];
+  for (const level of policy.levels) {
+    const hasApprover = await hasApproverForRole(
+      level.approverRole,
+      effectiveTenantId,
+      requesterId
+    );
+    if (hasApprover) {
+      validLevels.push(level);
+    }
+  }
+
+  // If no valid levels, at least keep DIRECTOR level as fallback
+  if (validLevels.length === 0) {
+    validLevels.push({
+      id: 'fallback',
+      levelOrder: 1,
+      approverRole: 'DIRECTOR',
+    });
+  }
+
+  // Re-number levels sequentially (1, 2, 3...) after filtering
+  const stepsData = validLevels.map((level, index) => ({
     entityType,
     entityId,
-    levelOrder: level.levelOrder,
+    levelOrder: index + 1,
     requiredRole: level.approverRole,
     status: 'PENDING' as ApprovalStepStatus,
-    tenantId: tenantId || 'SYSTEM',
+    tenantId: effectiveTenantId,
   }));
 
   // Use createMany for efficiency

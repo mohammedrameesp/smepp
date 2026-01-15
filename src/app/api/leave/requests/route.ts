@@ -498,8 +498,8 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       const approvalPolicy = await findApplicablePolicy('LEAVE_REQUEST', { days: totalDays, tenantId: tenantId! });
 
       if (approvalPolicy && approvalPolicy.levels.length > 0) {
-        // Initialize approval chain
-        const steps = await initializeApprovalChain('LEAVE_REQUEST', leaveRequest.id, approvalPolicy, tenantId!);
+        // Initialize approval chain (pass memberId to check manager relationship)
+        const steps = await initializeApprovalChain('LEAVE_REQUEST', leaveRequest.id, approvalPolicy, tenantId!, memberId);
 
         // Send WhatsApp notifications to approvers (non-blocking)
         if (steps.length > 0) {

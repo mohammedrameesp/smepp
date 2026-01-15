@@ -254,8 +254,8 @@ export async function sendPurchaseRequestNotifications(
   const approvalPolicy = await findApplicablePolicy('PURCHASE_REQUEST', { amount: totalAmountQAR, tenantId });
 
   if (approvalPolicy && approvalPolicy.levels.length > 0) {
-    // Initialize approval chain
-    const steps = await initializeApprovalChain('PURCHASE_REQUEST', purchaseRequest.id, approvalPolicy, tenantId);
+    // Initialize approval chain (pass userId to check manager relationship)
+    const steps = await initializeApprovalChain('PURCHASE_REQUEST', purchaseRequest.id, approvalPolicy, tenantId, userId);
 
     // Send WhatsApp notifications to approvers (non-blocking)
     if (steps.length > 0) {

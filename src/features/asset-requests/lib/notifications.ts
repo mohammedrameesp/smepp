@@ -136,8 +136,8 @@ async function sendEmployeeRequestNotifications(
   const approvalPolicy = await findApplicablePolicy('ASSET_REQUEST', { amount: assetValue, tenantId });
 
   if (approvalPolicy && approvalPolicy.levels.length > 0) {
-    // Initialize approval chain
-    const steps = await initializeApprovalChain('ASSET_REQUEST', assetRequest.id, approvalPolicy, tenantId);
+    // Initialize approval chain (pass requester ID to check manager relationship)
+    const steps = await initializeApprovalChain('ASSET_REQUEST', assetRequest.id, approvalPolicy, tenantId, assetRequest.user.id);
 
     // Send WhatsApp notifications to approvers (non-blocking)
     if (steps.length > 0) {
