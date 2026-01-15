@@ -79,10 +79,24 @@ async function getLeaveRequestHandler(request: NextRequest, context: APIContext)
       return NextResponse.json({ error: 'Leave request not found' }, { status: 404 });
     }
 
-    // Non-admin members can only see their own requests
-    const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
-    if (!isOwnerOrAdmin && leaveRequest.memberId !== tenant.userId) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    // Check access permissions
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasHRAccess;
+    const isOwnRequest = leaveRequest.memberId === tenant.userId;
+
+    if (!hasFullAccess && !isOwnRequest) {
+      // Check if manager viewing direct report's request
+      if (tenant?.canApprove) {
+        const directReports = await db.teamMember.findMany({
+          where: { reportingToId: tenant.userId },
+          select: { id: true },
+        });
+        const directReportIds = directReports.map(r => r.id);
+        if (!directReportIds.includes(leaveRequest.memberId)) {
+          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        }
+      } else {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      }
     }
 
     return NextResponse.json(leaveRequest);

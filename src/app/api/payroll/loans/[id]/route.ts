@@ -40,10 +40,24 @@ async function getLoanHandler(request: NextRequest, context: APIContext) {
       return NextResponse.json({ error: 'Loan not found' }, { status: 404 });
     }
 
-    // Non-admin users can only view their own loans
-    const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
-    if (!isOwnerOrAdmin && loan.memberId !== tenant.userId) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    // Check access permissions
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasFinanceAccess;
+    const isOwnLoan = loan.memberId === tenant.userId;
+
+    if (!hasFullAccess && !isOwnLoan) {
+      // Check if manager viewing direct report's loan
+      if (tenant?.canApprove) {
+        const directReports = await db.teamMember.findMany({
+          where: { reportingToId: tenant.userId },
+          select: { id: true },
+        });
+        const directReportIds = directReports.map(r => r.id);
+        if (!directReportIds.includes(loan.memberId)) {
+          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        }
+      } else {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      }
     }
 
     // Transform decimals

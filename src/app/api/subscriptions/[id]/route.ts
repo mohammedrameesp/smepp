@@ -91,10 +91,24 @@ async function getSubscriptionHandler(request: NextRequest, context: APIContext)
       return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
     }
 
-    // Authorization check: Only owners/admins or the assigned member can view the subscription
-    const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
-    if (!isOwnerOrAdmin && subscription.assignedMemberId !== tenant.userId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // Check access permissions
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasOperationsAccess;
+    const isAssignedToUser = subscription.assignedMemberId === tenant.userId;
+
+    if (!hasFullAccess && !isAssignedToUser) {
+      // Check if manager viewing direct report's assigned subscription
+      if (tenant?.canApprove && subscription.assignedMemberId) {
+        const directReports = await db.teamMember.findMany({
+          where: { reportingToId: tenant.userId },
+          select: { id: true },
+        });
+        const directReportIds = directReports.map(r => r.id);
+        if (!directReportIds.includes(subscription.assignedMemberId)) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      } else {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
     return NextResponse.json(subscription);

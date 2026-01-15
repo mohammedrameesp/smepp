@@ -47,15 +47,23 @@ async function getLeaveBalanceHandler(request: NextRequest, context: APIContext)
       return NextResponse.json({ error: 'Leave balance not found' }, { status: 404 });
     }
 
-    // Non-admin users can only see their own balance
-    const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
-    if (!isOwnerOrAdmin) {
-      const currentMember = await db.teamMember.findFirst({
-        where: { id: tenant.userId },
-        select: { id: true },
-      });
-      if (balance.memberId !== currentMember?.id) {
-        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    // Check access permissions
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasHRAccess;
+    const isOwnBalance = balance.memberId === tenant.userId;
+
+    if (!hasFullAccess && !isOwnBalance) {
+      // Check if manager viewing direct report's balance
+      if (tenant?.canApprove) {
+        const directReports = await db.teamMember.findMany({
+          where: { reportingToId: tenant.userId },
+          select: { id: true },
+        });
+        const directReportIds = directReports.map(r => r.id);
+        if (!directReportIds.includes(balance.memberId)) {
+          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        }
+      } else {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
     }
 

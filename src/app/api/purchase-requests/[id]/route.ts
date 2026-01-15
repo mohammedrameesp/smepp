@@ -65,10 +65,24 @@ async function getPurchaseRequestHandler(request: NextRequest, context: APIConte
       return NextResponse.json({ error: 'Purchase request not found' }, { status: 404 });
     }
 
-    // Non-admin users can only view their own requests
-    const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
-    if (!isOwnerOrAdmin && purchaseRequest.requesterId !== userId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // Check access permissions
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasFinanceAccess;
+    const isOwnRequest = purchaseRequest.requesterId === userId;
+
+    if (!hasFullAccess && !isOwnRequest) {
+      // Check if manager viewing direct report's request
+      if (tenant?.canApprove) {
+        const directReports = await db.teamMember.findMany({
+          where: { reportingToId: userId },
+          select: { id: true },
+        });
+        const directReportIds = directReports.map(r => r.id);
+        if (!directReportIds.includes(purchaseRequest.requesterId)) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      } else {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
     return NextResponse.json(purchaseRequest);

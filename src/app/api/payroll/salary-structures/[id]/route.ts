@@ -54,10 +54,24 @@ async function getSalaryStructureHandler(request: NextRequest, context: APIConte
       return NextResponse.json({ error: 'Salary structure not found' }, { status: 404 });
     }
 
-    // Non-admin users can only view their own salary structure
-    const isOwnerOrAdmin = tenant?.isOwner || tenant?.isAdmin;
-    if (!isOwnerOrAdmin && salaryStructure.memberId !== tenant.userId) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    // Check access permissions
+    const hasFullAccess = tenant?.isOwner || tenant?.isAdmin || tenant?.hasFinanceAccess;
+    const isOwnSalary = salaryStructure.memberId === tenant.userId;
+
+    if (!hasFullAccess && !isOwnSalary) {
+      // Check if manager viewing direct report's salary
+      if (tenant?.canApprove) {
+        const directReports = await db.teamMember.findMany({
+          where: { reportingToId: tenant.userId },
+          select: { id: true },
+        });
+        const directReportIds = directReports.map(r => r.id);
+        if (!directReportIds.includes(salaryStructure.memberId)) {
+          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        }
+      } else {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      }
     }
 
     // Transform decimals
