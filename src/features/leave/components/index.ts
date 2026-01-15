@@ -7,3 +7,4 @@ export { LeaveApprovalActions } from './leave-approval-actions';
 export { LeaveRequestHistory } from './leave-request-history';
 export { CancelLeaveDialog } from './cancel-leave-dialog';
 export { AdjustBalanceDialog } from './adjust-balance-dialog';
+export { ApprovalChainStatus } from './approval-chain-status';

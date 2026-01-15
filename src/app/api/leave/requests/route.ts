@@ -12,7 +12,8 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import { createBulkNotifications, createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { sendEmail } from '@/lib/core/email';
 import { leaveRequestSubmittedEmail } from '@/lib/core/email-templates';
-import { findApplicablePolicy, initializeApprovalChain, ensureDefaultApprovalPolicies, getApproversForRole, ApprovalPolicyWithLevels } from '@/features/approvals/lib';
+import { findApplicablePolicy, initializeApprovalChain, ensureDefaultApprovalPolicies, getApproversForRole, ApprovalPolicyWithLevels, getCurrentPendingStep } from '@/features/approvals/lib';
+import { prisma as globalPrisma } from '@/lib/core/prisma';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 import {
   getServiceBasedEntitlement,
@@ -160,8 +161,46 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
       db.leaveRequest.count({ where }),
     ]);
 
+    // Get approval summaries for pending requests (batch query for efficiency)
+    const pendingRequestIds = requests
+      .filter(r => r.status === 'PENDING')
+      .map(r => r.id);
+
+    let approvalStepsMap: Record<string, { currentStep: { levelOrder: number; requiredRole: string } | null; totalSteps: number; completedSteps: number }> = {};
+
+    if (pendingRequestIds.length > 0) {
+      // Batch fetch all approval steps for pending requests
+      const allSteps = await globalPrisma.approvalStep.findMany({
+        where: {
+          entityType: 'LEAVE_REQUEST',
+          entityId: { in: pendingRequestIds },
+        },
+        orderBy: { levelOrder: 'asc' },
+      });
+
+      // Group steps by entityId and calculate summary
+      for (const requestId of pendingRequestIds) {
+        const steps = allSteps.filter(s => s.entityId === requestId);
+        if (steps.length > 0) {
+          const currentPending = steps.find(s => s.status === 'PENDING');
+          const completedSteps = steps.filter(s => s.status === 'APPROVED' || s.status === 'SKIPPED').length;
+          approvalStepsMap[requestId] = {
+            currentStep: currentPending ? { levelOrder: currentPending.levelOrder, requiredRole: currentPending.requiredRole } : null,
+            totalSteps: steps.length,
+            completedSteps,
+          };
+        }
+      }
+    }
+
+    // Enrich requests with approval summary
+    const enrichedRequests = requests.map(request => ({
+      ...request,
+      approvalSummary: request.status === 'PENDING' ? approvalStepsMap[request.id] || null : null,
+    }));
+
     return NextResponse.json({
-      requests,
+      requests: enrichedRequests,
       pagination: {
         page: p,
         pageSize: ps,

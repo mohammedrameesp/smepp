@@ -24,6 +24,23 @@ import Link from 'next/link';
 import { getLeaveStatusVariant, getDateRangeText, formatLeaveDays, getRequestTypeText } from '@/features/leave/lib/leave-utils';
 import { LeaveStatus } from '@prisma/client';
 
+// Role display names for approval status
+const ROLE_DISPLAY_NAMES: Record<string, string> = {
+  MANAGER: 'Manager',
+  HR_MANAGER: 'HR',
+  FINANCE_MANAGER: 'Finance',
+  DIRECTOR: 'Director',
+};
+
+interface ApprovalSummaryInfo {
+  currentStep: {
+    levelOrder: number;
+    requiredRole: string;
+  } | null;
+  totalSteps: number;
+  completedSteps: number;
+}
+
 interface LeaveRequest {
   id: string;
   requestNumber: string;
@@ -47,6 +64,30 @@ interface LeaveRequest {
     id: string;
     name: string | null;
   } | null;
+  approvalSummary?: ApprovalSummaryInfo | null;
+}
+
+/**
+ * Get detailed status text for pending requests showing current approval level
+ */
+function getDetailedStatusText(request: LeaveRequest): string {
+  if (request.status !== 'PENDING') {
+    return request.status;
+  }
+
+  const summary = request.approvalSummary;
+  if (!summary || !summary.currentStep) {
+    return 'PENDING';
+  }
+
+  const roleName = ROLE_DISPLAY_NAMES[summary.currentStep.requiredRole] || summary.currentStep.requiredRole;
+  const levelLabel = `L${summary.currentStep.levelOrder}`;
+
+  if (summary.completedSteps > 0) {
+    return `Pending ${levelLabel} (${roleName})`;
+  }
+
+  return `Pending ${levelLabel} (${roleName})`;
 }
 
 interface LeaveRequestsTableProps {
@@ -240,8 +281,8 @@ export function LeaveRequestsTable({ showUser = true, memberId, basePath = '/adm
                     {formatLeaveDays(request.totalDays)}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={getLeaveStatusVariant(request.status)}>
-                      {request.status}
+                    <Badge variant={getLeaveStatusVariant(request.status)} className="whitespace-nowrap">
+                      {getDetailedStatusText(request)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-gray-500 hidden lg:table-cell">

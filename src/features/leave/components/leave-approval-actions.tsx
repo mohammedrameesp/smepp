@@ -176,6 +176,7 @@ export function LeaveApprovalActions({
                     <p className="font-medium">Upper-level override</p>
                     <p className="text-xs mt-0.5">
                       If you approve at a higher level, lower pending levels will be skipped.
+                      <strong className="block mt-1">Notes are required to explain the override.</strong>
                     </p>
                   </div>
                 </div>
@@ -190,12 +191,22 @@ export function LeaveApprovalActions({
           )}
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Notes (Optional)</label>
+            <label className="text-sm font-medium">
+              Notes {hasMultiLevelApproval && remainingSteps > 1 ? <span className="text-red-500">*</span> : '(Optional)'}
+            </label>
             <Textarea
-              placeholder="Add any notes for the employee..."
+              placeholder={hasMultiLevelApproval && remainingSteps > 1
+                ? "Explain why you are overriding lower approval levels..."
+                : "Add any notes for the employee..."}
               value={approveNotes}
               onChange={(e) => setApproveNotes(e.target.value)}
+              required={!!(hasMultiLevelApproval && remainingSteps > 1)}
             />
+            {hasMultiLevelApproval && remainingSteps > 1 && (
+              <p className="text-xs text-muted-foreground">
+                Required when approving at a higher level than the current pending step.
+              </p>
+            )}
           </div>
 
           <DialogFooter>

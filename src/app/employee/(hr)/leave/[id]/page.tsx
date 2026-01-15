@@ -15,7 +15,8 @@ import {
   canCancelLeaveRequest,
   canEditLeaveRequest,
 } from '@/features/leave/lib/leave-utils';
-import { LeaveRequestHistory, CancelLeaveDialog } from '@/features/leave/components';
+import { LeaveRequestHistory, CancelLeaveDialog, ApprovalChainStatus } from '@/features/leave/components';
+import type { ApprovalStep, ApprovalSummary } from '@/lib/types/leave';
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 
@@ -77,6 +78,8 @@ interface LeaveRequest {
       name: string | null;
     };
   }>;
+  approvalChain?: ApprovalStep[] | null;
+  approvalSummary?: ApprovalSummary | null;
 }
 
 export default function EmployeeLeaveRequestDetailPage() {
@@ -278,6 +281,16 @@ export default function EmployeeLeaveRequestDetailPage() {
             </div>
           </DetailCard>
         </div>
+
+        {/* Approval Progress - Show for all statuses that have chain */}
+        {request.approvalChain && request.approvalChain.length > 0 && (
+          <div className="mb-6">
+            <ApprovalChainStatus
+              approvalChain={request.approvalChain}
+              approvalSummary={request.approvalSummary || null}
+            />
+          </div>
+        )}
 
         {/* Balance Summary */}
         {balance && (

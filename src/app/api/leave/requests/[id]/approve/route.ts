@@ -170,6 +170,13 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
   // If user is approving at a level higher than current pending, this is an override
   const isOverride = stepToApprove.levelOrder > currentPendingStep.levelOrder;
 
+  // Override approvals require notes explaining why lower levels are being skipped
+  if (isOverride && (!notes || notes.trim() === '')) {
+    return NextResponse.json({
+      error: 'Notes are required when approving at a higher level (override). Please explain why you are skipping the lower approval levels.',
+    }, { status: 400 });
+  }
+
   const now = new Date();
   const year = existing.startDate.getFullYear();
 
