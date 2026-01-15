@@ -29,6 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Copy } from 'lucide-react';
 import {
   ArrowLeft,
   Building2,
@@ -160,6 +162,14 @@ interface WhatsAppStatus {
   platformAvailable: boolean;
   hasCustomConfig: boolean;
   customConfigActive: boolean;
+  customConfig?: {
+    id: string;
+    phoneNumberId: string;
+    businessAccountId: string;
+    webhookVerifyToken: string;
+    webhookUrl: string;
+    isActive: boolean;
+  };
   stats?: {
     messagesSentThisMonth: number;
     messagesDelivered: number;
@@ -265,6 +275,12 @@ export default function OrganizationDetailPage() {
   // WhatsApp state
   const [whatsAppStatus, setWhatsAppStatus] = useState<WhatsAppStatus | null>(null);
   const [togglingWhatsAppPlatform, setTogglingWhatsAppPlatform] = useState(false);
+  const [whatsAppSource, setWhatsAppSource] = useState<'NONE' | 'PLATFORM' | 'CUSTOM'>('NONE');
+  const [savingWhatsApp, setSavingWhatsApp] = useState(false);
+  const [waPhoneNumberId, setWaPhoneNumberId] = useState('');
+  const [waBusinessAccountId, setWaBusinessAccountId] = useState('');
+  const [waAccessToken, setWaAccessToken] = useState('');
+  const [copiedWaField, setCopiedWaField] = useState<string | null>(null);
 
   // Custom Domain state
   const [customDomainStatus, setCustomDomainStatus] = useState<CustomDomainStatus | null>(null);
@@ -359,6 +375,12 @@ export default function OrganizationDetailPage() {
         if (whatsAppRes.ok) {
           const whatsAppData = await whatsAppRes.json();
           setWhatsAppStatus(whatsAppData.whatsApp);
+          setWhatsAppSource(whatsAppData.whatsApp.source || 'NONE');
+          // Populate form fields if custom config exists
+          if (whatsAppData.whatsApp.customConfig) {
+            setWaPhoneNumberId(whatsAppData.whatsApp.customConfig.phoneNumberId || '');
+            setWaBusinessAccountId(whatsAppData.whatsApp.customConfig.businessAccountId || '');
+          }
         }
 
         // Fetch Custom Domain status
@@ -853,6 +875,74 @@ export default function OrganizationDetailPage() {
     }
   };
 
+  const handleWhatsAppSourceChange = async (source: 'NONE' | 'PLATFORM' | 'CUSTOM') => {
+    setSavingWhatsApp(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/super-admin/organizations/${orgId}/whatsapp`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update WhatsApp source');
+      }
+
+      const data = await response.json();
+      setWhatsAppStatus(data.whatsApp);
+      setWhatsAppSource(source);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update');
+    } finally {
+      setSavingWhatsApp(false);
+    }
+  };
+
+  const handleSaveWhatsAppConfig = async () => {
+    if (!waPhoneNumberId || !waBusinessAccountId || !waAccessToken) {
+      setError('Please fill in all WhatsApp configuration fields');
+      return;
+    }
+
+    setSavingWhatsApp(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/super-admin/organizations/${orgId}/whatsapp`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customConfig: {
+            phoneNumberId: waPhoneNumberId,
+            businessAccountId: waBusinessAccountId,
+            accessToken: waAccessToken,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to save WhatsApp config');
+      }
+
+      const data = await response.json();
+      setWhatsAppStatus(data.whatsApp);
+      setWhatsAppSource('CUSTOM');
+      setWaAccessToken(''); // Clear token after saving
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save');
+    } finally {
+      setSavingWhatsApp(false);
+    }
+  };
+
+  const copyWaField = async (text: string, field: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedWaField(field);
+    setTimeout(() => setCopiedWaField(null), 2000);
+  };
+
   // Custom Domain handlers
   const handleSetCustomDomain = async () => {
     if (!newCustomDomain.trim()) return;
@@ -1265,73 +1355,135 @@ export default function OrganizationDetailPage() {
           <CardTitle className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
             WhatsApp Integration
-            {togglingWhatsAppPlatform && (
+            {(savingWhatsApp || togglingWhatsAppPlatform) && (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             )}
           </CardTitle>
-          <CardDescription>Control WhatsApp notification access for this organization</CardDescription>
+          <CardDescription>Configure WhatsApp Business API for approval notifications</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {whatsAppStatus ? (
             <>
-              {/* Current Status */}
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
-                    whatsAppStatus.source !== 'NONE' ? 'bg-green-100' : 'bg-slate-100'
-                  }`}>
-                    <MessageCircle className={`h-5 w-5 ${
-                      whatsAppStatus.source !== 'NONE' ? 'text-green-600' : 'text-slate-500'
-                    }`} />
+              {/* Source Selection */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">WhatsApp Source</Label>
+                <RadioGroup
+                  value={whatsAppSource}
+                  onValueChange={(value) => handleWhatsAppSourceChange(value as 'NONE' | 'PLATFORM' | 'CUSTOM')}
+                  disabled={savingWhatsApp}
+                  className="space-y-2"
+                >
+                  <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50">
+                    <RadioGroupItem value="NONE" id="wa-none" />
+                    <div className="flex-1">
+                      <Label htmlFor="wa-none" className="font-medium cursor-pointer">Disabled</Label>
+                      <p className="text-sm text-muted-foreground">Turn off WhatsApp notifications</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">WhatsApp Status</p>
-                    <p className="text-sm text-muted-foreground">
-                      {whatsAppStatus.source === 'NONE' && 'Disabled'}
-                      {whatsAppStatus.source === 'PLATFORM' && 'Using Platform WhatsApp'}
-                      {whatsAppStatus.source === 'CUSTOM' && 'Using Custom WhatsApp'}
-                    </p>
+
+                  <div className={`flex items-center space-x-3 p-3 border rounded-lg ${whatsAppStatus.platformAvailable ? 'hover:bg-muted/50' : 'opacity-60'}`}>
+                    <RadioGroupItem value="PLATFORM" id="wa-platform" disabled={!whatsAppStatus.platformAvailable} />
+                    <div className="flex-1">
+                      <Label htmlFor="wa-platform" className="font-medium cursor-pointer flex items-center gap-2">
+                        Platform WhatsApp
+                        {!whatsAppStatus.platformAvailable && <Badge variant="secondary" className="text-xs">Not Available</Badge>}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">Use Durj platform WhatsApp account</p>
+                    </div>
                   </div>
-                </div>
-                <Badge variant={whatsAppStatus.source !== 'NONE' ? 'default' : 'secondary'}>
-                  {whatsAppStatus.source}
-                </Badge>
+
+                  <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50">
+                    <RadioGroupItem value="CUSTOM" id="wa-custom" />
+                    <div className="flex-1">
+                      <Label htmlFor="wa-custom" className="font-medium cursor-pointer">Custom WhatsApp API</Label>
+                      <p className="text-sm text-muted-foreground">Use organization&apos;s own WhatsApp Business API</p>
+                    </div>
+                    {whatsAppStatus.hasCustomConfig && (
+                      <Badge variant={whatsAppStatus.customConfigActive ? 'default' : 'secondary'}>
+                        {whatsAppStatus.customConfigActive ? 'Configured' : 'Inactive'}
+                      </Badge>
+                    )}
+                  </div>
+                </RadioGroup>
               </div>
 
-              {/* Platform Access Toggle */}
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <p className="font-medium">Allow Platform WhatsApp</p>
-                  <p className="text-sm text-muted-foreground">
-                    {whatsAppStatus.platformAvailable
-                      ? 'Enable this organization to use the platform WhatsApp account'
-                      : 'Platform WhatsApp is not configured yet'}
-                  </p>
-                </div>
-                <Switch
-                  checked={whatsAppStatus.platformEnabled}
-                  onCheckedChange={handleToggleWhatsAppPlatform}
-                  disabled={togglingWhatsAppPlatform || !whatsAppStatus.platformAvailable}
-                />
-              </div>
-
-              {/* Custom Config Status */}
-              {whatsAppStatus.hasCustomConfig && (
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">Custom WhatsApp Config</p>
-                    <p className="text-sm text-muted-foreground">
-                      Organization has their own WhatsApp Business API configured
-                    </p>
+              {/* Custom Configuration Form */}
+              {whatsAppSource === 'CUSTOM' && (
+                <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
+                  <h4 className="font-medium">Custom API Configuration</h4>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="wa-phone-id">Phone Number ID</Label>
+                      <Input
+                        id="wa-phone-id"
+                        value={waPhoneNumberId}
+                        onChange={(e) => setWaPhoneNumberId(e.target.value)}
+                        placeholder="e.g., 123456789012345"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="wa-business-id">Business Account ID</Label>
+                      <Input
+                        id="wa-business-id"
+                        value={waBusinessAccountId}
+                        onChange={(e) => setWaBusinessAccountId(e.target.value)}
+                        placeholder="e.g., 123456789012345"
+                      />
+                    </div>
                   </div>
-                  <Badge variant={whatsAppStatus.customConfigActive ? 'default' : 'secondary'}>
-                    {whatsAppStatus.customConfigActive ? 'Active' : 'Inactive'}
-                  </Badge>
+                  <div className="space-y-2">
+                    <Label htmlFor="wa-token">Access Token</Label>
+                    <Input
+                      id="wa-token"
+                      type="password"
+                      value={waAccessToken}
+                      onChange={(e) => setWaAccessToken(e.target.value)}
+                      placeholder={whatsAppStatus.hasCustomConfig ? '••••••••••••••••' : 'Enter access token'}
+                    />
+                    <p className="text-xs text-muted-foreground">Permanent access token from Meta Business Manager</p>
+                  </div>
+                  <Button onClick={handleSaveWhatsAppConfig} disabled={savingWhatsApp}>
+                    {savingWhatsApp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Save Configuration
+                  </Button>
+
+                  {/* Webhook Info */}
+                  {whatsAppStatus.customConfig && (
+                    <div className="mt-4 pt-4 border-t space-y-3">
+                      <h5 className="text-sm font-medium">Webhook Configuration</h5>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Webhook URL</Label>
+                        <div className="flex gap-2">
+                          <Input value={whatsAppStatus.customConfig.webhookUrl} readOnly className="font-mono text-xs" />
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => copyWaField(whatsAppStatus.customConfig!.webhookUrl, 'url')}
+                          >
+                            {copiedWaField === 'url' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Verify Token</Label>
+                        <div className="flex gap-2">
+                          <Input value={whatsAppStatus.customConfig.webhookVerifyToken} readOnly className="font-mono text-xs" />
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => copyWaField(whatsAppStatus.customConfig!.webhookVerifyToken, 'token')}
+                          >
+                            {copiedWaField === 'token' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Usage Stats */}
-              {whatsAppStatus.stats && whatsAppStatus.source !== 'NONE' && (
+              {whatsAppStatus.stats && whatsAppSource !== 'NONE' && (
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h4 className="text-sm font-medium text-gray-700 mb-3">Usage This Month</h4>
                   <div className="grid grid-cols-3 gap-4">
