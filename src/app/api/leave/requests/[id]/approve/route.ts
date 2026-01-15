@@ -135,9 +135,12 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
   // Find the step that matches the user's role
   const userStep = chain.find(step => step.requiredRole === userRole.role);
 
+  // Track if this is an admin bypass (admin approving when their role isn't in chain)
+  let isAdminBypass = false;
+
   if (!userStep) {
     // User's role is not in the chain - check if they can approve any step
-    // Admins can approve any step
+    // Admins can approve any step (admin bypass)
     const member = await db.teamMember.findUnique({
       where: { id: currentUserId },
       select: { isAdmin: true },
@@ -148,6 +151,8 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
         error: 'Your role is not part of the approval chain for this request'
       }, { status: 403 });
     }
+
+    isAdminBypass = true;
   }
 
   // Get approver name for notes
@@ -165,15 +170,18 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
   }
 
   // Determine which step to approve based on user's role
+  // For admin bypass, approve all remaining steps (full bypass)
   const stepToApprove = userStep || chain[chain.length - 1]; // If no matching step, approve last one (admin case)
 
   // If user is approving at a level higher than current pending, this is an override
   const isOverride = stepToApprove.levelOrder > currentPendingStep.levelOrder;
 
-  // Override approvals require notes explaining why lower levels are being skipped
-  if (isOverride && (!notes || notes.trim() === '')) {
+  // Override and admin bypass approvals require notes explaining the action
+  if ((isOverride || isAdminBypass) && (!notes || notes.trim() === '')) {
     return NextResponse.json({
-      error: 'Notes are required when approving at a higher level (override). Please explain why you are skipping the lower approval levels.',
+      error: isAdminBypass
+        ? 'Notes are required for admin bypass approvals. Please explain why you are approving this request.'
+        : 'Notes are required when approving at a higher level (override). Please explain why you are skipping the lower approval levels.',
     }, { status: 400 });
   }
 
@@ -182,35 +190,52 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
 
   // Process approval in transaction
   const result = await prisma.$transaction(async (tx) => {
-    // If this is an override, skip all lower pending steps
-    if (isOverride) {
-      // Mark all pending steps below user's level as SKIPPED
+    // Admin bypass: approve ALL pending steps at once
+    if (isAdminBypass) {
       await tx.approvalStep.updateMany({
         where: {
           entityType: 'LEAVE_REQUEST',
           entityId: id,
           status: 'PENDING',
-          levelOrder: { lt: stepToApprove.levelOrder },
         },
         data: {
-          status: 'SKIPPED',
+          status: 'APPROVED',
           approverId: currentUserId,
           actionAt: now,
-          notes: `Skipped - Approved by ${approverName}`,
+          notes: `Admin bypass: ${notes}`,
+        },
+      });
+    } else {
+      // If this is an override, skip all lower pending steps
+      if (isOverride) {
+        // Mark all pending steps below user's level as SKIPPED
+        await tx.approvalStep.updateMany({
+          where: {
+            entityType: 'LEAVE_REQUEST',
+            entityId: id,
+            status: 'PENDING',
+            levelOrder: { lt: stepToApprove.levelOrder },
+          },
+          data: {
+            status: 'SKIPPED',
+            approverId: currentUserId,
+            actionAt: now,
+            notes: `Skipped - Approved by ${approverName}`,
+          },
+        });
+      }
+
+      // Approve the current step (or user's step)
+      await tx.approvalStep.update({
+        where: { id: stepToApprove.id },
+        data: {
+          status: 'APPROVED',
+          approverId: currentUserId,
+          actionAt: now,
+          notes: notes || undefined,
         },
       });
     }
-
-    // Approve the current step (or user's step)
-    await tx.approvalStep.update({
-      where: { id: stepToApprove.id },
-      data: {
-        status: 'APPROVED',
-        approverId: currentUserId,
-        actionAt: now,
-        notes: notes || undefined,
-      },
-    });
 
     // Check if all steps are now complete (approved or skipped)
     const remainingPending = await tx.approvalStep.count({
@@ -269,9 +294,11 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
           action: 'APPROVED',
           oldStatus: 'PENDING',
           newStatus: 'APPROVED',
-          notes: isOverride
-            ? `${notes || ''} (Override: lower levels skipped)`.trim()
-            : notes,
+          notes: isAdminBypass
+            ? `Admin bypass: ${notes}`
+            : isOverride
+              ? `${notes || ''} (Override: lower levels skipped)`.trim()
+              : notes,
           performedById: currentUserId,
         },
       });

@@ -14,9 +14,9 @@ import { ApprovalModule, Role } from '@prisma/client';
  */
 const DEFAULT_LEAVE_POLICIES = [
   {
-    name: 'Short Leave Approval (1-2 days)',
+    name: 'Short Leave Approval (up to 2 days)',
     module: 'LEAVE_REQUEST' as ApprovalModule,
-    minDays: 1,
+    minDays: 0, // Includes half-day requests (0.5 days)
     maxDays: 2,
     priority: 10, // Higher priority - matches first
     levels: [
