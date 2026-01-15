@@ -14,10 +14,11 @@ const updateUserSchema = z.object({
   name: z.string().optional(),
   // Permission flags (new boolean-based system)
   isAdmin: z.boolean().optional(),
+  isManager: z.boolean().optional(), // Maps to canApprove in database
   hasOperationsAccess: z.boolean().optional(),
   hasHRAccess: z.boolean().optional(),
   hasFinanceAccess: z.boolean().optional(),
-  canApprove: z.boolean().optional(),
+  canApprove: z.boolean().optional(), // Legacy, use isManager instead
   // Manager relationship for approval routing
   reportingToId: z.string().nullable().optional(),
 });
@@ -26,6 +27,7 @@ const updateUserSchema = z.object({
 function transformUpdateData(data: {
   name?: string;
   isAdmin?: boolean;
+  isManager?: boolean;
   hasOperationsAccess?: boolean;
   hasHRAccess?: boolean;
   hasFinanceAccess?: boolean;
@@ -42,6 +44,11 @@ function transformUpdateData(data: {
     updates.isAdmin = data.isAdmin;
   }
 
+  // isManager maps to canApprove in database
+  if (data.isManager !== undefined) {
+    updates.canApprove = data.isManager;
+  }
+
   if (data.hasOperationsAccess !== undefined) {
     updates.hasOperationsAccess = data.hasOperationsAccess;
   }
@@ -54,7 +61,8 @@ function transformUpdateData(data: {
     updates.hasFinanceAccess = data.hasFinanceAccess;
   }
 
-  if (data.canApprove !== undefined) {
+  // Legacy support for canApprove
+  if (data.canApprove !== undefined && data.isManager === undefined) {
     updates.canApprove = data.canApprove;
   }
 

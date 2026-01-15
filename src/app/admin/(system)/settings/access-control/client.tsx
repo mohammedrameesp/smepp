@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ShieldCheck, Users, Briefcase, UserCog, CircleDollarSign, Search, Loader2, Crown } from 'lucide-react';
+import { ShieldCheck, Users, Briefcase, UserCog, CircleDollarSign, Search, Loader2, Crown, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface TeamMember {
@@ -17,6 +17,7 @@ interface TeamMember {
   image: string | null;
   isOwner?: boolean;
   isAdmin: boolean;
+  isManager: boolean;
   hasOperationsAccess: boolean;
   hasHRAccess: boolean;
   hasFinanceAccess: boolean;
@@ -26,6 +27,7 @@ interface TeamMember {
 interface PermissionStats {
   total: number;
   admins: number;
+  managers: number;
   operations: number;
   hr: number;
   finance: number;
@@ -42,6 +44,7 @@ export function AccessControlClient() {
   const [stats, setStats] = useState<PermissionStats>({
     total: 0,
     admins: 0,
+    managers: 0,
     operations: 0,
     hr: 0,
     finance: 0,
@@ -62,13 +65,14 @@ export function AccessControlClient() {
       setStats({
         total: membersList.length,
         admins: membersList.filter((m: TeamMember) => m.isAdmin).length,
+        managers: membersList.filter((m: TeamMember) => m.isManager).length,
         operations: membersList.filter((m: TeamMember) => m.hasOperationsAccess).length,
         hr: membersList.filter((m: TeamMember) => m.hasHRAccess).length,
         finance: membersList.filter((m: TeamMember) => m.hasFinanceAccess).length,
       });
 
-      // Get managers for the "Reports To" dropdown (admins can be managers)
-      const managersList = membersList.filter((m: TeamMember) => m.isAdmin);
+      // Get managers for the "Reports To" dropdown (admins and managers can be selected)
+      const managersList = membersList.filter((m: TeamMember) => m.isAdmin || m.isManager);
       setManagers(managersList);
     } catch (error) {
       toast.error('Failed to load team members');
@@ -102,6 +106,9 @@ export function AccessControlClient() {
         case 'admins':
           result = result.filter((m) => m.isAdmin);
           break;
+        case 'managers':
+          result = result.filter((m) => m.isManager);
+          break;
         case 'operations':
           result = result.filter((m) => m.hasOperationsAccess);
           break;
@@ -119,7 +126,7 @@ export function AccessControlClient() {
 
   const updatePermission = async (
     memberId: string,
-    field: 'isAdmin' | 'hasOperationsAccess' | 'hasHRAccess' | 'hasFinanceAccess',
+    field: 'isAdmin' | 'isManager' | 'hasOperationsAccess' | 'hasHRAccess' | 'hasFinanceAccess',
     value: boolean
   ) => {
     setUpdatingId(memberId);
@@ -208,7 +215,7 @@ export function AccessControlClient() {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card className="cursor-pointer hover:border-gray-400 transition-colors" onClick={() => setFilter('all')}>
           <CardContent className="pt-4 pb-3">
             <div className="flex items-center gap-2">
@@ -226,6 +233,16 @@ export function AccessControlClient() {
               <span className="text-sm text-gray-600">Admins</span>
             </div>
             <p className="text-2xl font-bold mt-1">{stats.admins}</p>
+          </CardContent>
+        </Card>
+
+        <Card className={`cursor-pointer hover:border-purple-400 transition-colors ${filter === 'managers' ? 'border-purple-500' : ''}`} onClick={() => setFilter(filter === 'managers' ? 'all' : 'managers')}>
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-purple-500" />
+              <span className="text-sm text-gray-600">Managers</span>
+            </div>
+            <p className="text-2xl font-bold mt-1">{stats.managers}</p>
           </CardContent>
         </Card>
 
@@ -290,6 +307,7 @@ export function AccessControlClient() {
                 <TableRow>
                   <TableHead className="w-[250px]">Member</TableHead>
                   <TableHead className="text-center w-[80px]">Admin</TableHead>
+                  <TableHead className="text-center w-[80px]">Manager</TableHead>
                   <TableHead className="text-center w-[100px] hidden md:table-cell">Operations</TableHead>
                   <TableHead className="text-center w-[80px] hidden md:table-cell">HR</TableHead>
                   <TableHead className="text-center w-[80px] hidden md:table-cell">Finance</TableHead>
@@ -299,7 +317,7 @@ export function AccessControlClient() {
               <TableBody>
                 {filteredMembers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                       No team members found
                     </TableCell>
                   </TableRow>
@@ -345,6 +363,15 @@ export function AccessControlClient() {
                               disabled={updatingId === member.id}
                             />
                           )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex justify-center">
+                          <Switch
+                            checked={member.isManager}
+                            onCheckedChange={(checked) => updatePermission(member.id, 'isManager', checked)}
+                            disabled={updatingId === member.id || member.isAdmin || member.isOwner}
+                          />
                         </div>
                       </TableCell>
                       <TableCell className="text-center hidden md:table-cell">
@@ -407,6 +434,10 @@ export function AccessControlClient() {
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-red-500" />
               <span>Admin = Full access to all modules</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4 text-purple-500" />
+              <span>Manager = Can approve direct reports</span>
             </div>
             <div className="flex items-center gap-2">
               <Briefcase className="h-4 w-4 text-blue-500" />

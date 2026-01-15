@@ -77,6 +77,7 @@ async function getTeamMembersHandler(
     isEmployee: member.isEmployee,
     canLogin: member.canLogin,
     isAdmin: member.isAdmin,
+    isManager: member.canApprove, // Map canApprove to isManager for UI
     hasOperationsAccess: member.hasOperationsAccess,
     hasHRAccess: member.hasHRAccess,
     hasFinanceAccess: member.hasFinanceAccess,
