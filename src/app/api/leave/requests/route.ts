@@ -567,6 +567,16 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
         }
       } else {
         // No policy - fall back to notifying all admins in the same organization
+        logger.info({ tenantId, leaveRequestId: leaveRequest.id }, 'No approval policy - using fallback notification path');
+
+        // Send WhatsApp notifications (non-blocking)
+        notifyApproversViaWhatsApp(
+          tenantId!,
+          'LEAVE_REQUEST',
+          leaveRequest.id,
+          'ADMIN' // Default role for fallback
+        );
+
         const admins = await db.teamMember.findMany({
           where: {
             isAdmin: true,
