@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Users, Loader2, Shield, Calendar, ArrowLeft, Banknote } from 'lucide-react';
+import { User, Users, Loader2, Shield, ArrowLeft, Banknote } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { HRProfileForm } from '@/components/domains/hr/profile';
 import { toast } from 'sonner';
@@ -85,7 +85,6 @@ interface HRProfileData {
   canApprove?: boolean;
   reportingToId?: string | null;
   // Other settings
-  bypassNoticeRequirement?: boolean;
   isOnWps?: boolean;
   isEmployee?: boolean;
 }
@@ -96,8 +95,6 @@ export default function AdminEmployeeEditPage() {
   const [hrProfile, setHRProfile] = useState<HRProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bypassNotice, setBypassNotice] = useState(false);
-  const [isUpdatingBypass, setIsUpdatingBypass] = useState(false);
   const [isOnWps, setIsOnWps] = useState(false);
   const [isUpdatingWps, setIsUpdatingWps] = useState(false);
   const [isEmployee, setIsEmployee] = useState(true);
@@ -138,7 +135,6 @@ export default function AdminEmployeeEditPage() {
 
       const data = await response.json();
       setHRProfile(data);
-      setBypassNotice(data.bypassNoticeRequirement === true);
       setIsOnWps(data.isOnWps === true);
       setIsEmployee(data.isEmployee !== false); // Default to true
       // Permission flags
@@ -245,33 +241,6 @@ export default function AdminEmployeeEditPage() {
       fetchHRProfile(false);
     } finally {
       setIsUpdatingPermission(false);
-    }
-  };
-
-  const updateBypassNotice = async (enabled: boolean) => {
-    setIsUpdatingBypass(true);
-    try {
-      const response = await fetch(`/api/users/${employeeId}/hr-profile`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bypassNoticeRequirement: enabled }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to update setting');
-      }
-
-      setBypassNotice(enabled);
-      toast.success(enabled
-        ? 'Notice requirement bypass enabled'
-        : 'Notice requirement bypass disabled'
-      );
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to update setting');
-      setBypassNotice(!enabled); // Revert on error
-    } finally {
-      setIsUpdatingBypass(false);
     }
   };
 
@@ -526,49 +495,6 @@ export default function AdminEmployeeEditPage() {
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                     <p className="text-sm text-blue-800">
                       Full admin access is enabled. This user has complete access to all modules and can approve any request.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Leave Settings - only for employees */}
-          {hrProfile && isEmployee && (
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Leave Settings
-                </CardTitle>
-                <CardDescription>
-                  Configure leave-related settings for this employee
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="bypass-notice">Bypass Advance Notice Requirement</Label>
-                    <p className="text-sm text-gray-500">
-                      Allow this employee to submit leave requests without meeting the advance notice requirement (e.g., 7 days for Annual Leave)
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {isUpdatingBypass && (
-                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                    )}
-                    <Switch
-                      id="bypass-notice"
-                      checked={bypassNotice}
-                      onCheckedChange={updateBypassNotice}
-                      disabled={isUpdatingBypass}
-                    />
-                  </div>
-                </div>
-                {bypassNotice && (
-                  <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                    <p className="text-sm text-amber-800">
-                      This employee can submit leave requests without advance notice. Remember to disable this after their immediate need is resolved.
                     </p>
                   </div>
                 )}

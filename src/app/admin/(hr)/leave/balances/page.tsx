@@ -47,7 +47,7 @@ export default async function AdminLeaveBalancesPage() {
     <>
       <PageHeader
         title="Leave Balances"
-        subtitle="View and manage employee leave balances"
+        subtitle="View and manage employee leave balances and exceptions"
         actions={
           <>
             <PageHeaderButton href="/admin/leave/requests/new" variant="primary">
