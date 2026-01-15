@@ -708,6 +708,10 @@ model TeamMember {
   // RELATIONS
   // ═══════════════════════════════════════════════════════════════════════════════
 
+  // Manager/Direct Reports (self-relation)
+  reportingTo   TeamMember?  @relation("ManagerRelation", fields: [reportingToId], references: [id])
+  directReports TeamMember[] @relation("ManagerRelation")
+
   // Assets
   assets                       Asset[]               @relation("MemberAssets")
   assetsDisposed               Asset[]               @relation("AssetDisposer")
@@ -796,6 +800,7 @@ model TeamMember {
   @@index([tenantId, status])
   @@index([tenantId, isAdmin])
   @@index([tenantId, canApprove])
+  @@index([tenantId, reportingToId])
   @@index([email])
   @@index([resetToken])
   @@index([setupToken])

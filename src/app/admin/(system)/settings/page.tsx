@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { DataExportImport } from '@/features/settings/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
-import { Package, ChevronRight } from 'lucide-react';
+import { Package, ChevronRight, ShieldCheck } from 'lucide-react';
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
@@ -25,22 +25,40 @@ export default async function SettingsPage() {
         subtitle="Export and import your organization's data"
       />
       <PageContent>
-        {/* Quick link to Modules */}
-        <Link
-          href="/admin/modules"
-          className="flex items-center justify-between p-4 mb-6 bg-white rounded-xl border border-slate-200 hover:border-slate-400 hover:bg-slate-50 transition-colors group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-slate-100">
-              <Package className="h-5 w-5 text-slate-600" />
+        {/* Quick Links */}
+        <div className="space-y-3 mb-6">
+          <Link
+            href="/admin/modules"
+            className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-400 hover:bg-slate-50 transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-slate-100">
+                <Package className="h-5 w-5 text-slate-600" />
+              </div>
+              <div>
+                <p className="font-medium text-slate-900">Manage Modules</p>
+                <p className="text-sm text-slate-500">Install or remove features for your organization</p>
+              </div>
             </div>
-            <div>
-              <p className="font-medium text-slate-900">Manage Modules</p>
-              <p className="text-sm text-slate-500">Install or remove features for your organization</p>
+            <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+          </Link>
+
+          <Link
+            href="/admin/settings/access-control"
+            className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-400 hover:bg-slate-50 transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-red-100">
+                <ShieldCheck className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <p className="font-medium text-slate-900">Access Control</p>
+                <p className="text-sm text-slate-500">Manage team permissions and module access</p>
+              </div>
             </div>
-          </div>
-          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
-        </Link>
+            <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+          </Link>
+        </div>
 
         <DataExportImport />
       </PageContent>

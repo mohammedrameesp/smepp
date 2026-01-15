@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, AlertTriangle, Download, User, Package, CreditCard, Clock, RefreshCw, CheckCircle2, Circle } from 'lucide-react';
+import { Loader2, AlertTriangle, Download, User, Package, Clock, RefreshCw, CheckCircle2, Circle, ShieldCheck, Briefcase, UserCog, CircleDollarSign, Shield } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { EmployeeActions } from './employee-actions';
 import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
 import { calculateTenure } from '@/features/employees/lib/hr-utils';
@@ -25,6 +26,13 @@ interface Employee {
   image: string | null;
   role: string;
   createdAt: string;
+  // Permission flags
+  isAdmin?: boolean;
+  hasOperationsAccess?: boolean;
+  hasHRAccess?: boolean;
+  hasFinanceAccess?: boolean;
+  canApprove?: boolean;
+  reportingTo?: { id: string; name: string } | null;
   _count: {
     assets: number;
     subscriptions: number;
@@ -259,8 +267,8 @@ export function EmployeeListTable() {
                 Employee ID {sortBy === 'employeeId' && (sortOrder === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead className="hidden xl:table-cell">Designation</TableHead>
+              <TableHead className="hidden md:table-cell">Access</TableHead>
               <TableHead className="text-center">Assets</TableHead>
-              <TableHead className="text-center hidden lg:table-cell">Subs</TableHead>
               <TableHead className="text-center hidden xl:table-cell">Tenure</TableHead>
               <TableHead className="text-center hidden lg:table-cell">Onboarding</TableHead>
               <TableHead className="text-center">Actions</TableHead>
@@ -269,14 +277,14 @@ export function EmployeeListTable() {
           <TableBody>
             {loading && employees.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
+                <TableCell colSpan={9} className="text-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
                   <p className="text-gray-500 mt-2">Loading employees...</p>
                 </TableCell>
               </TableRow>
             ) : employees.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                   {debouncedSearch || profileStatus !== 'all' || expiryStatus !== 'all'
                     ? 'No employees match your filters'
                     : 'No employees found'}
@@ -322,16 +330,50 @@ export function EmployeeListTable() {
                   <TableCell className="hidden xl:table-cell">
                     {employee.hrProfile?.designation || <span className="text-gray-400">-</span>}
                   </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <div className="flex flex-wrap gap-1">
+                      {employee.isAdmin ? (
+                        <Badge variant="destructive" className="gap-1 text-xs">
+                          <ShieldCheck className="h-3 w-3" />
+                          Admin
+                        </Badge>
+                      ) : (
+                        <>
+                          {employee.hasOperationsAccess && (
+                            <Badge variant="secondary" className="gap-1 text-xs bg-blue-100 text-blue-700 hover:bg-blue-100">
+                              <Briefcase className="h-3 w-3" />
+                              Ops
+                            </Badge>
+                          )}
+                          {employee.hasHRAccess && (
+                            <Badge variant="secondary" className="gap-1 text-xs bg-green-100 text-green-700 hover:bg-green-100">
+                              <UserCog className="h-3 w-3" />
+                              HR
+                            </Badge>
+                          )}
+                          {employee.hasFinanceAccess && (
+                            <Badge variant="secondary" className="gap-1 text-xs bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
+                              <CircleDollarSign className="h-3 w-3" />
+                              Fin
+                            </Badge>
+                          )}
+                          {employee.canApprove && (
+                            <Badge variant="secondary" className="gap-1 text-xs bg-purple-100 text-purple-700 hover:bg-purple-100">
+                              <Shield className="h-3 w-3" />
+                              Approver
+                            </Badge>
+                          )}
+                        </>
+                      )}
+                      {!employee.isAdmin && !employee.hasOperationsAccess && !employee.hasHRAccess && !employee.hasFinanceAccess && !employee.canApprove && (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-center">
                     <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 text-blue-700">
                       <Package className="h-3.5 w-3.5" />
                       <span className="font-semibold">{employee._count.assets}</span>
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center hidden lg:table-cell">
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-purple-50 text-purple-700">
-                      <CreditCard className="h-3.5 w-3.5" />
-                      <span className="font-semibold">{employee._count.subscriptions}</span>
                     </span>
                   </TableCell>
                   <TableCell className="text-center hidden xl:table-cell">

@@ -80,6 +80,13 @@ export const GET = withErrorHandler(
             assets: true,
           },
         },
+        reportingTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
       orderBy: sortBy === 'createdAt'
         ? { createdAt: sortOrder as 'asc' | 'desc' }
@@ -116,6 +123,16 @@ export const GET = withErrorHandler(
         canLogin: emp.canLogin,
         isEmployee: emp.isEmployee,
         isOnWps: emp.isOnWps,
+        // Permission flags
+        isAdmin: emp.isAdmin,
+        hasOperationsAccess: emp.hasOperationsAccess,
+        hasHRAccess: emp.hasHRAccess,
+        hasFinanceAccess: emp.hasFinanceAccess,
+        canApprove: emp.canApprove,
+        reportingTo: emp.reportingTo ? {
+          id: emp.reportingTo.id,
+          name: emp.reportingTo.name || emp.reportingTo.email,
+        } : null,
         createdAt: emp.createdAt,
         updatedAt: emp.updatedAt,
         _count: { assets: emp._count.assets, subscriptions: 0 },
