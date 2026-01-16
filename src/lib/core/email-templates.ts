@@ -1834,6 +1834,147 @@ ${data.orgName}
 }
 
 // ============================================================================
+// LEAVE REQUEST APPROVED EMAIL (To Requester)
+// ============================================================================
+
+interface LeaveApprovedData {
+  requestNumber: string;
+  employeeName: string;
+  leaveType: string;
+  startDate: Date;
+  endDate: Date;
+  totalDays: number;
+  approverName: string;
+  approverNotes?: string | null;
+  orgSlug: string;
+  orgName: string;
+  primaryColor?: string;
+}
+
+export function leaveApprovedEmail(data: LeaveApprovedData): { subject: string; html: string; text: string } {
+  const subject = `Leave Approved: ${data.requestNumber} - ${data.leaveType} (${data.totalDays} day${data.totalDays === 1 ? '' : 's'})`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
+
+  const html = emailWrapper(`
+    <!-- Success Banner -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #d4edda; border-left: 4px solid #28a745; border-radius: 4px; margin: 0 0 25px 0;">
+      <tr>
+        <td style="padding: 15px 20px;">
+          <p style="color: #155724; font-size: 14px; margin: 0; font-weight: bold;">
+            Your Leave Request Has Been Approved
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Leave Request Approved</h2>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      Dear <strong>${escapeHtml(data.employeeName)}</strong>,
+    </p>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      Your leave request has been approved. Please find the details below.
+    </p>
+
+    <!-- Request Details Box -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
+      <tr>
+        <td style="padding: 25px;">
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Approved Leave Details</h3>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Request Number:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${data.requestNumber}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Leave Type:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.leaveType)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Start Date:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${formatDate(data.startDate)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">End Date:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${formatDate(data.endDate)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Total Days:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 16px; font-weight: bold;">${data.totalDays} day${data.totalDays === 1 ? '' : 's'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Approved By:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.approverName)}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    ${data.approverNotes ? `
+    <!-- Approver Notes Box -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #e8f4fd; border-radius: 8px; margin: 0 0 25px 0;">
+      <tr>
+        <td style="padding: 20px;">
+          <h4 style="color: ${brandColor}; margin: 0 0 10px 0; font-size: 14px;">Approver Notes:</h4>
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; margin: 0;">
+            ${escapeHtml(data.approverNotes)}
+          </p>
+        </td>
+      </tr>
+    </table>
+    ` : ''}
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      You can view all your leave requests by logging into the portal.
+    </p>
+
+    <!-- CTA Button -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
+      <tr>
+        <td align="center">
+          <a href="${getTenantPortalUrl(data.orgSlug, '/employee/leave')}"
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+            View My Leave
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
+      Best regards,<br>
+      <strong>${data.orgName} HR Team</strong>
+    </p>
+  `, data.orgName, brandColor);
+
+  const text = `
+Leave Request Approved - ${data.requestNumber}
+
+Dear ${data.employeeName},
+
+Your leave request has been approved.
+
+Approved Leave Details:
+- Request Number: ${data.requestNumber}
+- Leave Type: ${data.leaveType}
+- Start Date: ${formatDate(data.startDate)}
+- End Date: ${formatDate(data.endDate)}
+- Total Days: ${data.totalDays} day${data.totalDays === 1 ? '' : 's'}
+- Approved By: ${data.approverName}
+${data.approverNotes ? `\nApprover Notes:\n${data.approverNotes}` : ''}
+
+You can view all your leave requests by logging into the portal.
+${getTenantPortalUrl(data.orgSlug, '/employee/leave')}
+
+Best regards,
+${data.orgName} HR Team
+`.trim();
+
+  return { subject, html, text };
+}
+
+// ============================================================================
 // NEW ORGANIZATION SIGNUP NOTIFICATION (Super Admin)
 // ============================================================================
 

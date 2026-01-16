@@ -13,7 +13,7 @@ import { approveLeaveRequestSchema } from '@/features/leave/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { createNotification, createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { sendEmail } from '@/lib/core/email';
-import { leaveRequestSubmittedEmail } from '@/lib/core/email-templates';
+import { leaveRequestSubmittedEmail, leaveApprovedEmail } from '@/lib/core/email-templates';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 import logger from '@/lib/core/log';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -365,7 +365,7 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
     // Invalidate WhatsApp action tokens
     await invalidateTokensForEntity('LEAVE_REQUEST', id);
 
-    // Notify the requester
+    // Notify the requester (in-app)
     await createNotification(
       NotificationTemplates.leaveApproved(
         existing.memberId,
@@ -375,6 +375,40 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
       ),
       tenantId
     );
+
+    // Send email notification to the requester
+    try {
+      const org = await db.organization.findUnique({
+        where: { id: tenantId },
+        select: { slug: true, name: true, primaryColor: true },
+      });
+
+      if (org && result.request.member?.email) {
+        const emailContent = leaveApprovedEmail({
+          requestNumber: existing.requestNumber,
+          employeeName: result.request.member.name || 'Employee',
+          leaveType: existing.leaveType?.name || 'Leave',
+          startDate: existing.startDate,
+          endDate: existing.endDate,
+          totalDays: Number(existing.totalDays),
+          approverName: approverName,
+          approverNotes: notes || null,
+          orgSlug: org.slug,
+          orgName: org.name,
+          primaryColor: org.primaryColor || undefined,
+        });
+
+        sendEmail({
+          to: result.request.member.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+          text: emailContent.text,
+          tenantId,
+        }).catch(err => logger.error({ error: err instanceof Error ? err.message : 'Unknown error' }, 'Failed to send leave approval email'));
+      }
+    } catch (emailError) {
+      logger.error({ error: emailError instanceof Error ? emailError.message : 'Unknown error', leaveRequestId: id }, 'Failed to send leave approval email notification');
+    }
 
     // Include approval chain in response
     const updatedChain = await getApprovalChain('LEAVE_REQUEST', id);
