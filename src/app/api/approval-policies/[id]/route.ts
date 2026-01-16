@@ -91,7 +91,6 @@ async function updateApprovalPolicyHandler(request: NextRequest, context: APICon
           policyId: id,
           levelOrder: level.levelOrder,
           approverRole: level.approverRole,
-          tenantId,
         })),
       });
     }
