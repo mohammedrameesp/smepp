@@ -571,6 +571,7 @@ model TeamMember {
   hasHRAccess         Boolean @default(false) // Employees, Leave modules
   hasFinanceAccess    Boolean @default(false) // Payroll, Purchase Requests
   canApprove          Boolean @default(false) // Approve direct reports (via reportingToId)
+  permissionsUpdatedAt DateTime? // Tracks when permissions were last changed (for session refresh)
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // EMPLOYEE FLAGS

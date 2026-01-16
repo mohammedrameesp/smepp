@@ -131,6 +131,7 @@ providers.push(
           hasHRAccess: true,
           hasFinanceAccess: true,
           canApprove: true,
+          permissionsUpdatedAt: true,
           tenantId: true,
           tenant: {
             select: {
@@ -198,6 +199,7 @@ providers.push(
           hasHRAccess: teamMember.hasHRAccess,
           hasFinanceAccess: teamMember.hasFinanceAccess,
           canApprove: teamMember.canApprove,
+          permissionsUpdatedAt: teamMember.permissionsUpdatedAt?.toISOString() || null,
           // Organization context
           organizationId: teamMember.tenant.id,
           organizationSlug: teamMember.tenant.slug,
@@ -362,6 +364,7 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
   hasHRAccess: boolean;
   hasFinanceAccess: boolean;
   canApprove: boolean;
+  permissionsUpdatedAt: string | null;
 } | null> {
   const member = await prisma.teamMember.findUnique({
     where: { id: memberId },
@@ -373,6 +376,7 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
       hasHRAccess: true,
       hasFinanceAccess: true,
       canApprove: true,
+      permissionsUpdatedAt: true,
       tenant: {
         select: {
           id: true,
@@ -408,6 +412,7 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
     hasHRAccess: member.hasHRAccess,
     hasFinanceAccess: member.hasFinanceAccess,
     canApprove: member.canApprove,
+    permissionsUpdatedAt: member.permissionsUpdatedAt?.toISOString() || null,
   };
 }
 
@@ -624,6 +629,7 @@ export const authOptions: NextAuthOptions = {
                 hasHRAccess: true,
                 hasOperationsAccess: true,
                 canApprove: true,
+                permissionsUpdatedAt: true,
                 isEmployee: true,
               },
             });
@@ -650,6 +656,7 @@ export const authOptions: NextAuthOptions = {
               token.hasOperationsAccess = securityCheck.hasOperationsAccess;
               token.canApprove = securityCheck.canApprove;
               token.isEmployee = securityCheck.isEmployee;
+              token.permissionsUpdatedAt = securityCheck.permissionsUpdatedAt?.toISOString() || null;
             }
           } else {
             // Super admin - check User table
@@ -740,6 +747,7 @@ export const authOptions: NextAuthOptions = {
                   hasHRAccess: true,
                   hasFinanceAccess: true,
                   canApprove: true,
+                  permissionsUpdatedAt: true,
                   tenant: {
                     select: {
                       id: true,
@@ -766,6 +774,7 @@ export const authOptions: NextAuthOptions = {
                 token.hasHRAccess = teamMember.hasHRAccess;
                 token.hasFinanceAccess = teamMember.hasFinanceAccess;
                 token.canApprove = teamMember.canApprove;
+                token.permissionsUpdatedAt = teamMember.permissionsUpdatedAt?.toISOString() || null;
                 // Organization context
                 token.organizationId = teamMember.tenant.id;
                 token.organizationSlug = teamMember.tenant.slug;
@@ -810,6 +819,7 @@ export const authOptions: NextAuthOptions = {
             token.hasHRAccess = memberData.hasHRAccess;
             token.hasFinanceAccess = memberData.hasFinanceAccess;
             token.canApprove = memberData.canApprove;
+            token.permissionsUpdatedAt = memberData.permissionsUpdatedAt;
           }
         }
 
@@ -839,6 +849,7 @@ export const authOptions: NextAuthOptions = {
             session.user.hasHRAccess = token.hasHRAccess as boolean ?? false;
             session.user.hasFinanceAccess = token.hasFinanceAccess as boolean ?? false;
             session.user.canApprove = token.canApprove as boolean ?? false;
+            session.user.permissionsUpdatedAt = token.permissionsUpdatedAt as string | undefined;
           }
 
           // Organization info
@@ -951,6 +962,7 @@ declare module 'next-auth' {
       hasHRAccess?: boolean; // Employees, Leave modules
       hasFinanceAccess?: boolean; // Payroll, Purchase Requests
       canApprove?: boolean; // Approve direct reports + scoped read
+      permissionsUpdatedAt?: string; // ISO timestamp of last permission change (for session refresh)
       // Organization context
       organizationId?: string;
       organizationSlug?: string;
@@ -999,6 +1011,7 @@ declare module 'next-auth/jwt' {
     hasHRAccess?: boolean;
     hasFinanceAccess?: boolean;
     canApprove?: boolean;
+    permissionsUpdatedAt?: string | null;
     // Organization context
     organizationId?: string;
     organizationSlug?: string;

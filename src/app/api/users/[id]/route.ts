@@ -45,6 +45,9 @@ const updateUserSchema = z.object({
   reportingToId: z.string().nullable().optional(),
 });
 
+// Permission fields that trigger session refresh when changed
+const PERMISSION_FIELDS = ['isAdmin', 'hasOperationsAccess', 'hasHRAccess', 'hasFinanceAccess', 'canApprove'];
+
 // Transform the data for TeamMember updates
 function transformUpdateData(data: {
   name?: string;
@@ -58,6 +61,7 @@ function transformUpdateData(data: {
   reportingToId?: string | null;
 }) {
   const updates: Record<string, unknown> = {};
+  let permissionsChanged = false;
 
   if (data.name) {
     updates.name = data.name;
@@ -71,35 +75,47 @@ function transformUpdateData(data: {
     updates.hasHRAccess = permissions.hasHRAccess;
     updates.hasFinanceAccess = permissions.hasFinanceAccess;
     updates.hasOperationsAccess = permissions.hasOperationsAccess;
+    permissionsChanged = true;
   } else {
     // Legacy: handle individual permission flags
     if (data.isAdmin !== undefined) {
       updates.isAdmin = data.isAdmin;
+      permissionsChanged = true;
     }
 
     if (data.isManager !== undefined) {
       updates.canApprove = data.isManager;
+      permissionsChanged = true;
     }
 
     if (data.hasOperationsAccess !== undefined) {
       updates.hasOperationsAccess = data.hasOperationsAccess;
+      permissionsChanged = true;
     }
 
     if (data.hasHRAccess !== undefined) {
       updates.hasHRAccess = data.hasHRAccess;
+      permissionsChanged = true;
     }
 
     if (data.hasFinanceAccess !== undefined) {
       updates.hasFinanceAccess = data.hasFinanceAccess;
+      permissionsChanged = true;
     }
 
     if (data.canApprove !== undefined && data.isManager === undefined) {
       updates.canApprove = data.canApprove;
+      permissionsChanged = true;
     }
   }
 
   if (data.reportingToId !== undefined) {
     updates.reportingToId = data.reportingToId;
+  }
+
+  // Set permissionsUpdatedAt if any permission field changed
+  if (permissionsChanged) {
+    updates.permissionsUpdatedAt = new Date();
   }
 
   return updates;
@@ -207,7 +223,7 @@ async function updateUserHandler(
   if (validation.data.reportingToId && validation.data.reportingToId !== existingMember.reportingToId) {
     await db.teamMember.update({
       where: { id: validation.data.reportingToId },
-      data: { canApprove: true },
+      data: { canApprove: true, permissionsUpdatedAt: new Date() },
     });
   }
 

@@ -72,6 +72,7 @@ export async function PATCH(
       hasHRAccess?: boolean;
       hasFinanceAccess?: boolean;
       canApprove?: boolean;
+      permissionsUpdatedAt?: Date;
     } = {};
 
     // If legacy role is provided, map to isAdmin
@@ -84,6 +85,11 @@ export async function PATCH(
     if (result.data.hasHRAccess !== undefined) updateData.hasHRAccess = result.data.hasHRAccess;
     if (result.data.hasFinanceAccess !== undefined) updateData.hasFinanceAccess = result.data.hasFinanceAccess;
     if (result.data.canApprove !== undefined) updateData.canApprove = result.data.canApprove;
+
+    // Set permissionsUpdatedAt if any permission field is being updated
+    if (Object.keys(updateData).length > 0) {
+      updateData.permissionsUpdatedAt = new Date();
+    }
 
     // Update permissions
     const updated = await prisma.teamMember.update({

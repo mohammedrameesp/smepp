@@ -56,6 +56,7 @@ async function fixManagersHandler(
     },
     data: {
       canApprove: true,
+      permissionsUpdatedAt: new Date(),
     },
   });
 
