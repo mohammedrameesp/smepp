@@ -70,6 +70,7 @@ export function AdminLayoutClient({
         enabledModules={enabledModules}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
         isAdmin={isAdmin}
+        canApprove={canApprove}
         hasFinanceAccess={hasFinanceAccess}
         hasHRAccess={hasHRAccess}
         hasOperationsAccess={hasOperationsAccess}

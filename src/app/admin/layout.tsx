@@ -89,12 +89,13 @@ export default async function AdminLayout({
   }
 
   // Redirect users without any admin/department access
-  // Check isAdmin flag OR department access flags (boolean-based permission system)
+  // Check isAdmin flag OR department access flags OR canApprove (managers)
   const isAdmin = session?.user?.isOwner || session?.user?.isAdmin;
   const hasAdminAccess = isAdmin ||
                          session?.user?.hasFinanceAccess ||
                          session?.user?.hasHRAccess ||
-                         session?.user?.hasOperationsAccess;
+                         session?.user?.hasOperationsAccess ||
+                         session?.user?.canApprove; // Managers can access for approvals
   if (!hasAdminAccess && !devAuthEnabled) {
     redirect('/employee');
   }

@@ -62,24 +62,27 @@ interface AdminTopNavProps {
   hasFinanceAccess?: boolean;
   hasHRAccess?: boolean;
   hasOperationsAccess?: boolean;
+  canApprove?: boolean;
 }
 
 // Roles that can access approval workflows
 const APPROVER_ROLES = ['ADMIN', 'MANAGER', 'HR_MANAGER', 'FINANCE_MANAGER', 'DIRECTOR'];
 
 // Access role derivation for display in user menu
-type AccessRole = 'Admin' | 'HR' | 'Finance' | 'Operations' | 'Member';
+type AccessRole = 'Admin' | 'HR' | 'Finance' | 'Operations' | 'Manager' | 'Member';
 
 function deriveAccessRole(flags: {
   isAdmin?: boolean;
   hasHRAccess?: boolean;
   hasFinanceAccess?: boolean;
   hasOperationsAccess?: boolean;
+  canApprove?: boolean;
 }): AccessRole {
   if (flags.isAdmin) return 'Admin';
   if (flags.hasHRAccess) return 'HR';
   if (flags.hasFinanceAccess) return 'Finance';
   if (flags.hasOperationsAccess) return 'Operations';
+  if (flags.canApprove) return 'Manager';
   return 'Member';
 }
 
@@ -88,6 +91,7 @@ const ACCESS_ROLE_STYLES: Record<AccessRole, { bg: string; text: string; icon: t
   HR: { bg: 'bg-green-100', text: 'text-green-700', icon: UserCog },
   Finance: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: CircleDollarSign },
   Operations: { bg: 'bg-blue-100', text: 'text-blue-700', icon: Briefcase },
+  Manager: { bg: 'bg-purple-100', text: 'text-purple-700', icon: Users },
   Member: { bg: 'bg-gray-100', text: 'text-gray-600', icon: User },
 };
 
@@ -99,6 +103,7 @@ export function AdminTopNav({
   hasFinanceAccess = false,
   hasHRAccess = false,
   hasOperationsAccess = false,
+  canApprove = false,
 }: AdminTopNavProps) {
   const { data: session, status } = useSession();
   const isSessionLoading = status === 'loading';
@@ -128,8 +133,8 @@ export function AdminTopNav({
     return false;
   };
 
-  // Can approve if admin, or has any department access (managers with department access can approve)
-  const isApprover = isAdmin || session?.user?.canApprove;
+  // Can approve if admin or manager with canApprove permission
+  const isApprover = isAdmin || canApprove;
 
   // Navigation items for the main nav - filtered by module AND department access
   const mainNavItems = [
@@ -269,6 +274,7 @@ export function AdminTopNav({
                           hasHRAccess,
                           hasFinanceAccess,
                           hasOperationsAccess,
+                          canApprove,
                         });
                         const style = ACCESS_ROLE_STYLES[accessRole];
                         const Icon = style.icon;
