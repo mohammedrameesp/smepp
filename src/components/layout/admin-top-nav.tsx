@@ -95,6 +95,38 @@ const ACCESS_ROLE_STYLES: Record<AccessRole, { bg: string; text: string; icon: t
   Member: { bg: 'bg-gray-100', text: 'text-gray-600', icon: User },
 };
 
+// Separate component for access role badge to ensure it renders
+function AccessRoleBadge({
+  isAdmin,
+  hasHRAccess,
+  hasFinanceAccess,
+  hasOperationsAccess,
+  canApprove,
+}: {
+  isAdmin?: boolean;
+  hasHRAccess?: boolean;
+  hasFinanceAccess?: boolean;
+  hasOperationsAccess?: boolean;
+  canApprove?: boolean;
+}) {
+  const accessRole = deriveAccessRole({
+    isAdmin,
+    hasHRAccess,
+    hasFinanceAccess,
+    hasOperationsAccess,
+    canApprove,
+  });
+  const style = ACCESS_ROLE_STYLES[accessRole];
+  const Icon = style.icon;
+
+  return (
+    <Badge variant="secondary" className={`mt-1.5 gap-1 text-xs ${style.bg} ${style.text}`}>
+      <Icon className="h-3 w-3" />
+      {accessRole}
+    </Badge>
+  );
+}
+
 export function AdminTopNav({
   badgeCounts = {},
   enabledModules = [],
@@ -268,23 +300,13 @@ export function AdminTopNav({
                     <div className="px-2 py-2">
                       <p className="font-medium text-slate-900 text-sm">{session?.user?.name || 'User'}</p>
                       <p className="text-xs text-slate-500">{session?.user?.email}</p>
-                      {(() => {
-                        const accessRole = deriveAccessRole({
-                          isAdmin,
-                          hasHRAccess,
-                          hasFinanceAccess,
-                          hasOperationsAccess,
-                          canApprove,
-                        });
-                        const style = ACCESS_ROLE_STYLES[accessRole];
-                        const Icon = style.icon;
-                        return (
-                          <Badge variant="secondary" className={`mt-1.5 gap-1 text-xs ${style.bg} ${style.text}`}>
-                            <Icon className="h-3 w-3" />
-                            {accessRole}
-                          </Badge>
-                        );
-                      })()}
+                      <AccessRoleBadge
+                        isAdmin={isAdmin}
+                        hasHRAccess={hasHRAccess}
+                        hasFinanceAccess={hasFinanceAccess}
+                        hasOperationsAccess={hasOperationsAccess}
+                        canApprove={canApprove}
+                      />
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
