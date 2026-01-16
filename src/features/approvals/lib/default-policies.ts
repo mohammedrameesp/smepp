@@ -38,11 +38,80 @@ const DEFAULT_LEAVE_POLICIES = [
 ];
 
 /**
+ * Default purchase request approval policies configuration.
+ * Amount-based thresholds in QAR.
+ */
+const DEFAULT_PURCHASE_POLICIES = [
+  {
+    name: 'Small Purchase (up to 5,000 QAR)',
+    module: 'PURCHASE_REQUEST' as ApprovalModule,
+    minAmount: 0,
+    maxAmount: 5000,
+    priority: 20, // Highest priority - matches first
+    levels: [
+      { levelOrder: 1, approverRole: 'MANAGER' as Role },
+    ],
+  },
+  {
+    name: 'Medium Purchase (5,001 - 50,000 QAR)',
+    module: 'PURCHASE_REQUEST' as ApprovalModule,
+    minAmount: 5001,
+    maxAmount: 50000,
+    priority: 10,
+    levels: [
+      { levelOrder: 1, approverRole: 'MANAGER' as Role },
+      { levelOrder: 2, approverRole: 'FINANCE_MANAGER' as Role },
+    ],
+  },
+  {
+    name: 'Large Purchase (50,001+ QAR)',
+    module: 'PURCHASE_REQUEST' as ApprovalModule,
+    minAmount: 50001,
+    maxAmount: null, // No upper limit
+    priority: 0, // Lower priority - catch-all
+    levels: [
+      { levelOrder: 1, approverRole: 'MANAGER' as Role },
+      { levelOrder: 2, approverRole: 'FINANCE_MANAGER' as Role },
+      { levelOrder: 3, approverRole: 'DIRECTOR' as Role },
+    ],
+  },
+];
+
+/**
+ * Default asset request approval policies configuration.
+ * Amount-based thresholds in QAR.
+ */
+const DEFAULT_ASSET_POLICIES = [
+  {
+    name: 'Standard Asset (up to 10,000 QAR)',
+    module: 'ASSET_REQUEST' as ApprovalModule,
+    minAmount: 0,
+    maxAmount: 10000,
+    priority: 10, // Higher priority - matches first
+    levels: [
+      { levelOrder: 1, approverRole: 'MANAGER' as Role },
+    ],
+  },
+  {
+    name: 'High-Value Asset (10,001+ QAR)',
+    module: 'ASSET_REQUEST' as ApprovalModule,
+    minAmount: 10001,
+    maxAmount: null, // No upper limit
+    priority: 0, // Lower priority - catch-all
+    levels: [
+      { levelOrder: 1, approverRole: 'MANAGER' as Role },
+      { levelOrder: 2, approverRole: 'FINANCE_MANAGER' as Role },
+      { levelOrder: 3, approverRole: 'DIRECTOR' as Role },
+    ],
+  },
+];
+
+/**
  * Ensure default approval policies exist for a tenant.
- * This is called lazily when a leave request is created and no policies are found.
+ * This is called lazily when a request is created and no policies are found.
  *
  * @param tenantId - The organization ID
- * @param module - The module to ensure policies for (currently only LEAVE_REQUEST)
+ * @param module - The module to ensure policies for
  * @returns true if policies were created, false if they already existed
  */
 export async function ensureDefaultApprovalPolicies(
@@ -63,27 +132,46 @@ export async function ensureDefaultApprovalPolicies(
     return false;
   }
 
+  // Get the appropriate default policies based on module
+  let defaultPolicies: typeof DEFAULT_LEAVE_POLICIES | typeof DEFAULT_PURCHASE_POLICIES | typeof DEFAULT_ASSET_POLICIES;
+
+  switch (module) {
+    case 'LEAVE_REQUEST':
+      defaultPolicies = DEFAULT_LEAVE_POLICIES;
+      break;
+    case 'PURCHASE_REQUEST':
+      defaultPolicies = DEFAULT_PURCHASE_POLICIES;
+      break;
+    case 'ASSET_REQUEST':
+      defaultPolicies = DEFAULT_ASSET_POLICIES;
+      break;
+    default:
+      return false; // Unknown module
+  }
+
   // Create default policies for this tenant
-  if (module === 'LEAVE_REQUEST') {
-    for (const policyConfig of DEFAULT_LEAVE_POLICIES) {
-      await prisma.approvalPolicy.create({
-        data: {
-          tenantId,
-          name: policyConfig.name,
-          module: policyConfig.module,
-          isActive: true,
-          minDays: policyConfig.minDays,
-          maxDays: policyConfig.maxDays,
-          priority: policyConfig.priority,
-          levels: {
-            create: policyConfig.levels.map(level => ({
-              levelOrder: level.levelOrder,
-              approverRole: level.approverRole,
-            })),
-          },
+  for (const policyConfig of defaultPolicies) {
+    await prisma.approvalPolicy.create({
+      data: {
+        tenantId,
+        name: policyConfig.name,
+        module: policyConfig.module,
+        isActive: true,
+        // For leave policies (days-based)
+        minDays: 'minDays' in policyConfig ? policyConfig.minDays : null,
+        maxDays: 'maxDays' in policyConfig ? policyConfig.maxDays : null,
+        // For purchase/asset policies (amount-based)
+        minAmount: 'minAmount' in policyConfig ? policyConfig.minAmount : null,
+        maxAmount: 'maxAmount' in policyConfig ? policyConfig.maxAmount : null,
+        priority: policyConfig.priority,
+        levels: {
+          create: policyConfig.levels.map(level => ({
+            levelOrder: level.levelOrder,
+            approverRole: level.approverRole,
+          })),
         },
-      });
-    }
+      },
+    });
   }
 
   return true;

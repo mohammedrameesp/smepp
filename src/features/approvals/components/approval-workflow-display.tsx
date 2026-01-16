@@ -30,37 +30,114 @@ const MODULE_CONFIG: Record<string, { label: string; icon: React.ElementType }> 
   ASSET_REQUEST: { label: 'Asset Requests', icon: Package },
 };
 
-// Default leave policies (client-safe copy from default-policies.ts)
-const DEFAULT_LEAVE_POLICIES = [
-  {
-    id: 'default-short',
-    name: 'Short Leave (up to 2 days)',
-    module: 'LEAVE_REQUEST',
-    minDays: 0,
-    maxDays: 2,
-    minAmount: null,
-    maxAmount: null,
-    isActive: true,
-    isDefault: true,
-    levels: [{ id: 'd1', levelOrder: 1, approverRole: 'MANAGER' }],
-  },
-  {
-    id: 'default-extended',
-    name: 'Extended Leave (3+ days)',
-    module: 'LEAVE_REQUEST',
-    minDays: 3,
-    maxDays: null,
-    minAmount: null,
-    maxAmount: null,
-    isActive: true,
-    isDefault: true,
-    levels: [
-      { id: 'd2', levelOrder: 1, approverRole: 'MANAGER' },
-      { id: 'd3', levelOrder: 2, approverRole: 'HR_MANAGER' },
-      { id: 'd4', levelOrder: 3, approverRole: 'DIRECTOR' },
-    ],
-  },
-];
+// Default policies (client-safe copy from default-policies.ts)
+const DEFAULT_POLICIES: Record<string, ApprovalPolicy[]> = {
+  LEAVE_REQUEST: [
+    {
+      id: 'default-leave-short',
+      name: 'Short Leave (up to 2 days)',
+      module: 'LEAVE_REQUEST',
+      minDays: 0,
+      maxDays: 2,
+      minAmount: null,
+      maxAmount: null,
+      isActive: true,
+      isDefault: true,
+      levels: [{ id: 'd1', levelOrder: 1, approverRole: 'MANAGER' }],
+    },
+    {
+      id: 'default-leave-extended',
+      name: 'Extended Leave (3+ days)',
+      module: 'LEAVE_REQUEST',
+      minDays: 3,
+      maxDays: null,
+      minAmount: null,
+      maxAmount: null,
+      isActive: true,
+      isDefault: true,
+      levels: [
+        { id: 'd2', levelOrder: 1, approverRole: 'MANAGER' },
+        { id: 'd3', levelOrder: 2, approverRole: 'HR_MANAGER' },
+        { id: 'd4', levelOrder: 3, approverRole: 'DIRECTOR' },
+      ],
+    },
+  ],
+  PURCHASE_REQUEST: [
+    {
+      id: 'default-purchase-small',
+      name: 'Small Purchase (up to 5,000 QAR)',
+      module: 'PURCHASE_REQUEST',
+      minDays: null,
+      maxDays: null,
+      minAmount: '0',
+      maxAmount: '5000',
+      isActive: true,
+      isDefault: true,
+      levels: [{ id: 'dp1', levelOrder: 1, approverRole: 'MANAGER' }],
+    },
+    {
+      id: 'default-purchase-medium',
+      name: 'Medium Purchase (5,001 - 50,000 QAR)',
+      module: 'PURCHASE_REQUEST',
+      minDays: null,
+      maxDays: null,
+      minAmount: '5001',
+      maxAmount: '50000',
+      isActive: true,
+      isDefault: true,
+      levels: [
+        { id: 'dp2', levelOrder: 1, approverRole: 'MANAGER' },
+        { id: 'dp3', levelOrder: 2, approverRole: 'FINANCE_MANAGER' },
+      ],
+    },
+    {
+      id: 'default-purchase-large',
+      name: 'Large Purchase (50,001+ QAR)',
+      module: 'PURCHASE_REQUEST',
+      minDays: null,
+      maxDays: null,
+      minAmount: '50001',
+      maxAmount: null,
+      isActive: true,
+      isDefault: true,
+      levels: [
+        { id: 'dp4', levelOrder: 1, approverRole: 'MANAGER' },
+        { id: 'dp5', levelOrder: 2, approverRole: 'FINANCE_MANAGER' },
+        { id: 'dp6', levelOrder: 3, approverRole: 'DIRECTOR' },
+      ],
+    },
+  ],
+  ASSET_REQUEST: [
+    {
+      id: 'default-asset-standard',
+      name: 'Standard Asset (up to 10,000 QAR)',
+      module: 'ASSET_REQUEST',
+      minDays: null,
+      maxDays: null,
+      minAmount: '0',
+      maxAmount: '10000',
+      isActive: true,
+      isDefault: true,
+      levels: [{ id: 'da1', levelOrder: 1, approverRole: 'MANAGER' }],
+    },
+    {
+      id: 'default-asset-high',
+      name: 'High-Value Asset (10,001+ QAR)',
+      module: 'ASSET_REQUEST',
+      minDays: null,
+      maxDays: null,
+      minAmount: '10001',
+      maxAmount: null,
+      isActive: true,
+      isDefault: true,
+      levels: [
+        { id: 'da2', levelOrder: 1, approverRole: 'MANAGER' },
+        { id: 'da3', levelOrder: 2, approverRole: 'FINANCE_MANAGER' },
+        { id: 'da4', levelOrder: 3, approverRole: 'DIRECTOR' },
+      ],
+    },
+  ],
+};
 
 interface ApprovalLevel {
   id: string;
@@ -246,21 +323,23 @@ export function ApprovalWorkflowDisplay({ enabledModules, className }: ApprovalW
     .map((m) => moduleMapping[m])
     .filter(Boolean);
 
-  // Group policies by module
+  // Group policies by module and track which use defaults
   const policiesByModule: Record<string, ApprovalPolicy[]> = {};
+  const modulesUsingDefaults: Set<string> = new Set();
+
   for (const module of enabledApiModules) {
-    policiesByModule[module] = policies.filter((p) => p.module === module);
+    const modulePolicies = policies.filter((p) => p.module === module);
+
+    if (modulePolicies.length === 0 && DEFAULT_POLICIES[module]) {
+      // No custom policies - use defaults
+      policiesByModule[module] = DEFAULT_POLICIES[module];
+      modulesUsingDefaults.add(module);
+    } else {
+      policiesByModule[module] = modulePolicies;
+    }
   }
 
-  // Determine if using defaults for leave
-  const hasLeaveModule = enabledApiModules.includes('LEAVE_REQUEST');
-  const leavePolicies = policiesByModule['LEAVE_REQUEST'] || [];
-  const usingDefaultLeave = hasLeaveModule && leavePolicies.length === 0;
-
-  // If using defaults for leave, use the default policies
-  if (usingDefaultLeave) {
-    policiesByModule['LEAVE_REQUEST'] = DEFAULT_LEAVE_POLICIES;
-  }
+  const hasAnyDefaults = modulesUsingDefaults.size > 0;
 
   return (
     <Card className={className}>
@@ -286,17 +365,17 @@ export function ApprovalWorkflowDisplay({ enabledModules, className }: ApprovalW
                 key={module}
                 module={module}
                 policies={policiesByModule[module] || []}
-                isDefault={module === 'LEAVE_REQUEST' && usingDefaultLeave}
+                isDefault={modulesUsingDefaults.has(module)}
               />
             ))}
 
             {/* Info alert about auto-skip */}
-            {usingDefaultLeave && (
+            {hasAnyDefaults && (
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription>
-                  Using default approval workflow. Steps are auto-skipped if no approver is available
-                  (e.g., no line manager assigned to the employee).
+                  Using default approval workflow for some modules. Steps are auto-skipped if no approver
+                  is available (e.g., no line manager assigned to the employee).
                 </AlertDescription>
               </Alert>
             )}
