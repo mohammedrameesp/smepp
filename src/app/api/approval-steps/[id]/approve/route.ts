@@ -98,7 +98,7 @@ async function approveStepHandler(request: NextRequest, context: APIContext) {
   return NextResponse.json(result);
 }
 
-export const POST = withErrorHandler(approveStepHandler, { requireAuth: true });
+export const POST = withErrorHandler(approveStepHandler, { requireCanApprove: true });
 
 async function handleFinalApproval(
   db: TenantPrismaClient,

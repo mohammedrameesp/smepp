@@ -284,4 +284,4 @@ async function rejectAssetRequestHandler(request: NextRequest, context: APIConte
     return NextResponse.json(updatedRequest);
 }
 
-export const POST = withErrorHandler(rejectAssetRequestHandler, { requireAdmin: true, requireModule: 'assets' });
+export const POST = withErrorHandler(rejectAssetRequestHandler, { requireCanApprove: true, requireModule: 'assets' });

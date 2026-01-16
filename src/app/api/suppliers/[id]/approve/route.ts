@@ -174,4 +174,4 @@ async function approveSupplierHandler(request: NextRequest, context: APIContext)
     });
 }
 
-export const PATCH = withErrorHandler(approveSupplierHandler, { requireAdmin: true, requireModule: 'suppliers' });
+export const PATCH = withErrorHandler(approveSupplierHandler, { requireOperationsAccess: true, requireModule: 'suppliers' });

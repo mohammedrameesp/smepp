@@ -84,4 +84,4 @@ async function rejectSupplierHandler(request: NextRequest, context: APIContext) 
     });
 }
 
-export const PATCH = withErrorHandler(rejectSupplierHandler, { requireAdmin: true, requireModule: 'suppliers' });
+export const PATCH = withErrorHandler(rejectSupplierHandler, { requireOperationsAccess: true, requireModule: 'suppliers' });

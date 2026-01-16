@@ -413,4 +413,4 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
     return NextResponse.json(purchaseRequest);
 }
 
-export const PATCH = withErrorHandler(updateStatusHandler, { requireAdmin: true, requireModule: 'purchase-requests' });
+export const PATCH = withErrorHandler(updateStatusHandler, { requireCanApprove: true, requireModule: 'purchase-requests' });

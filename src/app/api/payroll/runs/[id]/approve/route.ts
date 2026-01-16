@@ -190,4 +190,4 @@ async function approvePayrollHandler(request: NextRequest, context: APIContext) 
     });
 }
 
-export const POST = withErrorHandler(approvePayrollHandler, { requireAdmin: true, requireModule: 'payroll' });
+export const POST = withErrorHandler(approvePayrollHandler, { requireFinanceAccess: true, requireModule: 'payroll' });
