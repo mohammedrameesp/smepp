@@ -191,11 +191,10 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
       });
       const directReportIds = new Set(directReports.map(r => r.id));
 
-      // Helper function to check if current user can approve a step
+      // Helper function to check if current user can approve a step based on role match
+      // Note: Admins CAN approve any step (via bypass), but we only show "You" if they're
+      // the natural approver for that step to avoid confusion
       const canUserApproveStep = (step: { requiredRole: string }, requesterId: string): boolean => {
-        // Admins can approve anything
-        if (currentUserIsAdmin) return true;
-
         switch (step.requiredRole) {
           case 'MANAGER':
             // User must be the requester's direct manager
@@ -205,8 +204,8 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
           case 'FINANCE_MANAGER':
             return currentUserHasFinanceAccess;
           case 'DIRECTOR':
-            // Only admins can approve (already handled above)
-            return false;
+            // Only admins can approve director-level steps
+            return currentUserIsAdmin;
           default:
             return false;
         }

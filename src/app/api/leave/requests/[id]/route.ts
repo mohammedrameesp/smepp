@@ -123,31 +123,30 @@ async function getLeaveRequestHandler(request: NextRequest, context: APIContext)
           const currentUserHasHRAccess = !!tenant.hasHRAccess;
           const currentUserHasFinanceAccess = !!tenant.hasFinanceAccess;
 
-          // Determine if current user can approve
+          // Determine if current user can approve based on their role matching the step's required role
+          // Note: Admins CAN approve any step (via bypass), but we only show "You" if they're
+          // the natural approver for that step to avoid confusion
           let canCurrentUserApprove = false;
-          if (currentUserIsAdmin) {
-            canCurrentUserApprove = true;
-          } else {
-            switch (currentStep.requiredRole) {
-              case 'MANAGER': {
-                // Check if current user is the requester's manager
-                const directReports = await db.teamMember.findMany({
-                  where: { reportingToId: currentUserId },
-                  select: { id: true },
-                });
-                canCurrentUserApprove = directReports.some(r => r.id === leaveRequest.memberId);
-                break;
-              }
-              case 'HR_MANAGER':
-                canCurrentUserApprove = currentUserHasHRAccess;
-                break;
-              case 'FINANCE_MANAGER':
-                canCurrentUserApprove = currentUserHasFinanceAccess;
-                break;
-              case 'DIRECTOR':
-                canCurrentUserApprove = false; // Only admins can approve, handled above
-                break;
+          switch (currentStep.requiredRole) {
+            case 'MANAGER': {
+              // Check if current user is the requester's manager
+              const directReports = await db.teamMember.findMany({
+                where: { reportingToId: currentUserId },
+                select: { id: true },
+              });
+              canCurrentUserApprove = directReports.some(r => r.id === leaveRequest.memberId);
+              break;
             }
+            case 'HR_MANAGER':
+              canCurrentUserApprove = currentUserHasHRAccess;
+              break;
+            case 'FINANCE_MANAGER':
+              canCurrentUserApprove = currentUserHasFinanceAccess;
+              break;
+            case 'DIRECTOR':
+              // Only admins can approve director-level steps
+              canCurrentUserApprove = currentUserIsAdmin;
+              break;
           }
 
           approvalSummary = {
