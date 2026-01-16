@@ -231,10 +231,14 @@ function ModuleSection({
   module,
   policies,
   isDefault,
+  onCreateDefaults,
+  isCreating,
 }: {
   module: string;
   policies: ApprovalPolicy[];
   isDefault: boolean;
+  onCreateDefaults?: (module: string) => void;
+  isCreating?: boolean;
 }) {
   const config = MODULE_CONFIG[module];
   if (!config) return null;
@@ -248,11 +252,26 @@ function ModuleSection({
           <Icon className="h-4 w-4 text-muted-foreground" />
           <h4 className="font-medium">{config.label}</h4>
         </div>
-        {isDefault && (
-          <Badge variant="secondary" className="text-xs">
-            Default
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {isDefault && (
+            <>
+              <Badge variant="secondary" className="text-xs">
+                Default
+              </Badge>
+              {onCreateDefaults && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onCreateDefaults(module)}
+                  disabled={isCreating}
+                  className="text-xs h-6"
+                >
+                  {isCreating ? 'Creating...' : 'Save to Edit'}
+                </Button>
+              )}
+            </>
+          )}
+        </div>
       </div>
       <div className="space-y-2 pl-6">
         {policies.length > 0 ? (
@@ -287,26 +306,52 @@ export function ApprovalWorkflowDisplay({ enabledModules, className }: ApprovalW
   const [policies, setPolicies] = useState<ApprovalPolicy[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [creatingModule, setCreatingModule] = useState<string | null>(null);
+
+  const fetchPolicies = async () => {
+    try {
+      const res = await fetch('/api/approval-policies?isActive=true');
+      if (res.ok) {
+        const data = await res.json();
+        setPolicies(data);
+      } else {
+        setError('Failed to load policies');
+      }
+    } catch (err) {
+      console.error('Failed to fetch policies:', err);
+      setError('Failed to load policies');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchPolicies() {
-      try {
-        const res = await fetch('/api/approval-policies?isActive=true');
-        if (res.ok) {
-          const data = await res.json();
-          setPolicies(data);
-        } else {
-          setError('Failed to load policies');
-        }
-      } catch (err) {
-        console.error('Failed to fetch policies:', err);
-        setError('Failed to load policies');
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchPolicies();
   }, []);
+
+  const handleCreateDefaults = async (module: string) => {
+    setCreatingModule(module);
+    try {
+      const res = await fetch('/api/approval-policies/create-defaults', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ module }),
+      });
+
+      if (res.ok) {
+        // Refresh policies list
+        await fetchPolicies();
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to create default policies');
+      }
+    } catch (err) {
+      console.error('Failed to create defaults:', err);
+      setError('Failed to create default policies');
+    } finally {
+      setCreatingModule(null);
+    }
+  };
 
   if (loading) {
     return <LoadingSkeleton />;
@@ -366,6 +411,8 @@ export function ApprovalWorkflowDisplay({ enabledModules, className }: ApprovalW
                 module={module}
                 policies={policiesByModule[module] || []}
                 isDefault={modulesUsingDefaults.has(module)}
+                onCreateDefaults={handleCreateDefaults}
+                isCreating={creatingModule === module}
               />
             ))}
 
