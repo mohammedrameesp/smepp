@@ -6,10 +6,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
 import { logAction } from '@/lib/core/activity';
-import { generateUniqueSupplierCode } from '@/features/suppliers';
+import { generateUniqueSupplierCode, approveSupplierSchema } from '@/features/suppliers';
 import { sendEmail } from '@/lib/core/email';
 import { handleEmailFailure } from '@/lib/core/email-failure-handler';
 import { supplierApprovalEmail } from '@/lib/core/email-templates';
+import { createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import logger from '@/lib/core/log';
@@ -28,6 +29,19 @@ async function approveSupplierHandler(request: NextRequest, context: APIContext)
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
+
+    // Validate request body (optional - body may be empty for simple approval)
+    const body = await request.json().catch(() => ({}));
+    const validation = approveSupplierSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json({
+        error: 'Invalid request body',
+        details: validation.error.issues,
+      }, { status: 400 });
+    }
+
+    const { notes } = validation.data;
 
     // Check if supplier exists and is PENDING - tenant filtering handled automatically
     const existingSupplier = await db.supplier.findFirst({
@@ -60,7 +74,7 @@ async function approveSupplierHandler(request: NextRequest, context: APIContext)
       },
     });
 
-    // Log the approval activity
+    // Log the approval activity (including notes in metadata)
     await logAction(
       tenantId,
       userId,
@@ -70,6 +84,7 @@ async function approveSupplierHandler(request: NextRequest, context: APIContext)
       {
         suppCode: supplier.suppCode,
         name: supplier.name,
+        ...(notes && { approverNotes: notes }),
       }
     );
 
@@ -121,9 +136,41 @@ async function approveSupplierHandler(request: NextRequest, context: APIContext)
       }
     }
 
+    // Send in-app notifications to all admins about the approval
+    try {
+      const admins = await db.teamMember.findMany({
+        where: { isAdmin: true, isDeleted: false },
+        select: { id: true },
+      });
+
+      if (admins.length > 0) {
+        const notifications = admins
+          .filter(admin => admin.id !== userId) // Don't notify the approver
+          .map(admin =>
+            NotificationTemplates.supplierApproved(
+              admin.id,
+              supplier.name,
+              supplier.suppCode,
+              supplier.id
+            )
+          );
+
+        if (notifications.length > 0) {
+          await createBulkNotifications(notifications, tenantId);
+        }
+      }
+    } catch (notifyError) {
+      logger.error({
+        error: notifyError instanceof Error ? notifyError.message : 'Unknown error',
+        supplierId: supplier.id,
+      }, 'Failed to send in-app notifications for supplier approval');
+    }
+
     return NextResponse.json({
+      success: true,
       message: 'Supplier approved successfully',
       supplier,
+      status: 'APPROVED',
     });
 }
 

@@ -96,7 +96,8 @@ async function updateApprovalPolicyHandler(request: NextRequest, context: APICon
       });
     }
 
-    // Update the policy
+    // Update the policy and increment version for audit trail
+    // Version is auto-incremented on every update to track policy changes
     const updatedPolicy = await tx.approvalPolicy.update({
       where: { id },
       data: {
@@ -107,6 +108,7 @@ async function updateApprovalPolicyHandler(request: NextRequest, context: APICon
         ...(updateData.minDays !== undefined && { minDays: updateData.minDays }),
         ...(updateData.maxDays !== undefined && { maxDays: updateData.maxDays }),
         ...(updateData.priority !== undefined && { priority: updateData.priority }),
+        version: { increment: 1 }, // Auto-increment version on every update
       },
       include: {
         levels: {
@@ -127,6 +129,7 @@ async function updateApprovalPolicyHandler(request: NextRequest, context: APICon
     {
       name: policy.name,
       module: policy.module,
+      version: policy.version,
       changes: validation.data,
     }
   );

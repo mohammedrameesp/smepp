@@ -167,10 +167,11 @@ export const updateSupplierSchema = supplierBaseSchema.partial();
 /**
  * Schema for approving a supplier.
  * Changes status from PENDING to APPROVED.
+ * Note: approvedById is taken from session, not request body.
  */
 export const approveSupplierSchema = z.object({
-  /** ID of the admin approving */
-  approvedById: z.string().min(1, 'Approver ID is required'),
+  /** Optional notes from the approver */
+  notes: z.string().max(500, 'Notes cannot exceed 500 characters').optional(),
 });
 
 /**

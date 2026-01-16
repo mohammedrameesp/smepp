@@ -37,10 +37,105 @@ import { canAdminProcess } from '@/features/asset-requests';
 import { sendEmail } from '@/lib/core/email';
 import { handleEmailFailure } from '@/lib/core/email-failure-handler';
 import { assetRequestApprovedEmail, assetReturnApprovedEmail } from '@/lib/core/asset-request-emails';
-import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
+import { createNotification, createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
-import { invalidateTokensForEntity } from '@/lib/whatsapp';
+import { invalidateTokensForEntity, notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 import logger from '@/lib/core/log';
+import {
+  getApprovalChain,
+  getApprovalChainSummary,
+  getCurrentPendingStep,
+  getApproversForRole,
+  hasApprovalChain,
+  canMemberApprove,
+} from '@/features/approvals/lib';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPER: Process approval chain step
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Process the approval chain for an asset request.
+ * Returns information about whether the chain is complete or needs more approvals.
+ */
+async function processApprovalChainStep(
+  requestId: string,
+  approverId: string,
+  tenantId: string,
+  requesterId: string,
+  notes?: string
+): Promise<{
+  chainExists: boolean;
+  isChainComplete: boolean;
+  stepApproved: boolean;
+  error?: string;
+}> {
+  // Check if approval chain exists
+  const chainExists = await hasApprovalChain('ASSET_REQUEST', requestId);
+
+  if (!chainExists) {
+    return { chainExists: false, isChainComplete: true, stepApproved: false };
+  }
+
+  // Get current pending step
+  const pendingStep = await getCurrentPendingStep('ASSET_REQUEST', requestId);
+
+  if (!pendingStep) {
+    // No pending steps - chain already complete
+    return { chainExists: true, isChainComplete: true, stepApproved: false };
+  }
+
+  // Check if user can approve this step
+  const canApproveResult = await canMemberApprove(approverId, pendingStep, requesterId);
+
+  if (!canApproveResult.canApprove) {
+    return {
+      chainExists: true,
+      isChainComplete: false,
+      stepApproved: false,
+      error: canApproveResult.reason || 'Not authorized to approve',
+    };
+  }
+
+  // Approve the step atomically
+  const now = new Date();
+  const updateResult = await prisma.approvalStep.updateMany({
+    where: {
+      id: pendingStep.id,
+      status: 'PENDING', // Atomic check to prevent race conditions
+    },
+    data: {
+      status: 'APPROVED',
+      approverId,
+      actionAt: now,
+      notes,
+    },
+  });
+
+  if (updateResult.count === 0) {
+    return {
+      chainExists: true,
+      isChainComplete: false,
+      stepApproved: false,
+      error: 'Step already processed',
+    };
+  }
+
+  // Check if chain is now complete
+  const remainingPending = await prisma.approvalStep.count({
+    where: {
+      entityType: 'ASSET_REQUEST',
+      entityId: requestId,
+      status: 'PENDING',
+    },
+  });
+
+  return {
+    chainExists: true,
+    isChainComplete: remainingPending === 0,
+    stepApproved: true,
+  };
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // POST /api/asset-requests/[id]/approve - Approve Request
@@ -136,7 +231,96 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 4: Determine new status and activity based on type
+    // STEP 4: Process approval chain (if exists)
+    // ─────────────────────────────────────────────────────────────────────────────
+    const chainResult = await processApprovalChainStep(
+      id,
+      session.user.id,
+      tenantId,
+      assetRequest.memberId!, // memberId is required in schema
+      notes ?? undefined
+    );
+
+    // If chain exists but user can't approve, return error
+    if (chainResult.chainExists && chainResult.error) {
+      return NextResponse.json({ error: chainResult.error }, { status: 403 });
+    }
+
+    // If chain exists and step was approved but chain not complete, notify next approvers
+    if (chainResult.chainExists && chainResult.stepApproved && !chainResult.isChainComplete) {
+      // Get org info for notifications
+      const org = await prisma.organization.findUnique({
+        where: { id: tenantId },
+        select: { slug: true, name: true, primaryColor: true },
+      });
+
+      // Notify next level approvers
+      try {
+        const nextPendingStep = await getCurrentPendingStep('ASSET_REQUEST', id);
+
+        if (nextPendingStep) {
+          const nextLevelApprovers = await getApproversForRole(
+            nextPendingStep.requiredRole,
+            tenantId,
+            assetRequest.memberId
+          );
+
+          // Filter out the requester
+          const filteredApprovers = nextLevelApprovers.filter(a => a.id !== assetRequest.memberId);
+
+          if (filteredApprovers.length > 0) {
+            // Send WhatsApp notifications to next level approvers
+            notifyApproversViaWhatsApp(
+              tenantId,
+              'ASSET_REQUEST',
+              id,
+              nextPendingStep.requiredRole
+            );
+
+            // Send in-app notifications
+            const notifications = filteredApprovers.map(approver => ({
+              recipientId: approver.id,
+              type: 'APPROVAL_PENDING' as const,
+              title: 'Asset Request Pending Your Approval',
+              message: `${assetRequest.member?.name || 'Employee'}'s request (${assetRequest.requestNumber}) for asset ${assetRequest.asset.assetTag || assetRequest.asset.model} has been forwarded to you for approval.`,
+              link: `/admin/asset-requests/${id}`,
+              entityType: 'AssetRequest',
+              entityId: id,
+            }));
+            await createBulkNotifications(notifications, tenantId);
+
+            // Send email notifications
+            if (org) {
+              for (const approver of filteredApprovers) {
+                sendEmail({
+                  to: approver.email,
+                  subject: `Asset Request Pending: ${assetRequest.requestNumber}`,
+                  html: `<p>${assetRequest.member?.name || 'Employee'}'s asset request (${assetRequest.requestNumber}) requires your approval.</p>`,
+                  text: `${assetRequest.member?.name || 'Employee'}'s asset request (${assetRequest.requestNumber}) requires your approval.`,
+                }).catch(err => logger.error({ error: err instanceof Error ? err.message : 'Unknown error' }, 'Failed to send asset approval forward email'));
+              }
+            }
+          }
+        }
+      } catch (notifyError) {
+        logger.error({ error: notifyError instanceof Error ? notifyError.message : 'Unknown error', assetRequestId: id }, 'Failed to send next level approval notifications');
+      }
+
+      // Get chain summary for response
+      const updatedChain = await getApprovalChain('ASSET_REQUEST', id);
+      const chainSummary = await getApprovalChainSummary('ASSET_REQUEST', id);
+
+      return NextResponse.json({
+        message: `Approval step completed. Waiting for remaining approvals.`,
+        approvalChain: updatedChain,
+        approvalSummary: chainSummary,
+        currentStep: chainSummary.currentStep,
+      });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 5: Determine new status and activity based on type
+    // Chain is either complete or doesn't exist - proceed with final approval
     // ─────────────────────────────────────────────────────────────────────────────
     let newStatus: AssetRequestStatus;
     let activityAction: string;
@@ -154,7 +338,7 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // STEP 5: Update request and handle asset changes in transaction
+    // STEP 6: Update request and handle asset changes in transaction
     // ─────────────────────────────────────────────────────────────────────────────
     const updatedRequest = await prisma.$transaction(async (tx) => {
       // Update request status
@@ -333,6 +517,18 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
         requestId: id,
         requestNumber: assetRequest.requestNumber,
       }, 'Failed to send in-app notification for asset request approval');
+    }
+
+    // Include approval chain info in response (if chain existed)
+    if (chainResult.chainExists) {
+      const updatedChain = await getApprovalChain('ASSET_REQUEST', id);
+      const chainSummary = await getApprovalChainSummary('ASSET_REQUEST', id);
+      return NextResponse.json({
+        ...updatedRequest,
+        approvalChain: updatedChain,
+        approvalSummary: chainSummary,
+        message: 'Asset request fully approved',
+      });
     }
 
     return NextResponse.json(updatedRequest);

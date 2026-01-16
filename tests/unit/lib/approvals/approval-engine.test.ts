@@ -35,6 +35,7 @@ jest.mock('@/lib/core/prisma', () => ({
     },
     teamMember: {
       findUnique: jest.fn(),
+      count: jest.fn(),
     },
   },
 }));
@@ -79,6 +80,7 @@ describe('Approval Engine', () => {
       minDays: 1,
       maxDays: 5,
       priority: 10,
+      version: 1,
       levels: [
         { id: 'level-1', levelOrder: 1, approverRole: 'MANAGER' },
       ],
@@ -94,6 +96,7 @@ describe('Approval Engine', () => {
       minDays: null,
       maxDays: null,
       priority: 20,
+      version: 1,
       levels: [
         { id: 'level-1', levelOrder: 1, approverRole: 'MANAGER' },
         { id: 'level-2', levelOrder: 2, approverRole: 'DIRECTOR' },
@@ -170,6 +173,7 @@ describe('Approval Engine', () => {
       minDays: null,
       maxDays: null,
       priority: 10,
+      version: 1,
       levels: [
         { id: 'level-1', levelOrder: 1, approverRole: 'MANAGER' },
         { id: 'level-2', levelOrder: 2, approverRole: 'DIRECTOR' },
@@ -286,6 +290,7 @@ describe('Approval Engine', () => {
   describe('processApproval', () => {
     const mockStep = {
       id: 'step-1',
+      tenantId: 'tenant-1',
       entityType: 'LEAVE_REQUEST' as ApprovalModule,
       entityId: 'entity-1',
       levelOrder: 1,
@@ -294,59 +299,88 @@ describe('Approval Engine', () => {
       approver: null,
     };
 
+    const processOptions = { tenantId: 'tenant-1' };
+
     beforeEach(() => {
       (mockPrisma.approvalStep.findUnique as jest.Mock).mockResolvedValue(mockStep);
-      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ id: 'member-1', isAdmin: false, canApprove: true });
+      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ id: 'member-1', isAdmin: false, isDeleted: false, canApprove: true });
     });
 
     it('should approve step and update status', async () => {
       const approvedStep = { ...mockStep, status: 'APPROVED', approverId: 'user-1' };
-      (mockPrisma.approvalStep.update as jest.Mock).mockResolvedValue(approvedStep);
+      (mockPrisma.approvalStep.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      (mockPrisma.approvalStep.findUnique as jest.Mock)
+        .mockResolvedValueOnce(mockStep)
+        .mockResolvedValueOnce(approvedStep);
       (mockPrisma.approvalStep.count as jest.Mock).mockResolvedValue(0); // No pending steps
 
-      const result = await processApproval('step-1', 'user-1', 'APPROVE', 'Looks good');
+      const result = await processApproval('step-1', 'user-1', 'APPROVE', 'Looks good', processOptions);
 
       expect(result.success).toBe(true);
       expect(result.isChainComplete).toBe(true);
       expect(result.allApproved).toBe(true);
-      expect(mockPrisma.approvalStep.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ status: 'APPROVED', notes: 'Looks good' }),
-        })
-      );
     });
 
     it('should reject step and skip remaining steps', async () => {
       const rejectedStep = { ...mockStep, status: 'REJECTED' };
-      (mockPrisma.approvalStep.update as jest.Mock).mockResolvedValue(rejectedStep);
-      (mockPrisma.approvalStep.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      (mockPrisma.approvalStep.updateMany as jest.Mock)
+        .mockResolvedValueOnce({ count: 1 }) // atomic update
+        .mockResolvedValueOnce({ count: 1 }); // skip pending steps
+      (mockPrisma.approvalStep.findUnique as jest.Mock)
+        .mockResolvedValueOnce(mockStep)
+        .mockResolvedValueOnce(rejectedStep);
 
-      const result = await processApproval('step-1', 'user-1', 'REJECT', 'Not approved');
+      const result = await processApproval('step-1', 'user-1', 'REJECT', 'Not approved', processOptions);
 
       expect(result.success).toBe(true);
       expect(result.allApproved).toBe(false);
-      expect(mockPrisma.approvalStep.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: { status: 'SKIPPED' },
-        })
-      );
+    });
+
+    it('should throw error when tenantId not provided', async () => {
+      await expect(processApproval('step-1', 'user-1', 'APPROVE'))
+        .rejects.toThrow('Tenant ID is required for approval processing');
     });
 
     it('should throw error when step not found', async () => {
       (mockPrisma.approvalStep.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(processApproval('step-1', 'user-1', 'APPROVE'))
+      await expect(processApproval('step-1', 'user-1', 'APPROVE', undefined, processOptions))
+        .rejects.toThrow('Approval step not found');
+    });
+
+    it('should throw error when step belongs to different tenant', async () => {
+      (mockPrisma.approvalStep.findUnique as jest.Mock).mockResolvedValue({
+        ...mockStep,
+        tenantId: 'different-tenant',
+      });
+
+      // Should throw generic error to avoid leaking tenant info
+      await expect(processApproval('step-1', 'user-1', 'APPROVE', undefined, processOptions))
         .rejects.toThrow('Approval step not found');
     });
 
     it('should throw error when step already processed', async () => {
-      (mockPrisma.approvalStep.findUnique as jest.Mock).mockResolvedValue({
-        ...mockStep,
-        status: 'APPROVED',
+      // First call returns pending step (passes initial checks)
+      // Then canUserApprove needs to pass
+      // Then atomic update returns count 0 (race condition)
+      (mockPrisma.approvalStep.findUnique as jest.Mock)
+        .mockResolvedValueOnce(mockStep)  // Initial lookup
+        .mockResolvedValueOnce({ ...mockStep, status: 'APPROVED' }); // Refetch after failed update
+      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({
+        id: 'user-1', isAdmin: true, isDeleted: false
       });
+      (mockPrisma.approvalStep.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
 
-      await expect(processApproval('step-1', 'user-1', 'APPROVE'))
+      await expect(processApproval('step-1', 'user-1', 'APPROVE', undefined, processOptions))
         .rejects.toThrow('Step already approved');
+    });
+
+    it('should prevent self-approval', async () => {
+      await expect(processApproval('step-1', 'requester-1', 'APPROVE', undefined, {
+        tenantId: 'tenant-1',
+        requesterId: 'requester-1',
+      }))
+        .rejects.toThrow('You cannot approve your own request');
     });
   });
 

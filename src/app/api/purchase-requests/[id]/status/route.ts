@@ -13,10 +13,18 @@ import { getAllowedStatusTransitions, getStatusLabel } from '@/features/purchase
 import { sendEmail } from '@/lib/core/email';
 import { handleEmailFailure } from '@/lib/core/email-failure-handler';
 import { purchaseRequestStatusEmail } from '@/lib/core/email-templates';
-import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
+import { createNotification, createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import logger from '@/lib/core/log';
-import { invalidateTokensForEntity } from '@/lib/whatsapp';
+import { invalidateTokensForEntity, notifyApproversViaWhatsApp } from '@/lib/whatsapp';
+import {
+  getApprovalChain,
+  getApprovalChainSummary,
+  getCurrentPendingStep,
+  getApproversForRole,
+  hasApprovalChain,
+  canMemberApprove,
+} from '@/features/approvals/lib';
 
 // PATCH - Update purchase request status (admin only)
 async function updateStatusHandler(request: NextRequest, context: APIContext) {
@@ -71,6 +79,145 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
         error: `Cannot transition from ${currentRequest.status} to ${status}`,
         allowedTransitions,
       }, { status: 400 });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Handle approval chain for APPROVED/REJECTED status
+    // ─────────────────────────────────────────────────────────────────────────────
+    if (status === 'APPROVED' || status === 'REJECTED') {
+      const chainExists = await hasApprovalChain('PURCHASE_REQUEST', id);
+
+      if (chainExists) {
+        // Get current pending step
+        const pendingStep = await getCurrentPendingStep('PURCHASE_REQUEST', id);
+
+        if (pendingStep) {
+          // Check if user can approve this step
+          const canApproveResult = await canMemberApprove(userId, pendingStep, currentRequest.requesterId);
+
+          if (!canApproveResult.canApprove) {
+            return NextResponse.json({ error: canApproveResult.reason || 'Not authorized to approve' }, { status: 403 });
+          }
+
+          // Process the step atomically
+          const now = new Date();
+          const newStepStatus = status === 'APPROVED' ? 'APPROVED' : 'REJECTED';
+          const updateResult = await prisma.approvalStep.updateMany({
+            where: {
+              id: pendingStep.id,
+              status: 'PENDING', // Atomic check to prevent race conditions
+            },
+            data: {
+              status: newStepStatus,
+              approverId: userId,
+              actionAt: now,
+              notes: reviewNotes,
+            },
+          });
+
+          if (updateResult.count === 0) {
+            return NextResponse.json({ error: 'Step already processed' }, { status: 400 });
+          }
+
+          // If rejected, skip all remaining steps
+          if (status === 'REJECTED') {
+            await prisma.approvalStep.updateMany({
+              where: {
+                entityType: 'PURCHASE_REQUEST',
+                entityId: id,
+                status: 'PENDING',
+              },
+              data: {
+                status: 'SKIPPED',
+              },
+            });
+          }
+
+          // Check if chain is now complete
+          const remainingPending = await prisma.approvalStep.count({
+            where: {
+              entityType: 'PURCHASE_REQUEST',
+              entityId: id,
+              status: 'PENDING',
+            },
+          });
+
+          const isChainComplete = remainingPending === 0;
+
+          // If chain not complete and approved, notify next level approvers
+          if (!isChainComplete && status === 'APPROVED') {
+            // Get org info for notifications
+            const org = await prisma.organization.findUnique({
+              where: { id: tenantId },
+              select: { slug: true, name: true, primaryColor: true },
+            });
+
+            try {
+              const nextPendingStep = await getCurrentPendingStep('PURCHASE_REQUEST', id);
+
+              if (nextPendingStep) {
+                const nextLevelApprovers = await getApproversForRole(
+                  nextPendingStep.requiredRole,
+                  tenantId,
+                  currentRequest.requesterId
+                );
+
+                // Filter out the requester
+                const filteredApprovers = nextLevelApprovers.filter(a => a.id !== currentRequest.requesterId);
+
+                if (filteredApprovers.length > 0) {
+                  // Send WhatsApp notifications to next level approvers
+                  notifyApproversViaWhatsApp(
+                    tenantId,
+                    'PURCHASE_REQUEST',
+                    id,
+                    nextPendingStep.requiredRole
+                  );
+
+                  // Send in-app notifications
+                  const notifications = filteredApprovers.map(approver => ({
+                    recipientId: approver.id,
+                    type: 'APPROVAL_PENDING' as const,
+                    title: 'Purchase Request Pending Your Approval',
+                    message: `${currentRequest.requester?.name || 'Employee'}'s purchase request (${currentRequest.referenceNumber}) has been forwarded to you for approval.`,
+                    link: `/admin/purchase-requests/${id}`,
+                    entityType: 'PurchaseRequest',
+                    entityId: id,
+                  }));
+                  await createBulkNotifications(notifications, tenantId);
+
+                  // Send email notifications
+                  if (org) {
+                    for (const approver of filteredApprovers) {
+                      sendEmail({
+                        to: approver.email,
+                        subject: `Purchase Request Pending: ${currentRequest.referenceNumber}`,
+                        html: `<p>${currentRequest.requester?.name || 'Employee'}'s purchase request (${currentRequest.referenceNumber}) requires your approval.</p>`,
+                        text: `${currentRequest.requester?.name || 'Employee'}'s purchase request (${currentRequest.referenceNumber}) requires your approval.`,
+                      }).catch(err => logger.error({ error: err instanceof Error ? err.message : 'Unknown error' }, 'Failed to send purchase approval forward email'));
+                    }
+                  }
+                }
+              }
+            } catch (notifyError) {
+              logger.error({ error: notifyError instanceof Error ? notifyError.message : 'Unknown error', purchaseRequestId: id }, 'Failed to send next level approval notifications');
+            }
+
+            // Return partial approval response
+            const updatedChain = await getApprovalChain('PURCHASE_REQUEST', id);
+            const chainSummary = await getApprovalChainSummary('PURCHASE_REQUEST', id);
+
+            return NextResponse.json({
+              message: `Approval step completed. Waiting for remaining approvals.`,
+              approvalChain: updatedChain,
+              approvalSummary: chainSummary,
+              currentStep: chainSummary.currentStep,
+            });
+          }
+
+          // Chain is complete - proceed with final status update below
+        }
+      }
     }
 
     // Build update data
@@ -246,6 +393,21 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
         ),
         tenantId
       );
+    }
+
+    // Include approval chain info in response if chain existed
+    if (status === 'APPROVED' || status === 'REJECTED') {
+      const chainExists = await hasApprovalChain('PURCHASE_REQUEST', id);
+      if (chainExists) {
+        const updatedChain = await getApprovalChain('PURCHASE_REQUEST', id);
+        const chainSummary = await getApprovalChainSummary('PURCHASE_REQUEST', id);
+        return NextResponse.json({
+          ...purchaseRequest,
+          approvalChain: updatedChain,
+          approvalSummary: chainSummary,
+          message: status === 'APPROVED' ? 'Purchase request fully approved' : 'Purchase request rejected',
+        });
+      }
     }
 
     return NextResponse.json(purchaseRequest);

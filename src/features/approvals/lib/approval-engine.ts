@@ -29,6 +29,7 @@ export interface ApprovalPolicyWithLevels {
   minDays: number | null;
   maxDays: number | null;
   priority: number;
+  version: number;
   levels: {
     id: string;
     levelOrder: number;
@@ -244,15 +245,18 @@ export async function initializeApprovalChain(
   }
 
   // If no valid levels, at least keep DIRECTOR level as fallback
+  // Note: We don't need to generate a real CUID here as the level id is only used
+  // for policy reference, and the actual ApprovalStep will get its own CUID on creation
   if (validLevels.length === 0) {
     validLevels.push({
-      id: 'fallback',
+      id: `fallback-${entityId}`, // Use entityId to ensure uniqueness per request
       levelOrder: 1,
       approverRole: 'DIRECTOR',
     });
   }
 
   // Re-number levels sequentially (1, 2, 3...) after filtering
+  // Store policyId and policyVersion for audit trail
   const stepsData = validLevels.map((level, index) => ({
     entityType,
     entityId,
@@ -260,6 +264,8 @@ export async function initializeApprovalChain(
     requiredRole: level.approverRole,
     status: 'PENDING' as ApprovalStepStatus,
     tenantId: effectiveTenantId,
+    policyId: policy.id,
+    policyVersion: policy.version,
   }));
 
   // Use createMany for efficiency
@@ -334,18 +340,26 @@ export async function getCurrentPendingStep(
  * - DIRECTOR: Member must have isAdmin=true
  * - EMPLOYEE: Cannot approve (this role is for requesters only)
  *
- * Note: Admins (isAdmin=true) can approve ANY step regardless of required role.
+ * SECURITY:
+ * - Self-approval is NEVER allowed, even for admins
+ * - Admins (isAdmin=true) can approve ANY step except their own requests
  */
 export async function canMemberApprove(
   memberId: string,
   step: ApprovalStepWithApprover,
   requesterId?: string
 ): Promise<{ canApprove: boolean; reason?: string }> {
+  // SECURITY: Prevent self-approval (must be checked FIRST, before any role checks)
+  if (requesterId && requesterId === memberId) {
+    return { canApprove: false, reason: 'You cannot approve your own request' };
+  }
+
   const member = await prisma.teamMember.findUnique({
     where: { id: memberId },
     select: {
       id: true,
       isAdmin: true,
+      isDeleted: true,
       hasHRAccess: true,
       hasFinanceAccess: true,
       hasOperationsAccess: true,
@@ -356,7 +370,12 @@ export async function canMemberApprove(
     return { canApprove: false, reason: 'Member not found' };
   }
 
-  // Admin can approve anything (bypass)
+  // SECURITY: Deleted members cannot approve
+  if (member.isDeleted) {
+    return { canApprove: false, reason: 'Member account is inactive' };
+  }
+
+  // Admin can approve anything except their own request (bypass, self-approval already checked)
   if (member.isAdmin) {
     return { canApprove: true };
   }
@@ -408,6 +427,13 @@ export const canUserApprove = canMemberApprove;
 // APPROVAL ACTIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+export interface ProcessApprovalOptions {
+  /** Tenant ID for validation (required for security) */
+  tenantId: string;
+  /** Requester ID to prevent self-approval (optional but recommended) */
+  requesterId?: string;
+}
+
 export interface ProcessApprovalResult {
   success: boolean;
   step: ApprovalStepWithApprover;
@@ -418,13 +444,30 @@ export interface ProcessApprovalResult {
 
 /**
  * Process an approval action (approve or reject) on a step.
+ *
+ * SECURITY:
+ * - Validates step belongs to the specified tenant (prevents IDOR)
+ * - Prevents self-approval (requester cannot approve own request)
+ * - Uses atomic update to prevent race conditions
+ *
+ * @param stepId - The approval step ID
+ * @param approverId - The TeamMember ID of the approver
+ * @param action - APPROVE or REJECT
+ * @param notes - Optional notes from the approver
+ * @param options - Required options including tenantId for security validation
  */
 export async function processApproval(
   stepId: string,
   approverId: string,
   action: 'APPROVE' | 'REJECT',
-  notes?: string
+  notes?: string,
+  options?: ProcessApprovalOptions
 ): Promise<ProcessApprovalResult> {
+  // SECURITY: Require tenantId for cross-tenant validation
+  if (!options?.tenantId) {
+    throw new Error('Tenant ID is required for approval processing');
+  }
+
   const step = await prisma.approvalStep.findUnique({
     where: { id: stepId },
     include: {
@@ -438,33 +481,66 @@ export async function processApproval(
     throw new Error('Approval step not found');
   }
 
-  if (step.status !== 'PENDING') {
-    throw new Error(`Step already ${step.status.toLowerCase()}`);
+  // SECURITY: Validate step belongs to the requesting tenant (IDOR prevention)
+  if (step.tenantId !== options.tenantId) {
+    throw new Error('Approval step not found'); // Generic error to avoid leaking info
   }
 
+  // SECURITY: Prevent self-approval
+  if (options.requesterId && options.requesterId === approverId) {
+    throw new Error('You cannot approve your own request');
+  }
+
+  // Moved status check to atomic operation below - see atomic update
+
   // Check if user can approve
-  const canApproveResult = await canUserApprove(approverId, step);
+  const canApproveResult = await canUserApprove(approverId, step, options.requesterId);
   if (!canApproveResult.canApprove) {
     throw new Error(canApproveResult.reason || 'Not authorized to approve');
   }
 
   const newStatus: ApprovalStepStatus = action === 'APPROVE' ? 'APPROVED' : 'REJECTED';
+  const now = new Date();
 
-  // Update the step
-  const updatedStep = await prisma.approvalStep.update({
-    where: { id: stepId },
+  // SECURITY: Atomic update with status check to prevent race conditions
+  // This ensures that only PENDING steps can be updated, preventing double-approval
+  const updateResult = await prisma.approvalStep.updateMany({
+    where: {
+      id: stepId,
+      status: 'PENDING', // Only update if still pending (atomic check)
+    },
     data: {
       status: newStatus,
       approverId,
-      actionAt: new Date(),
+      actionAt: now,
       notes,
     },
+  });
+
+  // If no rows updated, step was already processed (race condition caught)
+  if (updateResult.count === 0) {
+    // Refetch to get actual status
+    const currentStep = await prisma.approvalStep.findUnique({
+      where: { id: stepId },
+    });
+    throw new Error(
+      `Step already ${currentStep?.status?.toLowerCase() || 'processed'}`
+    );
+  }
+
+  // Fetch the updated step with approver info
+  const updatedStep = await prisma.approvalStep.findUnique({
+    where: { id: stepId },
     include: {
       approver: {
         select: { id: true, name: true, email: true },
       },
     },
   });
+
+  if (!updatedStep) {
+    throw new Error('Failed to fetch updated approval step');
+  }
 
   // If rejected, skip all remaining steps
   if (action === 'REJECT') {

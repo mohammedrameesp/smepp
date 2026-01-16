@@ -383,4 +383,72 @@ export const NotificationTemplates = {
     message,
     link,
   }),
+
+  // Supplier Management
+  supplierApproved: (
+    adminMemberId: string,
+    supplierName: string,
+    suppCode: string | null,
+    entityId?: string
+  ): CreateNotificationInput => ({
+    recipientId: adminMemberId,
+    type: 'SUPPLIER_APPROVED',
+    title: 'Supplier Approved',
+    message: suppCode
+      ? `Supplier ${supplierName} (${suppCode}) has been approved.`
+      : `Supplier ${supplierName} has been approved.`,
+    link: `/admin/suppliers/${entityId}`,
+    entityType: 'Supplier',
+    entityId,
+  }),
+
+  supplierRejected: (
+    adminMemberId: string,
+    supplierName: string,
+    reason?: string,
+    entityId?: string
+  ): CreateNotificationInput => ({
+    recipientId: adminMemberId,
+    type: 'SUPPLIER_REJECTED',
+    title: 'Supplier Rejected',
+    message: reason
+      ? `Supplier ${supplierName} has been rejected. Reason: ${reason}`
+      : `Supplier ${supplierName} has been rejected.`,
+    link: `/admin/suppliers/${entityId}`,
+    entityType: 'Supplier',
+    entityId,
+  }),
+
+  // Payroll Management
+  payrollSubmitted: (
+    adminMemberId: string,
+    referenceNumber: string,
+    periodLabel: string,
+    totalAmount: string,
+    currency: string,
+    entityId?: string
+  ): CreateNotificationInput => ({
+    recipientId: adminMemberId,
+    type: 'PAYROLL_SUBMITTED',
+    title: 'Payroll Submitted for Approval',
+    message: `Payroll ${referenceNumber} (${periodLabel}) for ${currency} ${totalAmount} has been submitted for approval.`,
+    link: `/admin/payroll/runs/${entityId}`,
+    entityType: 'PayrollRun',
+    entityId,
+  }),
+
+  payrollApproved: (
+    adminMemberId: string,
+    referenceNumber: string,
+    periodLabel: string,
+    entityId?: string
+  ): CreateNotificationInput => ({
+    recipientId: adminMemberId,
+    type: 'PAYROLL_APPROVED',
+    title: 'Payroll Approved',
+    message: `Payroll ${referenceNumber} (${periodLabel}) has been approved.`,
+    link: `/admin/payroll/runs/${entityId}`,
+    entityType: 'PayrollRun',
+    entityId,
+  }),
 };

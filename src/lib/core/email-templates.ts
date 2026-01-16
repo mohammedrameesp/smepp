@@ -1950,3 +1950,229 @@ Durj Platform
 
   return { subject, html, text };
 }
+
+// ============================================================================
+// PAYROLL SUBMITTED EMAIL (To Admins)
+// ============================================================================
+
+interface PayrollSubmittedData {
+  referenceNumber: string;
+  periodLabel: string;
+  employeeCount: number;
+  totalGross: string;
+  totalNet: string;
+  currency: string;
+  submitterName: string;
+  orgSlug: string;
+  orgName: string;
+  primaryColor?: string;
+}
+
+export function payrollSubmittedEmail(data: PayrollSubmittedData): { subject: string; html: string; text: string } {
+  const subject = `Payroll Submitted for Approval - ${data.referenceNumber}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
+  const portalUrl = getTenantPortalUrl(data.orgSlug, `/admin/payroll/runs`);
+
+  const html = emailWrapper(`
+    <!-- Alert Banner -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; margin: 0 0 25px 0;">
+      <tr>
+        <td style="padding: 15px 20px;">
+          <p style="color: #856404; font-size: 14px; margin: 0; font-weight: bold;">
+            Action Required: Payroll Pending Approval
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Payroll Submitted for Approval</h2>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      A payroll run has been submitted for your approval. Please review the details below.
+    </p>
+
+    <!-- Payroll Details Box -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
+      <tr>
+        <td style="padding: 25px;">
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Payroll Details</h3>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Reference Number:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${escapeHtml(data.referenceNumber)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Pay Period:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.periodLabel)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Employees:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.employeeCount} employee${data.employeeCount === 1 ? '' : 's'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Total Gross:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.currency} ${data.totalGross}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Total Net:</td>
+              <td style="padding: 8px 0; color: ${brandColor}; font-size: 14px; font-weight: bold;">${data.currency} ${data.totalNet}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Submitted By:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.submitterName)}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- CTA Button -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
+      <tr>
+        <td align="center">
+          <a href="${portalUrl}"
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+            Review Payroll
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
+      Best regards,<br>
+      <strong>${data.orgName}</strong>
+    </p>
+  `, data.orgName, brandColor);
+
+  const text = `
+Payroll Submitted for Approval - Action Required
+
+A payroll run has been submitted for your approval.
+
+Payroll Details:
+- Reference Number: ${data.referenceNumber}
+- Pay Period: ${data.periodLabel}
+- Employees: ${data.employeeCount} employee${data.employeeCount === 1 ? '' : 's'}
+- Total Gross: ${data.currency} ${data.totalGross}
+- Total Net: ${data.currency} ${data.totalNet}
+- Submitted By: ${data.submitterName}
+
+Please log in to review and approve the payroll:
+${portalUrl}
+
+Best regards,
+${data.orgName}
+`.trim();
+
+  return { subject, html, text };
+}
+
+// ============================================================================
+// PAYROLL APPROVED EMAIL (To Admins)
+// ============================================================================
+
+interface PayrollApprovedData {
+  referenceNumber: string;
+  periodLabel: string;
+  employeeCount: number;
+  totalNet: string;
+  currency: string;
+  approverName: string;
+  orgSlug: string;
+  orgName: string;
+  primaryColor?: string;
+}
+
+export function payrollApprovedEmail(data: PayrollApprovedData): { subject: string; html: string; text: string } {
+  const subject = `Payroll Approved - ${data.referenceNumber}`;
+  const brandColor = data.primaryColor || DEFAULT_BRAND_COLOR;
+  const portalUrl = getTenantPortalUrl(data.orgSlug, `/admin/payroll/runs`);
+
+  const html = emailWrapper(`
+    <!-- Success Banner -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #d4edda; border-left: 4px solid #28a745; border-radius: 4px; margin: 0 0 25px 0;">
+      <tr>
+        <td style="padding: 15px 20px;">
+          <p style="color: #155724; font-size: 14px; margin: 0; font-weight: bold;">
+            ✓ Payroll Approved
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">Payroll Has Been Approved</h2>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+      The following payroll run has been approved and is ready for processing.
+    </p>
+
+    <!-- Payroll Details Box -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f8f9fa; border-radius: 8px; margin: 25px 0;">
+      <tr>
+        <td style="padding: 25px;">
+          <h3 style="color: ${brandColor}; margin: 0 0 15px 0; font-size: 16px;">Payroll Details</h3>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px; width: 40%;">Reference Number:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px; font-weight: bold;">${escapeHtml(data.referenceNumber)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Pay Period:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.periodLabel)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Employees:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${data.employeeCount} employee${data.employeeCount === 1 ? '' : 's'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Total Net Payable:</td>
+              <td style="padding: 8px 0; color: ${brandColor}; font-size: 14px; font-weight: bold;">${data.currency} ${data.totalNet}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; color: #666666; font-size: 14px;">Approved By:</td>
+              <td style="padding: 8px 0; color: #333333; font-size: 14px;">${escapeHtml(data.approverName)}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- CTA Button -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
+      <tr>
+        <td align="center">
+          <a href="${portalUrl}"
+             style="display: inline-block; padding: 14px 30px; background-color: ${brandColor}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+            View Payroll
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0;">
+      Best regards,<br>
+      <strong>${data.orgName}</strong>
+    </p>
+  `, data.orgName, brandColor);
+
+  const text = `
+Payroll Approved - ${data.referenceNumber}
+
+The following payroll run has been approved and is ready for processing.
+
+Payroll Details:
+- Reference Number: ${data.referenceNumber}
+- Pay Period: ${data.periodLabel}
+- Employees: ${data.employeeCount} employee${data.employeeCount === 1 ? '' : 's'}
+- Total Net Payable: ${data.currency} ${data.totalNet}
+- Approved By: ${data.approverName}
+
+View the payroll at:
+${portalUrl}
+
+Best regards,
+${data.orgName}
+`.trim();
+
+  return { subject, html, text };
+}

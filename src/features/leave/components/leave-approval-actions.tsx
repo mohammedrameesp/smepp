@@ -109,21 +109,29 @@ export function LeaveApprovalActions({
 
   return (
     <>
-      <div className="flex gap-2">
+      <div className="flex gap-2" role="group" aria-label="Approval actions">
         <button
           onClick={() => setApproveOpen(true)}
           className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-emerald-600 text-white hover:bg-emerald-700 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-emerald-500"
+          aria-label="Approve this leave request"
+          aria-describedby={hasMultiLevelApproval && remainingSteps > 1 ? 'approval-chain-info' : undefined}
         >
-          <CheckCircle className="h-4 w-4" />
+          <CheckCircle className="h-4 w-4" aria-hidden="true" />
           Approve
         </button>
         <button
           onClick={() => setRejectOpen(true)}
           className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-all bg-red-600 text-white hover:bg-red-700 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:ring-red-500"
+          aria-label="Reject this leave request"
         >
-          <XCircle className="h-4 w-4" />
+          <XCircle className="h-4 w-4" aria-hidden="true" />
           Reject
         </button>
+        {hasMultiLevelApproval && remainingSteps > 1 && (
+          <span id="approval-chain-info" className="sr-only">
+            This request requires {remainingSteps} more approval levels. Your approval will advance it to the next level.
+          </span>
+        )}
       </div>
 
       {/* Approve Dialog */}
@@ -140,28 +148,28 @@ export function LeaveApprovalActions({
 
           {/* Approval Chain Status */}
           {hasMultiLevelApproval && (
-            <div className="space-y-2">
+            <div className="space-y-2" role="region" aria-label="Approval chain status">
               {/* Already approved steps */}
               {completedStepsInfo && (
-                <div className="flex items-start gap-2 p-3 bg-emerald-50 border border-emerald-100 rounded-lg text-sm">
-                  <CheckCircle className="h-4 w-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-2 p-3 bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded-lg text-sm" role="status">
+                  <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
                   <div>
-                    <p className="font-medium text-emerald-800">Already approved by:</p>
-                    <p className="text-emerald-700">{completedStepsInfo}</p>
+                    <p className="font-medium text-emerald-900 dark:text-emerald-100">Already approved by:</p>
+                    <p className="text-emerald-800 dark:text-emerald-200">{completedStepsInfo}</p>
                   </div>
                 </div>
               )}
 
               {/* Current pending step info */}
               {currentPendingStep && remainingSteps > 1 && (
-                <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm">
-                  <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg text-sm" role="status">
+                  <Info className="h-4 w-4 text-blue-700 dark:text-blue-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
                   <div>
-                    <p className="text-blue-800">
+                    <p className="text-blue-900 dark:text-blue-100">
                       <span className="font-medium">Current level:</span>{' '}
                       {ROLE_DISPLAY_NAMES[currentPendingStep.requiredRole] || currentPendingStep.requiredRole}
                     </p>
-                    <p className="text-blue-700 text-xs mt-1">
+                    <p className="text-blue-800 dark:text-blue-200 text-xs mt-1">
                       {remainingSteps} approval level{remainingSteps > 1 ? 's' : ''} remaining
                     </p>
                   </div>
@@ -170,11 +178,11 @@ export function LeaveApprovalActions({
 
               {/* Override warning - shown when higher level approves */}
               {currentPendingStep && remainingSteps > 1 && (
-                <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm">
-                  <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                  <div className="text-amber-800">
+                <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-sm" role="alert">
+                  <AlertTriangle className="h-4 w-4 text-amber-700 dark:text-amber-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                  <div className="text-amber-900 dark:text-amber-100">
                     <p className="font-medium">Upper-level override</p>
-                    <p className="text-xs mt-0.5">
+                    <p className="text-xs mt-0.5 text-amber-800 dark:text-amber-200">
                       If you approve at a higher level, lower pending levels will be skipped.
                       <strong className="block mt-1">Notes are required to explain the override.</strong>
                     </p>
@@ -240,11 +248,11 @@ export function LeaveApprovalActions({
 
           {/* Rejection warning for multi-level chains */}
           {hasMultiLevelApproval && completedStepsInfo && (
-            <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-100 rounded-lg text-sm">
-              <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div className="text-amber-800">
+            <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-sm" role="alert">
+              <AlertTriangle className="h-4 w-4 text-amber-700 dark:text-amber-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
+              <div className="text-amber-900 dark:text-amber-100">
                 <p className="font-medium">Previous approvals will be overridden</p>
-                <p className="text-xs mt-0.5">
+                <p className="text-xs mt-0.5 text-amber-800 dark:text-amber-200">
                   Already approved by: {completedStepsInfo}. Rejection will terminate the approval chain.
                 </p>
               </div>

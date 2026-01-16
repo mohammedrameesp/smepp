@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processApprovalSchema } from '@/features/approvals/validations/approvals';
 import { processApproval } from '@/features/approvals/lib';
+import { prisma } from '@/lib/core/prisma';
 import { logAction } from '@/lib/core/activity';
 import { createNotification, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -33,7 +34,40 @@ async function rejectStepHandler(request: NextRequest, context: APIContext) {
     }, { status: 400 });
   }
 
-  const result = await processApproval(id, userId, 'REJECT', validation.data.notes);
+  // Get requester ID for self-rejection prevention
+  // We need to look up the entity to get the requester
+  const step = await prisma.approvalStep.findUnique({
+    where: { id },
+    select: { entityType: true, entityId: true },
+  });
+
+  let requesterId: string | undefined;
+  if (step) {
+    if (step.entityType === 'LEAVE_REQUEST') {
+      const request = await db.leaveRequest.findUnique({
+        where: { id: step.entityId },
+        select: { memberId: true },
+      });
+      requesterId = request?.memberId;
+    } else if (step.entityType === 'PURCHASE_REQUEST') {
+      const request = await db.purchaseRequest.findUnique({
+        where: { id: step.entityId },
+        select: { requesterId: true },
+      });
+      requesterId = request?.requesterId;
+    } else if (step.entityType === 'ASSET_REQUEST') {
+      const request = await db.assetRequest.findUnique({
+        where: { id: step.entityId },
+        select: { memberId: true },
+      });
+      requesterId = request?.memberId;
+    }
+  }
+
+  const result = await processApproval(id, userId, 'REJECT', validation.data.notes, {
+    tenantId,
+    requesterId,
+  });
 
   // Log the action
   await logAction(

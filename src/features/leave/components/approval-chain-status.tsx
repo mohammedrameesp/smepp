@@ -164,7 +164,7 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, submittedA
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-base font-medium">Approval Progress</CardTitle>
           {approvalSummary && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -180,9 +180,10 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, submittedA
         </div>
       </CardHeader>
       <CardContent>
-        {/* Horizontal approval steps - evenly spaced */}
+        {/* Horizontal approval steps on desktop, vertical on mobile */}
         <TooltipProvider>
-          <div className="flex items-center">
+          {/* Desktop layout - horizontal */}
+          <div className="hidden sm:flex items-center">
             {/* Submitted step */}
             <div className="flex items-center flex-1">
               <Tooltip>
@@ -309,6 +310,85 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, submittedA
                       )} />
                     </div>
                   )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Mobile layout - vertical stack */}
+          <div className="flex sm:hidden flex-col gap-2">
+            {/* Submitted step */}
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  'flex items-center gap-2 px-3 py-2 rounded-lg border flex-1',
+                  'bg-emerald-50 dark:bg-emerald-950',
+                  'border-emerald-300 dark:border-emerald-700'
+                )}
+              >
+                <Send className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-medium leading-tight">Submitted</span>
+                  <span className="text-[10px] leading-tight text-muted-foreground truncate">
+                    {formatShortDate(submittedAt ?? null) || 'Done'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Approval steps */}
+            {approvalChain.map((step, index) => {
+              const isCurrent = step.status === 'PENDING' &&
+                !approvalChain.slice(0, index).some(s => s.status === 'PENDING');
+              const styles = getStepStyles(step.status, isCurrent);
+
+              // Determine the label to show for the current step
+              const getStepLabel = () => {
+                if (isCurrent) {
+                  return canCurrentUserApprove ? 'Your turn' : 'Pending';
+                }
+                // For completed steps, show time if available
+                if (step.actionAt && (step.status === 'APPROVED' || step.status === 'REJECTED')) {
+                  return formatShortDate(step.actionAt);
+                }
+                return getStatusLabel(step.status);
+              };
+
+              return (
+                <div key={step.id} className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-2 rounded-lg border flex-1',
+                      styles.bg,
+                      styles.border,
+                      isCurrent && 'ring-2 ring-blue-400 ring-offset-1'
+                    )}
+                  >
+                    {getStatusIcon(step.status, 'sm')}
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium leading-tight">
+                          {ROLE_DISPLAY_NAMES[step.requiredRole] || step.requiredRole}
+                        </span>
+                        <span className={cn(
+                          'text-[10px] leading-tight',
+                          isCurrent ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-muted-foreground'
+                        )}>
+                          {getStepLabel()}
+                        </span>
+                      </div>
+                      {step.approver && (
+                        <span className="text-[10px] text-muted-foreground truncate">
+                          {step.approver.name || step.approver.email}
+                        </span>
+                      )}
+                      {step.notes && (
+                        <span className="text-[10px] text-muted-foreground italic truncate">
+                          &ldquo;{step.notes}&rdquo;
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               );
             })}

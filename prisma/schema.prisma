@@ -141,6 +141,12 @@ enum NotificationType {
   APPROVAL_STEP_COMPLETED // Notify next approver/requester of step completion
   APPROVAL_FINAL_APPROVED // Notify requester of final approval
   APPROVAL_REJECTED // Notify requester of rejection at any level
+  // Supplier notifications
+  SUPPLIER_APPROVED // Notify admins when supplier is approved
+  SUPPLIER_REJECTED // Notify admins when supplier is rejected
+  // Payroll notifications
+  PAYROLL_SUBMITTED // Notify admins when payroll is submitted for approval
+  PAYROLL_APPROVED // Notify admins when payroll is approved
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1171,6 +1177,7 @@ model ApprovalPolicy {
   minDays   Int? // For leave request thresholds
   maxDays   Int?
   priority  Int            @default(0) // Higher = checked first
+  version   Int            @default(1) // Incremented on each update for audit trail
 
   levels ApprovalLevel[]
 
@@ -1194,13 +1201,15 @@ model ApprovalLevel {
 }
 
 model ApprovalStep {
-  id           String         @id @default(cuid())
-  tenantId     String
-  tenant       Organization   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  entityType   ApprovalModule // Which module (LEAVE_REQUEST, PURCHASE_REQUEST, ASSET_REQUEST)
-  entityId     String // The ID of the request being approved
-  levelOrder   Int // Which level in the chain
-  requiredRole Role // Role required to approve this step
+  id            String         @id @default(cuid())
+  tenantId      String
+  tenant        Organization   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  entityType    ApprovalModule // Which module (LEAVE_REQUEST, PURCHASE_REQUEST, ASSET_REQUEST)
+  entityId      String // The ID of the request being approved
+  levelOrder    Int // Which level in the chain
+  requiredRole  Role // Role required to approve this step
+  policyId      String? // Reference to the policy used (for audit trail)
+  policyVersion Int? // Version of the policy when chain was created
 
   approverId String? // Member who took action (null if pending)
   approver   TeamMember? @relation("ApprovalStepApprover", fields: [approverId], references: [id])
@@ -1217,6 +1226,7 @@ model ApprovalStep {
   @@index([tenantId])
   @@index([tenantId, status, requiredRole])
   @@index([tenantId, approverId, status])
+  @@index([policyId])
 }
 
 model MaintenanceRecord {
