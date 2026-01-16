@@ -162,7 +162,7 @@ export function LeaveApprovalActions({
                 </div>
               )}
 
-              {/* Current pending step info */}
+              {/* Current pending step info - show when there are more steps after this one */}
               {currentPendingStep && remainingSteps > 1 && (
                 <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg text-sm" role="status">
                   <Info className="h-4 w-4 text-blue-700 dark:text-blue-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
@@ -172,7 +172,7 @@ export function LeaveApprovalActions({
                       {ROLE_DISPLAY_NAMES[currentPendingStep.requiredRole] || currentPendingStep.requiredRole}
                     </p>
                     <p className="text-blue-800 dark:text-blue-200 text-xs mt-1">
-                      {remainingSteps} approval level{remainingSteps > 1 ? 's' : ''} remaining
+                      {remainingSteps - 1} more approval{remainingSteps - 1 > 1 ? 's' : ''} required after yours
                     </p>
                   </div>
                 </div>
