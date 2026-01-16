@@ -93,6 +93,7 @@ interface LeaveRequest {
     currentStep: number | null;
     status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_STARTED';
     canCurrentUserApprove?: boolean;
+    isUserOverride?: boolean;
   } | null;
 }
 
@@ -241,7 +242,8 @@ export default function AdminLeaveRequestDetailPage() {
         }}
         actions={
           <div className="flex gap-2">
-            {request.status === 'PENDING' && (
+            {/* Show approval buttons only when status is PENDING and user can approve */}
+            {request.status === 'PENDING' && request.approvalSummary?.canCurrentUserApprove && (
               <LeaveApprovalActions
                 requestId={request.id}
                 onApproved={fetchRequest}
@@ -250,7 +252,8 @@ export default function AdminLeaveRequestDetailPage() {
                 approvalSummary={request.approvalSummary || null}
               />
             )}
-            {canCancel && (
+            {/* Show cancel button only when request is APPROVED (not during pending approval) */}
+            {canCancel && request.status === 'APPROVED' && (
               <CancelLeaveDialog
                 requestId={request.id}
                 requestNumber={request.requestNumber}
