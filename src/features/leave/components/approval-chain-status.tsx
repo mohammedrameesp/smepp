@@ -168,9 +168,9 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, className 
         </div>
       </CardHeader>
       <CardContent>
-        {/* Horizontal approval steps */}
+        {/* Horizontal approval steps - evenly spaced */}
         <TooltipProvider>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center">
             {approvalChain.map((step, index) => {
               const isLast = index === approvalChain.length - 1;
               const isCurrent = step.status === 'PENDING' &&
@@ -178,7 +178,7 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, className 
               const styles = getStepStyles(step.status, isCurrent);
 
               return (
-                <div key={step.id} className="flex items-center">
+                <div key={step.id} className={cn('flex items-center', !isLast && 'flex-1')}>
                   {/* Step card */}
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -232,12 +232,12 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, className 
                     </TooltipContent>
                   </Tooltip>
 
-                  {/* Connector arrow */}
+                  {/* Connector line - fills remaining space */}
                   {!isLast && (
-                    <div className="flex items-center px-1">
-                      <div className={cn('h-0.5 w-3', getConnectorColor(step.status))} />
+                    <div className="flex-1 flex items-center px-2">
+                      <div className={cn('h-0.5 flex-1', getConnectorColor(step.status))} />
                       <ChevronRight className={cn(
-                        'h-4 w-4 -ml-1',
+                        'h-4 w-4 -ml-1 flex-shrink-0',
                         step.status === 'APPROVED' ? 'text-emerald-400' :
                         step.status === 'REJECTED' ? 'text-red-400' :
                         step.status === 'SKIPPED' ? 'text-amber-400' :
