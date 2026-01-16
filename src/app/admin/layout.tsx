@@ -96,6 +96,19 @@ export default async function AdminLayout({
                          session?.user?.hasHRAccess ||
                          session?.user?.hasOperationsAccess ||
                          session?.user?.canApprove; // Managers can access for approvals
+
+  // DEBUG: Log session permissions
+  console.log('[AdminLayout] Session permissions:', {
+    email: session?.user?.email,
+    isOwner: session?.user?.isOwner,
+    isAdmin: session?.user?.isAdmin,
+    hasFinanceAccess: session?.user?.hasFinanceAccess,
+    hasHRAccess: session?.user?.hasHRAccess,
+    hasOperationsAccess: session?.user?.hasOperationsAccess,
+    canApprove: session?.user?.canApprove,
+    hasAdminAccess,
+  });
+
   if (!hasAdminAccess && !devAuthEnabled) {
     redirect('/employee');
   }
