@@ -257,8 +257,18 @@ async function deleteUserHandler(
       isOwner: true,
       _count: {
         select: {
-          assets: true,
-          subscriptions: true,
+          // Only count active assets (IN_USE status means assigned and in use)
+          assets: {
+            where: {
+              status: { in: ['IN_USE', 'REPAIR'] },
+            },
+          },
+          // Only count active subscriptions (not cancelled)
+          subscriptions: {
+            where: {
+              status: 'ACTIVE',
+            },
+          },
         },
       },
     },
@@ -279,14 +289,15 @@ async function deleteUserHandler(
     );
   }
 
-  // Check if user has assigned items in this tenant
+  // Check if user has active assigned items in this tenant
   if (teamMember._count.assets > 0 || teamMember._count.subscriptions > 0) {
     return NextResponse.json(
       {
-        error: 'Cannot delete user with assigned assets or subscriptions',
+        error: 'Cannot delete user with active assets or subscriptions',
         details: {
-          assignedAssets: teamMember._count.assets,
-          assignedSubscriptions: teamMember._count.subscriptions
+          activeAssets: teamMember._count.assets,
+          activeSubscriptions: teamMember._count.subscriptions,
+          hint: 'Unassign or cancel these items before deleting the employee'
         }
       },
       { status: 409 }
