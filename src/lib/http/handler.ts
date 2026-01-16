@@ -316,9 +316,13 @@ export function withErrorHandler(
           return response;
         }
 
-        // Check for approval capability (isAdmin or canApprove flag)
+        // Check for approval capability (isAdmin, canApprove, or department access flags)
+        // Users with HR/Finance/Operations access can approve requests in their domain
         if (options.requireCanApprove) {
-          const canApproveRequests = session.user.isAdmin || session.user.canApprove;
+          const canApproveRequests = session.user.isAdmin ||
+            session.user.canApprove ||
+            session.user.hasHRAccess ||
+            session.user.hasFinanceAccess;
 
           if (!canApproveRequests) {
             const response = errorResponse('Forbidden', 403, {
