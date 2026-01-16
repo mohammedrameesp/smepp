@@ -33,6 +33,7 @@ import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
 import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings, LocationsSettings, ExchangeRateSettings, PayrollSettings, LeaveTypesSettings } from '@/features/settings/components';
 import { CurrencySelector } from '@/components/currency-selector';
+import { ApprovalWorkflowDisplay } from '@/features/approvals/components';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
 
 // Types
@@ -829,30 +830,7 @@ export function OrganizationTabs({
             {/* Approvals Sub-Tab */}
             <TabsContent value="approvals" className="space-y-6 mt-6">
               {(enabledModules.includes('leave') || enabledModules.includes('assets') || enabledModules.includes('purchase-requests')) ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <GitBranch className="h-5 w-5" />
-                      Approval Policies
-                    </CardTitle>
-                    <CardDescription>
-                      Configure multi-level approval chains for leave, purchase, and asset requests
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Define approval workflows based on request type, amount thresholds, or leave duration.
-                      Requests matching a policy will follow the defined approval chain instead of going to all admins.
-                    </p>
-                    <div className="flex gap-2">
-                      <Button asChild>
-                        <a href="/admin/settings/approvals">
-                          Manage Approval Policies
-                        </a>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ApprovalWorkflowDisplay enabledModules={enabledModules} />
               ) : (
                 <ModuleRequiredPlaceholder
                   moduleName="Leave, Assets, or Purchase Requests"
