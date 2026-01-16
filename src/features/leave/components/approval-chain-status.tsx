@@ -46,6 +46,7 @@ interface ApprovalSummary {
   completedSteps: number;
   currentStep: number | null;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_STARTED';
+  canCurrentUserApprove?: boolean;
 }
 
 interface ApprovalChainStatusProps {
@@ -148,6 +149,7 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, className 
   }
 
   const overallStatus = approvalSummary?.status || 'PENDING';
+  const canCurrentUserApprove = approvalSummary?.canCurrentUserApprove || false;
 
   return (
     <Card className={className}>
@@ -177,6 +179,13 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, className 
                 !approvalChain.slice(0, index).some(s => s.status === 'PENDING');
               const styles = getStepStyles(step.status, isCurrent);
 
+              // Determine the label to show for the current step
+              const getCurrentStepLabel = () => {
+                if (!isCurrent) return getStatusLabel(step.status);
+                if (canCurrentUserApprove) return 'You';
+                return 'Current';
+              };
+
               return (
                 <div key={step.id} className={cn('flex items-center', !isLast && 'flex-1')}>
                   {/* Step card */}
@@ -199,7 +208,7 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, className 
                             'text-[10px] leading-tight',
                             isCurrent ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-muted-foreground'
                           )}>
-                            {isCurrent ? 'Current' : getStatusLabel(step.status)}
+                            {getCurrentStepLabel()}
                           </span>
                         </div>
                       </div>

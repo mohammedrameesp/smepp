@@ -226,6 +226,7 @@ export interface ApprovalSummary {
   completedSteps: number;
   currentStep: number | null;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_STARTED';
+  canCurrentUserApprove?: boolean;
 }
 
 export interface LeaveApprovalActionsProps {

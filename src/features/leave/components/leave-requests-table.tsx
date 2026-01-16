@@ -39,6 +39,7 @@ interface ApprovalSummaryInfo {
   } | null;
   totalSteps: number;
   completedSteps: number;
+  canCurrentUserApprove?: boolean;
 }
 
 interface LeaveRequest {
@@ -68,7 +69,8 @@ interface LeaveRequest {
 }
 
 /**
- * Get detailed status text for pending requests showing current approval level
+ * Get detailed status text for pending requests showing current approval level.
+ * Shows "(You)" when the current user can approve the pending step.
  */
 function getDetailedStatusText(request: LeaveRequest): string {
   if (request.status !== 'PENDING') {
@@ -80,13 +82,14 @@ function getDetailedStatusText(request: LeaveRequest): string {
     return 'PENDING';
   }
 
-  const roleName = ROLE_DISPLAY_NAMES[summary.currentStep.requiredRole] || summary.currentStep.requiredRole;
   const levelLabel = `L${summary.currentStep.levelOrder}`;
 
-  if (summary.completedSteps > 0) {
-    return `Pending ${levelLabel} (${roleName})`;
+  // Show "(You)" if the current user can approve this step
+  if (summary.canCurrentUserApprove) {
+    return `Pending ${levelLabel} (You)`;
   }
 
+  const roleName = ROLE_DISPLAY_NAMES[summary.currentStep.requiredRole] || summary.currentStep.requiredRole;
   return `Pending ${levelLabel} (${roleName})`;
 }
 

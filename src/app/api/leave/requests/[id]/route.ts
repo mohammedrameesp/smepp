@@ -112,6 +112,50 @@ async function getLeaveRequestHandler(request: NextRequest, context: APIContext)
     if (chainExists) {
       approvalChain = await getApprovalChain('LEAVE_REQUEST', id);
       approvalSummary = await getApprovalChainSummary('LEAVE_REQUEST', id);
+
+      // Add canCurrentUserApprove flag
+      if (approvalSummary?.status === 'PENDING' && approvalChain && approvalChain.length > 0) {
+        const currentStep = approvalChain.find(step => step.status === 'PENDING');
+        if (currentStep) {
+          // Get current user's approval capabilities
+          const currentUserId = tenant.userId;
+          const currentUserIsAdmin = !!(tenant.isAdmin || tenant.isOwner);
+          const currentUserHasHRAccess = !!tenant.hasHRAccess;
+          const currentUserHasFinanceAccess = !!tenant.hasFinanceAccess;
+
+          // Determine if current user can approve
+          let canCurrentUserApprove = false;
+          if (currentUserIsAdmin) {
+            canCurrentUserApprove = true;
+          } else {
+            switch (currentStep.requiredRole) {
+              case 'MANAGER': {
+                // Check if current user is the requester's manager
+                const directReports = await db.teamMember.findMany({
+                  where: { reportingToId: currentUserId },
+                  select: { id: true },
+                });
+                canCurrentUserApprove = directReports.some(r => r.id === leaveRequest.memberId);
+                break;
+              }
+              case 'HR_MANAGER':
+                canCurrentUserApprove = currentUserHasHRAccess;
+                break;
+              case 'FINANCE_MANAGER':
+                canCurrentUserApprove = currentUserHasFinanceAccess;
+                break;
+              case 'DIRECTOR':
+                canCurrentUserApprove = false; // Only admins can approve, handled above
+                break;
+            }
+          }
+
+          approvalSummary = {
+            ...approvalSummary,
+            canCurrentUserApprove,
+          };
+        }
+      }
     }
 
     return NextResponse.json({

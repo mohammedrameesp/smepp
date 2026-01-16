@@ -166,7 +166,7 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
       .filter(r => r.status === 'PENDING')
       .map(r => r.id);
 
-    let approvalStepsMap: Record<string, { currentStep: { levelOrder: number; requiredRole: string } | null; totalSteps: number; completedSteps: number }> = {};
+    let approvalStepsMap: Record<string, { currentStep: { levelOrder: number; requiredRole: string } | null; totalSteps: number; completedSteps: number; canCurrentUserApprove: boolean }> = {};
 
     if (pendingRequestIds.length > 0) {
       // Batch fetch all approval steps for pending requests
@@ -178,16 +178,55 @@ async function getLeaveRequestsHandler(request: NextRequest, context: APIContext
         orderBy: { levelOrder: 'asc' },
       });
 
+      // Get current user's approval capabilities
+      const currentUserId = tenant.userId;
+      const currentUserIsAdmin = !!(tenant.isAdmin || tenant.isOwner);
+      const currentUserHasHRAccess = !!tenant.hasHRAccess;
+      const currentUserHasFinanceAccess = !!tenant.hasFinanceAccess;
+
+      // Get the list of team members who report to the current user (for MANAGER role check)
+      const directReports = await db.teamMember.findMany({
+        where: { reportingToId: currentUserId },
+        select: { id: true },
+      });
+      const directReportIds = new Set(directReports.map(r => r.id));
+
+      // Helper function to check if current user can approve a step
+      const canUserApproveStep = (step: { requiredRole: string }, requesterId: string): boolean => {
+        // Admins can approve anything
+        if (currentUserIsAdmin) return true;
+
+        switch (step.requiredRole) {
+          case 'MANAGER':
+            // User must be the requester's direct manager
+            return directReportIds.has(requesterId);
+          case 'HR_MANAGER':
+            return currentUserHasHRAccess;
+          case 'FINANCE_MANAGER':
+            return currentUserHasFinanceAccess;
+          case 'DIRECTOR':
+            // Only admins can approve (already handled above)
+            return false;
+          default:
+            return false;
+        }
+      };
+
+      // Create a map of request IDs to requester member IDs
+      const requestMemberMap = new Map(requests.map(r => [r.id, r.member?.id || '']));
+
       // Group steps by entityId and calculate summary
       for (const requestId of pendingRequestIds) {
         const steps = allSteps.filter(s => s.entityId === requestId);
         if (steps.length > 0) {
           const currentPending = steps.find(s => s.status === 'PENDING');
           const completedSteps = steps.filter(s => s.status === 'APPROVED' || s.status === 'SKIPPED').length;
+          const requesterId = requestMemberMap.get(requestId) || '';
           approvalStepsMap[requestId] = {
             currentStep: currentPending ? { levelOrder: currentPending.levelOrder, requiredRole: currentPending.requiredRole } : null,
             totalSteps: steps.length,
             completedSteps,
+            canCurrentUserApprove: currentPending ? canUserApproveStep(currentPending, requesterId) : false,
           };
         }
       }

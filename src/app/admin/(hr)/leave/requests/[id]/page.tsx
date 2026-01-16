@@ -92,6 +92,7 @@ interface LeaveRequest {
     completedSteps: number;
     currentStep: number | null;
     status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_STARTED';
+    canCurrentUserApprove?: boolean;
   } | null;
 }
 
