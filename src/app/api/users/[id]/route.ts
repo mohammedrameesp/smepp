@@ -305,9 +305,9 @@ async function deleteUserHandler(
   }
 
   const now = new Date();
-  const scheduledDeletionAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+  const scheduledDeletionAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
 
-  // Soft-delete team member (7-day recovery period before permanent deletion)
+  // Soft-delete team member (30-day recovery period before permanent deletion)
   await db.teamMember.update({
     where: { id },
     data: {
@@ -336,7 +336,7 @@ async function deleteUserHandler(
 
   return NextResponse.json({
     message: 'Employee scheduled for deletion',
-    details: 'The employee has been deactivated and will be permanently deleted in 7 days. You can restore them during this period.',
+    details: 'The employee has been deactivated and will be permanently deleted in 30 days. You can restore them during this period.',
     user: {
       id: teamMember.id,
       name: teamMember.name,
