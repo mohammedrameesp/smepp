@@ -113,15 +113,15 @@ export default async function AdminTeamPage() {
                 </span>
               )}
             </PageHeaderButton>
-            <PageHeaderButton href="/admin/employees/deleted" variant="secondary">
-              <Trash2 className="h-4 w-4" />
-              Deleted
-              {deletedEmployeesCount > 0 && (
+            {deletedEmployeesCount > 0 && (
+              <PageHeaderButton href="/admin/employees/deleted" variant="secondary">
+                <Trash2 className="h-4 w-4" />
+                Deleted
                 <span className="bg-slate-500 text-white text-xs px-1.5 py-0.5 rounded-full">
                   {deletedEmployeesCount}
                 </span>
-              )}
-            </PageHeaderButton>
+              </PageHeaderButton>
+            )}
           </>
         }
       >
