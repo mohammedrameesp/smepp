@@ -203,6 +203,14 @@ async function updateUserHandler(
     data: updateData,
   });
 
+  // Auto-enable canApprove for the manager when someone reports to them
+  if (validation.data.reportingToId && validation.data.reportingToId !== existingMember.reportingToId) {
+    await db.teamMember.update({
+      where: { id: validation.data.reportingToId },
+      data: { canApprove: true },
+    });
+  }
+
   // Log activity
   await logAction(
     tenantId,
