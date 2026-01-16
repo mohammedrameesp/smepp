@@ -12,10 +12,9 @@ import {
   getDateRangeText,
   formatLeaveDays,
   getRequestTypeText,
-  canCancelLeaveRequest,
   getAnnualLeaveDetails,
 } from '@/features/leave/lib/leave-utils';
-import { LeaveApprovalActions, LeaveRequestHistory, CancelLeaveDialog } from '@/features/leave/components';
+import { LeaveApprovalActions, LeaveRequestHistory } from '@/features/leave/components';
 import { ApprovalChainStatus } from '@/features/leave/components/approval-chain-status';
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 
@@ -220,8 +219,6 @@ export default function AdminLeaveRequestDetailPage() {
     );
   }
 
-  const canCancel = canCancelLeaveRequest(request.status, new Date(request.startDate));
-
   return (
     <>
       <PageHeader
@@ -241,26 +238,16 @@ export default function AdminLeaveRequestDetailPage() {
           variant: getStatusBadgeVariant(request.status),
         }}
         actions={
-          <div className="flex gap-2">
-            {/* Show approval buttons only when status is PENDING and user can approve */}
-            {request.status === 'PENDING' && request.approvalSummary?.canCurrentUserApprove && (
-              <LeaveApprovalActions
-                requestId={request.id}
-                onApproved={fetchRequest}
-                onRejected={fetchRequest}
-                approvalChain={request.approvalChain || null}
-                approvalSummary={request.approvalSummary || null}
-              />
-            )}
-            {/* Show cancel button only when request is APPROVED (not during pending approval) */}
-            {canCancel && request.status === 'APPROVED' && (
-              <CancelLeaveDialog
-                requestId={request.id}
-                requestNumber={request.requestNumber}
-                onCancelled={fetchRequest}
-              />
-            )}
-          </div>
+          /* Show approval buttons only when status is PENDING and user can approve */
+          request.status === 'PENDING' && request.approvalSummary?.canCurrentUserApprove ? (
+            <LeaveApprovalActions
+              requestId={request.id}
+              onApproved={fetchRequest}
+              onRejected={fetchRequest}
+              approvalChain={request.approvalChain || null}
+              approvalSummary={request.approvalSummary || null}
+            />
+          ) : undefined
         }
       />
 
