@@ -1,15 +1,21 @@
 /**
  * @file approval-chain-status.tsx
- * @description Visual approval chain timeline component showing multi-level approval progress.
+ * @description Horizontal approval chain stepper component showing multi-level approval progress.
  *              Displays each approval level with status, approver info, and timing.
  * @module components/domains/hr
  */
 'use client';
 
-import { CheckCircle2, Clock, XCircle, SkipForward, User } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle, SkipForward, User, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // Role display names mapping
 const ROLE_DISPLAY_NAMES: Record<string, string> = {
@@ -48,31 +54,67 @@ interface ApprovalChainStatusProps {
   className?: string;
 }
 
-function getStatusIcon(status: ApprovalStep['status']) {
+function getStatusIcon(status: ApprovalStep['status'], size: 'sm' | 'md' = 'md') {
+  const sizeClass = size === 'sm' ? 'h-4 w-4' : 'h-5 w-5';
   switch (status) {
     case 'APPROVED':
-      return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
+      return <CheckCircle2 className={cn(sizeClass, 'text-emerald-500')} />;
     case 'REJECTED':
-      return <XCircle className="h-5 w-5 text-red-500" />;
+      return <XCircle className={cn(sizeClass, 'text-red-500')} />;
     case 'SKIPPED':
-      return <SkipForward className="h-5 w-5 text-amber-500" />;
+      return <SkipForward className={cn(sizeClass, 'text-amber-500')} />;
     case 'PENDING':
     default:
-      return <Clock className="h-5 w-5 text-slate-400" />;
+      return <Clock className={cn(sizeClass, 'text-slate-400')} />;
   }
 }
 
-function getStatusBadge(status: ApprovalStep['status']) {
+function getStepStyles(status: ApprovalStep['status'], isCurrent: boolean) {
+  if (isCurrent) {
+    return {
+      bg: 'bg-blue-50 dark:bg-blue-950',
+      border: 'border-blue-300 dark:border-blue-700',
+      ring: 'ring-2 ring-blue-400 ring-offset-2',
+    };
+  }
   switch (status) {
     case 'APPROVED':
-      return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Approved</Badge>;
+      return {
+        bg: 'bg-emerald-50 dark:bg-emerald-950',
+        border: 'border-emerald-300 dark:border-emerald-700',
+        ring: '',
+      };
     case 'REJECTED':
-      return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejected</Badge>;
+      return {
+        bg: 'bg-red-50 dark:bg-red-950',
+        border: 'border-red-300 dark:border-red-700',
+        ring: '',
+      };
     case 'SKIPPED':
-      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Skipped</Badge>;
-    case 'PENDING':
+      return {
+        bg: 'bg-amber-50 dark:bg-amber-950',
+        border: 'border-amber-300 dark:border-amber-700',
+        ring: '',
+      };
     default:
-      return <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200">Pending</Badge>;
+      return {
+        bg: 'bg-slate-50 dark:bg-slate-900',
+        border: 'border-slate-200 dark:border-slate-700',
+        ring: '',
+      };
+  }
+}
+
+function getConnectorColor(status: ApprovalStep['status']) {
+  switch (status) {
+    case 'APPROVED':
+      return 'bg-emerald-300 dark:bg-emerald-600';
+    case 'REJECTED':
+      return 'bg-red-300 dark:bg-red-600';
+    case 'SKIPPED':
+      return 'bg-amber-300 dark:bg-amber-600';
+    default:
+      return 'bg-slate-200 dark:bg-slate-700';
   }
 }
 
@@ -85,6 +127,19 @@ function formatDate(dateString: string | null) {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function getStatusLabel(status: ApprovalStep['status']) {
+  switch (status) {
+    case 'APPROVED':
+      return 'Approved';
+    case 'REJECTED':
+      return 'Rejected';
+    case 'SKIPPED':
+      return 'Skipped';
+    default:
+      return 'Pending';
+  }
 }
 
 export function ApprovalChainStatus({ approvalChain, approvalSummary, className }: ApprovalChainStatusProps) {
@@ -101,7 +156,7 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, className 
           <CardTitle className="text-base font-medium">Approval Progress</CardTitle>
           {approvalSummary && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>{approvalSummary.completedSteps} of {approvalSummary.totalSteps} completed</span>
+              <span>{approvalSummary.completedSteps} of {approvalSummary.totalSteps}</span>
               {overallStatus === 'APPROVED' && (
                 <Badge className="bg-emerald-500 hover:bg-emerald-600">Approved</Badge>
               )}
@@ -113,100 +168,88 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, className 
         </div>
       </CardHeader>
       <CardContent>
-        {/* Progress bar */}
-        {approvalSummary && (
-          <div className="mb-4">
-            <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-              <div
-                className={cn(
-                  "h-full transition-all duration-500 rounded-full",
-                  overallStatus === 'REJECTED' ? "bg-red-500" : "bg-emerald-500"
-                )}
-                style={{
-                  width: `${(approvalSummary.completedSteps / approvalSummary.totalSteps) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
-        )}
+        {/* Horizontal approval steps */}
+        <TooltipProvider>
+          <div className="flex items-center gap-1">
+            {approvalChain.map((step, index) => {
+              const isLast = index === approvalChain.length - 1;
+              const isCurrent = step.status === 'PENDING' &&
+                !approvalChain.slice(0, index).some(s => s.status === 'PENDING');
+              const styles = getStepStyles(step.status, isCurrent);
 
-        {/* Approval steps timeline */}
-        <div className="relative">
-          {approvalChain.map((step, index) => {
-            const isLast = index === approvalChain.length - 1;
-            const isCurrent = step.status === 'PENDING' &&
-              !approvalChain.slice(0, index).some(s => s.status === 'PENDING');
-
-            return (
-              <div key={step.id} className="relative flex gap-4">
-                {/* Timeline connector line */}
-                {!isLast && (
-                  <div
-                    className={cn(
-                      "absolute left-[10px] top-[28px] w-0.5 h-[calc(100%-8px)]",
-                      step.status === 'APPROVED' ? "bg-emerald-200" :
-                      step.status === 'REJECTED' ? "bg-red-200" :
-                      step.status === 'SKIPPED' ? "bg-amber-200" :
-                      "bg-slate-200 dark:bg-slate-700"
-                    )}
-                  />
-                )}
-
-                {/* Status icon */}
-                <div className={cn(
-                  "relative z-10 flex-shrink-0 w-5 h-5 mt-0.5 rounded-full flex items-center justify-center",
-                  isCurrent && "ring-2 ring-blue-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900"
-                )}>
-                  {getStatusIcon(step.status)}
-                </div>
-
-                {/* Step content */}
-                <div className={cn("flex-1 pb-6", isLast && "pb-0")}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm">
+              return (
+                <div key={step.id} className="flex items-center">
+                  {/* Step card */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        className={cn(
+                          'flex items-center gap-2 px-3 py-2 rounded-lg border cursor-default transition-all',
+                          styles.bg,
+                          styles.border,
+                          styles.ring
+                        )}
+                      >
+                        {getStatusIcon(step.status, 'sm')}
+                        <div className="flex flex-col">
+                          <span className="text-xs font-medium leading-tight">
+                            {ROLE_DISPLAY_NAMES[step.requiredRole] || step.requiredRole}
+                          </span>
+                          <span className={cn(
+                            'text-[10px] leading-tight',
+                            isCurrent ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-muted-foreground'
+                          )}>
+                            {isCurrent ? 'Current' : getStatusLabel(step.status)}
+                          </span>
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-xs">
+                      <div className="space-y-1">
+                        <p className="font-medium">
                           Level {step.levelOrder}: {ROLE_DISPLAY_NAMES[step.requiredRole] || step.requiredRole}
-                        </span>
-                        {isCurrent && (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
-                            Current
-                          </Badge>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Status: {getStatusLabel(step.status)}
+                        </p>
+                        {step.approver && (
+                          <div className="flex items-center gap-1 text-xs">
+                            <User className="h-3 w-3" />
+                            <span>{step.approver.name || step.approver.email}</span>
+                          </div>
+                        )}
+                        {step.actionAt && (
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(step.actionAt)}
+                          </p>
+                        )}
+                        {step.notes && (
+                          <p className="text-xs italic border-t pt-1 mt-1">
+                            &ldquo;{step.notes}&rdquo;
+                          </p>
                         )}
                       </div>
+                    </TooltipContent>
+                  </Tooltip>
 
-                      {/* Approver info */}
-                      {step.approver && (
-                        <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
-                          <User className="h-3.5 w-3.5" />
-                          <span>{step.approver.name || step.approver.email}</span>
-                          {step.actionAt && (
-                            <>
-                              <span className="mx-1">-</span>
-                              <span>{formatDate(step.actionAt)}</span>
-                            </>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Notes */}
-                      {step.notes && (
-                        <p className="mt-1.5 text-sm text-muted-foreground bg-slate-50 dark:bg-slate-800 rounded px-2 py-1.5">
-                          {step.notes}
-                        </p>
-                      )}
+                  {/* Connector arrow */}
+                  {!isLast && (
+                    <div className="flex items-center px-1">
+                      <div className={cn('h-0.5 w-3', getConnectorColor(step.status))} />
+                      <ChevronRight className={cn(
+                        'h-4 w-4 -ml-1',
+                        step.status === 'APPROVED' ? 'text-emerald-400' :
+                        step.status === 'REJECTED' ? 'text-red-400' :
+                        step.status === 'SKIPPED' ? 'text-amber-400' :
+                        'text-slate-300 dark:text-slate-600'
+                      )} />
                     </div>
-
-                    {/* Status badge */}
-                    <div className="flex-shrink-0">
-                      {getStatusBadge(step.status)}
-                    </div>
-                  </div>
+                  )}
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </TooltipProvider>
       </CardContent>
     </Card>
   );
