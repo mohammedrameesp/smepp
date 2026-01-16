@@ -329,6 +329,7 @@ export default function AdminLeaveRequestDetailPage() {
             <ApprovalChainStatus
               approvalChain={request.approvalChain}
               approvalSummary={request.approvalSummary || null}
+              submittedAt={request.createdAt}
             />
           )}
 

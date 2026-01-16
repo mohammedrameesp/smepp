@@ -288,6 +288,7 @@ export default function EmployeeLeaveRequestDetailPage() {
             <ApprovalChainStatus
               approvalChain={request.approvalChain}
               approvalSummary={request.approvalSummary || null}
+              submittedAt={request.createdAt}
             />
           </div>
         )}

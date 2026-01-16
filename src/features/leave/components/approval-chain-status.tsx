@@ -6,7 +6,7 @@
  */
 'use client';
 
-import { CheckCircle2, Clock, XCircle, SkipForward, User, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle, SkipForward, User, ChevronRight, Send } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +52,7 @@ interface ApprovalSummary {
 interface ApprovalChainStatusProps {
   approvalChain: ApprovalStep[] | null;
   approvalSummary: ApprovalSummary | null;
+  submittedAt?: string | null;
   className?: string;
 }
 
@@ -130,6 +131,15 @@ function formatDate(dateString: string | null) {
   });
 }
 
+function formatShortDate(dateString: string | null) {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
 function getStatusLabel(status: ApprovalStep['status']) {
   switch (status) {
     case 'APPROVED':
@@ -143,7 +153,7 @@ function getStatusLabel(status: ApprovalStep['status']) {
   }
 }
 
-export function ApprovalChainStatus({ approvalChain, approvalSummary, className }: ApprovalChainStatusProps) {
+export function ApprovalChainStatus({ approvalChain, approvalSummary, submittedAt, className }: ApprovalChainStatusProps) {
   if (!approvalChain || approvalChain.length === 0) {
     return null;
   }
@@ -173,6 +183,46 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, className 
         {/* Horizontal approval steps - evenly spaced */}
         <TooltipProvider>
           <div className="flex items-center">
+            {/* Submitted step */}
+            <div className="flex items-center flex-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-2 rounded-lg border cursor-default transition-all',
+                      'bg-emerald-50 dark:bg-emerald-950',
+                      'border-emerald-300 dark:border-emerald-700'
+                    )}
+                  >
+                    <Send className="h-4 w-4 text-emerald-500" />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-medium leading-tight">Submitted</span>
+                      <span className="text-[10px] leading-tight text-muted-foreground">
+                        {formatShortDate(submittedAt ?? null) || 'Done'}
+                      </span>
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs">
+                  <div className="space-y-1">
+                    <p className="font-medium">Request Submitted</p>
+                    {submittedAt && (
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(submittedAt ?? null)}
+                      </p>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Connector from submitted to first approval */}
+              <div className="flex-1 flex items-center px-2">
+                <div className="h-0.5 flex-1 bg-emerald-300 dark:bg-emerald-600" />
+                <ChevronRight className="h-4 w-4 -ml-1 flex-shrink-0 text-emerald-400" />
+              </div>
+            </div>
+
+            {/* Approval steps */}
             {approvalChain.map((step, index) => {
               const isLast = index === approvalChain.length - 1;
               const isCurrent = step.status === 'PENDING' &&
@@ -180,10 +230,15 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, className 
               const styles = getStepStyles(step.status, isCurrent);
 
               // Determine the label to show for the current step
-              const getCurrentStepLabel = () => {
-                if (!isCurrent) return getStatusLabel(step.status);
-                if (canCurrentUserApprove) return 'You';
-                return 'Current';
+              const getStepLabel = () => {
+                if (isCurrent) {
+                  return canCurrentUserApprove ? 'You' : 'Pending';
+                }
+                // For completed steps, show time if available
+                if (step.actionAt && (step.status === 'APPROVED' || step.status === 'REJECTED')) {
+                  return formatShortDate(step.actionAt);
+                }
+                return getStatusLabel(step.status);
               };
 
               return (
@@ -208,7 +263,7 @@ export function ApprovalChainStatus({ approvalChain, approvalSummary, className 
                             'text-[10px] leading-tight',
                             isCurrent ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-muted-foreground'
                           )}>
-                            {getCurrentStepLabel()}
+                            {getStepLabel()}
                           </span>
                         </div>
                       </div>
