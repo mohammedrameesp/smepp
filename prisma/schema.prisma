@@ -22,6 +22,7 @@ enum Role {
   MANAGER // First-level approver
   HR_MANAGER // HR approvals
   FINANCE_MANAGER // Finance/budget approvals
+  OPERATIONS_MANAGER // Operations/asset approvals
   DIRECTOR // High-value approvals
   ADMIN // Legacy - kept for backwards compatibility
 }

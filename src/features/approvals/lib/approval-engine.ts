@@ -174,6 +174,18 @@ async function hasApproverForRole(
       });
       return financeCount > 0;
 
+    case 'OPERATIONS_MANAGER':
+      // Check if anyone OTHER than the requester has Operations access
+      const operationsCount = await prisma.teamMember.count({
+        where: {
+          tenantId,
+          hasOperationsAccess: true,
+          isDeleted: false,
+          ...(requesterId && { id: { not: requesterId } }), // Exclude requester
+        },
+      });
+      return operationsCount > 0;
+
     case 'DIRECTOR':
       // First check if any admin (non-owner) OTHER than the requester exists
       const adminCount = await prisma.teamMember.count({
@@ -406,6 +418,12 @@ export async function canMemberApprove(
         return { canApprove: true };
       }
       return { canApprove: false, reason: 'Finance access required to approve this step' };
+
+    case 'OPERATIONS_MANAGER':
+      if (member.hasOperationsAccess) {
+        return { canApprove: true };
+      }
+      return { canApprove: false, reason: 'Operations access required to approve this step' };
 
     case 'DIRECTOR':
       // Only admins can approve director-level steps (already handled above)
@@ -690,6 +708,11 @@ export async function getPendingApprovalsForUser(
     approvableRoles.push('FINANCE_MANAGER');
   }
 
+  // Operations access can approve OPERATIONS_MANAGER steps
+  if (member.hasOperationsAccess) {
+    approvableRoles.push('OPERATIONS_MANAGER');
+  }
+
   // If no approvable roles, return empty
   if (approvableRoles.length === 0) {
     return [];
@@ -837,6 +860,13 @@ export async function getApproversForRole(
       // Get all team members with Finance access
       return prisma.teamMember.findMany({
         where: { tenantId, hasFinanceAccess: true, isDeleted: false },
+        select: { id: true, email: true, name: true },
+      });
+
+    case 'OPERATIONS_MANAGER':
+      // Get all team members with Operations access
+      return prisma.teamMember.findMany({
+        where: { tenantId, hasOperationsAccess: true, isDeleted: false },
         select: { id: true, email: true, name: true },
       });
 
