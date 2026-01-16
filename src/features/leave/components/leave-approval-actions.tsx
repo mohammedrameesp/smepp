@@ -63,6 +63,8 @@ export function LeaveApprovalActions({
   const currentPendingStep = getCurrentPendingStep(approvalChain);
   const completedStepsInfo = getCompletedStepsInfo(approvalChain);
   const remainingSteps = approvalChain?.filter(s => s.status === 'PENDING').length || 0;
+  // Check if user would be performing an override (approving at higher level than current)
+  const isUserOverride = approvalSummary?.isUserOverride ?? false;
 
   const approveAction = useSubmitAction({
     action: async () => approveLeaveRequest(requestId, approveNotes || undefined),
@@ -176,14 +178,14 @@ export function LeaveApprovalActions({
                 </div>
               )}
 
-              {/* Override warning - shown when higher level approves */}
-              {currentPendingStep && remainingSteps > 1 && (
+              {/* Override warning - only shown when user is at a higher level than current pending */}
+              {isUserOverride && (
                 <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-sm" role="alert">
                   <AlertTriangle className="h-4 w-4 text-amber-700 dark:text-amber-400 mt-0.5 flex-shrink-0" aria-hidden="true" />
                   <div className="text-amber-900 dark:text-amber-100">
                     <p className="font-medium">Upper-level override</p>
                     <p className="text-xs mt-0.5 text-amber-800 dark:text-amber-200">
-                      If you approve at a higher level, lower pending levels will be skipped.
+                      You are approving at a higher level. Lower pending levels will be skipped.
                       <strong className="block mt-1">Notes are required to explain the override.</strong>
                     </p>
                   </div>
@@ -200,17 +202,17 @@ export function LeaveApprovalActions({
 
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              Notes {hasMultiLevelApproval && remainingSteps > 1 ? <span className="text-red-500">*</span> : '(Optional)'}
+              Notes {isUserOverride ? <span className="text-red-500">*</span> : '(Optional)'}
             </label>
             <Textarea
-              placeholder={hasMultiLevelApproval && remainingSteps > 1
+              placeholder={isUserOverride
                 ? "Explain why you are overriding lower approval levels..."
                 : "Add any notes for the employee..."}
               value={approveNotes}
               onChange={(e) => setApproveNotes(e.target.value)}
-              required={!!(hasMultiLevelApproval && remainingSteps > 1)}
+              required={isUserOverride}
             />
-            {hasMultiLevelApproval && remainingSteps > 1 && (
+            {isUserOverride && (
               <p className="text-xs text-muted-foreground">
                 Required when approving at a higher level than the current pending step.
               </p>

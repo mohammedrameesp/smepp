@@ -227,6 +227,8 @@ export interface ApprovalSummary {
   currentStep: number | null;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_STARTED';
   canCurrentUserApprove?: boolean;
+  /** True if user would be approving at a higher level than the current pending step */
+  isUserOverride?: boolean;
 }
 
 export interface LeaveApprovalActionsProps {

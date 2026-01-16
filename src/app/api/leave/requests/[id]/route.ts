@@ -127,6 +127,8 @@ async function getLeaveRequestHandler(request: NextRequest, context: APIContext)
           // Note: Admins CAN approve any step (via bypass), but we only show "You" if they're
           // the natural approver for that step to avoid confusion
           let canCurrentUserApprove = false;
+          let userRoleLevelOrder = 0; // Track user's level in the chain
+
           switch (currentStep.requiredRole) {
             case 'MANAGER': {
               // Check if current user is the requester's manager
@@ -135,23 +137,49 @@ async function getLeaveRequestHandler(request: NextRequest, context: APIContext)
                 select: { id: true },
               });
               canCurrentUserApprove = directReports.some(r => r.id === leaveRequest.memberId);
+              if (canCurrentUserApprove) userRoleLevelOrder = currentStep.levelOrder;
               break;
             }
             case 'HR_MANAGER':
               canCurrentUserApprove = currentUserHasHRAccess;
+              if (canCurrentUserApprove) userRoleLevelOrder = currentStep.levelOrder;
               break;
             case 'FINANCE_MANAGER':
               canCurrentUserApprove = currentUserHasFinanceAccess;
+              if (canCurrentUserApprove) userRoleLevelOrder = currentStep.levelOrder;
               break;
             case 'DIRECTOR':
               // Only admins can approve director-level steps
               canCurrentUserApprove = currentUserIsAdmin;
+              if (canCurrentUserApprove) userRoleLevelOrder = currentStep.levelOrder;
               break;
+          }
+
+          // Check if user would be performing an override (approving at higher level than current)
+          // Find the user's step in the chain based on their role/capabilities
+          let isUserOverride = false;
+          if (currentUserIsAdmin) {
+            // Admins can approve any step - check if they're at DIRECTOR level in the chain
+            const directorStep = approvalChain.find(s => s.requiredRole === 'DIRECTOR');
+            if (directorStep && directorStep.levelOrder > currentStep.levelOrder) {
+              isUserOverride = true;
+            }
+          } else if (currentUserHasHRAccess) {
+            const hrStep = approvalChain.find(s => s.requiredRole === 'HR_MANAGER');
+            if (hrStep && hrStep.levelOrder > currentStep.levelOrder) {
+              isUserOverride = true;
+            }
+          } else if (currentUserHasFinanceAccess) {
+            const financeStep = approvalChain.find(s => s.requiredRole === 'FINANCE_MANAGER');
+            if (financeStep && financeStep.levelOrder > currentStep.levelOrder) {
+              isUserOverride = true;
+            }
           }
 
           approvalSummary = {
             ...approvalSummary,
             canCurrentUserApprove,
+            isUserOverride,
           };
         }
       }
