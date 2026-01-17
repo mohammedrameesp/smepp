@@ -121,7 +121,23 @@ export default async function AdminLayout({
   }));
 
   if (!hasAdminAccess && !devAuthEnabled) {
-    redirect('/employee');
+    // TEMP DEBUG: Show error instead of redirect to verify layout is running
+    return (
+      <html>
+        <body>
+          <div style={{ padding: '2rem', fontFamily: 'monospace' }}>
+            <h1 style={{ color: 'red' }}>DEBUG: Would redirect to /employee</h1>
+            <p>Layout version: v3</p>
+            <pre>{JSON.stringify({
+              email: session?.user?.email,
+              canApprove: session?.user?.canApprove,
+              hasAdminAccess,
+            }, null, 2)}</pre>
+          </div>
+        </body>
+      </html>
+    );
+    // redirect('/employee');
   }
 
   // SEC-CRIT-1: Enforce view-mode cookie for admins who switched to employee view
