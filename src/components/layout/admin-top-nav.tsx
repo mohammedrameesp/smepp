@@ -300,7 +300,6 @@ export function AdminTopNav({
                     <div className="px-2 py-2">
                       <p className="font-medium text-slate-900 text-sm">{session?.user?.name || 'User'}</p>
                       <p className="text-xs text-slate-500">{session?.user?.email}</p>
-                      <p className="text-xs text-purple-600 mt-1">Role: {canApprove ? 'Manager' : 'Member'}</p>
                       <AccessRoleBadge
                         isAdmin={isAdmin}
                         hasHRAccess={hasHRAccess}

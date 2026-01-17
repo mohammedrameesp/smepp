@@ -1,10 +1,15 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
+import { unstable_noStore as noStore } from 'next/cache';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { AdminLayoutClient } from './layout-client';
 import type { Metadata } from 'next';
+
+// Force dynamic rendering to prevent caching issues
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 // Dynamic page titles with organization name
 export async function generateMetadata(): Promise<Metadata> {
@@ -77,6 +82,9 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Prevent any caching of this layout
+  noStore();
+
   const session = await getServerSession(authOptions);
 
   // PROD-003: Auth bypass only when DEV_AUTH_ENABLED is explicitly set
@@ -97,17 +105,20 @@ export default async function AdminLayout({
                          session?.user?.hasOperationsAccess ||
                          session?.user?.canApprove; // Managers can access for approvals
 
-  // DEBUG: Log session permissions
-  console.log('[AdminLayout] Session permissions:', {
+  // DEBUG: Log to Vercel function logs
+  console.log('[AdminLayout] Access check:', JSON.stringify({
     email: session?.user?.email,
     isOwner: session?.user?.isOwner,
     isAdmin: session?.user?.isAdmin,
+    isTeamMember: session?.user?.isTeamMember,
     hasFinanceAccess: session?.user?.hasFinanceAccess,
     hasHRAccess: session?.user?.hasHRAccess,
     hasOperationsAccess: session?.user?.hasOperationsAccess,
     canApprove: session?.user?.canApprove,
     hasAdminAccess,
-  });
+    devAuthEnabled,
+    willRedirect: !hasAdminAccess && !devAuthEnabled,
+  }));
 
   if (!hasAdminAccess && !devAuthEnabled) {
     redirect('/employee');
