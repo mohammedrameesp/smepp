@@ -712,6 +712,9 @@ export async function middleware(request: NextRequest) {
     response.headers.set('x-user-id', token.id as string);
     response.headers.set('x-user-role', token.role as string || '');
     response.headers.set('x-subscription-tier', token.subscriptionTier as string || 'FREE');
+    // DEBUG: Mark middleware allowed and show canApprove
+    response.headers.set('x-middleware-debug', 'subdomain-allowed-v3');
+    response.headers.set('x-debug-canapprove', String(token.canApprove || false));
     return response;
   }
 
