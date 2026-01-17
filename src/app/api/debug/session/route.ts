@@ -54,6 +54,6 @@ export async function GET() {
         'canApprove': session.user.canApprove,
       }
     },
-    deploymentCheck: 'v4-subdomain-debug',
+    timestamp: new Date().toISOString(),
   });
 }

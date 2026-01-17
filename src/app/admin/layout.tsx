@@ -105,21 +105,6 @@ export default async function AdminLayout({
                          session?.user?.hasOperationsAccess ||
                          session?.user?.canApprove; // Managers can access for approvals
 
-  // DEBUG: Log to Vercel function logs - VERSION 3
-  console.log('[AdminLayout] Access check v3:', JSON.stringify({
-    email: session?.user?.email,
-    isOwner: session?.user?.isOwner,
-    isAdmin: session?.user?.isAdmin,
-    isTeamMember: session?.user?.isTeamMember,
-    hasFinanceAccess: session?.user?.hasFinanceAccess,
-    hasHRAccess: session?.user?.hasHRAccess,
-    hasOperationsAccess: session?.user?.hasOperationsAccess,
-    canApprove: session?.user?.canApprove,
-    hasAdminAccess,
-    devAuthEnabled,
-    willRedirect: !hasAdminAccess && !devAuthEnabled,
-  }));
-
   if (!hasAdminAccess && !devAuthEnabled) {
     redirect('/employee');
   }
