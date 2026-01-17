@@ -105,8 +105,8 @@ export default async function AdminLayout({
                          session?.user?.hasOperationsAccess ||
                          session?.user?.canApprove; // Managers can access for approvals
 
-  // DEBUG: Log to Vercel function logs
-  console.log('[AdminLayout] Access check:', JSON.stringify({
+  // DEBUG: Log to Vercel function logs - VERSION 3
+  console.log('[AdminLayout] Access check v3:', JSON.stringify({
     email: session?.user?.email,
     isOwner: session?.user?.isOwner,
     isAdmin: session?.user?.isAdmin,

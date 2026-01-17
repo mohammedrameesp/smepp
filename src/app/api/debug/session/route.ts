@@ -54,6 +54,6 @@ export async function GET() {
         'canApprove': session.user.canApprove,
       }
     },
-    deploymentCheck: 'v2-with-canApprove-fix',
+    deploymentCheck: 'v3-caching-fix',
   });
 }
