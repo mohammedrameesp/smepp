@@ -45,9 +45,10 @@ export default async function AdminDashboard() {
   const hasFinanceAccess = session.user.hasFinanceAccess || false;
   const hasHRAccess = session.user.hasHRAccess || false;
   const hasOperationsAccess = session.user.hasOperationsAccess || false;
+  const canApprove = session.user.canApprove || false;
 
-  // Redirect if no admin access at all
-  const hasAnyAdminAccess = isAdmin || hasFinanceAccess || hasHRAccess || hasOperationsAccess;
+  // Redirect if no admin access at all (must match layout.tsx logic)
+  const hasAnyAdminAccess = isAdmin || hasFinanceAccess || hasHRAccess || hasOperationsAccess || canApprove;
   if (!hasAnyAdminAccess) {
     redirect('/employee');
   }
