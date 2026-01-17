@@ -14,7 +14,9 @@ export default async function AdminPurchaseRequestsPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && !session.user.isAdmin) {
+  // Allow access for admins OR users with Finance access
+  const hasAccess = session.user.isAdmin || session.user.hasFinanceAccess;
+  if (process.env.NODE_ENV !== 'development' && !hasAccess) {
     redirect('/forbidden');
   }
 

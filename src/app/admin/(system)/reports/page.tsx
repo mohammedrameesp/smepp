@@ -25,7 +25,13 @@ export default async function AdminReportsPage() {
     redirect('/login');
   }
 
-  if (process.env.NODE_ENV !== 'development' && !session.user.isAdmin) {
+  // Allow access for admins OR users with any department access
+  const hasAccess = session.user.isAdmin ||
+                    session.user.hasFinanceAccess ||
+                    session.user.hasHRAccess ||
+                    session.user.hasOperationsAccess ||
+                    session.user.canApprove;
+  if (process.env.NODE_ENV !== 'development' && !hasAccess) {
     redirect('/forbidden');
   }
 
