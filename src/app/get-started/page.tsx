@@ -391,11 +391,15 @@ export default function GetStartedPage() {
                     </div>
                     <span className="gs-subdomain-suffix">.{APP_DOMAIN.split(':')[0]}</span>
                   </div>
-                  {subdomainStatus && (
+                  {subdomainStatus ? (
                     <span className={`gs-field-hint ${subdomainStatus.available ? 'success' : 'error'}`}>
                       {subdomainStatus.available
                         ? 'This subdomain is available!'
                         : subdomainStatus.error || 'This subdomain is not available'}
+                    </span>
+                  ) : (
+                    <span className="gs-field-hint warning">
+                      Choose carefully — this cannot be changed later
                     </span>
                   )}
                 </div>
