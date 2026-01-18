@@ -8,6 +8,7 @@ interface TenantBrandedPanelProps {
   variant: 'super-admin' | 'tenant';
   welcomeTitleOverride?: string;
   welcomeSubtitleOverride?: string;
+  taglineOverride?: string;
 }
 
 // Inspiring quotes for the login page
@@ -28,7 +29,7 @@ function getDailyQuote() {
 /**
  * Branded left panel for login pages
  */
-export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleOverride, welcomeSubtitleOverride }: TenantBrandedPanelProps) {
+export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleOverride, welcomeSubtitleOverride, taglineOverride }: TenantBrandedPanelProps) {
   const quote = getDailyQuote();
 
   // Super admin panel - fixed Durj branding (main domain)
@@ -64,9 +65,16 @@ export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleO
               {superAdminTitle}
               {isTwoLineTitle && <><br /><span className="text-slate-400">More Clarity.</span></>}
             </h1>
-            <p className="text-lg text-slate-300 leading-relaxed">
-              {superAdminSubtitle}
-            </p>
+            {superAdminSubtitle && (
+              <p className="text-lg text-slate-300 leading-relaxed">
+                {superAdminSubtitle}
+              </p>
+            )}
+            {taglineOverride && (
+              <p className="text-base text-slate-400 mt-3 leading-relaxed">
+                {taglineOverride}
+              </p>
+            )}
           </div>
 
           {/* Quote at bottom */}
@@ -142,7 +150,14 @@ export function TenantBrandedPanel({ branding, isLoading, variant, welcomeTitleO
           )}
 
           <h2 className="text-4xl font-bold text-white mb-4">{welcomeTitle}</h2>
-          <p className="text-xl text-white/80">{welcomeSubtitle}</p>
+          {welcomeSubtitle && (
+            <p className="text-xl text-white/80">{welcomeSubtitle}</p>
+          )}
+          {taglineOverride && (
+            <p className="text-base text-white/60 mt-3 leading-relaxed">
+              {taglineOverride}
+            </p>
+          )}
         </div>
 
         {/* Quote at bottom */}

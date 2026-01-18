@@ -16,6 +16,8 @@ import {
   CheckCircle,
   ArrowRight,
   Shield,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { TenantBrandedPanel } from '@/components/auth/TenantBrandedPanel';
 import { useTenantBranding } from '@/hooks/use-tenant-branding';
@@ -70,6 +72,10 @@ function SignupForm() {
 
   // Password strength
   const [passwordStrength, setPasswordStrength] = useState(0);
+
+  // Show/hide password
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Fetch invitation details to get auth config
   useEffect(() => {
@@ -221,9 +227,9 @@ function SignupForm() {
       } else if (data.organization?.slug) {
         await new Promise(resolve => setTimeout(resolve, 500));
         const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
-        // Invited users go to admin (middleware will redirect to employee if needed)
-        // New org owners go to setup wizard
-        const redirectPath = inviteToken ? '/admin' : '/setup';
+        // Owners go to setup wizard, other team members go to admin
+        // (middleware will redirect non-admins to employee portal if needed)
+        const redirectPath = data.isOwner ? '/setup' : '/admin';
         window.location.href = `${window.location.protocol}//${data.organization.slug}.${appDomain}${redirectPath}`;
       } else if (inviteToken) {
         router.push(`/invite/${inviteToken}`);
@@ -284,8 +290,9 @@ function SignupForm() {
         branding={branding}
         isLoading={loadingInvite || brandingLoading}
         variant={subdomain ? 'tenant' : 'super-admin'}
-        welcomeTitleOverride="Welcome to Durj"
-        welcomeSubtitleOverride="Track assets, manage subscriptions, stay organized — effortlessly"
+        welcomeTitleOverride={`Welcome to Durj`}
+        welcomeSubtitleOverride={orgName !== 'Durj' ? `You're joining ${orgName}` : undefined}
+        taglineOverride="Designed to bring structure and insight to growing businesses"
       />
 
       {/* Right Panel - Form */}
@@ -515,16 +522,24 @@ function SignupForm() {
                   <Input
                     id="password"
                     name="password"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="Min. 8 characters"
                     value={formData.password}
                     onChange={handleChange}
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     required
                     minLength={8}
                     disabled={isLoading}
                     autoFocus={isInviteFlow}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
                 {formData.password && (
                   <div className="flex items-center gap-2">
@@ -555,16 +570,25 @@ function SignupForm() {
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Confirm your password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     required
                     disabled={isLoading}
                   />
-                  {formData.confirmPassword && formData.password === formData.confirmPassword && (
+                  {formData.confirmPassword && formData.password === formData.confirmPassword ? (
                     <CheckCircle className="absolute right-3 top-3 h-4 w-4 text-emerald-500" />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   )}
                 </div>
               </div>
@@ -586,7 +610,7 @@ function SignupForm() {
                   </>
                 ) : (
                   <>
-                    Create account & Join
+                    Complete Signup
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}

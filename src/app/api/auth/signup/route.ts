@@ -210,6 +210,9 @@ export async function POST(request: NextRequest) {
       };
     });
 
+    // Determine if user is owner (for redirect to setup wizard)
+    const isOwner = invitation?.role === 'OWNER';
+
     return NextResponse.json(
       {
         success: true,
@@ -228,6 +231,7 @@ export async function POST(request: NextRequest) {
               slug: userWithOrg.organization.slug,
             }
           : null,
+        isOwner,
       },
       { status: 201 }
     );
