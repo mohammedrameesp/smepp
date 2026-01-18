@@ -250,6 +250,19 @@ export async function PATCH(
         });
 
         logger.info({ orgId: id, oldEmail: invitation.email, newEmail: newOwnerEmail }, 'Updated pending owner invitation email');
+
+        // Trigger resend-invite to send email to the new address
+        try {
+          const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+          await fetch(`${baseUrl}/api/organizations/resend-invite`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: newOwnerEmail.toLowerCase() }),
+          });
+          logger.info({ email: newOwnerEmail, orgId: id }, 'Triggered resend-invite after owner email update');
+        } catch (emailError) {
+          logger.error({ error: emailError instanceof Error ? emailError.message : 'Unknown error' }, 'Failed to trigger resend-invite');
+        }
       }
     }
 
