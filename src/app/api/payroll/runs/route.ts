@@ -86,6 +86,7 @@ export const GET = withErrorHandler(
   {
     requireAuth: true,
     requireAdmin: true,
+    requireFinanceAccess: true,
     requireModule: 'payroll',
     rateLimit: true,
   }
@@ -235,6 +236,7 @@ export const POST = withErrorHandler(
   {
     requireAuth: true,
     requireAdmin: true,
+    requireFinanceAccess: true,
     requireModule: 'payroll',
     rateLimit: true,
   }

@@ -30,10 +30,8 @@ enum Role {
 // ═══════════════════════════════════════════════════════════════════════════════
 // TEAM MEMBER ENUMS
 // ═══════════════════════════════════════════════════════════════════════════════
-enum TeamMemberRole {
-  ADMIN // Full access to manage organization
-  MEMBER // Self-service only (own profile, leave, payslips)
-}
+// Note: TeamMemberRole enum was removed - replaced by boolean flags:
+// isAdmin, hasOperationsAccess, hasHRAccess, hasFinanceAccess, canApprove
 
 enum TeamMemberStatus {
   ACTIVE

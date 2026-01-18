@@ -545,4 +545,4 @@ async function createAssetHandler(request: NextRequest, context: APIContext) {
   }
 }
 
-export const POST = withErrorHandler(createAssetHandler, { requireAdmin: true, rateLimit: true, requireModule: 'assets' });
+export const POST = withErrorHandler(createAssetHandler, { requireAdmin: true, requireOperationsAccess: true, rateLimit: true, requireModule: 'assets' });

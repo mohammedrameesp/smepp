@@ -202,6 +202,7 @@ export const GET = withErrorHandler(
   {
     requireAuth: true,
     requireAdmin: true,
+    requireHRAccess: true,
     rateLimit: true,
   }
 );

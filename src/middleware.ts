@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import * as jose from 'jose';
-import { checkModuleAccess } from '@/lib/modules/routes';
+import { checkModuleAccess, checkPermissionAccess } from '@/lib/modules/routes';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AUTH RATE LIMITING (Edge-compatible)
@@ -525,6 +525,19 @@ export async function middleware(request: NextRequest) {
         }
       }
 
+      // Permission-based access check for custom domain
+      const permissionAccessCustom = checkPermissionAccess(pathname, {
+        isAdmin: token.isAdmin as boolean | undefined,
+        isOwner: token.isOwner as boolean | undefined,
+        hasOperationsAccess: token.hasOperationsAccess as boolean | undefined,
+        hasHRAccess: token.hasHRAccess as boolean | undefined,
+        hasFinanceAccess: token.hasFinanceAccess as boolean | undefined,
+      });
+
+      if (!permissionAccessCustom.allowed) {
+        return NextResponse.redirect(new URL('/forbidden', request.url));
+      }
+
       // User belongs to this custom domain's tenant - allow access
       const response = NextResponse.next();
       response.headers.set('x-custom-domain', customDomainHost);
@@ -699,6 +712,24 @@ export async function middleware(request: NextRequest) {
         // Non-admin: redirect to forbidden (can't install modules)
         return NextResponse.redirect(new URL('/forbidden', request.url));
       }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // PERMISSION-BASED ACCESS CHECK
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    // Check if user has permission to access this route (Operations/HR/Finance)
+    const permissionAccess = checkPermissionAccess(pathname, {
+      isAdmin: token.isAdmin as boolean | undefined,
+      isOwner: token.isOwner as boolean | undefined,
+      hasOperationsAccess: token.hasOperationsAccess as boolean | undefined,
+      hasHRAccess: token.hasHRAccess as boolean | undefined,
+      hasFinanceAccess: token.hasFinanceAccess as boolean | undefined,
+    });
+
+    if (!permissionAccess.allowed) {
+      // User lacks permission for this route
+      return NextResponse.redirect(new URL('/forbidden', request.url));
     }
 
     // User belongs to this subdomain - allow access

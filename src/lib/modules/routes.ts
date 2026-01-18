@@ -62,3 +62,64 @@ export function checkModuleAccess(
 
   return { allowed: true };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PERMISSION-BASED ROUTE ACCESS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+type PermissionFlag = 'hasOperationsAccess' | 'hasHRAccess' | 'hasFinanceAccess';
+
+// Route prefixes mapped to required permission flags
+const PERMISSION_ROUTE_MAP: Array<{ prefix: string; permission: PermissionFlag }> = [
+  // Operations module routes
+  { prefix: '/admin/assets', permission: 'hasOperationsAccess' },
+  { prefix: '/admin/asset-requests', permission: 'hasOperationsAccess' },
+  { prefix: '/admin/subscriptions', permission: 'hasOperationsAccess' },
+  { prefix: '/admin/suppliers', permission: 'hasOperationsAccess' },
+  // HR module routes
+  { prefix: '/admin/employees', permission: 'hasHRAccess' },
+  { prefix: '/admin/leave', permission: 'hasHRAccess' },
+  // Finance module routes
+  { prefix: '/admin/payroll', permission: 'hasFinanceAccess' },
+  { prefix: '/admin/purchase-requests', permission: 'hasFinanceAccess' },
+];
+
+export interface PermissionContext {
+  isAdmin?: boolean;
+  isOwner?: boolean;
+  hasOperationsAccess?: boolean;
+  hasHRAccess?: boolean;
+  hasFinanceAccess?: boolean;
+}
+
+/**
+ * Check if a user has permission to access a specific route
+ * Admin and Owner bypass all permission checks
+ * Edge Runtime compatible
+ */
+export function checkPermissionAccess(
+  pathname: string,
+  permissions: PermissionContext
+): { allowed: boolean; requiredPermission?: PermissionFlag; reason?: string } {
+  // Admin/Owner bypass all permission checks
+  if (permissions.isAdmin || permissions.isOwner) {
+    return { allowed: true };
+  }
+
+  // Find matching route prefix
+  for (const { prefix, permission } of PERMISSION_ROUTE_MAP) {
+    if (pathname === prefix || pathname.startsWith(prefix + '/')) {
+      // Check if user has the required permission
+      if (!permissions[permission]) {
+        return {
+          allowed: false,
+          requiredPermission: permission,
+          reason: `Access denied: requires ${permission}`,
+        };
+      }
+      break;
+    }
+  }
+
+  return { allowed: true };
+}
