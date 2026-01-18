@@ -187,23 +187,23 @@ export function AdminTopNav({
                 /* Show placeholder while session loads to prevent logo flash */
                 <div className="h-9 w-28 bg-slate-700 rounded animate-pulse" />
               ) : session?.user?.organizationLogoUrl ? (
-                <img
-                  src={session.user.organizationLogoUrlInverse || session.user.organizationLogoUrl}
-                  alt={session.user.organizationName || 'Organization'}
-                  className="h-9 w-auto max-w-[160px] object-contain"
-                  style={!session.user.organizationLogoUrlInverse ? { filter: 'brightness(0) invert(1)' } : undefined}
-                />
+                <>
+                  <img
+                    src={session.user.organizationLogoUrlInverse || session.user.organizationLogoUrl}
+                    alt={session.user.organizationName || 'Organization'}
+                    className="h-9 w-auto max-w-[160px] object-contain"
+                    style={!session.user.organizationLogoUrlInverse ? { filter: 'brightness(0) invert(1)' } : undefined}
+                  />
+                  <span className="text-slate-500 hidden sm:inline">|</span>
+                  <span className="text-sm font-medium text-slate-200 hidden sm:inline">
+                    {session?.user?.organizationName || 'Organization'}
+                  </span>
+                </>
               ) : (
-                <img src="/sme-wordmark-white.png" alt="Durj" className="h-9 w-auto" />
+                <span className="text-lg font-bold text-white">
+                  {session?.user?.organizationName || 'Durj'}
+                </span>
               )}
-              <span className="text-slate-500 hidden sm:inline">|</span>
-              <span className="text-sm font-medium text-slate-200 hidden sm:inline">
-                {isSessionLoading ? (
-                  <span className="inline-block h-4 w-20 bg-slate-700 rounded animate-pulse" />
-                ) : (
-                  session?.user?.organizationName || 'Organization'
-                )}
-              </span>
             </Link>
 
               {/* Navigation */}
