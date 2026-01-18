@@ -223,7 +223,7 @@ export function EmployeeListTableFiltered({ employees }: EmployeeListTableFilter
         hasActiveFilters={hasActiveFilters}
       >
         <Select value={filters.profileStatus} onValueChange={(v) => handleFilterChange('profileStatus', v)}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="All Profiles" />
           </SelectTrigger>
           <SelectContent>
@@ -234,7 +234,7 @@ export function EmployeeListTableFiltered({ employees }: EmployeeListTableFilter
         </Select>
 
         <Select value={filters.expiryStatus} onValueChange={(v) => handleFilterChange('expiryStatus', v)}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -245,7 +245,7 @@ export function EmployeeListTableFiltered({ employees }: EmployeeListTableFilter
         </Select>
 
         <Select value={filters.sponsorshipType} onValueChange={(v) => handleFilterChange('sponsorshipType', v)}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="Sponsorship" />
           </SelectTrigger>
           <SelectContent>

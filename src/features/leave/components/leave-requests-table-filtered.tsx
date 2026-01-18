@@ -205,7 +205,7 @@ export function LeaveRequestsTableFiltered({
         hasActiveFilters={hasActiveFilters}
       >
         <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
-          <SelectTrigger className="w-[130px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -218,7 +218,7 @@ export function LeaveRequestsTableFiltered({
         </Select>
 
         <Select value={filters.year} onValueChange={(v) => handleFilterChange('year', v)}>
-          <SelectTrigger className="w-[120px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="Year" />
           </SelectTrigger>
           <SelectContent>

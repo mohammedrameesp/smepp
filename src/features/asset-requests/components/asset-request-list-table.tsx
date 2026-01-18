@@ -165,7 +165,7 @@ export function AssetRequestListTable({
         hasActiveFilters={hasActiveFilters}
       >
         <Select value={filters.type} onValueChange={(v) => handleFilterChange('type', v)}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="All Types" />
           </SelectTrigger>
           <SelectContent>
@@ -179,7 +179,7 @@ export function AssetRequestListTable({
         </Select>
 
         <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>

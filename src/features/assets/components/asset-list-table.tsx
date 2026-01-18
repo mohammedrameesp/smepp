@@ -156,7 +156,7 @@ export function AssetListTable({ assets }: AssetListTableProps) {
         hasActiveFilters={hasActiveFilters}
       >
         <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="Active" />
           </SelectTrigger>
           <SelectContent>
@@ -170,7 +170,7 @@ export function AssetListTable({ assets }: AssetListTableProps) {
         </Select>
 
         <Select value={filters.type} onValueChange={(v) => handleFilterChange('type', v)}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="All Types" />
           </SelectTrigger>
           <SelectContent>
@@ -184,7 +184,7 @@ export function AssetListTable({ assets }: AssetListTableProps) {
         </Select>
 
         <Select value={filters.categoryId} onValueChange={(v) => handleFilterChange('categoryId', v)}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>

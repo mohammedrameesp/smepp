@@ -158,7 +158,7 @@ export function PurchaseRequestListTableFiltered({
         hasActiveFilters={hasActiveFilters}
       >
         <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -172,7 +172,7 @@ export function PurchaseRequestListTableFiltered({
         </Select>
 
         <Select value={filters.priority} onValueChange={(v) => handleFilterChange('priority', v)}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="All Priorities" />
           </SelectTrigger>
           <SelectContent>

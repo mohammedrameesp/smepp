@@ -143,7 +143,7 @@ export function SupplierListTableFiltered({ suppliers }: SupplierListTableFilter
         hasActiveFilters={hasActiveFilters}
       >
         <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
-          <SelectTrigger className="w-[130px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
@@ -154,7 +154,7 @@ export function SupplierListTableFiltered({ suppliers }: SupplierListTableFilter
         </Select>
 
         <Select value={filters.category} onValueChange={(v) => handleFilterChange('category', v)}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>

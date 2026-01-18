@@ -93,7 +93,7 @@ export function TableFilterBar({
 
         {/* Filter dropdowns (passed as children) */}
         {children && (
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 flex-1">
             {children}
           </div>
         )}

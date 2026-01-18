@@ -175,7 +175,7 @@ export function SubscriptionListTable({ subscriptions }: SubscriptionListTablePr
         hasActiveFilters={hasActiveFilters}
       >
         <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -186,7 +186,7 @@ export function SubscriptionListTable({ subscriptions }: SubscriptionListTablePr
         </Select>
 
         <Select value={filters.category} onValueChange={(v) => handleFilterChange('category', v)}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
@@ -200,7 +200,7 @@ export function SubscriptionListTable({ subscriptions }: SubscriptionListTablePr
         </Select>
 
         <Select value={filters.billingCycle} onValueChange={(v) => handleFilterChange('billingCycle', v)}>
-          <SelectTrigger className="w-[160px]">
+          <SelectTrigger className="flex-1 min-w-[140px]">
             <SelectValue placeholder="All Cycles" />
           </SelectTrigger>
           <SelectContent>
