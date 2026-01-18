@@ -253,8 +253,8 @@ export function OrganizationTabs({
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      setLogoError('File too large. Maximum size is 2MB');
+    if (file.size > 1 * 1024 * 1024) {
+      setLogoError('File too large. Maximum size is 1MB');
       return;
     }
 
@@ -392,7 +392,9 @@ export function OrganizationTabs({
                         <Camera className="h-4 w-4 mr-2" />
                         {logoPreview ? 'Change' : 'Upload'}
                       </Button>
-                      <p className="text-xs text-muted-foreground">PNG, JPEG, WebP, SVG. Max 2MB.</p>
+                      <p className="text-xs text-muted-foreground">PNG, JPG, WebP, SVG up to 1MB</p>
+                      <p className="text-xs text-muted-foreground">Recommended: 200×200px or larger, square</p>
+                      <p className="text-xs text-muted-foreground">Optimized automatically for dark backgrounds</p>
                     </div>
                     <input
                       ref={fileInputRef}
