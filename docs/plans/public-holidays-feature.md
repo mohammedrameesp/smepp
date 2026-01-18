@@ -9,10 +9,9 @@ Implement public holidays configuration for each organization. Holidays will be 
 | Holiday | Duration | Type |
 |---------|----------|------|
 | Eid al-Fitr | 3 days | Variable (Islamic calendar) |
-| Eid al-Adha | 4 days | Variable (Islamic calendar) |
+| Eid al-Adha | 3 days | Variable (Islamic calendar) |
 | Qatar National Day | 1 day | Fixed (December 18) |
 | Sports Day | 1 day | Variable (2nd Tuesday of February) |
-| Prophet's Birthday (Mawlid) | 1 day | Variable (Islamic calendar) |
 
 Since Islamic holidays follow the lunar calendar, dates change yearly. Admin must configure each year.
 
