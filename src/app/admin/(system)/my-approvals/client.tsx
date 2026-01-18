@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,13 +17,18 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  FileText,
-  ShoppingCart,
-  Package,
+  Calendar,
+  Clock,
   Check,
   X,
-  Calendar,
   ChevronRight,
+  Palmtree,
+  ShoppingCart,
+  Package,
+  User,
+  DollarSign,
+  ArrowUpRight,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -45,54 +51,98 @@ interface MyApprovalsClientProps {
   };
 }
 
-const MODULE_CONFIG = {
+const TYPE_CONFIG = {
   LEAVE_REQUEST: {
-    icon: FileText,
-    label: 'Leave Request',
-    gradient: 'from-blue-400 to-indigo-500',
+    icon: Palmtree,
+    label: 'Leave',
+    color: 'blue',
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-700',
+    borderColor: 'border-blue-200',
     iconBg: 'bg-blue-100',
     iconColor: 'text-blue-600',
     href: '/admin/leave/requests',
   },
   PURCHASE_REQUEST: {
     icon: ShoppingCart,
-    label: 'Purchase Request',
-    gradient: 'from-emerald-400 to-teal-500',
+    label: 'Purchase',
+    color: 'emerald',
+    bgColor: 'bg-emerald-50',
+    textColor: 'text-emerald-700',
+    borderColor: 'border-emerald-200',
     iconBg: 'bg-emerald-100',
     iconColor: 'text-emerald-600',
     href: '/admin/purchase-requests',
   },
   ASSET_REQUEST: {
     icon: Package,
-    label: 'Asset Request',
-    gradient: 'from-purple-400 to-violet-500',
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-600',
-    href: '/admin/assets/requests',
+    label: 'Asset',
+    color: 'violet',
+    bgColor: 'bg-violet-50',
+    textColor: 'text-violet-700',
+    borderColor: 'border-violet-200',
+    iconBg: 'bg-violet-100',
+    iconColor: 'text-violet-600',
+    href: '/admin/asset-requests',
   },
 };
+
+// Avatar color palette based on name hash
+const AVATAR_COLORS = [
+  'bg-blue-500',
+  'bg-emerald-500',
+  'bg-violet-500',
+  'bg-amber-500',
+  'bg-rose-500',
+  'bg-cyan-500',
+  'bg-indigo-500',
+  'bg-teal-500',
+];
+
+function getAvatarColor(name: string): string {
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return AVATAR_COLORS[hash % AVATAR_COLORS.length];
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function getWaitingStatus(createdAt: string): { label: string; urgent: boolean } {
+  const hours = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60);
+  if (hours > 72) return { label: 'Waiting 3+ days', urgent: true };
+  if (hours > 48) return { label: 'Waiting 2+ days', urgent: true };
+  if (hours > 24) return { label: 'Waiting 1+ day', urgent: false };
+  return { label: formatDistanceToNow(new Date(createdAt), { addSuffix: false }), urgent: false };
+}
 
 export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [processingId, setProcessingId] = useState<string | null>(null);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
-  const [selectedStep, setSelectedStep] = useState<ApprovalItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ApprovalItem | null>(null);
   const [notes, setNotes] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'leave' | 'purchase' | 'asset'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'LEAVE_REQUEST' | 'PURCHASE_REQUEST' | 'ASSET_REQUEST'>('all');
 
   const handleAction = async () => {
-    if (!selectedStep || !actionType) return;
+    if (!selectedItem || !actionType) return;
 
     setIsSubmitting(true);
+    setProcessingId(selectedItem.id);
     try {
-      // Determine the correct API endpoint based on entity type
       let apiUrl = '';
-      if (selectedStep.entityType === 'LEAVE_REQUEST') {
-        apiUrl = `/api/leave/requests/${selectedStep.entityId}/${actionType}`;
-      } else if (selectedStep.entityType === 'ASSET_REQUEST') {
-        apiUrl = `/api/assets/requests/${selectedStep.entityId}/${actionType}`;
-      } else if (selectedStep.entityType === 'PURCHASE_REQUEST') {
-        apiUrl = `/api/purchase-requests/${selectedStep.entityId}/${actionType}`;
+      if (selectedItem.entityType === 'LEAVE_REQUEST') {
+        apiUrl = `/api/leave/requests/${selectedItem.entityId}/${actionType}`;
+      } else if (selectedItem.entityType === 'ASSET_REQUEST') {
+        apiUrl = `/api/asset-requests/${selectedItem.entityId}/${actionType}`;
+      } else if (selectedItem.entityType === 'PURCHASE_REQUEST') {
+        apiUrl = `/api/purchase-requests/${selectedItem.entityId}/${actionType}`;
       }
 
       const response = await fetch(apiUrl, {
@@ -100,7 +150,7 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           notes: notes.trim() || undefined,
-          reason: notes.trim() || undefined, // Some APIs use 'reason' instead of 'notes'
+          reason: notes.trim() || undefined,
         }),
       });
 
@@ -109,252 +159,387 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
         throw new Error(data.error || `Failed to ${actionType} request`);
       }
 
-      toast.success(actionType === 'approve' ? 'Request approved' : 'Request rejected');
+      toast.success(
+        actionType === 'approve' ? 'Request approved successfully' : 'Request rejected',
+        { description: `${TYPE_CONFIG[selectedItem.entityType].label} request has been ${actionType}d.` }
+      );
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : `Failed to ${actionType} request`);
     } finally {
       setIsSubmitting(false);
+      setProcessingId(null);
       setActionType(null);
-      setSelectedStep(null);
+      setSelectedItem(null);
       setNotes('');
     }
   };
 
-  const openActionDialog = (step: ApprovalItem, action: 'approve' | 'reject') => {
-    setSelectedStep(step);
+  const openActionDialog = (item: ApprovalItem, action: 'approve' | 'reject') => {
+    setSelectedItem(item);
     setActionType(action);
     setNotes('');
   };
 
-  const getDisplayApprovals = () => {
-    switch (activeTab) {
-      case 'leave':
-        return grouped.LEAVE_REQUEST;
-      case 'purchase':
-        return grouped.PURCHASE_REQUEST;
-      case 'asset':
-        return grouped.ASSET_REQUEST;
-      default:
-        return approvals;
-    }
-  };
+  const displayApprovals = activeFilter === 'all' ? approvals : grouped[activeFilter];
 
-  const renderApprovalCard = (step: ApprovalItem) => {
-    const config = MODULE_CONFIG[step.entityType];
-    const Icon = config.icon;
-    const details = step.entityDetails;
-    const href = `${config.href}/${step.entityId}`;
-
-    // Get initials from requester name
-    const requesterName = String(details.requester || 'Unknown');
-    const initials = requesterName
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
-
-    return (
-      <div
-        key={step.id}
-        className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md transition-all"
-      >
-        <div className="flex items-start gap-4">
-          {/* Avatar */}
-          <div className={cn(
-            'w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br text-white font-semibold text-sm',
-            config.gradient
-          )}>
-            {initials}
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <div>
-                <h3 className="font-semibold text-slate-900">{requesterName}</h3>
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <Icon className="h-3.5 w-3.5" />
-                  <span>
-                    {step.entityType === 'LEAVE_REQUEST' && (
-                      <>{String(details.type || 'Leave')} - {String(details.totalDays || 0)} day(s)</>
-                    )}
-                    {step.entityType === 'PURCHASE_REQUEST' && (
-                      <>{String(details.title || 'Untitled')}</>
-                    )}
-                    {step.entityType === 'ASSET_REQUEST' && (
-                      <>{String(details.type || 'Request')} - {String(details.assetName || 'Asset')}</>
-                    )}
-                  </span>
-                </div>
-              </div>
-              <span className="text-xs text-slate-400 flex-shrink-0">
-                {format(new Date(step.createdAt), 'MMM d')}
-              </span>
-            </div>
-
-            {/* Details */}
-            <div className="mt-2 space-y-1">
-              {step.entityType === 'LEAVE_REQUEST' && (
-                <div className="flex items-center gap-1 text-sm text-slate-600">
-                  <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                  <span>
-                    {format(new Date(details.startDate as string), 'MMM d')} - {format(new Date(details.endDate as string), 'MMM d, yyyy')}
-                  </span>
-                </div>
-              )}
-
-              {step.entityType === 'PURCHASE_REQUEST' && !!details.totalAmount && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-900">
-                    {String(details.currency || 'QAR')} {Number(details.totalAmount).toLocaleString()}
-                  </span>
-                  {!!details.priority && (
-                    <span className={cn(
-                      'text-xs px-2 py-0.5 rounded-full font-medium',
-                      String(details.priority) === 'HIGH' && 'bg-red-100 text-red-600',
-                      String(details.priority) === 'MEDIUM' && 'bg-amber-100 text-amber-600',
-                      String(details.priority) === 'LOW' && 'bg-green-100 text-green-600'
-                    )}>
-                      {String(details.priority)}
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {!!(details.reason || details.justification) && (
-                <p className="text-sm text-slate-500 line-clamp-1">
-                  {String(details.reason || details.justification)}
-                </p>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-2 mt-3">
-              <Button
-                size="sm"
-                onClick={() => openActionDialog(step, 'approve')}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white h-8"
-              >
-                <Check className="h-3.5 w-3.5 mr-1" />
-                Approve
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => openActionDialog(step, 'reject')}
-                className="text-red-600 border-red-200 hover:bg-red-50 h-8"
-              >
-                <X className="h-3.5 w-3.5 mr-1" />
-                Reject
-              </Button>
-              <Link
-                href={href}
-                className="ml-auto text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
-              >
-                Details
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const tabs = [
-    { id: 'all', label: 'All', count: approvals.length },
-    { id: 'leave', label: 'Leave', count: grouped.LEAVE_REQUEST.length, icon: FileText },
-    { id: 'purchase', label: 'Purchase', count: grouped.PURCHASE_REQUEST.length, icon: ShoppingCart },
-    { id: 'asset', label: 'Asset', count: grouped.ASSET_REQUEST.length, icon: Package },
+  const filterOptions: Array<{
+    key: 'all' | 'LEAVE_REQUEST' | 'PURCHASE_REQUEST' | 'ASSET_REQUEST';
+    label: string;
+    count: number;
+    icon?: typeof Palmtree;
+  }> = [
+    { key: 'all', label: 'All', count: approvals.length },
+    { key: 'LEAVE_REQUEST', label: 'Leave', count: grouped.LEAVE_REQUEST.length, icon: Palmtree },
+    { key: 'PURCHASE_REQUEST', label: 'Purchase', count: grouped.PURCHASE_REQUEST.length, icon: ShoppingCart },
+    { key: 'ASSET_REQUEST', label: 'Asset', count: grouped.ASSET_REQUEST.length, icon: Package },
   ];
 
   return (
-    <>
-      {/* Tabs */}
-      <div className="bg-white rounded-xl border border-slate-200 mb-4">
-        <div className="flex border-b border-slate-100">
-          {tabs.map((tab) => (
+    <div className="space-y-6">
+      {/* Filter Pills */}
+      <div className="flex flex-wrap gap-2">
+        {filterOptions.map((option) => {
+          const isActive = activeFilter === option.key;
+          const Icon = option.icon;
+          return (
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              disabled={tab.count === 0 && tab.id !== 'all'}
+              key={option.key}
+              onClick={() => setActiveFilter(option.key)}
+              disabled={option.count === 0 && option.key !== 'all'}
               className={cn(
-                'flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
-                activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700',
-                tab.count === 0 && tab.id !== 'all' && 'opacity-50 cursor-not-allowed'
+                'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all',
+                isActive
+                  ? 'bg-slate-900 text-white shadow-md'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50',
+                option.count === 0 && option.key !== 'all' && 'opacity-40 cursor-not-allowed'
               )}
             >
-              {tab.icon && <tab.icon className="h-4 w-4" />}
-              {tab.label}
+              {Icon && <Icon className="h-4 w-4" />}
+              {option.label}
               <span className={cn(
-                'text-xs px-1.5 py-0.5 rounded-full',
-                activeTab === tab.id
-                  ? 'bg-blue-100 text-blue-600'
-                  : 'bg-slate-100 text-slate-500'
+                'text-xs px-2 py-0.5 rounded-full',
+                isActive ? 'bg-white/20' : 'bg-slate-100'
               )}>
-                {tab.count}
+                {option.count}
               </span>
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
       {/* Approval Cards */}
-      <div className="space-y-3">
-        {getDisplayApprovals().map(renderApprovalCard)}
+      <div className="grid gap-4">
+        {displayApprovals.map((item) => {
+          const config = TYPE_CONFIG[item.entityType];
+          const Icon = config.icon;
+          const details = item.entityDetails;
+          const requesterName = String(details.requester || 'Unknown');
+          const waitingStatus = getWaitingStatus(item.createdAt);
+          const isProcessing = processingId === item.id;
+
+          return (
+            <div
+              key={item.id}
+              className={cn(
+                'bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all hover:shadow-lg hover:border-slate-300',
+                isProcessing && 'opacity-60 pointer-events-none'
+              )}
+            >
+              {/* Type indicator bar */}
+              <div className={cn('h-1', config.bgColor)} />
+
+              <div className="p-5">
+                <div className="flex gap-4">
+                  {/* Avatar */}
+                  <div className={cn(
+                    'w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0',
+                    getAvatarColor(requesterName)
+                  )}>
+                    {getInitials(requesterName)}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    {/* Header row */}
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h3 className="font-semibold text-slate-900">{requesterName}</h3>
+                          <Badge variant="secondary" className={cn('text-xs', config.bgColor, config.textColor)}>
+                            <Icon className="h-3 w-3 mr-1" />
+                            {config.label}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-slate-500">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            {waitingStatus.label}
+                          </span>
+                          {waitingStatus.urgent && (
+                            <span className="text-amber-600 font-medium">Needs attention</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quick approve/reject for desktop */}
+                      <div className="hidden sm:flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => openActionDialog(item, 'approve')}
+                          disabled={isProcessing}
+                          className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm"
+                        >
+                          {isProcessing ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Check className="h-4 w-4 mr-1" />
+                              Approve
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openActionDialog(item, 'reject')}
+                          disabled={isProcessing}
+                          className="text-slate-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Request details */}
+                    <div className={cn(
+                      'rounded-xl p-3 mb-3',
+                      config.bgColor
+                    )}>
+                      {item.entityType === 'LEAVE_REQUEST' && (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-slate-900">
+                              {String(details.type || 'Leave')}
+                            </span>
+                            <span className="text-sm font-semibold text-slate-700">
+                              {String(details.totalDays || 0)} day{Number(details.totalDays) !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {format(new Date(details.startDate as string), 'MMM d')} → {format(new Date(details.endDate as string), 'MMM d, yyyy')}
+                          </div>
+                        </div>
+                      )}
+
+                      {item.entityType === 'PURCHASE_REQUEST' && (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-slate-900 line-clamp-1">
+                              {String(details.title || 'Untitled Request')}
+                            </span>
+                            {details.priority && (
+                              <Badge variant="secondary" className={cn(
+                                'text-xs',
+                                String(details.priority) === 'HIGH' && 'bg-red-100 text-red-700',
+                                String(details.priority) === 'MEDIUM' && 'bg-amber-100 text-amber-700',
+                                String(details.priority) === 'LOW' && 'bg-slate-100 text-slate-600'
+                              )}>
+                                {String(details.priority) as string}
+                              </Badge>
+                            )}
+                          </div>
+                          {details.totalAmount && (
+                            <div className="flex items-center gap-1.5 text-sm">
+                              <DollarSign className="h-3.5 w-3.5 text-slate-500" />
+                              <span className="font-semibold text-slate-900">
+                                {String(details.currency || 'QAR')} {Number(details.totalAmount).toLocaleString()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {item.entityType === 'ASSET_REQUEST' && (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-slate-900">
+                              {String(details.assetName || 'Asset')}
+                            </span>
+                            <Badge variant="secondary" className={cn(
+                              'text-xs',
+                              String(details.type) === 'Return'
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-blue-100 text-blue-700'
+                            )}>
+                              {String(details.type || 'Request') as string}
+                            </Badge>
+                          </div>
+                          {details.assetTag && (
+                            <div className="text-sm text-slate-600">
+                              Tag: {String(details.assetTag) as string}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Reason/Justification */}
+                      {(details.reason || details.justification) && (
+                        <p className="text-sm text-slate-600 mt-2 line-clamp-2 italic">
+                          &ldquo;{String(details.reason || details.justification)}&rdquo;
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Mobile action buttons + View details link */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 sm:hidden">
+                        <Button
+                          size="sm"
+                          onClick={() => openActionDialog(item, 'approve')}
+                          disabled={isProcessing}
+                          className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openActionDialog(item, 'reject')}
+                          disabled={isProcessing}
+                          className="text-red-600 border-red-200 hover:bg-red-50"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      <Link
+                        href={`${config.href}/${item.entityId}`}
+                        className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 font-medium ml-auto"
+                      >
+                        View details
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
+      {/* Empty state for filtered view */}
+      {displayApprovals.length === 0 && activeFilter !== 'all' && (
+        <div className="text-center py-12">
+          <div className={cn(
+            'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4',
+            TYPE_CONFIG[activeFilter].iconBg
+          )}>
+            {(() => {
+              const Icon = TYPE_CONFIG[activeFilter].icon;
+              return <Icon className={cn('h-8 w-8', TYPE_CONFIG[activeFilter].iconColor)} />;
+            })()}
+          </div>
+          <h3 className="font-semibold text-slate-900 mb-1">No {TYPE_CONFIG[activeFilter].label.toLowerCase()} requests</h3>
+          <p className="text-slate-500 text-sm">All {TYPE_CONFIG[activeFilter].label.toLowerCase()} requests have been processed.</p>
+        </div>
+      )}
+
       {/* Action confirmation dialog */}
-      <AlertDialog open={actionType !== null} onOpenChange={() => setActionType(null)}>
-        <AlertDialogContent>
+      <AlertDialog open={actionType !== null} onOpenChange={() => !isSubmitting && setActionType(null)}>
+        <AlertDialogContent className="sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {actionType === 'approve' ? 'Approve Request' : 'Reject Request'}
+            <AlertDialogTitle className="flex items-center gap-2">
+              {actionType === 'approve' ? (
+                <>
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <Check className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  Approve Request
+                </>
+              ) : (
+                <>
+                  <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                    <X className="h-4 w-4 text-red-600" />
+                  </div>
+                  Reject Request
+                </>
+              )}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {actionType === 'approve'
-                ? 'Are you sure you want to approve this request?'
-                : 'Are you sure you want to reject this request? This will cancel the entire approval chain.'}
+                ? 'This will approve the request and notify the requester.'
+                : 'This will reject the request. Please provide a reason below.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div className="py-4">
-            <label className="text-sm font-medium">
-              Notes {actionType === 'reject' && <span className="text-red-500">*</span>}
+          {selectedItem && (
+            <div className={cn(
+              'rounded-lg p-3 my-2',
+              TYPE_CONFIG[selectedItem.entityType].bgColor
+            )}>
+              <div className="flex items-center gap-2 text-sm">
+                <User className="h-4 w-4 text-slate-500" />
+                <span className="font-medium">{String(selectedItem.entityDetails.requester)}</span>
+                <span className="text-slate-500">•</span>
+                <span className="text-slate-600">{TYPE_CONFIG[selectedItem.entityType].label}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">
+              {actionType === 'approve' ? 'Notes (optional)' : 'Reason for rejection'}
+              {actionType === 'reject' && <span className="text-red-500 ml-1">*</span>}
             </label>
             <Textarea
               placeholder={
                 actionType === 'approve'
-                  ? 'Optional notes for approval...'
-                  : 'Please provide a reason for rejection...'
+                  ? 'Add any notes for the requester...'
+                  : 'Please explain why this request is being rejected...'
               }
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="mt-2"
               rows={3}
+              className="resize-none"
             />
           </div>
 
-          <AlertDialogFooter>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
             <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleAction}
               disabled={isSubmitting || (actionType === 'reject' && !notes.trim())}
               className={cn(
+                'gap-2',
                 actionType === 'approve'
                   ? 'bg-emerald-500 hover:bg-emerald-600'
                   : 'bg-red-500 hover:bg-red-600'
               )}
             >
-              {isSubmitting ? 'Processing...' : actionType === 'approve' ? 'Approve' : 'Reject'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : actionType === 'approve' ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  Approve
+                </>
+              ) : (
+                <>
+                  <X className="h-4 w-4" />
+                  Reject
+                </>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 }

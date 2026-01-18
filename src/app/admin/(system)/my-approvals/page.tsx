@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Inbox } from 'lucide-react';
 import { MyApprovalsClient } from './client';
 import Link from 'next/link';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
@@ -183,15 +183,22 @@ export default async function MyApprovalsPage() {
 
       <PageContent>
         {approvals.counts.total === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="h-8 w-8 text-emerald-500" />
+          <div className="bg-gradient-to-b from-white to-emerald-50/30 rounded-2xl border border-slate-200 p-12 text-center">
+            <div className="relative inline-block mb-6">
+              <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle className="h-10 w-10 text-emerald-500" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-white rounded-full border-2 border-emerald-200 flex items-center justify-center">
+                <Inbox className="h-4 w-4 text-emerald-500" />
+              </div>
             </div>
-            <h3 className="font-semibold text-slate-900 text-lg mb-1">All caught up!</h3>
-            <p className="text-slate-500 mb-4">No pending approvals at the moment.</p>
+            <h3 className="font-semibold text-slate-900 text-xl mb-2">All caught up!</h3>
+            <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+              Great job! You have no pending approvals at the moment. New requests will appear here.
+            </p>
             <Link
               href="/admin"
-              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-full text-sm font-medium hover:bg-slate-800 transition-colors"
             >
               Back to Dashboard
             </Link>
