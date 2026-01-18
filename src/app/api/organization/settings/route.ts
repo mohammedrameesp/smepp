@@ -36,7 +36,7 @@ export async function GET() {
     }
 
     // Debug log
-    console.log('[API /organization/settings] Returning weekendDays:', organization.weekendDays);
+    console.log('[API /organization/settings] UserID:', session.user.id, 'OrgID:', session.user.organizationId, 'weekendDays:', organization.weekendDays);
 
     return NextResponse.json({
       settings: {

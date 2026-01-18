@@ -76,7 +76,7 @@ export async function GET() {
     const { customGoogleClientId: _customGoogleClientId, customGoogleClientSecret: _customGoogleClientSecret, customAzureClientId: _customAzureClientId, customAzureClientSecret: _customAzureClientSecret, ...orgData } = organization;
 
     // Debug log
-    logger.info({ weekendDays: organization.weekendDays, orgId: organization.id }, 'GET /api/admin/organization returning weekendDays');
+    logger.info({ userId: session.user.id, orgId: session.user.organizationId, weekendDays: organization.weekendDays }, 'GET /api/admin/organization');
 
     return NextResponse.json({
       organization: orgData,
