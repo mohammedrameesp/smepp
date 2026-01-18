@@ -32,7 +32,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 
-import { SubscriptionListTableServerSearch } from '@/features/subscriptions';
+import { SubscriptionListClient } from '@/features/subscriptions';
 import { getExchangeRateToQAR } from '@/lib/core/currency';
 import { Plus } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
@@ -150,7 +150,7 @@ export default async function AdminSubscriptionsPage() {
             <p className="text-sm text-slate-500">Complete list with filters and sorting</p>
           </div>
           <div className="p-4">
-            <SubscriptionListTableServerSearch />
+            <SubscriptionListClient />
           </div>
         </div>
       </PageContent>

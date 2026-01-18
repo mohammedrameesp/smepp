@@ -37,6 +37,8 @@
 export { AssetActions } from './asset-actions';
 export { AssetCostBreakdown } from './asset-cost-breakdown';
 export { default as AssetHistory } from './asset-history';
+export { AssetListClient } from './asset-list-client';
+export { AssetListTable } from './asset-list-table';
 export { AssetListTableServerSearch } from './asset-list-table-server-search';
 export { AssetMaintenanceRecords } from './asset-maintenance-records';
 export { AssetStatusCard } from './asset-status-card';
@@ -61,6 +63,7 @@ export {
   type EmployeeAssetServer,
   type AssetMember,
   type AssetLocation,
+  type AssetCategory,
   type AssetPendingRequest,
   type AssetStatus,
   type StatusConfig,

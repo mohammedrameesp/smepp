@@ -37,6 +37,15 @@ export interface AssetLocation {
 }
 
 /**
+ * Asset category reference
+ */
+export interface AssetCategory {
+  id: string;
+  code: string;
+  name: string;
+}
+
+/**
  * Pending asset request reference
  */
 export interface AssetPendingRequest {
@@ -73,6 +82,7 @@ export interface AdminAsset extends BaseAsset {
   configuration: string | null;
   isShared: boolean;
   location: AssetLocation | null;
+  assetCategory: AssetCategory | null;
   assetRequests?: AssetPendingRequest[];
 }
 

@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 
-import { SupplierListTableServerSearch, ShareSupplierLinkButton } from '@/features/suppliers';
+import { SupplierListClient, ShareSupplierLinkButton } from '@/features/suppliers';
 import { Plus } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
@@ -87,7 +87,7 @@ export default async function AdminSuppliersPage() {
             <p className="text-sm text-slate-500">Complete list with status and contact information</p>
           </div>
           <div className="p-4">
-            <SupplierListTableServerSearch />
+            <SupplierListClient />
           </div>
         </div>
       </PageContent>

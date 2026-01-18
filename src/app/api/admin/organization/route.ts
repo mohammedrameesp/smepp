@@ -6,6 +6,9 @@ import { z } from 'zod';
 import { updateSetupProgressBulk } from '@/features/onboarding/lib';
 import logger from '@/lib/core/log';
 
+// Force dynamic rendering to prevent caching
+export const dynamic = 'force-dynamic';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/admin/organization - Get current organization details
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -80,6 +83,10 @@ export async function GET() {
         hasSSO,
         hasCustomGoogleOAuth,
         hasCustomAzureOAuth,
+      },
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
       },
     });
   } catch (error) {

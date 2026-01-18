@@ -1,4 +1,6 @@
 // Data Tables
+export * from './data-tables/subscription-list-client';
+export * from './data-tables/subscription-list-table';
 export * from './data-tables/subscription-list-table-server-search';
 export * from './data-tables/employee-subscription-list-table';
 

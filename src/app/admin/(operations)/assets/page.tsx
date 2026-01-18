@@ -18,7 +18,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 import { AssetRequestStatus } from '@prisma/client';
-import { AssetListTableServerSearch } from '@/features/assets';
+import { AssetListClient } from '@/features/assets';
 import { Plus, Inbox, Trash2 } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
@@ -124,7 +124,7 @@ export default async function AdminAssetsPage() {
             <p className="text-sm text-slate-500">Complete inventory with filters and sorting</p>
           </div>
           <div className="p-4">
-            <AssetListTableServerSearch />
+            <AssetListClient />
           </div>
         </div>
       </PageContent>

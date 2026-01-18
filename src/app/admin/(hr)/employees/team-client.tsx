@@ -40,7 +40,7 @@ import {
   AtSign,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
-import { EmployeeListTable } from '@/features/employees/components';
+import { EmployeeListTableClient } from '@/features/employees/components';
 import { cn } from '@/lib/core/utils';
 
 interface PendingStatus {
@@ -393,7 +393,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
             <p className="text-sm text-slate-500">Team members with HR profiles, leave, and payroll access</p>
           </div>
           <div className="p-4">
-            <EmployeeListTable />
+            <EmployeeListTableClient />
           </div>
         </div>
       </div>
