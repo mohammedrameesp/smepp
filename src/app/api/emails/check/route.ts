@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/core/prisma';
+import { VALIDATION_PATTERNS } from '@/lib/validations/patterns';
 
 /**
  * GET /api/emails/check?email=user@example.com
@@ -23,8 +24,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Validate email format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
+  if (!VALIDATION_PATTERNS.email.test(email)) {
     return NextResponse.json(
       {
         available: false,

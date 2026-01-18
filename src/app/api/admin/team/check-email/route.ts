@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
+import { VALIDATION_PATTERNS } from '@/lib/validations/patterns';
 
 /**
  * GET /api/admin/team/check-email?email=user@example.com
@@ -34,8 +35,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!VALIDATION_PATTERNS.email.test(email)) {
       return NextResponse.json({
         available: false,
         valid: false,

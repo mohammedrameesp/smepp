@@ -184,18 +184,19 @@ async function sendEmployeeRequestNotifications(
         text: emailData.text,
       })));
 
-      // In-app notifications
-      for (const approver of approvers) {
-        await createNotification({
+      // In-app notifications (bulk creation)
+      await createBulkNotifications(
+        approvers.map(approver => ({
           recipientId: approver.id,
-          type: 'APPROVAL_PENDING',
+          type: 'APPROVAL_PENDING' as const,
           title: 'Asset Request Approval Required',
           message: `${assetRequest.user.name || assetRequest.user.email} requested asset ${asset.model} (${asset.assetTag || 'N/A'}). Your approval is required.`,
           link: `/admin/asset-requests/${assetRequest.id}`,
           entityType: 'AssetRequest',
           entityId: assetRequest.id,
-        }, tenantId);
-      }
+        })),
+        tenantId
+      );
     }
   } else {
     // No policy - fall back to notifying all admins

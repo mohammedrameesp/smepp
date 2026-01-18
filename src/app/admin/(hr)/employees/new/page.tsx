@@ -15,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RefreshCw, AlertTriangle, User, Briefcase, Shield, Mail, Building2, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { createUserSchema, type CreateUserInput, USER_ROLES, ROLE_CONFIG, type UserRole } from '@/features/users/validations/users';
+import { VALIDATION_PATTERNS } from '@/lib/validations/patterns';
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -103,8 +104,7 @@ export default function NewEmployeePage() {
       }
 
       // Basic format validation before API call
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(debouncedEmail)) {
+      if (!VALIDATION_PATTERNS.email.test(debouncedEmail)) {
         setEmailCheckResult({
           available: false,
           valid: false,

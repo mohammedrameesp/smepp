@@ -30,16 +30,6 @@ import { createQuerySchema } from '@/lib/validations/pagination-schema';
 import { SupplierStatus, Prisma } from '@prisma/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// VALIDATION PATTERNS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/** Email validation regex */
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/** Domain validation regex - accepts with or without http/https */
-const domainRegex = /^(https?:\/\/)?([\w-]+(\.[\w-]+)+)(\/.*)?$/;
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // SUPPLIER SCHEMAS
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -60,7 +50,7 @@ const supplierBaseSchema = z.object({
   country: z.string().optional().nullable().or(z.literal('')),
   /** Company website URL */
   website: z.string().optional().nullable().or(z.literal('')).refine(
-    (val) => !val || val === '' || domainRegex.test(val),
+    (val) => !val || val === '' || VALIDATION_PATTERNS.domain.test(val),
     { message: 'Invalid website format (e.g., example.com or https://example.com)' }
   ),
   /** Year company was established (1800-current) */
@@ -71,7 +61,7 @@ const supplierBaseSchema = z.object({
   primaryContactTitle: z.string().optional().nullable().or(z.literal('')),
   /** Primary contact email address (optional - either email or phone required) */
   primaryContactEmail: z.string().optional().nullable().or(z.literal('')).refine(
-    (val) => !val || val === '' || emailRegex.test(val),
+    (val) => !val || val === '' || VALIDATION_PATTERNS.email.test(val),
     { message: 'Invalid email format' }
   ),
   /** Primary contact mobile number */
@@ -84,7 +74,7 @@ const supplierBaseSchema = z.object({
   secondaryContactTitle: z.string().optional().nullable().or(z.literal('')),
   /** Secondary contact email address */
   secondaryContactEmail: z.string().optional().nullable().or(z.literal('')).refine(
-    (val) => !val || val === '' || emailRegex.test(val),
+    (val) => !val || val === '' || VALIDATION_PATTERNS.email.test(val),
     { message: 'Invalid email format' }
   ),
   /** Secondary contact mobile number */

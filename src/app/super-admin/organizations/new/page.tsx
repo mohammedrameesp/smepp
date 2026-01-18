@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { generateSlug } from '@/lib/multi-tenant/subdomain';
 import { generateCodePrefixFromName } from '@/lib/utils/code-prefix';
+import { VALIDATION_PATTERNS } from '@/lib/validations/patterns';
 
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 
@@ -157,8 +158,7 @@ export default function CreateOrganizationPage() {
 
   // Check email availability
   const checkEmailAvailability = useCallback(async (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email)) {
+    if (!email || !VALIDATION_PATTERNS.email.test(email)) {
       setEmailStatus(null);
       return;
     }
@@ -232,8 +232,7 @@ export default function CreateOrganizationPage() {
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!adminEmail || !emailRegex.test(adminEmail.trim())) {
+    if (!adminEmail || !VALIDATION_PATTERNS.email.test(adminEmail.trim())) {
       setError('Please enter a valid email address');
       return;
     }

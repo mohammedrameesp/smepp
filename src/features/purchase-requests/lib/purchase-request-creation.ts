@@ -304,18 +304,19 @@ export async function sendPurchaseRequestNotifications(
         });
       }
 
-      // In-app notifications
-      for (const approver of approvers) {
-        await createNotification({
+      // In-app notifications (bulk creation)
+      await createBulkNotifications(
+        approvers.map(approver => ({
           recipientId: approver.id,
-          type: 'APPROVAL_PENDING',
+          type: 'APPROVAL_PENDING' as const,
           title: 'Purchase Request Approval Required',
           message: `${userName} submitted a purchase request (${referenceNumber}) for ${purchaseRequest.currency} ${totalAmount.toFixed(2)}. Your approval is required.`,
           link: `/admin/purchase-requests/${purchaseRequest.id}`,
           entityType: 'PurchaseRequest',
           entityId: purchaseRequest.id,
-        }, tenantId);
-      }
+        })),
+        tenantId
+      );
     }
   } else {
     // No policy - fall back to notifying all admins

@@ -203,12 +203,12 @@ The test checklist sections (12-23) **correctly mirror the code architecture**:
 
 ### Phase 1: Quick Wins (50+ files, 200-300 lines reduced)
 1. Replace `optionalString` patterns → Import from `field-schemas.ts`
-2. Remove local regex definitions → Import from `patterns.ts`
+2. ✅ Remove local regex definitions → Import from `patterns.ts` (DONE - January 2026)
 3. Replace pagination schemas → Use `createQuerySchema()` factory
 4. Consolidate workflow schemas → Import from `workflow-schemas.ts`
 
 ### Phase 2: Performance (5-10 files)
-1. Fix sequential notification creation → Use bulk endpoint
+1. ✅ Fix sequential notification creation → Use bulk endpoint (DONE - January 2026)
 2. Audit remaining N+1 patterns in approval workflows
 3. Add missing composite indexes
 

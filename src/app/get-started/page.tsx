@@ -18,6 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { generateSlug } from '@/lib/multi-tenant/subdomain';
+import { VALIDATION_PATTERNS } from '@/lib/validations/patterns';
 import './get-started.css';
 
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
@@ -185,8 +186,7 @@ export default function GetStartedPage() {
       (emailStatus === null || emailStatus.available);
 
   const handleSubmit = async () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!adminEmail || !emailRegex.test(adminEmail.trim())) {
+    if (!adminEmail || !VALIDATION_PATTERNS.email.test(adminEmail.trim())) {
       setError('Please enter a valid email address');
       return;
     }
