@@ -20,7 +20,6 @@ import { CurrencyStep } from './steps/CurrencyStep';
 import { LogoStep } from './steps/LogoStep';
 import { ColorStep } from './steps/ColorStep';
 import { ModuleStep } from './steps/ModuleStep';
-import { InviteStep } from './steps/InviteStep';
 import { WelcomeStep } from './steps/WelcomeStep';
 
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
@@ -59,19 +58,12 @@ const STEPS = [
   { title: 'Currencies', description: 'Additional currencies' },
   { title: 'Logo', description: 'Upload your logo' },
   { title: 'Colors', description: 'Brand colors' },
-  { title: 'Team', description: 'Invite members' },
   { title: 'Modules', description: 'Choose features' },
   { title: 'Complete', description: 'All done!' },
 ];
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 6;
 
-interface TeamInvite {
-  email: string;
-  role: 'ADMIN' | 'MANAGER' | 'MEMBER';
-  isEmployee?: boolean;
-  onWPS?: boolean;
-}
 
 export function SetupWizardClient() {
   const { data: session, status, update } = useSession();
@@ -100,11 +92,7 @@ export function SetupWizardClient() {
   const [primaryColor, setPrimaryColor] = useState('');
   const [secondaryColor, setSecondaryColor] = useState('');
 
-  // Step 5: Team invites
-  const [teamInvites, setTeamInvites] = useState<TeamInvite[]>([]);
-  const [inviteError, setInviteError] = useState<string | null>(null);
-
-  // Step 6: Modules
+  // Step 5: Modules
   const [selectedModules, setSelectedModules] = useState<string[]>([
     'assets',
     'subscriptions',
@@ -176,7 +164,7 @@ export function SetupWizardClient() {
       case 4:
         // Colors are optional, but if provided they must be valid hex
         return isValidHexColor(primaryColor) && isValidHexColor(secondaryColor);
-      case 6:
+      case 5:
         return selectedModules.length > 0;
       default:
         return true;
@@ -184,9 +172,9 @@ export function SetupWizardClient() {
   }, [currentStep, orgName, codePrefix, website, primaryColor, secondaryColor, selectedModules]);
 
   // Check if current step is skippable
-  // Team (step 5) is skippable, Modules (step 6) is NOT skippable
+  // Modules (step 5) is NOT skippable
   const isSkippable = useCallback(() => {
-    return [2, 3, 4, 5].includes(currentStep);
+    return [2, 3, 4].includes(currentStep);
   }, [currentStep]);
 
   // Complete setup
@@ -241,55 +229,9 @@ export function SetupWizardClient() {
             profileComplete: true,
             logoUploaded: !!logoFile,
             brandingConfigured: primaryColor !== '#0f172a',
-            firstTeamMemberInvited: teamInvites.length > 0,
           },
         }),
       });
-
-      // 4. Send team invites
-      const inviteResults: { email: string; success: boolean; error?: string }[] = [];
-      for (const invite of teamInvites) {
-        try {
-          const inviteResponse = await fetch('/api/admin/team/invitations', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: invite.email,
-              role: invite.role,
-              isEmployee: invite.isEmployee,
-              onWPS: invite.onWPS,
-            }),
-          });
-
-          if (!inviteResponse.ok) {
-            const errorData = await inviteResponse.json().catch(() => ({}));
-            console.error(`Failed to send invite to ${invite.email}:`, errorData);
-            inviteResults.push({
-              email: invite.email,
-              success: false,
-              error: errorData.error || `HTTP ${inviteResponse.status}`
-            });
-          } else {
-            const successData = await inviteResponse.json();
-            console.log(`Invite sent to ${invite.email}:`, successData.emailSent ? 'email sent' : 'email not sent');
-            inviteResults.push({ email: invite.email, success: true });
-          }
-        } catch (inviteErr) {
-          console.error(`Exception sending invite to ${invite.email}:`, inviteErr);
-          inviteResults.push({
-            email: invite.email,
-            success: false,
-            error: inviteErr instanceof Error ? inviteErr.message : 'Network error'
-          });
-        }
-      }
-
-      // Log summary of invite results
-      const successCount = inviteResults.filter(r => r.success).length;
-      const failCount = inviteResults.filter(r => !r.success).length;
-      if (failCount > 0) {
-        console.warn(`Invitations: ${successCount} sent, ${failCount} failed`, inviteResults.filter(r => !r.success));
-      }
 
       // Refresh session
       await update();
@@ -315,7 +257,7 @@ export function SetupWizardClient() {
 
   // Handle next button click
   const handleNext = () => {
-    if (currentStep === 6) {
+    if (currentStep === 5) {
       completeSetup();
     } else {
       goNext();
@@ -410,23 +352,14 @@ export function SetupWizardClient() {
         );
       case 5:
         return (
-          <InviteStep
-            invites={teamInvites}
-            onChange={setTeamInvites}
-            error={inviteError}
-            onError={setInviteError}
-          />
-        );
-      case 6:
-        return (
           <ModuleStep selected={selectedModules} onChange={setSelectedModules} />
         );
-      case 7:
+      case 6:
         return (
           <WelcomeStep
             orgName={orgName}
             selectedModules={selectedModules}
-            inviteCount={teamInvites.length}
+            inviteCount={0}
             primaryCurrency={primaryCurrency}
             additionalCurrencies={additionalCurrencies}
           />
@@ -492,7 +425,7 @@ export function SetupWizardClient() {
 
           {/* Navigation */}
           {currentStep < TOTAL_STEPS && (
-            <div className="flex justify-between mt-8 max-w-lg mx-auto">
+            <div className={`flex justify-between mt-8 mx-auto ${currentStep === 5 ? 'max-w-3xl' : 'max-w-lg'}`}>
               {currentStep > 1 ? (
                 <Button
                   variant="ghost"
@@ -526,11 +459,9 @@ export function SetupWizardClient() {
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                       Saving...
                     </>
-                  ) : currentStep === 6 ? (
+                  ) : currentStep === 5 ? (
                     <>
-                      {teamInvites.length > 0
-                        ? 'Send Invites & Finish'
-                        : 'Finish Setup'}
+                      Finish Setup
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </>
                   ) : (

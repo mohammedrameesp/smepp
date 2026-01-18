@@ -90,7 +90,7 @@ export function LogoStep({
                     <button
                       type="button"
                       onClick={removeLogo}
-                      className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 hover:text-slate-700 transition-colors border border-slate-200"
+                      className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-red-50 text-red-400 flex items-center justify-center hover:bg-red-100 hover:text-red-500 transition-colors border border-red-200"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
