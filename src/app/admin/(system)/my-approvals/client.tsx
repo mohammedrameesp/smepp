@@ -339,18 +339,18 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                             <span className="font-medium text-slate-900 line-clamp-1">
                               {String(details.title || 'Untitled Request')}
                             </span>
-                            {details.priority && (
+                            {details.priority != null && (
                               <Badge variant="secondary" className={cn(
                                 'text-xs',
                                 String(details.priority) === 'HIGH' && 'bg-red-100 text-red-700',
                                 String(details.priority) === 'MEDIUM' && 'bg-amber-100 text-amber-700',
                                 String(details.priority) === 'LOW' && 'bg-slate-100 text-slate-600'
                               )}>
-                                {String(details.priority) as string}
+                                {String(details.priority)}
                               </Badge>
                             )}
                           </div>
-                          {details.totalAmount && (
+                          {details.totalAmount != null && (
                             <div className="flex items-center gap-1.5 text-sm">
                               <DollarSign className="h-3.5 w-3.5 text-slate-500" />
                               <span className="font-semibold text-slate-900">
@@ -376,16 +376,16 @@ export function MyApprovalsClient({ approvals, grouped }: MyApprovalsClientProps
                               {String(details.type || 'Request') as string}
                             </Badge>
                           </div>
-                          {details.assetTag && (
+                          {details.assetTag != null && (
                             <div className="text-sm text-slate-600">
-                              Tag: {String(details.assetTag) as string}
+                              Tag: {String(details.assetTag)}
                             </div>
                           )}
                         </div>
                       )}
 
                       {/* Reason/Justification */}
-                      {(details.reason || details.justification) && (
+                      {(details.reason != null || details.justification != null) && (
                         <p className="text-sm text-slate-600 mt-2 line-clamp-2 italic">
                           &ldquo;{String(details.reason || details.justification)}&rdquo;
                         </p>
