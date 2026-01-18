@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
   MailWarning,
   RefreshCw,
@@ -417,6 +418,7 @@ export default function EmailFailuresPage() {
                       <TableHead>Error</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Date</TableHead>
+                      <TableHead className="w-20">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -480,6 +482,13 @@ export default function EmailFailuresPage() {
                         </TableCell>
                         <TableCell className="text-sm text-gray-600">
                           {formatDate(failure.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <Link href={`/super-admin/email-failures/${failure.id}`}>
+                            <Button variant="outline" size="sm">
+                              View
+                            </Button>
+                          </Link>
                         </TableCell>
                       </TableRow>
                     ))}
