@@ -53,6 +53,8 @@ export default function GetStartedPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [orgCreated, setOrgCreated] = useState(false); // Track if org was already created
+  const [createdOrgSlug, setCreatedOrgSlug] = useState<string | null>(null); // Store org slug for email change
+  const [originalEmail, setOriginalEmail] = useState<string | null>(null); // Store original email
 
   // Form state
   const [organizationName, setOrganizationName] = useState('');
@@ -173,13 +175,14 @@ export default function GetStartedPage() {
     !checkingSubdomain &&
     (orgCreated || subdomainStatus === null || subdomainStatus.available);
 
-  const canProceedStep2 =
-    industry &&
-    (industry !== 'other' || otherIndustry.trim().length >= 2) &&
-    companySize &&
-    adminEmail &&
-    !checkingEmail &&
-    (emailStatus === null || emailStatus.available);
+  const canProceedStep2 = orgCreated
+    ? adminEmail && !checkingEmail && (emailStatus === null || emailStatus.available)
+    : industry &&
+      (industry !== 'other' || otherIndustry.trim().length >= 2) &&
+      companySize &&
+      adminEmail &&
+      !checkingEmail &&
+      (emailStatus === null || emailStatus.available);
 
   const handleSubmit = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -192,6 +195,30 @@ export default function GetStartedPage() {
     setIsLoading(true);
 
     try {
+      // If org already created, update email instead of creating new org
+      if (orgCreated && createdOrgSlug) {
+        const response = await fetch('/api/organizations/resend-invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: originalEmail, // Original email to find the invitation
+            newEmail: adminEmail.trim().toLowerCase(), // New email to update to
+            slug: createdOrgSlug, // Org slug to find the invitation
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to update email');
+        }
+
+        // Update original email reference
+        setOriginalEmail(adminEmail.trim().toLowerCase());
+        setSuccess(true);
+        return;
+      }
+
       // Determine the industry value to send
       const industryValue = industry === 'other' ? `other:${otherIndustry.trim()}` : industry;
 
@@ -214,6 +241,9 @@ export default function GetStartedPage() {
         throw new Error(data.error || 'Failed to create organization');
       }
 
+      // Store org slug and email for potential email change
+      setCreatedOrgSlug(subdomain);
+      setOriginalEmail(adminEmail.trim().toLowerCase());
       setOrgCreated(true);
       setSuccess(true);
     } catch (err) {
@@ -452,71 +482,75 @@ export default function GetStartedPage() {
             <div className="gs-form-step">
               <div className="gs-form-header">
                 <div className="gs-form-icon">
-                  <Briefcase />
+                  {orgCreated ? <Mail /> : <Briefcase />}
                 </div>
-                <h1>A bit more about {organizationName || 'your company'}</h1>
-                <p>This helps us customize your experience</p>
+                <h1>{orgCreated ? 'Update your email address' : `A bit more about ${organizationName || 'your company'}`}</h1>
+                <p>{orgCreated ? 'Enter your new email address and we\'ll send you a new invitation link' : 'This helps us customize your experience'}</p>
               </div>
 
               <div className="gs-form-fields">
-                <div className="gs-field">
-                  <label htmlFor="industry">
-                    Industry <span className="required">*</span>
-                  </label>
-                  <div className="gs-select-wrapper">
-                    <Briefcase className="gs-input-icon" />
-                    <select
-                      id="industry"
-                      value={industry}
-                      onChange={(e) => {
-                        setIndustry(e.target.value);
-                        if (e.target.value !== 'other') {
-                          setOtherIndustry('');
-                        }
-                      }}
-                    >
-                      <option value="">Select your industry</option>
-                      {INDUSTRIES.map((ind) => (
-                        <option key={ind.value} value={ind.value}>
-                          {ind.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {industry === 'other' && (
-                    <div className="gs-input-wrapper gs-other-input">
-                      <input
-                        id="otherIndustry"
-                        type="text"
-                        placeholder="Please specify your industry"
-                        value={otherIndustry}
-                        onChange={(e) => setOtherIndustry(e.target.value)}
-                        autoFocus
-                      />
+                {!orgCreated && (
+                  <>
+                    <div className="gs-field">
+                      <label htmlFor="industry">
+                        Industry <span className="required">*</span>
+                      </label>
+                      <div className="gs-select-wrapper">
+                        <Briefcase className="gs-input-icon" />
+                        <select
+                          id="industry"
+                          value={industry}
+                          onChange={(e) => {
+                            setIndustry(e.target.value);
+                            if (e.target.value !== 'other') {
+                              setOtherIndustry('');
+                            }
+                          }}
+                        >
+                          <option value="">Select your industry</option>
+                          {INDUSTRIES.map((ind) => (
+                            <option key={ind.value} value={ind.value}>
+                              {ind.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {industry === 'other' && (
+                        <div className="gs-input-wrapper gs-other-input">
+                          <input
+                            id="otherIndustry"
+                            type="text"
+                            placeholder="Please specify your industry"
+                            value={otherIndustry}
+                            onChange={(e) => setOtherIndustry(e.target.value)}
+                            autoFocus
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                <div className="gs-field">
-                  <label htmlFor="companySize">
-                    Company Size <span className="required">*</span>
-                  </label>
-                  <div className="gs-select-wrapper">
-                    <Users className="gs-input-icon" />
-                    <select
-                      id="companySize"
-                      value={companySize}
-                      onChange={(e) => setCompanySize(e.target.value)}
-                    >
-                      <option value="">Select company size</option>
-                      {COMPANY_SIZES.map((size) => (
-                        <option key={size.value} value={size.value}>
-                          {size.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                    <div className="gs-field">
+                      <label htmlFor="companySize">
+                        Company Size <span className="required">*</span>
+                      </label>
+                      <div className="gs-select-wrapper">
+                        <Users className="gs-input-icon" />
+                        <select
+                          id="companySize"
+                          value={companySize}
+                          onChange={(e) => setCompanySize(e.target.value)}
+                        >
+                          <option value="">Select company size</option>
+                          {COMPANY_SIZES.map((size) => (
+                            <option key={size.value} value={size.value}>
+                              {size.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="gs-field">
                   <label htmlFor="adminEmail">
@@ -550,21 +584,23 @@ export default function GetStartedPage() {
                   )}
                 </div>
 
-                <div className="gs-field">
-                  <label htmlFor="adminName">
-                    Your Name <span className="optional">(optional)</span>
-                  </label>
-                  <div className="gs-input-wrapper">
-                    <User className="gs-input-icon" />
-                    <input
-                      id="adminName"
-                      type="text"
-                      placeholder="John Smith"
-                      value={adminName}
-                      onChange={(e) => setAdminName(e.target.value)}
-                    />
+                {!orgCreated && (
+                  <div className="gs-field">
+                    <label htmlFor="adminName">
+                      Your Name <span className="optional">(optional)</span>
+                    </label>
+                    <div className="gs-input-wrapper">
+                      <User className="gs-input-icon" />
+                      <input
+                        id="adminName"
+                        type="text"
+                        placeholder="John Smith"
+                        value={adminName}
+                        onChange={(e) => setAdminName(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className={`gs-form-actions ${orgCreated ? '' : 'gs-form-actions-split'}`}>
@@ -587,7 +623,12 @@ export default function GetStartedPage() {
                   {isLoading ? (
                     <>
                       <Loader2 className="gs-btn-icon spinning" />
-                      Creating...
+                      {orgCreated ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : orgCreated ? (
+                    <>
+                      <Mail className="gs-btn-icon" />
+                      Update Email & Resend
                     </>
                   ) : (
                     <>

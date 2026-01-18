@@ -11,6 +11,8 @@ const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 
 const resendSchema = z.object({
   email: z.string().email('Invalid email address'),
+  newEmail: z.string().email('Invalid email address').optional(),
+  slug: z.string().optional(), // Organization slug for updating email
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -29,11 +31,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const email = result.data.email.toLowerCase();
+    const { email, newEmail, slug } = result.data;
+    const emailLower = email.toLowerCase();
+    const newEmailLower = newEmail?.toLowerCase();
 
-    // Rate limiting
+    // Rate limiting based on email or slug
+    const rateLimitKey = slug || emailLower;
     const now = Date.now();
-    const attempts = resendAttempts.get(email);
+    const attempts = resendAttempts.get(rateLimitKey);
     if (attempts) {
       if (now - attempts.lastAttempt < WINDOW_MS) {
         if (attempts.count >= MAX_ATTEMPTS) {
@@ -46,29 +51,80 @@ export async function POST(request: NextRequest) {
         attempts.lastAttempt = now;
       } else {
         // Reset window
-        resendAttempts.set(email, { count: 1, lastAttempt: now });
+        resendAttempts.set(rateLimitKey, { count: 1, lastAttempt: now });
       }
     } else {
-      resendAttempts.set(email, { count: 1, lastAttempt: now });
+      resendAttempts.set(rateLimitKey, { count: 1, lastAttempt: now });
     }
 
-    // Find pending invitation (OWNER role = signup invitation, not yet accepted)
-    const invitation = await prisma.organizationInvitation.findFirst({
-      where: {
-        email,
-        role: 'OWNER',
-        acceptedAt: null,
-      },
-      include: {
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
+    // Find pending invitation
+    // If slug is provided (changing email flow), find by org slug
+    // Otherwise find by email (regular resend flow)
+    let invitation;
+    if (slug && newEmailLower) {
+      // Changing email flow: find by org slug
+      invitation = await prisma.organizationInvitation.findFirst({
+        where: {
+          organization: { slug },
+          role: 'OWNER',
+          acceptedAt: null,
+        },
+        include: {
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
           },
         },
-      },
-    });
+      });
+
+      if (invitation) {
+        // Check if new email is already used as an owner
+        const existingOwner = await prisma.teamMember.findFirst({
+          where: {
+            email: newEmailLower,
+            isOwner: true,
+            isDeleted: false,
+          },
+        });
+
+        if (existingOwner) {
+          return NextResponse.json(
+            { error: 'This email is already associated with an organization' },
+            { status: 409 }
+          );
+        }
+
+        // Update the invitation email
+        await prisma.organizationInvitation.update({
+          where: { id: invitation.id },
+          data: { email: newEmailLower },
+        });
+
+        // Update invitation reference with new email for sending
+        invitation = { ...invitation, email: newEmailLower };
+      }
+    } else {
+      // Regular resend flow: find by email
+      invitation = await prisma.organizationInvitation.findFirst({
+        where: {
+          email: emailLower,
+          role: 'OWNER',
+          acceptedAt: null,
+        },
+        include: {
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+      });
+    }
 
     if (!invitation) {
       // Don't reveal whether email exists - just say success
@@ -89,14 +145,15 @@ export async function POST(request: NextRequest) {
     const inviteUrl = `${protocol}://${invitation.organization.slug}.${appDomain}/invite/${invitation.token}`;
     const greeting = invitation.name ? `Dear ${invitation.name}` : 'Hello';
     const orgName = invitation.organization.name;
-    const slug = invitation.organization.slug;
+    const orgSlug = invitation.organization.slug;
 
     // Calculate days remaining
     const daysRemaining = Math.ceil((invitation.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 
-    // Send email
+    // Send email to the invitation email (which may have been updated)
+    const recipientEmail = invitation.email;
     await sendEmail({
-      to: email,
+      to: recipientEmail,
       subject: `Your Durj Invitation Link - ${orgName}`,
       html: `
 <!DOCTYPE html>
@@ -141,7 +198,7 @@ export async function POST(request: NextRequest) {
                 <tr>
                   <td style="padding: 20px;">
                     <p style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 8px;">Your Portal URL</p>
-                    <p style="color: #0f172a; font-size: 16px; font-weight: bold; margin: 0; font-family: monospace;">${slug}.${appDomain.split(':')[0]}</p>
+                    <p style="color: #0f172a; font-size: 16px; font-weight: bold; margin: 0; font-family: monospace;">${orgSlug}.${appDomain.split(':')[0]}</p>
                   </td>
                 </tr>
               </table>
@@ -182,7 +239,7 @@ You requested a new sign-in link for your organization "${orgName}".
 
 Complete your setup here: ${inviteUrl}
 
-Your portal URL: ${slug}.${appDomain.split(':')[0]}
+Your portal URL: ${orgSlug}.${appDomain.split(':')[0]}
 
 Note: This link expires in ${daysRemaining} day${daysRemaining === 1 ? '' : 's'}.
 
@@ -193,7 +250,7 @@ Need help? Contact support@durj.qa
 © ${new Date().getFullYear()} Durj. All rights reserved.`,
     });
 
-    logger.info({ email, organizationId: invitation.organization.id }, 'Resent signup invitation');
+    logger.info({ email: recipientEmail, organizationId: invitation.organization.id }, 'Resent signup invitation');
 
     return NextResponse.json({ success: true });
   } catch (error) {
