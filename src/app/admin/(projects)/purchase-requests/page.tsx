@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 
-import { PurchaseRequestListTable } from '@/features/purchase-requests/components';
+import { PurchaseRequestListClient } from '@/features/purchase-requests/components';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
 
@@ -79,7 +79,7 @@ export default async function AdminPurchaseRequestsPage() {
             <p className="text-sm text-slate-500">View, review, and manage all employee purchase requests</p>
           </div>
           <div className="p-4">
-            <PurchaseRequestListTable isAdmin={true} />
+            <PurchaseRequestListClient isAdmin={true} />
           </div>
         </div>
       </PageContent>
