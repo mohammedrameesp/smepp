@@ -95,12 +95,9 @@ export default function EmployeeNewLeavePage() {
         // Get organization's weekend days setting
         if (orgRes.ok) {
           const orgData = await orgRes.json();
-          console.log('[Leave New Page] Organization weekendDays from API:', orgData.settings?.weekendDays);
           if (orgData.settings?.weekendDays?.length > 0) {
             setWeekendDays(orgData.settings.weekendDays);
           }
-        } else {
-          console.warn('[Leave New Page] Failed to fetch organization settings:', orgRes.status, orgRes.statusText);
         }
 
         // Add accrual info to balances for accrual-based leave types
