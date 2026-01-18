@@ -30,6 +30,7 @@ interface Module {
   name: string;
   description: string;
   icon: LucideIcon;
+  warning?: string;
 }
 
 interface Section {
@@ -51,13 +52,13 @@ const ADDON_MODULES: Module[] = [
   { id: 'documents', name: 'Company Documents', description: 'Document management', icon: FileText },
   { id: 'purchase-requests', name: 'Purchase Requests', description: 'Procurement workflow', icon: ShoppingCart },
   { id: 'leave', name: 'Leave Management', description: 'Leave requests & balances', icon: Calendar },
-  { id: 'payroll', name: 'Payroll', description: 'Salary & payslips', icon: DollarSign },
+  { id: 'payroll', name: 'Payroll', description: 'Salary & payslips', icon: DollarSign, warning: 'Requires additional configuration' },
 ];
 
 const SECTIONS: Section[] = [
   {
     title: 'Default Modules',
-    subtitle: 'Pre-selected for your organization',
+    subtitle: 'Essential modules to get started. Recommended for most organizations.',
     color: '#3b82f6',
     modules: DEFAULT_MODULES,
   },
@@ -95,6 +96,9 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
         </h1>
         <p className="text-sm text-slate-600">
           Select the features you need. You can change these anytime.
+        </p>
+        <p className="text-xs text-slate-400 mt-1">
+          Enabled modules will appear in your workspace menu
         </p>
       </div>
 
@@ -148,6 +152,12 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
                       {module.name}
                     </h4>
                     <p className="text-xs text-slate-500">{module.description}</p>
+                    {module.warning && (
+                      <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" />
+                        {module.warning}
+                      </p>
+                    )}
                   </button>
                 );
               })}
@@ -181,7 +191,7 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
             onClick={selectAll}
             className="text-sm text-slate-600 hover:text-slate-900 font-medium"
           >
-            Select All
+            Enable all add-ons
           </button>
         </div>
       </div>
