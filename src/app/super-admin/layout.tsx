@@ -25,6 +25,7 @@ import {
   X,
   Eye,
   EyeOff,
+  MailWarning,
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 
@@ -36,6 +37,7 @@ const mainNavItems = [
 
 const systemNavItems = [
   { icon: ShieldCheck, href: '/super-admin/admins', title: 'Super Admins' },
+  { icon: MailWarning, href: '/super-admin/email-failures', title: 'Email Failures' },
   { icon: HardDrive, href: '/super-admin/backups', title: 'Backups' },
   { icon: Settings, href: '/super-admin/settings', title: 'Settings' },
 ];
@@ -295,6 +297,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     if (pathname.startsWith('/super-admin/organizations')) return { title: 'Organizations', description: 'Manage all registered organizations' };
     if (pathname.startsWith('/super-admin/users')) return { title: 'Users', description: 'View all platform users' };
     if (pathname.startsWith('/super-admin/admins')) return { title: 'Super Admins', description: 'Manage super admin accounts' };
+    if (pathname.startsWith('/super-admin/email-failures')) return { title: 'Email Failures', description: 'Monitor and manage email delivery failures' };
     if (pathname.startsWith('/super-admin/settings')) return { title: 'Settings', description: 'Platform configuration' };
     return { title: 'Super Admin', description: 'Platform management' };
   };

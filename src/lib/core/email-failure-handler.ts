@@ -8,7 +8,7 @@
 import { prisma } from './prisma';
 import { sendEmail } from './email';
 import { createBulkNotifications } from '@/features/notifications/lib/notification-service';
-import { NotificationType } from '@prisma/client';
+import { NotificationType, Prisma } from '@prisma/client';
 import logger from './log';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -195,7 +195,7 @@ async function persistFailureLog(context: EmailFailureContext): Promise<void> {
         emailSubject: context.emailSubject,
         error: context.error,
         errorCode: context.errorCode,
-        metadata: context.metadata ? context.metadata : undefined,
+        metadata: context.metadata ? (context.metadata as Prisma.InputJsonValue) : undefined,
       },
     });
     logger.debug(
