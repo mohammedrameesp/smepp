@@ -37,33 +37,42 @@ async function approveStepHandler(request: NextRequest, context: APIContext) {
   }
 
   // Get requester ID for self-approval prevention
-  // We need to look up the entity to get the requester
-  const step = await prisma.approvalStep.findUnique({
-    where: { id },
+  // First verify the step exists and belongs to this tenant (IDOR prevention)
+  // ApprovalStep has tenantId field, so we query with tenant filter
+  const step = await prisma.approvalStep.findFirst({
+    where: {
+      id,
+      tenantId, // Critical: Only find steps belonging to this tenant
+    },
     select: { entityType: true, entityId: true },
   });
 
+  // If no step found, either doesn't exist or belongs to another tenant
+  if (!step) {
+    return NextResponse.json({ error: 'Approval step not found' }, { status: 404 });
+  }
+
+  // Now get the requester ID from the entity (using tenant-scoped db)
   let requesterId: string | undefined;
-  if (step) {
-    if (step.entityType === 'LEAVE_REQUEST') {
-      const request = await db.leaveRequest.findUnique({
-        where: { id: step.entityId },
-        select: { memberId: true },
-      });
-      requesterId = request?.memberId;
-    } else if (step.entityType === 'PURCHASE_REQUEST') {
-      const request = await db.purchaseRequest.findUnique({
-        where: { id: step.entityId },
-        select: { requesterId: true },
-      });
-      requesterId = request?.requesterId;
-    } else if (step.entityType === 'ASSET_REQUEST') {
-      const request = await db.assetRequest.findUnique({
-        where: { id: step.entityId },
-        select: { memberId: true },
-      });
-      requesterId = request?.memberId;
-    }
+
+  if (step.entityType === 'LEAVE_REQUEST') {
+    const request = await db.leaveRequest.findUnique({
+      where: { id: step.entityId },
+      select: { memberId: true },
+    });
+    requesterId = request?.memberId;
+  } else if (step.entityType === 'PURCHASE_REQUEST') {
+    const request = await db.purchaseRequest.findUnique({
+      where: { id: step.entityId },
+      select: { requesterId: true },
+    });
+    requesterId = request?.requesterId;
+  } else if (step.entityType === 'ASSET_REQUEST') {
+    const request = await db.assetRequest.findUnique({
+      where: { id: step.entityId },
+      select: { memberId: true },
+    });
+    requesterId = request?.memberId ?? undefined;
   }
 
   const result = await processApproval(id, userId, 'APPROVE', validation.data.notes, {
@@ -183,12 +192,26 @@ async function handleFinalApproval(
       tenantId
     );
   } else if (entityType === 'ASSET_REQUEST') {
+    // First get the request to check its type
+    const existingRequest = await db.assetRequest.findUnique({
+      where: { id: entityId },
+      select: { type: true },
+    });
+
+    // For EMPLOYEE_REQUEST, status goes to PENDING_USER_ACCEPTANCE (employee must accept)
+    // For RETURN_REQUEST, status goes directly to APPROVED
+    const newStatus = existingRequest?.type === 'EMPLOYEE_REQUEST'
+      ? 'PENDING_USER_ACCEPTANCE'
+      : 'APPROVED';
+
     const assetRequest = await db.assetRequest.update({
       where: { id: entityId },
       data: {
-        status: 'APPROVED',
+        status: newStatus,
         processedById: approverId,
         processedAt: new Date(),
+        // For employee requests, set the admin as assigner
+        ...(existingRequest?.type === 'EMPLOYEE_REQUEST' && { assignedById: approverId }),
       },
       include: {
         member: { select: { id: true } },

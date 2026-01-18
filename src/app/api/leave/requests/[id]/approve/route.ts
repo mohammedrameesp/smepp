@@ -203,7 +203,8 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
   }
 
   const now = new Date();
-  const year = existing.startDate.getFullYear();
+  const startYear = existing.startDate.getFullYear();
+  const endYear = existing.endDate.getFullYear();
 
   // Process approval in transaction
   const result = await prisma.$transaction(async (tx) => {
@@ -289,20 +290,94 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
       });
 
       // Update balance: pending -= totalDays, used += totalDays
-      await tx.leaveBalance.update({
-        where: {
-          tenantId_memberId_leaveTypeId_year: {
-            tenantId,
-            memberId: existing.memberId,
-            leaveTypeId: existing.leaveTypeId,
-            year,
+      // Handle cross-year leave requests (e.g., Dec 28 - Jan 3)
+      if (startYear === endYear) {
+        // Single year - update normally
+        await tx.leaveBalance.update({
+          where: {
+            tenantId_memberId_leaveTypeId_year: {
+              tenantId,
+              memberId: existing.memberId,
+              leaveTypeId: existing.leaveTypeId,
+              year: startYear,
+            },
           },
-        },
-        data: {
-          pending: { decrement: Number(existing.totalDays) },
-          used: { increment: Number(existing.totalDays) },
-        },
-      });
+          data: {
+            pending: { decrement: Number(existing.totalDays) },
+            used: { increment: Number(existing.totalDays) },
+          },
+        });
+      } else {
+        // Cross-year request - split days between years
+        // Calculate days in each year
+        const endOfStartYear = new Date(startYear, 11, 31);
+        const daysInStartYear = Math.ceil(
+          (endOfStartYear.getTime() - existing.startDate.getTime()) / (1000 * 60 * 60 * 24)
+        ) + 1; // +1 because both start and end dates are inclusive
+        const daysInEndYear = Number(existing.totalDays) - daysInStartYear;
+
+        // Update start year balance
+        if (daysInStartYear > 0) {
+          await tx.leaveBalance.update({
+            where: {
+              tenantId_memberId_leaveTypeId_year: {
+                tenantId,
+                memberId: existing.memberId,
+                leaveTypeId: existing.leaveTypeId,
+                year: startYear,
+              },
+            },
+            data: {
+              pending: { decrement: daysInStartYear },
+              used: { increment: daysInStartYear },
+            },
+          });
+        }
+
+        // Update end year balance (create if doesn't exist)
+        if (daysInEndYear > 0) {
+          const endYearBalance = await tx.leaveBalance.findUnique({
+            where: {
+              tenantId_memberId_leaveTypeId_year: {
+                tenantId,
+                memberId: existing.memberId,
+                leaveTypeId: existing.leaveTypeId,
+                year: endYear,
+              },
+            },
+          });
+
+          if (endYearBalance) {
+            await tx.leaveBalance.update({
+              where: {
+                tenantId_memberId_leaveTypeId_year: {
+                  tenantId,
+                  memberId: existing.memberId,
+                  leaveTypeId: existing.leaveTypeId,
+                  year: endYear,
+                },
+              },
+              data: {
+                pending: { decrement: daysInEndYear },
+                used: { increment: daysInEndYear },
+              },
+            });
+          } else {
+            // Create balance for the new year if it doesn't exist
+            await tx.leaveBalance.create({
+              data: {
+                tenantId,
+                memberId: existing.memberId,
+                leaveTypeId: existing.leaveTypeId,
+                year: endYear,
+                entitlement: 0, // Will be properly set during new year initialization
+                used: daysInEndYear,
+                pending: 0,
+              },
+            });
+          }
+        }
+      }
 
       // Create history entry
       await tx.leaveRequestHistory.create({

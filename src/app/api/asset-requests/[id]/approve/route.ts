@@ -230,6 +230,11 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
       return NextResponse.json({ error: 'Cannot approve this request' }, { status: 400 });
     }
 
+    // Validate memberId exists (required for approval chain processing)
+    if (!assetRequest.memberId) {
+      return NextResponse.json({ error: 'Asset request has no associated member' }, { status: 400 });
+    }
+
     // ─────────────────────────────────────────────────────────────────────────────
     // STEP 4: Process approval chain (if exists)
     // ─────────────────────────────────────────────────────────────────────────────
@@ -237,7 +242,7 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
       id,
       session.user.id,
       tenantId,
-      assetRequest.memberId!, // memberId is required in schema
+      assetRequest.memberId,
       notes ?? undefined
     );
 

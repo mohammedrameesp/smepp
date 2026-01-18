@@ -84,6 +84,9 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
     // ─────────────────────────────────────────────────────────────────────────────
     // Handle approval chain for APPROVED/REJECTED status
     // ─────────────────────────────────────────────────────────────────────────────
+    // Track if we sent notifications via approval chain to avoid duplicates
+    let notificationsSentViaChain = false;
+
     if (status === 'APPROVED' || status === 'REJECTED') {
       const chainExists = await hasApprovalChain('PURCHASE_REQUEST', id);
 
@@ -143,6 +146,34 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
           });
 
           const isChainComplete = remainingPending === 0;
+
+          // Mark that we'll handle notifications via the chain
+          // This prevents duplicate notifications when falling through to the general update
+          if (isChainComplete) {
+            notificationsSentViaChain = true;
+
+            // Send notification to requester that chain is complete
+            if (status === 'APPROVED') {
+              await createNotification(
+                NotificationTemplates.purchaseRequestApproved(
+                  currentRequest.requesterId,
+                  currentRequest.referenceNumber,
+                  id
+                ),
+                tenantId
+              );
+            } else if (status === 'REJECTED') {
+              await createNotification(
+                NotificationTemplates.purchaseRequestRejected(
+                  currentRequest.requesterId,
+                  currentRequest.referenceNumber,
+                  reviewNotes || undefined,
+                  id
+                ),
+                tenantId
+              );
+            }
+          }
 
           // If chain not complete and approved, notify next level approvers
           if (!isChainComplete && status === 'APPROVED') {
@@ -375,25 +406,28 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
     }
 
     // Send in-app notification for approved/rejected status
-    if (status === 'APPROVED') {
-      await createNotification(
-        NotificationTemplates.purchaseRequestApproved(
-          currentRequest.requesterId,
-          purchaseRequest.referenceNumber,
-          purchaseRequest.id
-        ),
-        tenantId
-      );
-    } else if (status === 'REJECTED') {
-      await createNotification(
-        NotificationTemplates.purchaseRequestRejected(
-          currentRequest.requesterId,
-          purchaseRequest.referenceNumber,
-          reviewNotes || undefined,
-          purchaseRequest.id
-        ),
-        tenantId
-      );
+    // Skip if already sent via approval chain to prevent duplicate notifications
+    if (!notificationsSentViaChain) {
+      if (status === 'APPROVED') {
+        await createNotification(
+          NotificationTemplates.purchaseRequestApproved(
+            currentRequest.requesterId,
+            purchaseRequest.referenceNumber,
+            purchaseRequest.id
+          ),
+          tenantId
+        );
+      } else if (status === 'REJECTED') {
+        await createNotification(
+          NotificationTemplates.purchaseRequestRejected(
+            currentRequest.requesterId,
+            purchaseRequest.referenceNumber,
+            reviewNotes || undefined,
+            purchaseRequest.id
+          ),
+          tenantId
+        );
+      }
     }
 
     // Include approval chain info in response if chain existed

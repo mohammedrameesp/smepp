@@ -312,6 +312,19 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
     const startDate = new Date(data.startDate);
     const endDate = new Date(data.endDate);
 
+    // Validate start date is not in the past (unless admin creating backdated request)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDateNormalized = new Date(startDate);
+    startDateNormalized.setHours(0, 0, 0, 0);
+
+    if (startDateNormalized < today && !isAdmin) {
+      return NextResponse.json(
+        { error: 'Leave start date cannot be in the past. Contact your administrator to create backdated requests.' },
+        { status: 400 }
+      );
+    }
+
     // Validate leave type exists, is active, and belongs to this tenant
     const leaveType = await db.leaveType.findFirst({
       where: { id: data.leaveTypeId },
