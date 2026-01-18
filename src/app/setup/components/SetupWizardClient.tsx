@@ -376,17 +376,14 @@ export function SetupWizardClient() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             {logoPreview ? (
-              <img src={logoPreview} alt={orgName || 'Logo'} className="h-10 w-10 object-contain" />
-            ) : orgName ? (
-              <span className="text-xl font-semibold text-slate-900">{orgName}</span>
-            ) : (
               <>
-                <img src="/sme-icon-shield-512.png" alt="Durj" className="h-10 w-10" />
-                <span className="text-xl font-semibold text-slate-900">Durj</span>
+                <img src={logoPreview} alt={orgName || 'Logo'} className="h-10 w-10 object-contain" />
+                {orgName && <span className="text-xl font-semibold text-slate-900">{orgName}</span>}
               </>
-            )}
-            {logoPreview && orgName && (
-              <span className="text-xl font-semibold text-slate-900">{orgName}</span>
+            ) : orgName ? (
+              <span className="text-2xl font-bold text-slate-900">{orgName}</span>
+            ) : (
+              <span className="text-2xl font-bold text-slate-900">Durj</span>
             )}
           </div>
           {currentStep < TOTAL_STEPS && (

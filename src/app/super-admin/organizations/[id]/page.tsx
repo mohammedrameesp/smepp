@@ -392,11 +392,11 @@ export default function OrganizationDetailPage() {
           // Pre-fill custom domain input with website if no domain is set
           if (!customDomainData.customDomain?.domain && orgData.organization?.website) {
             try {
-              // Extract domain from website URL (e.g., "https://www.example.com" -> "app.example.com")
+              // Extract domain from website URL (e.g., "https://www.example.com" -> "example.com")
               const websiteUrl = new URL(orgData.organization.website);
-              // Remove 'www.' prefix if present and suggest 'app.' subdomain
+              // Remove 'www.' prefix if present
               const hostname = websiteUrl.hostname.replace(/^www\./, '');
-              setNewCustomDomain(`app.${hostname}`);
+              setNewCustomDomain(hostname);
             } catch {
               // If URL parsing fails, just use the website as-is
             }
@@ -959,6 +959,13 @@ export default function OrganizationDetailPage() {
   // Custom Domain handlers
   const handleSetCustomDomain = async () => {
     if (!newCustomDomain.trim()) return;
+
+    // Check if SSO is enabled (either Google or Microsoft)
+    const hasSSOEnabled = authConfig?.hasCustomGoogleOAuth || authConfig?.hasCustomAzureOAuth;
+    if (!hasSSOEnabled) {
+      setDomainError('SSO must be enabled (Google or Microsoft) before setting a custom domain. Please configure SSO first in the Authentication Settings section below.');
+      return;
+    }
 
     setSettingDomain(true);
     setDomainError(null);
@@ -1533,7 +1540,7 @@ export default function OrganizationDetailPage() {
             )}
           </CardTitle>
           <CardDescription>
-            Configure a custom domain for this organization (e.g., app.company.com)
+            Configure a custom domain for this organization. SSO must be enabled first.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -1726,7 +1733,7 @@ export default function OrganizationDetailPage() {
                 <Label>Custom Domain</Label>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="app.company.com"
+                    placeholder="company.com"
                     value={newCustomDomain}
                     onChange={(e) => setNewCustomDomain(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSetCustomDomain()}
@@ -1745,7 +1752,7 @@ export default function OrganizationDetailPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Enter the domain you want to use (e.g., app.company.com, hr.acme.qa)
+                  Enter the domain you want to use (e.g., company.com, acme.qa). SSO must be enabled first.
                 </p>
               </div>
             </>
