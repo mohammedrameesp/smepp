@@ -52,6 +52,7 @@ export default function GetStartedPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [orgCreated, setOrgCreated] = useState(false); // Track if org was already created
 
   // Form state
   const [organizationName, setOrganizationName] = useState('');
@@ -132,15 +133,16 @@ export default function GetStartedPage() {
     }
   }, []);
 
-  // Debounced subdomain check
+  // Debounced subdomain check (skip if org already created)
   useEffect(() => {
+    if (orgCreated) return; // Don't recheck if org already exists
     const timer = setTimeout(() => {
       if (subdomain) {
         checkSubdomain(subdomain);
       }
     }, 500);
     return () => clearTimeout(timer);
-  }, [subdomain, checkSubdomain]);
+  }, [subdomain, checkSubdomain, orgCreated]);
 
   // Debounced email check
   useEffect(() => {
@@ -169,7 +171,7 @@ export default function GetStartedPage() {
     organizationName.trim().length >= 2 &&
     subdomain.length >= 3 &&
     !checkingSubdomain &&
-    (subdomainStatus === null || subdomainStatus.available);
+    (orgCreated || subdomainStatus === null || subdomainStatus.available);
 
   const canProceedStep2 =
     industry &&
@@ -212,6 +214,7 @@ export default function GetStartedPage() {
         throw new Error(data.error || 'Failed to create organization');
       }
 
+      setOrgCreated(true);
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -390,6 +393,8 @@ export default function GetStartedPage() {
                         placeholder="acme"
                         value={subdomain}
                         onChange={(e) => handleSubdomainChange(e.target.value)}
+                        disabled={orgCreated}
+                        className={orgCreated ? 'disabled' : ''}
                       />
                       <div className="gs-subdomain-status">
                         {checkingSubdomain ? (
@@ -405,17 +410,26 @@ export default function GetStartedPage() {
                     </div>
                     <span className="gs-subdomain-suffix">.{APP_DOMAIN.split(':')[0]}</span>
                   </div>
-                  {subdomainStatus ? (
-                    <span className={`gs-field-hint ${subdomainStatus.available ? 'success' : 'error'}`}>
-                      {subdomainStatus.available
-                        ? 'This subdomain is available!'
-                        : subdomainStatus.error || 'This subdomain is not available'}
+                  {orgCreated ? (
+                    <span className="gs-field-hint success">
+                      Your workspace URL is confirmed
                     </span>
-                  ) : (
-                    <span className="gs-field-hint warning">
-                      Choose carefully — this cannot be changed later
-                    </span>
-                  )}
+                  ) : subdomainStatus ? (
+                    subdomainStatus.available ? (
+                      <div className="gs-subdomain-hints">
+                        <span className="gs-field-hint success">
+                          Subdomain is available
+                        </span>
+                        <span className="gs-field-hint caution">
+                          Choose carefully — this cannot be changed later
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="gs-field-hint error">
+                        {subdomainStatus.error || 'This subdomain is not available'}
+                      </span>
+                    )
+                  ) : null}
                 </div>
               </div>
 
@@ -553,15 +567,17 @@ export default function GetStartedPage() {
                 </div>
               </div>
 
-              <div className="gs-form-actions gs-form-actions-split">
-                <button
-                  type="button"
-                  className="gs-btn gs-btn-outline"
-                  onClick={() => setStep(1)}
-                >
-                  <ArrowLeft className="gs-btn-icon" />
-                  Back
-                </button>
+              <div className={`gs-form-actions ${orgCreated ? '' : 'gs-form-actions-split'}`}>
+                {!orgCreated && (
+                  <button
+                    type="button"
+                    className="gs-btn gs-btn-outline"
+                    onClick={() => setStep(1)}
+                  >
+                    <ArrowLeft className="gs-btn-icon" />
+                    Back
+                  </button>
+                )}
                 <button
                   type="button"
                   className="gs-btn gs-btn-primary gs-btn-submit"

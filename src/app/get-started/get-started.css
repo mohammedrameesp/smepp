@@ -290,6 +290,13 @@
   color: #94a3b8;
 }
 
+.gs-input-wrapper input:disabled,
+.gs-input-wrapper input.disabled {
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
 .gs-select-wrapper {
   position: relative;
 }
@@ -386,11 +393,16 @@
 }
 
 .gs-field-hint.success {
-  color: #22c55e;
+  color: #16a34a;
+  font-weight: 500;
 }
 
 .gs-field-hint.error {
   color: #ef4444;
+}
+
+.gs-field-hint.caution {
+  color: #d97706;
 }
 
 .gs-field-hint.warning {
@@ -400,6 +412,12 @@
   border-radius: 0.5rem;
   margin-top: 0.5rem;
   display: block;
+}
+
+.gs-subdomain-hints {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 /* Checkbox Fields */
