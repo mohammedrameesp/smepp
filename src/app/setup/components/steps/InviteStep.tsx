@@ -7,11 +7,12 @@
  */
 
 import { useState, useMemo } from 'react';
-import { UserPlus, Plus, Trash2, Users, UserCheck, Banknote, HelpCircle } from 'lucide-react';
+import { UserPlus, Plus, Trash2, Users, UserCheck, Banknote, HelpCircle, AlertCircle, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/core/utils';
 import {
   Tooltip,
   TooltipContent,
@@ -19,6 +20,15 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { detectServiceEmail } from '@/lib/utils/email-pattern-detection';
+
+// Validate email format
+function validateEmail(email: string): { isValid: boolean; error?: string } {
+  if (!email) return { isValid: true }; // Empty is valid while typing
+  if (!email.includes('@')) return { isValid: false, error: 'Enter a valid email address' };
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) return { isValid: false, error: 'Enter a valid email address' };
+  return { isValid: true };
+}
 
 interface TeamInvite {
   email: string;
@@ -36,6 +46,7 @@ interface InviteStepProps {
 
 export function InviteStep({ invites, onChange, error, onError }: InviteStepProps) {
   const [email, setEmail] = useState('');
+  const [emailTouched, setEmailTouched] = useState(false);
   const [role, setRole] = useState<'ADMIN' | 'MANAGER' | 'MEMBER'>('MEMBER');
   const [isEmployee, setIsEmployee] = useState(true);
   const [onWPS, setOnWPS] = useState(true);
@@ -44,6 +55,15 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
   const emailDetection = useMemo(() => detectServiceEmail(email), [email]);
   // Show employee options only when email is entered and NOT a system email
   const showEmployeeOptions = email.includes('@') && !emailDetection.isLikelyServiceEmail;
+
+  // Live email validation
+  const emailValidation = useMemo(() => {
+    const baseValidation = validateEmail(email);
+    if (baseValidation.isValid && email && invites.some((i) => i.email === email)) {
+      return { isValid: false, error: 'This email has already been added' };
+    }
+    return baseValidation;
+  }, [email, invites]);
 
   const addInvite = () => {
     if (!email || !email.includes('@')) {
@@ -62,6 +82,7 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
     }
     onChange([...invites, invite]);
     setEmail('');
+    setEmailTouched(false);
     setIsEmployee(true);
     setOnWPS(true);
     onError(null);
@@ -95,14 +116,34 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
       <div className="bg-white rounded-2xl border border-slate-200 p-5">
         {/* Invite form */}
         <div className="flex gap-2">
-          <Input
-            type="email"
-            placeholder="colleague@company.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1 bg-slate-50 border-slate-200 rounded-xl h-12"
-          />
+          <div className="relative flex-1">
+            <Input
+              type="email"
+              placeholder="colleague@company.com"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setEmailTouched(true);
+                onError(null); // Clear any previous error
+              }}
+              onBlur={() => setEmailTouched(true)}
+              onKeyDown={handleKeyDown}
+              className={cn(
+                "bg-slate-50 border-slate-200 rounded-xl h-12 pr-10",
+                emailTouched && email && !emailValidation.isValid && "border-red-500 focus:border-red-500 focus:ring-red-500",
+                emailTouched && email && emailValidation.isValid && "border-green-500 focus:border-green-500 focus:ring-green-500"
+              )}
+            />
+            {emailTouched && email && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                {emailValidation.isValid ? (
+                  <Check className="w-5 h-5 text-green-500" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                )}
+              </div>
+            )}
+          </div>
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as 'ADMIN' | 'MANAGER' | 'MEMBER')}
@@ -177,7 +218,13 @@ export function InviteStep({ invites, onChange, error, onError }: InviteStepProp
           </TooltipProvider>
         )}
 
-        {error && (
+        {/* Live validation error */}
+        {emailTouched && email && !emailValidation.isValid && (
+          <p className="mt-2 text-sm text-red-600">{emailValidation.error}</p>
+        )}
+
+        {/* Submit error (from parent) */}
+        {error && !emailValidation.error && (
           <p className="mt-2 text-sm text-red-600">{error}</p>
         )}
 

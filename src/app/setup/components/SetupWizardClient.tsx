@@ -25,6 +25,35 @@ import { WelcomeStep } from './steps/WelcomeStep';
 
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 
+// Normalize URL by adding https:// if no protocol is present
+function normalizeUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+// Validate website URL format
+function isValidWebsite(url: string): boolean {
+  if (!url.trim()) return true; // Empty is valid (optional field)
+  let urlToTest = url.trim();
+  if (!/^https?:\/\//i.test(urlToTest)) {
+    urlToTest = `https://${urlToTest}`;
+  }
+  try {
+    const parsed = new URL(urlToTest);
+    return parsed.hostname.includes('.');
+  } catch {
+    return false;
+  }
+}
+
+// Validate hex color format
+function isValidHexColor(color: string): boolean {
+  if (!color) return true; // Empty is valid (optional)
+  return /^#[0-9A-Fa-f]{6}$/.test(color) || /^#[0-9A-Fa-f]{3}$/.test(color);
+}
+
 const STEPS = [
   { title: 'Organization', description: 'Name your workspace' },
   { title: 'Currencies', description: 'Additional currencies' },
@@ -142,14 +171,17 @@ export function SetupWizardClient() {
   const canProceed = useCallback(() => {
     switch (currentStep) {
       case 1:
-        // Org name must be at least 2 chars, code prefix must be exactly 3 uppercase alphanumeric
-        return orgName.trim().length >= 2 && /^[A-Z0-9]{3}$/.test(codePrefix);
+        // Org name must be at least 2 chars, code prefix must be 2-3 uppercase alphanumeric, website must be valid if provided
+        return orgName.trim().length >= 2 && /^[A-Z0-9]{2,3}$/.test(codePrefix) && isValidWebsite(website);
+      case 4:
+        // Colors are optional, but if provided they must be valid hex
+        return isValidHexColor(primaryColor) && isValidHexColor(secondaryColor);
       case 6:
         return selectedModules.length > 0;
       default:
         return true;
     }
-  }, [currentStep, orgName, codePrefix, selectedModules]);
+  }, [currentStep, orgName, codePrefix, website, primaryColor, secondaryColor, selectedModules]);
 
   // Check if current step is skippable
   // Team (step 5) is skippable, Modules (step 6) is NOT skippable
@@ -189,7 +221,7 @@ export function SetupWizardClient() {
           enabledModules: selectedModules,
           ...(primaryColor && { primaryColor }),
           ...(secondaryColor && { secondaryColor }),
-          ...(website.trim() && { website: website.trim() }),
+          ...(website.trim() && { website: normalizeUrl(website) }),
           currency: primaryCurrency,
           additionalCurrencies,
         }),

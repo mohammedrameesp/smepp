@@ -6,10 +6,20 @@
  * @module setup/steps
  */
 
-import { useState } from 'react';
-import { Palette, Check, X } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Palette, Check, X, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/core/utils';
+
+// Validate hex color format
+function validateHexColor(color: string): { isValid: boolean; error?: string } {
+  if (!color) return { isValid: true }; // Empty is valid (optional)
+  if (/^#[0-9A-Fa-f]{6}$/.test(color)) return { isValid: true };
+  if (/^#[0-9A-Fa-f]{3}$/.test(color)) return { isValid: true };
+  if (/^[0-9A-Fa-f]{6}$/.test(color)) return { isValid: false, error: 'Add # prefix (e.g., #FF5733)' };
+  if (/^[0-9A-Fa-f]{3}$/.test(color)) return { isValid: false, error: 'Add # prefix (e.g., #F53)' };
+  return { isValid: false, error: 'Invalid hex color (e.g., #FF5733)' };
+}
 
 interface ColorStepProps {
   primaryColor: string;
@@ -53,6 +63,9 @@ export function ColorStep({
   const activeColor = activeTab === 'primary' ? primaryColor : secondaryColor;
   const onColorChange = activeTab === 'primary' ? onPrimaryChange : onSecondaryChange;
   const isUsingDefault = !activeColor;
+
+  // Live validation for current color
+  const colorValidation = useMemo(() => validateHexColor(activeColor), [activeColor]);
 
   return (
     <div className="max-w-xl mx-auto">
@@ -192,13 +205,28 @@ export function ColorStep({
                 style={{ backgroundColor: activeColor || '#e2e8f0' }}
               />
             </div>
-            <Input
-              type="text"
-              value={activeColor}
-              onChange={(e) => onColorChange(e.target.value)}
-              placeholder="Platform default"
-              className="flex-1 font-mono text-sm bg-slate-50 h-9 uppercase"
-            />
+            <div className="relative flex-1">
+              <Input
+                type="text"
+                value={activeColor}
+                onChange={(e) => onColorChange(e.target.value)}
+                placeholder="Platform default"
+                className={cn(
+                  "font-mono text-sm bg-slate-50 h-9 uppercase pr-8",
+                  activeColor && !colorValidation.isValid && "border-red-500 focus:border-red-500 focus:ring-red-500",
+                  activeColor && colorValidation.isValid && "border-green-500 focus:border-green-500 focus:ring-green-500"
+                )}
+              />
+              {activeColor && (
+                <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                  {colorValidation.isValid ? (
+                    <Check className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-red-500" />
+                  )}
+                </div>
+              )}
+            </div>
             {activeColor && (
               <button
                 onClick={() => onColorChange('')}
@@ -209,6 +237,11 @@ export function ColorStep({
               </button>
             )}
           </div>
+
+          {/* Validation error */}
+          {activeColor && !colorValidation.isValid && (
+            <p className="text-xs text-red-600 mt-1">{colorValidation.error}</p>
+          )}
 
           <p className="text-xs text-slate-400 mt-2">
             {activeTab === 'primary'

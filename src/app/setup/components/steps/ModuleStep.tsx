@@ -16,6 +16,7 @@ import {
   FileText,
   Check,
   Blocks,
+  AlertCircle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -156,14 +157,17 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
       </div>
 
       {/* Selection summary */}
-      <div className="mt-4 p-3 bg-slate-100 rounded-xl border border-slate-200">
+      <div className={`mt-4 p-3 rounded-xl border ${selected.length === 0 ? 'bg-red-50 border-red-200' : 'bg-slate-100 border-slate-200'}`}>
         <div className="flex items-center justify-between">
-          <div>
-            <span className="text-sm font-medium text-slate-900">
-              {selected.length} modules selected
+          <div className="flex items-center gap-2">
+            {selected.length === 0 && (
+              <AlertCircle className="w-4 h-4 text-red-500" />
+            )}
+            <span className={`text-sm font-medium ${selected.length === 0 ? 'text-red-700' : 'text-slate-900'}`}>
+              {selected.length === 0 ? 'Select at least one module' : `${selected.length} modules selected`}
             </span>
             {selected.length > 0 && (
-              <span className="text-sm text-slate-600 ml-2">
+              <span className="text-sm text-slate-600 ml-1">
                 {selected
                   .map((id) => ALL_MODULES.find((m) => m.id === id)?.name)
                   .filter(Boolean)

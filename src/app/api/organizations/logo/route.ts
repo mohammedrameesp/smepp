@@ -14,8 +14,8 @@ import {
 // Force Node.js runtime (required for Buffer operations)
 export const runtime = 'nodejs';
 
-// Maximum file size: 2MB
-const MAX_FILE_SIZE = 2 * 1024 * 1024;
+// Maximum file size: 1MB
+const MAX_FILE_SIZE = 1 * 1024 * 1024;
 
 // Allowed image types (no JPEG - doesn't support transparency well)
 const ALLOWED_TYPES = ['image/png', 'image/webp', 'image/svg+xml'];
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 2MB' },
+        { error: 'File too large. Maximum size is 1MB' },
         { status: 400 }
       );
     }

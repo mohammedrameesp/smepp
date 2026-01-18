@@ -36,8 +36,8 @@ export function LogoStep({
       return;
     }
 
-    if (selectedFile.size > 2 * 1024 * 1024) {
-      onError('File too large. Maximum size is 2MB');
+    if (selectedFile.size > 1 * 1024 * 1024) {
+      onError('File too large. Maximum size is 1MB');
       return;
     }
 
@@ -110,7 +110,7 @@ export function LogoStep({
               Drag and drop your logo here
             </p>
             <p className="text-xs text-slate-400">
-              or click to browse (PNG, JPG, SVG up to 2MB)
+              or click to browse (PNG, JPG, SVG up to 1MB)
             </p>
           </div>
         )}

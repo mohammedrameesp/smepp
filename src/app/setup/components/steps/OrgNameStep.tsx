@@ -6,11 +6,33 @@
  * @module setup/steps
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
-import { Building2, Check, X } from 'lucide-react';
+import { Building2, Check, X, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 import { generateCodePrefixFromName } from '@/lib/utils/code-prefix';
+
+// Validate website URL (allows with or without protocol)
+function validateWebsite(url: string): { isValid: boolean; error?: string } {
+  if (!url.trim()) return { isValid: true }; // Empty is valid (optional field)
+
+  // Add protocol if missing for validation
+  let urlToTest = url.trim();
+  if (!/^https?:\/\//i.test(urlToTest)) {
+    urlToTest = `https://${urlToTest}`;
+  }
+
+  try {
+    const parsed = new URL(urlToTest);
+    // Check for valid hostname (must have at least one dot for a real domain)
+    if (!parsed.hostname.includes('.')) {
+      return { isValid: false, error: 'Enter a valid domain (e.g., example.com)' };
+    }
+    return { isValid: true };
+  } catch {
+    return { isValid: false, error: 'Enter a valid website URL' };
+  }
+}
 
 interface OrgNameStepProps {
   value: string;
@@ -30,11 +52,22 @@ export function OrgNameStep({
   onWebsiteChange,
 }: OrgNameStepProps) {
   const [userEditedPrefix, setUserEditedPrefix] = useState(false);
+  const [websiteTouched, setWebsiteTouched] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Validate org name
+  const orgNameError = useMemo(() => {
+    if (!value.trim()) return 'Organization name is required';
+    if (value.trim().length < 2) return 'Name must be at least 2 characters';
+    return null;
+  }, [value]);
 
   // Validate prefix format (2-3 uppercase alphanumeric)
   const isValidPrefix = /^[A-Z0-9]{2,3}$/.test(codePrefix);
   const isPartialPrefix = codePrefix.length > 0 && codePrefix.length < 2;
+
+  // Validate website
+  const websiteValidation = useMemo(() => validateWebsite(website), [website]);
 
   // Auto-generate suggestion from org name (only if user hasn't manually edited)
   useEffect(() => {
@@ -96,13 +129,33 @@ export function OrgNameStep({
             Website
             <span className="text-slate-400 font-normal ml-1">(optional)</span>
           </label>
-          <Input
-            value={website}
-            onChange={(e) => onWebsiteChange(e.target.value)}
-            placeholder="https://yourcompany.com"
-            type="url"
-            className="h-12 text-base text-center bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900"
-          />
+          <div className="relative">
+            <Input
+              value={website}
+              onChange={(e) => onWebsiteChange(e.target.value)}
+              onBlur={() => setWebsiteTouched(true)}
+              placeholder="yourcompany.com"
+              type="text"
+              className={cn(
+                "h-12 text-base text-center bg-slate-50 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900",
+                websiteTouched && !websiteValidation.isValid && "border-red-500 focus:border-red-500 focus:ring-red-500",
+                websiteTouched && website && websiteValidation.isValid && "border-green-500 focus:border-green-500 focus:ring-green-500"
+              )}
+            />
+            {/* Status indicator */}
+            {websiteTouched && website && (
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                {websiteValidation.isValid ? (
+                  <Check className="w-5 h-5 text-green-500" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                )}
+              </div>
+            )}
+          </div>
+          {websiteTouched && !websiteValidation.isValid && (
+            <p className="mt-1 text-sm text-red-600 text-center">{websiteValidation.error}</p>
+          )}
         </div>
 
         {/* Organization Code */}
