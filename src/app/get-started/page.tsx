@@ -426,7 +426,7 @@ export default function GetStartedPage() {
                 <div className="gs-form-icon">
                   <Briefcase />
                 </div>
-                <h1>A bit more about you</h1>
+                <h1>A bit more about {organizationName || 'your company'}</h1>
                 <p>This helps us customize your experience</p>
               </div>
 
