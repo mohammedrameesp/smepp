@@ -186,8 +186,11 @@ export async function POST(request: NextRequest) {
               <p style="color: #64748b; font-size: 14px; line-height: 21px; margin: 0 0 10px; font-family: Arial, Helvetica, sans-serif;">
                 This is an automated message from ${brandName}.
               </p>
+              <p style="color: #64748b; font-size: 14px; line-height: 21px; margin: 0 0 10px; font-family: Arial, Helvetica, sans-serif;">
+                Need help? Contact <a href="mailto:support@durj.qa" style="color: #0f172a;">support@durj.qa</a>
+              </p>
               <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
-                © ${new Date().getFullYear()} ${brandName}.${teamMember ? ' Powered by Durj.' : ' All rights reserved.'}
+                © ${new Date().getFullYear()} Durj. All rights reserved.
               </p>
             </td>
           </tr>
@@ -208,7 +211,9 @@ This link will expire in 1 hour for security reasons.
 
 If you didn't request a password reset, you can safely ignore this email.
 
-- The ${brandName} Team`,
+Need help? Contact support@durj.qa
+
+© ${new Date().getFullYear()} Durj. All rights reserved.`,
       });
 
       logger.debug('Password reset email sent');

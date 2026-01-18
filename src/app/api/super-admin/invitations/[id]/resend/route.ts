@@ -152,8 +152,11 @@ export async function POST(
               <p style="color: #64748b; font-size: 14px; line-height: 21px; margin: 0 0 10px; font-family: Arial, Helvetica, sans-serif;">
                 If you did not expect this invitation, you can safely ignore this email.
               </p>
+              <p style="color: #64748b; font-size: 14px; line-height: 21px; margin: 0 0 10px; font-family: Arial, Helvetica, sans-serif;">
+                Need help? Contact <a href="mailto:support@durj.qa" style="color: #0f172a;">support@durj.qa</a>
+              </p>
               <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
-                © ${new Date().getFullYear()} ${orgName}. Powered by Durj.
+                © ${new Date().getFullYear()} Durj. All rights reserved.
               </p>
             </td>
           </tr>
@@ -174,7 +177,9 @@ Note: This invitation will expire in 7 days.
 
 If you did not expect this invitation, you can safely ignore this email.
 
-- The ${orgName} Team`,
+Need help? Contact support@durj.qa
+
+© ${new Date().getFullYear()} Durj. All rights reserved.`,
     });
 
     return NextResponse.json({
