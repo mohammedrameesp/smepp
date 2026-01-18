@@ -816,6 +816,56 @@
   padding: 0 1rem;
 }
 
+/* Didn't receive email section */
+.gs-didnt-receive {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.gs-didnt-receive > span {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.gs-didnt-receive-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gs-link-btn {
+  background: none;
+  border: none;
+  color: #0f172a;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.gs-link-btn:hover {
+  color: #475569;
+}
+
+.gs-link-btn:disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.gs-divider {
+  color: #cbd5e1;
+  font-size: 0.875rem;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .gs-main {

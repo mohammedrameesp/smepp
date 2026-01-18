@@ -16,15 +16,7 @@ import {
   Users,
   ArrowLeft,
   Sparkles,
-  HelpCircle,
 } from 'lucide-react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { detectServiceEmail } from '@/lib/utils/email-pattern-detection';
 import { generateSlug } from '@/lib/multi-tenant/subdomain';
 import './get-started.css';
 
@@ -70,11 +62,6 @@ export default function GetStartedPage() {
   const [companySize, setCompanySize] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminName, setAdminName] = useState('');
-
-  // Employee status (for the admin creating the org)
-  const [isEmployee, setIsEmployee] = useState(true);
-  const [isOnWps, setIsOnWps] = useState(true);
-  const [showEmployeeOptions, setShowEmployeeOptions] = useState(false);
 
   // Subdomain validation
   const [checkingSubdomain, setCheckingSubdomain] = useState(false);
@@ -172,27 +159,10 @@ export default function GetStartedPage() {
     setSubdomainStatus(null);
   };
 
-  // Smart email detection for employee status
   const handleEmailChange = (email: string) => {
     setAdminEmail(email);
     setError(null);
-    setEmailStatus(null); // Reset email status when user starts typing
-    if (email.includes('@')) {
-      const detection = detectServiceEmail(email);
-      // Only show employee options for non-system emails
-      setShowEmployeeOptions(!detection.isLikelyServiceEmail);
-      if (detection.isLikelyServiceEmail) {
-        // System emails - hide options, default to not employee
-        setIsEmployee(false);
-        setIsOnWps(false);
-      } else {
-        // Personal emails - show options, default to employee on WPS
-        setIsEmployee(true);
-        setIsOnWps(true);
-      }
-    } else {
-      setShowEmployeeOptions(false);
-    }
+    setEmailStatus(null);
   };
 
   const canProceedStep1 =
@@ -233,9 +203,6 @@ export default function GetStartedPage() {
           adminName: adminName.trim() || undefined,
           industry: industryValue || undefined,
           companySize: companySize || undefined,
-          // Uses default modules: assets, subscriptions, suppliers
-          isEmployee: isEmployee,
-          isOnWps: isEmployee ? isOnWps : false,
         }),
       });
 
@@ -251,6 +218,32 @@ export default function GetStartedPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Resend email handler
+  const handleResendEmail = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/organizations/resend-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: adminEmail.trim().toLowerCase() }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        setError(data.error || 'Failed to resend email');
+      }
+    } catch {
+      setError('Failed to resend email');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Change email handler - go back to step 2
+  const handleChangeEmail = () => {
+    setSuccess(false);
+    setStep(2);
   };
 
   // Success state
@@ -270,7 +263,7 @@ export default function GetStartedPage() {
             </div>
             <h1>Check Your Email!</h1>
             <p>
-              We&apos;ve sent an invitation link to <strong>{adminEmail}</strong>
+              We&apos;ve sent a secure sign-in link to <strong>{adminEmail}</strong>
             </p>
             <div className="gs-success-details">
               <div className="gs-success-item">
@@ -286,9 +279,30 @@ export default function GetStartedPage() {
               Click the link in the email to set up your password and access your dashboard.
               The link expires in 7 days.
             </p>
+            <div className="gs-didnt-receive">
+              <span>Didn&apos;t receive the email?</span>
+              <div className="gs-didnt-receive-actions">
+                <button
+                  type="button"
+                  onClick={handleResendEmail}
+                  disabled={isLoading}
+                  className="gs-link-btn"
+                >
+                  {isLoading ? 'Sending...' : 'Resend email'}
+                </button>
+                <span className="gs-divider">·</span>
+                <button
+                  type="button"
+                  onClick={handleChangeEmail}
+                  className="gs-link-btn"
+                >
+                  Change email address
+                </button>
+              </div>
+            </div>
             <Link href="/" className="gs-btn gs-btn-outline">
               <ArrowLeft className="gs-btn-icon" />
-              Back to Home
+              Go to Homepage
             </Link>
           </div>
         </main>
@@ -511,61 +525,14 @@ export default function GetStartedPage() {
                       ) : null}
                     </div>
                   </div>
-                  {emailStatus && !emailStatus.available && (
+                  {emailStatus && !emailStatus.available ? (
                     <span className="gs-field-hint error">
                       {emailStatus.error || 'This email is already registered'}
                     </span>
-                  )}
-
-                  {/* Employee/WPS options - only shown for non-system emails */}
-                  {showEmployeeOptions && (
-                    <TooltipProvider>
-                      <div className="gs-employee-options">
-                        <div className="gs-inline-checkboxes">
-                          <label className="gs-inline-checkbox">
-                            <input
-                              type="checkbox"
-                              checked={isEmployee}
-                              onChange={(e) => {
-                                setIsEmployee(e.target.checked);
-                                if (!e.target.checked) setIsOnWps(false);
-                              }}
-                            />
-                            <span>Employee</span>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <HelpCircle className="gs-help-icon" />
-                              </TooltipTrigger>
-                              <TooltipContent className="gs-tooltip" side="top">
-                                <p className="gs-tooltip-title">Employee</p>
-                                <p className="gs-tooltip-text">Full HR profile with document tracking (QID, passport, health card expiry), leave management, and payroll.</p>
-                                <p className="gs-tooltip-title" style={{ marginTop: '8px' }}>Non-employee</p>
-                                <p className="gs-tooltip-text">System accounts like info@company.com, sales@company.com, or admin users who don&apos;t need HR tracking.</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </label>
-                          {isEmployee && (
-                            <label className="gs-inline-checkbox">
-                              <input
-                                type="checkbox"
-                                checked={isOnWps}
-                                onChange={(e) => setIsOnWps(e.target.checked)}
-                              />
-                              <span>On WPS</span>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <HelpCircle className="gs-help-icon" />
-                                </TooltipTrigger>
-                                <TooltipContent className="gs-tooltip" side="top">
-                                  <p className="gs-tooltip-title">WPS (Wage Protection System)</p>
-                                  <p className="gs-tooltip-text">Include this user in the company&apos;s monthly salary file for Qatar labor compliance. Only for employees receiving salary through your company.</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </label>
-                          )}
-                        </div>
-                      </div>
-                    </TooltipProvider>
+                  ) : (
+                    <span className="gs-field-hint">
+                      We&apos;ll send a confirmation link to activate your account.
+                    </span>
                   )}
                 </div>
 
@@ -609,7 +576,7 @@ export default function GetStartedPage() {
                   ) : (
                     <>
                       <Sparkles className="gs-btn-icon" />
-                      Create My Account
+                      Create My Workspace
                     </>
                   )}
                 </button>
