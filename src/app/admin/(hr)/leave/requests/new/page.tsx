@@ -67,7 +67,7 @@ export default function AdminNewLeavePage() {
         const [employeesRes, typesRes, orgRes] = await Promise.all([
           fetch('/api/users?includeHrProfile=true'),
           fetch('/api/leave/types'),
-          fetch('/api/admin/organization'),
+          fetch('/api/admin/organization', { cache: 'no-store' }),
         ]);
 
         if (employeesRes.ok) {

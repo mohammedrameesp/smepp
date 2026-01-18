@@ -13,6 +13,7 @@ import { approveLeaveRequestSchema } from '@/features/leave/validations/leave';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { createNotification, createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { sendEmail } from '@/lib/core/email';
+import { handleEmailFailure } from '@/lib/core/email-failure-handler';
 import { leaveRequestSubmittedEmail, leaveApprovedEmail } from '@/lib/core/email-templates';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 import logger from '@/lib/core/log';
@@ -404,7 +405,27 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
           html: emailContent.html,
           text: emailContent.text,
           tenantId,
-        }).catch(err => logger.error({ error: err instanceof Error ? err.message : 'Unknown error' }, 'Failed to send leave approval email'));
+        }).catch(async (err) => {
+          logger.error({ error: err instanceof Error ? err.message : 'Unknown error' }, 'Failed to send leave approval email');
+
+          // Notify admins and super admin about email failure
+          await handleEmailFailure({
+            module: 'leave',
+            action: 'approval',
+            tenantId,
+            organizationName: org.name,
+            organizationSlug: org.slug,
+            recipientEmail: result.request!.member!.email!,
+            recipientName: result.request!.member!.name || result.request!.member!.email!,
+            emailSubject: emailContent.subject,
+            error: err instanceof Error ? err.message : 'Unknown error',
+            metadata: {
+              leaveRequestId: id,
+              requestNumber: existing.requestNumber,
+              leaveType: existing.leaveType?.name,
+            },
+          }).catch(() => {}); // Non-blocking
+        });
       }
     } catch (emailError) {
       logger.error({ error: emailError instanceof Error ? emailError.message : 'Unknown error', leaveRequestId: id }, 'Failed to send leave approval email notification');

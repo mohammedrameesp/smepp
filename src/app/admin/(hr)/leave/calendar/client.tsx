@@ -95,7 +95,7 @@ export function LeaveCalendarClient() {
   useEffect(() => {
     const fetchOrgSettings = async () => {
       try {
-        const response = await fetch('/api/admin/organization');
+        const response = await fetch('/api/admin/organization', { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
           if (data.organization?.weekendDays?.length > 0) {

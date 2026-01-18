@@ -153,7 +153,7 @@ export default function AdminEmployeeEditPage() {
 
   const fetchEnabledModules = useCallback(async () => {
     try {
-      const response = await fetch('/api/admin/organization');
+      const response = await fetch('/api/admin/organization', { cache: 'no-store' });
       if (response.ok) {
         const data = await response.json();
         setPayrollEnabled(data.organization?.enabledModules?.includes('payroll') ?? false);

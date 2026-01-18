@@ -134,7 +134,7 @@ export default function NewEmployeePage() {
   useEffect(() => {
     async function fetchOrgSettings() {
       try {
-        const response = await fetch('/api/admin/organization');
+        const response = await fetch('/api/admin/organization', { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
           setEnabledModules(data.organization?.enabledModules || []);
