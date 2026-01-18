@@ -75,6 +75,9 @@ export async function GET() {
     // Remove sensitive fields before returning
     const { customGoogleClientId: _customGoogleClientId, customGoogleClientSecret: _customGoogleClientSecret, customAzureClientId: _customAzureClientId, customAzureClientSecret: _customAzureClientSecret, ...orgData } = organization;
 
+    // Debug log
+    logger.info({ weekendDays: organization.weekendDays, orgId: organization.id }, 'GET /api/admin/organization returning weekendDays');
+
     return NextResponse.json({
       organization: orgData,
       authConfig: {
@@ -152,6 +155,11 @@ export async function PATCH(request: NextRequest) {
 
     // Normalize website: empty string becomes null
     const normalizedWebsite = (!website || website === '') ? null : website;
+
+    // Log incoming weekendDays for debugging
+    if (weekendDays !== undefined) {
+      logger.info({ weekendDays, orgId: session.user.organizationId }, 'Updating weekendDays');
+    }
 
     const updated = await prisma.organization.update({
       where: { id: session.user.organizationId },

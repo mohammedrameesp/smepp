@@ -4,6 +4,9 @@
  * @module admin/organization
  */
 
+// Force dynamic rendering to prevent caching of weekend days and other settings
+export const dynamic = 'force-dynamic';
+
 import { getServerSession } from 'next-auth/next';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/core/auth';

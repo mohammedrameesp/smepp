@@ -35,6 +35,9 @@ export async function GET() {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
+    // Debug log
+    console.log('[API /organization/settings] Returning weekendDays:', organization.weekendDays);
+
     return NextResponse.json({
       settings: {
         weekendDays: organization.weekendDays,
