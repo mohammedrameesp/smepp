@@ -324,6 +324,11 @@ export default async function AdminDashboard() {
       title: 'Assets',
       description: 'Physical and digital assets',
       count: dashboardData?.stats.assets,
+      emptyState: {
+        text: 'No assets yet',
+        actionText: 'Add first asset',
+        actionHref: '/admin/assets/new',
+      },
       badge: dashboardData?.stats.totalPendingAssets ? `${dashboardData.stats.totalPendingAssets} pending` : null,
       badgeColor: 'bg-red-500',
       enabled: isModuleEnabled('assets'),
@@ -336,6 +341,11 @@ export default async function AdminDashboard() {
       title: 'Subscriptions',
       description: 'Software licenses and renewals',
       count: dashboardData?.stats.subscriptions,
+      emptyState: {
+        text: 'No subscriptions yet',
+        actionText: 'Add subscription',
+        actionHref: '/admin/subscriptions/new',
+      },
       enabled: isModuleEnabled('subscriptions'),
       requiredAccess: 'operations' as const,
     },
@@ -346,6 +356,11 @@ export default async function AdminDashboard() {
       title: 'Suppliers',
       description: 'Vendors and partners',
       count: dashboardData?.stats.suppliers,
+      emptyState: {
+        text: 'No suppliers yet',
+        actionText: 'Add supplier',
+        actionHref: '/admin/suppliers/new',
+      },
       badge: dashboardData?.stats.pendingSuppliers ? `${dashboardData.stats.pendingSuppliers} pending` : null,
       badgeColor: 'bg-red-500',
       enabled: isModuleEnabled('suppliers'),
@@ -358,6 +373,11 @@ export default async function AdminDashboard() {
       title: 'Team',
       description: 'Employees, members, and invitations',
       count: dashboardData?.stats.employees,
+      emptyState: {
+        text: 'Just you for now',
+        actionText: 'Invite team member',
+        actionHref: '/admin/employees?invite=true',
+      },
       badge: dashboardData?.stats.pendingChangeRequests ? `${dashboardData.stats.pendingChangeRequests} change req` : null,
       badgeColor: 'bg-orange-500',
       enabled: true,  // Always enabled - core feature
@@ -402,6 +422,11 @@ export default async function AdminDashboard() {
       title: 'Documents',
       description: 'Licenses and registrations',
       count: dashboardData?.stats.companyDocuments,
+      emptyState: {
+        text: 'No documents yet',
+        actionText: 'Add document',
+        actionHref: '/admin/company-documents/new',
+      },
       badge: (dashboardData?.expiringCompanyDocs?.length || 0) > 0 ? `${dashboardData?.expiringCompanyDocs?.length} expiring` : null,
       badgeColor: 'bg-red-500',
       enabled: isModuleEnabled('documents'),
@@ -488,7 +513,17 @@ export default async function AdminDashboard() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-4xl">{card.icon}</div>
                   {card.count !== undefined ? (
-                    <div className="text-2xl font-bold text-slate-700">{card.count}</div>
+                    // Check if "empty" - for team it's <=1, for others it's 0
+                    ((card.id === 'team' ? card.count <= 1 : card.count === 0) && card.emptyState) ? (
+                      <div className="text-right">
+                        <p className="text-sm text-slate-500">{card.emptyState.text}</p>
+                        <p className="text-xs text-blue-600 font-medium mt-0.5">
+                          {card.emptyState.actionText} →
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="text-2xl font-bold text-slate-700">{card.count}</div>
+                    )
                   ) : card.status ? (
                     <div className={`text-sm font-semibold ${card.status.color} px-2 py-1 rounded`}>
                       {card.status.text}
