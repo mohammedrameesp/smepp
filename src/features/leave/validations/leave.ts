@@ -318,8 +318,8 @@ export const leaveRequestQuerySchema = z.object({
   endDate: z.string().optional(),
   /** Page number (1-based) */
   p: z.coerce.number().min(1).default(1),
-  /** Page size (max 100) */
-  ps: z.coerce.number().min(1).max(100).default(50),
+  /** Page size (max 10000) */
+  ps: z.coerce.number().min(1).max(10000).default(50),
   /** Sort field */
   sort: z.enum(['requestNumber', 'startDate', 'endDate', 'totalDays', 'createdAt', 'status']).default('createdAt'),
   /** Sort order */

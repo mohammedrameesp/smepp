@@ -188,8 +188,8 @@ export const assetRequestQuerySchema = z.object({
   assetId: z.string().optional(),
   /** Page number (1-indexed, default: 1) */
   p: z.coerce.number().min(1).default(1),
-  /** Page size (1-100, default: 20) */
-  ps: z.coerce.number().min(1).max(100).default(20),
+  /** Page size (1-10000, default: 20) */
+  ps: z.coerce.number().min(1).max(10000).default(20),
   /** Sort field */
   sort: z.enum(['createdAt', 'updatedAt', 'requestNumber', 'status']).default('createdAt'),
   /** Sort direction */

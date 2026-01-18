@@ -229,8 +229,8 @@ export const payrollRunQuerySchema = z.object({
   status: z.nativeEnum(PayrollStatus).optional(),
   /** Page number (1-based) */
   p: z.coerce.number().min(1).default(1),
-  /** Page size (max 100) */
-  ps: z.coerce.number().min(1).max(100).default(20),
+  /** Page size (max 10000) */
+  ps: z.coerce.number().min(1).max(10000).default(20),
 });
 
 /**
@@ -248,8 +248,8 @@ export const payslipQuerySchema = z.object({
   month: z.coerce.number().int().min(1).max(12).optional(),
   /** Page number (1-based) */
   p: z.coerce.number().min(1).default(1),
-  /** Page size (max 100) */
-  ps: z.coerce.number().min(1).max(100).default(50),
+  /** Page size (max 10000) */
+  ps: z.coerce.number().min(1).max(10000).default(50),
 });
 
 /**
@@ -265,8 +265,8 @@ export const loanQuerySchema = z.object({
   type: z.enum(['LOAN', 'ADVANCE']).optional(),
   /** Page number (1-based) */
   p: z.coerce.number().min(1).default(1),
-  /** Page size (max 100) */
-  ps: z.coerce.number().min(1).max(100).default(50),
+  /** Page size (max 10000) */
+  ps: z.coerce.number().min(1).max(10000).default(50),
 });
 
 /**
@@ -282,8 +282,8 @@ export const salaryStructureQuerySchema = z.object({
   search: z.string().optional(),
   /** Page number (1-based) */
   p: z.coerce.number().min(1).default(1),
-  /** Page size (max 100) */
-  ps: z.coerce.number().min(1).max(100).default(50),
+  /** Page size (max 10000) */
+  ps: z.coerce.number().min(1).max(10000).default(50),
 });
 
 /**

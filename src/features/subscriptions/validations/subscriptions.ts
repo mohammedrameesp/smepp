@@ -165,7 +165,7 @@ export const subscriptionQuerySchema = z.object({
   billingCycle: z.nativeEnum(BillingCycle).optional(),
   renewalWindowDays: z.coerce.number().min(0).max(365).optional(),
   p: z.coerce.number().min(1).default(1),
-  ps: z.coerce.number().min(1).max(100).default(50),
+  ps: z.coerce.number().min(1).max(10000).default(50),
   sort: z.enum(['serviceName', 'renewalDate', 'costPerCycle', 'createdAt']).default('createdAt'),
   order: z.enum(['asc', 'desc']).default('desc'),
 });

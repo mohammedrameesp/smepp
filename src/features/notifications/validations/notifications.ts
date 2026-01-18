@@ -36,8 +36,8 @@ export const notificationQuerySchema = z.object({
     .transform((val) => (val === undefined ? undefined : val === 'true')),
   /** Page number (1-based, default: 1) */
   p: z.coerce.number().min(1).default(1),
-  /** Page size (max 100, default: 20) */
-  ps: z.coerce.number().min(1).max(100).default(20),
+  /** Page size (max 10000, default: 20) */
+  ps: z.coerce.number().min(1).max(10000).default(20),
 });
 
 /** Inferred type for notification query parameters */

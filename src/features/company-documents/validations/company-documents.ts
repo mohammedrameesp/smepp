@@ -68,7 +68,7 @@ export const companyDocumentQuerySchema = z.object({
   expiryStatus: z.enum(['all', 'expired', 'expiring', 'valid']).optional().default('all'),
   search: z.string().optional(),
   p: z.coerce.number().int().positive().optional().default(1),
-  ps: z.coerce.number().int().positive().max(100).optional().default(20),
+  ps: z.coerce.number().int().positive().max(10000).optional().default(20),
   sortBy: z.enum(['expiryDate', 'createdAt', 'documentTypeName']).optional().default('expiryDate'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('asc'),
 });
