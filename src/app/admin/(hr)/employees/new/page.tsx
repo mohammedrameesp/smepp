@@ -453,7 +453,7 @@ export default function NewEmployeePage() {
                 <Alert className="border-amber-200 bg-amber-50">
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-amber-800">
-                    Non-employee users only appear in team management, not in HR features like payroll or leave.
+                    Service accounts only appear in team management, not in HR features like payroll or leave.
                   </AlertDescription>
                 </Alert>
               )}

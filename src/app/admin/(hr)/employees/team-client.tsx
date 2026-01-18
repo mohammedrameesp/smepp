@@ -25,7 +25,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  Users,
   UserPlus,
   Mail,
   Loader2,
@@ -38,6 +37,7 @@ import {
   Shield,
   User,
   Briefcase,
+  AtSign,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { EmployeeListTable } from '@/features/employees/components';
@@ -99,7 +99,7 @@ interface TeamClientProps {
   };
 }
 
-type FilterType = 'employees' | 'non-employees' | 'all';
+type FilterType = 'employees' | 'service-accounts';
 
 const roleIcons: Record<string, React.ReactNode> = {
   OWNER: <Crown className="h-4 w-4 text-amber-500" />,
@@ -149,11 +149,9 @@ export function TeamClient({ initialStats }: TeamClientProps) {
 
   // Stats
   const stats = useMemo(() => ({
-    all: members.length,
     employees: members.filter((m) => m.isEmployee).length,
-    nonEmployees: members.filter((m) => !m.isEmployee).length,
-    pending: pendingMembers.length,
-  }), [members, pendingMembers]);
+    serviceAccounts: members.filter((m) => !m.isEmployee).length,
+  }), [members]);
 
   useEffect(() => {
     fetchData();
@@ -360,33 +358,18 @@ export function TeamClient({ initialStats }: TeamClientProps) {
             </Badge>
           </button>
           <button
-            onClick={() => setCurrentTab('non-employees')}
+            onClick={() => setCurrentTab('service-accounts')}
             className={cn(
               'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-2',
-              currentTab === 'non-employees'
+              currentTab === 'service-accounts'
                 ? 'bg-background text-foreground shadow-sm'
                 : 'hover:bg-background/50'
             )}
           >
-            <User className="h-4 w-4" />
-            Non-Employees
+            <AtSign className="h-4 w-4" />
+            Service Accounts
             <Badge variant="secondary" className="ml-1">
-              {stats.nonEmployees || initialStats.totalNonEmployees}
-            </Badge>
-          </button>
-          <button
-            onClick={() => setCurrentTab('all')}
-            className={cn(
-              'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-2',
-              currentTab === 'all'
-                ? 'bg-background text-foreground shadow-sm'
-                : 'hover:bg-background/50'
-            )}
-          >
-            <Users className="h-4 w-4" />
-            All
-            <Badge variant="secondary" className="ml-1">
-              {stats.all || (initialStats.totalEmployees + initialStats.totalNonEmployees)}
+              {stats.serviceAccounts || initialStats.totalNonEmployees}
             </Badge>
           </button>
         </div>
@@ -415,16 +398,16 @@ export function TeamClient({ initialStats }: TeamClientProps) {
         </div>
       </div>
 
-      {/* Non-Employees Tab Content */}
-      <div className={currentTab === 'non-employees' ? '' : 'hidden'}>
+      {/* Service Accounts Tab Content */}
+      <div className={currentTab === 'service-accounts' ? '' : 'hidden'}>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Non-Employees
+              <AtSign className="h-5 w-5" />
+              Service Accounts
             </CardTitle>
             <CardDescription>
-              Team members without HR profiles (contractors, external users, etc.)
+              Shared accounts for system use (info@, admin@, support@, etc.)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -434,8 +417,8 @@ export function TeamClient({ initialStats }: TeamClientProps) {
               </div>
             ) : nonEmployees.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No non-employees found</p>
+                <AtSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No service accounts found</p>
               </div>
             ) : (
               <div className="divide-y">
@@ -515,106 +498,6 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                           )}
                         </Button>
                       )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* All Tab Content - Shows summary with links to specific tabs */}
-      <div className={currentTab === 'all' ? 'space-y-6' : 'hidden'}>
-        {/* Quick Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card
-            className="cursor-pointer hover:border-blue-300 transition-colors"
-            onClick={() => setCurrentTab('employees')}
-          >
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Briefcase className="h-5 w-5 text-blue-600" />
-                Employees
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-blue-600">{stats.employees || initialStats.totalEmployees}</p>
-              <p className="text-sm text-muted-foreground mt-1">Team members with HR profiles</p>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="cursor-pointer hover:border-slate-400 transition-colors"
-            onClick={() => setCurrentTab('non-employees')}
-          >
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <User className="h-5 w-5 text-slate-600" />
-                Non-Employees
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-slate-600">{stats.nonEmployees || initialStats.totalNonEmployees}</p>
-              <p className="text-sm text-muted-foreground mt-1">Contractors, external users</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Combined List - Simple view of all members */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              All Team Members ({stats.all || (initialStats.totalEmployees + initialStats.totalNonEmployees)})
-            </CardTitle>
-            <CardDescription>
-              Click on Employees or Non-Employees tab for detailed view
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : members.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No team members found</p>
-              </div>
-            ) : (
-              <div className="divide-y">
-                {members.map((member) => (
-                  <div key={member.id} className="py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center">
-                        {member.user.image ? (
-                          <img
-                            src={member.user.image}
-                            alt={member.user.name || ''}
-                            className="h-9 w-9 rounded-full"
-                          />
-                        ) : (
-                          <span className="text-sm font-semibold text-slate-600">
-                            {(member.user.name || member.user.email)?.[0]?.toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{member.user.name || member.user.email}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {member.isEmployee ? (
-                            <span className="text-blue-600">Employee</span>
-                          ) : (
-                            <span className="text-slate-500">Non-employee</span>
-                          )}
-                          {member.designation && ` • ${member.designation}`}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {roleIcons[member.role]}
-                      <Badge variant="secondary">{member.role}</Badge>
                     </div>
                   </div>
                 ))}

@@ -130,7 +130,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (profile && hrProfile !== null && !isLoadingHR) {
       // Only show onboarding for EMPLOYEES who haven't completed it
-      // Non-employees (system/service accounts) skip onboarding entirely
+      // Service accounts skip onboarding entirely
       if (profile.isEmployee && !hrProfile.onboardingComplete) {
         setShowOnboarding(true);
       }
@@ -452,10 +452,10 @@ export default function ProfilePage() {
                       ) : isEditing && !profile.isEmployee ? (
                         <div className="flex-1">
                           <p className="text-sm text-gray-600">
-                            System/service accounts use the organization logo as their profile picture.
+                            Service accounts use the organization logo as their profile picture.
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            This cannot be changed for non-employee accounts.
+                            This cannot be changed for service accounts.
                           </p>
                         </div>
                       ) : null}
@@ -606,21 +606,21 @@ export default function ProfilePage() {
                   </CardContent>
                 </Card>
               ) : !profile.isEmployee ? (
-                // Non-employees (system/service accounts) don't have HR profiles
+                // Service accounts don't have HR profiles
                 <Card>
                   <CardContent className="py-12">
                     <div className="text-center">
                       <Shield className="h-12 w-12 mx-auto mb-4 text-blue-400" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        System/Service Account
+                        Service Account
                       </h3>
                       <p className="text-gray-600 mb-4 max-w-md mx-auto">
-                        This account is registered as a system or service account and does not require an HR profile.
+                        This account is registered as a service account and does not require an HR profile.
                       </p>
                       <div className="bg-gray-50 rounded-lg p-4 max-w-sm mx-auto text-left">
                         <p className="text-sm text-gray-500 mb-2">Account details:</p>
                         <ul className="text-sm text-gray-700 space-y-1">
-                          <li><strong>Type:</strong> System/Service Account</li>
+                          <li><strong>Type:</strong> Service Account</li>
                           <li><strong>Email:</strong> {profile.email}</li>
                           <li><strong>Profile Picture:</strong> Organization logo</li>
                         </ul>

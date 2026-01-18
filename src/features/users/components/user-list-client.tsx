@@ -91,7 +91,7 @@ export function UserListClient({ users, currentUserId }: UserListClientProps) {
             <TableCell>
               {user.isSystemAccount ? (
                 <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
-                  🏢 System Account
+                  Service Account
                 </Badge>
               ) : user.role === 'EMPLOYEE' ? (
                 <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">

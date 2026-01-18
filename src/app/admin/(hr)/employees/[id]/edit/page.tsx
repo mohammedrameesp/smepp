@@ -292,7 +292,7 @@ export default function AdminEmployeeEditPage() {
       }
       toast.success(enabled
         ? 'Marked as employee'
-        : 'Marked as non-employee'
+        : 'Marked as service account'
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update employee status');
