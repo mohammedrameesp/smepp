@@ -84,16 +84,20 @@ function getSportsDayDate(year: number): { month: number; day: number } {
 const QATAR_HOLIDAYS_TEMPLATE = [
   {
     name: 'Eid al-Fitr',
-    description: 'End of Ramadan celebration',
-    durationDays: 3,
+    description: 'End of Ramadan (min 3 days, includes weekends)',
+    minDays: 3,
+    durationDays: 3, // Default, but can be more
     isRecurring: false,
+    flexibleDuration: true, // User can set more than minimum
     color: '#22C55E', // Green
   },
   {
     name: 'Eid al-Adha',
-    description: 'Feast of Sacrifice',
-    durationDays: 3,
+    description: 'Feast of Sacrifice (min 3 days, includes weekends)',
+    minDays: 3,
+    durationDays: 3, // Default, but can be more
     isRecurring: false,
+    flexibleDuration: true, // User can set more than minimum
     color: '#3B82F6', // Blue
   },
   {
@@ -122,9 +126,11 @@ interface HolidayDisplayRow {
   startDate: string | null;
   endDate: string | null;
   durationDays: number;
+  minDays?: number; // Minimum days for flexible holidays
   isRecurring: boolean;
   color: string;
   isConfigured: boolean;
+  flexibleDuration?: boolean; // Can set more than default duration
 }
 
 interface PublicHolidaysSettingsProps {
@@ -187,10 +193,12 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
           description: dbHoliday.description || template.description,
           startDate: dbHoliday.startDate,
           endDate: dbHoliday.endDate,
-          durationDays: template.durationDays,
+          durationDays: getDurationDays(dbHoliday.startDate, dbHoliday.endDate),
+          minDays: 'minDays' in template ? template.minDays : undefined,
           isRecurring: template.isRecurring,
           color: dbHoliday.color || template.color,
           isConfigured: true,
+          flexibleDuration: 'flexibleDuration' in template ? template.flexibleDuration : false,
         });
       } else {
         // Not in database - show as unconfigured
@@ -217,9 +225,11 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
           startDate: defaultStart,
           endDate: defaultEnd,
           durationDays: template.durationDays,
+          minDays: 'minDays' in template ? template.minDays : undefined,
           isRecurring: template.isRecurring,
           color: template.color,
           isConfigured: false,
+          flexibleDuration: 'flexibleDuration' in template ? template.flexibleDuration : false,
         });
       }
     }
@@ -532,7 +542,12 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
             </DialogTitle>
             <DialogDescription>
               {editingHoliday?.description}
-              {editingHoliday && editingHoliday.durationDays > 1 && (
+              {editingHoliday && editingHoliday.flexibleDuration && editingHoliday.minDays && (
+                <span className="block mt-1 text-blue-600">
+                  Minimum {editingHoliday.minDays} days (can be extended)
+                </span>
+              )}
+              {editingHoliday && !editingHoliday.flexibleDuration && editingHoliday.durationDays > 1 && (
                 <span className="block mt-1 text-blue-600">
                   This holiday spans {editingHoliday.durationDays} days
                 </span>
@@ -549,10 +564,16 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
                   value={editStartDate}
                   onChange={(e) => {
                     setEditStartDate(e.target.value);
-                    // Auto-set end date based on duration
-                    if (editingHoliday && e.target.value) {
+                    // Auto-set end date based on duration (only for fixed-duration holidays)
+                    if (editingHoliday && e.target.value && !editingHoliday.flexibleDuration) {
                       const start = new Date(e.target.value);
                       start.setDate(start.getDate() + editingHoliday.durationDays - 1);
+                      setEditEndDate(start.toISOString().split('T')[0]);
+                    }
+                    // For flexible holidays, set minimum end date
+                    if (editingHoliday && e.target.value && editingHoliday.flexibleDuration && editingHoliday.minDays) {
+                      const start = new Date(e.target.value);
+                      start.setDate(start.getDate() + editingHoliday.minDays - 1);
                       setEditEndDate(start.toISOString().split('T')[0]);
                     }
                   }}
@@ -565,8 +586,21 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
                   type="date"
                   value={editEndDate}
                   onChange={(e) => setEditEndDate(e.target.value)}
-                  min={editStartDate}
+                  min={editStartDate ? (() => {
+                    // For flexible holidays, enforce minimum days
+                    if (editingHoliday?.flexibleDuration && editingHoliday?.minDays) {
+                      const start = new Date(editStartDate);
+                      start.setDate(start.getDate() + editingHoliday.minDays - 1);
+                      return start.toISOString().split('T')[0];
+                    }
+                    return editStartDate;
+                  })() : undefined}
                 />
+                {editingHoliday?.flexibleDuration && editStartDate && editEndDate && (
+                  <p className="text-xs text-muted-foreground">
+                    Duration: {getDurationDays(editStartDate, editEndDate)} days
+                  </p>
+                )}
               </div>
             </div>
           </div>
