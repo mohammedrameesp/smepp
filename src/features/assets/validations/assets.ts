@@ -293,8 +293,8 @@ export const assetQuerySchema = z.object({
   assignmentFilter: z.enum(['all', 'mine', 'unassigned', 'others']).optional(),
   /** Page number (1-indexed, default: 1) */
   p: z.coerce.number().min(1).default(1),
-  /** Page size (1-100, default: 20) */
-  ps: z.coerce.number().min(1).max(100).default(20),
+  /** Page size (1-10000, default: 20) */
+  ps: z.coerce.number().min(1).max(10000).default(20),
   /** Sort field */
   sort: z.enum(['model', 'brand', 'type', 'category', 'purchaseDate', 'warrantyExpiry', 'priceQAR', 'createdAt', 'assetTag']).default('createdAt'),
   /** Sort direction */
