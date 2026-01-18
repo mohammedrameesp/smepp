@@ -55,6 +55,31 @@ interface PublicHoliday {
   color: string;
 }
 
+/**
+ * Calculate the 2nd Tuesday of February for a given year
+ */
+function getSportsDayDate(year: number): { month: number; day: number } {
+  // Start from February 1st
+  const feb1 = new Date(year, 1, 1); // Month is 0-indexed, so 1 = February
+  const dayOfWeek = feb1.getDay(); // 0 = Sunday, 2 = Tuesday
+
+  // Calculate days until the first Tuesday
+  let daysUntilFirstTuesday = (2 - dayOfWeek + 7) % 7;
+  if (daysUntilFirstTuesday === 0) daysUntilFirstTuesday = 7; // If Feb 1 is Tuesday, first Tuesday is Feb 1
+
+  // Actually, if Feb 1 is a Tuesday, that's the first Tuesday (day 1)
+  if (dayOfWeek === 2) {
+    daysUntilFirstTuesday = 0;
+  }
+
+  // First Tuesday date
+  const firstTuesday = 1 + daysUntilFirstTuesday;
+  // Second Tuesday is 7 days later
+  const secondTuesday = firstTuesday + 7;
+
+  return { month: 2, day: secondTuesday };
+}
+
 // Qatar public holidays template - these always appear
 const QATAR_HOLIDAYS_TEMPLATE = [
   {
@@ -85,6 +110,7 @@ const QATAR_HOLIDAYS_TEMPLATE = [
     description: '2nd Tuesday of February',
     durationDays: 1,
     isRecurring: false,
+    calculateDate: getSportsDayDate, // Dynamic calculation
     color: '#F59E0B', // Amber
   },
 ];
@@ -174,6 +200,13 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
         // For National Day, pre-fill the default date
         if (template.defaultMonth && template.defaultDay) {
           defaultStart = `${selectedYear}-${String(template.defaultMonth).padStart(2, '0')}-${String(template.defaultDay).padStart(2, '0')}`;
+          defaultEnd = defaultStart;
+        }
+
+        // For Sports Day, calculate the 2nd Tuesday of February
+        if ('calculateDate' in template && template.calculateDate) {
+          const calculated = template.calculateDate(selectedYear);
+          defaultStart = `${selectedYear}-${String(calculated.month).padStart(2, '0')}-${String(calculated.day).padStart(2, '0')}`;
           defaultEnd = defaultStart;
         }
 
