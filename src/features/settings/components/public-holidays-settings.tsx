@@ -6,19 +6,18 @@
  * @module components/domains/system/settings
  *
  * FEATURES:
- * - View, create, edit, delete public holidays
+ * - All Qatar holidays pre-populated (Eid al-Fitr, Eid al-Adha, National Day, Sports Day)
+ * - Dates shown as "Not set" until configured
  * - Year-based filtering
- * - Seed Qatar holidays for selected year
  * - Support for multi-day holidays (e.g., Eid)
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -35,16 +34,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
   Table,
   TableBody,
   TableCell,
@@ -52,7 +41,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Calendar, Plus, Pencil, Trash2, Loader2, Sparkles } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Pencil, Loader2, Plus } from 'lucide-react';
 
 interface PublicHoliday {
   id: string;
@@ -65,35 +55,51 @@ interface PublicHoliday {
   color: string;
 }
 
-// Qatar public holidays template
+// Qatar public holidays template - these always appear
 const QATAR_HOLIDAYS_TEMPLATE = [
   {
     name: 'Eid al-Fitr',
-    description: 'End of Ramadan celebration (3 days)',
+    description: 'End of Ramadan celebration',
     durationDays: 3,
-    isRecurring: false, // Variable date (Islamic calendar)
+    isRecurring: false,
+    color: '#22C55E', // Green
   },
   {
     name: 'Eid al-Adha',
-    description: 'Feast of Sacrifice (3 days)',
+    description: 'Feast of Sacrifice',
     durationDays: 3,
-    isRecurring: false, // Variable date (Islamic calendar)
+    isRecurring: false,
+    color: '#3B82F6', // Blue
   },
   {
     name: 'Qatar National Day',
-    description: 'Celebrates the unification of Qatar',
+    description: 'December 18 - Unification of Qatar',
+    durationDays: 1,
+    isRecurring: true,
     defaultMonth: 12,
     defaultDay: 18,
-    durationDays: 1,
-    isRecurring: true, // Fixed date
+    color: '#8B1538', // Maroon (Qatar color)
   },
   {
     name: 'Sports Day',
-    description: 'National Sports Day (2nd Tuesday of February)',
+    description: '2nd Tuesday of February',
     durationDays: 1,
-    isRecurring: false, // Variable date (2nd Tuesday of Feb)
+    isRecurring: false,
+    color: '#F59E0B', // Amber
   },
 ];
+
+interface HolidayDisplayRow {
+  id: string | null; // null if not yet in database
+  name: string;
+  description: string;
+  startDate: string | null;
+  endDate: string | null;
+  durationDays: number;
+  isRecurring: boolean;
+  color: string;
+  isConfigured: boolean;
+}
 
 interface PublicHolidaysSettingsProps {
   isAdmin?: boolean;
@@ -104,33 +110,19 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [holidays, setHolidays] = useState<PublicHoliday[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Create form state
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [createName, setCreateName] = useState('');
-  const [createDescription, setCreateDescription] = useState('');
-  const [createStartDate, setCreateStartDate] = useState('');
-  const [createEndDate, setCreateEndDate] = useState('');
-  const [createColor, setCreateColor] = useState('#EF4444');
-  const [createIsRecurring, setCreateIsRecurring] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
+  const [savingHoliday, setSavingHoliday] = useState<string | null>(null);
 
   // Edit dialog state
-  const [editHoliday, setEditHoliday] = useState<PublicHoliday | null>(null);
-  const [editName, setEditName] = useState('');
-  const [editDescription, setEditDescription] = useState('');
+  const [editingHoliday, setEditingHoliday] = useState<HolidayDisplayRow | null>(null);
   const [editStartDate, setEditStartDate] = useState('');
   const [editEndDate, setEditEndDate] = useState('');
-  const [editColor, setEditColor] = useState('#EF4444');
-  const [editIsRecurring, setEditIsRecurring] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Delete dialog state
-  const [deleteHoliday, setDeleteHoliday] = useState<PublicHoliday | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // Seed holidays state
-  const [isSeedDialogOpen, setIsSeedDialogOpen] = useState(false);
+  // Custom holiday dialog
+  const [showAddCustom, setShowAddCustom] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [isAddingCustom, setIsAddingCustom] = useState(false);
 
   const fetchHolidays = useCallback(async () => {
     try {
@@ -154,183 +146,219 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
     fetchHolidays();
   }, [fetchHolidays]);
 
-  function resetCreateForm() {
-    setCreateName('');
-    setCreateDescription('');
-    setCreateStartDate('');
-    setCreateEndDate('');
-    setCreateColor('#EF4444');
-    setCreateIsRecurring(false);
-  }
+  // Merge template holidays with database holidays
+  const displayHolidays = useMemo((): HolidayDisplayRow[] => {
+    const rows: HolidayDisplayRow[] = [];
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    if (!createName.trim() || !createStartDate || !createEndDate) return;
+    // Add template holidays (always shown)
+    for (const template of QATAR_HOLIDAYS_TEMPLATE) {
+      const dbHoliday = holidays.find((h) => h.name === template.name);
 
-    setIsCreating(true);
-    try {
-      const response = await fetch('/api/admin/public-holidays', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: createName.trim(),
-          description: createDescription.trim() || null,
-          startDate: createStartDate,
-          endDate: createEndDate,
-          year: selectedYear,
-          isRecurring: createIsRecurring,
-          color: createColor,
-        }),
-      });
-
-      if (response.ok) {
-        toast.success('Holiday created successfully');
-        resetCreateForm();
-        setShowCreateDialog(false);
-        fetchHolidays();
-      } else {
-        const data = await response.json();
-        toast.error(data.error || 'Failed to create holiday');
-      }
-    } catch (error) {
-      console.error('Error creating holiday:', error);
-      toast.error('Failed to create holiday');
-    } finally {
-      setIsCreating(false);
-    }
-  }
-
-  async function handleUpdate(e: React.FormEvent) {
-    e.preventDefault();
-    if (!editHoliday || !editName.trim() || !editStartDate || !editEndDate) return;
-
-    setIsUpdating(true);
-    try {
-      const response = await fetch(`/api/admin/public-holidays/${editHoliday.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: editName.trim(),
-          description: editDescription.trim() || null,
-          startDate: editStartDate,
-          endDate: editEndDate,
-          isRecurring: editIsRecurring,
-          color: editColor,
-        }),
-      });
-
-      if (response.ok) {
-        toast.success('Holiday updated successfully');
-        setEditHoliday(null);
-        fetchHolidays();
-      } else {
-        const data = await response.json();
-        toast.error(data.error || 'Failed to update holiday');
-      }
-    } catch (error) {
-      console.error('Error updating holiday:', error);
-      toast.error('Failed to update holiday');
-    } finally {
-      setIsUpdating(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (!deleteHoliday) return;
-
-    setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/admin/public-holidays/${deleteHoliday.id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        toast.success('Holiday deleted');
-        setDeleteHoliday(null);
-        fetchHolidays();
-      } else {
-        const data = await response.json();
-        toast.error(data.error || 'Failed to delete holiday');
-      }
-    } catch (error) {
-      console.error('Error deleting holiday:', error);
-      toast.error('Failed to delete holiday');
-    } finally {
-      setIsDeleting(false);
-    }
-  }
-
-  function openEditDialog(holiday: PublicHoliday) {
-    setEditHoliday(holiday);
-    setEditName(holiday.name);
-    setEditDescription(holiday.description || '');
-    setEditStartDate(holiday.startDate.split('T')[0]);
-    setEditEndDate(holiday.endDate.split('T')[0]);
-    setEditColor(holiday.color);
-    setEditIsRecurring(holiday.isRecurring);
-  }
-
-  async function seedQatarHolidays() {
-    setIsSeedDialogOpen(false);
-
-    // Only seed fixed-date holidays automatically
-    const nationalDay = QATAR_HOLIDAYS_TEMPLATE.find((h) => h.name === 'Qatar National Day');
-    if (nationalDay && nationalDay.defaultMonth && nationalDay.defaultDay) {
-      try {
-        const startDate = `${selectedYear}-${String(nationalDay.defaultMonth).padStart(2, '0')}-${String(nationalDay.defaultDay).padStart(2, '0')}`;
-        const response = await fetch('/api/admin/public-holidays', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: nationalDay.name,
-            description: nationalDay.description,
-            startDate,
-            endDate: startDate,
-            year: selectedYear,
-            isRecurring: nationalDay.isRecurring,
-            color: '#EF4444',
-          }),
+      if (dbHoliday) {
+        rows.push({
+          id: dbHoliday.id,
+          name: dbHoliday.name,
+          description: dbHoliday.description || template.description,
+          startDate: dbHoliday.startDate,
+          endDate: dbHoliday.endDate,
+          durationDays: template.durationDays,
+          isRecurring: template.isRecurring,
+          color: dbHoliday.color || template.color,
+          isConfigured: true,
         });
+      } else {
+        // Not in database - show as unconfigured
+        let defaultStart: string | null = null;
+        let defaultEnd: string | null = null;
 
-        if (response.ok) {
-          toast.success('Qatar National Day added');
-        } else {
-          const data = await response.json();
-          if (data.error?.includes('already exists')) {
-            toast.info('Qatar National Day already exists for this year');
-          }
+        // For National Day, pre-fill the default date
+        if (template.defaultMonth && template.defaultDay) {
+          defaultStart = `${selectedYear}-${String(template.defaultMonth).padStart(2, '0')}-${String(template.defaultDay).padStart(2, '0')}`;
+          defaultEnd = defaultStart;
         }
-      } catch (error) {
-        console.error('Error seeding holiday:', error);
+
+        rows.push({
+          id: null,
+          name: template.name,
+          description: template.description,
+          startDate: defaultStart,
+          endDate: defaultEnd,
+          durationDays: template.durationDays,
+          isRecurring: template.isRecurring,
+          color: template.color,
+          isConfigured: false,
+        });
       }
     }
 
-    // Refresh the list
-    fetchHolidays();
-    toast.info('Variable holidays (Eid, Sports Day) need dates set manually each year');
+    // Add any custom holidays not in template
+    for (const dbHoliday of holidays) {
+      const isTemplate = QATAR_HOLIDAYS_TEMPLATE.some((t) => t.name === dbHoliday.name);
+      if (!isTemplate) {
+        rows.push({
+          id: dbHoliday.id,
+          name: dbHoliday.name,
+          description: dbHoliday.description || '',
+          startDate: dbHoliday.startDate,
+          endDate: dbHoliday.endDate,
+          durationDays: getDurationDays(dbHoliday.startDate, dbHoliday.endDate),
+          isRecurring: dbHoliday.isRecurring,
+          color: dbHoliday.color,
+          isConfigured: true,
+        });
+      }
+    }
+
+    return rows;
+  }, [holidays, selectedYear]);
+
+  function getDurationDays(startDate: string, endDate: string): number {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = end.getTime() - start.getTime();
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
   }
 
-  function formatDate(dateString: string) {
+  function formatDate(dateString: string | null): string {
+    if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('en-GB', {
       day: 'numeric',
       month: 'short',
-      year: 'numeric',
     });
   }
 
-  function formatDateRange(startDate: string, endDate: string) {
+  function formatDateRange(startDate: string | null, endDate: string | null): string {
+    if (!startDate || !endDate) return 'Not set';
     const start = formatDate(startDate);
     const end = formatDate(endDate);
     if (start === end) return start;
     return `${start} - ${end}`;
   }
 
-  function getDurationDays(startDate: string, endDate: string) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = end.getTime() - start.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    return diffDays;
+  function openEditDialog(holiday: HolidayDisplayRow) {
+    setEditingHoliday(holiday);
+    setEditStartDate(holiday.startDate?.split('T')[0] || '');
+    setEditEndDate(holiday.endDate?.split('T')[0] || '');
+  }
+
+  async function handleSaveHoliday() {
+    if (!editingHoliday || !editStartDate || !editEndDate) return;
+
+    setSavingHoliday(editingHoliday.name);
+
+    try {
+      if (editingHoliday.id) {
+        // Update existing
+        const response = await fetch(`/api/admin/public-holidays/${editingHoliday.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            startDate: editStartDate,
+            endDate: editEndDate,
+          }),
+        });
+
+        if (response.ok) {
+          toast.success(`${editingHoliday.name} updated`);
+          setEditingHoliday(null);
+          fetchHolidays();
+        } else {
+          const data = await response.json();
+          toast.error(data.error || 'Failed to update holiday');
+        }
+      } else {
+        // Create new
+        const response = await fetch('/api/admin/public-holidays', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: editingHoliday.name,
+            description: editingHoliday.description,
+            startDate: editStartDate,
+            endDate: editEndDate,
+            year: selectedYear,
+            isRecurring: editingHoliday.isRecurring,
+            color: editingHoliday.color,
+          }),
+        });
+
+        if (response.ok) {
+          toast.success(`${editingHoliday.name} configured`);
+          setEditingHoliday(null);
+          fetchHolidays();
+        } else {
+          const data = await response.json();
+          toast.error(data.error || 'Failed to save holiday');
+        }
+      }
+    } catch (error) {
+      console.error('Error saving holiday:', error);
+      toast.error('Failed to save holiday');
+    } finally {
+      setSavingHoliday(null);
+    }
+  }
+
+  async function handleClearHoliday(holiday: HolidayDisplayRow) {
+    if (!holiday.id) return;
+
+    setSavingHoliday(holiday.name);
+    try {
+      const response = await fetch(`/api/admin/public-holidays/${holiday.id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        toast.success(`${holiday.name} dates cleared`);
+        fetchHolidays();
+      } else {
+        toast.error('Failed to clear holiday');
+      }
+    } catch (error) {
+      console.error('Error clearing holiday:', error);
+      toast.error('Failed to clear holiday');
+    } finally {
+      setSavingHoliday(null);
+    }
+  }
+
+  async function handleAddCustomHoliday(e: React.FormEvent) {
+    e.preventDefault();
+    if (!customName.trim() || !customStartDate || !customEndDate) return;
+
+    setIsAddingCustom(true);
+    try {
+      const response = await fetch('/api/admin/public-holidays', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: customName.trim(),
+          description: '',
+          startDate: customStartDate,
+          endDate: customEndDate,
+          year: selectedYear,
+          isRecurring: false,
+          color: '#6B7280',
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Custom holiday added');
+        setShowAddCustom(false);
+        setCustomName('');
+        setCustomStartDate('');
+        setCustomEndDate('');
+        fetchHolidays();
+      } else {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to add holiday');
+      }
+    } catch (error) {
+      console.error('Error adding holiday:', error);
+      toast.error('Failed to add holiday');
+    } finally {
+      setIsAddingCustom(false);
+    }
   }
 
   // Generate year options (current year - 1 to current year + 2)
@@ -369,13 +397,9 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="sm" onClick={() => setIsSeedDialogOpen(true)}>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Add Qatar Holidays
-                </Button>
-                <Button size="sm" onClick={() => setShowCreateDialog(true)}>
+                <Button variant="outline" size="sm" onClick={() => setShowAddCustom(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Holiday
+                  Add Custom
                 </Button>
               </div>
             )}
@@ -387,23 +411,6 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
               <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
               Loading holidays...
             </div>
-          ) : holidays.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground space-y-4">
-              <Calendar className="h-12 w-12 mx-auto text-muted-foreground/50" />
-              <p>No holidays configured for {selectedYear}.</p>
-              {isAdmin && (
-                <div className="flex justify-center gap-2">
-                  <Button variant="outline" onClick={() => setIsSeedDialogOpen(true)}>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Add Qatar Holidays
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowCreateDialog(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Custom Holiday
-                  </Button>
-                </div>
-              )}
-            </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
               <Table>
@@ -412,13 +419,17 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
                     <TableHead className="w-10"></TableHead>
                     <TableHead>Holiday</TableHead>
                     <TableHead>Date(s)</TableHead>
-                    <TableHead className="text-center w-24">Days</TableHead>
-                    <TableHead className="text-right w-24">Actions</TableHead>
+                    <TableHead className="text-center w-20">Days</TableHead>
+                    <TableHead className="text-center w-24">Status</TableHead>
+                    {isAdmin && <TableHead className="text-right w-24">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {holidays.map((holiday) => (
-                    <TableRow key={holiday.id}>
+                  {displayHolidays.map((holiday) => (
+                    <TableRow
+                      key={holiday.name}
+                      className={!holiday.isConfigured ? 'bg-muted/30' : ''}
+                    >
                       <TableCell>
                         <div
                           className="w-4 h-4 rounded-full"
@@ -429,43 +440,47 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
                         <div>
                           <span className="font-medium">{holiday.name}</span>
                           {holiday.isRecurring && (
-                            <span className="ml-2 text-xs text-muted-foreground">(Recurring)</span>
+                            <span className="ml-2 text-xs text-muted-foreground">(Fixed)</span>
                           )}
-                          {holiday.description && (
-                            <p className="text-sm text-muted-foreground truncate max-w-xs">
-                              {holiday.description}
-                            </p>
-                          )}
+                          <p className="text-sm text-muted-foreground">{holiday.description}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {formatDateRange(holiday.startDate, holiday.endDate)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {getDurationDays(holiday.startDate, holiday.endDate)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {isAdmin && (
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openEditDialog(holiday)}
-                              title="Edit"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeleteHoliday(holiday)}
-                              title="Delete"
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
+                      <TableCell>
+                        {holiday.isConfigured ? (
+                          <span>{formatDateRange(holiday.startDate, holiday.endDate)}</span>
+                        ) : (
+                          <span className="text-muted-foreground italic">Not set</span>
                         )}
                       </TableCell>
+                      <TableCell className="text-center">{holiday.durationDays}</TableCell>
+                      <TableCell className="text-center">
+                        {holiday.isConfigured ? (
+                          <Badge variant="default" className="bg-green-600">
+                            Set
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Pending</Badge>
+                        )}
+                      </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditDialog(holiday)}
+                            disabled={savingHoliday === holiday.name}
+                          >
+                            {savingHoliday === holiday.name ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <Pencil className="h-4 w-4 mr-1" />
+                                {holiday.isConfigured ? 'Edit' : 'Set'}
+                              </>
+                            )}
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -475,269 +490,143 @@ export function PublicHolidaysSettings({ isAdmin = true }: PublicHolidaysSetting
         </CardContent>
       </Card>
 
-      {/* Create Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+      {/* Edit/Set Holiday Dialog */}
+      <Dialog open={!!editingHoliday} onOpenChange={(open) => !open && setEditingHoliday(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Public Holiday</DialogTitle>
+            <DialogTitle>
+              {editingHoliday?.isConfigured ? 'Edit' : 'Set'} {editingHoliday?.name}
+            </DialogTitle>
             <DialogDescription>
-              Create a new public holiday for {selectedYear}
+              {editingHoliday?.description}
+              {editingHoliday && editingHoliday.durationDays > 1 && (
+                <span className="block mt-1 text-blue-600">
+                  This holiday spans {editingHoliday.durationDays} days
+                </span>
+              )}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleCreate}>
-            <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="create-name">Holiday Name *</Label>
+                <Label htmlFor="edit-start-date">Start Date</Label>
                 <Input
-                  id="create-name"
-                  value={createName}
-                  onChange={(e) => setCreateName(e.target.value)}
-                  placeholder="e.g., Eid al-Fitr, National Day"
-                  required
+                  id="edit-start-date"
+                  type="date"
+                  value={editStartDate}
+                  onChange={(e) => {
+                    setEditStartDate(e.target.value);
+                    // Auto-set end date based on duration
+                    if (editingHoliday && e.target.value) {
+                      const start = new Date(e.target.value);
+                      start.setDate(start.getDate() + editingHoliday.durationDays - 1);
+                      setEditEndDate(start.toISOString().split('T')[0]);
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="create-description">Description</Label>
-                <Textarea
-                  id="create-description"
-                  value={createDescription}
-                  onChange={(e) => setCreateDescription(e.target.value)}
-                  placeholder="Optional description"
-                  rows={2}
+                <Label htmlFor="edit-end-date">End Date</Label>
+                <Input
+                  id="edit-end-date"
+                  type="date"
+                  value={editEndDate}
+                  onChange={(e) => setEditEndDate(e.target.value)}
+                  min={editStartDate}
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="create-start-date">Start Date *</Label>
-                  <Input
-                    id="create-start-date"
-                    type="date"
-                    value={createStartDate}
-                    onChange={(e) => {
-                      setCreateStartDate(e.target.value);
-                      if (!createEndDate || e.target.value > createEndDate) {
-                        setCreateEndDate(e.target.value);
-                      }
-                    }}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="create-end-date">End Date *</Label>
-                  <Input
-                    id="create-end-date"
-                    type="date"
-                    value={createEndDate}
-                    onChange={(e) => setCreateEndDate(e.target.value)}
-                    min={createStartDate}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="create-color">Color</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="create-color"
-                      type="color"
-                      value={createColor}
-                      onChange={(e) => setCreateColor(e.target.value)}
-                      className="w-14 h-10 p-1 cursor-pointer"
-                    />
-                    <Input
-                      value={createColor}
-                      onChange={(e) => setCreateColor(e.target.value)}
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Recurring</Label>
-                  <Select
-                    value={createIsRecurring ? 'yes' : 'no'}
-                    onValueChange={(v) => setCreateIsRecurring(v === 'yes')}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="no">No (variable date)</SelectItem>
-                      <SelectItem value="yes">Yes (fixed date)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowCreateDialog(false);
-                  resetCreateForm();
-                }}
-              >
+          </div>
+          <DialogFooter className="flex justify-between">
+            <div>
+              {editingHoliday?.isConfigured && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="text-destructive"
+                  onClick={() => {
+                    if (editingHoliday) {
+                      handleClearHoliday(editingHoliday);
+                      setEditingHoliday(null);
+                    }
+                  }}
+                >
+                  Clear Dates
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setEditingHoliday(null)}>
                 Cancel
               </Button>
               <Button
-                type="submit"
-                disabled={isCreating || !createName.trim() || !createStartDate || !createEndDate}
+                onClick={handleSaveHoliday}
+                disabled={!editStartDate || !editEndDate || !!savingHoliday}
               >
-                {isCreating ? 'Creating...' : 'Create Holiday'}
+                {savingHoliday ? 'Saving...' : 'Save'}
               </Button>
-            </DialogFooter>
-          </form>
+            </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editHoliday} onOpenChange={(open) => !open && setEditHoliday(null)}>
+      {/* Add Custom Holiday Dialog */}
+      <Dialog open={showAddCustom} onOpenChange={setShowAddCustom}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Public Holiday</DialogTitle>
-            <DialogDescription>Update the holiday details</DialogDescription>
+            <DialogTitle>Add Custom Holiday</DialogTitle>
+            <DialogDescription>Add a holiday not in the standard Qatar list</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleUpdate}>
+          <form onSubmit={handleAddCustomHoliday}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Holiday Name *</Label>
+                <Label htmlFor="custom-name">Holiday Name</Label>
                 <Input
-                  id="edit-name"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
+                  id="custom-name"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="e.g., Company Anniversary"
                   required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-description">Description</Label>
-                <Textarea
-                  id="edit-description"
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  rows={2}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-start-date">Start Date *</Label>
+                  <Label htmlFor="custom-start-date">Start Date</Label>
                   <Input
-                    id="edit-start-date"
+                    id="custom-start-date"
                     type="date"
-                    value={editStartDate}
+                    value={customStartDate}
                     onChange={(e) => {
-                      setEditStartDate(e.target.value);
-                      if (e.target.value > editEndDate) {
-                        setEditEndDate(e.target.value);
-                      }
+                      setCustomStartDate(e.target.value);
+                      if (!customEndDate) setCustomEndDate(e.target.value);
                     }}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-end-date">End Date *</Label>
+                  <Label htmlFor="custom-end-date">End Date</Label>
                   <Input
-                    id="edit-end-date"
+                    id="custom-end-date"
                     type="date"
-                    value={editEndDate}
-                    onChange={(e) => setEditEndDate(e.target.value)}
-                    min={editStartDate}
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    min={customStartDate}
                     required
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-color">Color</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="edit-color"
-                      type="color"
-                      value={editColor}
-                      onChange={(e) => setEditColor(e.target.value)}
-                      className="w-14 h-10 p-1 cursor-pointer"
-                    />
-                    <Input
-                      value={editColor}
-                      onChange={(e) => setEditColor(e.target.value)}
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Recurring</Label>
-                  <Select
-                    value={editIsRecurring ? 'yes' : 'no'}
-                    onValueChange={(v) => setEditIsRecurring(v === 'yes')}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="no">No (variable date)</SelectItem>
-                      <SelectItem value="yes">Yes (fixed date)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditHoliday(null)}>
+              <Button type="button" variant="outline" onClick={() => setShowAddCustom(false)}>
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={isUpdating || !editName.trim() || !editStartDate || !editEndDate}
-              >
-                {isUpdating ? 'Saving...' : 'Save Changes'}
+              <Button type="submit" disabled={isAddingCustom}>
+                {isAddingCustom ? 'Adding...' : 'Add Holiday'}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteHoliday} onOpenChange={(open) => !open && setDeleteHoliday(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Holiday</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete &quot;{deleteHoliday?.name}&quot;? This action cannot
-              be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Seed Qatar Holidays Confirmation */}
-      <AlertDialog open={isSeedDialogOpen} onOpenChange={setIsSeedDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Add Qatar Holidays</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>This will add Qatar National Day (December 18) for {selectedYear}.</p>
-              <p className="text-sm text-muted-foreground">
-                Note: Variable holidays like Eid al-Fitr, Eid al-Adha, and Sports Day need to be
-                added manually each year as their dates change based on the Islamic calendar.
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={seedQatarHolidays}>Add Holidays</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }
