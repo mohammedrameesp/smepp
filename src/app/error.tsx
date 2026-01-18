@@ -24,6 +24,19 @@ export default function Error({
       },
       'Application error boundary triggered'
     );
+
+    // Report to backend for super admin visibility (non-blocking)
+    fetch('/api/errors/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: error.message,
+        stack: error.stack,
+        source: 'error-boundary',
+        digest: error.digest,
+        url: typeof window !== 'undefined' ? window.location.href : undefined,
+      }),
+    }).catch(() => {}); // Non-blocking - ignore failures
   }, [error]);
 
   return (

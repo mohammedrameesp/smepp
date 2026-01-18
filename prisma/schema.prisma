@@ -428,6 +428,7 @@ model Organization {
   aiChatUsage            AIChatUsage[]
   aiChatAuditLogs        AIChatAuditLog[]
   emailFailureLogs       EmailFailureLog[]
+  errorLogs              ErrorLog[]
 
   // Access Control
   rolePermissions RolePermission[]
@@ -1203,6 +1204,60 @@ model EmailFailureLog {
   @@index([module])
   @@index([resolved])
   @@index([createdAt])
+  @@index([tenantId, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ERROR LOG (Centralized error tracking across all services)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model ErrorLog {
+  id               String        @id @default(cuid())
+  tenantId         String?
+  tenant           Organization? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  // Error classification
+  type             String        // API_ERROR, CLIENT_ERROR, SERVICE_ERROR
+  source           String        // Module or component (e.g., "assets", "leave", "ui/dashboard")
+  action           String?       // Specific action (e.g., "create", "approve")
+
+  // Request info
+  requestId        String?
+  method           String?       // GET, POST, etc.
+  path             String?       // /api/assets/[id]
+
+  // User info
+  userId           String?
+  userEmail        String?
+  userRole         String?       // ADMIN, MEMBER, etc.
+
+  // Error details
+  message          String        @db.Text
+  stack            String?       @db.Text
+  statusCode       Int?
+  errorCode        String?       // Custom error codes
+
+  // Additional context
+  metadata         Json?
+  userAgent        String?
+
+  // Severity
+  severity         String        @default("error") // error, warning, critical
+
+  // Resolution tracking
+  resolved         Boolean       @default(false)
+  resolvedAt       DateTime?
+  resolvedBy       String?       // Super admin who resolved
+  resolutionNotes  String?
+
+  createdAt        DateTime      @default(now())
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([severity])
+  @@index([resolved])
+  @@index([createdAt])
+  @@index([userId])
   @@index([tenantId, createdAt])
 }
 

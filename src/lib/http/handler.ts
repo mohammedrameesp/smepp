@@ -63,6 +63,7 @@ import { hasPermission as checkPermission } from '@/lib/access-control';
 import { MAX_BODY_SIZE_BYTES } from '@/lib/constants/limits';
 import { isTokenRevoked } from '@/lib/security/impersonation';
 import { logAction, ActivityActions } from '@/lib/core/activity';
+import { handleSystemError, getModuleFromPath } from '@/lib/core/error-logger';
 
 // Maximum JSON body size - uses constant from limits.ts, can be overridden via env
 const MAX_BODY_SIZE = parseInt(process.env.MAX_BODY_SIZE || String(MAX_BODY_SIZE_BYTES), 10);
@@ -611,11 +612,30 @@ export function withErrorHandler(
           session?.user.email,
           error as Error
         );
+
+        // Log to database for super admin visibility (non-blocking)
+        const tenantContext = getTenantContextFromHeaders(request.headers);
+        handleSystemError({
+          type: 'API_ERROR',
+          source: getModuleFromPath(request.url),
+          tenantId: tenantContext?.tenantId,
+          requestId,
+          method: request.method,
+          path: new URL(request.url).pathname,
+          userId: session?.user.id,
+          userEmail: session?.user.email,
+          userRole: session?.user.isAdmin ? 'ADMIN' : session?.user.isOwner ? 'OWNER' : 'MEMBER',
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          statusCode,
+          userAgent: request.headers.get('user-agent') || undefined,
+          severity: statusCode >= 500 ? 'error' : 'warning',
+        }).catch(() => {}); // Non-blocking - never fail the response
       }
-      
+
       const response = NextResponse.json(errorResponse, { status: statusCode });
       response.headers.set('x-request-id', requestId);
-      
+
       return response;
     }
   };

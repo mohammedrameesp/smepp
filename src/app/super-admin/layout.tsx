@@ -26,6 +26,7 @@ import {
   Eye,
   EyeOff,
   MailWarning,
+  AlertOctagon,
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 
@@ -38,6 +39,7 @@ const mainNavItems = [
 const systemNavItems = [
   { icon: ShieldCheck, href: '/super-admin/admins', title: 'Super Admins' },
   { icon: MailWarning, href: '/super-admin/email-failures', title: 'Email Failures' },
+  { icon: AlertOctagon, href: '/super-admin/error-logs', title: 'Error Logs' },
   { icon: HardDrive, href: '/super-admin/backups', title: 'Backups' },
   { icon: Settings, href: '/super-admin/settings', title: 'Settings' },
 ];
@@ -298,6 +300,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
     if (pathname.startsWith('/super-admin/users')) return { title: 'Users', description: 'View all platform users' };
     if (pathname.startsWith('/super-admin/admins')) return { title: 'Super Admins', description: 'Manage super admin accounts' };
     if (pathname.startsWith('/super-admin/email-failures')) return { title: 'Email Failures', description: 'Monitor and manage email delivery failures' };
+    if (pathname.startsWith('/super-admin/error-logs')) return { title: 'Error Logs', description: 'Monitor and manage system errors across all services' };
     if (pathname.startsWith('/super-admin/settings')) return { title: 'Settings', description: 'Platform configuration' };
     return { title: 'Super Admin', description: 'Platform management' };
   };
