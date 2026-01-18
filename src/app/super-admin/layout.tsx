@@ -22,7 +22,9 @@ import {
   ClipboardList,
   HardDrive,
   Menu,
-  X
+  X,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { cn } from '@/lib/core/utils';
 
@@ -44,6 +46,7 @@ function LoginForm() {
   const [step, setStep] = useState<'credentials' | '2fa'>('credentials');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
   const [isBackupCode, setIsBackupCode] = useState(false);
   const [backupCode, setBackupCode] = useState('');
@@ -196,7 +199,17 @@ function LoginForm() {
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password" className="text-slate-700">Password</Label>
                   </div>
-                  <Input id="password" type="password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1.5 bg-slate-50 border-slate-200 rounded-xl h-12" required />
+                  <div className="relative mt-1.5">
+                    <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-slate-50 border-slate-200 rounded-xl h-12 pr-10" required />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full h-12 bg-slate-800 hover:bg-slate-700 rounded-xl" disabled={isLoading}>
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Continue'}
