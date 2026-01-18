@@ -32,15 +32,16 @@ const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 
 // Industry options
 const INDUSTRIES = [
-  { value: 'technology', label: 'Technology' },
+  { value: 'technology', label: 'Technology / Software' },
   { value: 'retail', label: 'Retail & E-commerce' },
   { value: 'healthcare', label: 'Healthcare' },
   { value: 'manufacturing', label: 'Manufacturing' },
-  { value: 'construction', label: 'Construction' },
+  { value: 'construction', label: 'Construction & Trades' },
   { value: 'education', label: 'Education' },
-  { value: 'finance', label: 'Finance & Banking' },
+  { value: 'financial-services', label: 'Financial Services' },
   { value: 'real-estate', label: 'Real Estate' },
-  { value: 'hospitality', label: 'Hospitality' },
+  { value: 'hospitality', label: 'Hospitality & Food Services' },
+  { value: 'media-marketing', label: 'Media, Marketing & Creative' },
   { value: 'professional-services', label: 'Professional Services' },
   { value: 'other', label: 'Other' },
 ];
@@ -65,6 +66,7 @@ export default function GetStartedPage() {
   const [subdomain, setSubdomain] = useState('');
   const [subdomainEdited, setSubdomainEdited] = useState(false);
   const [industry, setIndustry] = useState('');
+  const [otherIndustry, setOtherIndustry] = useState('');
   const [companySize, setCompanySize] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminName, setAdminName] = useState('');
@@ -201,6 +203,7 @@ export default function GetStartedPage() {
 
   const canProceedStep2 =
     industry &&
+    (industry !== 'other' || otherIndustry.trim().length >= 2) &&
     companySize &&
     adminEmail &&
     !checkingEmail &&
@@ -217,6 +220,9 @@ export default function GetStartedPage() {
     setIsLoading(true);
 
     try {
+      // Determine the industry value to send
+      const industryValue = industry === 'other' ? `other:${otherIndustry.trim()}` : industry;
+
       const response = await fetch('/api/organizations/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -225,7 +231,7 @@ export default function GetStartedPage() {
           slug: subdomain,
           adminEmail: adminEmail.trim().toLowerCase(),
           adminName: adminName.trim() || undefined,
-          industry: industry || undefined,
+          industry: industryValue || undefined,
           companySize: companySize || undefined,
           // Uses default modules: assets, subscriptions, suppliers
           isEmployee: isEmployee,
@@ -430,7 +436,12 @@ export default function GetStartedPage() {
                     <select
                       id="industry"
                       value={industry}
-                      onChange={(e) => setIndustry(e.target.value)}
+                      onChange={(e) => {
+                        setIndustry(e.target.value);
+                        if (e.target.value !== 'other') {
+                          setOtherIndustry('');
+                        }
+                      }}
                     >
                       <option value="">Select your industry</option>
                       {INDUSTRIES.map((ind) => (
@@ -440,6 +451,18 @@ export default function GetStartedPage() {
                       ))}
                     </select>
                   </div>
+                  {industry === 'other' && (
+                    <div className="gs-input-wrapper gs-other-input">
+                      <input
+                        id="otherIndustry"
+                        type="text"
+                        placeholder="Please specify your industry"
+                        value={otherIndustry}
+                        onChange={(e) => setOtherIndustry(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="gs-field">
