@@ -492,7 +492,27 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
               html: emailContent.html,
               text: emailContent.text,
               tenantId,
-            }).catch(err => logger.error({ error: err instanceof Error ? err.message : 'Unknown error' }, 'Failed to send leave approval forward email'));
+            }).catch(async (err) => {
+              logger.error({ error: err instanceof Error ? err.message : 'Unknown error' }, 'Failed to send leave approval forward email');
+
+              // Notify super admin about email failure to approvers
+              await handleEmailFailure({
+                module: 'leave',
+                action: 'approval-forward',
+                tenantId,
+                organizationName: org.name,
+                organizationSlug: org.slug,
+                recipientEmail: filteredApprovers.map(a => a.email).join(', '),
+                recipientName: 'Next Level Approvers',
+                emailSubject: emailContent.subject,
+                error: err instanceof Error ? err.message : 'Unknown error',
+                metadata: {
+                  leaveRequestId: id,
+                  requestNumber: existing.requestNumber,
+                  approverCount: filteredApprovers.length,
+                },
+              }).catch(() => {}); // Non-blocking
+            });
           }
 
           // In-app notifications to next level approvers

@@ -14,6 +14,7 @@ import { hrProfileSchema, hrProfileEmployeeSchema } from '@/features/employees/v
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { sendEmail } from '@/lib/core/email';
+import { handleEmailFailure } from '@/lib/core/email-failure-handler';
 import { emailWrapper, getTenantPortalUrl, escapeHtml } from '@/lib/core/email-utils';
 import { initializeMemberLeaveBalances } from '@/features/leave/lib/leave-balance-init';
 import logger from '@/lib/core/log';
@@ -318,6 +319,30 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
     } catch (emailError) {
       // Log error but don't fail the request
       logger.error({ error: String(emailError), userId: tenant.userId }, 'Failed to send onboarding completion email');
+
+      // Notify super admin about email failure (admin notifications are still important)
+      // Fetch org info separately since it's out of scope from the try block
+      const failureOrg = await prisma.organization.findUnique({
+        where: { id: tenantId },
+        select: { name: true, slug: true },
+      });
+
+      await handleEmailFailure({
+        module: 'users',
+        action: 'onboarding-completion-notification',
+        tenantId,
+        organizationName: failureOrg?.name || 'Organization',
+        organizationSlug: failureOrg?.slug || 'app',
+        recipientEmail: 'admins', // Batch to admins
+        recipientName: 'Organization Admins',
+        emailSubject: `[HR] ${escapeHtml(updatedMember.name) || 'Employee'} has completed onboarding`,
+        error: emailError instanceof Error ? emailError.message : String(emailError),
+        metadata: {
+          userId: tenant.userId,
+          employeeName: updatedMember.name,
+          employeeEmail: updatedMember.email,
+        },
+      }).catch(() => {}); // Non-blocking
     }
 
     // Initialize leave balances when onboarding is completed with dateOfJoining

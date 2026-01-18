@@ -427,6 +427,7 @@ model Organization {
   chatConversations      ChatConversation[]
   aiChatUsage            AIChatUsage[]
   aiChatAuditLogs        AIChatAuditLog[]
+  emailFailureLogs       EmailFailureLog[]
 
   // Access Control
   rolePermissions RolePermission[]
@@ -1159,6 +1160,50 @@ model Notification {
   @@index([createdAt])
   @@index([tenantId])
   @@index([tenantId, recipientId, isRead]) // Composite for unread notifications per user per tenant
+}
+
+// Email failure log for super admin monitoring
+model EmailFailureLog {
+  id               String        @id @default(cuid())
+  tenantId         String?
+  tenant           Organization? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Module context
+  module           String        // e.g., "assets", "leave", "users"
+  action           String        // e.g., "assignment", "approval"
+
+  // Organization info (denormalized for when tenant is deleted)
+  organizationName String?
+  organizationSlug String?
+
+  // Recipient info
+  recipientEmail   String
+  recipientName    String?
+
+  // Email details
+  emailSubject     String
+
+  // Error info
+  error            String        @db.Text
+  errorCode        String?
+
+  // Additional context
+  metadata         Json?
+
+  // Resolution tracking
+  resolved         Boolean       @default(false)
+  resolvedAt       DateTime?
+  resolvedBy       String?       // Super admin who resolved
+  resolutionNotes  String?
+
+  // Timestamps
+  createdAt        DateTime      @default(now())
+
+  @@index([tenantId])
+  @@index([module])
+  @@index([resolved])
+  @@index([createdAt])
+  @@index([tenantId, createdAt])
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

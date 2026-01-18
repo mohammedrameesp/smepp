@@ -17,7 +17,7 @@ import logger from './log';
 
 export interface EmailFailureContext {
   // Module information
-  module: 'assets' | 'asset-requests' | 'leave' | 'purchase-requests' | 'suppliers' | 'hr' | 'auth' | 'other';
+  module: 'assets' | 'asset-requests' | 'leave' | 'purchase-requests' | 'suppliers' | 'users' | 'hr' | 'auth' | 'other';
   action: string; // e.g., "assignment", "approval", "rejection"
 
   // Tenant context
@@ -78,8 +78,9 @@ export async function handleEmailFailure(context: EmailFailureContext): Promise<
     }
   }
 
-  // Run notifications in parallel
+  // Run all operations in parallel
   await Promise.all([
+    persistFailureLog(context),
     notifyTenantAdmins(context),
     notifySuperAdmin(context),
   ]);
@@ -169,6 +170,42 @@ async function notifySuperAdmin(context: EmailFailureContext): Promise<void> {
     logger.error(
       { error: error instanceof Error ? error.message : String(error) },
       'Exception while notifying super admin about email failure'
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATABASE PERSISTENCE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Persist email failure to database for super admin dashboard.
+ */
+async function persistFailureLog(context: EmailFailureContext): Promise<void> {
+  try {
+    await prisma.emailFailureLog.create({
+      data: {
+        tenantId: context.tenantId,
+        module: context.module,
+        action: context.action,
+        organizationName: context.organizationName,
+        organizationSlug: context.organizationSlug,
+        recipientEmail: context.recipientEmail,
+        recipientName: context.recipientName,
+        emailSubject: context.emailSubject,
+        error: context.error,
+        errorCode: context.errorCode,
+        metadata: context.metadata ? context.metadata : undefined,
+      },
+    });
+    logger.debug(
+      { tenantId: context.tenantId, module: context.module },
+      'Persisted email failure to database'
+    );
+  } catch (error) {
+    logger.error(
+      { error: error instanceof Error ? error.message : String(error), tenantId: context.tenantId },
+      'Failed to persist email failure to database'
     );
   }
 }

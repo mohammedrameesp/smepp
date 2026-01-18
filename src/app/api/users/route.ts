@@ -11,6 +11,7 @@ import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
 import { sendEmail } from '@/lib/core/email';
+import { handleEmailFailure } from '@/lib/core/email-failure-handler';
 import { welcomeUserEmail, welcomeUserWithPasswordSetupEmail, organizationInvitationEmail } from '@/lib/core/email-templates';
 import { randomBytes } from 'crypto';
 import { updateSetupProgress } from '@/features/onboarding/lib';
@@ -337,7 +338,29 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
       }
     } catch (emailError) {
       logger.error({ error: String(emailError), userId: user.id }, 'Failed to send welcome/invitation email');
-      // Don't fail the request if email fails
+
+      // Notify admins and super admin about email failure
+      const org = await prisma.organization.findUnique({
+        where: { id: tenantId },
+        select: { name: true, slug: true },
+      });
+
+      await handleEmailFailure({
+        module: 'users',
+        action: 'welcome-invitation',
+        tenantId,
+        organizationName: org?.name || 'Organization',
+        organizationSlug: org?.slug || 'app',
+        recipientEmail: user.email,
+        recipientName: user.name || user.email,
+        emailSubject: 'Welcome/Invitation Email',
+        error: emailError instanceof Error ? emailError.message : String(emailError),
+        metadata: {
+          userId: user.id,
+          userRole: user.role,
+          isEmployee,
+        },
+      }).catch(() => {}); // Non-blocking
     }
   }
 
