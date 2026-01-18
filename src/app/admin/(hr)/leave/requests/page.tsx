@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { redirect } from 'next/navigation';
 
-import { LeaveRequestsTable } from '@/features/leave/components';
+import { LeaveRequestsTableClient } from '@/features/leave/components';
 import { Calendar, Plus, Users } from 'lucide-react';
 import { PageHeader, PageHeaderButton, PageContent } from '@/components/ui/page-header';
 import { StatChip, StatChipGroup } from '@/components/ui/stat-chip';
@@ -80,7 +80,7 @@ export default async function AdminLeaveRequestsPage() {
             <p className="text-sm text-slate-500">Filter and search through leave requests</p>
           </div>
           <div className="p-4">
-            <LeaveRequestsTable showUser={true} />
+            <LeaveRequestsTableClient showUser={true} />
           </div>
         </div>
       </PageContent>

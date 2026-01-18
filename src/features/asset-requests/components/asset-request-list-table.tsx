@@ -9,8 +9,9 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TableFilterBar } from '@/components/ui/table-filter-bar';
+import { useClientDataTable } from '@/hooks/use-client-data-table';
 import { AssetRequestStatusBadge } from './asset-request-status-badge';
 import { AssetRequestTypeBadge } from './asset-request-type-badge';
 import { ClipboardList } from 'lucide-react';
@@ -50,236 +51,203 @@ interface AssetRequestListTableProps {
   basePath?: string;
 }
 
+type AssetRequestFilters = {
+  status: string;
+  type: string;
+  [key: string]: string;
+};
+
+const PAGE_SIZE = 50;
+
 export function AssetRequestListTable({
   requests,
   showUser = true,
   basePath = '/employee/asset-requests',
 }: AssetRequestListTableProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('PENDING');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
 
   // Get unique statuses and types for filters
   const uniqueStatuses = useMemo(() => {
-    return Array.from(new Set(requests.map(r => r.status))).sort();
+    const statuses = new Map<string, number>();
+    requests.forEach(r => {
+      statuses.set(r.status, (statuses.get(r.status) || 0) + 1);
+    });
+    return Array.from(statuses.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([status, count]) => ({ status, count }));
   }, [requests]);
 
   const uniqueTypes = useMemo(() => {
-    return Array.from(new Set(requests.map(r => r.type))).sort();
+    const types = new Map<string, number>();
+    requests.forEach(r => {
+      types.set(r.type, (types.get(r.type) || 0) + 1);
+    });
+    return Array.from(types.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([type, count]) => ({ type, count }));
   }, [requests]);
 
-  // Filter and sort requests
-  const filteredAndSortedRequests = useMemo(() => {
-    let filtered = requests;
+  // Client-side filtering using hook
+  const {
+    filteredData,
+    searchTerm,
+    setSearchTerm,
+    filters,
+    setFilter,
+    resetFilters,
+    sortBy,
+    sortOrder,
+    toggleSort,
+  } = useClientDataTable<AssetRequest, AssetRequestFilters>({
+    data: requests,
+    searchFields: ['requestNumber'],
+    defaultSort: 'requestNumber',
+    defaultOrder: 'desc',
+    initialFilters: { status: 'PENDING', type: 'all' },
+    filterFn: (item, key, value) => {
+      if (!value || value === 'all') return true;
+      if (key === 'status') return item.status === value;
+      if (key === 'type') return item.type === value;
+      return true;
+    },
+  });
 
-    // Apply search filter
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(request =>
-        request.requestNumber.toLowerCase().includes(term) ||
-        request.asset.model.toLowerCase().includes(term) ||
-        request.asset.brand?.toLowerCase().includes(term) ||
-        request.asset.assetTag?.toLowerCase().includes(term) ||
-        request.member.name?.toLowerCase().includes(term) ||
-        request.member.email.toLowerCase().includes(term)
-      );
-    }
+  // Additional search for nested fields
+  const searchFilteredData = useMemo(() => {
+    if (!searchTerm) return filteredData;
+    const term = searchTerm.toLowerCase();
+    return filteredData.filter(request =>
+      request.requestNumber.toLowerCase().includes(term) ||
+      request.asset.model.toLowerCase().includes(term) ||
+      request.asset.brand?.toLowerCase().includes(term) ||
+      request.asset.assetTag?.toLowerCase().includes(term) ||
+      request.member.name?.toLowerCase().includes(term) ||
+      request.member.email.toLowerCase().includes(term)
+    );
+  }, [filteredData, searchTerm]);
 
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(request => request.status === statusFilter);
-    }
+  // Client-side pagination
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return searchFilteredData.slice(start, start + PAGE_SIZE);
+  }, [searchFilteredData, page]);
 
-    // Apply type filter
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(request => request.type === typeFilter);
-    }
+  const totalPages = Math.ceil(searchFilteredData.length / PAGE_SIZE);
 
-    // Apply sorting
-    const sorted = [...filtered].sort((a, b) => {
-      let aValue: string | number;
-      let bValue: string | number;
-
-      switch (sortBy) {
-        case 'requestNumber':
-          aValue = a.requestNumber;
-          bValue = b.requestNumber;
-          break;
-        case 'asset':
-          aValue = a.asset.model.toLowerCase();
-          bValue = b.asset.model.toLowerCase();
-          break;
-        case 'status':
-          aValue = a.status;
-          bValue = b.status;
-          break;
-        case 'type':
-          aValue = a.type;
-          bValue = b.type;
-          break;
-        case 'createdAt':
-        default:
-          aValue = new Date(a.createdAt).getTime();
-          bValue = new Date(b.createdAt).getTime();
-          break;
-      }
-
-      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return sorted;
-  }, [requests, searchTerm, statusFilter, typeFilter, sortBy, sortOrder]);
-
-  const toggleSort = (column: string) => {
-    if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(column);
-      setSortOrder('desc');
-    }
+  // Reset page when filters change
+  const handleFilterChange = <K extends keyof AssetRequestFilters>(key: K, value: AssetRequestFilters[K]) => {
+    setFilter(key, value);
+    setPage(1);
   };
 
-  return (
-    <div>
-      {/* Filters */}
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <Input
-            placeholder="Search requests..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
-          />
-        </div>
-        <div>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="All Types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              {uniqueTypes.map(type => (
-                <SelectItem key={type} value={type}>
-                  {type.replace(/_/g, ' ')}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="All Statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              {uniqueStatuses.map(status => (
-                <SelectItem key={status} value={status}>
-                  {status.replace(/_/g, ' ')}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">Sort:</span>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="flex-1">
-              <SelectValue placeholder="Sort by..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="createdAt">Date</SelectItem>
-              <SelectItem value="requestNumber">Request #</SelectItem>
-              <SelectItem value="asset">Asset</SelectItem>
-              <SelectItem value="status">Status</SelectItem>
-              <SelectItem value="type">Type</SelectItem>
-            </SelectContent>
-          </Select>
-          <button
-            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-            className="px-3 py-2 border rounded-md hover:bg-gray-50 text-sm"
-          >
-            {sortOrder === 'asc' ? '↑' : '↓'}
-          </button>
-        </div>
-      </div>
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setPage(1);
+  };
 
-      {/* Results count */}
-      <div className="mb-4 text-sm text-gray-600" aria-live="polite" aria-atomic="true">
-        Showing {filteredAndSortedRequests.length} of {requests.length} requests
-      </div>
+  const handleResetFilters = () => {
+    resetFilters();
+    setPage(1);
+  };
+
+  const hasActiveFilters = searchTerm !== '' || filters.status !== 'PENDING' || filters.type !== 'all';
+
+  return (
+    <div className="space-y-4">
+      {/* Filters */}
+      <TableFilterBar
+        searchValue={searchTerm}
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Search requests..."
+        resultCount={searchFilteredData.length}
+        totalCount={requests.length}
+        onClearFilters={handleResetFilters}
+        hasActiveFilters={hasActiveFilters}
+      >
+        <Select value={filters.type} onValueChange={(v) => handleFilterChange('type', v)}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            {uniqueTypes.map(opt => (
+              <SelectItem key={opt.type} value={opt.type}>
+                {opt.type.replace(/_/g, ' ')} ({opt.count})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.status} onValueChange={(v) => handleFilterChange('status', v)}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="All Statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            {uniqueStatuses.map(opt => (
+              <SelectItem key={opt.status} value={opt.status}>
+                {opt.status.replace(/_/g, ' ')} ({opt.count})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableFilterBar>
 
       {/* Table */}
-      {filteredAndSortedRequests.length > 0 ? (
-        <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
+      <div className="border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead
+                className="cursor-pointer hover:bg-gray-100"
+                onClick={() => toggleSort('requestNumber')}
+                onKeyDown={(e) => e.key === 'Enter' && toggleSort('requestNumber')}
+                role="button"
+                tabIndex={0}
+                aria-sort={sortBy === 'requestNumber' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+              >
+                Request # {sortBy === 'requestNumber' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer hover:bg-gray-100"
+                onClick={() => toggleSort('type')}
+                onKeyDown={(e) => e.key === 'Enter' && toggleSort('type')}
+                role="button"
+                tabIndex={0}
+                aria-sort={sortBy === 'type' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+              >
+                Type {sortBy === 'type' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </TableHead>
+              <TableHead>Asset</TableHead>
+              {showUser && <TableHead>User</TableHead>}
+              <TableHead
+                className="cursor-pointer hover:bg-gray-100"
+                onClick={() => toggleSort('status')}
+                onKeyDown={(e) => e.key === 'Enter' && toggleSort('status')}
+                role="button"
+                tabIndex={0}
+                aria-sort={sortBy === 'status' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+              >
+                Status {sortBy === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedData.length === 0 ? (
               <TableRow>
-                <TableHead
-                  className="cursor-pointer hover:bg-gray-100"
-                  onClick={() => toggleSort('requestNumber')}
-                  onKeyDown={(e) => e.key === 'Enter' && toggleSort('requestNumber')}
-                  role="button"
-                  tabIndex={0}
-                  aria-sort={sortBy === 'requestNumber' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
-                  aria-label="Sort by request number"
-                >
-                  Request # {sortBy === 'requestNumber' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead
-                  className="cursor-pointer hover:bg-gray-100"
-                  onClick={() => toggleSort('type')}
-                  onKeyDown={(e) => e.key === 'Enter' && toggleSort('type')}
-                  role="button"
-                  tabIndex={0}
-                  aria-sort={sortBy === 'type' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
-                  aria-label="Sort by type"
-                >
-                  Type {sortBy === 'type' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead
-                  className="cursor-pointer hover:bg-gray-100"
-                  onClick={() => toggleSort('asset')}
-                  onKeyDown={(e) => e.key === 'Enter' && toggleSort('asset')}
-                  role="button"
-                  tabIndex={0}
-                  aria-sort={sortBy === 'asset' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
-                  aria-label="Sort by asset"
-                >
-                  Asset {sortBy === 'asset' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </TableHead>
-                {showUser && <TableHead>User</TableHead>}
-                <TableHead
-                  className="cursor-pointer hover:bg-gray-100"
-                  onClick={() => toggleSort('status')}
-                  onKeyDown={(e) => e.key === 'Enter' && toggleSort('status')}
-                  role="button"
-                  tabIndex={0}
-                  aria-sort={sortBy === 'status' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
-                  aria-label="Sort by status"
-                >
-                  Status {sortBy === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead
-                  className="cursor-pointer hover:bg-gray-100"
-                  onClick={() => toggleSort('createdAt')}
-                  onKeyDown={(e) => e.key === 'Enter' && toggleSort('createdAt')}
-                  role="button"
-                  tabIndex={0}
-                  aria-sort={sortBy === 'createdAt' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
-                  aria-label="Sort by date"
-                >
-                  Date {sortBy === 'createdAt' && (sortOrder === 'asc' ? '↑' : '↓')}
-                </TableHead>
-                <TableHead className="text-center">Actions</TableHead>
+                <TableCell colSpan={showUser ? 7 : 6} className="text-center py-8">
+                  <ClipboardList className="h-10 w-10 mx-auto text-gray-300 mb-2" />
+                  <p className="text-gray-500">
+                    {hasActiveFilters
+                      ? 'No requests match your filters'
+                      : 'No requests found'}
+                  </p>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAndSortedRequests.map((request) => (
+            ) : (
+              paginatedData.map((request) => (
                 <TableRow key={request.id} className="hover:bg-gray-50">
                   <TableCell className="font-mono text-sm">
                     {request.requestNumber}
@@ -316,17 +284,36 @@ export function AssetRequestListTable({
                     </Link>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
-        <div className="text-center py-12 text-gray-500 border rounded-lg bg-gray-50">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ClipboardList className="h-8 w-8 text-slate-400" />
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Page {page} of {totalPages}
           </div>
-          <p className="text-lg font-medium">No requests found</p>
-          <p className="text-sm">Try adjusting your filters or search terms</p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => p - 1)}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(p => p + 1)}
+              disabled={page >= totalPages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
     </div>
