@@ -515,9 +515,9 @@ export default async function AdminDashboard() {
                   {card.count !== undefined ? (
                     // Check if "empty" - for team it's <=1, for others it's 0
                     ((card.id === 'team' ? card.count <= 1 : card.count === 0) && card.emptyState) ? (
-                      <div className="text-right">
+                      <div className="bg-slate-50 rounded-lg px-3 py-2 text-right">
                         <p className="text-sm text-slate-500">{card.emptyState.text}</p>
-                        <p className="text-xs text-blue-600 font-medium mt-0.5">
+                        <p className="text-xs text-slate-600 font-medium group-hover:text-slate-900 transition-colors">
                           {card.emptyState.actionText} →
                         </p>
                       </div>
