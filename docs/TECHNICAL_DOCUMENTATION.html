@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Durj - Technical Documentation for Code Reviewers</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --text-color: #1f2937;
+            --text-muted: #6b7280;
+            --bg-color: #ffffff;
+            --bg-secondary: #f9fafb;
+            --border-color: #e5e7eb;
+            --code-bg: #f3f4f6;
+            --success-color: #059669;
+            --warning-color: #d97706;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 0;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        header .meta {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        header .meta p {
+            margin: 0.25rem 0;
+        }
+
+        nav {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        nav h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+        }
+
+        nav ol {
+            columns: 2;
+            column-gap: 2rem;
+            padding-left: 1.5rem;
+        }
+
+        nav li {
+            margin: 0.5rem 0;
+        }
+
+        nav a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        section {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        section:last-of-type {
+            border-bottom: none;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        h3 {
+            font-size: 1.35rem;
+            color: var(--text-color);
+            margin: 1.5rem 0 1rem;
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            color: var(--text-color);
+            margin: 1.25rem 0 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        strong {
+            color: var(--text-color);
+        }
+
+        ul, ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin: 0.5rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        code {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 0.9em;
+            background: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1.25rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0 1.5rem;
+            font-size: 0.875rem;
+            line-height: 1.7;
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        .diagram {
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0 1.5rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            white-space: pre;
+        }
+
+        .highlight {
+            background: #fef3c7;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--warning-color);
+            margin: 1rem 0;
+        }
+
+        .info-box {
+            background: #eff6ff;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+            margin: 1rem 0;
+        }
+
+        .tree {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 0.875rem;
+            background: var(--code-bg);
+            padding: 1rem;
+            border-radius: 8px;
+            line-height: 1.6;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-style: italic;
+            border-top: 2px solid var(--border-color);
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            nav ol {
+                columns: 1;
+            }
+
+            header h1 {
+                font-size: 1.75rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            th, td {
+                padding: 0.5rem;
+            }
+        }
+
+        @media print {
+            body {
+                max-width: 100%;
+                padding: 0;
+            }
+
+            nav, .diagram, pre {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Durj - Technical Documentation for Code Reviewers</h1>
+        <div class="meta">
+            <p><strong>Version:</strong> 1.0</p>
+            <p><strong>Last Updated:</strong> January 2026</p>
+            <p><strong>Target Audience:</strong> Senior Software Engineers, Architects, Technical Reviewers</p>
+        </div>
+    </header>
+
+    <nav>
+        <h2>Table of Contents</h2>
+        <ol>
+            <li><a href="#project-overview">Project Overview</a></li>
+            <li><a href="#system-architecture">System Architecture</a></li>
+            <li><a href="#technology-stack">Technology Stack</a></li>
+            <li><a href="#codebase-structure">Codebase Structure</a></li>
+            <li><a href="#key-functional-modules">Key Functional Modules</a></li>
+            <li><a href="#configuration-environments">Configuration &amp; Environments</a></li>
+            <li><a href="#data-persistence-layer">Data &amp; Persistence Layer</a></li>
+            <li><a href="#security-considerations">Security Considerations</a></li>
+            <li><a href="#error-handling-observability">Error Handling &amp; Observability</a></li>
+            <li><a href="#testing-strategy">Testing Strategy</a></li>
+            <li><a href="#deployment-release-process">Deployment &amp; Release Process</a></li>
+            <li><a href="#known-tradeoffs-technical-debt">Known Trade-offs &amp; Technical Debt</a></li>
+            <li><a href="#reviewer-notes">Reviewer Notes</a></li>
+        </ol>
+    </nav>
+
+    <main>
+        <!-- Section 1: Project Overview -->
+        <section id="project-overview">
+            <h2>1. Project Overview</h2>
+
+            <h3>1.1 Purpose and Problem Statement</h3>
+            <p><strong>Durj</strong> is a multi-tenant SaaS platform for business management targeting small and medium enterprises (SMEs) in the Qatar/GCC region. It provides comprehensive asset management, HR operations, and procurement workflows in a single integrated platform.</p>
+
+            <h4>Core Problems Solved:</h4>
+            <ul>
+                <li>SMEs lack affordable, integrated business management tools</li>
+                <li>Manual tracking of assets, employees, and procurement is error-prone</li>
+                <li>Compliance with Qatar labor law (leave entitlements, gratuity) requires specialized calculations</li>
+                <li>Multi-currency operations (QAR/USD) need automatic conversion</li>
+            </ul>
+
+            <h3>1.2 Target Users and Use Cases</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>User Type</th>
+                        <th>Primary Use Cases</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Organization Owners</strong></td>
+                        <td>Company setup, user management, billing, module configuration</td>
+                    </tr>
+                    <tr>
+                        <td><strong>HR Administrators</strong></td>
+                        <td>Employee onboarding, leave management, payroll processing</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Operations Managers</strong></td>
+                        <td>Asset tracking, subscription management, vendor management</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Finance Teams</strong></td>
+                        <td>Purchase requests, approvals, expense tracking</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Regular Employees</strong></td>
+                        <td>Self-service leave requests, view payslips, asset assignment acceptance</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Super Admins</strong></td>
+                        <td>Platform management, organization onboarding, support impersonation</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>1.3 Core Value Proposition</h3>
+            <ul>
+                <li><strong>Multi-Tenant Architecture:</strong> Complete data isolation between organizations</li>
+                <li><strong>Modular Design:</strong> Enable/disable features per organization based on needs</li>
+                <li><strong>Regional Compliance:</strong> Qatar labor law built-in (leave tiers, gratuity calculations)</li>
+                <li><strong>Self-Service:</strong> Employees can manage their own leave, view assignments</li>
+                <li><strong>Approval Workflows:</strong> Configurable multi-level approval chains</li>
+            </ul>
+
+            <h3>1.4 High-Level Product Goals</h3>
+            <ol>
+                <li>Provide an affordable alternative to enterprise ERPs for SMEs</li>
+                <li>Ensure complete data isolation in multi-tenant architecture</li>
+                <li>Support white-label deployment for enterprise customers (custom domains, OAuth)</li>
+                <li>Enable rapid onboarding with sensible defaults</li>
+                <li>Maintain Qatar-specific compliance out of the box</li>
+            </ol>
+        </section>
+
+        <!-- Section 2: System Architecture -->
+        <section id="system-architecture">
+            <h2>2. System Architecture</h2>
+
+            <h3>2.1 Overall Architecture</h3>
+            <p><strong>Pattern:</strong> Modular Monolith with Feature-Based Organization</p>
+
+            <div class="diagram">┌─────────────────────────────────────────────────────────────────┐
+│                        Client Layer                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ Admin Portal │  │Employee Portal│  │ Super Admin Portal   │  │
+│  │ (Next.js SSR)│  │ (Next.js SSR) │  │   (Next.js SSR)      │  │
+│  └──────────────┘  └──────────────┘  └──────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     Middleware Layer                             │
+│  ┌────────────┐ ┌──────────────┐ ┌────────────┐ ┌────────────┐ │
+│  │ Subdomain  │ │    Auth      │ │   Rate     │ │  Module    │ │
+│  │  Routing   │ │  Validation  │ │  Limiting  │ │  Access    │ │
+│  └────────────┘ └──────────────┘ └────────────┘ └────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      API Layer (Next.js Routes)                  │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │              withErrorHandler Wrapper                      │  │
+│  │  - Authentication - Rate Limiting - Tenant Context        │  │
+│  │  - Module Checks - Permission Validation - Logging        │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     Business Logic Layer                         │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐          │
+│  │  Assets  │ │   HR     │ │ Payroll  │ │Approvals │  ...     │
+│  │  Module  │ │  Module  │ │  Module  │ │  Engine  │          │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────┘          │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   Data Access Layer                              │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │           Tenant-Scoped Prisma Extension                   │ │
+│  │  - Auto-filters all queries by tenantId                    │ │
+│  │  - Auto-injects tenantId on creates                        │ │
+│  │  - Validates tenant ownership on deletes                   │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   External Services                              │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌──────────┐ │
+│  │PostgreSQL│ │Supabase │ │ Resend  │ │WhatsApp │ │  Sentry  │ │
+│  │(Database)│ │(Storage)│ │ (Email) │ │  (Meta) │ │(Monitoring)│ │
+│  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └──────────┘ │
+└─────────────────────────────────────────────────────────────────┘</div>
+
+            <h3>2.2 High-Level Data Flow</h3>
+            <h4>Request Lifecycle:</h4>
+            <div class="diagram">1. Request arrives at {org-slug}.durj.com
+                    │
+                    ▼
+2. Middleware extracts subdomain, validates auth
+   Sets: x-tenant-id, x-user-id, x-user-role headers
+                    │
+                    ▼
+3. API Route Handler (withErrorHandler wrapper)
+   - Rate limit check
+   - Body size validation (1MB default)
+   - Session verification
+   - Admin/permission checks
+   - Module access validation
+                    │
+                    ▼
+4. Business Logic executes with tenant-scoped Prisma
+   All queries auto-filtered by tenantId
+                    │
+                    ▼
+5. Response returned with request ID for tracing</div>
+
+            <h3>2.3 Major Subsystems</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Subsystem</th>
+                        <th>Responsibility</th>
+                        <th>Key Files</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Multi-Tenant Core</strong></td>
+                        <td>Tenant isolation, subdomain routing</td>
+                        <td><code>src/middleware.ts</code>, <code>src/lib/core/prisma-tenant.ts</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Authentication</strong></td>
+                        <td>Session management, OAuth providers</td>
+                        <td><code>src/lib/core/auth.ts</code>, <code>src/lib/oauth/</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Module System</strong></td>
+                        <td>Feature flags per organization</td>
+                        <td><code>src/lib/modules/registry.ts</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Approval Engine</strong></td>
+                        <td>Multi-level approval workflows</td>
+                        <td><code>src/features/approvals/lib/</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Notification System</strong></td>
+                        <td>In-app + WhatsApp notifications</td>
+                        <td><code>src/features/notifications/</code>, <code>src/lib/whatsapp/</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Super Admin</strong></td>
+                        <td>Platform management, impersonation</td>
+                        <td><code>src/app/super-admin/</code>, <code>src/lib/security/impersonation.ts</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>2.4 Deployment Architecture</h3>
+            <p><strong>Hosting:</strong> Vercel (serverless functions)<br>
+            <strong>Region:</strong> <code>bom1</code> (Mumbai - closest to Qatar)<br>
+            <strong>Database:</strong> PostgreSQL via Supabase<br>
+            <strong>File Storage:</strong> Supabase Storage (tenant-scoped buckets)</p>
+
+            <div class="diagram">┌────────────────────────────────────────┐
+│              Vercel Edge               │
+│  ┌──────────────────────────────────┐ │
+│  │         Middleware (Edge)        │ │
+│  │  - Subdomain routing             │ │
+│  │  - Auth rate limiting            │ │
+│  │  - Impersonation tokens          │ │
+│  └──────────────────────────────────┘ │
+└────────────────────────────────────────┘
+                    │
+                    ▼
+┌────────────────────────────────────────┐
+│         Vercel Serverless              │
+│  ┌──────────────────────────────────┐ │
+│  │       API Routes (30s max)       │ │
+│  │       Long tasks (300s max):     │ │
+│  │       - Backup/Restore           │ │
+│  └──────────────────────────────────┘ │
+└────────────────────────────────────────┘
+                    │
+          ┌─────────┴─────────┐
+          ▼                   ▼
+┌──────────────────┐  ┌──────────────────┐
+│    Supabase      │  │   Upstash Redis  │
+│  - PostgreSQL    │  │  - Rate limiting │
+│  - File Storage  │  │  - Caching       │
+└──────────────────┘  └──────────────────┘</div>
+        </section>
+
+        <!-- Section 3: Technology Stack -->
+        <section id="technology-stack">
+            <h2>3. Technology Stack</h2>
+
+            <h3>3.1 Frontend</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Technology</th>
+                        <th>Version</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Next.js</strong></td>
+                        <td>16</td>
+                        <td>App Router, SSR, API routes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>React</strong></td>
+                        <td>19</td>
+                        <td>UI components</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TypeScript</strong></td>
+                        <td>5.x</td>
+                        <td>Type safety</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tailwind CSS</strong></td>
+                        <td>4.x</td>
+                        <td>Styling</td>
+                    </tr>
+                    <tr>
+                        <td><strong>shadcn/ui</strong></td>
+                        <td>Latest</td>
+                        <td>Component library (Radix UI based)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>React Hook Form</strong></td>
+                        <td>7.x</td>
+                        <td>Form management</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Zod</strong></td>
+                        <td>3.x</td>
+                        <td>Runtime validation</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>3.2 Backend</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Technology</th>
+                        <th>Version</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Next.js API Routes</strong></td>
+                        <td>16</td>
+                        <td>Backend endpoints</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Prisma ORM</strong></td>
+                        <td>6.x</td>
+                        <td>Database access + migrations</td>
+                    </tr>
+                    <tr>
+                        <td><strong>NextAuth.js</strong></td>
+                        <td>4.24</td>
+                        <td>Authentication (Google, Azure, Credentials)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>bcrypt</strong></td>
+                        <td>5.x</td>
+                        <td>Password hashing</td>
+                    </tr>
+                    <tr>
+                        <td><strong>jsonwebtoken</strong></td>
+                        <td>9.x</td>
+                        <td>JWT for impersonation tokens</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>3.3 Database &amp; Storage</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>PostgreSQL</strong> (Supabase)</td>
+                        <td>Primary database</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Supabase Storage</strong></td>
+                        <td>File uploads (tenant-scoped buckets)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Upstash Redis</strong></td>
+                        <td>Rate limiting, caching</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>3.4 External Integrations</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Google OAuth</strong></td>
+                        <td>Social login</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Azure AD</strong></td>
+                        <td>Enterprise SSO</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Resend</strong></td>
+                        <td>Transactional email</td>
+                    </tr>
+                    <tr>
+                        <td><strong>WhatsApp Business API</strong></td>
+                        <td>Approval notifications</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sentry</strong></td>
+                        <td>Error monitoring</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Stripe</strong></td>
+                        <td>Billing (planned)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>3.5 DevOps &amp; Infrastructure</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tool</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Vercel</strong></td>
+                        <td>Hosting, CI/CD, Edge functions</td>
+                    </tr>
+                    <tr>
+                        <td><strong>GitHub Actions</strong></td>
+                        <td>CI pipeline (testing)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Jest</strong></td>
+                        <td>Unit + integration testing</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Playwright</strong></td>
+                        <td>E2E testing</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 4: Codebase Structure -->
+        <section id="codebase-structure">
+            <h2>4. Codebase Structure</h2>
+
+            <h3>4.1 Repository Layout</h3>
+            <div class="tree">D:\Projects\SME++\
+├── prisma/
+│   ├── schema.prisma          # Database schema (120+ models)
+│   └── migrations/            # Migration history
+├── src/
+│   ├── app/                   # Next.js App Router
+│   │   ├── (auth)/           # Auth flows (login, signup, invite)
+│   │   ├── (marketing)/      # Public pages (landing, pricing)
+│   │   ├── admin/            # Admin dashboard
+│   │   ├── employee/         # Employee self-service
+│   │   ├── super-admin/      # Platform management
+│   │   └── api/              # API endpoints
+│   ├── components/           # React components
+│   │   ├── ui/               # Base UI (64 components)
+│   │   ├── domains/          # Domain-specific components
+│   │   └── shared/           # Shared utilities
+│   ├── features/             # Feature modules (16 modules)
+│   │   ├── assets/
+│   │   ├── employees/
+│   │   ├── leave/
+│   │   ├── payroll/
+│   │   ├── approvals/
+│   │   └── ...
+│   ├── hooks/                # React hooks
+│   └── lib/                  # Core libraries
+│       ├── core/             # Prisma, auth, email, logging
+│       ├── security/         # Rate limiting, CSRF, encryption
+│       ├── modules/          # Module system
+│       ├── multi-tenant/     # Tenant utilities
+│       ├── http/             # API handler, errors
+│       ├── validations/      # Shared Zod schemas
+│       ├── whatsapp/         # WhatsApp integration
+│       └── oauth/            # Custom OAuth flows
+├── tests/                    # Test suites
+│   ├── unit/
+│   ├── integration/
+│   ├── security/
+│   └── e2e/
+├── public/                   # Static assets
+├── next.config.ts            # Next.js configuration
+├── vercel.json               # Vercel deployment config
+├── jest.config.ts            # Jest configuration
+├── playwright.config.ts      # Playwright configuration
+└── package.json              # Dependencies &amp; scripts</div>
+
+            <h3>4.2 Feature Module Structure</h3>
+            <p>Each feature follows a consistent structure:</p>
+            <div class="tree">src/features/{feature}/
+├── components/
+│   ├── index.ts              # Barrel export
+│   ├── {feature}-form.tsx    # Create/edit forms
+│   ├── {feature}-table.tsx   # Data tables
+│   └── {feature}-dialog.tsx  # Modals
+├── lib/
+│   ├── index.ts              # Barrel export
+│   ├── {feature}-utils.ts    # Business logic
+│   └── seed-{feature}.ts     # Data seeding
+├── validations/
+│   └── index.ts              # Zod schemas
+└── constants/
+    └── index.ts              # Feature constants</div>
+
+            <h3>4.3 Key Design Patterns</h3>
+
+            <h4>1. API Handler Pattern</h4>
+            <pre><code>// All API routes use withErrorHandler wrapper
+export const GET = withErrorHandler(handler, {
+  requireAuth: true,
+  requireModule: 'assets',
+  rateLimit: true
+});</code></pre>
+
+            <h4>2. Tenant-Scoped Data Access</h4>
+            <pre><code>// Automatic tenant filtering via Prisma extension
+const assets = await db.asset.findMany({ where: { status: 'AVAILABLE' } });
+// Executes: WHERE tenantId = ? AND status = 'AVAILABLE'</code></pre>
+
+            <h4>3. Barrel Exports</h4>
+            <pre><code>// Every module has index.ts for clean imports
+export * from './asset-form';
+export * from './asset-table';</code></pre>
+
+            <h4>4. Server Components by Default</h4>
+            <pre><code>// Pages are async server components
+export default async function AssetsPage() {
+  const assets = await getAssets(); // Direct DB access
+  return &lt;AssetTable data={assets} /&gt;;
+}</code></pre>
+        </section>
+
+        <!-- Section 5: Key Functional Modules -->
+        <section id="key-functional-modules">
+            <h2>5. Key Functional Modules</h2>
+
+            <h3>5.1 Multi-Tenant Core</h3>
+            <p><strong>Purpose:</strong> Complete data isolation between organizations</p>
+
+            <h4>Key Files:</h4>
+            <ul>
+                <li><code>src/middleware.ts</code> - Subdomain routing, auth validation</li>
+                <li><code>src/lib/core/prisma-tenant.ts</code> - Tenant-scoped Prisma extension</li>
+                <li><code>src/lib/multi-tenant/</code> - Feature flags, usage limits</li>
+            </ul>
+
+            <h4>Entry Points:</h4>
+            <ul>
+                <li>Middleware intercepts all requests</li>
+                <li><code>createTenantPrismaClient(context)</code> creates scoped client</li>
+            </ul>
+
+            <h4>Key Logic:</h4>
+            <ul>
+                <li>Subdomain extraction: <code>{slug}.durj.com</code> → <code>slug</code></li>
+                <li>Session validation with 30-second permission refresh</li>
+                <li>Custom domain resolution via internal API</li>
+                <li>Module access enforcement at route level</li>
+            </ul>
+
+            <p><strong>Dependencies:</strong> NextAuth, Prisma</p>
+
+            <h3>5.2 Authentication System</h3>
+            <p><strong>Purpose:</strong> Multi-provider authentication with per-org customization</p>
+
+            <h4>Key Files:</h4>
+            <ul>
+                <li><code>src/lib/core/auth.ts</code> - NextAuth configuration</li>
+                <li><code>src/lib/oauth/</code> - Custom OAuth flows (Google, Azure)</li>
+                <li><code>src/lib/two-factor/</code> - 2FA for super admins</li>
+            </ul>
+
+            <h4>Providers:</h4>
+            <ol>
+                <li>Google OAuth (social login)</li>
+                <li>Azure AD (enterprise SSO)</li>
+                <li>Email/Password (credentials)</li>
+                <li>Super Admin (with 2FA)</li>
+            </ol>
+
+            <h4>Security Features:</h4>
+            <ul>
+                <li>Brute-force protection (5 attempts, progressive lockout)</li>
+                <li>Password invalidation on session revocation</li>
+                <li>30-second permission refresh interval</li>
+                <li>Account lockout tracking</li>
+            </ul>
+
+            <h3>5.3 Approval Engine</h3>
+            <p><strong>Purpose:</strong> Reusable multi-level approval workflows</p>
+
+            <h4>Key Files:</h4>
+            <ul>
+                <li><code>src/features/approvals/lib/approval-engine.ts</code></li>
+                <li><code>src/features/approvals/lib/process-entity-approval.ts</code></li>
+            </ul>
+
+            <h4>Capabilities:</h4>
+            <ul>
+                <li>Configurable approval policies (by amount thresholds)</li>
+                <li>Role-based approver routing (Manager → HR → Finance → Director)</li>
+                <li>Multi-level chains with automatic progression</li>
+                <li>WhatsApp notifications to approvers</li>
+            </ul>
+
+            <p><strong>Supported Entities:</strong> Leave requests, Purchase requests, Asset requests</p>
+
+            <h3>5.4 Leave Management</h3>
+            <p><strong>Purpose:</strong> Qatar labor law compliant leave tracking</p>
+
+            <h4>Key Files:</h4>
+            <ul>
+                <li><code>src/features/leave/lib/leave-utils.ts</code></li>
+                <li><code>src/features/leave/lib/leave-balance-init.ts</code></li>
+            </ul>
+
+            <h4>Features:</h4>
+            <ul>
+                <li>Service-based entitlements (21 days &lt; 5 years, 28 days &gt;= 5 years)</li>
+                <li>Public holiday exclusion</li>
+                <li>Sick leave pay tiers (14 days 100%, 28 days 50%, 42 days 0%)</li>
+                <li>Once-in-employment leave types (maternity, marriage)</li>
+                <li>Carryover rules</li>
+            </ul>
+
+            <h3>5.5 Payroll Module</h3>
+            <p><strong>Purpose:</strong> Salary structures and payroll processing</p>
+
+            <h4>Key Files:</h4>
+            <ul>
+                <li><code>src/features/payroll/lib/</code></li>
+                <li><code>src/features/payroll/types/</code></li>
+            </ul>
+
+            <h4>Features:</h4>
+            <ul>
+                <li>Salary structures (basic, housing, transport, allowances)</li>
+                <li>Payroll runs with approval workflow</li>
+                <li>Gratuity calculations (Qatar labor law)</li>
+                <li>Employee loans with deductions</li>
+                <li>WPS file export</li>
+            </ul>
+
+            <h3>5.6 Notification System</h3>
+            <p><strong>Purpose:</strong> In-app and WhatsApp notifications</p>
+
+            <h4>Key Files:</h4>
+            <ul>
+                <li><code>src/features/notifications/lib/notification-service.ts</code></li>
+                <li><code>src/lib/whatsapp/</code></li>
+            </ul>
+
+            <h4>Channels:</h4>
+            <ul>
+                <li>In-app notifications (bell icon)</li>
+                <li>WhatsApp via Meta Business API</li>
+                <li>Email (transactional)</li>
+            </ul>
+
+            <h4>Key Features:</h4>
+            <ul>
+                <li>Role-based routing for approvals</li>
+                <li>Bulk notification creation</li>
+                <li>Non-blocking delivery</li>
+            </ul>
+        </section>
+
+        <!-- Section 6: Configuration & Environments -->
+        <section id="configuration-environments">
+            <h2>6. Configuration &amp; Environments</h2>
+
+            <h3>6.1 Environment Types</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Environment</th>
+                        <th>Domain</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Development</strong></td>
+                        <td><code>*.localhost:3000</code></td>
+                        <td>Local development</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Preview</strong></td>
+                        <td>Vercel preview URL</td>
+                        <td>PR testing</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Production</strong></td>
+                        <td><code>*.durj.com</code></td>
+                        <td>Live system</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>6.2 Critical Environment Variables</h3>
+            <pre><code># Database
+DATABASE_URL=postgresql://...          # Pooled connection
+DIRECT_URL=postgresql://...            # Direct (migrations)
+
+# Authentication
+NEXTAUTH_SECRET=                        # JWT signing (required)
+NEXTAUTH_COOKIE_DOMAIN=.durj.com       # Subdomain cookie sharing
+NEXTAUTH_URL=https://durj.com          # Canonical URL
+
+# OAuth Providers
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+AZURE_AD_CLIENT_ID=
+AZURE_AD_CLIENT_SECRET=
+AZURE_AD_TENANT_ID=
+
+# Security (encryption keys)
+OAUTH_ENCRYPTION_KEY=                   # Per-org OAuth secrets
+WHATSAPP_ENCRYPTION_KEY=                # WhatsApp tokens
+BACKUP_ENCRYPTION_KEY=                  # Database backups
+
+# External Services
+RESEND_API_KEY=                         # Email delivery
+SENTRY_DSN=                             # Error monitoring
+UPSTASH_REDIS_REST_URL=                 # Rate limiting
+UPSTASH_REDIS_REST_TOKEN=
+
+# WhatsApp (Meta Business API)
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_ACCESS_TOKEN=
+
+# Feature Flags
+NEXT_PUBLIC_APP_DOMAIN=durj.com         # Multi-tenant domain</code></pre>
+
+            <h3>6.3 Configuration Sources</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Content</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>next.config.ts</code></td>
+                        <td>Build settings, security headers, image domains</td>
+                    </tr>
+                    <tr>
+                        <td><code>vercel.json</code></td>
+                        <td>Deployment config, cron jobs, function limits</td>
+                    </tr>
+                    <tr>
+                        <td><code>.env.local</code></td>
+                        <td>Local development secrets</td>
+                    </tr>
+                    <tr>
+                        <td>Vercel Dashboard</td>
+                        <td>Production/preview secrets</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 7: Data & Persistence Layer -->
+        <section id="data-persistence-layer">
+            <h2>7. Data &amp; Persistence Layer</h2>
+
+            <h3>7.1 Database Schema Overview</h3>
+            <p><strong>Total Models:</strong> 120+<br>
+            <strong>Tenant-Scoped Models:</strong> 40+ (all have <code>tenantId</code> field)</p>
+
+            <h4>Core Models:</h4>
+            <div class="tree">Organization (Tenant)
+├── id, slug, name
+├── subscriptionTier, enabledModules
+├── Custom OAuth (encrypted)
+├── Branding (logo, colors)
+└── Usage limits
+
+User (Platform-level)
+├── id, email, passwordHash
+├── isSuperAdmin
+├── 2FA settings
+└── Account lockout fields
+
+TeamMember (Org-level)
+├── id, tenantId, email
+├── Role flags (isOwner, isAdmin)
+├── Permission flags (hasHRAccess, etc.)
+├── Employment details
+└── canLogin, isDeleted
+
+Asset, LeaveRequest, PurchaseRequest, etc.
+├── id, tenantId
+├── Domain-specific fields
+└── Audit fields (createdAt, updatedAt)</div>
+
+            <h3>7.2 Tenant Isolation Strategy</h3>
+            <p><strong>Implementation:</strong> Prisma Client Extension</p>
+            <pre><code>// All queries automatically filtered
+const TENANT_MODELS = ['Asset', 'TeamMember', 'LeaveRequest', ...];
+
+prisma.$extends({
+  query: {
+    $allModels: {
+      findMany({ model, args, query }) {
+        if (isTenantModel(model)) {
+          args.where = { ...args.where, tenantId };
+        }
+        return query(args);
+      },
+      create({ model, args, query }) {
+        if (isTenantModel(model)) {
+          args.data.tenantId = tenantId;
+        }
+        return query(args);
+      }
+    }
+  }
+});</code></pre>
+
+            <h3>7.3 Migrations Strategy</h3>
+            <p><strong>Tool:</strong> Prisma Migrate</p>
+            <pre><code># Development: Create migration
+npx prisma migrate dev --name feature_name
+
+# Production: Deploy migrations
+npx prisma migrate deploy
+
+# Vercel: Uses db push for schema sync
+npm run build:vercel  # prisma generate &amp;&amp; prisma db push &amp;&amp; next build</code></pre>
+
+            <h3>7.4 Data Integrity Rules</h3>
+            <ul>
+                <li><strong>Soft Deletes:</strong> <code>isDeleted</code> + <code>deletedAt</code> fields (Users, TeamMembers)</li>
+                <li><strong>Audit Trail:</strong> <code>createdAt</code>, <code>updatedAt</code> on all models</li>
+                <li><strong>Activity Logging:</strong> <code>ActivityLog</code> table for user actions</li>
+                <li><strong>Decimal Precision:</strong> Prisma <code>Decimal</code> type for financial fields</li>
+            </ul>
+        </section>
+
+        <!-- Section 8: Security Considerations -->
+        <section id="security-considerations">
+            <h2>8. Security Considerations</h2>
+
+            <h3>8.1 Authentication Security</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Implementation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Session Duration</strong></td>
+                        <td>24 hours max</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Permission Refresh</strong></td>
+                        <td>30-second interval</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Brute Force Protection</strong></td>
+                        <td>5 attempts, progressive lockout (5/15/30/60 min)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Password Requirements</strong></td>
+                        <td>8+ chars, uppercase, lowercase, number</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2FA</strong></td>
+                        <td>TOTP + backup codes (super admins)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>8.2 Authorization Model</h3>
+            <div class="tree">User Roles:
+├── isOwner (org owner - full access)
+├── isAdmin (admin - full access)
+└── Regular employee
+
+Permission Flags:
+├── hasOperationsAccess (Assets, Subscriptions, Suppliers)
+├── hasHRAccess (Employees, Leave)
+├── hasFinanceAccess (Payroll, Purchase Requests)
+└── canApprove (Manager - approve direct reports)
+
+Module Access:
+├── Controlled by org.enabledModules array
+└── Enforced at middleware + API handler level</div>
+
+            <h3>8.3 Sensitive Data Handling</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data Type</th>
+                        <th>Protection</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Passwords</strong></td>
+                        <td>bcrypt hash (12 rounds)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>OAuth Secrets</strong></td>
+                        <td>AES-256-GCM encryption</td>
+                    </tr>
+                    <tr>
+                        <td><strong>WhatsApp Tokens</strong></td>
+                        <td>AES-256-GCM encryption</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Database Backups</strong></td>
+                        <td>AES-256-GCM + field redaction</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Session Tokens</strong></td>
+                        <td>Signed JWT (NEXTAUTH_SECRET)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Impersonation Tokens</strong></td>
+                        <td>Signed JWT with revocation tracking</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>8.4 Rate Limiting</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint Type</th>
+                        <th>Limit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Auth Endpoints</strong></td>
+                        <td>5 requests / 15 minutes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>API Mutations</strong></td>
+                        <td>60 requests / minute</td>
+                    </tr>
+                    <tr>
+                        <td><strong>General API</strong></td>
+                        <td>Configurable per endpoint</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Implementation:</strong> Upstash Redis (production) + in-memory fallback (development)</p>
+
+            <h3>8.5 Security Headers</h3>
+            <pre><code>Content-Security-Policy: script-src 'self' (strict in prod)
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Frame-Options: DENY
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin</code></pre>
+
+            <h3>8.6 Known Security Assumptions</h3>
+            <ol>
+                <li><strong>Subdomain Isolation:</strong> Tenants are isolated by subdomain; cross-subdomain requests blocked</li>
+                <li><strong>Trusted OAuth Providers:</strong> Google/Azure are trusted identity sources</li>
+                <li><strong>Database-Level Security:</strong> Prisma extension cannot be bypassed at application layer</li>
+                <li><strong>Super Admin Trust:</strong> Super admins have platform-wide access via impersonation</li>
+            </ol>
+        </section>
+
+        <!-- Section 9: Error Handling & Observability -->
+        <section id="error-handling-observability">
+            <h2>9. Error Handling &amp; Observability</h2>
+
+            <h3>9.1 Logging Strategy</h3>
+            <p><strong>Tool:</strong> Custom logger (<code>src/lib/core/log.ts</code>)</p>
+            <p><strong>Log Levels:</strong> debug, info, warn, error</p>
+
+            <h4>Context Captured:</h4>
+            <ul>
+                <li>Request ID (unique per request)</li>
+                <li>User ID, email</li>
+                <li>Tenant ID</li>
+                <li>Request method, path, status code</li>
+                <li>Execution time</li>
+            </ul>
+
+            <h3>9.2 Error Handling Conventions</h3>
+            <h4>API Error Response Format:</h4>
+            <pre><code>{
+  "error": "Validation Error",
+  "message": "Human-readable description",
+  "details": { "field": "error message" },
+  "code": "VALIDATION_FAILED",
+  "requestId": "req_abc123",
+  "timestamp": "2026-01-18T12:00:00Z"
+}</code></pre>
+
+            <h4>Error Codes:</h4>
+            <ul>
+                <li><code>AUTH_REQUIRED</code>, <code>SESSION_EXPIRED</code> (401)</li>
+                <li><code>FORBIDDEN</code>, <code>ADMIN_REQUIRED</code>, <code>PERMISSION_DENIED</code> (403)</li>
+                <li><code>NOT_FOUND</code> (404)</li>
+                <li><code>VALIDATION_FAILED</code>, <code>DUPLICATE_ENTRY</code> (400)</li>
+                <li><code>RATE_LIMITED</code> (429)</li>
+                <li><code>INTERNAL_ERROR</code> (500)</li>
+            </ul>
+
+            <h3>9.3 Centralized Error Tracking</h3>
+            <p><strong>Database:</strong> <code>ErrorLog</code> model captures:</p>
+            <ul>
+                <li>Error type, severity</li>
+                <li>Stack trace, metadata</li>
+                <li>Request context (method, path, user)</li>
+                <li>5-minute deduplication window</li>
+            </ul>
+            <p><strong>Super Admin Dashboard:</strong> View and manage logged errors</p>
+
+            <h3>9.4 Monitoring</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Sentry</strong></td>
+                        <td>Error tracking, performance monitoring</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Vercel Analytics</strong></td>
+                        <td>Request metrics, function durations</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Custom ErrorLog</strong></td>
+                        <td>Database-backed error history</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 10: Testing Strategy -->
+        <section id="testing-strategy">
+            <h2>10. Testing Strategy</h2>
+
+            <h3>10.1 Test Types</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Location</th>
+                        <th>Framework</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Unit</strong></td>
+                        <td><code>tests/unit/</code></td>
+                        <td>Jest</td>
+                        <td>Business logic, utilities</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Integration</strong></td>
+                        <td><code>tests/integration/</code></td>
+                        <td>Jest</td>
+                        <td>API endpoints, database</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Security</strong></td>
+                        <td><code>tests/security/</code></td>
+                        <td>Jest</td>
+                        <td>Security modules</td>
+                    </tr>
+                    <tr>
+                        <td><strong>E2E</strong></td>
+                        <td><code>tests/e2e/</code></td>
+                        <td>Playwright</td>
+                        <td>Full user flows</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>10.2 Coverage Expectations</h3>
+            <pre><code>// jest.config.ts thresholds
+coverageThreshold: {
+  global: { branches: 20, functions: 35, lines: 20 },
+  '**/payroll/**': { branches: 50, functions: 60, lines: 50 },
+  '**/leave/**': { branches: 50, functions: 60, lines: 50 },
+  '**/multi-tenant/**': { branches: 40, functions: 50, lines: 40 },
+  '**/security/**': { branches: 30, functions: 40, lines: 30 }
+}</code></pre>
+
+            <h3>10.3 Local Testing Workflow</h3>
+            <pre><code># Run all tests
+npm test
+
+# Watch mode
+npm run test:watch
+
+# Specific suites
+npm run test:unit
+npm run test:security
+npm run test:api
+
+# E2E tests
+npm run test:e2e           # Headless
+npm run test:e2e:headed    # Browser visible
+npm run test:e2e:debug     # Debug mode
+
+# Coverage report
+npm run test:coverage</code></pre>
+
+            <h3>10.4 Test Data</h3>
+            <ul>
+                <li><strong>Factories:</strong> <code>tests/helpers/factories.ts</code> for creating test entities</li>
+                <li><strong>Mocks:</strong> <code>tests/mocks/prisma.ts</code> for database mocking</li>
+                <li><strong>E2E Utils:</strong> <code>tests/e2e/utils/</code> for auth helpers</li>
+            </ul>
+        </section>
+
+        <!-- Section 11: Deployment & Release Process -->
+        <section id="deployment-release-process">
+            <h2>11. Deployment &amp; Release Process</h2>
+
+            <h3>11.1 Build Pipeline</h3>
+            <pre><code># Development
+npm run dev              # Turbopack dev server
+
+# Production build
+npm run build            # prisma generate -&gt; migrate deploy -&gt; next build
+
+# Vercel build (uses db push instead of migrate)
+npm run build:vercel     # prisma generate -&gt; db push -&gt; next build</code></pre>
+
+            <h3>11.2 Deployment Flow</h3>
+            <div class="diagram">1. Push to main branch
+         │
+         ▼
+2. Vercel auto-deploys
+   - Install: npm install --legacy-peer-deps
+   - Build: prisma generate &amp;&amp; next build
+   - Deploy: Serverless functions + static assets
+         │
+         ▼
+3. Database migrations
+   - Automatic via build command
+   - Uses DIRECT_URL for migrations</div>
+
+            <h3>11.3 Scheduled Jobs (Cron)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Job</th>
+                        <th>Schedule</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Backup Service</strong></td>
+                        <td>1 AM UTC daily</td>
+                        <td>Full platform backup</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cleanup Deleted Users</strong></td>
+                        <td>2 AM UTC daily</td>
+                        <td>Purge soft-deleted records</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>11.4 Rollback Strategy</h3>
+            <ol>
+                <li><strong>Vercel Instant Rollback:</strong> One-click rollback to previous deployment</li>
+                <li><strong>Database:</strong> Manual migration rollback via <code>prisma migrate reset</code> (destructive)</li>
+                <li><strong>Feature Flags:</strong> Disable problematic modules per organization</li>
+            </ol>
+        </section>
+
+        <!-- Section 12: Known Trade-offs & Technical Debt -->
+        <section id="known-tradeoffs-technical-debt">
+            <h2>12. Known Trade-offs &amp; Technical Debt</h2>
+
+            <h3>12.1 Explicit Design Decisions</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Decision</th>
+                        <th>Rationale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Monolith over Microservices</strong></td>
+                        <td>Faster development, simpler deployment for SME scale</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Server Components Default</strong></td>
+                        <td>Better performance, direct DB access</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Qatar-Specific Hardcoding</strong></td>
+                        <td>Target market focus; defer internationalization</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Soft Deletes</strong></td>
+                        <td>Audit compliance; deferred permanent deletion</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Boolean Permission Flags</strong></td>
+                        <td>Simpler than RBAC; sufficient for current scale</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>12.2 Deferred Items</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Status</th>
+                        <th>Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Stripe Integration</strong></td>
+                        <td>Schema ready, webhooks pending</td>
+                        <td>Billing not automated</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Full i18n</strong></td>
+                        <td>English only</td>
+                        <td>Limited to English users</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Offline Support</strong></td>
+                        <td>Not implemented</td>
+                        <td>Requires internet</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Real-time Updates</strong></td>
+                        <td>Polling-based</td>
+                        <td>No WebSocket push</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>12.3 Known Limitations</h3>
+            <ol>
+                <li><strong>Reference Number Generation:</strong> Count-based (race condition risk at scale)</li>
+                <li><strong>Rate Limiting:</strong> In-memory fallback loses state on function restart</li>
+                <li><strong>File Upload Size:</strong> 10MB max (Vercel limit)</li>
+                <li><strong>Function Timeout:</strong> 30 seconds (300 for backups)</li>
+            </ol>
+        </section>
+
+        <!-- Section 13: Reviewer Notes -->
+        <section id="reviewer-notes">
+            <h2>13. Reviewer Notes</h2>
+
+            <h3>13.1 Suggested Starting Points</h3>
+
+            <h4>1. Architecture Overview:</h4>
+            <ul>
+                <li>Start with <code>src/middleware.ts</code> to understand request flow</li>
+                <li>Review <code>src/lib/core/prisma-tenant.ts</code> for tenant isolation</li>
+                <li>Check <code>src/lib/http/handler.ts</code> for API patterns</li>
+            </ul>
+
+            <h4>2. Security Review:</h4>
+            <ul>
+                <li><code>src/lib/security/</code> - All security modules</li>
+                <li><code>src/lib/core/auth.ts</code> - Authentication configuration</li>
+                <li><code>tests/security/</code> - Security test coverage</li>
+            </ul>
+
+            <h4>3. Business Logic:</h4>
+            <ul>
+                <li>Pick a feature module (e.g., <code>src/features/leave/</code>)</li>
+                <li>Follow the pattern: validations → lib → components → API route</li>
+            </ul>
+
+            <h4>4. Database Schema:</h4>
+            <ul>
+                <li><code>prisma/schema.prisma</code> - Full data model</li>
+                <li>Focus on <code>Organization</code>, <code>TeamMember</code>, <code>ApprovalPolicy</code></li>
+            </ul>
+
+            <h3>13.2 How to Approach the Codebase</h3>
+            <ol>
+                <li><strong>Read CLAUDE.md first</strong> - Project conventions and commands</li>
+                <li><strong>Understand tenant flow</strong> - Middleware → API handler → Prisma extension</li>
+                <li><strong>Pick one feature end-to-end</strong> - Leave management is well-documented</li>
+                <li><strong>Run tests</strong> - <code>npm test</code> to verify local setup</li>
+            </ol>
+
+            <h3>13.3 Areas for Feedback</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Area</th>
+                        <th>Why Feedback is Valuable</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Tenant Isolation</strong></td>
+                        <td>Critical for security; verify no bypasses</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Approval Engine</strong></td>
+                        <td>Complex workflow; check edge cases</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Session Management</strong></td>
+                        <td>Balance security vs UX</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Error Handling</strong></td>
+                        <td>Consistency across codebase</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Test Coverage</strong></td>
+                        <td>Identify critical gaps</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Scalability</strong></td>
+                        <td>Count-based IDs, in-memory caches</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>13.4 Questions to Consider</h3>
+            <ol>
+                <li>Is the tenant isolation strategy sufficient for enterprise customers?</li>
+                <li>Are there any security vulnerabilities in the OAuth implementation?</li>
+                <li>Is the approval engine flexible enough for complex workflows?</li>
+                <li>Should reference numbers use database sequences instead of counts?</li>
+                <li>Is the current test coverage adequate for critical paths?</li>
+            </ol>
+        </section>
+
+        <!-- Appendix -->
+        <section id="appendix">
+            <h2>Appendix: Key File Reference</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>src/middleware.ts</code></td>
+                        <td>Request routing, auth validation</td>
+                    </tr>
+                    <tr>
+                        <td><code>src/lib/core/prisma-tenant.ts</code></td>
+                        <td>Tenant isolation</td>
+                    </tr>
+                    <tr>
+                        <td><code>src/lib/core/auth.ts</code></td>
+                        <td>NextAuth configuration</td>
+                    </tr>
+                    <tr>
+                        <td><code>src/lib/http/handler.ts</code></td>
+                        <td>API wrapper</td>
+                    </tr>
+                    <tr>
+                        <td><code>src/lib/modules/registry.ts</code></td>
+                        <td>Module definitions</td>
+                    </tr>
+                    <tr>
+                        <td><code>src/features/approvals/lib/approval-engine.ts</code></td>
+                        <td>Approval workflows</td>
+                    </tr>
+                    <tr>
+                        <td><code>prisma/schema.prisma</code></td>
+                        <td>Database schema</td>
+                    </tr>
+                    <tr>
+                        <td><code>vercel.json</code></td>
+                        <td>Deployment configuration</td>
+                    </tr>
+                    <tr>
+                        <td><code>CLAUDE.md</code></td>
+                        <td>Project conventions</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <p><em>End of Technical Documentation</em></p>
+    </footer>
+</body>
+</html>
