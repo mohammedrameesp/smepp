@@ -171,7 +171,8 @@ async function updateStatusHandler(request: NextRequest, context: APIContext) {
                     tenantId,
                     'PURCHASE_REQUEST',
                     id,
-                    nextPendingStep.requiredRole
+                    nextPendingStep.requiredRole,
+                    currentRequest.requesterId // Pass requester ID for role-based routing
                   );
 
                   // Send in-app notifications

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processApprovalSchema } from '@/features/approvals/validations/approvals';
-import { processApproval, getCurrentPendingStep } from '@/features/approvals/lib';
+import { processApproval, getCurrentPendingStep, getApproversForRole } from '@/features/approvals/lib';
 import { prisma } from '@/lib/core/prisma';
 import { logAction } from '@/lib/core/activity';
 import { createNotification, createBulkNotifications, NotificationTemplates } from '@/features/notifications/lib';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
+import { notifyNextLevelApproversViaWhatsApp } from '@/lib/whatsapp/approval-integration';
+import { Role } from '@prisma/client';
 
 // POST /api/approval-steps/[id]/approve - Approve a step
 async function approveStepHandler(request: NextRequest, context: APIContext) {
@@ -91,7 +93,17 @@ async function approveStepHandler(request: NextRequest, context: APIContext) {
     // Notify next approver (tenant-scoped)
     const nextStep = await getCurrentPendingStep(result.step.entityType, result.step.entityId);
     if (nextStep) {
-      await notifyNextApprover(db, result.step.entityType, result.step.entityId, nextStep.requiredRole, tenantId);
+      // Send in-app notifications to next level approvers
+      await notifyNextApprover(db, result.step.entityType, result.step.entityId, nextStep.requiredRole, tenantId, requesterId);
+
+      // Send WhatsApp notifications to next level approvers (non-blocking)
+      notifyNextLevelApproversViaWhatsApp(
+        tenantId,
+        result.step.entityType,
+        result.step.entityId,
+        nextStep.requiredRole,
+        requesterId
+      );
     }
   }
 
@@ -201,14 +213,11 @@ async function notifyNextApprover(
   entityType: string,
   entityId: string,
   requiredRole: string,
-  tenantId: string
+  tenantId: string,
+  requesterId?: string
 ) {
-  // Find team members with the required role to notify (tenant-scoped)
-  // Note: requiredRole can be 'ADMIN', 'MANAGER', etc. We map to isAdmin for ADMIN role
-  const approvers = await db.teamMember.findMany({
-    where: requiredRole === 'ADMIN' ? { isAdmin: true } : {},
-    select: { id: true },
-  });
+  // Find team members with the required role to notify (role-based routing)
+  const approvers = await getApproversForRole(requiredRole as Role, tenantId, requesterId);
 
   // Get entity details for notification
   let entityDetails: { title: string; requesterName: string; link: string } = {

@@ -8,47 +8,36 @@ This document tracks planned improvements and technical debt items for future de
 
 ### Role-Based Approver Routing
 
-**Current State:**
-The `findApproversForRole()` function in `src/lib/whatsapp/approval-integration.ts` ignores the `requiredRole` parameter and simply returns all admins (`isAdmin: true`).
+**Status:** COMPLETED (January 2026)
 
-```typescript
-// Current implementation - role is ignored
-async function findApproversForRole(tenantId: string, requiredRole: Role) {
-  return prisma.teamMember.findMany({
-    where: { tenantId, isAdmin: true, isDeleted: false }
-  });
-}
-```
+**Implementation:**
+The `findApproversForRole()` function in `src/lib/whatsapp/approval-integration.ts` now properly routes WhatsApp notifications based on the required role:
 
-**Limitation:**
-All admins receive WhatsApp notifications regardless of the approval step's required role. This works for simple org structures but doesn't support multi-level approval workflows where different roles approve at different stages.
+- `MANAGER` → Requester's direct manager (via `reportingToId`)
+- `HR_MANAGER` → Team members with `hasHRAccess: true`
+- `FINANCE_MANAGER` → Team members with `hasFinanceAccess: true`
+- `OPERATIONS_MANAGER` → Team members with `hasOperationsAccess: true`
+- `DIRECTOR`/`ADMIN` → Team members with `isAdmin: true` (fallback to `isOwner: true`)
 
-**Future Enhancement:**
-Implement proper role-based routing:
-
-1. Map `Role` enum to actual permission flags or team member roles
-2. Consider manager relationships (direct reports)
-3. Support scenarios like:
-   - `MANAGER` role → Find the requester's direct manager
-   - `HR_MANAGER` → Find users with `hasHRAccess: true`
-   - `FINANCE_MANAGER` → Find users with `hasFinanceAccess: true`
-   - `DIRECTOR` → Find users with `isOwner: true` or senior leadership
-
-**Files to Modify:**
-- `src/lib/whatsapp/approval-integration.ts` - `findApproversForRole()`
-- Potentially add role mapping configuration
+The function now accepts an optional `requesterId` parameter for MANAGER role routing.
 
 ---
 
-## Approval Workflow
-
 ### Multi-Level Approval Chain
 
-**Current State:**
-Approval policies can define multiple levels, but WhatsApp notifications only go to the first level's approvers.
+**Status:** COMPLETED (January 2026)
 
-**Future Enhancement:**
-Send WhatsApp notifications when approval moves to the next level (after previous level approves).
+**Implementation:**
+WhatsApp notifications are now sent when approval moves to the next level:
+
+- Added `notifyNextLevelApproversViaWhatsApp()` function in `src/lib/whatsapp/approval-integration.ts`
+- Updated all approval routes to call this function when a step is approved and there are remaining pending steps
+- Both in-app and WhatsApp notifications are sent to next-level approvers
+
+**Files Modified:**
+- `src/lib/whatsapp/approval-integration.ts` - Added new function and updated role routing
+- `src/app/api/approval-steps/[id]/approve/route.ts` - Added WhatsApp notification for next level
+- All other approval routes updated to pass `requesterId` for proper routing
 
 ---
 
@@ -68,4 +57,4 @@ Implement OTP-based phone verification:
 
 ---
 
-*Last Updated: January 2025*
+*Last Updated: January 2026*

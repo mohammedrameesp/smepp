@@ -274,7 +274,8 @@ async function approveAssetRequestHandler(request: NextRequest, context: APICont
               tenantId,
               'ASSET_REQUEST',
               id,
-              nextPendingStep.requiredRole
+              nextPendingStep.requiredRole,
+              assetRequest.memberId // Pass requester ID for role-based routing
             );
 
             // Send in-app notifications

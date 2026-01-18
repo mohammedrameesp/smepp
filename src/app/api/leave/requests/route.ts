@@ -644,7 +644,8 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
               tenantId!,
               'LEAVE_REQUEST',
               leaveRequest.id,
-              firstStep.requiredRole
+              firstStep.requiredRole,
+              memberId // Pass requester ID for role-based routing
             );
 
             // Send email notifications to first level approvers only

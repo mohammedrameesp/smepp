@@ -263,7 +263,8 @@ export async function sendPurchaseRequestNotifications(
         tenantId,
         'PURCHASE_REQUEST',
         purchaseRequest.id,
-        steps[0].requiredRole
+        steps[0].requiredRole,
+        userId // Pass requester ID for role-based routing
       );
     }
 
@@ -323,7 +324,8 @@ export async function sendPurchaseRequestNotifications(
       tenantId,
       'PURCHASE_REQUEST',
       purchaseRequest.id,
-      'MANAGER'
+      'MANAGER',
+      userId // Pass requester ID for role-based routing
     );
 
     const admins = await prisma.teamMember.findMany({

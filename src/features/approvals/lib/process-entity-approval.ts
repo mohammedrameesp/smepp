@@ -273,7 +273,7 @@ async function notifyNextLevelApprovers(params: NotifyNextLevelParams): Promise<
     const link = getEntityLink(entityType, entityId);
 
     // Send WhatsApp notifications
-    notifyApproversViaWhatsApp(tenantId, entityType, entityId, nextPendingStep.requiredRole);
+    notifyApproversViaWhatsApp(tenantId, entityType, entityId, nextPendingStep.requiredRole, requesterId);
 
     // Send in-app notifications
     const notifications = filteredApprovers.map(approver => ({

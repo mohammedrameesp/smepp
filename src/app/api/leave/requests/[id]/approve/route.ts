@@ -469,7 +469,8 @@ async function approveLeaveRequestHandler(request: NextRequest, context: APICont
             tenantId,
             'LEAVE_REQUEST',
             id,
-            nextPendingStep.requiredRole
+            nextPendingStep.requiredRole,
+            existing.memberId // Pass requester ID for role-based routing
           );
 
           // Send email notifications to next level approvers

@@ -145,7 +145,8 @@ async function sendEmployeeRequestNotifications(
         tenantId,
         'ASSET_REQUEST',
         assetRequest.id,
-        steps[0].requiredRole
+        steps[0].requiredRole,
+        assetRequest.user.id // Pass requester ID for role-based routing
       );
     }
 
@@ -203,7 +204,8 @@ async function sendEmployeeRequestNotifications(
       tenantId,
       'ASSET_REQUEST',
       assetRequest.id,
-      'MANAGER'
+      'MANAGER',
+      assetRequest.user.id // Pass requester ID for role-based routing
     );
 
     const admins = await getTenantAdmins(tenantId);
