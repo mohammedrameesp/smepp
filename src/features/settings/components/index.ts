@@ -9,3 +9,4 @@ export { ExchangeRateSettings } from './exchange-rate-settings';
 export { LocationsSettings } from './locations-settings';
 export { PayrollSettings } from './payroll-settings';
 export { LeaveTypesSettings } from './leave-types-settings';
+export { PublicHolidaysSettings } from './public-holidays-settings';

@@ -484,6 +484,176 @@ export function calculateWorkingDays(
 }
 
 /**
+ * Public Holiday type definition
+ */
+export interface PublicHolidayData {
+  id: string;
+  name: string;
+  description?: string | null;
+  startDate: Date;
+  endDate: Date;
+  year: number;
+  isRecurring: boolean;
+  color: string;
+}
+
+/**
+ * Check if a date is a public holiday
+ * @param date Date to check
+ * @param holidays Array of public holidays
+ * @returns Holiday name if date is a holiday, null otherwise
+ */
+export function isPublicHoliday(date: Date, holidays: PublicHolidayData[]): string | null {
+  const checkDate = new Date(date);
+  checkDate.setHours(0, 0, 0, 0);
+
+  for (const holiday of holidays) {
+    const startDate = new Date(holiday.startDate);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(holiday.endDate);
+    endDate.setHours(0, 0, 0, 0);
+
+    if (checkDate >= startDate && checkDate <= endDate) {
+      return holiday.name;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Get all holidays within a date range
+ * @param startDate Start date of range
+ * @param endDate End date of range
+ * @param holidays Array of public holidays
+ * @returns Array of holiday names that fall within the range
+ */
+export function getHolidaysInRange(
+  startDate: Date,
+  endDate: Date,
+  holidays: PublicHolidayData[]
+): string[] {
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+
+  const holidayNames: string[] = [];
+
+  for (const holiday of holidays) {
+    const holidayStart = new Date(holiday.startDate);
+    holidayStart.setHours(0, 0, 0, 0);
+
+    const holidayEnd = new Date(holiday.endDate);
+    holidayEnd.setHours(0, 0, 0, 0);
+
+    // Check if holiday range overlaps with date range
+    if (holidayStart <= end && holidayEnd >= start) {
+      holidayNames.push(holiday.name);
+    }
+  }
+
+  return [...new Set(holidayNames)]; // Remove duplicates
+}
+
+/**
+ * Count the number of holiday days within a date range
+ * @param startDate Start date of range
+ * @param endDate End date of range
+ * @param holidays Array of public holidays
+ * @param weekendDays Array of weekend day numbers (to avoid double counting)
+ * @returns Number of holiday days (excluding weekends)
+ */
+export function countHolidayDays(
+  startDate: Date,
+  endDate: Date,
+  holidays: PublicHolidayData[],
+  weekendDays: number[] = [5, 6]
+): number {
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+
+  let count = 0;
+  const current = new Date(start);
+
+  while (current <= end) {
+    // Only count if it's a holiday AND not a weekend (to avoid double counting)
+    if (!isWeekend(current, weekendDays) && isPublicHoliday(current, holidays)) {
+      count++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+
+  return count;
+}
+
+/**
+ * Calculate working days between two dates, excluding weekends AND public holidays
+ * @param startDate Start date
+ * @param endDate End date
+ * @param requestType Type of leave request
+ * @param includeWeekends If true, counts weekends but still excludes holidays
+ * @param weekendDays Array of weekend day numbers (0=Sun, 1=Mon, ..., 5=Fri, 6=Sat)
+ * @param holidays Array of public holidays
+ * @returns Number of days (excluding holidays and optionally weekends)
+ */
+export function calculateWorkingDaysWithHolidays(
+  startDate: Date,
+  endDate: Date,
+  requestType: LeaveRequestType = 'FULL_DAY',
+  includeWeekends: boolean = false,
+  weekendDays: number[] = [5, 6],
+  holidays: PublicHolidayData[] = []
+): number {
+  // For half-day requests, return 0.5 if not a holiday
+  if (requestType === 'HALF_DAY_AM' || requestType === 'HALF_DAY_PM') {
+    // Half day should be on a working day and not a holiday
+    if (!includeWeekends && isWeekend(startDate, weekendDays)) {
+      return 0;
+    }
+    if (isPublicHoliday(startDate, holidays)) {
+      return 0;
+    }
+    return 0.5;
+  }
+
+  // For full day requests, count working days (excluding weekends if applicable, and holidays)
+  let count = 0;
+  const current = new Date(startDate);
+  current.setHours(0, 0, 0, 0);
+
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+
+  while (current <= end) {
+    const isWeekendDay = isWeekend(current, weekendDays);
+    const isHoliday = isPublicHoliday(current, holidays) !== null;
+
+    // Skip holidays always
+    if (isHoliday) {
+      current.setDate(current.getDate() + 1);
+      continue;
+    }
+
+    // Skip weekends if not including them
+    if (!includeWeekends && isWeekendDay) {
+      current.setDate(current.getDate() + 1);
+      continue;
+    }
+
+    count++;
+    current.setDate(current.getDate() + 1);
+  }
+
+  return count;
+}
+
+/**
  * Generate a leave request number
  * Format: LR-XXXXX (e.g., LR-00001)
  */

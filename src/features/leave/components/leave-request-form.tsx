@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DatePicker } from '@/components/ui/date-picker';
 import { createLeaveRequestSchema } from '@/features/leave/validations/leave';
 import { useState, useEffect } from 'react';
-import { calculateWorkingDays, formatLeaveDays, calculateRemainingBalance } from '@/features/leave/lib/leave-utils';
+import { calculateWorkingDays, calculateWorkingDaysWithHolidays, formatLeaveDays, calculateRemainingBalance, getHolidaysInRange, type PublicHolidayData } from '@/features/leave/lib/leave-utils';
 import { LeaveRequestType } from '@prisma/client';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -70,6 +70,8 @@ interface LeaveRequestFormProps {
   employeeId?: string;
   // Organization's configured weekend days (0=Sun, 6=Sat)
   weekendDays?: number[];
+  // Public holidays to exclude from leave calculations
+  publicHolidays?: PublicHolidayData[];
 }
 
 // Helper to format weekend day names
@@ -79,12 +81,13 @@ function formatWeekendDays(days: number[]): string {
   return days.map(d => DAY_NAMES[d]).join('/');
 }
 
-export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = false, employeeId, weekendDays = [5, 6] }: LeaveRequestFormProps) {
+export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = false, employeeId, weekendDays = [5, 6], publicHolidays = [] }: LeaveRequestFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [calculatedDays, setCalculatedDays] = useState<number | null>(null);
   const [selectedLeaveType, setSelectedLeaveType] = useState<LeaveType | null>(null);
   const [selectedBalance, setSelectedBalance] = useState<LeaveBalance | null>(null);
+  const [holidaysInRange, setHolidaysInRange] = useState<string[]>([]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(createLeaveRequestSchema) as never,
@@ -126,21 +129,33 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
 
   // Calculate working days when dates change
   // Accrual-based leave (Annual Leave) includes weekends, other leave types exclude weekends
+  // Public holidays are always excluded from the calculation
   useEffect(() => {
     if (watchStartDate && watchEndDate) {
       const start = new Date(watchStartDate);
       const end = new Date(watchEndDate);
       if (start <= end) {
         const includeWeekends = selectedLeaveType?.accrualBased === true;
-        const days = calculateWorkingDays(start, end, watchRequestType as LeaveRequestType, includeWeekends, weekendDays);
+
+        // Use the function that excludes holidays
+        const days = publicHolidays.length > 0
+          ? calculateWorkingDaysWithHolidays(start, end, watchRequestType as LeaveRequestType, includeWeekends, weekendDays, publicHolidays)
+          : calculateWorkingDays(start, end, watchRequestType as LeaveRequestType, includeWeekends, weekendDays);
+
         setCalculatedDays(days);
+
+        // Get holidays that fall within the selected date range
+        const holidays = getHolidaysInRange(start, end, publicHolidays);
+        setHolidaysInRange(holidays);
       } else {
         setCalculatedDays(null);
+        setHolidaysInRange([]);
       }
     } else {
       setCalculatedDays(null);
+      setHolidaysInRange([]);
     }
-  }, [watchStartDate, watchEndDate, watchRequestType, selectedLeaveType, weekendDays]);
+  }, [watchStartDate, watchEndDate, watchRequestType, selectedLeaveType, weekendDays, publicHolidays]);
 
   // Calculate available balance for selected leave type
   const getAvailableBalance = (): number => {
@@ -433,6 +448,11 @@ export function LeaveRequestForm({ leaveTypes, balances, onSuccess, isAdmin = fa
                   ? '(includes weekends)'
                   : `(excludes ${formatWeekendDays(weekendDays)} weekends)`}
           </span>
+          {holidaysInRange.length > 0 && (
+            <div className="mt-2 text-xs text-green-700 bg-green-50 rounded px-2 py-1">
+              Excludes holidays: {holidaysInRange.join(', ')}
+            </div>
+          )}
         </div>
       )}
 

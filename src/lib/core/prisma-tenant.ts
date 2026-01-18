@@ -71,6 +71,7 @@ const TENANT_MODELS = [
   'LeaveType',
   'LeaveBalance',
   'LeaveRequest',
+  'PublicHoliday',
 
   // Payroll
   'SalaryStructure',

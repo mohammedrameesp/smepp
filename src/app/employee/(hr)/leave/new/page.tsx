@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, FileEdit } from 'lucide-react';
 import Link from 'next/link';
 import { LeaveRequestForm } from '@/features/leave/components';
-import { getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
+import { getAnnualLeaveDetails, type PublicHolidayData } from '@/features/leave/lib/leave-utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 interface LeaveType {
@@ -46,18 +46,20 @@ export default function EmployeeNewLeavePage() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [weekendDays, setWeekendDays] = useState<number[]>([5, 6]); // Default Friday-Saturday
+  const [publicHolidays, setPublicHolidays] = useState<PublicHolidayData[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const currentYear = new Date().getFullYear();
 
-        // Fetch leave types, balances, user profile, and organization settings in parallel
-        const [typesRes, balancesRes, profileRes, orgRes] = await Promise.all([
+        // Fetch leave types, balances, user profile, organization settings, and holidays in parallel
+        const [typesRes, balancesRes, profileRes, orgRes, holidaysRes] = await Promise.all([
           fetch('/api/leave/types'),
           fetch(`/api/leave/balances?year=${currentYear}&ps=100`),
           fetch('/api/users/me'),
           fetch('/api/organization/settings', { cache: 'no-store' }),
+          fetch(`/api/admin/public-holidays?year=${currentYear}`),
         ]);
 
         let leaveTypesData: LeaveType[] = [];
@@ -98,6 +100,17 @@ export default function EmployeeNewLeavePage() {
           if (orgData.settings?.weekendDays?.length > 0) {
             setWeekendDays(orgData.settings.weekendDays);
           }
+        }
+
+        // Get public holidays
+        if (holidaysRes.ok) {
+          const holidaysData = await holidaysRes.json();
+          const holidays = (holidaysData.data || []).map((h: { id: string; name: string; description?: string | null; startDate: string; endDate: string; year: number; isRecurring: boolean; color: string }) => ({
+            ...h,
+            startDate: new Date(h.startDate),
+            endDate: new Date(h.endDate),
+          }));
+          setPublicHolidays(holidays);
         }
 
         // Add accrual info to balances for accrual-based leave types
@@ -187,6 +200,7 @@ export default function EmployeeNewLeavePage() {
                 onSuccess={handleSuccess}
                 isAdmin={isAdmin}
                 weekendDays={weekendDays}
+                publicHolidays={publicHolidays}
               />
             )}
           </div>

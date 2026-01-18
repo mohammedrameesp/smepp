@@ -1,5 +1,7 @@
 # Public Holidays Feature for Qatar Leave Management
 
+**Status: COMPLETED** (January 2026)
+
 ## Overview
 
 Implement public holidays configuration for each organization. Holidays will be excluded from leave day calculations (like weekends) and displayed on the leave calendar.

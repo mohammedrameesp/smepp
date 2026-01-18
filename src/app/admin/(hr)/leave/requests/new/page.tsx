@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, User } from 'lucide-react';
 import { LeaveRequestForm } from '@/features/leave/components';
-import { getAnnualLeaveDetails } from '@/features/leave/lib/leave-utils';
+import { getAnnualLeaveDetails, type PublicHolidayData } from '@/features/leave/lib/leave-utils';
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 
 interface LeaveType {
@@ -59,15 +59,18 @@ export default function AdminNewLeavePage() {
   const [loadingBalances, setLoadingBalances] = useState(false);
   const [, setDateOfJoining] = useState<Date | null>(null);
   const [weekendDays, setWeekendDays] = useState<number[]>([5, 6]); // Default Friday-Saturday
+  const [publicHolidays, setPublicHolidays] = useState<PublicHolidayData[]>([]);
 
   // Fetch employees and leave types on mount
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [employeesRes, typesRes, orgRes] = await Promise.all([
+        const currentYear = new Date().getFullYear();
+        const [employeesRes, typesRes, orgRes, holidaysRes] = await Promise.all([
           fetch('/api/users?includeHrProfile=true'),
           fetch('/api/leave/types'),
           fetch('/api/admin/organization', { cache: 'no-store' }),
+          fetch(`/api/admin/public-holidays?year=${currentYear}`),
         ]);
 
         if (employeesRes.ok) {
@@ -91,6 +94,17 @@ export default function AdminNewLeavePage() {
           if (orgData.organization?.weekendDays?.length > 0) {
             setWeekendDays(orgData.organization.weekendDays);
           }
+        }
+
+        // Get public holidays
+        if (holidaysRes.ok) {
+          const holidaysData = await holidaysRes.json();
+          const holidays = (holidaysData.data || []).map((h: { id: string; name: string; description?: string | null; startDate: string; endDate: string; year: number; isRecurring: boolean; color: string }) => ({
+            ...h,
+            startDate: new Date(h.startDate),
+            endDate: new Date(h.endDate),
+          }));
+          setPublicHolidays(holidays);
         }
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -257,6 +271,7 @@ export default function AdminNewLeavePage() {
                   isAdmin={true}
                   employeeId={selectedEmployeeId}
                   weekendDays={weekendDays}
+                  publicHolidays={publicHolidays}
                 />
               )}
             </CardContent>

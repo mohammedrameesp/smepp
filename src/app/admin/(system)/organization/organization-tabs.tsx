@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
-import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings, LocationsSettings, ExchangeRateSettings, PayrollSettings, LeaveTypesSettings } from '@/features/settings/components';
+import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings, LocationsSettings, ExchangeRateSettings, PayrollSettings, LeaveTypesSettings, PublicHolidaysSettings } from '@/features/settings/components';
 import { CurrencySelector } from '@/components/currency-selector';
 import { ApprovalWorkflowDisplay } from '@/features/approvals/components';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
@@ -811,7 +811,10 @@ export function OrganizationTabs({
               </Card>
 
               {enabledModules.includes('leave') && (
-                <LeaveTypesSettings />
+                <>
+                  <LeaveTypesSettings />
+                  <PublicHolidaysSettings isAdmin={isAdmin} />
+                </>
               )}
               {enabledModules.includes('payroll') && (
                 <PayrollSettings />

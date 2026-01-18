@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { getLeaveStatusVariant, formatLeaveDays } from '@/features/leave/lib/leave-utils';
+import { getLeaveStatusVariant, formatLeaveDays, isPublicHoliday, type PublicHolidayData } from '@/features/leave/lib/leave-utils';
 import { LeaveStatus } from '@prisma/client';
 import Link from 'next/link';
 
@@ -42,6 +42,7 @@ export function LeaveCalendarClient() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [statusFilter, setStatusFilter] = useState<string>('approved');
   const [weekendDays, setWeekendDays] = useState<number[]>([5, 6]); // Default Friday-Saturday
+  const [publicHolidays, setPublicHolidays] = useState<PublicHolidayData[]>([]);
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -108,6 +109,28 @@ export function LeaveCalendarClient() {
     };
     fetchOrgSettings();
   }, []);
+
+  // Fetch public holidays when the year changes
+  useEffect(() => {
+    const fetchPublicHolidays = async () => {
+      try {
+        const year = currentDate.getFullYear();
+        const response = await fetch(`/api/admin/public-holidays?year=${year}`);
+        if (response.ok) {
+          const data = await response.json();
+          const holidays = (data.data || []).map((h: { id: string; name: string; description?: string | null; startDate: string; endDate: string; year: number; isRecurring: boolean; color: string }) => ({
+            ...h,
+            startDate: new Date(h.startDate),
+            endDate: new Date(h.endDate),
+          }));
+          setPublicHolidays(holidays);
+        }
+      } catch (error) {
+        console.error('Failed to fetch public holidays:', error);
+      }
+    };
+    fetchPublicHolidays();
+  }, [currentDate]);
 
   const navigateMonth = (direction: number) => {
     setCurrentDate(prev => {
@@ -210,6 +233,12 @@ export function LeaveCalendarClient() {
               <span>{type.name}</span>
             </div>
           ))}
+          {publicHolidays.length > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <div className="w-3 h-3 rounded bg-red-500" />
+              <span>Public Holiday</span>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -230,13 +259,15 @@ export function LeaveCalendarClient() {
             {calendarDays.map((day, index) => {
               const isToday = day.date?.toDateString() === today.toDateString();
               const isWeekend = day.date && weekendDays.includes(day.date.getDay());
+              const holidayName = day.date ? isPublicHoliday(day.date, publicHolidays) : null;
+              const isHoliday = holidayName !== null;
 
               return (
                 <div
                   key={index}
                   className={`min-h-[120px] p-2 ${
                     day.date ? 'bg-white' : 'bg-gray-50'
-                  } ${isWeekend ? 'bg-gray-50' : ''}`}
+                  } ${isWeekend ? 'bg-gray-50' : ''} ${isHoliday ? 'bg-red-50' : ''}`}
                 >
                   {day.date && (
                     <>
@@ -245,12 +276,20 @@ export function LeaveCalendarClient() {
                           isToday
                             ? 'bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center'
                             : 'text-gray-500'
-                        } ${isWeekend ? 'text-gray-400' : ''}`}
+                        } ${isWeekend ? 'text-gray-400' : ''} ${isHoliday ? 'text-red-600 font-medium' : ''}`}
                       >
                         {day.date.getDate()}
                       </div>
+                      {isHoliday && (
+                        <div
+                          className="text-xs p-1 rounded truncate text-white bg-red-500 mb-1"
+                          title={holidayName}
+                        >
+                          {holidayName}
+                        </div>
+                      )}
                       <div className="space-y-1">
-                        {day.events.slice(0, 3).map(event => (
+                        {day.events.slice(0, isHoliday ? 2 : 3).map(event => (
                           <Link
                             key={event.id}
                             href={`/admin/leave/requests/${event.id}`}
@@ -265,9 +304,9 @@ export function LeaveCalendarClient() {
                             </div>
                           </Link>
                         ))}
-                        {day.events.length > 3 && (
+                        {day.events.length > (isHoliday ? 2 : 3) && (
                           <div className="text-xs text-gray-500">
-                            +{day.events.length - 3} more
+                            +{day.events.length - (isHoliday ? 2 : 3)} more
                           </div>
                         )}
                       </div>

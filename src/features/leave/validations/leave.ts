@@ -370,6 +370,86 @@ export const leaveTypeQuerySchema = z.object({
   includeInactive: z.enum(['true', 'false']).optional(),
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// PUBLIC HOLIDAY SCHEMAS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Schema for creating a public holiday.
+ * Supports single-day and multi-day holidays (e.g., Eid al-Fitr spans 3 days).
+ *
+ * @example
+ * { name: "Qatar National Day", startDate: "2024-12-18", endDate: "2024-12-18", year: 2024 }
+ * { name: "Eid al-Fitr", startDate: "2024-04-10", endDate: "2024-04-12", year: 2024 }
+ */
+export const createPublicHolidaySchema = z.object({
+  /** Holiday name (e.g., "Eid al-Fitr", "Qatar National Day") */
+  name: z.string().min(1, 'Holiday name is required').max(100, 'Name is too long'),
+  /** Optional description */
+  description: z.string().max(500, 'Description is too long').optional(),
+  /** Start date of the holiday (ISO string or Date) */
+  startDate: z.string().min(1, 'Start date is required'),
+  /** End date of the holiday (same as start for single-day holidays) */
+  endDate: z.string().min(1, 'End date is required'),
+  /** Year for the holiday (2000-2100) */
+  year: z.number().int().min(2000).max(2100),
+  /** Whether this is a recurring fixed-date holiday */
+  isRecurring: z.boolean().default(false),
+  /** Color for calendar display (hex code) */
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').default('#EF4444'),
+}).refine(
+  (data) => {
+    const start = new Date(data.startDate);
+    const end = new Date(data.endDate);
+    return end >= start;
+  },
+  { message: 'End date must be on or after start date', path: ['endDate'] }
+);
+
+/**
+ * Schema for updating a public holiday.
+ * All fields are optional.
+ */
+export const updatePublicHolidaySchema = z.object({
+  /** Holiday name */
+  name: z.string().min(1, 'Holiday name is required').max(100, 'Name is too long').optional(),
+  /** Optional description */
+  description: z.string().max(500, 'Description is too long').nullable().optional(),
+  /** Start date of the holiday */
+  startDate: z.string().min(1, 'Start date is required').optional(),
+  /** End date of the holiday */
+  endDate: z.string().min(1, 'End date is required').optional(),
+  /** Year for the holiday */
+  year: z.number().int().min(2000).max(2100).optional(),
+  /** Whether this is a recurring fixed-date holiday */
+  isRecurring: z.boolean().optional(),
+  /** Color for calendar display */
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid color format').optional(),
+}).refine(
+  (data) => {
+    // Only validate date range if both dates are provided
+    if (data.startDate && data.endDate) {
+      const start = new Date(data.startDate);
+      const end = new Date(data.endDate);
+      return end >= start;
+    }
+    return true;
+  },
+  { message: 'End date must be on or after start date', path: ['endDate'] }
+);
+
+/**
+ * Query parameters for listing public holidays.
+ */
+export const publicHolidayQuerySchema = z.object({
+  /** Filter by year */
+  year: z.coerce.number().int().min(2000).max(2100).optional(),
+  /** Page number (1-based) */
+  p: z.coerce.number().min(1).default(1),
+  /** Page size */
+  ps: z.coerce.number().min(1).max(100).default(50),
+});
+
 // ===== Type Exports =====
 
 export type CreateLeaveTypeRequest = z.infer<typeof createLeaveTypeSchema>;
@@ -385,6 +465,9 @@ export type LeaveRequestQuery = z.infer<typeof leaveRequestQuerySchema>;
 export type LeaveBalanceQuery = z.infer<typeof leaveBalanceQuerySchema>;
 export type TeamCalendarQuery = z.infer<typeof teamCalendarQuerySchema>;
 export type LeaveTypeQuery = z.infer<typeof leaveTypeQuerySchema>;
+export type CreatePublicHolidayRequest = z.infer<typeof createPublicHolidaySchema>;
+export type UpdatePublicHolidayRequest = z.infer<typeof updatePublicHolidaySchema>;
+export type PublicHolidayQuery = z.infer<typeof publicHolidayQuerySchema>;
 
 /**
  * Type compatibility check: Ensures Zod schema fields match Prisma model fields.

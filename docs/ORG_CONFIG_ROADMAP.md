@@ -190,14 +190,14 @@ Analysis of hardcoded values and business rules in the codebase that should be c
 ## ADDITIONAL SUGGESTIONS - Not Currently in Codebase
 
 ### 13. Public Holidays Calendar
-**Currently:** Not implemented
+**Status:** COMPLETED (January 2026)
 **Impact:** Leave calculations, calendar display
 
 **Implementation:**
-- Add `PublicHoliday` model per tenant (date, name, isOptional)
-- Update leave day calculations to optionally exclude holidays
-- Show holidays on leave calendar
-- Seed with country-specific defaults
+- Added `PublicHoliday` model per tenant (date, name, isRecurring)
+- Leave day calculations now exclude holidays
+- Holidays displayed on leave calendar with red background
+- "Add Qatar Holidays" button seeds common holidays
 
 ---
 
@@ -310,7 +310,7 @@ Analysis of hardcoded values and business rules in the codebase that should be c
 4. **Annual Leave Tiers** - Make service-based entitlement configurable per leave type
 5. **Gratuity Rules** - Add settings JSON field
 6. **Probation Period** - Add field
-7. **Public Holidays** - New model + calendar integration
+7. **Public Holidays** - DONE (New model + calendar integration)
 
 ### Phase 3: Financial/Localization
 8. **Base Currency** - Add field + update displays
@@ -341,7 +341,7 @@ Analysis of hardcoded values and business rules in the codebase that should be c
 | 4 | Annual Leave Tiers | Not Started | 2 |
 | 5 | Gratuity Rules | Not Started | 2 |
 | 6 | Probation Period | Not Started | 2 |
-| 7 | Public Holidays | Not Started | 2 |
+| 7 | Public Holidays | Done | 2 |
 | 8 | Base Currency | Not Started | 3 |
 | 9 | Phone Country Code | Not Started | 3 |
 | 10 | Number Format Locale | Not Started | 3 |

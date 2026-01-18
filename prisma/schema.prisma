@@ -415,6 +415,7 @@ model Organization {
   leaveTypes             LeaveType[]
   leaveBalances          LeaveBalance[]
   leaveRequests          LeaveRequest[]
+  publicHolidays         PublicHoliday[]
   salaryStructures       SalaryStructure[]
   payrollRuns            PayrollRun[]
   payslips               Payslip[]
@@ -1676,6 +1677,28 @@ model LeaveType {
   @@index([isActive])
   @@index([category])
   @@index([tenantId])
+}
+
+model PublicHoliday {
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name        String       // "Eid al-Fitr", "Qatar National Day"
+  description String?
+  startDate   DateTime
+  endDate     DateTime     // Same as startDate for single-day holidays
+  year        Int          // 2024, 2025, etc.
+  isRecurring Boolean      @default(false) // For fixed-date holidays
+  color       String       @default("#EF4444") // Red for holidays
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([tenantId, name, year])
+  @@index([tenantId])
+  @@index([tenantId, year])
+  @@index([tenantId, startDate, endDate])
 }
 
 model LeaveBalance {
