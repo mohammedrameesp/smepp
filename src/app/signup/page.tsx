@@ -290,7 +290,7 @@ function SignupForm() {
         branding={branding}
         isLoading={loadingInvite || brandingLoading}
         variant={subdomain ? 'tenant' : 'super-admin'}
-        welcomeTitleOverride={`Welcome to Durj`}
+        welcomeTitleOverride="Welcome to Durj"
         welcomeSubtitleOverride={orgName !== 'Durj' ? `You're joining ${orgName}` : undefined}
         taglineOverride="Designed to bring structure and insight to growing businesses"
       />
