@@ -209,7 +209,11 @@ export default function OrganizationDetailPage() {
   // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
   const [updating, setUpdating] = useState(false);
+
+  // Find pending owner invitation (signup not completed)
+  const pendingOwnerInvitation = invitations.find(inv => inv.role === 'OWNER' && !inv.isExpired);
 
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -450,6 +454,7 @@ export default function OrganizationDetailPage() {
   const openEditDialog = () => {
     if (org) {
       setEditName(org.name);
+      setEditEmail(pendingOwnerInvitation?.email || '');
       setEditDialogOpen(true);
     }
   };
@@ -463,6 +468,11 @@ export default function OrganizationDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: editName,
+          // Include email update if there's a pending owner invitation and email changed
+          ...(pendingOwnerInvitation && editEmail !== pendingOwnerInvitation.email && {
+            ownerInvitationId: pendingOwnerInvitation.id,
+            newOwnerEmail: editEmail,
+          }),
         }),
       });
 
@@ -473,6 +483,16 @@ export default function OrganizationDetailPage() {
 
       const data = await response.json();
       setOrg(prev => prev ? { ...prev, ...data.organization } : null);
+
+      // Update invitations list if email was changed
+      if (data.updatedInvitation) {
+        setInvitations(prev => prev.map(inv =>
+          inv.id === data.updatedInvitation.id
+            ? { ...inv, email: data.updatedInvitation.email }
+            : inv
+        ));
+      }
+
       setEditDialogOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update');
@@ -2681,6 +2701,21 @@ export default function OrganizationDetailPage() {
                 placeholder="Organization name"
               />
             </div>
+            {pendingOwnerInvitation && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Owner Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder="Owner email address"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This organization has a pending signup. You can update the owner&apos;s email if there was a typo.
+                </p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)} disabled={updating}>

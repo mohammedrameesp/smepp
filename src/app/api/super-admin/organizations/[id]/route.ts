@@ -161,6 +161,9 @@ const updateOrgSchema = z.object({
   maxAssets: z.number().min(1).optional(),
   aiChatEnabled: z.boolean().optional(),
   aiTokenBudgetMonthly: z.number().min(1000).nullable().optional(),
+  // For updating pending owner invitation email
+  ownerInvitationId: z.string().optional(),
+  newOwnerEmail: z.string().email().optional(),
 });
 
 export async function PATCH(
@@ -196,7 +199,7 @@ export async function PATCH(
       );
     }
 
-    const { name, maxUsers, maxAssets, aiChatEnabled, aiTokenBudgetMonthly } = result.data;
+    const { name, maxUsers, maxAssets, aiChatEnabled, aiTokenBudgetMonthly, ownerInvitationId, newOwnerEmail } = result.data;
 
     const organization = await prisma.organization.update({
       where: { id },
@@ -209,7 +212,48 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json({ organization });
+    // Update pending owner invitation email if provided
+    let updatedInvitation = null;
+    if (ownerInvitationId && newOwnerEmail) {
+      // Verify the invitation exists, belongs to this org, and is not yet accepted
+      const invitation = await prisma.organizationInvitation.findFirst({
+        where: {
+          id: ownerInvitationId,
+          organizationId: id,
+          role: 'OWNER',
+          acceptedAt: null,
+        },
+      });
+
+      if (invitation) {
+        // Check if new email is already used as an owner
+        const existingOwner = await prisma.teamMember.findFirst({
+          where: {
+            email: newOwnerEmail.toLowerCase(),
+            isOwner: true,
+            isDeleted: false,
+          },
+        });
+
+        if (existingOwner) {
+          return NextResponse.json(
+            { error: 'This email is already associated with another organization as owner' },
+            { status: 409 }
+          );
+        }
+
+        // Update the invitation email
+        updatedInvitation = await prisma.organizationInvitation.update({
+          where: { id: ownerInvitationId },
+          data: { email: newOwnerEmail.toLowerCase() },
+          select: { id: true, email: true },
+        });
+
+        logger.info({ orgId: id, oldEmail: invitation.email, newEmail: newOwnerEmail }, 'Updated pending owner invitation email');
+      }
+    }
+
+    return NextResponse.json({ organization, updatedInvitation });
   } catch (error) {
     logger.error({ error: error instanceof Error ? error.message : 'Unknown error', stack: error instanceof Error ? error.stack : undefined }, 'Update organization error');
     return NextResponse.json(
