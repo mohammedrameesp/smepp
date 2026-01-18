@@ -164,7 +164,7 @@ export function CurrencySelector({
       {/* Quick-add suggestions */}
       {showSuggestions && !disabled && availableSuggestions.length > 0 && (
         <div>
-          <p className="text-xs text-slate-400 mb-2">Quick add:</p>
+          <p className="text-xs text-slate-400 mb-2">Commonly used currencies:</p>
           <div className="flex flex-wrap gap-2">
             {availableSuggestions.map((code) => {
               const info = CURRENCY_MAP[code];

@@ -78,7 +78,7 @@ export function ColorStep({
           Brand Colors
         </h1>
         <p className="text-sm text-slate-500">
-          Customize your brand colors or use platform defaults
+          You can change these anytime from Brand Settings
         </p>
       </div>
 
@@ -167,7 +167,7 @@ export function ColorStep({
           {isUsingDefault && (
             <div className="mb-3 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
               <p className="text-xs text-slate-600">
-                Using platform default. Select a color below to customize.
+                Using platform default, optimized for clarity and accessibility.
               </p>
             </div>
           )}
@@ -245,8 +245,8 @@ export function ColorStep({
 
           <p className="text-xs text-slate-400 mt-2">
             {activeTab === 'primary'
-              ? 'Used for buttons and key actions'
-              : 'Used for links, borders, and accents'}
+              ? 'Used for buttons, headers, and key actions throughout the app'
+              : 'Used for links, borders, secondary buttons, and accents'}
           </p>
         </div>
       </div>

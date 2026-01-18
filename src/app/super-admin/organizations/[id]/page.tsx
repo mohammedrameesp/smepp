@@ -388,6 +388,19 @@ export default function OrganizationDetailPage() {
         if (customDomainRes.ok) {
           const customDomainData = await customDomainRes.json();
           setCustomDomainStatus(customDomainData.customDomain);
+
+          // Pre-fill custom domain input with website if no domain is set
+          if (!customDomainData.customDomain?.domain && orgData.organization?.website) {
+            try {
+              // Extract domain from website URL (e.g., "https://www.example.com" -> "app.example.com")
+              const websiteUrl = new URL(orgData.organization.website);
+              // Remove 'www.' prefix if present and suggest 'app.' subdomain
+              const hostname = websiteUrl.hostname.replace(/^www\./, '');
+              setNewCustomDomain(`app.${hostname}`);
+            } catch {
+              // If URL parsing fails, just use the website as-is
+            }
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load organization');

@@ -27,10 +27,10 @@ export function CurrencyStep({
           <Coins className="w-6 h-6 text-slate-600" />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">
-          Select your currencies
+          Currencies
         </h1>
         <p className="text-sm text-slate-600">
-          Add currencies you use in addition to QAR
+          Add any currencies you use besides QAR
         </p>
       </div>
 
@@ -44,15 +44,18 @@ export function CurrencyStep({
             <span className="text-2xl">🇶🇦</span>
             <div className="flex-1">
               <p className="font-medium text-slate-900">QAR - Qatari Riyal</p>
-              <p className="text-xs text-slate-500">Fixed as primary currency</p>
+              <p className="text-xs text-slate-500">Used as your default reporting currency</p>
             </div>
           </div>
         </div>
 
         {/* Additional Currencies */}
         <div>
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">
             Additional Currencies <span className="font-normal text-slate-400">(optional)</span>
+          </p>
+          <p className="text-xs text-slate-400 mb-2">
+            Add currencies only if you transact or track expenses in them
           </p>
           <CurrencySelector
             selectedCurrencies={additionalCurrencies}

@@ -112,7 +112,7 @@ export const CURRENCY_MAP: Record<string, CurrencyInfo> = Object.fromEntries(
 /**
  * Suggested currencies for quick selection (GCC region + USD).
  */
-export const SUGGESTED_CURRENCIES = ['USD', 'SAR', 'AED', 'KWD', 'BHD', 'OMR'];
+export const SUGGESTED_CURRENCIES = ['USD', 'EUR', 'SAR', 'AED', 'KWD', 'BHD', 'OMR'];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CACHE

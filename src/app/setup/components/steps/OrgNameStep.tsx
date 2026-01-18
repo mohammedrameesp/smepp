@@ -104,10 +104,10 @@ export function OrgNameStep({
           <Building2 className="w-6 h-6 text-slate-600" />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">
-          What&apos;s your organization called?
+          Organization details
         </h1>
         <p className="text-sm text-slate-600">
-          This will be the name shown throughout your workspace
+          Set up the basics for your workspace
         </p>
       </div>
 
@@ -160,10 +160,15 @@ export function OrgNameStep({
 
         {/* Organization Code */}
         <div className="pt-3 border-t border-slate-100">
-          <label className="block text-sm font-medium text-slate-700 mb-2 text-center">
+          <label className="block text-sm font-medium text-slate-700 mb-1 text-center">
             Organization Code
             <span className="text-slate-400 font-normal ml-1">(2-3 letters)</span>
           </label>
+          <p className="text-xs text-slate-500 text-center mb-2">
+            Used as a prefix in employee IDs, asset tags, request numbers, and other internal references.
+            <br />
+            <span className="text-slate-400">This code cannot be changed later. Formats can be customized.</span>
+          </p>
           <div className="relative">
             <Input
               value={codePrefix}
@@ -191,7 +196,7 @@ export function OrgNameStep({
           {/* Preview */}
           {isValidPrefix && (
             <p className="mt-3 text-sm text-slate-500 text-center">
-              Employee IDs will look like: <span className="font-mono font-medium text-slate-700">{codePrefix}-{currentYear}-001</span>
+              Example: <span className="font-mono font-medium text-slate-700">{codePrefix}-{currentYear}-001</span>
             </p>
           )}
           {!codePrefix && (
@@ -202,7 +207,7 @@ export function OrgNameStep({
         </div>
 
         <p className="text-center text-sm text-slate-500">
-          You can change these later in settings
+          You can update name and website later in settings
         </p>
       </div>
     </div>

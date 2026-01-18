@@ -7,7 +7,13 @@
  */
 
 import { useRef } from 'react';
-import { Image, Upload, X } from 'lucide-react';
+import { Image, Upload, Trash2 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface LogoStepProps {
   preview: string | null;
@@ -65,7 +71,7 @@ export function LogoStep({
           Add your company logo
         </h1>
         <p className="text-sm text-slate-600">
-          Your logo will appear in the navigation and reports
+          Your logo will appear in the navigation, reports, and exports
         </p>
       </div>
 
@@ -78,13 +84,22 @@ export function LogoStep({
                 alt="Logo preview"
                 className="h-24 w-24 object-contain rounded-xl border border-slate-200 bg-white mx-auto"
               />
-              <button
-                type="button"
-                onClick={removeLogo}
-                className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={removeLogo}
+                      className="absolute -top-2 -right-2 h-7 w-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 hover:text-slate-700 transition-colors border border-slate-200"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Remove logo</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <div className="mt-4">
               <p className="text-sm font-medium text-slate-900 mb-1">
@@ -109,11 +124,22 @@ export function LogoStep({
             <p className="text-sm text-slate-600 mb-1">
               Drag and drop your logo here
             </p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-400 mb-1">
               or click to browse (PNG, JPG, SVG up to 1MB)
+            </p>
+            <p className="text-xs text-slate-400">
+              Recommended: 200×200px or larger, square format
             </p>
           </div>
         )}
+
+        {/* Helper text */}
+        <p className="text-xs text-slate-400 text-center mt-4">
+          We&apos;ll automatically optimize your logo for dark backgrounds
+        </p>
+        <p className="text-xs text-slate-400 text-center">
+          You can change this anytime from Settings
+        </p>
 
         {error && (
           <p className="mt-4 text-sm text-red-600 text-center">{error}</p>
