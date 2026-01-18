@@ -807,11 +807,6 @@ export function OrganizationTabs({
                   <p className="text-sm text-muted-foreground">
                     Selected weekends are excluded from leave day calculations (except for accrual-based leave like Annual Leave which includes all calendar days).
                   </p>
-                  {weekendDays.length <= 1 && (
-                    <p className="text-sm text-amber-600">
-                      At least one weekend day is required.
-                    </p>
-                  )}
                 </CardContent>
               </Card>
 
