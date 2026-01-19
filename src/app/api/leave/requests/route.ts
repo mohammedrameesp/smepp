@@ -26,7 +26,6 @@ import {
   validateOnceInEmploymentLeave,
   validateLeaveRequestDates,
   validateNoOverlap,
-  validateDocumentRequirement,
 } from '@/features/leave/lib/leave-request-validation';
 import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
@@ -414,12 +413,6 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
 
     const totalDays = dateValidation.totalDays;
 
-    // Check for document requirement
-    const docResult = validateDocumentRequirement(leaveType, data.documentUrl, totalDays);
-    if (!docResult.valid) {
-      return NextResponse.json({ error: docResult.error }, { status: 400 });
-    }
-
     // Check for overlapping requests within tenant (pre-check before transaction)
     const overlappingRequests = await db.leaveRequest.findMany({
       where: {
@@ -546,7 +539,6 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
           requestType: data.requestType,
           totalDays,
           reason: data.reason,
-          documentUrl: data.documentUrl,
           emergencyContact: data.emergencyContact,
           emergencyPhone: data.emergencyPhone,
           status: 'PENDING',
