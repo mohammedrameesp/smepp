@@ -23,10 +23,10 @@ function getConnectionUrl(): string {
 
   // For Supabase Transaction pooler (port 6543):
   // - No connection_limit needed (transaction mode handles this automatically)
-  // - pool_timeout=0: Fail immediately if no connection available (let Vercel retry)
+  // - pool_timeout=10: Wait up to 10 seconds for a connection if pool is full
   // - statement_timeout: Max query execution time (ms)
   // Note: Use port 6543 for Transaction mode (serverless) instead of 5432 (Session mode)
-  return `${baseUrl}${separator}pool_timeout=0&statement_timeout=${QUERY_TIMEOUT_MS}`;
+  return `${baseUrl}${separator}pool_timeout=10&statement_timeout=${QUERY_TIMEOUT_MS}`;
 }
 
 export const prisma =
