@@ -39,9 +39,33 @@ import { ArrowLeft, Package, User, Clock, FileText, XCircle, AlertCircle, CheckC
 import { PageHeader, PageContent, PageHeaderButton } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
+import { ApprovalChainStatus } from '@/components/approvals';
 
 interface PageProps {
   params: Promise<{ id: string }>;
+}
+
+interface ApprovalStep {
+  id: string;
+  levelOrder: number;
+  requiredRole: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SKIPPED';
+  approverId: string | null;
+  approver: {
+    id: string;
+    name: string | null;
+    email: string;
+  } | null;
+  actionAt: string | null;
+  notes: string | null;
+}
+
+interface ApprovalSummary {
+  totalSteps: number;
+  completedSteps: number;
+  currentStep: number | null;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_STARTED';
+  canCurrentUserApprove?: boolean;
 }
 
 interface AssetRequest {
@@ -90,6 +114,8 @@ interface AssetRequest {
       email: string;
     };
   }[];
+  approvalChain?: ApprovalStep[] | null;
+  approvalSummary?: ApprovalSummary | null;
 }
 
 export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
@@ -270,6 +296,16 @@ export default function EmployeeAssetRequestDetailPage({ params }: PageProps) {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Approval Progress */}
+        {request.approvalChain && request.approvalChain.length > 0 && (
+          <ApprovalChainStatus
+            approvalChain={request.approvalChain}
+            approvalSummary={request.approvalSummary || null}
+            submittedAt={request.createdAt}
+            className="mb-6"
+          />
         )}
 
         <div className="space-y-6">

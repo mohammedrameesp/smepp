@@ -9,6 +9,7 @@ import { StatusBadge, PriorityBadge } from '@/features/purchase-requests/compone
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
 import { getStatusLabel, canDeleteRequest } from '@/features/purchase-requests/lib/purchase-request-utils';
+import { ApprovalChainStatus } from '@/components/approvals';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +50,29 @@ interface PurchaseRequestHistory {
   };
 }
 
+interface ApprovalStep {
+  id: string;
+  levelOrder: number;
+  requiredRole: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SKIPPED';
+  approverId: string | null;
+  approver: {
+    id: string;
+    name: string | null;
+    email: string;
+  } | null;
+  actionAt: string | null;
+  notes: string | null;
+}
+
+interface ApprovalSummary {
+  totalSteps: number;
+  completedSteps: number;
+  currentStep: number | null;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_STARTED';
+  canCurrentUserApprove?: boolean;
+}
+
 interface PurchaseRequest {
   id: string;
   referenceNumber: string;
@@ -78,6 +102,8 @@ interface PurchaseRequest {
   } | null;
   items: PurchaseRequestItem[];
   history: PurchaseRequestHistory[];
+  approvalChain?: ApprovalStep[] | null;
+  approvalSummary?: ApprovalSummary | null;
 }
 
 export default function EmployeePurchaseRequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -285,6 +311,16 @@ export default function EmployeePurchaseRequestDetailPage({ params }: { params: 
           <div className="mb-4 p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-600">
             {error}
           </div>
+        )}
+
+        {/* Approval Progress */}
+        {request.approvalChain && request.approvalChain.length > 0 && (
+          <ApprovalChainStatus
+            approvalChain={request.approvalChain}
+            approvalSummary={request.approvalSummary || null}
+            submittedAt={request.requestDate}
+            className="mb-6"
+          />
         )}
 
         <div className="space-y-6">
