@@ -11,6 +11,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { authRateLimitMiddleware } from '@/lib/security/rateLimit';
+import { isAccountLocked, recordFailedLogin, clearFailedLogins } from '@/lib/security/account-lockout';
 import logger from '@/lib/core/log';
 
 const loginSchema = z.object({
@@ -76,6 +77,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if account is locked
+    const lockStatus = await isAccountLocked(user.id);
+    if (lockStatus.locked) {
+      const minutesRemaining = lockStatus.lockedUntil
+        ? Math.ceil((lockStatus.lockedUntil.getTime() - Date.now()) / 60000)
+        : 5;
+      return NextResponse.json(
+        { error: `Account temporarily locked. Try again in ${minutesRemaining} minutes.` },
+        { status: 429 }
+      );
+    }
+
     // Check if user is a super admin
     if (!user.isSuperAdmin) {
       // AUDIT: Log non-super admin access attempt
@@ -104,6 +117,9 @@ export async function POST(request: NextRequest) {
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
+      // Record failed login attempt
+      const lockResult = await recordFailedLogin(user.id);
+
       // AUDIT: Log failed login attempt (wrong password)
       logger.warn({
         event: 'SUPER_ADMIN_LOGIN_FAILED',
@@ -111,13 +127,28 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         userEmail: user.email,
         clientIp: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+        attemptsRemaining: lockResult.attemptsRemaining,
+        accountLocked: lockResult.locked,
       }, 'Super admin login failed: invalid password');
+
+      if (lockResult.locked) {
+        const minutesRemaining = lockResult.lockedUntil
+          ? Math.ceil((lockResult.lockedUntil.getTime() - Date.now()) / 60000)
+          : 5;
+        return NextResponse.json(
+          { error: `Too many failed attempts. Account locked for ${minutesRemaining} minutes.` },
+          { status: 429 }
+        );
+      }
 
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
       );
     }
+
+    // Clear failed login attempts on successful password verification
+    await clearFailedLogins(user.id);
 
     // Check if 2FA is enabled
     if (user.twoFactorEnabled && user.twoFactorSecret) {
