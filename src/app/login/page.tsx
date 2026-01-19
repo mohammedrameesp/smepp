@@ -173,7 +173,17 @@ function LoginForm() {
       });
 
       if (result?.error) {
-        setError('Invalid email or password');
+        // Show specific error messages for lockout, deactivation, etc.
+        // NextAuth returns the error message from the authorize function
+        if (result.error.includes('locked')) {
+          setError(result.error);
+        } else if (result.error.includes('deactivated')) {
+          setError('This account has been deactivated');
+        } else if (result.error.includes('not enabled')) {
+          setError('This account is not enabled for login');
+        } else {
+          setError('Invalid email or password');
+        }
         setIsLoading(false);
         return;
       }
