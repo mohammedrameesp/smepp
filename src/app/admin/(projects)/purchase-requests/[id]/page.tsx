@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArrowLeft, Loader2, CheckCircle, XCircle, Clock, FileCheck, ShoppingCart, DollarSign, User, Building2, FileText, AlertCircle } from 'lucide-react';
 import { StatusBadge, PriorityBadge } from '@/features/purchase-requests/components';
 import { getAllowedStatusTransitions, getStatusLabel, getPurchaseTypeLabel, getCostTypeLabel, getPaymentModeLabel } from '@/features/purchase-requests/lib/purchase-request-utils';
+import { ApprovalChainStatus } from '@/components/approvals';
 
 interface PurchaseRequestItem {
   id: string;
@@ -35,6 +36,29 @@ interface PurchaseRequestHistory {
     name: string | null;
     email: string;
   };
+}
+
+interface ApprovalStep {
+  id: string;
+  levelOrder: number;
+  requiredRole: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SKIPPED';
+  approverId: string | null;
+  approver: {
+    id: string;
+    name: string | null;
+    email: string;
+  } | null;
+  actionAt: string | null;
+  notes: string | null;
+}
+
+interface ApprovalSummary {
+  totalSteps: number;
+  completedSteps: number;
+  currentStep: number | null;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_STARTED';
+  canCurrentUserApprove?: boolean;
 }
 
 interface PurchaseRequest {
@@ -74,6 +98,8 @@ interface PurchaseRequest {
   } | null;
   items: PurchaseRequestItem[];
   history: PurchaseRequestHistory[];
+  approvalChain?: ApprovalStep[] | null;
+  approvalSummary?: ApprovalSummary | null;
 }
 
 export default function AdminPurchaseRequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -232,6 +258,16 @@ export default function AdminPurchaseRequestDetailPage({ params }: { params: Pro
         <div className="mb-6 bg-rose-50 border border-rose-200 rounded-2xl p-4 text-rose-700">
           {error}
         </div>
+      )}
+
+      {/* Approval Progress */}
+      {request.approvalChain && request.approvalChain.length > 0 && (
+        <ApprovalChainStatus
+          approvalChain={request.approvalChain}
+          approvalSummary={request.approvalSummary || null}
+          submittedAt={request.requestDate}
+          className="mb-6"
+        />
       )}
 
       <div className="grid lg:grid-cols-3 gap-6">

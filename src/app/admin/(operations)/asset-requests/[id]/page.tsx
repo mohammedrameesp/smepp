@@ -44,6 +44,12 @@ import {
 import { PageHeader, PageContent } from '@/components/ui/page-header';
 import { DetailCard } from '@/components/ui/detail-card';
 import { InfoField, InfoFieldGrid } from '@/components/ui/info-field';
+import { ApprovalChainStatus } from '@/components/approvals';
+import {
+  getApprovalChain,
+  getApprovalChainSummary,
+  hasApprovalChain,
+} from '@/features/approvals/lib';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -132,6 +138,50 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
     notFound();
   }
 
+  // Fetch approval chain if it exists
+  const chainExists = await hasApprovalChain('ASSET_REQUEST', id);
+  let approvalChain = null;
+  let approvalSummary = null;
+
+  if (chainExists) {
+    approvalChain = await getApprovalChain('ASSET_REQUEST', id);
+    approvalSummary = await getApprovalChainSummary('ASSET_REQUEST', id);
+
+    // Add canCurrentUserApprove flag
+    if (approvalSummary?.status === 'PENDING' && approvalChain && approvalChain.length > 0) {
+      const currentStep = approvalChain.find(step => step.status === 'PENDING');
+      if (currentStep) {
+        const currentUserId = session.user.id;
+        const currentUserIsAdmin = !!session.user.isAdmin;
+        const currentUserHasOperationsAccess = !!session.user.hasOperationsAccess;
+
+        let canCurrentUserApprove = false;
+
+        switch (currentStep.requiredRole) {
+          case 'MANAGER': {
+            const directReports = await prisma.teamMember.findMany({
+              where: { reportingToId: currentUserId, tenantId },
+              select: { id: true },
+            });
+            canCurrentUserApprove = directReports.some(r => r.id === request.memberId);
+            break;
+          }
+          case 'HR_MANAGER':
+            canCurrentUserApprove = currentUserHasOperationsAccess;
+            break;
+          case 'DIRECTOR':
+            canCurrentUserApprove = currentUserIsAdmin;
+            break;
+        }
+
+        approvalSummary = {
+          ...approvalSummary,
+          canCurrentUserApprove,
+        };
+      }
+    }
+  }
+
   return (
     <>
       <PageHeader
@@ -155,6 +205,19 @@ export default async function AdminAssetRequestDetailPage({ params }: Props) {
       />
 
       <PageContent>
+        {/* Approval Progress */}
+        {approvalChain && approvalChain.length > 0 && (
+          <ApprovalChainStatus
+            approvalChain={approvalChain.map(step => ({
+              ...step,
+              actionAt: step.actionAt?.toISOString() || null,
+            }))}
+            approvalSummary={approvalSummary}
+            submittedAt={request.createdAt.toISOString()}
+            className="mb-6"
+          />
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content - 2/3 */}
         <div className="lg:col-span-2 space-y-6">

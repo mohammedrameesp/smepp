@@ -15,7 +15,7 @@ import {
   getAnnualLeaveDetails,
 } from '@/features/leave/lib/leave-utils';
 import { LeaveApprovalActions, LeaveRequestHistory } from '@/features/leave/components';
-import { ApprovalChainStatus } from '@/features/leave/components/approval-chain-status';
+import { ApprovalChainStatus } from '@/components/approvals';
 import { LeaveStatus, LeaveRequestType } from '@prisma/client';
 
 interface LeaveRequest {

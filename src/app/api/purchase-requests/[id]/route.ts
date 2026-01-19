@@ -11,6 +11,11 @@ import { updatePurchaseRequestSchema } from '@/lib/validations/projects/purchase
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { calculatePurchaseRequestItems, CalculatedItem } from '@/features/purchase-requests/lib/purchase-request-creation';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import {
+  getApprovalChain,
+  getApprovalChainSummary,
+  hasApprovalChain,
+} from '@/features/approvals/lib';
 
 // GET - Get single purchase request
 async function getPurchaseRequestHandler(request: NextRequest, context: APIContext) {
@@ -85,7 +90,59 @@ async function getPurchaseRequestHandler(request: NextRequest, context: APIConte
       }
     }
 
-    return NextResponse.json(purchaseRequest);
+    // Include approval chain if it exists
+    const chainExists = await hasApprovalChain('PURCHASE_REQUEST', id);
+    let approvalChain = null;
+    let approvalSummary = null;
+
+    if (chainExists) {
+      approvalChain = await getApprovalChain('PURCHASE_REQUEST', id);
+      approvalSummary = await getApprovalChainSummary('PURCHASE_REQUEST', id);
+
+      // Add canCurrentUserApprove flag
+      if (approvalSummary?.status === 'PENDING' && approvalChain && approvalChain.length > 0) {
+        const currentStep = approvalChain.find(step => step.status === 'PENDING');
+        if (currentStep) {
+          // Get current user's approval capabilities
+          const currentUserId = userId;
+          const currentUserIsAdmin = !!(tenant?.isAdmin || tenant?.isOwner);
+          const currentUserHasFinanceAccess = !!tenant?.hasFinanceAccess;
+
+          // Determine if current user can approve based on their role matching the step's required role
+          let canCurrentUserApprove = false;
+
+          switch (currentStep.requiredRole) {
+            case 'MANAGER': {
+              // Check if current user is the requester's manager
+              const directReports = await db.teamMember.findMany({
+                where: { reportingToId: currentUserId },
+                select: { id: true },
+              });
+              canCurrentUserApprove = directReports.some(r => r.id === purchaseRequest.requesterId);
+              break;
+            }
+            case 'FINANCE_MANAGER':
+              canCurrentUserApprove = currentUserHasFinanceAccess;
+              break;
+            case 'DIRECTOR':
+              // Only admins can approve director-level steps
+              canCurrentUserApprove = currentUserIsAdmin;
+              break;
+          }
+
+          approvalSummary = {
+            ...approvalSummary,
+            canCurrentUserApprove,
+          };
+        }
+      }
+    }
+
+    return NextResponse.json({
+      ...purchaseRequest,
+      approvalChain,
+      approvalSummary,
+    });
 }
 
 // PUT - Update purchase request (only when PENDING)

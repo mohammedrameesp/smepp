@@ -27,6 +27,11 @@ import { prisma } from '@/lib/core/prisma';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { canCancelRequest } from '@/features/asset-requests';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
+import {
+  getApprovalChain,
+  getApprovalChainSummary,
+  hasApprovalChain,
+} from '@/features/approvals/lib';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/asset-requests/[id] - Get Single Request (Most Used)
@@ -146,7 +151,61 @@ async function getAssetRequestHandler(request: NextRequest, context: APIContext)
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    return NextResponse.json(assetRequest);
+    // ─────────────────────────────────────────────────────────────────────────────
+    // STEP 3: Include approval chain if it exists
+    // ─────────────────────────────────────────────────────────────────────────────
+    const chainExists = await hasApprovalChain('ASSET_REQUEST', id);
+    let approvalChain = null;
+    let approvalSummary = null;
+
+    if (chainExists) {
+      approvalChain = await getApprovalChain('ASSET_REQUEST', id);
+      approvalSummary = await getApprovalChainSummary('ASSET_REQUEST', id);
+
+      // Add canCurrentUserApprove flag
+      if (approvalSummary?.status === 'PENDING' && approvalChain && approvalChain.length > 0) {
+        const currentStep = approvalChain.find(step => step.status === 'PENDING');
+        if (currentStep) {
+          // Get current user's approval capabilities
+          const currentUserId = session.user.id;
+          const currentUserIsAdmin = !!session.user.isAdmin;
+          const currentUserHasOperationsAccess = !!session.user.hasOperationsAccess;
+
+          // Determine if current user can approve based on their role matching the step's required role
+          let canCurrentUserApprove = false;
+
+          switch (currentStep.requiredRole) {
+            case 'MANAGER': {
+              // Check if current user is the requester's manager
+              const directReports = await prisma.teamMember.findMany({
+                where: { reportingToId: currentUserId, tenantId },
+                select: { id: true },
+              });
+              canCurrentUserApprove = directReports.some(r => r.id === assetRequest.memberId);
+              break;
+            }
+            case 'HR_MANAGER':
+              canCurrentUserApprove = currentUserHasOperationsAccess;
+              break;
+            case 'DIRECTOR':
+              // Only admins can approve director-level steps
+              canCurrentUserApprove = currentUserIsAdmin;
+              break;
+          }
+
+          approvalSummary = {
+            ...approvalSummary,
+            canCurrentUserApprove,
+          };
+        }
+      }
+    }
+
+    return NextResponse.json({
+      ...assetRequest,
+      approvalChain,
+      approvalSummary,
+    });
 }
 
 export const GET = withErrorHandler(getAssetRequestHandler, { requireAuth: true, requireModule: 'assets' });
