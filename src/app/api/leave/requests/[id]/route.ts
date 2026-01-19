@@ -310,7 +310,6 @@ async function updateLeaveRequestHandler(request: NextRequest, context: APIConte
           requestType,
           totalDays: newTotalDays,
           reason: data.reason !== undefined ? data.reason : existing.reason,
-          documentUrl: data.documentUrl !== undefined ? data.documentUrl : existing.documentUrl,
           emergencyContact: data.emergencyContact !== undefined ? data.emergencyContact : existing.emergencyContact,
           emergencyPhone: data.emergencyPhone !== undefined ? data.emergencyPhone : existing.emergencyPhone,
         },
