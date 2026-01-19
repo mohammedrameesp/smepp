@@ -104,6 +104,7 @@ providers.push(
     credentials: {
       email: { label: 'Email', type: 'email' },
       password: { label: 'Password', type: 'password' },
+      orgSlug: { label: 'Organization Slug', type: 'text' },
     },
     async authorize(credentials) {
       if (!credentials?.email || !credentials?.password) {
@@ -111,10 +112,16 @@ providers.push(
       }
 
       const email = credentials.email.toLowerCase().trim();
+      const orgSlug = credentials.orgSlug?.toLowerCase().trim() || null;
 
       // STEP 1: Try to find TeamMember first (org-level users)
+      // If orgSlug is provided (login from subdomain), filter by it to ensure
+      // we get the correct organization when user belongs to multiple orgs
       const teamMember = await prisma.teamMember.findFirst({
-        where: { email },
+        where: {
+          email,
+          ...(orgSlug && { tenant: { slug: { equals: orgSlug, mode: 'insensitive' as const } } }),
+        },
         select: {
           id: true,
           email: true,

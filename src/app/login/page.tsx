@@ -168,6 +168,7 @@ function LoginForm() {
       const result = await signIn('credentials', {
         email,
         password,
+        orgSlug: subdomain || '', // Pass subdomain to filter by org
         redirect: false,
       });
 
