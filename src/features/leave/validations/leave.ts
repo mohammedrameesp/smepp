@@ -172,8 +172,6 @@ export const createLeaveRequestSchema = z.object({
   requestType: z.nativeEnum(LeaveRequestType).default('FULL_DAY'),
   /** Optional reason for the leave */
   reason: z.string().max(1000, 'Reason is too long').optional().nullable(),
-  /** URL to supporting document (e.g., medical certificate) */
-  documentUrl: z.string().url('Invalid document URL').optional().nullable(),
   /** Emergency contact name during leave */
   emergencyContact: z.string().max(100, 'Emergency contact name is too long').optional().nullable(),
   /** Emergency contact phone - digits, spaces, hyphens, plus signs, and parentheses only */
@@ -225,8 +223,6 @@ export const updateLeaveRequestSchema = z.object({
   requestType: z.nativeEnum(LeaveRequestType).optional(),
   /** Updated reason */
   reason: z.string().max(1000, 'Reason is too long').optional().nullable(),
-  /** Updated document URL */
-  documentUrl: z.string().url('Invalid document URL').optional().nullable(),
   /** Updated emergency contact */
   emergencyContact: z.string().max(100, 'Emergency contact name is too long').optional().nullable(),
   /** Updated emergency phone - digits, spaces, hyphens, plus signs, and parentheses only */

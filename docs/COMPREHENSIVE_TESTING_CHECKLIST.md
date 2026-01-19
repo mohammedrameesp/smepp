@@ -3,75 +3,19 @@
 This document provides a complete manual testing checklist covering all modules, edge cases, validations, and potential bugs identified through code review.
 
 ## Table of Contents
-1. [Critical Issues Found](#critical-issues-found)
-2. [Authentication & Authorization](#authentication--authorization)
-3. [Leave Management](#leave-management)
-4. [Asset Management](#asset-management)
-5. [Purchase Requests](#purchase-requests)
-6. [Employee Management](#employee-management)
-7. [Payroll](#payroll)
-8. [Subscriptions](#subscriptions)
-9. [Suppliers](#suppliers)
-10. [Approval Workflows](#approval-workflows)
-11. [Multi-Tenancy Security](#multi-tenancy-security)
-12. [Validation Edge Cases](#validation-edge-cases)
-13. [Race Condition Tests](#race-condition-tests)
-14. [Notification System](#notification-system)
-
----
-
-## Critical Issues Found
-
-### HIGH PRIORITY - Potential Bugs
-
-#### 1. Asset Request Approval - Missing memberId Check
-**File:** `src/app/api/asset-requests/[id]/approve/route.ts:240`
-**Issue:** The code uses `assetRequest.memberId!` with a non-null assertion, but memberId could potentially be null for certain request types.
-**Test:** Create an asset request where memberId might be null and try to approve it.
-
-#### 2. Approval Steps - Missing Tenant Isolation on Step Lookup
-**File:** `src/app/api/approval-steps/[id]/approve/route.ts:41-44`
-**Issue:** The initial step lookup uses global `prisma` without tenant filtering:
-```typescript
-const step = await prisma.approvalStep.findUnique({
-  where: { id },
-  select: { entityType: true, entityId: true },
-});
-```
-**Risk:** An attacker with a valid step ID from another tenant could potentially access step metadata.
-**Test:** Try to access an approval step ID that belongs to a different organization.
-
-#### 3. Purchase Request Status - Double Update on Chain Complete
-**File:** `src/app/api/purchase-requests/[id]/status/route.ts:145-217`
-**Issue:** When the approval chain completes, the code continues to execute the final status update (lines 224-281), which could result in duplicate notifications.
-**Test:** Approve the final step in a purchase request chain and verify only one notification is sent.
-
-#### 4. Leave Balance Year Mismatch
-**File:** `src/app/api/leave/requests/[id]/approve/route.ts:206`
-**Issue:** The year is calculated from `existing.startDate.getFullYear()`, but if a leave spans two years (Dec 28 - Jan 3), only one year's balance is updated.
-**Test:** Create a leave request spanning December to January and approve it.
-
-#### 5. Asset Request - Employee Request Sets Wrong Final Status
-**File:** `src/app/api/approval-steps/[id]/approve/route.ts:185-189`
-**Issue:** For ASSET_REQUEST, the handleFinalApproval sets status to 'APPROVED' directly, but EMPLOYEE_REQUEST type should go to 'PENDING_USER_ACCEPTANCE' first.
-**Test:** Approve an employee asset request through the generic approval-steps endpoint and check the final status.
-
-### MEDIUM PRIORITY - Missing Validations
-
-#### 6. Leave Request - No Validation for Past Dates
-**File:** `src/features/leave/validations/leave.ts`
-**Issue:** The schema doesn't prevent creating leave requests with start dates in the past.
-**Test:** Try to create a leave request with a start date in the past.
-
-#### 7. Emergency Phone Validation
-**File:** `src/features/leave/validations/leave.ts:179`
-**Issue:** Emergency phone validation is only max length (20 chars), no format validation.
-**Test:** Enter non-numeric characters in emergency phone field.
-
-#### 8. Document URL Validation
-**File:** `src/features/leave/validations/leave.ts:176`
-**Issue:** Document URL is validated as any URL, but should probably be restricted to allowed file storage domains.
-**Test:** Enter an external URL (e.g., malicious site) as document URL.
+1. [Authentication & Authorization](#authentication--authorization)
+2. [Leave Management](#leave-management)
+3. [Asset Management](#asset-management)
+4. [Purchase Requests](#purchase-requests)
+5. [Employee Management](#employee-management)
+6. [Payroll](#payroll)
+7. [Subscriptions](#subscriptions)
+8. [Suppliers](#suppliers)
+9. [Approval Workflows](#approval-workflows)
+10. [Multi-Tenancy Security](#multi-tenancy-security)
+11. [Validation Edge Cases](#validation-edge-cases)
+12. [Race Condition Tests](#race-condition-tests)
+13. [Notification System](#notification-system)
 
 ---
 
@@ -517,8 +461,6 @@ const step = await prisma.approvalStep.findUnique({
 ## Summary Statistics
 
 - **Total Test Cases:** 250+
-- **Critical Issues Found:** 5
-- **Medium Issues Found:** 3
 - **Modules Covered:** 10
 - **API Routes Reviewed:** 227
 - **Validation Schemas:** 65+
