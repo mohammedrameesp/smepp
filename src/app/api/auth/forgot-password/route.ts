@@ -16,6 +16,7 @@ function hashToken(token: string): string {
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
+  orgSlug: z.string().optional(),
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -34,14 +35,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email } = result.data;
+    const { email, orgSlug } = result.data;
 
     // First check TeamMember (org users with credentials)
+    // If orgSlug is provided (from subdomain), filter by it to ensure correct org
     const teamMember = await prisma.teamMember.findFirst({
       where: {
         email: email.toLowerCase(),
         passwordHash: { not: null }, // Only credential users can reset password
         isDeleted: false,
+        ...(orgSlug && { tenant: { slug: { equals: orgSlug, mode: 'insensitive' as const } } }),
       },
       include: {
         tenant: {
