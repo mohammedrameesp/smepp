@@ -78,6 +78,7 @@ export function SetupWizardClient() {
   // Step 1: Org name, code prefix, and website
   const [orgName, setOrgName] = useState('');
   const [codePrefix, setCodePrefix] = useState('');
+  const [codePrefixEdited, setCodePrefixEdited] = useState(false);
   const [website, setWebsite] = useState('');
 
   // Step 2: Currencies
@@ -316,6 +317,8 @@ export function SetupWizardClient() {
             onChange={setOrgName}
             codePrefix={codePrefix}
             onCodePrefixChange={setCodePrefix}
+            codePrefixEdited={codePrefixEdited}
+            onCodePrefixEdited={setCodePrefixEdited}
             website={website}
             onWebsiteChange={setWebsite}
           />

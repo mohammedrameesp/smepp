@@ -39,6 +39,8 @@ interface OrgNameStepProps {
   onChange: (value: string) => void;
   codePrefix: string;
   onCodePrefixChange: (value: string) => void;
+  codePrefixEdited: boolean;
+  onCodePrefixEdited: (edited: boolean) => void;
   website: string;
   onWebsiteChange: (value: string) => void;
 }
@@ -48,10 +50,11 @@ export function OrgNameStep({
   onChange,
   codePrefix,
   onCodePrefixChange,
+  codePrefixEdited,
+  onCodePrefixEdited,
   website,
   onWebsiteChange,
 }: OrgNameStepProps) {
-  const [userEditedPrefix, setUserEditedPrefix] = useState(false);
   const [websiteTouched, setWebsiteTouched] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -75,7 +78,7 @@ export function OrgNameStep({
       clearTimeout(debounceTimerRef.current);
     }
 
-    if (value.trim() && !userEditedPrefix) {
+    if (value.trim() && !codePrefixEdited) {
       debounceTimerRef.current = setTimeout(() => {
         const suggested = generateCodePrefixFromName(value);
         onCodePrefixChange(suggested);
@@ -87,11 +90,11 @@ export function OrgNameStep({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [value, onCodePrefixChange, userEditedPrefix]);
+  }, [value, onCodePrefixChange, codePrefixEdited]);
 
   const handlePrefixChange = (newPrefix: string) => {
     const upperPrefix = newPrefix.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3);
-    setUserEditedPrefix(true);
+    onCodePrefixEdited(true);
     onCodePrefixChange(upperPrefix);
   };
 
