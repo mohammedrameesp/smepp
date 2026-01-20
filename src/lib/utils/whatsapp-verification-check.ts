@@ -179,13 +179,35 @@ export async function clearWhatsAppPromptSnooze(memberId: string): Promise<void>
  * @returns Number of users affected
  */
 export async function clearAllWhatsAppPromptSnoozes(tenantId: string): Promise<number> {
-  const result = await prisma.teamMember.updateMany({
+  // First, find eligible members who are NOT verified
+  // We need to do this in two steps because Prisma doesn't support
+  // OR with null relation check in updateMany
+  const eligibleMembers = await prisma.teamMember.findMany({
     where: {
       tenantId,
       OR: [{ isAdmin: true }, { canApprove: true }],
+    },
+    select: {
+      id: true,
       whatsAppPhone: {
-        OR: [{ isVerified: false }, { is: null }],
+        select: { isVerified: true },
       },
+    },
+  });
+
+  // Filter to only those not verified (no phone record or not verified)
+  const unverifiedMemberIds = eligibleMembers
+    .filter((m) => !m.whatsAppPhone?.isVerified)
+    .map((m) => m.id);
+
+  if (unverifiedMemberIds.length === 0) {
+    return 0;
+  }
+
+  // Clear snoozes for unverified eligible members
+  const result = await prisma.teamMember.updateMany({
+    where: {
+      id: { in: unverifiedMemberIds },
     },
     data: { whatsAppPromptSnoozedUntil: null },
   });
