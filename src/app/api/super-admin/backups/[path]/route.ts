@@ -50,9 +50,12 @@ function validateBackupPath(path: string): string | null {
   }
 
   // SECURITY: Validate it looks like a backup file
-  // Expected patterns: platform/YYYY-MM-DD/backup.json or {org-slug}/YYYY-MM-DD/backup.json
-  const backupFilePattern = /^[a-zA-Z0-9-]+\/\d{4}-\d{2}-\d{2}\/backup\.json$/;
-  if (!backupFilePattern.test(path)) {
+  // Expected patterns:
+  // - full/full-backup-YYYY-MM-DD.json or .enc
+  // - orgs/{org-slug}/{org-slug}-YYYY-MM-DD.json or .enc
+  const fullBackupPattern = /^full\/full-backup-\d{4}-\d{2}-\d{2}\.(json|enc)$/;
+  const orgBackupPattern = /^orgs\/[a-zA-Z0-9-]+\/[a-zA-Z0-9-]+-\d{4}-\d{2}-\d{2}\.(json|enc)$/;
+  if (!fullBackupPattern.test(path) && !orgBackupPattern.test(path)) {
     logger.warn({ path }, 'Path does not match expected backup file pattern');
     return null;
   }
