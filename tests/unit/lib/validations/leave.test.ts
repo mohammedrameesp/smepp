@@ -351,16 +351,21 @@ describe('Leave Validation Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should fail with invalid document URL', () => {
-      const invalidRequest = {
+    it('should ignore unknown fields like documentUrl', () => {
+      // documentUrl is not part of the schema, so it should be stripped
+      const requestWithExtraField = {
         leaveTypeId: 'leave-type-123',
         startDate: '2025-02-05',
         endDate: '2025-02-05',
-        documentUrl: 'not-a-url',
+        documentUrl: 'some-value', // This field is not in the schema
       };
 
-      const result = createLeaveRequestSchema.safeParse(invalidRequest);
-      expect(result.success).toBe(false);
+      const result = createLeaveRequestSchema.safeParse(requestWithExtraField);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        // The unknown field should be stripped
+        expect(result.data).not.toHaveProperty('documentUrl');
+      }
     });
 
     it('should accept null for optional fields', () => {
@@ -369,7 +374,6 @@ describe('Leave Validation Schemas', () => {
         startDate: '2025-02-05',
         endDate: '2025-02-05',
         reason: null,
-        documentUrl: null,
         emergencyContact: null,
         emergencyPhone: null,
       };
@@ -682,9 +686,9 @@ describe('Leave Validation Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should fail with page size over 100', () => {
+    it('should fail with page size over 10000', () => {
       const query = {
-        ps: 101,
+        ps: 10001,
       };
 
       const result = leaveRequestQuerySchema.safeParse(query);

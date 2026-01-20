@@ -281,13 +281,14 @@ describe('Supplier Validation Schemas', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should fail without approver ID', () => {
+    it('should succeed with empty object (approvedById comes from session)', () => {
+      // approvedById is not in the schema - it's taken from the session
       const result = approveSupplierSchema.safeParse({});
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
     });
 
-    it('should fail with empty approver ID', () => {
-      const result = approveSupplierSchema.safeParse({ approvedById: '' });
+    it('should fail when notes exceed 500 characters', () => {
+      const result = approveSupplierSchema.safeParse({ notes: 'a'.repeat(501) });
       expect(result.success).toBe(false);
     });
   });
@@ -470,8 +471,8 @@ describe('Supplier Validation Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should fail with page size over 100', () => {
-      const query = { ps: 101 };
+    it('should fail with page size over 10000', () => {
+      const query = { ps: 10001 };
       const result = supplierQuerySchema.safeParse(query);
       expect(result.success).toBe(false);
     });

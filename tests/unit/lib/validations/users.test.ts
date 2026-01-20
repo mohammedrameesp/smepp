@@ -116,38 +116,45 @@ describe('User Validation Schemas', () => {
       });
     });
 
-    it('should use default isAdmin value when not provided', () => {
+    it('should use default values when not provided', () => {
       const user = {
         name: 'Test User',
         email: 'test@example.com',
+        // role defaults to EMPLOYEE if not provided
       };
 
       const result = createUserSchema.safeParse(user);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.isAdmin).toBe(false);
+        // Check that defaults are applied
+        expect(result.data.isEmployee).toBe(true);
+        expect(result.data.canLogin).toBe(true);
+        expect(result.data.isOnWps).toBe(true);
+        expect(result.data.role).toBe('EMPLOYEE');
       }
     });
 
-    it('should fail with invalid isAdmin type', () => {
+    it('should fail with invalid isEmployee type', () => {
       const invalidUser = {
         name: 'Test User',
         email: 'test@example.com',
-        isAdmin: 'yes', // should be boolean
+        role: 'MEMBER',
+        isEmployee: 'yes', // should be boolean
       };
 
       const result = createUserSchema.safeParse(invalidUser);
       expect(result.success).toBe(false);
     });
 
-    it('should validate both isAdmin options', () => {
-      const adminValues = [true, false];
+    it('should validate both isEmployee options', () => {
+      const employeeValues = [true, false];
 
-      adminValues.forEach(isAdmin => {
+      employeeValues.forEach(isEmployee => {
         const user = {
           name: 'Test User',
           email: 'test@example.com',
-          isAdmin,
+          role: 'EMPLOYEE',
+          isEmployee,
         };
 
         const result = createUserSchema.safeParse(user);

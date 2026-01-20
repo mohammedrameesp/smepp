@@ -390,9 +390,9 @@ describe('Subscription Validation Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should fail with page size over 100', () => {
+    it('should fail with page size over 10000', () => {
       const query = {
-        ps: 101,
+        ps: 10001,
       };
 
       const result = subscriptionQuerySchema.safeParse(query);

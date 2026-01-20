@@ -65,8 +65,8 @@ describe('Subscriptions Route Tests', () => {
         expect(result.success).toBe(false);
       });
 
-      it('should reject page size greater than 100', () => {
-        const result = subscriptionQuerySchema.safeParse({ ps: 101 });
+      it('should reject page size greater than 10000', () => {
+        const result = subscriptionQuerySchema.safeParse({ ps: 10001 });
         expect(result.success).toBe(false);
       });
 

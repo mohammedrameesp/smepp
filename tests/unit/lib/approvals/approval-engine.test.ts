@@ -181,13 +181,17 @@ describe('Approval Engine', () => {
     };
 
     it('should create approval steps for each policy level', async () => {
+      // Mock that requester has a manager (for MANAGER role check)
+      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ reportingToId: 'manager-1' });
+      // Mock that admins exist for DIRECTOR role check
+      (mockPrisma.teamMember.count as jest.Mock).mockResolvedValue(1);
       (mockPrisma.approvalStep.createMany as jest.Mock).mockResolvedValue({ count: 2 });
       (mockPrisma.approvalStep.findMany as jest.Mock).mockResolvedValue([
         { id: 'step-1', levelOrder: 1, requiredRole: 'MANAGER', status: 'PENDING' },
         { id: 'step-2', levelOrder: 2, requiredRole: 'DIRECTOR', status: 'PENDING' },
       ]);
 
-      await initializeApprovalChain('LEAVE_REQUEST', 'entity-1', mockPolicy, 'tenant-1');
+      await initializeApprovalChain('LEAVE_REQUEST', 'entity-1', mockPolicy, 'tenant-1', 'requester-1');
 
       expect(mockPrisma.approvalStep.createMany).toHaveBeenCalledWith({
         data: expect.arrayContaining([
@@ -254,10 +258,13 @@ describe('Approval Engine', () => {
       expect(result.canApprove).toBe(true);
     });
 
-    it('should allow member with canApprove permission to approve', async () => {
-      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ id: 'member-1', isAdmin: false, canApprove: true });
+    it('should allow direct manager to approve MANAGER step', async () => {
+      // Mock the manager lookup
+      (mockPrisma.teamMember.findUnique as jest.Mock)
+        .mockResolvedValueOnce({ id: 'manager-1', isAdmin: false, isDeleted: false })  // approver
+        .mockResolvedValueOnce({ id: 'requester-1', reportingToId: 'manager-1' });  // requester
 
-      const result = await canUserApprove('member-1', mockStep);
+      const result = await canUserApprove('manager-1', mockStep, 'requester-1');
       expect(result.canApprove).toBe(true);
     });
 
@@ -270,12 +277,15 @@ describe('Approval Engine', () => {
       expect(result.canApprove).toBe(true);
     });
 
-    it('should reject member without approval permissions', async () => {
-      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ id: 'member-1', isAdmin: false, canApprove: false });
+    it('should reject member who is not direct manager for MANAGER step', async () => {
+      // Mock: member exists but is not the requester's manager
+      (mockPrisma.teamMember.findUnique as jest.Mock)
+        .mockResolvedValueOnce({ id: 'member-1', isAdmin: false, isDeleted: false })  // approver
+        .mockResolvedValueOnce({ id: 'requester-1', reportingToId: 'other-manager' });  // requester has different manager
 
-      const result = await canUserApprove('member-1', mockStep);
+      const result = await canUserApprove('member-1', mockStep, 'requester-1');
       expect(result.canApprove).toBe(false);
-      expect(result.reason).toBe('Not authorized to approve this request');
+      expect(result.reason).toBe('You are not the direct manager of this employee');
     });
 
     it('should reject non-existent member', async () => {
@@ -299,22 +309,29 @@ describe('Approval Engine', () => {
       approver: null,
     };
 
-    const processOptions = { tenantId: 'tenant-1' };
+    const processOptions = { tenantId: 'tenant-1', requesterId: 'requester-1' };
 
     beforeEach(() => {
       (mockPrisma.approvalStep.findUnique as jest.Mock).mockResolvedValue(mockStep);
-      (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({ id: 'member-1', isAdmin: false, isDeleted: false, canApprove: true });
     });
 
     it('should approve step and update status', async () => {
-      const approvedStep = { ...mockStep, status: 'APPROVED', approverId: 'user-1' };
-      (mockPrisma.approvalStep.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
+      const approvedStep = { ...mockStep, status: 'APPROVED', approverId: 'manager-1' };
+
+      // Mock step lookups
       (mockPrisma.approvalStep.findUnique as jest.Mock)
-        .mockResolvedValueOnce(mockStep)
-        .mockResolvedValueOnce(approvedStep);
+        .mockResolvedValueOnce(mockStep)  // Initial lookup
+        .mockResolvedValueOnce(approvedStep);  // After update
+
+      // Mock canUserApprove: approver is the requester's manager
+      (mockPrisma.teamMember.findUnique as jest.Mock)
+        .mockResolvedValueOnce({ id: 'manager-1', isAdmin: false, isDeleted: false })  // approver lookup
+        .mockResolvedValueOnce({ id: 'requester-1', reportingToId: 'manager-1' });  // requester lookup
+
+      (mockPrisma.approvalStep.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
       (mockPrisma.approvalStep.count as jest.Mock).mockResolvedValue(0); // No pending steps
 
-      const result = await processApproval('step-1', 'user-1', 'APPROVE', 'Looks good', processOptions);
+      const result = await processApproval('step-1', 'manager-1', 'APPROVE', 'Looks good', processOptions);
 
       expect(result.success).toBe(true);
       expect(result.isChainComplete).toBe(true);
@@ -323,14 +340,22 @@ describe('Approval Engine', () => {
 
     it('should reject step and skip remaining steps', async () => {
       const rejectedStep = { ...mockStep, status: 'REJECTED' };
+
+      // Mock step lookups
+      (mockPrisma.approvalStep.findUnique as jest.Mock)
+        .mockResolvedValueOnce(mockStep)  // Initial lookup
+        .mockResolvedValueOnce(rejectedStep);  // After update
+
+      // Mock canUserApprove: approver is the requester's manager
+      (mockPrisma.teamMember.findUnique as jest.Mock)
+        .mockResolvedValueOnce({ id: 'manager-1', isAdmin: false, isDeleted: false })  // approver lookup
+        .mockResolvedValueOnce({ id: 'requester-1', reportingToId: 'manager-1' });  // requester lookup
+
       (mockPrisma.approvalStep.updateMany as jest.Mock)
         .mockResolvedValueOnce({ count: 1 }) // atomic update
         .mockResolvedValueOnce({ count: 1 }); // skip pending steps
-      (mockPrisma.approvalStep.findUnique as jest.Mock)
-        .mockResolvedValueOnce(mockStep)
-        .mockResolvedValueOnce(rejectedStep);
 
-      const result = await processApproval('step-1', 'user-1', 'REJECT', 'Not approved', processOptions);
+      const result = await processApproval('step-1', 'manager-1', 'REJECT', 'Not approved', processOptions);
 
       expect(result.success).toBe(true);
       expect(result.allApproved).toBe(false);
@@ -344,7 +369,7 @@ describe('Approval Engine', () => {
     it('should throw error when step not found', async () => {
       (mockPrisma.approvalStep.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(processApproval('step-1', 'user-1', 'APPROVE', undefined, processOptions))
+      await expect(processApproval('step-1', 'user-1', 'APPROVE', undefined, { tenantId: 'tenant-1' }))
         .rejects.toThrow('Approval step not found');
     });
 
@@ -355,23 +380,23 @@ describe('Approval Engine', () => {
       });
 
       // Should throw generic error to avoid leaking tenant info
-      await expect(processApproval('step-1', 'user-1', 'APPROVE', undefined, processOptions))
+      await expect(processApproval('step-1', 'user-1', 'APPROVE', undefined, { tenantId: 'tenant-1' }))
         .rejects.toThrow('Approval step not found');
     });
 
     it('should throw error when step already processed', async () => {
       // First call returns pending step (passes initial checks)
-      // Then canUserApprove needs to pass
+      // Then canUserApprove needs to pass (admin can approve)
       // Then atomic update returns count 0 (race condition)
       (mockPrisma.approvalStep.findUnique as jest.Mock)
         .mockResolvedValueOnce(mockStep)  // Initial lookup
         .mockResolvedValueOnce({ ...mockStep, status: 'APPROVED' }); // Refetch after failed update
       (mockPrisma.teamMember.findUnique as jest.Mock).mockResolvedValue({
-        id: 'user-1', isAdmin: true, isDeleted: false
+        id: 'admin-1', isAdmin: true, isDeleted: false
       });
       (mockPrisma.approvalStep.updateMany as jest.Mock).mockResolvedValue({ count: 0 });
 
-      await expect(processApproval('step-1', 'user-1', 'APPROVE', undefined, processOptions))
+      await expect(processApproval('step-1', 'admin-1', 'APPROVE', undefined, { tenantId: 'tenant-1' }))
         .rejects.toThrow('Step already approved');
     });
 
