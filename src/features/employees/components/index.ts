@@ -5,3 +5,7 @@ export { EmployeeActions } from './employee-actions';
 export { EmployeeHRViewSection } from './employee-hr-view';
 export { EmployeeProfileViewOnly } from './employee-profile-view-only';
 export { EmployeeLeaveSection } from './employee-leave-section';
+export { EmployeeActionsDropdown } from './employee-actions-dropdown';
+export { OffboardEmployeeDialog } from './offboard-employee-dialog';
+export { CancelOffboardingButton } from './cancel-offboarding-button';
+export { OffboardingStatusBanner } from './offboarding-status-banner';

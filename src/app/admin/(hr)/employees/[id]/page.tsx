@@ -16,10 +16,13 @@ import { getMemberAssetHistory } from '@/features/assets';
 import {
   UserSubscriptionHistory,
   UserAssetHistory,
-  DeleteUserButton,
   ExportUserPDFButton,
   RestoreUserButton,
 } from '@/features/users/components';
+import {
+  EmployeeActionsDropdown,
+  OffboardingStatusBanner,
+} from '@/features/employees/components';
 import type { UserAssetHistoryItem, UserSubscriptionHistoryItem } from '@/features/users/components';
 import { EmployeeLeaveSection } from '@/features/employees/components';
 
@@ -60,8 +63,9 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
     notFound();
   }
 
-  // Check soft-delete status
+  // Check soft-delete and offboarding status
   const isDeleted = employee.isDeleted || false;
+  const isOffboarded = employee.status === 'OFFBOARDED';
   const scheduledDeletionAt = employee.scheduledDeletionAt;
   const daysUntilDeletion = scheduledDeletionAt
     ? Math.ceil((new Date(scheduledDeletionAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
@@ -74,7 +78,7 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
   // Calculate profile completion
   const requiredFields = [
     'dateOfBirth', 'gender', 'nationality', 'qatarMobile',
-    'emergencyContact', 'emergencyPhone',
+    'localEmergencyName', 'localEmergencyPhone',
     'qidNumber', 'qidExpiry', 'passportNumber', 'passportExpiry',
     'designation',
   ];
@@ -110,12 +114,14 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
               <Edit className="h-4 w-4" />
               Edit
             </PageHeaderButton>
-            {!isSelf && !isDeleted && (
-              <DeleteUserButton
-                userId={employee.id}
-                userName={employee.name || employee.email}
-              />
-            )}
+            <EmployeeActionsDropdown
+              employeeId={employee.id}
+              employeeName={employee.name || employee.email}
+              isSelf={isSelf}
+              isDeleted={isDeleted}
+              isOffboarded={isOffboarded}
+              dateOfJoining={employee.dateOfJoining}
+            />
           </div>
         }
       >
@@ -148,8 +154,19 @@ export default async function AdminEmployeeDetailPage({ params }: Props) {
           </div>
         )}
 
+        {/* Offboarding Status Banner */}
+        {isOffboarded && !isDeleted && (
+          <OffboardingStatusBanner
+            employeeId={employee.id}
+            employeeName={employee.name || employee.email}
+            dateOfLeaving={employee.dateOfLeaving}
+            offboardingReason={employee.offboardingReason}
+            offboardingNotes={employee.offboardingNotes}
+          />
+        )}
+
         {/* Profile Completion Alert */}
-        {completionPercentage < 80 && !isDeleted && (
+        {completionPercentage < 80 && !isDeleted && !isOffboarded && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
           <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
             <AlertTriangle className="h-5 w-5 text-amber-600" />

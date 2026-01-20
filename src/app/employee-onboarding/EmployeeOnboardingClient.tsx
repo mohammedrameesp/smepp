@@ -63,7 +63,6 @@ interface FormData {
   [key: string]: string | null;
   // Step 1: Personal
   dateOfBirth: string | null;
-  dateOfJoining: string | null;
   gender: string | null;
   nationality: string | null;
   maritalStatus: string | null;
@@ -91,7 +90,6 @@ interface FormData {
   passportNumber: string | null;
   passportExpiry: string | null;
   healthCardExpiry: string | null;
-  sponsorshipType: string | null;
   // Step 4: Banking & Documents
   bankName: string | null;
   iban: string | null;
@@ -102,7 +100,6 @@ interface FormData {
 
 const initialFormData: FormData = {
   dateOfBirth: null,
-  dateOfJoining: null,
   gender: null,
   nationality: null,
   maritalStatus: null,
@@ -128,7 +125,6 @@ const initialFormData: FormData = {
   passportNumber: null,
   passportExpiry: null,
   healthCardExpiry: null,
-  sponsorshipType: null,
   bankName: null,
   iban: null,
   qidUrl: null,
@@ -172,7 +168,6 @@ export function EmployeeOnboardingClient() {
           setFormData((prev) => ({
             ...prev,
             dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth).toISOString().split('T')[0] : null,
-            dateOfJoining: data.dateOfJoining ? new Date(data.dateOfJoining).toISOString().split('T')[0] : null,
             gender: data.gender || null,
             nationality: data.nationality || null,
             maritalStatus: data.maritalStatus || null,
@@ -198,7 +193,6 @@ export function EmployeeOnboardingClient() {
             passportNumber: data.passportNumber || null,
             passportExpiry: data.passportExpiry ? new Date(data.passportExpiry).toISOString().split('T')[0] : null,
             healthCardExpiry: data.healthCardExpiry ? new Date(data.healthCardExpiry).toISOString().split('T')[0] : null,
-            sponsorshipType: data.sponsorshipType || null,
             bankName: data.bankName || null,
             iban: data.iban || null,
             qidUrl: data.qidUrl || null,
@@ -263,7 +257,6 @@ export function EmployeeOnboardingClient() {
     switch (currentStep) {
       case 1:
         if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-        if (!formData.dateOfJoining) newErrors.dateOfJoining = 'Joining date is required';
         if (!formData.gender) newErrors.gender = 'Gender is required';
         if (!formData.nationality) newErrors.nationality = 'Nationality is required';
         break;

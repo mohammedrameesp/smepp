@@ -16,6 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RefreshCw, AlertTriangle, User, Briefcase, Shield, Mail, Building2, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { createUserSchema, type CreateUserInput, USER_ROLES, ROLE_CONFIG, type UserRole } from '@/features/users/validations/users';
 import { VALIDATION_PATTERNS } from '@/lib/validations/patterns';
+import { DatePicker } from '@/components/ui/date-picker';
+import { WORK_LOCATIONS, SPONSORSHIP_TYPES } from '@/lib/data/constants';
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -77,6 +79,11 @@ export default function NewEmployeePage() {
       employeeId: '',
       designation: '',
       department: '',
+      dateOfJoining: '',
+      workLocation: '',
+      probationEndDate: '',
+      noticePeriodDays: 30,
+      sponsorshipType: '',
       isEmployee: true,
       canLogin: true,
       isOnWps: true,
@@ -441,6 +448,78 @@ export default function NewEmployeePage() {
                         <p className="text-sm text-red-500">{errors.department.message}</p>
                       )}
                     </div>
+                  </div>
+
+                  {/* Date of Joining & Work Location */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="dateOfJoining">Date of Joining</Label>
+                      <DatePicker
+                        id="dateOfJoining"
+                        value={watch('dateOfJoining') || ''}
+                        onChange={(val) => setValue('dateOfJoining', val)}
+                        placeholder="DD/MM/YYYY"
+                        maxDate={new Date()}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="workLocation">Work Location</Label>
+                      <Select
+                        value={watch('workLocation') || ''}
+                        onValueChange={(val) => setValue('workLocation', val)}
+                      >
+                        <SelectTrigger id="workLocation">
+                          <SelectValue placeholder="Select location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {WORK_LOCATIONS.map((loc) => (
+                            <SelectItem key={loc} value={loc.toUpperCase()}>{loc}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Probation & Notice Period */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="probationEndDate">Probation End Date</Label>
+                      <DatePicker
+                        id="probationEndDate"
+                        value={watch('probationEndDate') || ''}
+                        onChange={(val) => setValue('probationEndDate', val)}
+                        placeholder="DD/MM/YYYY"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="noticePeriodDays">Notice Period (Days)</Label>
+                      <Input
+                        id="noticePeriodDays"
+                        type="number"
+                        min={0}
+                        max={365}
+                        {...register('noticePeriodDays', { valueAsNumber: true })}
+                        placeholder="30"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sponsorship Type */}
+                  <div className="space-y-2">
+                    <Label htmlFor="sponsorshipType">Sponsorship Type</Label>
+                    <Select
+                      value={watch('sponsorshipType') || ''}
+                      onValueChange={(val) => setValue('sponsorshipType', val)}
+                    >
+                      <SelectTrigger id="sponsorshipType">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SPONSORSHIP_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* WPS Checkbox - only show if payroll module is enabled */}

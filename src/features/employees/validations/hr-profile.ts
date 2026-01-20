@@ -130,6 +130,9 @@ export const hrProfileSchema = z.object({
   designation: optionalString(),
   department: optionalString(),
   dateOfJoining: optionalDateString,
+  workLocation: z.string().optional().nullable().transform((val) => val ? val.toUpperCase() : val),
+  probationEndDate: optionalDateString,
+  noticePeriodDays: z.coerce.number().int().min(0).max(365).optional().nullable(),
 
   // Bank & Payroll
   bankName: optionalString(),

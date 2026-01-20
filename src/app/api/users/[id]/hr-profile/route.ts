@@ -54,7 +54,6 @@ async function getHRProfileHandler(
     gender: member.gender,
     maritalStatus: member.maritalStatus,
     nationality: member.nationality,
-    religion: member.religion,
     // Contact
     qatarMobile: member.qatarMobile,
     otherMobileCode: member.otherMobileCode,
@@ -85,7 +84,11 @@ async function getHRProfileHandler(
     // Employment
     employeeId: member.employeeCode,
     designation: member.designation,
+    department: member.department,
     dateOfJoining: member.dateOfJoining,
+    workLocation: member.workLocation,
+    probationEndDate: member.probationEndDate,
+    noticePeriodDays: member.noticePeriodDays,
     status: member.status, // TeamMemberStatus: ACTIVE, INACTIVE, TERMINATED
     // Banking
     bankName: member.bankName,
@@ -198,7 +201,7 @@ async function updateHRProfileHandler(
   }
 
   // Convert empty strings to null for enum fields (Prisma requires null, not empty string)
-  const enumFields = ['gender', 'maritalStatus', 'sponsorshipType'];
+  const enumFields = ['gender', 'maritalStatus', 'sponsorshipType', 'workLocation'];
   enumFields.forEach((field) => {
     if (processedData[field] === '') {
       processedData[field] = null;
@@ -207,12 +210,12 @@ async function updateHRProfileHandler(
 
   // Convert empty strings to null for optional string fields
   const optionalStringFields = [
-    'nationality', 'religion', 'qatarMobile', 'otherMobileCode', 'otherMobileNumber',
+    'nationality', 'qatarMobile', 'otherMobileCode', 'otherMobileNumber',
     'personalEmail', 'qatarZone', 'qatarStreet', 'qatarBuilding', 'qatarUnit',
     'homeCountryAddress', 'localEmergencyName', 'localEmergencyRelation',
     'localEmergencyPhoneCode', 'localEmergencyPhone', 'homeEmergencyName',
     'homeEmergencyRelation', 'homeEmergencyPhoneCode', 'homeEmergencyPhone',
-    'qidNumber', 'passportNumber', 'designation', 'bankName', 'iban',
+    'qidNumber', 'passportNumber', 'designation', 'department', 'bankName', 'iban',
     'highestQualification', 'specialization', 'institutionName',
     'qidUrl', 'passportCopyUrl', 'photoUrl', 'contractCopyUrl',
     'languagesKnown', 'skillsCertifications', 'licenseNumber',
@@ -229,6 +232,7 @@ async function updateHRProfileHandler(
     'passportExpiry',
     'healthCardExpiry',
     'dateOfJoining',
+    'probationEndDate',
     'licenseExpiry',
     'contractExpiry',
   ];

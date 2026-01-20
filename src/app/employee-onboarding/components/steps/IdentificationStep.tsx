@@ -9,10 +9,8 @@
 import { CreditCard } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
 
 interface IdentificationStepProps {
   formData: Record<string, unknown>;
@@ -118,31 +116,13 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
             <CardTitle className="text-base text-slate-600">Optional Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Health Card Expiry</Label>
-                <DatePicker
-                  value={formatDateForPicker(formData.healthCardExpiry as string)}
-                  onChange={(val) => updateField('healthCardExpiry', val)}
-                  placeholder="DD/MM/YYYY"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Sponsorship Type</Label>
-                <Select
-                  value={(formData.sponsorshipType as string) || ''}
-                  onValueChange={(val) => updateField('sponsorshipType', val)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SPONSORSHIP_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label>Health Card Expiry</Label>
+              <DatePicker
+                value={formatDateForPicker(formData.healthCardExpiry as string)}
+                onChange={(val) => updateField('healthCardExpiry', val)}
+                placeholder="DD/MM/YYYY"
+              />
             </div>
           </CardContent>
         </Card>

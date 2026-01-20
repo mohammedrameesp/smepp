@@ -56,17 +56,24 @@ export function PersonalStep({ formData, updateField, errors }: PersonalStepProp
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dateOfJoining">
-              Date of Joining <span className="text-red-500">*</span>
+            <Label htmlFor="nationality">
+              Nationality <span className="text-red-500">*</span>
             </Label>
-            <DatePicker
-              id="dateOfJoining"
-              value={formatDateForPicker(formData.dateOfJoining as string)}
-              onChange={(val) => updateField('dateOfJoining', val)}
-              placeholder="DD/MM/YYYY"
-            />
-            {errors.dateOfJoining && (
-              <p className="text-sm text-red-600">{errors.dateOfJoining}</p>
+            <Select
+              value={(formData.nationality as string) || ''}
+              onValueChange={(val) => updateField('nationality', val)}
+            >
+              <SelectTrigger id="nationality">
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {COUNTRIES.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.nationality && (
+              <p className="text-sm text-red-600">{errors.nationality}</p>
             )}
           </div>
         </div>
@@ -95,43 +102,21 @@ export function PersonalStep({ formData, updateField, errors }: PersonalStepProp
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="nationality">
-              Nationality <span className="text-red-500">*</span>
-            </Label>
+            <Label htmlFor="maritalStatus">Marital Status</Label>
             <Select
-              value={(formData.nationality as string) || ''}
-              onValueChange={(val) => updateField('nationality', val)}
+              value={(formData.maritalStatus as string) || ''}
+              onValueChange={(val) => updateField('maritalStatus', val)}
             >
-              <SelectTrigger id="nationality">
-                <SelectValue placeholder="Select country" />
+              <SelectTrigger id="maritalStatus">
+                <SelectValue placeholder="Select status (optional)" />
               </SelectTrigger>
               <SelectContent>
-                {COUNTRIES.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                {MARITAL_STATUS.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.nationality && (
-              <p className="text-sm text-red-600">{errors.nationality}</p>
-            )}
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="maritalStatus">Marital Status</Label>
-          <Select
-            value={(formData.maritalStatus as string) || ''}
-            onValueChange={(val) => updateField('maritalStatus', val)}
-          >
-            <SelectTrigger id="maritalStatus">
-              <SelectValue placeholder="Select status (optional)" />
-            </SelectTrigger>
-            <SelectContent>
-              {MARITAL_STATUS.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </div>
     </div>

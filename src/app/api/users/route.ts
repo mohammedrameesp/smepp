@@ -101,7 +101,13 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     }, { status: 400 });
   }
 
-  const { name, email, role, isAdmin: legacyIsAdmin, employeeId, designation, isEmployee, canLogin, isOnWps } = validation.data;
+  const {
+    name, email, role, isAdmin: legacyIsAdmin, employeeId, designation,
+    isEmployee, canLogin, isOnWps,
+    // Admin-only employment fields
+    dateOfJoining, workLocation, probationEndDate, noticePeriodDays, sponsorshipType,
+    department,
+  } = validation.data;
 
   // Get permission flags from role (or use legacy isAdmin for backwards compatibility)
   const rolePermissions = ROLE_PERMISSIONS[role as UserRole] || ROLE_PERMISSIONS.EMPLOYEE;
@@ -162,6 +168,10 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
   // Permission flags from role determine access to different modules
   // Note: tenantId is included explicitly for type safety; the tenant prisma
   // extension also auto-injects it but TypeScript requires it at compile time
+  // Parse date fields if provided
+  const parsedDateOfJoining = dateOfJoining ? new Date(dateOfJoining) : null;
+  const parsedProbationEndDate = probationEndDate ? new Date(probationEndDate) : null;
+
   const member = await db.teamMember.create({
     data: {
       tenantId,
@@ -183,6 +193,13 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
       // HR profile fields (embedded in TeamMember)
       employeeCode: isEmployee ? finalEmployeeId : null,
       designation: isEmployee ? (designation || null) : null,
+      department: isEmployee ? (department || null) : null,
+      // Admin-set employment fields
+      dateOfJoining: isEmployee ? parsedDateOfJoining : null,
+      workLocation: isEmployee ? (workLocation as 'OFFICE' | 'REMOTE' | 'HYBRID' | undefined) : null,
+      probationEndDate: isEmployee ? parsedProbationEndDate : null,
+      noticePeriodDays: isEmployee ? (noticePeriodDays ?? 30) : null,
+      sponsorshipType: isEmployee ? (sponsorshipType || null) : null,
       onboardingComplete: false,
       onboardingStep: 0,
     },

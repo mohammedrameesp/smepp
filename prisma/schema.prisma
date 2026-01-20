@@ -36,7 +36,15 @@ enum Role {
 enum TeamMemberStatus {
   ACTIVE
   INACTIVE
+  OFFBOARDED
   TERMINATED
+}
+
+enum OffboardingReason {
+  RESIGNATION
+  RETIREMENT
+  CONTRACT_END
+  OTHER
 }
 
 enum EmploymentType {
@@ -45,6 +53,12 @@ enum EmploymentType {
   CONTRACT
   PROBATION
   INTERN
+}
+
+enum WorkLocation {
+  OFFICE
+  REMOTE
+  HYBRID
 }
 
 enum Gender {
@@ -590,10 +604,20 @@ model TeamMember {
   employeeCode   String?
   dateOfJoining  DateTime?
   dateOfLeaving  DateTime?
-  designation    String?
-  department     String?
-  employmentType EmploymentType?
-  reportingToId  String? // TeamMember ID of manager
+
+  // Offboarding (voluntary exit)
+  offboardingReason    OffboardingReason?
+  offboardingNotes     String?
+  offboardedAt         DateTime?
+  offboardedByMemberId String?
+
+  designation      String?
+  department       String?
+  employmentType   EmploymentType?
+  workLocation     WorkLocation?
+  probationEndDate DateTime?
+  noticePeriodDays Int?            @default(30)
+  reportingToId    String?         // TeamMember ID of manager
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // PERSONAL INFORMATION
@@ -602,14 +626,9 @@ model TeamMember {
   gender        Gender?
   nationality   String?
   maritalStatus MaritalStatus?
-  religion      String?
 
   // Contact
-  phone            String?
   personalEmail    String?
-  emergencyContact String?
-  emergencyPhone   String?
-  address          String?
 
   // Qatar-specific contact fields
   qatarMobile        String?

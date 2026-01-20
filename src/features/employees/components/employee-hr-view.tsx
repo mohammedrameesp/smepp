@@ -62,6 +62,9 @@ interface TeamMemberWithHR {
   designation: string | null;
   department: string | null;
   dateOfJoining: Date | null;
+  workLocation: string | null;
+  probationEndDate: Date | null;
+  noticePeriodDays: number | null;
   bankName: string | null;
   iban: string | null;
   highestQualification: string | null;
@@ -282,6 +285,9 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
             <InfoRow label="Designation" value={hr.designation} />
             <InfoRow label="Department" value={hr.department} />
             <InfoRow label="Date of Joining" value={hr.dateOfJoining ? formatDate(hr.dateOfJoining) : null} />
+            <InfoRow label="Work Location" value={hr.workLocation ? hr.workLocation.charAt(0) + hr.workLocation.slice(1).toLowerCase() : null} />
+            <InfoRow label="Probation End Date" value={hr.probationEndDate ? formatDate(hr.probationEndDate) : null} />
+            <InfoRow label="Notice Period" value={hr.noticePeriodDays ? `${hr.noticePeriodDays} days` : null} />
           </dl>
         </CardContent>
       </Card>

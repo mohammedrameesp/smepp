@@ -53,7 +53,6 @@ async function getHRProfileHandler(request: NextRequest, context: APIContext) {
     gender: member.gender,
     maritalStatus: member.maritalStatus,
     nationality: member.nationality,
-    religion: member.religion,
     // Contact
     qatarMobile: member.qatarMobile,
     otherMobileCode: member.otherMobileCode,
@@ -85,7 +84,11 @@ async function getHRProfileHandler(request: NextRequest, context: APIContext) {
     // Employment
     employeeId: member.employeeCode, // Map to old field name
     designation: member.designation,
+    department: member.department,
     dateOfJoining: member.dateOfJoining,
+    workLocation: member.workLocation,
+    probationEndDate: member.probationEndDate,
+    noticePeriodDays: member.noticePeriodDays,
     status: member.status, // TeamMemberStatus: ACTIVE, INACTIVE, TERMINATED
     hajjLeaveTaken: member.hajjLeaveTaken,
     bypassNoticeRequirement: member.bypassNoticeRequirement,
@@ -174,15 +177,23 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
 
   const data = validation.data;
 
+  // Admin-only fields that non-admins cannot update
+  const adminOnlyFields = new Set([
+    'employeeId', 'employeeCode',
+    'designation', 'department', 'dateOfJoining',
+    'workLocation', 'probationEndDate', 'noticePeriodDays',
+    'sponsorshipType',
+  ]);
+
   // Whitelist of allowed TeamMember fields for HR profile updates
   const allowedFields = new Set([
-    'dateOfBirth', 'gender', 'maritalStatus', 'nationality', 'religion',
+    'dateOfBirth', 'gender', 'maritalStatus', 'nationality',
     'qatarMobile', 'otherMobileCode', 'otherMobileNumber', 'personalEmail',
     'qatarZone', 'qatarStreet', 'qatarBuilding', 'qatarUnit', 'homeCountryAddress',
     'localEmergencyName', 'localEmergencyRelation', 'localEmergencyPhoneCode', 'localEmergencyPhone',
     'homeEmergencyName', 'homeEmergencyRelation', 'homeEmergencyPhoneCode', 'homeEmergencyPhone',
     'qidNumber', 'qidExpiry', 'passportNumber', 'passportExpiry', 'healthCardExpiry', 'sponsorshipType',
-    'designation', 'dateOfJoining',
+    'designation', 'department', 'dateOfJoining', 'workLocation', 'probationEndDate', 'noticePeriodDays',
     'bankName', 'iban',
     'highestQualification', 'specialization', 'institutionName', 'graduationYear',
     'qidUrl', 'passportCopyUrl', 'photoUrl', 'contractCopyUrl', 'contractExpiry',
@@ -196,9 +207,14 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
   };
 
   // Filter to only allowed fields and apply mapping
+  // Non-admins cannot update admin-only fields
   const processedData: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     const mappedKey = fieldMapping[key] || key;
+    // Skip admin-only fields for non-admins
+    if (!isAdmin && (adminOnlyFields.has(key) || adminOnlyFields.has(mappedKey))) {
+      continue;
+    }
     if (allowedFields.has(mappedKey) || allowedFields.has(key)) {
       processedData[mappedKey] = value;
     }
@@ -211,6 +227,7 @@ async function updateHRProfileHandler(request: NextRequest, context: APIContext)
     'passportExpiry',
     'healthCardExpiry',
     'dateOfJoining',
+    'probationEndDate',
     'licenseExpiry',
     'contractExpiry',
   ];

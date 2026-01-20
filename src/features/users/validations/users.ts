@@ -97,6 +97,16 @@ export const createUserSchema = z.object({
   designation: z.string().max(100, 'Designation must be less than 100 characters').optional(),
   /** Department/team (max 100 chars) */
   department: z.string().max(100, 'Department must be less than 100 characters').optional(),
+  /** Date of joining (YYYY-MM-DD string or empty) */
+  dateOfJoining: z.string().optional(),
+  /** Work location (OFFICE, REMOTE, HYBRID) */
+  workLocation: z.string().optional(),
+  /** Probation end date (YYYY-MM-DD string or empty) */
+  probationEndDate: z.string().optional(),
+  /** Notice period in days */
+  noticePeriodDays: z.number().int().min(0).max(365).optional(),
+  /** Sponsorship type */
+  sponsorshipType: z.string().optional(),
   /** Is this user an employee (appears in HR/payroll)? */
   isEmployee: z.boolean().default(true),
   /** Can this user authenticate to the system? */

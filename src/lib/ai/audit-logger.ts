@@ -68,10 +68,11 @@ function hashQuery(query: string): string {
 /**
  * Extract data access summary from function calls
  */
-interface FunctionResult {
-  count?: number;
-  total?: number;
-}
+type FunctionResult =
+  | Record<string, unknown>[]  // Array results
+  | { count?: number; total?: number; [key: string]: unknown }  // Object with optional count/total
+  | null
+  | undefined;
 
 function extractDataAccessSummary(
   functionsCalled: string[],
@@ -311,21 +312,3 @@ export async function getFlaggedQueries(
   });
 }
 
-/**
- * Clean up old audit logs (retention policy)
- */
-export async function cleanupOldAuditLogs(
-  retentionDays = 90
-): Promise<number> {
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
-
-  const result = await prisma.aIChatAuditLog.deleteMany({
-    where: {
-      createdAt: { lt: cutoffDate },
-      flagged: false, // Keep flagged entries longer
-    },
-  });
-
-  return result.count;
-}

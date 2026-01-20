@@ -31,6 +31,7 @@ import {
   SPONSORSHIP_TYPES,
   GENDERS,
   MARITAL_STATUS,
+  WORK_LOCATIONS,
   LANGUAGES,
 } from '@/lib/data/constants';
 import { PhoneInput, QatarPhoneInput } from './phone-input';
@@ -140,6 +141,9 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
       designation: initialData?.designation || '',
       department: initialData?.department || '',
       dateOfJoining: formatDateForPicker(initialData?.dateOfJoining),
+      workLocation: initialData?.workLocation || '',
+      probationEndDate: formatDateForPicker(initialData?.probationEndDate),
+      noticePeriodDays: initialData?.noticePeriodDays ?? 30,
       bankName: initialData?.bankName || '',
       iban: initialData?.iban || '',
       highestQualification: initialData?.highestQualification || '',
@@ -621,8 +625,9 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
             <Select
               value={watch('sponsorshipType') || ''}
               onValueChange={(val) => setValue('sponsorshipType', val, { shouldDirty: true })}
+              disabled={!isAdmin}
             >
-              <SelectTrigger id="sponsorshipType">
+              <SelectTrigger id="sponsorshipType" className={!isAdmin ? 'bg-gray-50' : ''}>
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
@@ -631,6 +636,9 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
                 ))}
               </SelectContent>
             </Select>
+            {!isAdmin && (
+              <p className="text-xs text-gray-500">Admin only field</p>
+            )}
           </div>
         </div>
       </SectionCard>
@@ -663,7 +671,12 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
               id="designation"
               {...register('designation')}
               placeholder="e.g., Software Engineer"
+              disabled={!isAdmin}
+              className={!isAdmin ? 'bg-gray-50' : ''}
             />
+            {!isAdmin && (
+              <p className="text-xs text-gray-500">Admin only field</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -672,18 +685,93 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
               id="department"
               {...register('department')}
               placeholder="e.g., Engineering, Sales"
+              disabled={!isAdmin}
+              className={!isAdmin ? 'bg-gray-50' : ''}
             />
+            {!isAdmin && (
+              <p className="text-xs text-gray-500">Admin only field</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="dateOfJoining">Date of Joining</Label>
-            <DatePicker
-              id="dateOfJoining"
-              value={watch('dateOfJoining') || ''}
-              onChange={(val) => setValue('dateOfJoining', val, { shouldDirty: true })}
-              placeholder="DD/MM/YYYY"
-              maxDate={new Date()}
+            {isAdmin ? (
+              <DatePicker
+                id="dateOfJoining"
+                value={watch('dateOfJoining') || ''}
+                onChange={(val) => setValue('dateOfJoining', val, { shouldDirty: true })}
+                placeholder="DD/MM/YYYY"
+                maxDate={new Date()}
+              />
+            ) : (
+              <>
+                <Input
+                  value={watch('dateOfJoining') ? new Date(watch('dateOfJoining')!).toLocaleDateString() : ''}
+                  disabled
+                  className="bg-gray-50"
+                />
+                <p className="text-xs text-gray-500">Admin only field</p>
+              </>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="workLocation">Work Location</Label>
+            <Select
+              value={watch('workLocation') || ''}
+              onValueChange={(val) => setValue('workLocation', val, { shouldDirty: true })}
+              disabled={!isAdmin}
+            >
+              <SelectTrigger id="workLocation" className={!isAdmin ? 'bg-gray-50' : ''}>
+                <SelectValue placeholder="Select location" />
+              </SelectTrigger>
+              <SelectContent>
+                {WORK_LOCATIONS.map((loc) => (
+                  <SelectItem key={loc} value={loc.toUpperCase()}>{loc}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!isAdmin && (
+              <p className="text-xs text-gray-500">Admin only field</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="probationEndDate">Probation End Date</Label>
+            {isAdmin ? (
+              <DatePicker
+                id="probationEndDate"
+                value={watch('probationEndDate') || ''}
+                onChange={(val) => setValue('probationEndDate', val, { shouldDirty: true })}
+                placeholder="DD/MM/YYYY"
+              />
+            ) : (
+              <>
+                <Input
+                  value={watch('probationEndDate') ? new Date(watch('probationEndDate')!).toLocaleDateString() : ''}
+                  disabled
+                  className="bg-gray-50"
+                />
+                <p className="text-xs text-gray-500">Admin only field</p>
+              </>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="noticePeriodDays">Notice Period (Days)</Label>
+            <Input
+              id="noticePeriodDays"
+              type="number"
+              min={0}
+              max={365}
+              {...register('noticePeriodDays', { valueAsNumber: true })}
+              placeholder="30"
+              disabled={!isAdmin}
+              className={!isAdmin ? 'bg-gray-50' : ''}
             />
+            {!isAdmin && (
+              <p className="text-xs text-gray-500">Admin only field</p>
+            )}
           </div>
         </div>
       </SectionCard>

@@ -9,6 +9,9 @@
  *   WHATSAPP_ACCESS_TOKEN - Your permanent access token
  */
 
+// Make this file a module to avoid global scope conflicts
+export {};
+
 const BUSINESS_ACCOUNT_ID = process.env.WHATSAPP_BUSINESS_ACCOUNT_ID || '2284343471961199';
 const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
 
