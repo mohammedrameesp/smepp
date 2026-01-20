@@ -45,6 +45,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/core/datetime';
+import { toast } from 'sonner';
 
 interface EmailFailure {
   id: string;
@@ -208,7 +209,7 @@ export default function EmailFailuresPage() {
       const data = await response.json();
       setDeleteDialog(false);
       fetchFailures();
-      alert(`Deleted ${data.deleted} resolved failures older than 30 days`);
+      toast.success(`Deleted ${data.deleted} resolved failures older than 30 days`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

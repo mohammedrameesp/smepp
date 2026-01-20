@@ -48,6 +48,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/core/datetime';
+import { toast } from 'sonner';
 
 interface ErrorLog {
   id: string;
@@ -235,7 +236,7 @@ export default function ErrorLogsPage() {
       const data = await response.json();
       setDeleteDialog(false);
       fetchErrors();
-      alert(data.message);
+      toast.success(data.message);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
