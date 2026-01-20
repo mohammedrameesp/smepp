@@ -11,6 +11,7 @@ import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import crypto from 'crypto';
 import { requireRecent2FA } from '@/lib/two-factor';
+import { sendEmail } from '@/lib/core/email';
 import logger from '@/lib/core/log';
 
 export async function GET() {
@@ -53,6 +54,9 @@ const inviteSchema = z.object({
   name: z.string().optional(),
 });
 
+// Setup token expires in 7 days
+const SETUP_TOKEN_EXPIRY_DAYS = 7;
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -93,25 +97,30 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      // Send notification email to existing user
+      await sendSuperAdminPromotionEmail(updatedUser.email, updatedUser.name || email.split('@')[0]);
+
       return NextResponse.json({
-        message: 'User promoted to super admin',
+        message: 'User promoted to super admin. Notification email sent.',
         user: updatedUser,
         isNewUser: false,
       });
     }
 
-    // Create new super admin user with temporary password
-    const tempPassword = crypto.randomBytes(16).toString('hex');
-    const bcrypt = await import('bcryptjs');
-    const passwordHash = await bcrypt.hash(tempPassword, 10);
+    // Generate setup token for new user
+    const setupToken = crypto.randomBytes(32).toString('hex');
+    const setupTokenExpiry = new Date();
+    setupTokenExpiry.setDate(setupTokenExpiry.getDate() + SETUP_TOKEN_EXPIRY_DAYS);
 
+    // Create new super admin user with setup token (no password yet)
     const newUser = await prisma.user.create({
       data: {
         email,
         name: name || email.split('@')[0],
-        passwordHash,
         isSuperAdmin: true,
-        emailVerified: new Date(), // Mark as verified since we're creating directly
+        setupToken,
+        setupTokenExpiry,
+        // No passwordHash - user will set it via the setup link
       },
       select: {
         id: true,
@@ -121,15 +130,24 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Note: In development, temp password is returned in response for convenience.
-    // In production, the creating admin should manually share credentials securely.
-    // Future enhancement: Send welcome email with password setup link.
+    // Send welcome email with setup link
+    const emailResult = await sendSuperAdminWelcomeEmail(
+      newUser.email,
+      newUser.name || email.split('@')[0],
+      setupToken
+    );
+
+    if (!emailResult.success) {
+      logger.warn({ email: newUser.email, error: emailResult.error }, 'Failed to send super admin welcome email');
+    }
 
     return NextResponse.json({
-      message: 'Super admin created successfully',
+      message: emailResult.success
+        ? 'Super admin created successfully. Setup email sent.'
+        : 'Super admin created but email failed to send. Please share the setup link manually.',
       user: newUser,
       isNewUser: true,
-      tempPassword: process.env.NODE_ENV === 'development' ? tempPassword : undefined,
+      emailSent: emailResult.success,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -144,4 +162,162 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EMAIL HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function sendSuperAdminWelcomeEmail(email: string, name: string, setupToken: string) {
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://durj.com';
+  const setupUrl = `${baseUrl}/set-password/${setupToken}`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <tr>
+          <td style="background-color: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                <span style="color: #ffffff; font-size: 24px; font-weight: bold;">D</span>
+              </div>
+              <h1 style="color: #0f172a; margin: 0; font-size: 24px; font-weight: 700;">Welcome to Durj</h1>
+              <p style="color: #64748b; margin: 8px 0 0; font-size: 14px;">Platform Administration</p>
+            </div>
+
+            <p style="color: #334155; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+              Hi ${name},
+            </p>
+
+            <p style="color: #334155; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+              You've been invited to become a <strong>Super Admin</strong> on the Durj platform. This role grants you full access to manage all organizations, users, and platform settings.
+            </p>
+
+            <div style="background-color: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 16px; margin: 24px 0;">
+              <p style="color: #92400e; font-size: 14px; margin: 0;">
+                <strong>Important:</strong> Super admin privileges provide complete platform access. Please ensure you understand the responsibilities that come with this role.
+              </p>
+            </div>
+
+            <p style="color: #334155; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+              Click the button below to set up your password and activate your account:
+            </p>
+
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${setupUrl}" style="display: inline-block; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                Set Up Your Password
+              </a>
+            </div>
+
+            <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 24px 0 0;">
+              This link will expire in ${SETUP_TOKEN_EXPIRY_DAYS} days. If you didn't expect this invitation, please ignore this email.
+            </p>
+
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0;">
+
+            <p style="color: #94a3b8; font-size: 12px; text-align: center; margin: 0;">
+              If the button doesn't work, copy and paste this link into your browser:<br>
+              <a href="${setupUrl}" style="color: #0f172a; word-break: break-all;">${setupUrl}</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  const text = `
+Welcome to Durj - Platform Administration
+
+Hi ${name},
+
+You've been invited to become a Super Admin on the Durj platform. This role grants you full access to manage all organizations, users, and platform settings.
+
+IMPORTANT: Super admin privileges provide complete platform access. Please ensure you understand the responsibilities that come with this role.
+
+Set up your password here: ${setupUrl}
+
+This link will expire in ${SETUP_TOKEN_EXPIRY_DAYS} days.
+
+If you didn't expect this invitation, please ignore this email.
+  `.trim();
+
+  return sendEmail({
+    to: email,
+    subject: 'You\'ve Been Invited as a Super Admin - Durj',
+    html,
+    text,
+  });
+}
+
+async function sendSuperAdminPromotionEmail(email: string, name: string) {
+  const baseUrl = process.env.NEXTAUTH_URL || 'https://durj.com';
+  const loginUrl = `${baseUrl}/super-admin`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <tr>
+          <td style="background-color: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+                <span style="color: #ffffff; font-size: 24px; font-weight: bold;">D</span>
+              </div>
+              <h1 style="color: #0f172a; margin: 0; font-size: 24px; font-weight: 700;">Super Admin Access Granted</h1>
+            </div>
+
+            <p style="color: #334155; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+              Hi ${name},
+            </p>
+
+            <p style="color: #334155; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+              Your account has been promoted to <strong>Super Admin</strong> on the Durj platform. You now have full access to manage all organizations, users, and platform settings.
+            </p>
+
+            <div style="text-align: center; margin: 32px 0;">
+              <a href="${loginUrl}" style="display: inline-block; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                Access Super Admin Dashboard
+              </a>
+            </div>
+
+            <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 24px 0 0;">
+              Use your existing login credentials to access the super admin dashboard.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  const text = `
+Super Admin Access Granted - Durj
+
+Hi ${name},
+
+Your account has been promoted to Super Admin on the Durj platform. You now have full access to manage all organizations, users, and platform settings.
+
+Access the super admin dashboard: ${loginUrl}
+
+Use your existing login credentials to access the super admin dashboard.
+  `.trim();
+
+  return sendEmail({
+    to: email,
+    subject: 'Super Admin Access Granted - Durj',
+    html,
+    text,
+  });
 }
