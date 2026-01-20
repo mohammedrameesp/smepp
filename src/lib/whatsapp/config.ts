@@ -169,7 +169,6 @@ export async function getMemberWhatsAppPhone(
     where: { id: memberId },
     select: {
       qatarMobile: true,
-      phone: true,
       otherMobileCode: true,
       otherMobileNumber: true,
     },
@@ -179,13 +178,9 @@ export async function getMemberWhatsAppPhone(
     return null;
   }
 
-  // Priority: qatarMobile > phone > otherMobile
+  // Priority: qatarMobile > otherMobile
   if (member.qatarMobile) {
     return normalizePhoneNumber(member.qatarMobile);
-  }
-
-  if (member.phone) {
-    return normalizePhoneNumber(member.phone);
   }
 
   if (member.otherMobileNumber) {
