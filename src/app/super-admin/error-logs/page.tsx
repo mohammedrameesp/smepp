@@ -219,19 +219,23 @@ export default function ErrorLogsPage() {
     }
   };
 
-  const handleDeleteOld = async () => {
+  const handleDeleteResolved = async (deleteAll: boolean) => {
     setActionLoading(true);
     try {
-      const response = await fetch('/api/super-admin/error-logs?olderThanDays=30', {
+      const url = deleteAll
+        ? '/api/super-admin/error-logs?all=true'
+        : '/api/super-admin/error-logs?olderThanDays=30';
+
+      const response = await fetch(url, {
         method: 'DELETE',
       });
 
-      if (!response.ok) throw new Error('Failed to delete old errors');
+      if (!response.ok) throw new Error('Failed to delete errors');
 
       const data = await response.json();
       setDeleteDialog(false);
       fetchErrors();
-      alert(`Deleted ${data.deleted} resolved errors older than 30 days`);
+      alert(data.message);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -619,22 +623,34 @@ export default function ErrorLogsPage() {
       <Dialog open={deleteDialog} onOpenChange={setDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Clean Up Old Errors</DialogTitle>
+            <DialogTitle>Clean Up Resolved Errors</DialogTitle>
             <DialogDescription>
-              This will permanently delete all resolved errors older than 30 days. This action cannot be undone.
+              Choose how to clean up resolved errors. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialog(false)}>
-              Cancel
+          <div className="flex flex-col gap-3 py-4">
+            <Button
+              variant="outline"
+              onClick={() => handleDeleteResolved(false)}
+              disabled={actionLoading}
+              className="justify-start"
+            >
+              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Delete resolved errors older than 30 days
             </Button>
             <Button
               variant="destructive"
-              onClick={handleDeleteOld}
+              onClick={() => handleDeleteResolved(true)}
               disabled={actionLoading}
+              className="justify-start"
             >
               {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Delete Old Errors
+              Delete ALL resolved errors
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteDialog(false)}>
+              Cancel
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -92,6 +92,7 @@ export async function POST() {
     // System
     results.notifications = (await prisma.notification.deleteMany()).count;
     results.activityLogs = (await prisma.activityLog.deleteMany()).count;
+    results.errorLogs = (await prisma.errorLog.deleteMany()).count;
     results.systemSettings = (await prisma.systemSettings.deleteMany()).count;
     results.appSettings = (await prisma.appSetting.deleteMany()).count;
 

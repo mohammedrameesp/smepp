@@ -245,21 +245,36 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const olderThanDays = parseInt(searchParams.get('olderThanDays') || '30', 10);
+    const olderThanDays = searchParams.get('olderThanDays');
+    const deleteAll = searchParams.get('all') === 'true';
 
-    const cutoffDate = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+    let result;
+    let message;
 
-    const result = await prisma.errorLog.deleteMany({
-      where: {
-        resolved: true,
-        createdAt: { lt: cutoffDate },
-      },
-    });
+    if (deleteAll) {
+      // Delete ALL resolved errors regardless of age
+      result = await prisma.errorLog.deleteMany({
+        where: { resolved: true },
+      });
+      message = `Deleted ${result.count} resolved errors`;
+    } else {
+      // Delete resolved errors older than X days (default 30)
+      const days = parseInt(olderThanDays || '30', 10);
+      const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+      result = await prisma.errorLog.deleteMany({
+        where: {
+          resolved: true,
+          createdAt: { lt: cutoffDate },
+        },
+      });
+      message = `Deleted ${result.count} resolved errors older than ${days} days`;
+    }
 
     return NextResponse.json({
       success: true,
       deleted: result.count,
-      message: `Deleted ${result.count} resolved errors older than ${olderThanDays} days`,
+      message,
     });
   } catch (error) {
     logger.error(
