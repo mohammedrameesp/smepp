@@ -11,7 +11,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowRight, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowRight, ArrowLeft, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
 
 const LOCALSTORAGE_KEY = 'employee-onboarding-draft';
 
@@ -63,6 +63,54 @@ const STEPS = [
 ];
 
 const TOTAL_STEPS = 6;
+
+/**
+ * Mandatory fields configuration grouped by step
+ * These are the fields users should fill, but won't block navigation
+ */
+const MANDATORY_FIELDS: Record<number, { field: string; label: string }[]> = {
+  1: [
+    { field: 'dateOfBirth', label: 'Date of Birth' },
+    { field: 'gender', label: 'Gender' },
+    { field: 'nationality', label: 'Nationality' },
+    { field: 'maritalStatus', label: 'Marital Status' },
+  ],
+  2: [
+    { field: 'qatarMobile', label: 'Qatar Mobile' },
+    { field: 'personalEmail', label: 'Personal Email' },
+    { field: 'qatarZone', label: 'Qatar Zone' },
+  ],
+  3: [
+    { field: 'qidNumber', label: 'QID Number' },
+    { field: 'qidExpiry', label: 'QID Expiry' },
+    { field: 'passportNumber', label: 'Passport Number' },
+    { field: 'passportExpiry', label: 'Passport Expiry' },
+  ],
+  4: [
+    { field: 'bankName', label: 'Bank Name' },
+    { field: 'iban', label: 'IBAN' },
+    { field: 'photoUrl', label: 'Profile Photo' },
+  ],
+};
+
+/**
+ * Get all missing mandatory fields across all steps
+ */
+function getMissingMandatoryFields(formData: FormData): { step: number; field: string; label: string }[] {
+  const missing: { step: number; field: string; label: string }[] = [];
+
+  for (const [stepStr, fields] of Object.entries(MANDATORY_FIELDS)) {
+    const step = parseInt(stepStr);
+    for (const { field, label } of fields) {
+      const value = formData[field];
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
+        missing.push({ step, field, label });
+      }
+    }
+  }
+
+  return missing;
+}
 
 interface FormData {
   [key: string]: string | null;
@@ -310,85 +358,60 @@ export function EmployeeOnboardingClient() {
     });
   }, []);
 
-  // Validate current step (required fields + format validation)
-  const validateStep = useCallback(() => {
+  // Validate format only (not required fields) - soft validation allows proceeding
+  const validateFormat = useCallback(() => {
     const newErrors: Record<string, string> = {};
 
     switch (currentStep) {
-      case 1:
-        if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-        if (!formData.gender) newErrors.gender = 'Gender is required';
-        if (!formData.nationality) newErrors.nationality = 'Nationality is required';
-        if (!formData.maritalStatus) newErrors.maritalStatus = 'Marital status is required';
-        break;
       case 2:
-        if (!formData.qatarMobile) {
-          newErrors.qatarMobile = 'Qatar mobile is required';
-        } else if (!VALIDATION_PATTERNS.qatarMobile.test(formData.qatarMobile)) {
+        // Validate Qatar mobile format if provided
+        if (formData.qatarMobile && !VALIDATION_PATTERNS.qatarMobile.test(formData.qatarMobile)) {
           newErrors.qatarMobile = PATTERN_MESSAGES.qatarMobile;
         }
-        // Validate other mobile if provided
+        // Validate other mobile format if provided
         if (formData.otherMobileNumber && !VALIDATION_PATTERNS.mobile.test(formData.otherMobileNumber)) {
           newErrors.otherMobileNumber = PATTERN_MESSAGES.mobile;
         }
-        // Personal email is required
-        if (!formData.personalEmail) {
-          newErrors.personalEmail = 'Personal email is required';
-        } else if (!VALIDATION_PATTERNS.email.test(formData.personalEmail)) {
+        // Validate personal email format if provided
+        if (formData.personalEmail && !VALIDATION_PATTERNS.email.test(formData.personalEmail)) {
           newErrors.personalEmail = PATTERN_MESSAGES.email;
         }
-        // Qatar zone is required
-        if (!formData.qatarZone) {
-          newErrors.qatarZone = 'Qatar zone is required';
-        }
-        // Validate local emergency phone if provided
+        // Validate local emergency phone format if provided
         if (formData.localEmergencyPhone && !VALIDATION_PATTERNS.phone.test(formData.localEmergencyPhone)) {
           newErrors.localEmergencyPhone = PATTERN_MESSAGES.phone;
         }
-        // Validate home emergency phone if provided
+        // Validate home emergency phone format if provided
         if (formData.homeEmergencyPhone && !VALIDATION_PATTERNS.phone.test(formData.homeEmergencyPhone)) {
           newErrors.homeEmergencyPhone = PATTERN_MESSAGES.phone;
         }
-        // At least one emergency contact is required
-        const hasLocalEmergency = formData.localEmergencyName && formData.localEmergencyPhone;
-        const hasHomeEmergency = formData.homeEmergencyName && formData.homeEmergencyPhone;
-        if (!hasLocalEmergency && !hasHomeEmergency) {
-          newErrors.localEmergencyName = 'At least one emergency contact is required';
-        }
         break;
       case 3:
-        if (!formData.qidNumber) {
-          newErrors.qidNumber = 'QID number is required';
-        } else if (!VALIDATION_PATTERNS.qatarId.test(formData.qidNumber)) {
+        // Validate QID format if provided
+        if (formData.qidNumber && !VALIDATION_PATTERNS.qatarId.test(formData.qidNumber)) {
           newErrors.qidNumber = PATTERN_MESSAGES.qatarId;
         }
-        if (!formData.qidExpiry) newErrors.qidExpiry = 'QID expiry is required';
-        if (!formData.passportNumber) {
-          newErrors.passportNumber = 'Passport number is required';
-        } else if (!VALIDATION_PATTERNS.passport.test(formData.passportNumber)) {
+        // Validate passport format if provided
+        if (formData.passportNumber && !VALIDATION_PATTERNS.passport.test(formData.passportNumber)) {
           newErrors.passportNumber = PATTERN_MESSAGES.passport;
         }
-        if (!formData.passportExpiry) newErrors.passportExpiry = 'Passport expiry is required';
         break;
       case 4:
-        if (!formData.bankName) newErrors.bankName = 'Bank name is required';
-        if (!formData.iban) {
-          newErrors.iban = 'IBAN is required';
-        } else {
-          // Clean IBAN (remove spaces) and validate
+        // Validate IBAN format if provided
+        if (formData.iban) {
           const cleanedIban = formData.iban.replace(/\s/g, '');
           if (!VALIDATION_PATTERNS.iban.test(cleanedIban)) {
             newErrors.iban = PATTERN_MESSAGES.iban;
           }
         }
-        // Photo is required
-        if (!formData.photoUrl) newErrors.photoUrl = 'Profile photo is required';
         break;
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [currentStep, formData]);
+
+  // Calculate missing mandatory fields for the banner
+  const missingFields = getMissingMandatoryFields(formData);
 
   // Save current step data
   const saveStepData = useCallback(async () => {
@@ -435,15 +458,16 @@ export function EmployeeOnboardingClient() {
 
   // Navigation functions
   const goNext = useCallback(async () => {
-    if (!validateStep()) return;
+    // Only block on format errors, not missing fields
+    if (!validateFormat()) return;
 
-    // Save data before proceeding
+    // Save data before proceeding (even if incomplete)
     const saved = await saveStepData();
     if (!saved) return;
 
     setDirection(1);
     setCurrentStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
-  }, [validateStep, saveStepData]);
+  }, [validateFormat, saveStepData]);
 
   const goBack = useCallback(() => {
     setError(null);
@@ -636,6 +660,41 @@ export function EmployeeOnboardingClient() {
         totalSteps={TOTAL_STEPS}
         steps={STEPS}
       />
+
+      {/* Missing Fields Banner */}
+      {missingFields.length > 0 && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-amber-800">
+                  {missingFields.length} required {missingFields.length === 1 ? 'field' : 'fields'} incomplete
+                </p>
+                <p className="text-sm text-amber-700 mt-1">
+                  Missing: {missingFields.map(f => f.label).join(', ')}
+                </p>
+                <p className="text-xs text-amber-600 mt-1">
+                  You can continue, but please complete all fields before your profile is finalized.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  // Navigate to the first step with missing fields
+                  const firstMissing = missingFields[0];
+                  if (firstMissing && firstMissing.step !== currentStep) {
+                    setDirection(firstMissing.step > currentStep ? 1 : -1);
+                    setCurrentStep(firstMissing.step);
+                  }
+                }}
+                className="text-sm font-medium text-amber-700 hover:text-amber-900 whitespace-nowrap"
+              >
+                Go to Step {missingFields[0]?.step}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="px-4 py-8">
