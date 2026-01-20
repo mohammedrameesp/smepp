@@ -10,6 +10,7 @@ import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import logger from '@/lib/core/log';
+import { createClient } from '@supabase/supabase-js';
 
 export async function GET(
   request: NextRequest,
@@ -280,6 +281,88 @@ export async function PATCH(
 // DELETE /api/super-admin/organizations/[id] - Delete organization and all users
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Cleanup all Supabase storage files for an organization:
+ * - Logos in durj-storage/orgs/{orgId}/
+ * - Tenant files in durj-storage/{tenantId}/
+ * - Backups in database-backups/orgs/{orgSlug}/
+ */
+async function cleanupOrganizationStorage(orgId: string, orgSlug: string) {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    logger.warn('Supabase not configured, skipping storage cleanup');
+    return { logos: 0, files: 0, backups: 0 };
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  const storageBucket = process.env.SUPABASE_BUCKET || 'durj-storage';
+  const backupBucket = 'database-backups';
+
+  let logosDeleted = 0;
+  let filesDeleted = 0;
+  let backupsDeleted = 0;
+
+  // 1. Delete logos from durj-storage/orgs/{orgId}/
+  try {
+    const logoFolder = `orgs/${orgId}`;
+    const { data: logoFiles } = await supabase.storage
+      .from(storageBucket)
+      .list(logoFolder);
+
+    if (logoFiles && logoFiles.length > 0) {
+      const paths = logoFiles.map(f => `${logoFolder}/${f.name}`);
+      const { error } = await supabase.storage.from(storageBucket).remove(paths);
+      if (!error) {
+        logosDeleted = paths.length;
+        logger.info({ orgId, count: logosDeleted }, 'Deleted organization logos');
+      }
+    }
+  } catch (error) {
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', orgId }, 'Failed to cleanup logos');
+  }
+
+  // 2. Delete all tenant files from durj-storage/{tenantId}/
+  try {
+    const { data: tenantFiles } = await supabase.storage
+      .from(storageBucket)
+      .list(orgId); // tenantId = orgId
+
+    if (tenantFiles && tenantFiles.length > 0) {
+      const paths = tenantFiles.map(f => `${orgId}/${f.name}`);
+      const { error } = await supabase.storage.from(storageBucket).remove(paths);
+      if (!error) {
+        filesDeleted = paths.length;
+        logger.info({ orgId, count: filesDeleted }, 'Deleted tenant files');
+      }
+    }
+  } catch (error) {
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', orgId }, 'Failed to cleanup tenant files');
+  }
+
+  // 3. Delete backups from database-backups/orgs/{orgSlug}/
+  try {
+    const backupFolder = `orgs/${orgSlug}`;
+    const { data: backupFiles } = await supabase.storage
+      .from(backupBucket)
+      .list(backupFolder);
+
+    if (backupFiles && backupFiles.length > 0) {
+      const paths = backupFiles.map(f => `${backupFolder}/${f.name}`);
+      const { error } = await supabase.storage.from(backupBucket).remove(paths);
+      if (!error) {
+        backupsDeleted = paths.length;
+        logger.info({ orgSlug, count: backupsDeleted }, 'Deleted organization backups');
+      }
+    }
+  } catch (error) {
+    logger.error({ error: error instanceof Error ? error.message : 'Unknown error', orgSlug }, 'Failed to cleanup backups');
+  }
+
+  return { logos: logosDeleted, files: filesDeleted, backups: backupsDeleted };
+}
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -330,6 +413,9 @@ export async function DELETE(
     // Emails of users who ONLY belong to this org (will be cleaned up)
     const uniqueEmails = memberEmails.filter(email => !emailsInOtherOrgs.has(email));
 
+    // Capture slug before deletion for backup cleanup
+    const { slug } = organization;
+
     // Delete in transaction
     await prisma.$transaction(async (tx) => {
       // 1. Delete organization (cascades: TeamMember, invitations, assets, subscriptions, etc.)
@@ -348,6 +434,9 @@ export async function DELETE(
       }
     });
 
+    // Cleanup storage files (non-blocking - failures don't affect response)
+    const storageCleanup = await cleanupOrganizationStorage(id, slug);
+
     return NextResponse.json({
       success: true,
       deleted: {
@@ -356,6 +445,7 @@ export async function DELETE(
         usersDeleted: uniqueEmails.length,
         usersRetained: memberEmails.length - uniqueEmails.length,
         assets: organization._count.assets,
+        storage: storageCleanup,
       }
     });
   } catch (error) {
