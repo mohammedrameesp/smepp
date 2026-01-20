@@ -51,7 +51,6 @@ export async function checkWhatsAppVerificationNeeded(
         isAdmin: true,
         canApprove: true,
         qatarMobile: true,
-        phone: true,
         whatsAppPromptSnoozedUntil: true,
         whatsAppPhone: {
           select: {
@@ -99,8 +98,8 @@ export async function checkWhatsAppVerificationNeeded(
 
   // If no WhatsApp phone, try to get from profile
   if (!phoneNumber) {
-    // Prefer Qatar mobile, fall back to general phone
-    const profilePhone = member.qatarMobile || member.phone;
+    // Use Qatar mobile
+    const profilePhone = member.qatarMobile;
     if (profilePhone) {
       // Extract country code if present
       const phoneMatch = profilePhone.match(/^(\+\d{1,4})(.+)$/);
