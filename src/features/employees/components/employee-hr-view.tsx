@@ -75,6 +75,7 @@ interface TeamMemberWithHR {
   passportCopyUrl: string | null;
   photoUrl: string | null;
   contractCopyUrl: string | null;
+  contractExpiry: Date | null;
   hasDrivingLicense: boolean;
   licenseExpiry: Date | null;
   languagesKnown: string | null;
@@ -344,13 +345,16 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
           </div>
         </CardHeader>
         <CardContent>
-          <dl className="grid md:grid-cols-3 gap-4">
+          <dl className="grid md:grid-cols-4 gap-4">
             <InfoRow label="QID Copy" value={<DocumentLink url={hr.qidUrl} label="View Document" />} />
             <InfoRow label="Passport Copy" value={<DocumentLink url={hr.passportCopyUrl} label="View Document" />} />
             <InfoRow label="Photo" value={<DocumentLink url={hr.photoUrl} label="View Photo" />} />
-            {/* Contract hidden for now - will be added later
             <InfoRow label="Contract Copy" value={<DocumentLink url={hr.contractCopyUrl} label="View Contract" />} />
-            */}
+            <InfoRow
+              label="Contract Expiry"
+              value={<ExpiryDateDisplay date={hr.contractExpiry} />}
+              highlight={getExpiryStatus(hr.contractExpiry) === 'expired' || getExpiryStatus(hr.contractExpiry) === 'expiring'}
+            />
           </dl>
         </CardContent>
       </Card>

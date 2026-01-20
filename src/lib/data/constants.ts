@@ -377,10 +377,12 @@ export const GENDERS = [
   'Female',
 ] as const;
 
-// Marital status options - simplified
+// Marital status options
 export const MARITAL_STATUS = [
   'Single',
   'Married',
+  'Divorced',
+  'Widowed',
 ] as const;
 
 // Work location options
