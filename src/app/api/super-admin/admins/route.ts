@@ -184,7 +184,7 @@ async function sendSuperAdminWelcomeEmail(email: string, name: string, setupToke
         <tr>
           <td style="background-color: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
             <div style="text-align: center; margin-bottom: 30px;">
-              <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+              <div style="width: 60px; height: 60px; background-color: #0f172a; border-radius: 12px; margin: 0 auto 16px; text-align: center; line-height: 60px;">
                 <span style="color: #ffffff; font-size: 24px; font-weight: bold;">D</span>
               </div>
               <h1 style="color: #0f172a; margin: 0; font-size: 24px; font-weight: 700;">Welcome to Durj</h1>
@@ -210,8 +210,10 @@ async function sendSuperAdminWelcomeEmail(email: string, name: string, setupToke
             </p>
 
             <div style="text-align: center; margin: 32px 0;">
-              <a href="${setupUrl}" style="display: inline-block; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                Set Up Your Password
+              <a href="${setupUrl}" style="display: inline-block; background-color: #0f172a; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; mso-padding-alt: 0;">
+                <!--[if mso]><i style="mso-font-width:150%;mso-text-raise:22pt">&nbsp;</i><![endif]-->
+                <span style="color: #ffffff;">Set Up Your Password</span>
+                <!--[if mso]><i style="mso-font-width:150%">&nbsp;</i><![endif]-->
               </a>
             </div>
 
@@ -272,7 +274,7 @@ async function sendSuperAdminPromotionEmail(email: string, name: string) {
         <tr>
           <td style="background-color: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
             <div style="text-align: center; margin-bottom: 30px;">
-              <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;">
+              <div style="width: 60px; height: 60px; background-color: #0f172a; border-radius: 12px; margin: 0 auto 16px; text-align: center; line-height: 60px;">
                 <span style="color: #ffffff; font-size: 24px; font-weight: bold;">D</span>
               </div>
               <h1 style="color: #0f172a; margin: 0; font-size: 24px; font-weight: 700;">Super Admin Access Granted</h1>
@@ -287,8 +289,10 @@ async function sendSuperAdminPromotionEmail(email: string, name: string) {
             </p>
 
             <div style="text-align: center; margin: 32px 0;">
-              <a href="${loginUrl}" style="display: inline-block; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                Access Super Admin Dashboard
+              <a href="${loginUrl}" style="display: inline-block; background-color: #0f172a; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; mso-padding-alt: 0;">
+                <!--[if mso]><i style="mso-font-width:150%;mso-text-raise:22pt">&nbsp;</i><![endif]-->
+                <span style="color: #ffffff;">Access Super Admin Dashboard</span>
+                <!--[if mso]><i style="mso-font-width:150%">&nbsp;</i><![endif]-->
               </a>
             </div>
 
