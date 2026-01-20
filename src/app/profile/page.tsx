@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Mail, Shield, Calendar, FileText, Loader2, AlertTriangle } from 'lucide-react';
+import { User, Mail, Shield, Calendar, FileText, Loader2, AlertTriangle, Building2 } from 'lucide-react';
 import { formatDate } from '@/lib/core/datetime';
 import { HRProfileForm } from '@/components/domains/hr/profile';
 import { EmployeeProfileViewOnly } from '@/features/employees/components';
@@ -26,8 +26,12 @@ interface UserProfile {
   email: string;
   image: string | null;
   role: string;
+  isAdmin: boolean;
+  isOwner: boolean;
   isEmployee: boolean;
   isOnWps: boolean;
+  accountTypeConfirmed: boolean;
+  accountTypeConfirmedAt: string | null;
   createdAt: string;
   updatedAt: string;
   _count: {
@@ -108,6 +112,7 @@ export default function ProfilePage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingMinimized, setOnboardingMinimized] = useState(false);
   const [profileImageError, setProfileImageError] = useState(false);
+  const [isSwitchingAccountType, setIsSwitchingAccountType] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -296,6 +301,41 @@ export default function ProfilePage() {
     setIsEditing(false);
     setError(null);
     setSuccess(null);
+  };
+
+  const handleSwitchAccountType = async () => {
+    if (!profile) return;
+
+    const newIsEmployee = !profile.isEmployee;
+
+    try {
+      setIsSwitchingAccountType(true);
+      setError(null);
+
+      const response = await fetch('/api/users/me/account-type', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isEmployee: newIsEmployee }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update account type');
+      }
+
+      toast.success(
+        newIsEmployee
+          ? 'Switched to personal employee account'
+          : 'Switched to service account'
+      );
+
+      // Reload to reflect changes
+      window.location.reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to switch account type');
+    } finally {
+      setIsSwitchingAccountType(false);
+    }
   };
 
   if (status === 'loading' || isLoading) {
@@ -564,6 +604,68 @@ export default function ProfilePage() {
                         </div>
                       );
                     })()}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Account Type Card (owners only) */}
+              {profile.isOwner && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      {profile.isEmployee ? (
+                        <User className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <Building2 className="h-5 w-5 text-gray-600" />
+                      )}
+                      Account Type
+                    </CardTitle>
+                    <CardDescription>
+                      Manage how your account is used in this organization
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {profile.isEmployee ? 'Personal Employee Account' : 'Service Account'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {profile.isEmployee
+                              ? 'You have an HR profile with leave and payroll features.'
+                              : 'This is a shared/generic account without HR features.'}
+                          </p>
+                        </div>
+                        <Badge variant={profile.isEmployee ? 'default' : 'secondary'}>
+                          {profile.isEmployee ? 'Employee' : 'Service'}
+                        </Badge>
+                      </div>
+
+                      <div className="border-t pt-4">
+                        <p className="text-sm text-gray-600 mb-3">
+                          {profile.isEmployee
+                            ? 'Service accounts are for shared email addresses (like info@, admin@) and don\'t have HR profiles or leave management.'
+                            : 'Switch to an employee account to access HR features like leave requests and payroll.'}
+                        </p>
+                        <Button
+                          variant="outline"
+                          onClick={handleSwitchAccountType}
+                          disabled={isSwitchingAccountType}
+                        >
+                          {isSwitchingAccountType ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Switching...
+                            </>
+                          ) : profile.isEmployee ? (
+                            'Switch to Service Account'
+                          ) : (
+                            'Switch to Employee Account'
+                          )}
+                        </Button>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               )}

@@ -567,11 +567,11 @@ model TeamMember {
   // ═══════════════════════════════════════════════════════════════════════════════
   // ACCESS & PERMISSIONS (Boolean flags - replaces old enum-based roles)
   // ═══════════════════════════════════════════════════════════════════════════════
-  isAdmin             Boolean @default(false) // Full access, supersedes all other flags
-  hasOperationsAccess Boolean @default(false) // Assets, Subscriptions, Suppliers
-  hasHRAccess         Boolean @default(false) // Employees, Leave modules
-  hasFinanceAccess    Boolean @default(false) // Payroll, Purchase Requests
-  canApprove          Boolean @default(false) // Approve direct reports (via reportingToId)
+  isAdmin              Boolean   @default(false) // Full access, supersedes all other flags
+  hasOperationsAccess  Boolean   @default(false) // Assets, Subscriptions, Suppliers
+  hasHRAccess          Boolean   @default(false) // Employees, Leave modules
+  hasFinanceAccess     Boolean   @default(false) // Payroll, Purchase Requests
+  canApprove           Boolean   @default(false) // Approve direct reports (via reportingToId)
   permissionsUpdatedAt DateTime? // Tracks when permissions were last changed (for session refresh)
 
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -579,6 +579,10 @@ model TeamMember {
   // ═══════════════════════════════════════════════════════════════════════════════
   isEmployee Boolean @default(true) // Has HR features (leave, payroll)?
   isOnWps    Boolean @default(true) // Included in WPS file?
+
+  // Account type confirmation (for owners using service/shared accounts)
+  accountTypeConfirmed   Boolean   @default(false)
+  accountTypeConfirmedAt DateTime?
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // EMPLOYEE CODE & BASIC INFO
@@ -1166,40 +1170,40 @@ model Notification {
 
 // Email failure log for super admin monitoring
 model EmailFailureLog {
-  id               String        @id @default(cuid())
-  tenantId         String?
-  tenant           Organization? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String        @id @default(cuid())
+  tenantId String?
+  tenant   Organization? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   // Module context
-  module           String        // e.g., "assets", "leave", "users"
-  action           String        // e.g., "assignment", "approval"
+  module String // e.g., "assets", "leave", "users"
+  action String // e.g., "assignment", "approval"
 
   // Organization info (denormalized for when tenant is deleted)
   organizationName String?
   organizationSlug String?
 
   // Recipient info
-  recipientEmail   String
-  recipientName    String?
+  recipientEmail String
+  recipientName  String?
 
   // Email details
-  emailSubject     String
+  emailSubject String
 
   // Error info
-  error            String        @db.Text
-  errorCode        String?
+  error     String  @db.Text
+  errorCode String?
 
   // Additional context
-  metadata         Json?
+  metadata Json?
 
   // Resolution tracking
-  resolved         Boolean       @default(false)
-  resolvedAt       DateTime?
-  resolvedBy       String?       // Super admin who resolved
-  resolutionNotes  String?
+  resolved        Boolean   @default(false)
+  resolvedAt      DateTime?
+  resolvedBy      String? // Super admin who resolved
+  resolutionNotes String?
 
   // Timestamps
-  createdAt        DateTime      @default(now())
+  createdAt DateTime @default(now())
 
   @@index([tenantId])
   @@index([module])
@@ -1213,45 +1217,45 @@ model EmailFailureLog {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 model ErrorLog {
-  id               String        @id @default(cuid())
-  tenantId         String?
-  tenant           Organization? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  id       String        @id @default(cuid())
+  tenantId String?
+  tenant   Organization? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
 
   // Error classification
-  type             String        // API_ERROR, CLIENT_ERROR, SERVICE_ERROR
-  source           String        // Module or component (e.g., "assets", "leave", "ui/dashboard")
-  action           String?       // Specific action (e.g., "create", "approve")
+  type   String // API_ERROR, CLIENT_ERROR, SERVICE_ERROR
+  source String // Module or component (e.g., "assets", "leave", "ui/dashboard")
+  action String? // Specific action (e.g., "create", "approve")
 
   // Request info
-  requestId        String?
-  method           String?       // GET, POST, etc.
-  path             String?       // /api/assets/[id]
+  requestId String?
+  method    String? // GET, POST, etc.
+  path      String? // /api/assets/[id]
 
   // User info
-  userId           String?
-  userEmail        String?
-  userRole         String?       // ADMIN, MEMBER, etc.
+  userId    String?
+  userEmail String?
+  userRole  String? // ADMIN, MEMBER, etc.
 
   // Error details
-  message          String        @db.Text
-  stack            String?       @db.Text
-  statusCode       Int?
-  errorCode        String?       // Custom error codes
+  message    String  @db.Text
+  stack      String? @db.Text
+  statusCode Int?
+  errorCode  String? // Custom error codes
 
   // Additional context
-  metadata         Json?
-  userAgent        String?
+  metadata  Json?
+  userAgent String?
 
   // Severity
-  severity         String        @default("error") // error, warning, critical
+  severity String @default("error") // error, warning, critical
 
   // Resolution tracking
-  resolved         Boolean       @default(false)
-  resolvedAt       DateTime?
-  resolvedBy       String?       // Super admin who resolved
-  resolutionNotes  String?
+  resolved        Boolean   @default(false)
+  resolvedAt      DateTime?
+  resolvedBy      String? // Super admin who resolved
+  resolutionNotes String?
 
-  createdAt        DateTime      @default(now())
+  createdAt DateTime @default(now())
 
   @@index([tenantId])
   @@index([type])
@@ -1680,20 +1684,20 @@ model LeaveType {
 }
 
 model PublicHoliday {
-  id          String       @id @default(cuid())
-  tenantId    String
-  tenant      Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  id       String       @id @default(cuid())
+  tenantId String
+  tenant   Organization @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  name        String       // "Eid al-Fitr", "Qatar National Day"
+  name        String // "Eid al-Fitr", "Qatar National Day"
   description String?
   startDate   DateTime
-  endDate     DateTime     // Same as startDate for single-day holidays
-  year        Int          // 2024, 2025, etc.
-  isRecurring Boolean      @default(false) // For fixed-date holidays
-  color       String       @default("#EF4444") // Red for holidays
+  endDate     DateTime // Same as startDate for single-day holidays
+  year        Int // 2024, 2025, etc.
+  isRecurring Boolean  @default(false) // For fixed-date holidays
+  color       String   @default("#EF4444") // Red for holidays
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, name, year])
   @@index([tenantId])
