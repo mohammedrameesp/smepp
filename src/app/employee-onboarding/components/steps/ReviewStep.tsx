@@ -2,11 +2,11 @@
 
 /**
  * @file ReviewStep.tsx
- * @description Step 5: Review all information before completing onboarding
+ * @description Step 6: Review all information before completing onboarding
  * @module employee-onboarding/steps
  */
 
-import { CheckCircle2, Pencil, User, Phone, CreditCard, Building2 } from 'lucide-react';
+import { CheckCircle2, Pencil, User, Phone, CreditCard, Building2, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -31,6 +31,20 @@ function formatDate(dateStr: string | null | undefined): string {
 
 function str(value: string | null | undefined): string {
   return value || '-';
+}
+
+// Helper to parse JSON array and format it
+function formatJsonArray(value: string | null | undefined): string {
+  if (!value) return '-';
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.join(', ');
+    }
+    return '-';
+  } catch {
+    return '-';
+  }
 }
 
 function ReviewSection({
@@ -195,7 +209,7 @@ export function ReviewStep({ formData, workEmail, onEdit }: ReviewStepProps) {
           </dl>
           <div className="mt-3 pt-3 border-t">
             <p className="text-xs text-slate-500 mb-2">Uploaded Documents</p>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {formData.qidUrl && (
                 <span className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-700 rounded">
                   <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -218,6 +232,37 @@ export function ReviewStep({ formData, workEmail, onEdit }: ReviewStepProps) {
                 <span className="text-xs text-slate-400">No documents uploaded</span>
               )}
             </div>
+          </div>
+        </ReviewSection>
+
+        {/* Education & Skills */}
+        <ReviewSection title="Education & Skills" icon={GraduationCap} step={5} onEdit={onEdit}>
+          <div className="space-y-4">
+            <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <Field label="Highest Qualification" value={formData.highestQualification} />
+              <Field label="Specialization" value={formData.specialization} />
+              <Field label="Institution" value={formData.institutionName} />
+              <Field label="Graduation Year" value={formData.graduationYear} />
+            </dl>
+
+            <div className="border-t pt-3">
+              <dl className="space-y-3">
+                <div>
+                  <dt className="text-xs text-slate-500">Languages Known</dt>
+                  <dd className="text-sm text-slate-900">{formatJsonArray(formData.languagesKnown)}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-slate-500">Skills & Certifications</dt>
+                  <dd className="text-sm text-slate-900">{formatJsonArray(formData.skillsCertifications)}</dd>
+                </div>
+              </dl>
+            </div>
+
+            {formData.licenseExpiry && (
+              <div className="border-t pt-3">
+                <Field label="Driving License Expiry" value={formatDate(formData.licenseExpiry)} />
+              </div>
+            )}
           </div>
         </ReviewSection>
       </div>

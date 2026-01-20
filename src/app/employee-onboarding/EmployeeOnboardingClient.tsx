@@ -6,12 +6,14 @@
  * @module employee-onboarding
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowRight, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+
+const LOCALSTORAGE_KEY = 'employee-onboarding-draft';
 
 import { StepTransition } from './components/StepTransition';
 import { WizardProgress } from './components/WizardProgress';
@@ -19,6 +21,7 @@ import { PersonalStep } from './components/steps/PersonalStep';
 import { ContactEmergencyStep } from './components/steps/ContactEmergencyStep';
 import { IdentificationStep } from './components/steps/IdentificationStep';
 import { BankingDocumentsStep } from './components/steps/BankingDocumentsStep';
+import { EducationSkillsStep } from './components/steps/EducationSkillsStep';
 import { ReviewStep } from './components/steps/ReviewStep';
 import { COUNTRY_CODES } from '@/lib/data/constants';
 import { VALIDATION_PATTERNS, PATTERN_MESSAGES } from '@/lib/validations/patterns';
@@ -55,10 +58,11 @@ const STEPS = [
   { title: 'Contact', description: 'Contact & emergency' },
   { title: 'ID & Legal', description: 'Documents' },
   { title: 'Banking', description: 'Bank & uploads' },
+  { title: 'Education', description: 'Skills & qualifications' },
   { title: 'Review', description: 'Confirm details' },
 ];
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 interface FormData {
   [key: string]: string | null;
@@ -97,6 +101,14 @@ interface FormData {
   qidUrl: string | null;
   passportCopyUrl: string | null;
   photoUrl: string | null;
+  // Step 5: Education & Skills
+  highestQualification: string | null;
+  specialization: string | null;
+  institutionName: string | null;
+  graduationYear: string | null;
+  languagesKnown: string | null;
+  skillsCertifications: string | null;
+  licenseExpiry: string | null;
 }
 
 const initialFormData: FormData = {
@@ -131,6 +143,13 @@ const initialFormData: FormData = {
   qidUrl: null,
   passportCopyUrl: null,
   photoUrl: null,
+  highestQualification: null,
+  specialization: null,
+  institutionName: null,
+  graduationYear: null,
+  languagesKnown: '[]',
+  skillsCertifications: '[]',
+  licenseExpiry: null,
 };
 
 export function EmployeeOnboardingClient() {
@@ -149,6 +168,39 @@ export function EmployeeOnboardingClient() {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [workEmail, setWorkEmail] = useState('');
   const [isCompleted, setIsCompleted] = useState(false);
+  const isInitialLoad = useRef(true);
+
+  // Load draft from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LOCALSTORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.formData) {
+          setFormData((prev) => ({ ...prev, ...parsed.formData }));
+        }
+        if (parsed.currentStep) {
+          setCurrentStep(parsed.currentStep);
+        }
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  // Auto-save to localStorage when formData or currentStep changes
+  useEffect(() => {
+    // Skip initial load to avoid overwriting with empty data
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return;
+    }
+    try {
+      localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify({ formData, currentStep }));
+    } catch {
+      // Ignore localStorage errors (quota exceeded, etc.)
+    }
+  }, [formData, currentStep]);
 
   // Load existing profile data
   useEffect(() => {
@@ -199,6 +251,13 @@ export function EmployeeOnboardingClient() {
             qidUrl: data.qidUrl || null,
             passportCopyUrl: data.passportCopyUrl || null,
             photoUrl: data.photoUrl || null,
+            highestQualification: data.highestQualification || null,
+            specialization: data.specialization || null,
+            institutionName: data.institutionName || null,
+            graduationYear: data.graduationYear?.toString() || null,
+            languagesKnown: data.languagesKnown || '[]',
+            skillsCertifications: data.skillsCertifications || '[]',
+            licenseExpiry: data.licenseExpiry ? new Date(data.licenseExpiry).toISOString().split('T')[0] : null,
           }));
         }
       } catch {
@@ -282,6 +341,12 @@ export function EmployeeOnboardingClient() {
         // Validate home emergency phone if provided
         if (formData.homeEmergencyPhone && !VALIDATION_PATTERNS.phone.test(formData.homeEmergencyPhone)) {
           newErrors.homeEmergencyPhone = PATTERN_MESSAGES.phone;
+        }
+        // At least one emergency contact is required
+        const hasLocalEmergency = formData.localEmergencyName && formData.localEmergencyPhone;
+        const hasHomeEmergency = formData.homeEmergencyName && formData.homeEmergencyPhone;
+        if (!hasLocalEmergency && !hasHomeEmergency) {
+          newErrors.localEmergencyName = 'At least one emergency contact is required';
         }
         break;
       case 3:
@@ -397,6 +462,13 @@ export function EmployeeOnboardingClient() {
         throw new Error(data.error || 'Failed to complete onboarding');
       }
 
+      // Clear localStorage draft on successful completion
+      try {
+        localStorage.removeItem(LOCALSTORAGE_KEY);
+      } catch {
+        // Ignore localStorage errors
+      }
+
       // Redirect to dashboard
       router.push('/employee');
     } catch (err) {
@@ -493,6 +565,14 @@ export function EmployeeOnboardingClient() {
           />
         );
       case 5:
+        return (
+          <EducationSkillsStep
+            formData={formData}
+            updateField={updateField}
+            errors={errors}
+          />
+        );
+      case 6:
         return (
           <ReviewStep
             formData={formData}

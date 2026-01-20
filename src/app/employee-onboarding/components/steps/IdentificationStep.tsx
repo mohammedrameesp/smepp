@@ -6,11 +6,35 @@
  * @module employee-onboarding/steps
  */
 
-import { CreditCard } from 'lucide-react';
+import { CreditCard, AlertTriangle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+// Check if a date is in the past
+function isExpired(dateStr: string | null | undefined): boolean {
+  if (!dateStr) return false;
+  try {
+    const date = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date < today;
+  } catch {
+    return false;
+  }
+}
+
+// Expiry warning component
+function ExpiryWarning({ date, label }: { date: string | null | undefined; label: string }) {
+  if (!isExpired(date)) return null;
+  return (
+    <div className="flex items-center gap-1.5 text-amber-600 text-xs mt-1">
+      <AlertTriangle className="h-3 w-3" />
+      <span>{label} appears to be expired</span>
+    </div>
+  );
+}
 
 interface IdentificationStepProps {
   formData: Record<string, unknown>;
@@ -70,6 +94,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                 {errors.qidExpiry && (
                   <p className="text-sm text-red-600">{errors.qidExpiry}</p>
                 )}
+                <ExpiryWarning date={formData.qidExpiry as string} label="QID" />
               </div>
             </div>
           </CardContent>
@@ -105,6 +130,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                 {errors.passportExpiry && (
                   <p className="text-sm text-red-600">{errors.passportExpiry}</p>
                 )}
+                <ExpiryWarning date={formData.passportExpiry as string} label="Passport" />
               </div>
             </div>
           </CardContent>
@@ -123,6 +149,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                 onChange={(val) => updateField('healthCardExpiry', val)}
                 placeholder="DD/MM/YYYY"
               />
+              <ExpiryWarning date={formData.healthCardExpiry as string} label="Health Card" />
             </div>
           </CardContent>
         </Card>
