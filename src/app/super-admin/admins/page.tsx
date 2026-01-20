@@ -13,10 +13,12 @@ import {
   Loader2,
   Trash2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 interface SuperAdmin {
   id: string;
@@ -36,8 +38,12 @@ export default function SuperAdminsPage() {
   const [inviteName, setInviteName] = useState('');
   const [inviting, setInviting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Remove confirmation dialog state
+  const [showRemoveDialog, setShowRemoveDialog] = useState(false);
+  const [adminToRemove, setAdminToRemove] = useState<SuperAdmin | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   useEffect(() => {
     fetchAdmins();
@@ -60,7 +66,6 @@ export default function SuperAdminsPage() {
     e.preventDefault();
     setInviting(true);
     setError(null);
-    setSuccess(null);
 
     try {
       const response = await fetch('/api/super-admin/admins', {
@@ -75,25 +80,35 @@ export default function SuperAdminsPage() {
         throw new Error(data.error || 'Failed to invite admin');
       }
 
-      setSuccess(data.message);
+      toast.success(data.message);
       setInviteEmail('');
       setInviteName('');
       setShowInvite(false);
       fetchAdmins();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to invite admin');
+      toast.error(err instanceof Error ? err.message : 'Failed to invite admin');
     } finally {
       setInviting(false);
     }
   }
 
-  async function handleRemoveAdmin(adminId: string) {
-    if (!confirm('Are you sure you want to remove super admin privileges from this user?')) {
-      return;
-    }
+  function openRemoveDialog(admin: SuperAdmin) {
+    setAdminToRemove(admin);
+    setShowRemoveDialog(true);
+  }
+
+  function closeRemoveDialog() {
+    setShowRemoveDialog(false);
+    setAdminToRemove(null);
+  }
+
+  async function handleRemoveAdmin() {
+    if (!adminToRemove) return;
+
+    setRemoving(true);
 
     try {
-      const response = await fetch(`/api/super-admin/admins/${adminId}`, {
+      const response = await fetch(`/api/super-admin/admins/${adminToRemove.id}`, {
         method: 'DELETE',
       });
 
@@ -102,10 +117,13 @@ export default function SuperAdminsPage() {
         throw new Error(data.error || 'Failed to remove admin');
       }
 
-      setSuccess('Super admin privileges removed');
+      toast.success('Super admin privileges removed');
+      closeRemoveDialog();
       fetchAdmins();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove admin');
+      toast.error(err instanceof Error ? err.message : 'Failed to remove admin');
+    } finally {
+      setRemoving(false);
     }
   }
 
@@ -134,23 +152,13 @@ export default function SuperAdminsPage() {
         </Button>
       </div>
 
-      {/* Alerts */}
+      {/* Error Alert */}
       {error && (
         <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 flex items-center gap-3">
           <AlertCircle className="h-5 w-5 text-rose-600" />
           <p className="text-rose-800 text-sm">{error}</p>
           <button onClick={() => setError(null)} className="ml-auto p-1 hover:bg-rose-100 rounded">
             <X className="h-4 w-4 text-rose-600" />
-          </button>
-        </div>
-      )}
-
-      {success && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex items-center gap-3">
-          <CheckCircle className="h-5 w-5 text-emerald-600" />
-          <p className="text-emerald-800 text-sm">{success}</p>
-          <button onClick={() => setSuccess(null)} className="ml-auto p-1 hover:bg-emerald-100 rounded">
-            <X className="h-4 w-4 text-emerald-600" />
           </button>
         </div>
       )}
@@ -281,7 +289,7 @@ export default function SuperAdminsPage() {
                       <td className="px-4 lg:px-5 py-4">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleRemoveAdmin(admin.id)}
+                            onClick={() => openRemoveDialog(admin)}
                             className="p-1.5 hover:bg-rose-100 rounded-lg transition-colors text-rose-600"
                             title="Remove super admin privileges"
                           >
@@ -362,6 +370,63 @@ export default function SuperAdminsPage() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Confirmation Modal */}
+      {showRemoveDialog && adminToRemove && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={closeRemoveDialog} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">Remove Super Admin</h2>
+              <button onClick={closeRemoveDialog} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                <X className="h-5 w-5 text-slate-400" />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="h-6 w-6 text-rose-600" />
+                </div>
+                <div>
+                  <p className="text-slate-900 font-medium mb-2">
+                    Remove super admin privileges?
+                  </p>
+                  <p className="text-slate-600 text-sm">
+                    You are about to remove super admin privileges from{' '}
+                    <span className="font-medium text-slate-900">
+                      {adminToRemove.name || adminToRemove.email}
+                    </span>
+                    . They will no longer be able to access the platform admin dashboard.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50">
+              <Button type="button" variant="outline" onClick={closeRemoveDialog} disabled={removing}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleRemoveAdmin}
+                disabled={removing}
+                className="bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                {removing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Removing...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Remove Admin
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}

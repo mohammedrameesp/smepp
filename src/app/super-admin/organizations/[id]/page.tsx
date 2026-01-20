@@ -264,6 +264,8 @@ export default function OrganizationDetailPage() {
   const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
+  const [clearEmailConfigDialogOpen, setClearEmailConfigDialogOpen] = useState(false);
+  const [clearingEmailConfig, setClearingEmailConfig] = useState(false);
 
   // AI Chat toggle state
   const [togglingAiChat, setTogglingAiChat] = useState(false);
@@ -2347,26 +2349,7 @@ export default function OrganizationDetailPage() {
                     <Button
                       variant="destructive"
                       size="icon"
-                      onClick={async () => {
-                        if (!confirm('Clear email configuration?')) return;
-                        try {
-                          const response = await fetch(`/api/super-admin/organizations/${orgId}/email-config`, {
-                            method: 'DELETE',
-                          });
-                          if (!response.ok) throw new Error('Failed to clear');
-                          setEmailConfig(null);
-                          setSmtpHost('');
-                          setSmtpPort('587');
-                          setSmtpUser('');
-                          setSmtpPassword('');
-                          setEmailFrom('');
-                          setEmailName('');
-                          setEmailSuccess('Email configuration cleared');
-                          setTimeout(() => setEmailSuccess(null), 3000);
-                        } catch (err) {
-                          setEmailError(err instanceof Error ? err.message : 'Failed to clear');
-                        }
-                      }}
+                      onClick={() => setClearEmailConfigDialogOpen(true)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -2864,6 +2847,64 @@ export default function OrganizationDetailPage() {
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Organization
                 </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Clear Email Config Confirmation Dialog */}
+      <Dialog open={clearEmailConfigDialogOpen} onOpenChange={setClearEmailConfigDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Clear Email Configuration</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to clear the custom email configuration? This organization will
+              use the platform&apos;s default email settings instead.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setClearEmailConfigDialogOpen(false)}
+              disabled={clearingEmailConfig}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                setClearingEmailConfig(true);
+                try {
+                  const response = await fetch(`/api/super-admin/organizations/${orgId}/email-config`, {
+                    method: 'DELETE',
+                  });
+                  if (!response.ok) throw new Error('Failed to clear');
+                  setEmailConfig(null);
+                  setSmtpHost('');
+                  setSmtpPort('587');
+                  setSmtpUser('');
+                  setSmtpPassword('');
+                  setEmailFrom('');
+                  setEmailName('');
+                  setEmailSuccess('Email configuration cleared');
+                  setTimeout(() => setEmailSuccess(null), 3000);
+                  setClearEmailConfigDialogOpen(false);
+                } catch (err) {
+                  setEmailError(err instanceof Error ? err.message : 'Failed to clear');
+                } finally {
+                  setClearingEmailConfig(false);
+                }
+              }}
+              disabled={clearingEmailConfig}
+            >
+              {clearingEmailConfig ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Clearing...
+                </>
+              ) : (
+                'Clear Configuration'
               )}
             </Button>
           </DialogFooter>
