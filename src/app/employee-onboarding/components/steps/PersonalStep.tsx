@@ -102,13 +102,15 @@ export function PersonalStep({ formData, updateField, errors }: PersonalStepProp
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="maritalStatus">Marital Status</Label>
+            <Label htmlFor="maritalStatus">
+              Marital Status <span className="text-red-500">*</span>
+            </Label>
             <Select
               value={(formData.maritalStatus as string) || ''}
               onValueChange={(val) => updateField('maritalStatus', val)}
             >
               <SelectTrigger id="maritalStatus">
-                <SelectValue placeholder="Select status (optional)" />
+                <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
                 {MARITAL_STATUS.map((s) => (
@@ -116,6 +118,9 @@ export function PersonalStep({ formData, updateField, errors }: PersonalStepProp
                 ))}
               </SelectContent>
             </Select>
+            {errors.maritalStatus && (
+              <p className="text-sm text-red-600">{errors.maritalStatus}</p>
+            )}
           </div>
         </div>
       </div>

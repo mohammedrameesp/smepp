@@ -69,7 +69,9 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
 
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="personalEmail">Personal Email</Label>
+                <Label htmlFor="personalEmail">
+                  Personal Email <span className="text-red-500">*</span>
+                </Label>
                 <Input
                   id="personalEmail"
                   type="email"
@@ -95,11 +97,12 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
               <Label className="text-sm text-slate-700 mb-2 block">Qatar Address</Label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs text-slate-500">Zone</Label>
+                  <Label className="text-xs text-slate-500">Zone <span className="text-red-500">*</span></Label>
                   <Input
                     value={(formData.qatarZone as string) || ''}
                     onChange={(e) => updateField('qatarZone', e.target.value)}
                     placeholder="45"
+                    className={errors.qatarZone ? 'border-red-500' : ''}
                   />
                 </div>
                 <div className="space-y-1">

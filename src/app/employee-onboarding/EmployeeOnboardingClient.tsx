@@ -319,6 +319,7 @@ export function EmployeeOnboardingClient() {
         if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
         if (!formData.gender) newErrors.gender = 'Gender is required';
         if (!formData.nationality) newErrors.nationality = 'Nationality is required';
+        if (!formData.maritalStatus) newErrors.maritalStatus = 'Marital status is required';
         break;
       case 2:
         if (!formData.qatarMobile) {
@@ -330,9 +331,15 @@ export function EmployeeOnboardingClient() {
         if (formData.otherMobileNumber && !VALIDATION_PATTERNS.mobile.test(formData.otherMobileNumber)) {
           newErrors.otherMobileNumber = PATTERN_MESSAGES.mobile;
         }
-        // Validate personal email if provided
-        if (formData.personalEmail && !VALIDATION_PATTERNS.email.test(formData.personalEmail)) {
+        // Personal email is required
+        if (!formData.personalEmail) {
+          newErrors.personalEmail = 'Personal email is required';
+        } else if (!VALIDATION_PATTERNS.email.test(formData.personalEmail)) {
           newErrors.personalEmail = PATTERN_MESSAGES.email;
+        }
+        // Qatar zone is required
+        if (!formData.qatarZone) {
+          newErrors.qatarZone = 'Qatar zone is required';
         }
         // Validate local emergency phone if provided
         if (formData.localEmergencyPhone && !VALIDATION_PATTERNS.phone.test(formData.localEmergencyPhone)) {
@@ -374,6 +381,8 @@ export function EmployeeOnboardingClient() {
             newErrors.iban = PATTERN_MESSAGES.iban;
           }
         }
+        // Photo is required
+        if (!formData.photoUrl) newErrors.photoUrl = 'Profile photo is required';
         break;
     }
 

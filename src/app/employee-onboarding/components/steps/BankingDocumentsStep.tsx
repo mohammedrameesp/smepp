@@ -117,19 +117,19 @@ export function BankingDocumentsStep({ formData, updateField, errors }: BankingD
           </CardContent>
         </Card>
 
-        {/* Optional Photo */}
-        <Card className="border-dashed">
+        {/* Profile Photo */}
+        <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base text-slate-600">Profile Photo (Optional)</CardTitle>
+            <CardTitle className="text-base">Profile Photo <span className="text-red-500">*</span></CardTitle>
           </CardHeader>
           <CardContent>
             <DocumentUpload
               id="photo"
-              label="Passport-size Photo"
+              label="Passport-size Photo *"
               value={(formData.photoUrl as string) || ''}
               onChange={(url) => updateField('photoUrl', url)}
               accept="image/jpeg,image/png"
-              description="Professional headshot"
+              description="Professional headshot for ID badge"
             />
           </CardContent>
         </Card>
