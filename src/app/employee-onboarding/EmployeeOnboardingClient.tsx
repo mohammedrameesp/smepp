@@ -21,6 +21,7 @@ import { IdentificationStep } from './components/steps/IdentificationStep';
 import { BankingDocumentsStep } from './components/steps/BankingDocumentsStep';
 import { ReviewStep } from './components/steps/ReviewStep';
 import { COUNTRY_CODES } from '@/lib/data/constants';
+import { VALIDATION_PATTERNS, PATTERN_MESSAGES } from '@/lib/validations/patterns';
 
 /**
  * Get the phone country code for a given nationality.
@@ -250,7 +251,7 @@ export function EmployeeOnboardingClient() {
     });
   }, []);
 
-  // Validate current step
+  // Validate current step (required fields + format validation)
   const validateStep = useCallback(() => {
     const newErrors: Record<string, string> = {};
 
@@ -261,17 +262,53 @@ export function EmployeeOnboardingClient() {
         if (!formData.nationality) newErrors.nationality = 'Nationality is required';
         break;
       case 2:
-        if (!formData.qatarMobile) newErrors.qatarMobile = 'Qatar mobile is required';
+        if (!formData.qatarMobile) {
+          newErrors.qatarMobile = 'Qatar mobile is required';
+        } else if (!VALIDATION_PATTERNS.qatarMobile.test(formData.qatarMobile)) {
+          newErrors.qatarMobile = PATTERN_MESSAGES.qatarMobile;
+        }
+        // Validate other mobile if provided
+        if (formData.otherMobileNumber && !VALIDATION_PATTERNS.mobile.test(formData.otherMobileNumber)) {
+          newErrors.otherMobileNumber = PATTERN_MESSAGES.mobile;
+        }
+        // Validate personal email if provided
+        if (formData.personalEmail && !VALIDATION_PATTERNS.email.test(formData.personalEmail)) {
+          newErrors.personalEmail = PATTERN_MESSAGES.email;
+        }
+        // Validate local emergency phone if provided
+        if (formData.localEmergencyPhone && !VALIDATION_PATTERNS.phone.test(formData.localEmergencyPhone)) {
+          newErrors.localEmergencyPhone = PATTERN_MESSAGES.phone;
+        }
+        // Validate home emergency phone if provided
+        if (formData.homeEmergencyPhone && !VALIDATION_PATTERNS.phone.test(formData.homeEmergencyPhone)) {
+          newErrors.homeEmergencyPhone = PATTERN_MESSAGES.phone;
+        }
         break;
       case 3:
-        if (!formData.qidNumber) newErrors.qidNumber = 'QID number is required';
+        if (!formData.qidNumber) {
+          newErrors.qidNumber = 'QID number is required';
+        } else if (!VALIDATION_PATTERNS.qatarId.test(formData.qidNumber)) {
+          newErrors.qidNumber = PATTERN_MESSAGES.qatarId;
+        }
         if (!formData.qidExpiry) newErrors.qidExpiry = 'QID expiry is required';
-        if (!formData.passportNumber) newErrors.passportNumber = 'Passport number is required';
+        if (!formData.passportNumber) {
+          newErrors.passportNumber = 'Passport number is required';
+        } else if (!VALIDATION_PATTERNS.passport.test(formData.passportNumber)) {
+          newErrors.passportNumber = PATTERN_MESSAGES.passport;
+        }
         if (!formData.passportExpiry) newErrors.passportExpiry = 'Passport expiry is required';
         break;
       case 4:
         if (!formData.bankName) newErrors.bankName = 'Bank name is required';
-        if (!formData.iban) newErrors.iban = 'IBAN is required';
+        if (!formData.iban) {
+          newErrors.iban = 'IBAN is required';
+        } else {
+          // Clean IBAN (remove spaces) and validate
+          const cleanedIban = formData.iban.replace(/\s/g, '');
+          if (!VALIDATION_PATTERNS.iban.test(cleanedIban)) {
+            newErrors.iban = PATTERN_MESSAGES.iban;
+          }
+        }
         break;
     }
 
@@ -293,6 +330,23 @@ export function EmployeeOnboardingClient() {
 
       if (!response.ok) {
         const data = await response.json();
+
+        // Map API validation errors to field-specific errors
+        if (data.details && Array.isArray(data.details)) {
+          const fieldErrors: Record<string, string> = {};
+          for (const detail of data.details) {
+            // API returns path as array like ['iban'] or string
+            const fieldName = Array.isArray(detail.path) ? detail.path[0] : detail.path;
+            if (fieldName) {
+              fieldErrors[fieldName] = detail.message;
+            }
+          }
+          if (Object.keys(fieldErrors).length > 0) {
+            setErrors((prev) => ({ ...prev, ...fieldErrors }));
+            return false;
+          }
+        }
+
         throw new Error(data.error || 'Failed to save');
       }
     } catch (err) {
