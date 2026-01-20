@@ -20,6 +20,12 @@ async function main() {
   await prisma.teamMember.deleteMany();
   await prisma.organization.deleteMany();
 
+  // Clean up non-super-admin users (old seed data)
+  // Preserve manually created super admins
+  await prisma.user.deleteMany({
+    where: { isSuperAdmin: false },
+  });
+
   console.log('✅ Cleared existing data');
 
   // Create or update super admin user (platform-level)
