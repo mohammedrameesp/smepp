@@ -792,7 +792,8 @@ model TeamMember {
   aiChatAuditLogs   AIChatAuditLog[]
 
   // WhatsApp
-  whatsAppPhone WhatsAppUserPhone?
+  whatsAppPhone                WhatsAppUserPhone?
+  whatsAppPromptSnoozedUntil   DateTime?           // User clicked "Remind me later"
 
   // Profile change requests
   changeRequests ProfileChangeRequest[]

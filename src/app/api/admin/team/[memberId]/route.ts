@@ -5,6 +5,7 @@ import { prisma } from '@/lib/core/prisma';
 import { z } from 'zod';
 import { TeamMemberStatus } from '@prisma/client';
 import logger from '@/lib/core/log';
+import { clearWhatsAppPromptSnooze } from '@/lib/utils/whatsapp-verification-check';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PATCH /api/admin/team/[memberId] - Update member permissions
@@ -51,6 +52,12 @@ export async function PATCH(
     // Check member exists and belongs to org
     const member = await prisma.teamMember.findUnique({
       where: { id: memberId },
+      select: {
+        id: true,
+        tenantId: true,
+        isAdmin: true,
+        canApprove: true,
+      },
     });
 
     if (!member || member.tenantId !== session.user.organizationId) {
@@ -91,6 +98,13 @@ export async function PATCH(
       updateData.permissionsUpdatedAt = new Date();
     }
 
+    // Check if member is being promoted to an eligible role for WhatsApp verification
+    const wasEligible = member.isAdmin || member.canApprove;
+    const willBeAdmin = updateData.isAdmin ?? member.isAdmin;
+    const willCanApprove = updateData.canApprove ?? member.canApprove;
+    const willBeEligible = willBeAdmin || willCanApprove;
+    const isBeingPromoted = !wasEligible && willBeEligible;
+
     // Update permissions
     const updated = await prisma.teamMember.update({
       where: { id: memberId },
@@ -107,6 +121,28 @@ export async function PATCH(
         isOwner: true,
       },
     });
+
+    // If user is being promoted to an eligible role, check if org has WhatsApp enabled
+    // and clear their snooze so they'll be prompted to verify their number
+    if (isBeingPromoted) {
+      const org = await prisma.organization.findUnique({
+        where: { id: session.user.organizationId },
+        select: { whatsAppSource: true },
+      });
+
+      if (org && org.whatsAppSource !== 'NONE') {
+        // Check if user is already verified
+        const whatsAppPhone = await prisma.whatsAppUserPhone.findUnique({
+          where: { memberId },
+          select: { isVerified: true },
+        });
+
+        if (!whatsAppPhone?.isVerified) {
+          // Clear snooze so they'll see the prompt on next login
+          await clearWhatsAppPromptSnooze(memberId);
+        }
+      }
+    }
 
     return NextResponse.json({
       member: {

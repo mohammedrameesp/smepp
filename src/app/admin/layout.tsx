@@ -5,6 +5,7 @@ import { unstable_noStore as noStore } from 'next/cache';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import { AdminLayoutClient } from './layout-client';
+import { checkWhatsAppVerificationNeeded } from '@/lib/utils/whatsapp-verification-check';
 import type { Metadata } from 'next';
 
 // Force dynamic rendering to prevent caching issues
@@ -131,11 +132,18 @@ export default async function AdminLayout({
     pendingApprovals: 0,
   };
   let orgSettings = { enabledModules: ['assets', 'subscriptions', 'suppliers'], aiChatEnabled: false };
+  let whatsAppVerification = {
+    needsVerification: false,
+    phoneNumber: null as string | null,
+    countryCode: null as string | null,
+  };
 
   if (tenantId) {
-    const [fetchedBadgeCounts, fetchedOrgSettings] = await Promise.all([
+    const userId = session?.user?.id;
+    const [fetchedBadgeCounts, fetchedOrgSettings, fetchedWhatsAppVerification] = await Promise.all([
       getBadgeCounts(tenantId),
       getOrgSettings(tenantId),
+      userId ? checkWhatsAppVerificationNeeded(tenantId, userId) : Promise.resolve(null),
     ]);
 
     // Check if organization still exists
@@ -146,6 +154,14 @@ export default async function AdminLayout({
 
     badgeCounts = fetchedBadgeCounts;
     orgSettings = fetchedOrgSettings;
+
+    if (fetchedWhatsAppVerification) {
+      whatsAppVerification = {
+        needsVerification: fetchedWhatsAppVerification.needsVerification,
+        phoneNumber: fetchedWhatsAppVerification.phoneNumber,
+        countryCode: fetchedWhatsAppVerification.countryCode,
+      };
+    }
   }
 
   return (
@@ -158,6 +174,7 @@ export default async function AdminLayout({
       hasFinanceAccess={session?.user?.hasFinanceAccess}
       hasHRAccess={session?.user?.hasHRAccess}
       hasOperationsAccess={session?.user?.hasOperationsAccess}
+      whatsAppVerification={whatsAppVerification}
     >
       {children}
     </AdminLayoutClient>

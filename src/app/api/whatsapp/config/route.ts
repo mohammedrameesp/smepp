@@ -16,6 +16,7 @@ import {
   WhatsAppClient,
   updateTenantWhatsAppSource,
 } from '@/lib/whatsapp';
+import { clearAllWhatsAppPromptSnoozes } from '@/lib/utils/whatsapp-verification-check';
 
 // Validation schema for config input
 const configSchema = z.object({
@@ -218,6 +219,7 @@ export const PATCH = withErrorHandler(async (request: NextRequest, { tenant }) =
     prisma.organization.findUnique({
       where: { id: tenant.tenantId },
       select: {
+        whatsAppSource: true,
         whatsAppPlatformEnabled: true,
         whatsAppConfig: { select: { isActive: true } },
       },
@@ -256,12 +258,26 @@ export const PATCH = withErrorHandler(async (request: NextRequest, { tenant }) =
     );
   }
 
+  // Check if this is first time enabling WhatsApp (transitioning from NONE)
+  const wasDisabled = org.whatsAppSource === 'NONE';
+  const isEnabling = source !== 'NONE';
+
   // Update the source
   await updateTenantWhatsAppSource(tenant.tenantId, source);
+
+  // If enabling WhatsApp for the first time, clear snoozes for all eligible users
+  // so they'll see the verification prompt on their next login
+  let eligibleUsersNotified = 0;
+  if (wasDisabled && isEnabling) {
+    eligibleUsersNotified = await clearAllWhatsAppPromptSnoozes(tenant.tenantId);
+  }
 
   return NextResponse.json({
     success: true,
     message: `WhatsApp source updated to ${source}`,
     source,
+    ...(eligibleUsersNotified > 0 && {
+      notification: `${eligibleUsersNotified} eligible users will be prompted to verify their WhatsApp number.`,
+    }),
   });
 }, { requireAuth: true, requireAdmin: true });

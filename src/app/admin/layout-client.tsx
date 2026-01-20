@@ -8,6 +8,7 @@ import { ImpersonationHandler, ImpersonationBanner } from '@/components/imperson
 import { AdminTopNav } from '@/components/layout/admin-top-nav';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { CommandPalette } from '@/components/layout/command-palette';
+import { WhatsAppVerificationDialog } from '@/components/ui/whatsapp-verification-dialog';
 
 // Lazy load ChatWidget - only loaded when AI chat is enabled
 // This saves 50-200KB from the initial JS bundle
@@ -15,6 +16,12 @@ const ChatWidget = dynamic(
   () => import('@/components/chat/chat-widget').then(mod => ({ default: mod.ChatWidget })),
   { ssr: false, loading: () => null }
 );
+
+interface WhatsAppVerificationData {
+  needsVerification: boolean;
+  phoneNumber: string | null;
+  countryCode: string | null;
+}
 
 interface AdminLayoutClientProps {
   children: React.ReactNode;
@@ -26,6 +33,7 @@ interface AdminLayoutClientProps {
   hasFinanceAccess?: boolean;
   hasHRAccess?: boolean;
   hasOperationsAccess?: boolean;
+  whatsAppVerification?: WhatsAppVerificationData;
 }
 
 export function AdminLayoutClient({
@@ -38,8 +46,12 @@ export function AdminLayoutClient({
   hasFinanceAccess = false,
   hasHRAccess = false,
   hasOperationsAccess = false,
+  whatsAppVerification,
 }: AdminLayoutClientProps) {
   const [commandPaletteOpen, setCommandPaletteOpen] = React.useState(false);
+  const [showWhatsAppDialog, setShowWhatsAppDialog] = React.useState(
+    whatsAppVerification?.needsVerification ?? false
+  );
 
   // Keyboard shortcut for command palette (Cmd/Ctrl + K)
   React.useEffect(() => {
@@ -101,6 +113,16 @@ export function AdminLayoutClient({
 
       {/* AI Chat Widget - only shown if enabled for organization */}
       {aiChatEnabled && <ChatWidget />}
+
+      {/* WhatsApp Verification Dialog - shown for eligible users who haven't verified */}
+      {showWhatsAppDialog && whatsAppVerification && (
+        <WhatsAppVerificationDialog
+          phoneNumber={whatsAppVerification.phoneNumber}
+          countryCode={whatsAppVerification.countryCode}
+          onVerified={() => setShowWhatsAppDialog(false)}
+          onSnoozed={() => setShowWhatsAppDialog(false)}
+        />
+      )}
     </>
   );
 }
