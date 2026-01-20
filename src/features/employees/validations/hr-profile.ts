@@ -128,6 +128,7 @@ export const hrProfileSchema = z.object({
   // Employment Information
   employeeId: optionalString(),
   designation: optionalString(),
+  department: optionalString(),
   dateOfJoining: optionalDateString,
 
   // Bank & Payroll

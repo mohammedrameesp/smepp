@@ -42,6 +42,7 @@ export async function GET() {
         isEmployee: true,
         employeeCode: true,
         designation: true,
+        department: true,
         setupToken: true, // For credentials pending detection
         passwordHash: true, // For credentials pending detection
       },
@@ -136,6 +137,7 @@ export async function GET() {
         isEmployee: m.isEmployee,
         employeeCode: m.employeeCode,
         designation: m.designation,
+        department: m.department,
         pendingStatus,
         user: {
           id: m.id,

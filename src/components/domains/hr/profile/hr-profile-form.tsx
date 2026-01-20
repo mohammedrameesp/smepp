@@ -138,6 +138,7 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
       sponsorshipType: initialData?.sponsorshipType || '',
       employeeId: initialData?.employeeId || '',
       designation: initialData?.designation || '',
+      department: initialData?.department || '',
       dateOfJoining: formatDateForPicker(initialData?.dateOfJoining),
       bankName: initialData?.bankName || '',
       iban: initialData?.iban || '',
@@ -662,6 +663,15 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
               id="designation"
               {...register('designation')}
               placeholder="e.g., Software Engineer"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="department">Department</Label>
+            <Input
+              id="department"
+              {...register('department')}
+              placeholder="e.g., Engineering, Sales"
             />
           </div>
 

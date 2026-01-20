@@ -95,6 +95,8 @@ export const createUserSchema = z.object({
   employeeId: z.string().max(50, 'Employee code must be less than 50 characters').optional(),
   /** Job title/designation (max 100 chars) */
   designation: z.string().max(100, 'Designation must be less than 100 characters').optional(),
+  /** Department/team (max 100 chars) */
+  department: z.string().max(100, 'Department must be less than 100 characters').optional(),
   /** Is this user an employee (appears in HR/payroll)? */
   isEmployee: z.boolean().default(true),
   /** Can this user authenticate to the system? */

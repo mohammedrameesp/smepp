@@ -60,6 +60,7 @@ interface HRProfileData {
   sponsorshipType: string | null;
   employeeId: string | null;
   designation: string | null;
+  department: string | null;
   dateOfJoining: string | null;
   bankName: string | null;
   iban: string | null;

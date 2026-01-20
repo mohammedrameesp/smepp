@@ -60,6 +60,7 @@ interface TeamMemberWithHR {
   sponsorshipType: string | null;
   employeeCode: string | null;
   designation: string | null;
+  department: string | null;
   dateOfJoining: Date | null;
   bankName: string | null;
   iban: string | null;
@@ -276,9 +277,10 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
           </div>
         </CardHeader>
         <CardContent>
-          <dl className="grid md:grid-cols-3 gap-4">
+          <dl className="grid md:grid-cols-4 gap-4">
             <InfoRow label="Employee ID" value={hr.employeeCode} />
             <InfoRow label="Designation" value={hr.designation} />
+            <InfoRow label="Department" value={hr.department} />
             <InfoRow label="Date of Joining" value={hr.dateOfJoining ? formatDate(hr.dateOfJoining) : null} />
           </dl>
         </CardContent>

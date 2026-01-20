@@ -76,6 +76,7 @@ export default function NewEmployeePage() {
       role: 'EMPLOYEE',
       employeeId: '',
       designation: '',
+      department: '',
       isEmployee: true,
       canLogin: true,
       isOnWps: true,
@@ -412,19 +413,34 @@ export default function NewEmployeePage() {
                     </p>
                   </div>
 
-                  {/* Designation */}
-                  <div className="space-y-2">
-                    <Label htmlFor="designation">Designation</Label>
-                    <Input
-                      id="designation"
-                      type="text"
-                      {...register('designation')}
-                      placeholder="e.g. Software Engineer, Project Manager"
-                      className={errors.designation ? 'border-red-500' : ''}
-                    />
-                    {errors.designation && (
-                      <p className="text-sm text-red-500">{errors.designation.message}</p>
-                    )}
+                  {/* Designation & Department */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="designation">Designation</Label>
+                      <Input
+                        id="designation"
+                        type="text"
+                        {...register('designation')}
+                        placeholder="e.g. Software Engineer"
+                        className={errors.designation ? 'border-red-500' : ''}
+                      />
+                      {errors.designation && (
+                        <p className="text-sm text-red-500">{errors.designation.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="department">Department</Label>
+                      <Input
+                        id="department"
+                        type="text"
+                        {...register('department')}
+                        placeholder="e.g. Engineering, Sales"
+                        className={errors.department ? 'border-red-500' : ''}
+                      />
+                      {errors.department && (
+                        <p className="text-sm text-red-500">{errors.department.message}</p>
+                      )}
+                    </div>
                   </div>
 
                   {/* WPS Checkbox - only show if payroll module is enabled */}

@@ -58,6 +58,7 @@ interface Member {
   isEmployee: boolean;
   employeeCode: string | null;
   designation: string | null;
+  department: string | null;
   pendingStatus: PendingStatus | null;
   user: {
     id: string;
@@ -449,6 +450,13 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                           {roleIcons[member.role]}
                         </div>
                         <p className="text-sm text-muted-foreground">{member.user.email}</p>
+                        {(member.designation || member.department) && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {member.designation}
+                            {member.designation && member.department && ' · '}
+                            {member.department}
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -607,8 +615,12 @@ export function TeamClient({ initialStats }: TeamClientProps) {
                       <p className="text-sm text-muted-foreground">{member.user.email}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="secondary">{member.role}</Badge>
-                        {member.designation && (
-                          <span className="text-xs text-muted-foreground">{member.designation}</span>
+                        {(member.designation || member.department) && (
+                          <span className="text-xs text-muted-foreground">
+                            {member.designation}
+                            {member.designation && member.department && ' · '}
+                            {member.department}
+                          </span>
                         )}
                         {member.pendingStatus?.isExpired ? (
                           <span className="text-xs text-red-600 flex items-center gap-1">
