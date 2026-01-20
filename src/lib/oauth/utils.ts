@@ -10,6 +10,9 @@ import { prisma } from '@/lib/core/prisma';
 import { encode } from 'next-auth/jwt';
 import { isAccountLocked, clearFailedLogins, isTeamMemberLocked, clearTeamMemberFailedLogins } from '@/lib/security/account-lockout';
 import logger from '@/lib/core/log';
+import { createBulkNotifications } from '@/features/notifications/lib/notification-service';
+import { sendEmail } from '@/lib/core/email';
+import { emailWrapper, getTenantPortalUrl, escapeHtml } from '@/lib/core/email-utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENCRYPTION CONFIGURATION
@@ -202,6 +205,120 @@ interface OAuthUserInfo {
 }
 
 /**
+ * Notify HR users (or admins as fallback) when a new team member joins via SSO
+ * This is non-blocking - failures are logged but don't break the login flow
+ */
+async function notifyHROfNewMember(
+  newMember: { id: string; name: string | null; email: string },
+  orgId: string,
+  provider: 'google' | 'azure'
+): Promise<void> {
+  try {
+    // First, try to find users with HR access
+    let recipients = await prisma.teamMember.findMany({
+      where: {
+        tenantId: orgId,
+        hasHRAccess: true,
+        isDeleted: false,
+        canLogin: true,
+        id: { not: newMember.id }, // Don't notify the new member themselves
+      },
+      select: { id: true, email: true, name: true },
+    });
+
+    // If no HR users, fallback to admins
+    if (recipients.length === 0) {
+      recipients = await prisma.teamMember.findMany({
+        where: {
+          tenantId: orgId,
+          isAdmin: true,
+          isDeleted: false,
+          canLogin: true,
+          id: { not: newMember.id },
+        },
+        select: { id: true, email: true, name: true },
+      });
+    }
+
+    if (recipients.length === 0) {
+      logger.warn({ orgId }, 'No HR users or admins found to notify about new SSO signup');
+      return;
+    }
+
+    // Get organization info for email
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { name: true, slug: true, primaryColor: true },
+    });
+
+    const memberName = escapeHtml(newMember.name || newMember.email);
+    const profileUrl = getTenantPortalUrl(org?.slug || 'app', `/admin/employees/${newMember.id}`);
+    const providerName = provider === 'google' ? 'Google' : 'Microsoft';
+
+    // Create in-app notifications
+    const notifications = recipients.map((recipient) => ({
+      recipientId: recipient.id,
+      type: 'TEAM_MEMBER_JOINED' as const,
+      title: 'New Team Member Joined',
+      message: `${memberName} has joined via ${providerName} SSO. Review their profile and assign an employee code.`,
+      link: `/admin/employees/${newMember.id}`,
+      entityType: 'TeamMember',
+      entityId: newMember.id,
+    }));
+
+    await createBulkNotifications(notifications, orgId);
+
+    // Send email notifications
+    const emailContent = `
+      <h2 style="color: #333333; margin: 0 0 20px 0; font-size: 20px;">New Team Member Joined</h2>
+      <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+        <strong>${memberName}</strong> (${newMember.email}) has joined your organization via ${providerName} SSO.
+      </p>
+      <p style="color: #555555; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">
+        Please review their profile and:
+      </p>
+      <ul style="color: #555555; font-size: 16px; line-height: 1.8; margin: 0 0 20px 0;">
+        <li>Assign an employee code</li>
+        <li>Set their department and designation</li>
+        <li>Configure their access permissions</li>
+      </ul>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 25px 0;">
+        <tr>
+          <td align="center">
+            <a href="${profileUrl}" style="display: inline-block; padding: 14px 30px; background-color: ${org?.primaryColor || '#0f172a'}; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">
+              View Profile
+            </a>
+          </td>
+        </tr>
+      </table>
+    `;
+
+    const orgName = org?.name || 'Your Organization';
+    for (const recipient of recipients) {
+      sendEmail({
+        to: recipient.email,
+        subject: `[HR] New team member joined: ${memberName}`,
+        html: emailWrapper(emailContent, orgName, org?.primaryColor || undefined),
+        text: `${memberName} (${newMember.email}) has joined via ${providerName} SSO. Review their profile at ${profileUrl}`,
+      }).catch((err) => {
+        logger.error({ error: String(err), recipientId: recipient.id }, 'Failed to send new member notification email');
+      });
+    }
+
+    logger.info({
+      event: 'NEW_MEMBER_NOTIFICATION_SENT',
+      newMemberId: newMember.id,
+      recipientCount: recipients.length,
+      orgId,
+    }, 'Notified HR/admins of new SSO signup');
+
+  } catch (error) {
+    // Non-blocking - log error but don't fail the login
+    logger.error({ error: String(error), orgId, newMemberId: newMember.id }, 'Failed to notify HR of new member');
+  }
+}
+
+/**
  * OAuth security validation result
  */
 export interface OAuthSecurityCheckResult {
@@ -364,14 +481,24 @@ export async function upsertOAuthUser(userInfo: OAuthUserInfo, orgId: string | n
         },
       });
 
+      // Determine provider from OAuth image URL
+      const provider = userInfo.image?.includes('google') ? 'google' : 'azure';
+
       // AUDIT: Log new OAuth account creation
       logger.info({
         event: 'OAUTH_ACCOUNT_CREATED',
         teamMemberId: teamMember.id,
         email: normalizedEmail,
         orgId,
-        provider: userInfo.image?.includes('google') ? 'google' : 'azure',
+        provider,
       }, 'New OAuth account created for TeamMember');
+
+      // Notify HR/admins about new SSO signup (non-blocking)
+      notifyHROfNewMember(
+        { id: teamMember.id, name: teamMember.name, email: teamMember.email },
+        orgId,
+        provider as 'google' | 'azure'
+      ).catch(() => {}); // Fire and forget
     } else {
       // SECURITY AUDIT: Log OAuth login to existing account
       // This helps detect potential account takeover attempts
@@ -507,6 +634,7 @@ export async function createTeamMemberSessionToken(memberId: string): Promise<st
     teamMemberRole: computedRole,
     isOwner: teamMember.isOwner,
     isEmployee: teamMember.isEmployee,
+    onboardingComplete: teamMember.onboardingComplete ?? false,
     isAdmin: teamMember.isAdmin,
     organizationId: teamMember.tenantId,
     organizationSlug: teamMember.tenant.slug,

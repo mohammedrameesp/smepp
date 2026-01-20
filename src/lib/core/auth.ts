@@ -132,6 +132,7 @@ providers.push(
           lockedUntil: true,
           isOwner: true,
           isEmployee: true,
+          onboardingComplete: true,
           // New boolean permission flags
           isAdmin: true,
           hasOperationsAccess: true,
@@ -366,6 +367,7 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
   organization: OrganizationInfo;
   isOwner: boolean;
   isEmployee: boolean;
+  onboardingComplete: boolean;
   isAdmin: boolean;
   hasOperationsAccess: boolean;
   hasHRAccess: boolean;
@@ -378,6 +380,7 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
     select: {
       isOwner: true,
       isEmployee: true,
+      onboardingComplete: true,
       isAdmin: true,
       hasOperationsAccess: true,
       hasHRAccess: true,
@@ -414,6 +417,7 @@ async function getTeamMemberOrganization(memberId: string): Promise<{
     },
     isOwner: member.isOwner,
     isEmployee: member.isEmployee,
+    onboardingComplete: member.onboardingComplete ?? false,
     isAdmin: member.isAdmin,
     hasOperationsAccess: member.hasOperationsAccess,
     hasHRAccess: member.hasHRAccess,
@@ -638,6 +642,7 @@ export const authOptions: NextAuthOptions = {
                 canApprove: true,
                 permissionsUpdatedAt: true,
                 isEmployee: true,
+                onboardingComplete: true,
               },
             });
 
@@ -663,6 +668,7 @@ export const authOptions: NextAuthOptions = {
               token.hasOperationsAccess = securityCheck.hasOperationsAccess;
               token.canApprove = securityCheck.canApprove;
               token.isEmployee = securityCheck.isEmployee;
+              token.onboardingComplete = securityCheck.onboardingComplete ?? false;
               token.permissionsUpdatedAt = securityCheck.permissionsUpdatedAt?.toISOString() || null;
             }
           } else {
@@ -706,6 +712,7 @@ export const authOptions: NextAuthOptions = {
             const userData = user as unknown as Record<string, unknown>;
             token.isOwner = userData.isOwner as boolean;
             token.isEmployee = userData.isEmployee as boolean;
+            token.onboardingComplete = (userData.onboardingComplete as boolean) ?? false;
             // Permission flags (new boolean-based system)
             token.isAdmin = userData.isAdmin as boolean;
             token.hasOperationsAccess = userData.hasOperationsAccess as boolean;
@@ -735,9 +742,11 @@ export const authOptions: NextAuthOptions = {
               // isEmployee is now on TeamMember, not User
               // Super admins are not employees (they're platform admins)
               token.isEmployee = false;
+              token.onboardingComplete = true; // Super admins don't need onboarding
             } else {
               token.isSuperAdmin = false;
               token.isEmployee = true;
+              token.onboardingComplete = false; // New users need onboarding
             }
 
             // For non-super-admins, check if they have an org via TeamMember
@@ -749,6 +758,7 @@ export const authOptions: NextAuthOptions = {
                   id: true,
                   isOwner: true,
                   isEmployee: true,
+                  onboardingComplete: true,
                   isAdmin: true,
                   hasOperationsAccess: true,
                   hasHRAccess: true,
@@ -775,6 +785,7 @@ export const authOptions: NextAuthOptions = {
                 token.isTeamMember = true;
                 token.isOwner = teamMember.isOwner;
                 token.isEmployee = teamMember.isEmployee;
+                token.onboardingComplete = teamMember.onboardingComplete ?? false;
                 // Permission flags
                 token.isAdmin = teamMember.isAdmin;
                 token.hasOperationsAccess = teamMember.hasOperationsAccess;
@@ -820,6 +831,7 @@ export const authOptions: NextAuthOptions = {
             token.enabledModules = memberData.organization.enabledModules;
             token.isOwner = memberData.isOwner;
             token.isEmployee = memberData.isEmployee;
+            token.onboardingComplete = memberData.onboardingComplete;
             // Permission flags
             token.isAdmin = memberData.isAdmin;
             token.hasOperationsAccess = memberData.hasOperationsAccess;
@@ -845,6 +857,7 @@ export const authOptions: NextAuthOptions = {
           session.user.name = token.name as string;
           session.user.isSuperAdmin = token.isSuperAdmin as boolean || false;
           session.user.isEmployee = token.isEmployee as boolean ?? true;
+          session.user.onboardingComplete = token.onboardingComplete as boolean ?? false;
 
           // TeamMember-specific fields
           session.user.isTeamMember = token.isTeamMember as boolean ?? false;
@@ -960,6 +973,7 @@ declare module 'next-auth' {
       image?: string | null;
       isSuperAdmin: boolean;
       isEmployee: boolean; // false = system/service account
+      onboardingComplete: boolean; // true = completed HR profile onboarding
       // TeamMember-specific fields
       isTeamMember: boolean; // true = org user (TeamMember), false = super admin (User)
       isOwner?: boolean; // Organization owner flag (when isTeamMember=true)
@@ -987,6 +1001,7 @@ declare module 'next-auth' {
     isSuperAdmin?: boolean;
     isOwner?: boolean;
     isEmployee?: boolean;
+    onboardingComplete?: boolean;
     // Permission flags (new boolean-based system)
     isAdmin?: boolean;
     hasOperationsAccess?: boolean;
@@ -1009,6 +1024,7 @@ declare module 'next-auth/jwt' {
     id?: string;
     isSuperAdmin?: boolean;
     isEmployee?: boolean;
+    onboardingComplete?: boolean;
     // TeamMember-specific fields
     isTeamMember?: boolean;
     isOwner?: boolean;

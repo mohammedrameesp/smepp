@@ -266,8 +266,6 @@ const PUBLIC_ROUTES = [
   '/api/invitations', // Invitation APIs (fetch details before auth)
   '/api/super-admin/auth', // Super admin auth APIs (login, verify-2fa)
   '/api/super-admin/stats', // Platform stats for login page
-  '/api/super-admin/import-becreative', // Data import endpoint (temporary)
-  '/api/super-admin/set-password', // Password reset endpoint (temporary)
   '/api/organizations/signup', // Public organization signup
   '/api/subdomains', // Subdomain availability check
   '/api/suppliers/register', // Public supplier registration API
@@ -538,6 +536,25 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/forbidden', request.url));
       }
 
+      // Employee onboarding check for custom domains
+      const isEmployeeCustom = token.isEmployee as boolean;
+      const onboardingCompleteCustom = token.onboardingComplete as boolean;
+      const isAdminCustom = token.isAdmin as boolean;
+      const isOnOnboardingPageCustom = pathname.startsWith('/employee-onboarding');
+      const isEmployeeSelfServiceCustom = pathname.startsWith('/employee');
+      const isApiRouteCustom = pathname.startsWith('/api');
+
+      if (
+        isEmployeeCustom &&
+        !onboardingCompleteCustom &&
+        !isAdminCustom &&
+        !isOnOnboardingPageCustom &&
+        !isEmployeeSelfServiceCustom &&
+        !isApiRouteCustom
+      ) {
+        return NextResponse.redirect(new URL('/employee-onboarding', request.url));
+      }
+
       // User belongs to this custom domain's tenant - allow access
       const response = NextResponse.next();
       response.headers.set('x-custom-domain', customDomainHost);
@@ -730,6 +747,30 @@ export async function middleware(request: NextRequest) {
     if (!permissionAccess.allowed) {
       // User lacks permission for this route
       return NextResponse.redirect(new URL('/forbidden', request.url));
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // EMPLOYEE ONBOARDING CHECK
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    // Redirect employees with incomplete onboarding to the onboarding page
+    // Skip for: admins, non-employees, already on onboarding page, or employee self-service routes
+    const isEmployee = token.isEmployee as boolean;
+    const onboardingComplete = token.onboardingComplete as boolean;
+    const isAdmin = token.isAdmin as boolean;
+    const isOnOnboardingPage = pathname.startsWith('/employee-onboarding');
+    const isEmployeeSelfService = pathname.startsWith('/employee');
+    const isApiRoute = pathname.startsWith('/api');
+
+    if (
+      isEmployee &&
+      !onboardingComplete &&
+      !isAdmin &&
+      !isOnOnboardingPage &&
+      !isEmployeeSelfService &&
+      !isApiRoute
+    ) {
+      return NextResponse.redirect(new URL('/employee-onboarding', request.url));
     }
 
     // User belongs to this subdomain - allow access
