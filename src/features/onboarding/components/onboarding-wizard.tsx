@@ -1104,7 +1104,6 @@ function DocumentsStep({ formData, updateField }: StepProps) {
           description="Passport-size photo"
         />
 
-        {/* Contract upload hidden for now - will be added later
         <DocumentUpload
           id="contractCopy"
           label="Contract Copy"
@@ -1113,7 +1112,16 @@ function DocumentsStep({ formData, updateField }: StepProps) {
           accept="image/jpeg,image/png,application/pdf"
           description="Employment contract"
         />
-        */}
+
+        <div className="space-y-2">
+          <Label htmlFor="contractExpiry">Contract Expiry Date</Label>
+          <DatePicker
+            id="contractExpiry"
+            value={(formData.contractExpiry as string) || ''}
+            onChange={(val) => updateField('contractExpiry', val)}
+            placeholder="DD/MM/YYYY"
+          />
+        </div>
       </div>
     </div>
   );
