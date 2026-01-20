@@ -18,6 +18,20 @@ async function main() {
 
   console.log('✅ Cleared existing data');
 
+  // Create or update super admin user (platform-level)
+  const superAdmin = await prisma.user.upsert({
+    where: { email: 'superadmin@durj.com' },
+    update: {},
+    create: {
+      email: 'superadmin@durj.com',
+      name: 'Super Admin',
+      isSuperAdmin: true,
+      // Note: Password should be set via the super admin setup flow
+    },
+  });
+
+  console.log(`✅ Created/verified super admin: ${superAdmin.email}`);
+
   // Create a test organization (tenant)
   const org = await prisma.organization.create({
     data: {
