@@ -33,8 +33,10 @@ async function main() {
   const superAdmin = await prisma.user.upsert({
     where: { email: 'superadmin@durj.com' },
     update: {
-      // Update password if user exists but has no password
+      // Restore super admin status and password
+      isSuperAdmin: true,
       passwordHash: passwordHash,
+      name: 'Super Admin',
     },
     create: {
       email: 'superadmin@durj.com',
