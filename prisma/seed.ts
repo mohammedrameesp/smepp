@@ -1,7 +1,11 @@
 import { PrismaClient, BillingCycle, AssetStatus, EmploymentType, Gender } from '@prisma/client';
 import { DEFAULT_LEAVE_TYPES } from '../src/features/leave/lib/leave-utils';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+// Default password for seeded super admin (change immediately after first login!)
+const DEFAULT_SUPER_ADMIN_PASSWORD = 'SuperAdmin123!';
 
 async function main() {
   console.log('🌱 Seeding database with sample data...');
@@ -19,18 +23,24 @@ async function main() {
   console.log('✅ Cleared existing data');
 
   // Create or update super admin user (platform-level)
+  const passwordHash = await bcrypt.hash(DEFAULT_SUPER_ADMIN_PASSWORD, 10);
   const superAdmin = await prisma.user.upsert({
     where: { email: 'superadmin@durj.com' },
-    update: {},
+    update: {
+      // Update password if user exists but has no password
+      passwordHash: passwordHash,
+    },
     create: {
       email: 'superadmin@durj.com',
       name: 'Super Admin',
       isSuperAdmin: true,
-      // Note: Password should be set via the super admin setup flow
+      passwordHash: passwordHash,
+      emailVerified: new Date(),
     },
   });
 
   console.log(`✅ Created/verified super admin: ${superAdmin.email}`);
+  console.log(`   Default password: ${DEFAULT_SUPER_ADMIN_PASSWORD} (change this immediately!)`);
 
   // Create a test organization (tenant)
   const org = await prisma.organization.create({
