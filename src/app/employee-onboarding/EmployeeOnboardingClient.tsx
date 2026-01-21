@@ -78,6 +78,8 @@ const MANDATORY_FIELDS: Record<number, { field: string; label: string }[]> = {
     { field: 'qatarMobile', label: 'Qatar Mobile' },
     { field: 'personalEmail', label: 'Personal Email' },
     { field: 'qatarZone', label: 'Qatar Zone' },
+    { field: 'qatarStreet', label: 'Qatar Street' },
+    { field: 'qatarBuilding', label: 'Qatar Building' },
   ],
   3: [
     { field: 'qidNumber', label: 'QID Number' },
@@ -142,6 +144,7 @@ interface FormData {
   passportNumber: string | null;
   passportExpiry: string | null;
   healthCardExpiry: string | null;
+  drivingLicenseExpiry: string | null;
   // Step 4: Banking & Documents
   bankName: string | null;
   iban: string | null;
@@ -185,6 +188,7 @@ const initialFormData: FormData = {
   passportNumber: null,
   passportExpiry: null,
   healthCardExpiry: null,
+  drivingLicenseExpiry: null,
   bankName: null,
   iban: null,
   qidUrl: null,
@@ -267,8 +271,8 @@ export function EmployeeOnboardingClient() {
 
           // Check if user has previously saved any mandatory fields (returning user)
           const mandatoryFieldKeys = ['dateOfBirth', 'gender', 'nationality',
-            'qatarMobile', 'personalEmail', 'qatarZone', 'qidNumber', 'qidExpiry',
-            'passportNumber', 'passportExpiry', 'bankName', 'iban', 'photoUrl'];
+            'qatarMobile', 'personalEmail', 'qatarZone', 'qatarStreet', 'qatarBuilding',
+            'qidNumber', 'qidExpiry', 'passportNumber', 'passportExpiry', 'bankName', 'iban', 'photoUrl'];
           const hasExistingData = mandatoryFieldKeys.some(key => data[key]);
           if (hasExistingData) {
             setIsReturningUser(true);
@@ -303,6 +307,7 @@ export function EmployeeOnboardingClient() {
             passportNumber: data.passportNumber || null,
             passportExpiry: data.passportExpiry ? new Date(data.passportExpiry).toISOString().split('T')[0] : null,
             healthCardExpiry: data.healthCardExpiry ? new Date(data.healthCardExpiry).toISOString().split('T')[0] : null,
+            drivingLicenseExpiry: data.drivingLicenseExpiry ? new Date(data.drivingLicenseExpiry).toISOString().split('T')[0] : null,
             bankName: data.bankName || null,
             iban: data.iban || null,
             qidUrl: data.qidUrl || null,

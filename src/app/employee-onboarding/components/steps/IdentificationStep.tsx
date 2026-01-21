@@ -177,15 +177,26 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
           <CardHeader className="pb-3">
             <CardTitle className="text-base text-slate-600">Optional Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Health Card Expiry</Label>
-              <DatePicker
-                value={formatDateForPicker(formData.healthCardExpiry as string)}
-                onChange={(val) => updateField('healthCardExpiry', val)}
-                placeholder="DD/MM/YYYY"
-              />
-              <ExpiryWarning date={formData.healthCardExpiry as string} label="Health Card" />
+          <CardContent>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Health Card Expiry</Label>
+                <DatePicker
+                  value={formatDateForPicker(formData.healthCardExpiry as string)}
+                  onChange={(val) => updateField('healthCardExpiry', val)}
+                  placeholder="DD/MM/YYYY"
+                />
+                <ExpiryWarning date={formData.healthCardExpiry as string} label="Health Card" />
+              </div>
+              <div className="space-y-2">
+                <Label>Driving License Expiry</Label>
+                <DatePicker
+                  value={formatDateForPicker(formData.drivingLicenseExpiry as string)}
+                  onChange={(val) => updateField('drivingLicenseExpiry', val)}
+                  placeholder="DD/MM/YYYY"
+                />
+                <ExpiryWarning date={formData.drivingLicenseExpiry as string} label="Driving License" />
+              </div>
             </div>
           </CardContent>
         </Card>
