@@ -32,10 +32,13 @@ function QidValidationHint({ qid }: { qid: string }) {
 
   return (
     <div className="space-y-0.5">
-      <p className={`text-xs flex items-center gap-1 ${isValidStart ? 'text-green-600' : 'text-slate-500'}`}>
-        {isValidStart ? <Check className="h-3 w-3" /> : <X className="h-3 w-3 text-slate-400" />}
-        Starts with 2 or 3
-      </p>
+      {/* Only show "Starts with 2 or 3" when it's wrong */}
+      {!isValidStart && qid.length > 0 && (
+        <p className="text-xs flex items-center gap-1 text-red-500">
+          <X className="h-3 w-3" />
+          Must start with 2 or 3
+        </p>
+      )}
       <p className={`text-xs flex items-center gap-1 ${isValidLength ? 'text-green-600' : 'text-slate-500'}`}>
         {isValidLength ? <Check className="h-3 w-3" /> : <X className="h-3 w-3 text-slate-400" />}
         {qid.length}/11 digits
@@ -80,7 +83,15 @@ const formatDateForPicker = (date: Date | string | null | undefined): string => 
   return d.toISOString().split('T')[0];
 };
 
+// Calculate minimum date (2 years back from today)
+const getMinExpiryDate = (): Date => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 2);
+  return date;
+};
+
 export function IdentificationStep({ formData, updateField, errors }: IdentificationStepProps) {
+  const minExpiryDate = getMinExpiryDate();
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
@@ -126,6 +137,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                   value={formatDateForPicker(formData.qidExpiry as string)}
                   onChange={(val) => updateField('qidExpiry', val)}
                   placeholder="DD/MM/YYYY"
+                  minDate={minExpiryDate}
                 />
                 {errors.qidExpiry && (
                   <p className="text-sm text-red-600">{errors.qidExpiry}</p>
@@ -162,6 +174,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                   value={formatDateForPicker(formData.passportExpiry as string)}
                   onChange={(val) => updateField('passportExpiry', val)}
                   placeholder="DD/MM/YYYY"
+                  minDate={minExpiryDate}
                 />
                 {errors.passportExpiry && (
                   <p className="text-sm text-red-600">{errors.passportExpiry}</p>
@@ -185,6 +198,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                   value={formatDateForPicker(formData.healthCardExpiry as string)}
                   onChange={(val) => updateField('healthCardExpiry', val)}
                   placeholder="DD/MM/YYYY"
+                  minDate={minExpiryDate}
                 />
                 <ExpiryWarning date={formData.healthCardExpiry as string} label="Health Card" />
               </div>
@@ -194,6 +208,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                   value={formatDateForPicker(formData.drivingLicenseExpiry as string)}
                   onChange={(val) => updateField('drivingLicenseExpiry', val)}
                   placeholder="DD/MM/YYYY"
+                  minDate={minExpiryDate}
                 />
                 <ExpiryWarning date={formData.drivingLicenseExpiry as string} label="Driving License" />
               </div>
