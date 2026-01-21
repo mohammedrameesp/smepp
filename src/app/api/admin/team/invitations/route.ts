@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     const { email, role, isEmployee, onWPS } = result.data;
 
-    // Check org limits
+    // Get org details for email
     const org = await prisma.organization.findUnique({
       where: { id: session.user.organizationId },
       select: {
@@ -97,28 +97,11 @@ export async function POST(request: NextRequest) {
         name: true,
         slug: true,
         primaryColor: true,
-        maxUsers: true,
-        _count: { select: { teamMembers: true } },
       },
     });
 
     if (!org) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
-    }
-
-    // Count pending invitations too
-    const pendingCount = await prisma.organizationInvitation.count({
-      where: {
-        organizationId: session.user.organizationId,
-        acceptedAt: null,
-      },
-    });
-
-    if (org._count.teamMembers + pendingCount >= org.maxUsers) {
-      return NextResponse.json(
-        { error: `User limit reached (${org.maxUsers}). Upgrade your plan to add more users.` },
-        { status: 403 }
-      );
     }
 
     // Check if user is already a TeamMember (primary check)

@@ -77,10 +77,6 @@ interface Invitation {
   isExpired: boolean;
 }
 
-interface Limits {
-  maxUsers: number;
-  currentUsers: number;
-}
 
 interface AuthConfig {
   allowedMethods: string[];
@@ -115,7 +111,6 @@ export function TeamClient({ initialStats }: TeamClientProps) {
   // State
   const [members, setMembers] = useState<Member[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [limits, setLimits] = useState<Limits | null>(null);
   const [, setAuthConfig] = useState<AuthConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -168,7 +163,6 @@ export function TeamClient({ initialStats }: TeamClientProps) {
       if (membersRes.ok) {
         const data = await membersRes.json();
         setMembers(data.members);
-        setLimits(data.limits);
         setAuthConfig(data.authConfig);
       }
 
@@ -256,9 +250,6 @@ export function TeamClient({ initialStats }: TeamClientProps) {
       }
 
       setMembers((prev) => prev.filter((m) => m.id !== id));
-      if (limits) {
-        setLimits({ ...limits, currentUsers: limits.currentUsers - 1 });
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove');
     } finally {
@@ -318,8 +309,6 @@ export function TeamClient({ initialStats }: TeamClientProps) {
     }
   }
 
-  const canAdd = limits && limits.currentUsers + invitations.length < limits.maxUsers;
-
   return (
     <div className="space-y-6">
       {/* Error Alert */}
@@ -327,16 +316,6 @@ export function TeamClient({ initialStats }: TeamClientProps) {
         <Alert variant="error">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {!canAdd && limits && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            You&apos;ve reached the user limit ({limits.maxUsers}). Upgrade your plan to add more
-            team members.
-          </AlertDescription>
         </Alert>
       )}
 
@@ -377,7 +356,7 @@ export function TeamClient({ initialStats }: TeamClientProps) {
 
         {/* Add Member Button */}
         {isAdmin && (
-          <Button asChild disabled={!canAdd}>
+          <Button asChild>
             <Link href="/admin/employees/new">
               <UserPlus className="h-4 w-4 mr-2" />
               Add Member

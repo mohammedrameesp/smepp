@@ -70,11 +70,10 @@ export async function GET() {
       pendingInvitations.map((inv) => [inv.email.toLowerCase(), inv])
     );
 
-    // Get org limits and auth config
+    // Get org auth config
     const org = await prisma.organization.findUnique({
       where: { id: session.user.organizationId },
       select: {
-        maxUsers: true,
         allowedAuthMethods: true,
         customGoogleClientId: true,
         customGoogleClientSecret: true,
@@ -151,10 +150,6 @@ export async function GET() {
 
     return NextResponse.json({
       members: membersWithPendingStatus,
-      limits: {
-        maxUsers: org?.maxUsers || 5,
-        currentUsers: members.length,
-      },
       authConfig: {
         allowedMethods,
         hasCredentials,

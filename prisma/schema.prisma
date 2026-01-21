@@ -369,9 +369,9 @@ model Organization {
   stripePriceId    String? // Current subscription price
   stripeSubEnd     DateTime? // Subscription end date
 
-  // Usage Limits (can be overridden from tier defaults)
-  maxUsers  Int @default(5)
-  maxAssets Int @default(50)
+  // Usage Limits (no longer enforced - kept for backwards compatibility)
+  maxUsers  Int @default(9999)
+  maxAssets Int @default(9999)
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // AUTHENTICATION CONFIGURATION (Super Admin only)
