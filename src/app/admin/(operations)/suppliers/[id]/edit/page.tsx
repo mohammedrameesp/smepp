@@ -12,31 +12,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CountrySelect } from '@/components/ui/country-select';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { z } from 'zod';
-
-// Country list
-const COUNTRIES = [
-  'Qatar',
-  'Saudi Arabia',
-  'United Arab Emirates',
-  'Kuwait',
-  'Bahrain',
-  'Oman',
-  'Jordan',
-  'Egypt',
-  'Lebanon',
-  'India',
-  'Pakistan',
-  'United States',
-  'United Kingdom',
-  'Germany',
-  'France',
-  'China',
-  'Japan',
-].sort();
 
 // Country codes
 const COUNTRY_CODES = [
@@ -325,21 +305,12 @@ export default function EditSupplierPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="country">Country</Label>
-                    <Select
+                    <CountrySelect
+                      id="country"
                       value={countryValue || ''}
-                      onValueChange={(value) => setValue('country', value)}
-                    >
-                      <SelectTrigger id="country">
-                        <SelectValue placeholder="Select country" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {COUNTRIES.map((country) => (
-                          <SelectItem key={country} value={country}>
-                            {country}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      onChange={(value) => setValue('country', value)}
+                      placeholder="Select country"
+                    />
                   </div>
                 </div>
 

@@ -19,6 +19,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { DatePicker } from '@/components/ui/date-picker';
 import { BirthDatePicker } from '@/components/ui/birth-date-picker';
+import { CountrySelect } from '@/components/ui/country-select';
 import { ChevronDown, ChevronUp, User, Phone, AlertTriangle, CreditCard, Briefcase, Building2, GraduationCap, FileText, Info, Loader2 } from 'lucide-react';
 
 import { hrProfileSchema, type HRProfileInput } from '@/features/employees/validations/hr-profile';
@@ -321,19 +322,12 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
 
           <div className="space-y-2">
             <Label htmlFor="nationality">Nationality</Label>
-            <Select
+            <CountrySelect
+              id="nationality"
               value={watch('nationality') || ''}
-              onValueChange={(val) => setValue('nationality', val, { shouldDirty: true })}
-            >
-              <SelectTrigger id="nationality">
-                <SelectValue placeholder="Select country" />
-              </SelectTrigger>
-              <SelectContent>
-                {COUNTRIES.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={(val) => setValue('nationality', val, { shouldDirty: true })}
+              placeholder="Select country"
+            />
           </div>
         </div>
       </SectionCard>

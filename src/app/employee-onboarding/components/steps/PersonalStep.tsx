@@ -10,7 +10,8 @@ import { User } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BirthDatePicker } from '@/components/ui/birth-date-picker';
-import { COUNTRIES, GENDERS, MARITAL_STATUS } from '@/lib/data/constants';
+import { CountrySelect } from '@/components/ui/country-select';
+import { GENDERS, MARITAL_STATUS } from '@/lib/data/constants';
 
 interface PersonalStepProps {
   formData: Record<string, unknown>;
@@ -58,19 +59,12 @@ export function PersonalStep({ formData, updateField, errors }: PersonalStepProp
             <Label htmlFor="nationality">
               Nationality <span className="text-red-500">*</span>
             </Label>
-            <Select
+            <CountrySelect
+              id="nationality"
               value={(formData.nationality as string) || ''}
-              onValueChange={(val) => updateField('nationality', val)}
-            >
-              <SelectTrigger id="nationality">
-                <SelectValue placeholder="Select country" />
-              </SelectTrigger>
-              <SelectContent>
-                {COUNTRIES.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={(val) => updateField('nationality', val)}
+              placeholder="Select country"
+            />
             {errors.nationality && (
               <p className="text-sm text-red-600">{errors.nationality}</p>
             )}
