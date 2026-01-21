@@ -541,7 +541,6 @@ export default function NewSubscriptionPage() {
                     <Input
                       id="costPerCycle"
                       type="number"
-                      step="0.01"
                       {...register('costPerCycle', { valueAsNumber: true })}
                       placeholder="0.00"
                       className={errors.costPerCycle ? 'border-red-500' : ''}

@@ -671,7 +671,6 @@ export default function EditSubscriptionPage() {
                     <Input
                       id="costPerCycle"
                       type="number"
-                      step="0.01"
                       {...register('costPerCycle', { valueAsNumber: true })}
                       placeholder="0.00"
                     />

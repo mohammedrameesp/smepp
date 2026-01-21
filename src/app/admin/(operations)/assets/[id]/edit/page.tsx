@@ -718,7 +718,6 @@ export default function EditAssetPage() {
                       <Input
                         id="price"
                         type="number"
-                        step="0.01"
                         {...register('price', { valueAsNumber: true })}
                         placeholder="0.00"
                       />

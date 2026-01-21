@@ -287,7 +287,6 @@ export default function EditApprovalPolicyPage() {
                       id="minAmount"
                       type="number"
                       min="0"
-                      step="0.01"
                       value={minAmount}
                       onChange={(e) => setMinAmount(e.target.value)}
                       placeholder="0"
@@ -299,7 +298,6 @@ export default function EditApprovalPolicyPage() {
                       id="maxAmount"
                       type="number"
                       min="0"
-                      step="0.01"
                       value={maxAmount}
                       onChange={(e) => setMaxAmount(e.target.value)}
                       placeholder="No limit"

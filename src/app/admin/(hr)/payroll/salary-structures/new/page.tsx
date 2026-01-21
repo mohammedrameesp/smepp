@@ -327,7 +327,6 @@ export default function NewSalaryStructurePage() {
                               <Label className="text-xs">Basic %</Label>
                               <Input
                                 type="number"
-                                step="0.1"
                                 min="0"
                                 max="100"
                                 value={percentages.basic}
@@ -338,7 +337,6 @@ export default function NewSalaryStructurePage() {
                               <Label className="text-xs">Housing %</Label>
                               <Input
                                 type="number"
-                                step="0.1"
                                 min="0"
                                 max="100"
                                 value={percentages.housing}
@@ -349,7 +347,6 @@ export default function NewSalaryStructurePage() {
                               <Label className="text-xs">Transport %</Label>
                               <Input
                                 type="number"
-                                step="0.1"
                                 min="0"
                                 max="100"
                                 value={percentages.transport}
@@ -360,7 +357,6 @@ export default function NewSalaryStructurePage() {
                               <Label className="text-xs">Food %</Label>
                               <Input
                                 type="number"
-                                step="0.1"
                                 min="0"
                                 max="100"
                                 value={percentages.food}
@@ -371,7 +367,6 @@ export default function NewSalaryStructurePage() {
                               <Label className="text-xs">Phone %</Label>
                               <Input
                                 type="number"
-                                step="0.1"
                                 min="0"
                                 max="100"
                                 value={percentages.phone}
@@ -382,7 +377,6 @@ export default function NewSalaryStructurePage() {
                               <Label className="text-xs">Other %</Label>
                               <Input
                                 type="number"
-                                step="0.1"
                                 min="0"
                                 max="100"
                                 value={percentages.other}

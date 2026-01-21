@@ -717,7 +717,6 @@ export default function NewPurchaseRequestPage() {
                             <Input
                               type="number"
                               min="0"
-                              step="0.01"
                               value={item.unitPrice || ''}
                               onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                               placeholder="0.00"
@@ -730,7 +729,6 @@ export default function NewPurchaseRequestPage() {
                             <Input
                               type="number"
                               min="0"
-                              step="0.01"
                               value={item.amountPerCycle || ''}
                               onChange={(e) => updateItem(item.id, 'amountPerCycle', parseFloat(e.target.value) || 0)}
                               placeholder="0.00"
@@ -857,7 +855,6 @@ export default function NewPurchaseRequestPage() {
                             <Input
                               type="number"
                               min="0"
-                              step="0.01"
                               value={item.amountPerCycle || ''}
                               onChange={(e) => updateItem(item.id, 'amountPerCycle', parseFloat(e.target.value) || 0)}
                               placeholder="0.00"
@@ -872,7 +869,6 @@ export default function NewPurchaseRequestPage() {
                           <Input
                             type="number"
                             min="0"
-                            step="0.01"
                             value={item.unitPrice || ''}
                             onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
                             placeholder="0.00"
