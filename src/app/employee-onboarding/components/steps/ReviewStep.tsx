@@ -6,7 +6,7 @@
  * @module employee-onboarding/steps
  */
 
-import { CheckCircle2, Pencil, User, Phone, CreditCard, Building2, GraduationCap } from 'lucide-react';
+import { CheckCircle2, Pencil, User, Phone, CreditCard, Building2, GraduationCap, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -134,7 +134,14 @@ export function ReviewStep({ formData, workEmail, onEdit }: ReviewStepProps) {
                 }
               />
               <Field label="Personal Email" value={formData.personalEmail} />
-              <Field label="Work Email" value={workEmail} />
+              <div>
+                <dt className="text-xs text-slate-500 flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  Work Email
+                </dt>
+                <dd className="text-sm text-slate-900">{workEmail || '-'}</dd>
+                <p className="text-xs text-slate-400">Managed by your company</p>
+              </div>
             </dl>
 
             {(formData.qatarZone || formData.qatarStreet) && (
@@ -257,12 +264,6 @@ export function ReviewStep({ formData, workEmail, onEdit }: ReviewStepProps) {
                 </div>
               </dl>
             </div>
-
-            {formData.licenseExpiry && (
-              <div className="border-t pt-3">
-                <Field label="Driving License Expiry" value={formatDate(formData.licenseExpiry)} />
-              </div>
-            )}
           </div>
         </ReviewSection>
       </div>

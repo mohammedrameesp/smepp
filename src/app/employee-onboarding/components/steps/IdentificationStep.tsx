@@ -201,6 +201,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                   minDate={minExpiryDate}
                 />
                 <ExpiryWarning date={formData.healthCardExpiry as string} label="Health Card" />
+                <p className="text-xs text-slate-400">Leave blank if you don&apos;t have one</p>
               </div>
               <div className="space-y-2">
                 <Label>Driving License Expiry</Label>
@@ -211,6 +212,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                   minDate={minExpiryDate}
                 />
                 <ExpiryWarning date={formData.drivingLicenseExpiry as string} label="Driving License" />
+                <p className="text-xs text-slate-400">Leave blank if you don&apos;t have one</p>
               </div>
             </div>
           </CardContent>
