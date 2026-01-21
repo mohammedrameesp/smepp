@@ -18,6 +18,7 @@ import {
   ShoppingCart,
   Package,
   Shield,
+  Truck,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -85,6 +86,7 @@ export function EmployeeTopNav({
     { label: 'Leave', href: '/employee/leave', moduleId: 'leave' },
     { label: 'Purchases', href: '/employee/purchase-requests', moduleId: 'purchase-requests' },
     { label: 'My Holdings', href: '/employee/my-assets', moduleId: 'assets' },
+    { label: 'Suppliers', href: '/employee/suppliers', moduleId: 'suppliers' },
   ].filter(item => !item.moduleId || isModuleEnabled(item.moduleId));
 
   const isActive = (href: string, exact?: boolean) => {
@@ -212,6 +214,14 @@ export function EmployeeTopNav({
                       <Link href="/employee/purchase-requests" className="flex items-center gap-2 cursor-pointer">
                         <ShoppingCart className="h-4 w-4 text-slate-400" />
                         Purchase Requests
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {isModuleEnabled('suppliers') && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/employee/suppliers" className="flex items-center gap-2 cursor-pointer">
+                        <Truck className="h-4 w-4 text-slate-400" />
+                        Suppliers
                       </Link>
                     </DropdownMenuItem>
                   )}
