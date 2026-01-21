@@ -13,6 +13,11 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { GitBranch, ArrowRight, Info, Settings, FileText, Package, ShoppingCart } from 'lucide-react';
+import {
+  DEFAULT_LEAVE_POLICIES,
+  DEFAULT_PURCHASE_POLICIES,
+  DEFAULT_ASSET_POLICIES,
+} from '../lib/default-policies';
 import Link from 'next/link';
 
 // Role display names
@@ -30,113 +35,34 @@ const MODULE_CONFIG: Record<string, { label: string; icon: React.ElementType }> 
   ASSET_REQUEST: { label: 'Asset Requests', icon: Package },
 };
 
-// Default policies (client-safe copy from default-policies.ts)
+// Transform imported defaults to display format
+function transformDefaultsForDisplay(
+  defaults: typeof DEFAULT_LEAVE_POLICIES | typeof DEFAULT_PURCHASE_POLICIES | typeof DEFAULT_ASSET_POLICIES,
+  prefix: string
+): ApprovalPolicy[] {
+  return defaults.map((policy, idx) => ({
+    id: `${prefix}-${idx}`,
+    name: policy.name,
+    module: policy.module,
+    minDays: 'minDays' in policy ? policy.minDays : null,
+    maxDays: 'maxDays' in policy ? policy.maxDays : null,
+    minAmount: 'minAmount' in policy && policy.minAmount !== null ? String(policy.minAmount) : null,
+    maxAmount: 'maxAmount' in policy && policy.maxAmount !== null ? String(policy.maxAmount) : null,
+    isActive: true,
+    isDefault: true,
+    levels: policy.levels.map((level, levelIdx) => ({
+      id: `${prefix}-${idx}-${levelIdx}`,
+      levelOrder: level.levelOrder,
+      approverRole: level.approverRole,
+    })),
+  }));
+}
+
+// Default policies derived from single source of truth
 const DEFAULT_POLICIES: Record<string, ApprovalPolicy[]> = {
-  LEAVE_REQUEST: [
-    {
-      id: 'default-leave-short',
-      name: 'Short Leave (up to 2 days)',
-      module: 'LEAVE_REQUEST',
-      minDays: 0,
-      maxDays: 2,
-      minAmount: null,
-      maxAmount: null,
-      isActive: true,
-      isDefault: true,
-      levels: [{ id: 'd1', levelOrder: 1, approverRole: 'MANAGER' }],
-    },
-    {
-      id: 'default-leave-extended',
-      name: 'Extended Leave (3+ days)',
-      module: 'LEAVE_REQUEST',
-      minDays: 3,
-      maxDays: null,
-      minAmount: null,
-      maxAmount: null,
-      isActive: true,
-      isDefault: true,
-      levels: [
-        { id: 'd2', levelOrder: 1, approverRole: 'MANAGER' },
-        { id: 'd3', levelOrder: 2, approverRole: 'HR_MANAGER' },
-        { id: 'd4', levelOrder: 3, approverRole: 'DIRECTOR' },
-      ],
-    },
-  ],
-  PURCHASE_REQUEST: [
-    {
-      id: 'default-purchase-small',
-      name: 'Small Purchase (up to 5,000 QAR)',
-      module: 'PURCHASE_REQUEST',
-      minDays: null,
-      maxDays: null,
-      minAmount: '0',
-      maxAmount: '5000',
-      isActive: true,
-      isDefault: true,
-      levels: [{ id: 'dp1', levelOrder: 1, approverRole: 'MANAGER' }],
-    },
-    {
-      id: 'default-purchase-medium',
-      name: 'Medium Purchase (5,001 - 50,000 QAR)',
-      module: 'PURCHASE_REQUEST',
-      minDays: null,
-      maxDays: null,
-      minAmount: '5001',
-      maxAmount: '50000',
-      isActive: true,
-      isDefault: true,
-      levels: [
-        { id: 'dp2', levelOrder: 1, approverRole: 'MANAGER' },
-        { id: 'dp3', levelOrder: 2, approverRole: 'FINANCE_MANAGER' },
-      ],
-    },
-    {
-      id: 'default-purchase-large',
-      name: 'Large Purchase (50,001+ QAR)',
-      module: 'PURCHASE_REQUEST',
-      minDays: null,
-      maxDays: null,
-      minAmount: '50001',
-      maxAmount: null,
-      isActive: true,
-      isDefault: true,
-      levels: [
-        { id: 'dp4', levelOrder: 1, approverRole: 'MANAGER' },
-        { id: 'dp5', levelOrder: 2, approverRole: 'FINANCE_MANAGER' },
-        { id: 'dp6', levelOrder: 3, approverRole: 'DIRECTOR' },
-      ],
-    },
-  ],
-  ASSET_REQUEST: [
-    {
-      id: 'default-asset-standard',
-      name: 'Standard Asset (up to 10,000 QAR)',
-      module: 'ASSET_REQUEST',
-      minDays: null,
-      maxDays: null,
-      minAmount: '0',
-      maxAmount: '10000',
-      isActive: true,
-      isDefault: true,
-      levels: [{ id: 'da1', levelOrder: 1, approverRole: 'MANAGER' }],
-    },
-    {
-      id: 'default-asset-high',
-      name: 'High-Value Asset (10,001+ QAR)',
-      module: 'ASSET_REQUEST',
-      minDays: null,
-      maxDays: null,
-      minAmount: '10001',
-      maxAmount: null,
-      isActive: true,
-      isDefault: true,
-      levels: [
-        { id: 'da2', levelOrder: 1, approverRole: 'MANAGER' },
-        { id: 'da3', levelOrder: 2, approverRole: 'FINANCE_MANAGER' },
-        { id: 'da4', levelOrder: 3, approverRole: 'DIRECTOR' },
-      ],
-    },
-  ],
+  LEAVE_REQUEST: transformDefaultsForDisplay(DEFAULT_LEAVE_POLICIES, 'leave'),
+  PURCHASE_REQUEST: transformDefaultsForDisplay(DEFAULT_PURCHASE_POLICIES, 'purchase'),
+  ASSET_REQUEST: transformDefaultsForDisplay(DEFAULT_ASSET_POLICIES, 'asset'),
 };
 
 interface ApprovalLevel {
@@ -231,14 +157,10 @@ function ModuleSection({
   module,
   policies,
   isDefault,
-  onCreateDefaults,
-  isCreating,
 }: {
   module: string;
   policies: ApprovalPolicy[];
   isDefault: boolean;
-  onCreateDefaults?: (module: string) => void;
-  isCreating?: boolean;
 }) {
   const config = MODULE_CONFIG[module];
   if (!config) return null;
@@ -252,26 +174,11 @@ function ModuleSection({
           <Icon className="h-4 w-4 text-muted-foreground" />
           <h4 className="font-medium">{config.label}</h4>
         </div>
-        <div className="flex items-center gap-2">
-          {isDefault && (
-            <>
-              <Badge variant="secondary" className="text-xs">
-                Default
-              </Badge>
-              {onCreateDefaults && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onCreateDefaults(module)}
-                  disabled={isCreating}
-                  className="text-xs h-6"
-                >
-                  {isCreating ? 'Creating...' : 'Save to Edit'}
-                </Button>
-              )}
-            </>
-          )}
-        </div>
+        {isDefault && (
+          <Badge variant="secondary" className="text-xs">
+            Default
+          </Badge>
+        )}
       </div>
       <div className="space-y-2 pl-6">
         {policies.length > 0 ? (
@@ -306,52 +213,27 @@ export function ApprovalWorkflowDisplay({ enabledModules, className }: ApprovalW
   const [policies, setPolicies] = useState<ApprovalPolicy[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [creatingModule, setCreatingModule] = useState<string | null>(null);
-
-  const fetchPolicies = async () => {
-    try {
-      const res = await fetch('/api/approval-policies?isActive=true');
-      if (res.ok) {
-        const data = await res.json();
-        setPolicies(data);
-      } else {
-        setError('Failed to load policies');
-      }
-    } catch (err) {
-      console.error('Failed to fetch policies:', err);
-      setError('Failed to load policies');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
+    const fetchPolicies = async () => {
+      try {
+        const res = await fetch('/api/approval-policies?isActive=true');
+        if (res.ok) {
+          const data = await res.json();
+          setPolicies(data);
+        } else {
+          setError('Failed to load policies');
+        }
+      } catch (err) {
+        console.error('Failed to fetch policies:', err);
+        setError('Failed to load policies');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchPolicies();
   }, []);
-
-  const handleCreateDefaults = async (module: string) => {
-    setCreatingModule(module);
-    try {
-      const res = await fetch('/api/approval-policies/create-defaults', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ module }),
-      });
-
-      if (res.ok) {
-        // Refresh policies list
-        await fetchPolicies();
-      } else {
-        const data = await res.json();
-        setError(data.error || 'Failed to create default policies');
-      }
-    } catch (err) {
-      console.error('Failed to create defaults:', err);
-      setError('Failed to create default policies');
-    } finally {
-      setCreatingModule(null);
-    }
-  };
 
   if (loading) {
     return <LoadingSkeleton />;
@@ -411,8 +293,6 @@ export function ApprovalWorkflowDisplay({ enabledModules, className }: ApprovalW
                 module={module}
                 policies={policiesByModule[module] || []}
                 isDefault={modulesUsingDefaults.has(module)}
-                onCreateDefaults={handleCreateDefaults}
-                isCreating={creatingModule === module}
               />
             ))}
 

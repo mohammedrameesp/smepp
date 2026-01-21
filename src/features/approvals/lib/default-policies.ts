@@ -12,7 +12,7 @@ import { ApprovalModule, Role } from '@prisma/client';
  * Default leave approval policies configuration.
  * These are created lazily when a tenant first needs them.
  */
-const DEFAULT_LEAVE_POLICIES = [
+export const DEFAULT_LEAVE_POLICIES = [
   {
     name: 'Short Leave Approval (up to 2 days)',
     module: 'LEAVE_REQUEST' as ApprovalModule,
@@ -42,7 +42,7 @@ const DEFAULT_LEAVE_POLICIES = [
  * Default purchase request approval policies configuration.
  * Amount-based thresholds in QAR.
  */
-const DEFAULT_PURCHASE_POLICIES = [
+export const DEFAULT_PURCHASE_POLICIES = [
   {
     name: 'Small Purchase (up to 500 QAR)',
     module: 'PURCHASE_REQUEST' as ApprovalModule,
@@ -72,7 +72,7 @@ const DEFAULT_PURCHASE_POLICIES = [
  * Default asset request approval policies configuration.
  * Amount-based thresholds in QAR.
  */
-const DEFAULT_ASSET_POLICIES = [
+export const DEFAULT_ASSET_POLICIES = [
   {
     name: 'Standard Asset (up to 1,000 QAR)',
     module: 'ASSET_REQUEST' as ApprovalModule,
