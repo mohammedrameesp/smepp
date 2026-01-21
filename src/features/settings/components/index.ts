@@ -3,7 +3,6 @@ export { AssetCategoriesSettings } from './asset-categories-settings';
 export { AssetTypeMappingsSettings } from './asset-type-mappings-settings';
 export { CodeFormatSettings } from './code-format-settings';
 export { DataExportImport } from './data-export-import';
-export { DatabaseStats } from './database-stats';
 export { DepreciationCategoriesSettings } from './depreciation-categories-settings';
 export { ExchangeRateSettings } from './exchange-rate-settings';
 export { LocationsSettings } from './locations-settings';
