@@ -9,9 +9,22 @@
 import { User } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BirthDatePicker } from '@/components/ui/birth-date-picker';
+import { DatePicker } from '@/components/ui/date-picker';
 import { CountrySelect } from '@/components/ui/country-select';
 import { GENDERS, MARITAL_STATUS } from '@/lib/data/constants';
+
+// DOB constraints: must be 18-80 years old
+const getMaxDOB = (): Date => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 18);
+  return date;
+};
+
+const getMinDOB = (): Date => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 80);
+  return date;
+};
 
 interface PersonalStepProps {
   formData: Record<string, unknown>;
@@ -44,11 +57,13 @@ export function PersonalStep({ formData, updateField, errors }: PersonalStepProp
             <Label htmlFor="dateOfBirth">
               Date of Birth <span className="text-red-500">*</span>
             </Label>
-            <BirthDatePicker
+            <DatePicker
               id="dateOfBirth"
               value={formatDateForPicker(formData.dateOfBirth as string)}
               onChange={(val) => updateField('dateOfBirth', val)}
               placeholder="DD/MM/YYYY"
+              minDate={getMinDOB()}
+              maxDate={getMaxDOB()}
             />
             {errors.dateOfBirth && (
               <p className="text-sm text-red-600">{errors.dateOfBirth}</p>
