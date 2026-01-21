@@ -9,27 +9,27 @@
  * Zone data from QNAS API
  */
 export interface QNASZone {
-  zone_number: string;
-  name_en: string;
-  name_ar: string;
+  zone_number: number;
+  zone_name_en: string;
+  zone_name_ar: string;
 }
 
 /**
  * Street data from QNAS API
  */
 export interface QNASStreet {
-  street_number: string;
-  name_en: string;
-  name_ar: string;
+  street_number: number;
+  street_name_en: string;
+  street_name_ar: string;
 }
 
 /**
  * Building data from QNAS API
  */
 export interface QNASBuilding {
-  building_number: string;
-  latitude: number;
-  longitude: number;
+  building_number: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 /**

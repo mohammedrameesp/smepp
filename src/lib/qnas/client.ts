@@ -7,7 +7,7 @@
 
 import type { QNASZone, QNASStreet, QNASBuilding, QNASLocation } from './types';
 
-const QNAS_API_BASE = 'https://api.qna.gov.qa/api/v2';
+const QNAS_API_BASE = 'https://qnas.qa';
 
 /**
  * Custom error class for QNAS API errors

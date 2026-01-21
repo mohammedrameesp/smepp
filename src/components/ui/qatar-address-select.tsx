@@ -326,8 +326,8 @@ export function QatarAddressSelect({
             </SelectTrigger>
             <SelectContent>
               {zones.map((zone) => (
-                <SelectItem key={zone.zone_number} value={zone.zone_number}>
-                  {zone.zone_number} - {zone.name_en}
+                <SelectItem key={zone.zone_number} value={String(zone.zone_number)}>
+                  {zone.zone_number} - {zone.zone_name_en}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -354,8 +354,8 @@ export function QatarAddressSelect({
             </SelectTrigger>
             <SelectContent>
               {streets.map((street) => (
-                <SelectItem key={street.street_number} value={street.street_number}>
-                  {street.street_number} - {street.name_en}
+                <SelectItem key={street.street_number} value={String(street.street_number)}>
+                  {street.street_number} - {street.street_name_en}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -382,7 +382,7 @@ export function QatarAddressSelect({
             </SelectTrigger>
             <SelectContent>
               {buildings.map((building) => (
-                <SelectItem key={building.building_number} value={building.building_number}>
+                <SelectItem key={building.building_number} value={String(building.building_number)}>
                   {building.building_number}
                 </SelectItem>
               ))}
