@@ -97,7 +97,7 @@ export default function LeafletMap({
   return (
     <div
       ref={containerRef}
-      style={{ height }}
+      style={{ height, position: 'relative', zIndex: 0 }}
       className={`w-full rounded-lg overflow-hidden border border-slate-200 ${className}`}
     />
   );
