@@ -18,7 +18,8 @@ import { DepartmentSelect } from '@/components/ui/department-select';
 import { createUserSchema, type CreateUserInput, USER_ROLES, ROLE_CONFIG, type UserRole } from '@/features/users/validations/users';
 import { VALIDATION_PATTERNS } from '@/lib/validations/patterns';
 import { DatePicker } from '@/components/ui/date-picker';
-import { WORK_LOCATIONS, SPONSORSHIP_TYPES } from '@/lib/data/constants';
+import { SPONSORSHIP_TYPES } from '@/lib/data/constants';
+import { LocationSelect } from '@/components/ui/location-select';
 
 // Debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -489,19 +490,12 @@ export default function NewEmployeePage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="workLocation">Work Location</Label>
-                      <Select
+                      <LocationSelect
+                        id="workLocation"
                         value={watch('workLocation') || ''}
-                        onValueChange={(val) => setValue('workLocation', val)}
-                      >
-                        <SelectTrigger id="workLocation">
-                          <SelectValue placeholder="Select location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {WORK_LOCATIONS.map((loc) => (
-                            <SelectItem key={loc} value={loc.toUpperCase()}>{loc}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onChange={(val) => setValue('workLocation', val)}
+                        placeholder="Select location"
+                      />
                     </div>
                   </div>
 

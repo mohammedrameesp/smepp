@@ -33,9 +33,9 @@ import {
   SPONSORSHIP_TYPES,
   GENDERS,
   MARITAL_STATUS,
-  WORK_LOCATIONS,
   LANGUAGES,
 } from '@/lib/data/constants';
+import { LocationSelect } from '@/components/ui/location-select';
 import { PhoneInput, QatarPhoneInput } from './phone-input';
 import { DocumentUpload } from './document-upload';
 import { MultiSelectTags, TagsInput } from './multi-select-tags';
@@ -712,20 +712,14 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
 
           <div className="space-y-2">
             <Label htmlFor="workLocation">Work Location</Label>
-            <Select
+            <LocationSelect
+              id="workLocation"
               value={watch('workLocation') || ''}
-              onValueChange={(val) => setValue('workLocation', val, { shouldDirty: true })}
+              onChange={(val) => setValue('workLocation', val, { shouldDirty: true })}
+              placeholder="Select location"
               disabled={!isAdmin}
-            >
-              <SelectTrigger id="workLocation" className={!isAdmin ? 'bg-gray-50' : ''}>
-                <SelectValue placeholder="Select location" />
-              </SelectTrigger>
-              <SelectContent>
-                {WORK_LOCATIONS.map((loc) => (
-                  <SelectItem key={loc} value={loc.toUpperCase()}>{loc}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              className={!isAdmin ? 'bg-gray-50' : ''}
+            />
             {!isAdmin && (
               <p className="text-xs text-gray-500">Admin only field</p>
             )}
