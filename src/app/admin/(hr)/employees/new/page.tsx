@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RefreshCw, AlertTriangle, User, Briefcase, Shield, Mail, Building2, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { DepartmentSelect } from '@/components/ui/department-select';
 import { createUserSchema, type CreateUserInput, USER_ROLES, ROLE_CONFIG, type UserRole } from '@/features/users/validations/users';
 import { VALIDATION_PATTERNS } from '@/lib/validations/patterns';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -437,11 +438,11 @@ export default function NewEmployeePage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="department">Department</Label>
-                      <Input
+                      <DepartmentSelect
                         id="department"
-                        type="text"
-                        {...register('department')}
-                        placeholder="e.g. Engineering, Sales"
+                        value={watch('department') || ''}
+                        onChange={(val) => setValue('department', val)}
+                        placeholder="Select or type department"
                         className={errors.department ? 'border-red-500' : ''}
                       />
                       {errors.department && (

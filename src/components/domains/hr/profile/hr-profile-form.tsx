@@ -20,6 +20,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { DatePicker } from '@/components/ui/date-picker';
 import { BirthDatePicker } from '@/components/ui/birth-date-picker';
 import { CountrySelect } from '@/components/ui/country-select';
+import { DepartmentSelect } from '@/components/ui/department-select';
 import { ChevronDown, ChevronUp, User, Phone, AlertTriangle, CreditCard, Briefcase, Building2, GraduationCap, FileText, Info, Loader2 } from 'lucide-react';
 
 import { hrProfileSchema, type HRProfileInput } from '@/features/employees/validations/hr-profile';
@@ -674,10 +675,11 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
 
           <div className="space-y-2">
             <Label htmlFor="department">Department</Label>
-            <Input
+            <DepartmentSelect
               id="department"
-              {...register('department')}
-              placeholder="e.g., Engineering, Sales"
+              value={watch('department') || ''}
+              onChange={(val) => setValue('department', val, { shouldDirty: true })}
+              placeholder="Select or type department"
               disabled={!isAdmin}
               className={!isAdmin ? 'bg-gray-50' : ''}
             />
