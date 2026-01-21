@@ -6,13 +6,45 @@
  * @module employee-onboarding/steps
  */
 
-import { Building2, FileText } from 'lucide-react';
+import { Building2, FileText, Check, X } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DocumentUpload } from '@/components/domains/hr/profile';
 import { QATAR_BANKS } from '@/lib/data/constants';
+
+// IBAN validation hint component
+function IbanValidationHint({ iban }: { iban: string }) {
+  if (!iban) {
+    return <p className="text-xs text-slate-500">29 characters, starts with QA</p>;
+  }
+
+  const startsWithQA = iban.startsWith('QA');
+  const isValidLength = iban.length === 29;
+  const isComplete = startsWithQA && isValidLength;
+
+  if (isComplete) {
+    return (
+      <p className="text-xs text-green-600 flex items-center gap-1">
+        <Check className="h-3 w-3" /> Valid IBAN format
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-0.5">
+      <p className={`text-xs flex items-center gap-1 ${startsWithQA ? 'text-green-600' : 'text-slate-500'}`}>
+        {startsWithQA ? <Check className="h-3 w-3" /> : <X className="h-3 w-3 text-slate-400" />}
+        Starts with QA
+      </p>
+      <p className={`text-xs flex items-center gap-1 ${isValidLength ? 'text-green-600' : 'text-slate-500'}`}>
+        {isValidLength ? <Check className="h-3 w-3" /> : <X className="h-3 w-3 text-slate-400" />}
+        {iban.length}/29 characters
+      </p>
+    </div>
+  );
+}
 
 interface BankingDocumentsStepProps {
   formData: Record<string, unknown>;
@@ -66,13 +98,23 @@ export function BankingDocumentsStep({ formData, updateField, errors }: BankingD
                 <Label>IBAN <span className="text-red-500">*</span></Label>
                 <Input
                   value={(formData.iban as string) || ''}
-                  onChange={(e) => updateField('iban', e.target.value.toUpperCase())}
-                  placeholder="QA00XXXX0000000000XXXXXXXXXXX"
+                  onChange={(e) => {
+                    // Remove spaces and non-alphanumeric, uppercase
+                    let value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                    // Auto-prepend QA if user starts typing without it
+                    if (value.length > 0 && !value.startsWith('Q') && !value.startsWith('QA')) {
+                      value = 'QA' + value;
+                    }
+                    updateField('iban', value);
+                  }}
+                  placeholder="QA00XXXX0000000000000000000"
+                  maxLength={29}
                   className={errors.iban ? 'border-red-500' : ''}
                 />
                 {errors.iban && (
                   <p className="text-sm text-red-600">{errors.iban}</p>
                 )}
+                <IbanValidationHint iban={(formData.iban as string) || ''} />
               </div>
             </div>
           </CardContent>
