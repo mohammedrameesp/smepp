@@ -6,7 +6,8 @@
  * @module employee-onboarding/steps
  */
 
-import { Phone, AlertTriangle } from 'lucide-react';
+import { useCallback } from 'react';
+import { Phone, AlertTriangle, Lock } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PhoneInput, QatarPhoneInput } from '@/components/domains/hr/profile';
 import { RELATIONSHIPS } from '@/lib/data/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { QatarAddressSelect, type QatarAddressValue } from '@/components/ui/qatar-address-select';
 
 interface ContactEmergencyStepProps {
   formData: Record<string, unknown>;
@@ -23,6 +25,34 @@ interface ContactEmergencyStepProps {
 }
 
 export function ContactEmergencyStep({ formData, updateField, errors, workEmail }: ContactEmergencyStepProps) {
+  // Handler for Qatar address changes from the cascading select
+  const handleAddressChange = useCallback(
+    (address: QatarAddressValue) => {
+      updateField('qatarZone', address.zone);
+      updateField('qatarStreet', address.street);
+      updateField('qatarBuilding', address.building);
+      updateField('qatarUnit', address.unit || '');
+      // Store coordinates if available
+      if (address.latitude !== undefined) {
+        updateField('qatarLatitude', address.latitude);
+      }
+      if (address.longitude !== undefined) {
+        updateField('qatarLongitude', address.longitude);
+      }
+    },
+    [updateField]
+  );
+
+  // Current address value for the component
+  const addressValue: QatarAddressValue = {
+    zone: (formData.qatarZone as string) || '',
+    street: (formData.qatarStreet as string) || '',
+    building: (formData.qatarBuilding as string) || '',
+    unit: (formData.qatarUnit as string) || '',
+    latitude: formData.qatarLatitude as number | undefined,
+    longitude: formData.qatarLongitude as number | undefined,
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
@@ -86,50 +116,28 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
               </div>
 
               <div className="space-y-2">
-                <Label>Work Email</Label>
+                <Label className="flex items-center gap-1.5">
+                  <Lock className="h-3.5 w-3.5 text-slate-400" />
+                  Work Email
+                </Label>
                 <Input value={workEmail} disabled className="bg-slate-50" />
-                <p className="text-xs text-slate-500">From your login</p>
+                <p className="text-xs text-slate-500">Managed by your company</p>
               </div>
             </div>
 
             {/* Qatar Address */}
             <div className="pt-2">
               <Label className="text-sm text-slate-700 mb-2 block">Qatar Address</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs text-slate-500">Zone <span className="text-red-500">*</span></Label>
-                  <Input
-                    value={(formData.qatarZone as string) || ''}
-                    onChange={(e) => updateField('qatarZone', e.target.value)}
-                    placeholder="45"
-                    className={errors.qatarZone ? 'border-red-500' : ''}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-slate-500">Street</Label>
-                  <Input
-                    value={(formData.qatarStreet as string) || ''}
-                    onChange={(e) => updateField('qatarStreet', e.target.value)}
-                    placeholder="123"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-slate-500">Building</Label>
-                  <Input
-                    value={(formData.qatarBuilding as string) || ''}
-                    onChange={(e) => updateField('qatarBuilding', e.target.value)}
-                    placeholder="15"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-slate-500">Unit</Label>
-                  <Input
-                    value={(formData.qatarUnit as string) || ''}
-                    onChange={(e) => updateField('qatarUnit', e.target.value)}
-                    placeholder="5A"
-                  />
-                </div>
-              </div>
+              <QatarAddressSelect
+                value={addressValue}
+                onChange={handleAddressChange}
+                errors={{
+                  zone: errors.qatarZone,
+                  street: errors.qatarStreet,
+                  building: errors.qatarBuilding,
+                }}
+                showMap={true}
+              />
             </div>
 
             <div className="space-y-2">
