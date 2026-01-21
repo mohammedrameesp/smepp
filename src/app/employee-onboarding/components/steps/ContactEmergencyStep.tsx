@@ -159,7 +159,7 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
               <AlertTriangle className="h-4 w-4 text-orange-500" />
               <CardTitle className="text-base">Emergency Contacts</CardTitle>
             </div>
-            <CardDescription>Required: both local and home country contacts</CardDescription>
+            <CardDescription>Local contact required, home country optional</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Local Emergency */}
@@ -208,7 +208,7 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
             {/* Home Country Emergency */}
             <div className="space-y-3 pt-3 border-t">
               <h4 className="text-sm font-semibold text-slate-700">
-                Home Country Contact <span className="text-red-500">*</span>
+                Home Country Contact <span className="text-slate-400 font-normal">(Optional)</span>
               </h4>
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
