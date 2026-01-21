@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DocumentUpload } from '@/components/domains/hr/profile';
+import { DocumentUpload, ProfilePhotoUpload } from '@/components/domains/hr/profile';
 import { QATAR_BANKS } from '@/lib/data/constants';
 
 // IBAN validation hint component
@@ -165,14 +165,16 @@ export function BankingDocumentsStep({ formData, updateField, errors }: BankingD
             <CardTitle className="text-base">Profile Photo <span className="text-red-500">*</span></CardTitle>
           </CardHeader>
           <CardContent>
-            <DocumentUpload
+            <ProfilePhotoUpload
               id="photo"
-              label="Passport-size Photo *"
+              label="Passport-size Photo"
               value={(formData.photoUrl as string) || ''}
               onChange={(url) => updateField('photoUrl', url)}
-              accept="image/jpeg,image/png"
-              description="Professional headshot for ID badge"
+              employeeName={`${(formData.firstName as string) || ''} ${(formData.lastName as string) || ''}`.trim() || 'Employee Name'}
             />
+            {errors.photoUrl && (
+              <p className="text-sm text-red-600 mt-2">{errors.photoUrl}</p>
+            )}
           </CardContent>
         </Card>
       </div>
