@@ -16,15 +16,20 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+// Marker icon as inline SVG data URL (avoids CSP issues with external images)
+const markerSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 41" width="24" height="41">
+  <path fill="#2563eb" d="M12 0C5.4 0 0 5.4 0 12c0 7.5 12 29 12 29s12-21.5 12-29C24 5.4 18.6 0 12 0z"/>
+  <circle fill="#fff" cx="12" cy="12" r="5"/>
+</svg>`;
+
+const markerIconUrl = `data:image/svg+xml;base64,${btoa(markerSvg)}`;
+
 // Fix for default marker icons in Leaflet with webpack/bundlers
 const DefaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
+  iconUrl: markerIconUrl,
+  iconSize: [24, 41],
   iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+  popupAnchor: [0, -41],
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;

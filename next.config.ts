@@ -33,8 +33,8 @@ const nextConfig: NextConfig = {
         : "script-src 'self' 'unsafe-inline'", // unsafe-inline needed for Next.js
       // Styles: self + inline for styled-components/emotion
       "style-src 'self' 'unsafe-inline'",
-      // Images: self + Supabase + data URIs + blob
-      "img-src 'self' data: blob: https://*.supabase.co",
+      // Images: self + Supabase + OpenStreetMap tiles + data URIs + blob
+      "img-src 'self' data: blob: https://*.supabase.co https://*.tile.openstreetmap.org",
       // Fonts: self + Google Fonts
       "font-src 'self' data: https://fonts.gstatic.com",
       // Connect: self + Supabase + Sentry + Upstash
