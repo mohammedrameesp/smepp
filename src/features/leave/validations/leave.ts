@@ -322,8 +322,8 @@ export const leaveRequestQuerySchema = z.object({
   endDate: z.string().optional(),
   /** Page number (1-based) */
   p: z.coerce.number().min(1).default(1),
-  /** Page size (max 10000) */
-  ps: z.coerce.number().min(1).max(10000).default(50),
+  /** Page size (max 10000 for consistency across modules) */
+  ps: z.coerce.number().min(1).max(10000).default(20),
   /** Sort field */
   sort: z.enum(['requestNumber', 'startDate', 'endDate', 'totalDays', 'createdAt', 'status']).default('createdAt'),
   /** Sort order */
@@ -345,8 +345,8 @@ export const leaveBalanceQuerySchema = z.object({
   year: z.coerce.number().int().min(2000).max(2100).optional(),
   /** Page number (1-based) */
   p: z.coerce.number().min(1).default(1),
-  /** Page size (max 1000 for calendar views) */
-  ps: z.coerce.number().min(1).max(1000).default(50),
+  /** Page size (max 10000 for consistency across modules) */
+  ps: z.coerce.number().min(1).max(10000).default(20),
 });
 
 /**

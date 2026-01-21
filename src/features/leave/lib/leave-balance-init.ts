@@ -16,11 +16,13 @@ function getServiceMonths(joinDate: Date | null | undefined, referenceDate: Date
 }
 
 /**
- * Get annual leave entitlement based on service
- * - < 5 years: 21 days
- * - >= 5 years: 28 days
+ * Get annual leave entitlement based on service (Qatar Labor Law)
+ * - < 5 years (< 60 months): 21 days
+ * - >= 5 years (>= 60 months): 28 days
+ *
+ * Exported for use across the application to ensure consistency.
  */
-function getAnnualLeaveEntitlement(serviceMonths: number): number {
+export function getAnnualLeaveEntitlement(serviceMonths: number): number {
   if (serviceMonths >= 60) {
     return 28; // 5+ years
   }
@@ -31,12 +33,14 @@ function getAnnualLeaveEntitlement(serviceMonths: number): number {
  * FIN-008: Calculate pro-rata entitlement for new employees
  * If employee joins mid-year, they get proportional leave based on remaining months
  *
+ * Exported for use across the application to ensure consistency.
+ *
  * @param fullEntitlement - Full annual entitlement (e.g., 30 days)
  * @param dateOfJoining - Employee's date of joining
  * @param year - The leave year to calculate for
  * @returns Pro-rated entitlement rounded to nearest 0.5
  */
-function calculateProRataEntitlement(
+export function calculateProRataEntitlement(
   fullEntitlement: number,
   dateOfJoining: Date | null | undefined,
   year: number

@@ -21,6 +21,11 @@
  * - Disposal: Days from last run / 30.44 (average days per month)
  */
 
+import Decimal from 'decimal.js';
+
+// FIN-003: Configure Decimal.js for financial precision
+Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP });
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -92,9 +97,10 @@ export interface ProRataDepreciationResult {
 
 /**
  * Round to 2 decimal places for currency.
+ * FIN-003: Uses Decimal.js for precise banker's rounding (ROUND_HALF_UP)
  */
 function round2(value: number): number {
-  return Math.round(value * 100) / 100;
+  return new Decimal(value).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
 }
 
 /**

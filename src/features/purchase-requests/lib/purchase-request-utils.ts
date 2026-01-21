@@ -47,19 +47,12 @@ export async function generatePurchaseRequestNumber(
 
 /**
  * Purchase Request Item categories
+ * Imports from unified procurement categories for consistency with supplier categories.
  */
-export const PURCHASE_REQUEST_CATEGORIES = [
-  'IT Equipment',
-  'Office Supplies',
-  'Software/Licenses',
-  'Furniture',
-  'Marketing Materials',
-  'Travel & Events',
-  'Professional Services',
-  'Other',
-] as const;
-
-export type PurchaseRequestCategory = typeof PURCHASE_REQUEST_CATEGORIES[number];
+export {
+  PURCHASE_REQUEST_CATEGORIES,
+  type PurchaseRequestCategory,
+} from '@/lib/constants/procurement-categories';
 
 /**
  * Purchase Types

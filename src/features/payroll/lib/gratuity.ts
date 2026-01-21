@@ -5,6 +5,8 @@
  */
 
 import { GratuityCalculation, GratuityProjection } from '@/features/payroll/types/payroll';
+import { calculateServiceMonths } from '@/features/leave/lib/leave-utils';
+import { divideMoney, multiplyMoney, toFixed2 } from './utils';
 
 /**
  * Qatar End of Service Benefits (Gratuity) Calculation
@@ -15,24 +17,8 @@ import { GratuityCalculation, GratuityProjection } from '@/features/payroll/type
 
 const WEEKS_PER_YEAR = 3; // 3 weeks per year of service
 
-/**
- * Calculate months of service between two dates
- */
-export function calculateServiceMonths(dateOfJoining: Date, referenceDate: Date = new Date()): number {
-  const joinDate = new Date(dateOfJoining);
-  const refDate = new Date(referenceDate);
-
-  let months = (refDate.getFullYear() - joinDate.getFullYear()) * 12;
-  months -= joinDate.getMonth();
-  months += refDate.getMonth();
-
-  // Adjust for partial month
-  if (refDate.getDate() < joinDate.getDate()) {
-    months--;
-  }
-
-  return Math.max(0, months);
-}
+// Re-export for backwards compatibility
+export { calculateServiceMonths };
 
 /**
  * Calculate years of service
@@ -80,8 +66,9 @@ export function calculateGratuity(
   // Daily and weekly rates based on basic salary
   // Monthly salary / 30 = daily rate
   // Daily rate * 7 = weekly rate
-  const dailyRate = basicSalary / 30;
-  const weeklyRate = dailyRate * 7;
+  // FIN-003: Use Decimal.js for precise financial calculations
+  const dailyRate = divideMoney(basicSalary, 30);
+  const weeklyRate = multiplyMoney(dailyRate, 7);
 
   // FIN-006: Check minimum eligibility (12 months)
   // Less than 12 months = no gratuity at all
@@ -93,8 +80,8 @@ export function calculateGratuity(
       daysOfService,
       weeksPerYear: WEEKS_PER_YEAR,
       gratuityAmount: 0,
-      dailyRate: Math.round(dailyRate * 100) / 100,
-      weeklyRate: Math.round(weeklyRate * 100) / 100,
+      dailyRate: toFixed2(dailyRate),
+      weeklyRate: toFixed2(weeklyRate),
       breakdown: {
         fullYearsAmount: 0,
         partialYearAmount: 0,
@@ -105,12 +92,14 @@ export function calculateGratuity(
   }
 
   // Full years gratuity: years * 3 weeks * weekly rate
-  const fullYearsAmount = yearsOfService * WEEKS_PER_YEAR * weeklyRate;
+  // FIN-003: Use Decimal.js for precise multiplication
+  const fullYearsAmount = multiplyMoney(multiplyMoney(yearsOfService, WEEKS_PER_YEAR), weeklyRate);
 
   // Partial year gratuity: (months / 12) * 3 weeks * weekly rate
-  const partialYearAmount = (partialMonths / 12) * WEEKS_PER_YEAR * weeklyRate;
+  const partialYearFraction = partialMonths / 12;
+  const partialYearAmount = multiplyMoney(multiplyMoney(partialYearFraction, WEEKS_PER_YEAR), weeklyRate);
 
-  const gratuityAmount = fullYearsAmount + partialYearAmount;
+  const gratuityAmount = toFixed2(fullYearsAmount + partialYearAmount);
 
   return {
     basicSalary,
@@ -118,12 +107,12 @@ export function calculateGratuity(
     monthsOfService,
     daysOfService,
     weeksPerYear: WEEKS_PER_YEAR,
-    gratuityAmount: Math.round(gratuityAmount * 100) / 100,
-    dailyRate: Math.round(dailyRate * 100) / 100,
-    weeklyRate: Math.round(weeklyRate * 100) / 100,
+    gratuityAmount,
+    dailyRate: toFixed2(dailyRate),
+    weeklyRate: toFixed2(weeklyRate),
     breakdown: {
-      fullYearsAmount: Math.round(fullYearsAmount * 100) / 100,
-      partialYearAmount: Math.round(partialYearAmount * 100) / 100,
+      fullYearsAmount: toFixed2(fullYearsAmount),
+      partialYearAmount: toFixed2(partialYearAmount),
     },
   };
 }
@@ -154,15 +143,9 @@ export function projectGratuity(
 
 /**
  * Format gratuity amount for display
+ * Uses shared formatCurrency for consistency
  */
-export function formatGratuityAmount(amount: number): string {
-  return new Intl.NumberFormat('en-QA', {
-    style: 'currency',
-    currency: 'QAR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
+export { formatCurrency as formatGratuityAmount } from './utils';
 
 /**
  * Get service duration text

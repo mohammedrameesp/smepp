@@ -28,13 +28,14 @@ describe('Purchase Request Utilities', () => {
   describe('Constants', () => {
     describe('PURCHASE_REQUEST_CATEGORIES', () => {
       it('should have expected categories', () => {
+        // Updated to match unified procurement categories
         expect(PURCHASE_REQUEST_CATEGORIES).toContain('IT Equipment');
         expect(PURCHASE_REQUEST_CATEGORIES).toContain('Office Supplies');
-        expect(PURCHASE_REQUEST_CATEGORIES).toContain('Software/Licenses');
+        expect(PURCHASE_REQUEST_CATEGORIES).toContain('Software & Licenses');
         expect(PURCHASE_REQUEST_CATEGORIES).toContain('Furniture');
-        expect(PURCHASE_REQUEST_CATEGORIES).toContain('Marketing Materials');
-        expect(PURCHASE_REQUEST_CATEGORIES).toContain('Travel & Events');
-        expect(PURCHASE_REQUEST_CATEGORIES).toContain('Professional Services');
+        expect(PURCHASE_REQUEST_CATEGORIES).toContain('Marketing & Advertising');
+        expect(PURCHASE_REQUEST_CATEGORIES).toContain('Travel & Transportation');
+        expect(PURCHASE_REQUEST_CATEGORIES).toContain('Consulting');
         expect(PURCHASE_REQUEST_CATEGORIES).toContain('Other');
       });
 

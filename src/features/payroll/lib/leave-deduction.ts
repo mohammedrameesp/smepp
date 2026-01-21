@@ -26,7 +26,7 @@
 
 import { prisma } from '@/lib/core/prisma';
 import { LeaveStatus } from '@prisma/client';
-import { parseDecimal } from './utils';
+import { parseDecimal, multiplyMoney, toFixed2 } from './utils';
 
 export interface UnpaidLeaveDeduction {
   leaveRequestId: string;
@@ -123,7 +123,8 @@ export async function calculateUnpaidLeaveDeductions(
       daysToDeduct = calendarDays;
     }
 
-    const deductionAmount = daysToDeduct * dailySalary;
+    // FIN-003: Use Decimal.js for precise financial calculations
+    const deductionAmount = multiplyMoney(daysToDeduct, dailySalary);
 
     deductions.push({
       leaveRequestId: leave.id,
@@ -133,7 +134,7 @@ export async function calculateUnpaidLeaveDeductions(
       endDate: effectiveEnd,
       totalDays: daysToDeduct,
       dailyRate: dailySalary,
-      deductionAmount: Math.round(deductionAmount * 100) / 100,
+      deductionAmount: toFixed2(deductionAmount),
     });
   }
 

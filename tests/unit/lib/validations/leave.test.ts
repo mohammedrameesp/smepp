@@ -638,7 +638,7 @@ describe('Leave Validation Schemas', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.p).toBe(1);
-        expect(result.data.ps).toBe(50);
+        expect(result.data.ps).toBe(20); // Updated: standardized default page size
         expect(result.data.sort).toBe('createdAt');
         expect(result.data.order).toBe('desc');
       }
@@ -729,7 +729,7 @@ describe('Leave Validation Schemas', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.p).toBe(1);
-        expect(result.data.ps).toBe(50);
+        expect(result.data.ps).toBe(20); // Updated: standardized default page size
       }
     });
 
