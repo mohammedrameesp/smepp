@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Durj Platform - Testing Checklist</title>
+    <style>
+        :root { --primary: #3b82f6; --primary-dark: #2563eb; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db; --gray-500: #6b7280; --gray-700: #374151; --gray-900: #111827; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-50); color: var(--gray-900); line-height: 1.5; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        header { background: white; border-bottom: 1px solid var(--gray-200); padding: 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .header-content { max-width: 1400px; margin: 0 auto; }
+        h1 { font-size: 1.5rem; margin-bottom: 15px; }
+        .stats-bar { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; margin-bottom: 15px; }
+        .stat { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--gray-100); border-radius: 8px; font-size: 0.875rem; }
+        .stat-value { font-weight: 600; color: var(--primary); }
+        .stat.success .stat-value { color: var(--success); }
+        .progress-container { flex: 1; min-width: 300px; }
+        .progress-bar { height: 24px; background: var(--gray-200); border-radius: 12px; overflow: hidden; position: relative; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--success)); transition: width 0.3s ease; border-radius: 12px; }
+        .progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: 600; font-size: 0.75rem; color: var(--gray-700); }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .search-box { flex: 1; min-width: 200px; padding: 10px 16px; border: 1px solid var(--gray-300); border-radius: 8px; font-size: 0.875rem; }
+        .search-box:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .filter-btn { padding: 10px 16px; border: 1px solid var(--gray-300); background: white; border-radius: 8px; cursor: pointer; font-size: 0.875rem; transition: all 0.2s; }
+        .filter-btn:hover { background: var(--gray-100); }
+        .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-danger { background: var(--danger); color: white; }
+        .main-content { display: flex; gap: 20px; margin-top: 20px; }
+        .sidebar { width: 280px; flex-shrink: 0; position: sticky; top: 140px; height: calc(100vh - 160px); overflow-y: auto; }
+        .sidebar-content { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .sidebar h3 { font-size: 0.875rem; color: var(--gray-500); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; margin-bottom: 4px; transition: all 0.2s; }
+        .nav-item:hover { background: var(--gray-100); }
+        .nav-item .progress-mini { font-size: 0.7rem; color: var(--gray-500); }
+        .nav-item.complete { background: rgba(34, 197, 94, 0.1); }
+        .nav-item.complete .progress-mini { color: var(--success); }
+        .content { flex: 1; min-width: 0; }
+        .section { background: white; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+        .section-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--gray-50); border-bottom: 1px solid var(--gray-200); cursor: pointer; }
+        .section-header:hover { background: var(--gray-100); }
+        .section-title { display: flex; align-items: center; gap: 12px; }
+        .section-title h2 { font-size: 1.125rem; font-weight: 600; }
+        .section-progress { display: flex; align-items: center; gap: 12px; }
+        .section-progress-bar { width: 120px; height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; }
+        .section-progress-fill { height: 100%; background: var(--success); transition: width 0.3s ease; }
+        .section-progress-text { font-size: 0.875rem; color: var(--gray-500); min-width: 60px; text-align: right; }
+        .section-content { padding: 0; }
+        .section.collapsed .section-content { display: none; }
+        .subsection { border-bottom: 1px solid var(--gray-100); }
+        .subsection:last-child { border-bottom: none; }
+        .subsection-header { padding: 12px 20px; background: var(--gray-50); font-weight: 500; font-size: 0.875rem; color: var(--gray-700); display: flex; justify-content: space-between; }
+        .test-list { padding: 0; }
+        .test-item { display: flex; align-items: flex-start; padding: 10px 20px; border-bottom: 1px solid var(--gray-100); transition: background 0.2s; }
+        .test-item:hover { background: var(--gray-50); }
+        .test-item.completed { background: rgba(34, 197, 94, 0.05); }
+        .test-item.completed .test-name { text-decoration: line-through; color: var(--gray-500); }
+        .test-item input { width: 18px; height: 18px; margin-right: 12px; cursor: pointer; accent-color: var(--success); flex-shrink: 0; margin-top: 2px; }
+        .test-info { flex: 1; min-width: 0; }
+        .test-name { font-weight: 500; font-size: 0.875rem; margin-bottom: 4px; }
+        .test-details { font-size: 0.8rem; color: var(--gray-500); }
+        .test-details span { margin-right: 16px; }
+        .collapse-icon { transition: transform 0.2s; }
+        .section.collapsed .collapse-icon { transform: rotate(-90deg); }
+        .hidden { display: none !important; }
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; background: var(--gray-900); color: white; border-radius: 8px; font-size: 0.875rem; z-index: 1000; }
+        @media (max-width: 1024px) { .sidebar { display: none; } }
+        @media (max-width: 640px) { .stats-bar { flex-direction: column; align-items: stretch; } .test-details { display: none; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>Durj Platform - Comprehensive Testing Checklist (1250+ Tests)</h1>
+            <div class="stats-bar">
+                <div class="stat"><span>Total:</span><span class="stat-value" id="total-tests">0</span></div>
+                <div class="stat success"><span>Done:</span><span class="stat-value" id="completed-tests">0</span></div>
+                <div class="stat"><span>Left:</span><span class="stat-value" id="remaining-tests">0</span></div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="main-progress-fill" style="width: 0%"></div>
+                        <span class="progress-text" id="main-progress-text">0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="controls">
+                <input type="text" class="search-box" placeholder="Search tests..." id="search-input">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="pending">Pending</button>
+                <button class="filter-btn" data-filter="completed">Completed</button>
+                <button class="btn btn-primary" onclick="exportProgress()">Export</button>
+                <button class="btn btn-primary" onclick="document.getElementById('import-file').click()">Import</button>
+                <input type="file" id="import-file" accept=".json" style="display:none" onchange="importProgress(event)">
+                <button class="btn btn-danger" onclick="resetProgress()">Reset</button>
+            </div>
+        </div>
+    </header>
+    <div class="container">
+        <div class="main-content">
+            <aside class="sidebar"><div class="sidebar-content"><h3>Sections</h3><nav id="sidebar-nav"></nav></div></aside>
+            <main class="content" id="main-content"></main>
+        </div>
+    </div>
+    <script>
+const T = {
+"Authentication & Authorization": {
+"Login Tests": [
+["Valid email/password login", "Enter valid credentials, click Login", "Redirects to dashboard"],
+["Invalid email format", "Enter 'notanemail', click Login", "Shows 'Invalid email' error"],
+["Wrong password", "Enter correct email, wrong password", "Shows 'Invalid credentials'"],
+["Empty email field", "Leave email empty, click Login", "Shows 'Email is required'"],
+["Empty password field", "Leave password empty, click Login", "Shows 'Password is required'"],
+["SQL injection in email", "Enter '; DROP TABLE users;--", "Should be sanitized, show error"],
+["XSS in email field", "Enter script tag", "Should be escaped"],
+["Account lockout", "Enter wrong password 5+ times", "Account should be locked"],
+["Case sensitivity", "Enter email with different case", "Should work (case-insensitive)"],
+["Trimmed whitespace", "Enter email with leading/trailing spaces", "Should work after trimming"],
+["Locked account shows time remaining", "Get locked out, check message", "Shows 'Try again in X minutes'"],
+["Login on wrong subdomain", "User in org-a logs into org-b subdomain", "Error or redirect to correct subdomain"],
+["Multi-org user correct isolation", "User belongs to 2 orgs, login to each", "Sees only that org's data"],
+["OAuth user tries password login", "User signed up via Google, tries email/pass", "Error 'Use Google sign-in'"],
+["Deactivated user login", "Login with canLogin=false account", "Error 'Account deactivated'"],
+["Deleted user login", "Login with soft-deleted account", "Error 'Invalid credentials'"],
+["Login after password change on other device", "Change password, check other session", "Other session invalidated"],
+["Account locked then unlocked by time", "Wait for lockout to expire", "Can login again"],
+["Progressive lockout duration", "Get locked multiple times", "Duration increases (5m→15m→30m→60m)"]
+],
+"OAuth Tests": [
+["Google OAuth", "Click 'Sign in with Google'", "Redirects to Google, returns to app"],
+["Microsoft OAuth", "Click 'Sign in with Microsoft'", "Redirects to MS, returns to app"],
+["OAuth user exists", "Sign in via OAuth with existing email", "Links account, logs in"],
+["OAuth new user", "Sign in via OAuth with new email", "Creates account, shows onboarding"],
+["OAuth state tampering", "Modify state parameter in callback", "Should reject with error"],
+["OAuth callback state mismatch", "Tamper with state parameter", "Error 'Invalid state'"],
+["OAuth with existing email different provider", "Google user tries Microsoft with same email", "Links or shows conflict"],
+["OAuth token expired during callback", "Slow network, token expires", "Error handling, retry prompt"],
+["OAuth account email changed", "Change email in Google, re-login", "Handles email update"],
+["Custom OAuth credentials invalid", "Org configures wrong OAuth keys", "Falls back or clear error"],
+["OAuth with org-specific credentials", "Org has custom Google OAuth", "Uses org credentials, not platform"]
+],
+"2FA Tests": [
+["2FA token reuse", "Use same 2FA code twice", "Second attempt rejected"],
+["2FA token expired", "Wait >30 seconds, enter code", "Error 'Code expired'"],
+["2FA pending token replay", "Get pending token, use twice", "Second use rejected (JTI check)"],
+["2FA setup incomplete login", "Enable 2FA, don't complete setup", "Blocked until setup complete"],
+["2FA backup codes", "Use backup code", "Works, code invalidated"],
+["2FA on new device", "Login from new device with 2FA", "Requires 2FA verification"],
+["Disable 2FA requires verification", "Try to disable 2FA", "Must enter current 2FA code"]
+],
+"Session Tests": [
+["Session expiry", "Wait for session to expire", "Redirected to login"],
+["Multiple devices", "Log in on two browsers", "Both should work independently"],
+["Logout clears session", "Click logout", "All session data cleared"],
+["Token refresh", "Wait near expiry, make request", "Token should auto-refresh"],
+["Remember me checked", "Check remember me", "Session lasts 30 days"],
+["Remember me unchecked", "Don't check", "Session lasts 24 hours"],
+["Multiple tabs", "Open app in 2 tabs", "Session synced"],
+["Logout in one tab", "Logout, check other tab", "Other tab logs out"],
+["Session after password change", "Change password", "Forces re-login"],
+["Inactive timeout", "Leave idle for 30 min", "Session still valid"],
+["Session after org deletion", "Org deleted while user logged in", "Graceful logout, clear message"],
+["Session with changed permissions", "Admin removes user's HR access", "Next request reflects new permissions"],
+["Concurrent session limit", "Login on 5+ devices", "Oldest sessions invalidated or all work"],
+["Session token in URL", "Token leaked in URL", "Should not expose token in URL"],
+["Cross-tab session sync", "Login in tab 1, check tab 2", "Tab 2 reflects login state"]
+],
+"Authorization Tests": [
+["Employee accessing admin route", "As employee, navigate to /admin/settings", "Redirected to employee portal"],
+["Non-HR accessing HR routes", "As regular admin, access HR settings", "Access denied or limited view"],
+["Non-Finance accessing payroll", "As regular admin, access payroll", "Access denied"],
+["Disabled module access", "Try to access disabled module route", "Shows 'Module not enabled'"]
+]
+},
+"Onboarding": {
+"Organization Setup": [
+["New user redirect", "Sign up as new user", "Redirected to /setup wizard"],
+["Company name required", "Leave company name empty", "Validation error"],
+["Company slug unique", "Enter existing org slug", "Error 'slug already taken'"],
+["Company slug format", "Enter slug with spaces/special chars", "Validation error"],
+["Website field optional", "Leave website empty", "Proceeds to next step"],
+["Website URL validation", "Enter invalid URL", "Validation error"],
+["Code prefix required", "Leave prefix empty", "Cannot proceed"],
+["Code prefix format", "Enter lowercase/special chars", "Error (must be 2-3 uppercase)"],
+["Additional currencies", "Add USD/EUR currencies", "Saved to org settings"],
+["Skip currencies step", "Click 'Skip for now'", "Proceeds to logo step"],
+["Logo upload", "Upload company logo", "Logo saved and displayed"],
+["Logo invalid format", "Upload non-image file", "Error 'invalid format'"],
+["Skip logo step", "Click 'Skip for now'", "Proceeds to colors step"],
+["Primary color selection", "Select primary color", "Color saved"],
+["Secondary color selection", "Select secondary color", "Color saved"],
+["Skip colors step", "Click 'Skip for now'", "Proceeds to modules step"],
+["Module selection", "Enable/disable modules", "Saved to org settings"],
+["At least one module", "Try to proceed with 0 modules", "Cannot proceed"],
+["Complete setup", "Click 'Finish Setup'", "Redirected to admin dashboard"],
+["Skip setup entirely", "Click 'Skip setup'", "Goes to admin dashboard"]
+],
+"Employee Onboarding": [
+["New employee redirect", "New employee logs in", "Shown onboarding wizard"],
+["Skip onboarding", "Click 'Skip for now'", "Goes to employee dashboard"],
+["Resume onboarding", "Skip then return later", "Can resume from dashboard"],
+["Already completed", "Complete onboarding, revisit", "Shows 'already completed'"]
+],
+"Step 1: Personal Information": [
+["Date of birth required", "Leave empty, click Continue", "Validation error"],
+["DOB age validation", "Enter DOB making age <18 or >80", "Date picker prevents selection"],
+["Gender required", "Leave empty, click Continue", "Validation error"],
+["Nationality required", "Leave empty, click Continue", "Validation error"],
+["Marital status optional", "Leave empty, click Continue", "Proceeds without error"],
+["Future DOB", "Enter future date for DOB", "Validation error"],
+["Valid personal info", "Fill all required fields", "Proceeds to step 2"]
+],
+"Step 2: Contact & Emergency": [
+["Qatar mobile required", "Leave empty", "Validation error"],
+["Qatar mobile 8 digits", "Enter 7 digits", "Error 'must be 8 digits'"],
+["Qatar mobile valid", "Enter 8 digits", "Valid, proceeds"],
+["Phone code auto-set", "Select nationality", "Other mobile code auto-updates"],
+["Other mobile 5-15 digits", "Enter 4 digits for other mobile", "Validation error"],
+["Personal email required", "Leave empty", "Validation error"],
+["Personal email format", "Enter invalid email", "Validation error"],
+["Qatar address fields", "Fill zone/street/building", "Saved correctly"],
+["Qatar address unit optional", "Leave unit empty", "Proceeds without error"],
+["Local emergency name required", "Leave name empty", "Validation error"],
+["Local emergency relationship required", "Leave relationship empty", "Validation error"],
+["Local emergency phone required", "Leave phone empty", "Validation error"],
+["Home country details optional", "Leave all home country fields empty", "Proceeds without error"]
+],
+"Step 3: Identification & Legal": [
+["QID number required", "Leave empty", "Validation error"],
+["QID 11 digits", "Enter 10 digits", "Error 'must be 11 digits'"],
+["QID starts with 2 or 3", "Enter QID starting with 1", "Validation error"],
+["QID digits only", "Enter letters in QID", "Only digits accepted"],
+["QID expiry required", "Leave empty", "Validation error"],
+["QID expired date", "Enter past date for expiry", "Should warn (not block)"],
+["Passport number required", "Leave empty", "Validation error"],
+["Passport format", "Enter <5 chars", "Error '5-20 characters'"],
+["Passport auto-uppercase", "Enter lowercase passport number", "Converted to uppercase"],
+["Passport expiry required", "Leave empty", "Validation error"],
+["Health card optional", "Leave empty", "Proceeds without error"],
+["Driving license expiry optional", "Leave empty", "Proceeds without error"]
+],
+"Step 4: Banking & Documents": [
+["Bank name required", "Leave empty", "Validation error"],
+["Bank name dropdown", "Click bank name field", "Shows list of Qatar banks"],
+["IBAN required", "Leave empty", "Validation error"],
+["IBAN auto-prefills QA", "Focus on empty IBAN field", "QA prefix auto-added"],
+["IBAN format invalid", "Enter wrong format", "Validation error"],
+["IBAN Qatar format", "Enter valid QA IBAN", "Valid"],
+["IBAN spaces removed", "Enter IBAN with spaces", "Spaces automatically removed"],
+["IBAN uppercase enforced", "Enter lowercase letters", "Converted to uppercase"],
+["IBAN max 34 characters", "Enter 35+ characters", "Input limited to 34 chars"],
+["Profile photo required", "Leave photo empty", "Validation error"],
+["QID copy required", "Leave QID copy empty", "Validation error"],
+["Passport copy required", "Leave passport copy empty", "Validation error"],
+["QID document upload", "Upload QID copy", "File uploaded to storage"],
+["Passport upload", "Upload passport copy", "File uploaded to storage"],
+["Photo upload", "Upload photo", "File uploaded to storage"],
+["Invalid file type", "Upload .exe file", "Error 'invalid format'"],
+["File too large", "Upload >5MB file", "Error 'file too large'"]
+],
+"Step 5: Education & Skills": [
+["Qualification optional", "Leave qualification empty", "Proceeds without error"],
+["Specialization optional", "Leave specialization empty", "Proceeds without error"],
+["Institution optional", "Leave institution empty", "Proceeds without error"],
+["Graduation year range", "Enter year 1900", "Validation error (must be within 50 years)"],
+["Graduation year future allowed", "Enter year current+2", "Valid (allows interns)"],
+["Languages multi-select", "Select multiple languages", "All saved correctly"],
+["Custom language entry", "Type custom language", "Custom language added"],
+["Skills tags input", "Enter multiple skills with Enter key", "All skills saved as tags"],
+["Skip education step", "Leave all fields empty", "Proceeds to review step"]
+],
+"Step 6: Review & Complete": [
+["Review all data", "View review step", "All entered data displayed"],
+["Education section displayed", "View review step", "Education & skills info shown"],
+["Documents status shown", "View review step", "Upload status badges displayed"],
+["Edit from review", "Click edit on section", "Goes back to that step"],
+["Complete onboarding", "Click Complete", "Profile marked complete"],
+["Redirect after complete", "Complete onboarding", "Redirected to employee dashboard"]
+],
+"Progress & State Management": [
+["Progress saved", "Fill step, refresh page", "Data persisted"],
+["Step navigation", "Click step indicators", "Can navigate between steps"],
+["Back button works", "Click Back", "Returns to previous step"],
+["Validation on next", "Click Continue with errors", "Shows field-specific errors"],
+["Skip for now", "Click 'Skip for now'", "Progress saved, exits to dashboard"]
+]
+},
+"Leave Management": {
+"Leave Type Configuration": [
+["Create leave type - valid", "Fill all required fields", "Type created successfully"],
+["Create leave type - empty name", "Submit without name", "Validation error"],
+["Create leave type - negative days", "Enter -5 for default days", "Validation error"],
+["Create leave type - invalid color", "Enter 'red' instead of hex", "Validation error"],
+["Enable carry forward without max", "Enable carry forward, no max days", "Validation error"],
+["Gender restriction", "Create type with FEMALE restriction", "Only females see it"],
+["Service requirement", "Create type requiring 12 months", "New employees can't use it"],
+["Once-in-employment", "Create Hajj leave, use it twice", "Second request blocked"],
+["Once-per-employment used twice", "Use Hajj leave, request again next year", "Error 'Already used this leave type'"],
+["Gender-restricted leave", "Male requests maternity leave", "Not shown or error"],
+["Service requirement not met", "New employee requests type requiring 12 months", "Error 'Minimum service not met'"],
+["Probation-restricted leave", "Employee on probation requests annual leave", "Policy-dependent, may block"],
+["Medical leave without document", "Request >1 day sick leave, no doc", "Error 'Document required'"],
+["Unpaid leave exceeds limit", "Request 60 days unpaid (max 30)", "Error 'Exceeds maximum'"]
+],
+"Leave Request Creation": [
+["Valid request - full day", "Select type, dates, submit", "Request created with PENDING status"],
+["Valid request - half day AM", "Select half day AM, single date", "Request created for 0.5 days"],
+["Valid request - half day PM", "Select half day PM, single date", "Request created for 0.5 days"],
+["Half day - different dates", "Select half day, different start/end", "Validation error"],
+["End before start", "End date before start date", "Validation error"],
+["Overlapping request", "Create request overlapping existing", "'Leave already booked' error"],
+["Insufficient balance", "Request more days than available", "'Insufficient balance' error"],
+["Notice period violation", "Request leave starting tomorrow", "Validation error"],
+["Admin override notice", "As admin, override notice requirement", "Request created"],
+["Document required - no doc", "Type requires doc, don't upload", "Validation error (if >1 day)"],
+["Document required - 1 day", "Type requires doc, request 1 day", "Should allow without doc"],
+["Max consecutive days", "Exceed max consecutive limit", "Validation error"],
+["Weekend handling", "Request includes weekend", "Weekends excluded from count"],
+["Public holiday handling", "Request includes public holiday", "Holiday excluded from count"],
+["On-behalf request", "Admin creates for employee", "Shows 'created by' in history"],
+["Service eligibility", "New employee, type requires 12 months", "Not eligible error"],
+["Leave for employee without login", "Admin creates leave for canLogin=false", "Request created, no employee action needed"],
+["Leave spanning year boundary", "Request Dec 28 to Jan 5", "Split across years or handled correctly"],
+["Leave spanning multiple years", "Request 6-month leave across 2 years", "Balance deducted from both years"],
+["Negative balance after adjustment", "Adjust balance to -5", "Shows negative, blocks new requests"],
+["Request on terminated employee", "Submit leave for terminated", "Error 'Employee terminated'"],
+["Request for future year", "Request leave for next year", "Allowed if policy permits, uses future balance"],
+["Half-day on public holiday", "Request half-day on holiday", "Should exclude holiday"],
+["Leave during notice period", "Employee in notice period requests leave", "Policy-dependent, may require approval"],
+["Request exactly at balance", "Request all remaining balance", "Allowed, balance becomes 0"],
+["Weekend-only request", "Fri-Sat leave (both weekend)", "Error 'No working days' or 0 days"]
+],
+"Leave Request Approval": [
+["Manager approval", "Manager approves direct report", "Moves to next level or approved"],
+["HR approval", "HR manager approves", "Moves to next level or approved"],
+["Director approval", "Director approves", "Fully approved"],
+["Self-approval prevention", "Try to approve own request", "Access denied"],
+["Admin bypass", "Admin approves skipping levels", "Requires notes, approved"],
+["Admin bypass without notes", "Admin bypasses without notes", "Validation error"],
+["Reject request", "Reject with reason", "Status = REJECTED, balance restored"],
+["Reject without reason", "Reject without reason", "Validation error"],
+["Already approved", "Try to approve already approved", "Error 'already processed'"],
+["Already rejected", "Try to approve rejected request", "Error 'not pending'"],
+["Balance update on approval", "Approve request", "pending decreases, used increases"],
+["Approver deleted while pending", "Manager deleted, request pending", "Escalates to next level or admin"],
+["Approver deactivated", "Manager canLogin=false, pending request", "Should still be able to approve via admin"],
+["Self-approval attempt", "Requester is also the manager", "Skips to next level or blocks"],
+["All approvers at level unavailable", "All managers deleted", "Escalates or admin notified"],
+["Approval policy deleted", "Delete policy with pending requests", "Existing requests continue or handled"],
+["Threshold exactly at boundary", "Request 5 days, policy threshold is 5", "Correct policy applied"],
+["No approval policy configured", "Request with no matching policy", "Default behavior or error"],
+["Race condition - two approvers", "L1 has 2 managers, both click approve", "Only one succeeds"]
+],
+"Leave Balance Tests": [
+["Initial balance", "New employee, check annual leave", "Calculated based on service"],
+["Pro-rata accrual", "Employee with 6 months service", "Should have ~half entitlement"],
+["Balance adjustment", "Admin adjusts balance by +5", "Balance increases, notes recorded"],
+["Negative adjustment", "Admin adjusts by -10 (more than available)", "Should allow (admin override)"],
+["Carry forward", "End of year with balance", "Balance carries to next year"],
+["Max carry forward", "Carry forward exceeds max", "Capped at max"],
+["Pro-rata for mid-month joiner", "Joined Jan 15, check Jan balance", "Correctly pro-rated"],
+["Pro-rata for mid-year joiner", "Joined July 1, check annual leave", "Half year entitlement"],
+["Carry forward exceeds maximum", "Balance 30, max carry 10", "Only 10 carried forward"],
+["Carry forward disabled", "Type has carryForward=false", "Balance resets to 0 on new year"],
+["Balance for terminated employee", "Check balance after termination", "Shows final balance, no accrual"],
+["Adjust balance beyond limits", "Admin adjusts to 999 days", "Should work (admin override)"],
+["Multiple adjustments same day", "3 adjustments in one day", "All recorded in history"],
+["Negative pending balance", "Cancel approved, pending goes negative", "Handled correctly"]
+]
+},
+"Asset Management": {
+"Asset Creation & Editing": [
+["Create asset - minimal fields", "Enter type and model only", "Asset created with auto-generated tag"],
+["Create asset - all fields", "Fill all optional fields", "Asset created with complete data"],
+["Auto-tag format", "Create new asset", "Tag format: ORG-CAT-YYSEQ (e.g., BCE-CP-25001)"],
+["Tag collision handling", "Create 50 assets rapidly", "All get unique sequential tags"],
+["Duplicate serial allowed", "Same serial in same tenant", "Allowed (serial not unique constraint)"],
+["Price currency conversion", "Enter price in USD/EUR", "Converted and stored in QAR"],
+["Warranty date auto-fill", "Enter purchase date, leave warranty blank", "Warranty = purchase + 1 year default"],
+["Edit asset details", "Modify model, brand, notes", "Changes saved, history recorded"],
+["Change asset category", "Change type on existing asset", "Category updated, tag unchanged"],
+["Change asset location", "Update location field", "Location history tracked"]
+],
+"Asset Status Management": [
+["Status IN_USE (default)", "Create new asset without specifying status", "Status defaults to IN_USE"],
+["Status IN_USE requires assignee", "Set IN_USE without assignee", "Error unless shared=true"],
+["Status IN_USE with shared=true", "Set IN_USE, shared=true, no assignee", "Valid for shared assets"],
+["Status REPAIR", "Set status to REPAIR", "Asset marked as in repair"],
+["Status DISPOSED", "Dispose asset", "Asset archived, not in active list"],
+["Status transitions valid", "SPARE→IN_USE→SPARE", "All valid transitions work"]
+],
+"Asset Assignment Flow": [
+["Admin assigns to employee with login", "Assign asset to canLogin=true user", "Creates PENDING_USER_ACCEPTANCE request"],
+["Admin assigns to employee without login", "Assign asset to canLogin=false user", "Direct assignment, auto-accepted"],
+["Admin force assign (skipAcceptance)", "Assign with skipAcceptance=true", "Direct assignment, no approval needed"],
+["Employee accepts assignment", "Employee clicks Accept", "Asset status=IN_USE, assigned to employee"],
+["Employee declines assignment", "Employee clicks Decline with reason", "Asset stays SPARE, admins notified"],
+["Acceptance timeout (7 days)", "Don't respond to assignment", "Request expires, admins notified"],
+["Reassignment flow", "Assign A's asset to B", "A unassigned+notified, B gets assignment"],
+["Unassign asset (admin)", "Admin removes assignment", "Asset=SPARE, employee notified"],
+["Assign to deleted employee", "Try assign to soft-deleted", "Error: Member not found"],
+["Assign while pending request exists", "Asset has pending, try new assign", "Error: Asset has pending request"],
+["Assign REPAIR status asset", "Try assign asset in REPAIR status", "Warning shown, can proceed"],
+["Assign DISPOSED asset", "Try assign disposed asset", "Error: Cannot assign disposed asset"],
+["Self-assign as admin", "Admin assigns to themselves", "Works with same flow"],
+["Assignment date backdating", "Set assignment date in past", "Allowed for record correction"],
+["Assignment date before purchase", "Assignment before purchase date", "Validation error"]
+],
+"Asset Request Workflow (Employee)": [
+["Employee requests SPARE asset", "Employee submits request", "Request created, admins notified"],
+["Employee requests IN_USE asset", "Request already assigned asset", "Error: Asset not available"],
+["Duplicate pending request", "Same asset, same employee, pending exists", "Error: Request already pending"],
+["Cancel own pending request", "Employee cancels before approval", "Request cancelled"],
+["Request with reason/notes", "Add justification to request", "Notes saved and visible to approvers"],
+["Admin approves employee request", "Admin approves", "Status→PENDING_USER_ACCEPTANCE"],
+["Admin rejects employee request", "Admin rejects with reason", "Request rejected, employee notified"]
+],
+"Asset Return Flow": [
+["Employee requests return", "Employee initiates return", "PENDING_RETURN_APPROVAL created"],
+["Admin approves return", "Admin approves return request", "Asset unassigned, status=SPARE"],
+["Admin rejects return", "Admin rejects return request", "Asset stays assigned to employee"],
+["Return non-assigned asset", "Try return SPARE asset", "Error: Asset not assigned to you"],
+["Return someone else's asset", "User B tries to return A's asset", "Error: Not assigned to you"],
+["Admin force unassign", "Admin unassigns without return request", "Direct unassign, employee notified"],
+["Unassign with pending return", "Pending return exists, admin unassigns", "Return request cancelled, asset unassigned"]
+],
+"Asset Clone": [
+["Clone basic asset", "Clone SPARE asset", "New asset created with same details"],
+["Clone clears assignment", "Clone IN_USE asset", "Clone is SPARE, not assigned"],
+["Clone clears serial", "Clone asset with serial number", "Clone has no serial (must be unique)"],
+["Clone disposed asset", "Clone DISPOSED asset", "Clone created as SPARE"],
+["Clone preserves category", "Clone asset", "Same type, auto-generated new tag"]
+],
+"Asset Depreciation": [
+["Straight-line calculation", "Asset with depreciation category", "Monthly depreciation calculated correctly"],
+["Pro-rata first month", "Asset purchased mid-month", "First month depreciation pro-rated"],
+["Fully depreciated asset", "Asset past useful life", "NBV equals salvage value, no negative"],
+["Depreciation schedule view", "View depreciation schedule", "Shows month-by-month breakdown"],
+["Change depreciation category", "Update category on asset", "Recalculates from purchase date"],
+["No depreciation category", "Asset without depreciation settings", "No depreciation calculated"]
+],
+"Asset Disposal": [
+["Dispose - Sold", "Dispose with method=SOLD", "Requires proceeds amount > 0"],
+["Dispose - Scrapped", "Dispose with method=SCRAPPED", "No proceeds required"],
+["Dispose - Donated", "Dispose with method=DONATED", "No proceeds required"],
+["Dispose - Written Off", "Dispose with method=WRITTEN_OFF", "Records write-off (for lost/stolen/obsolete assets), no proceeds required"],
+["Disposal gain/loss calculation", "Sell above/below NBV", "Gain or loss calculated correctly"],
+["Dispose assigned asset", "Try dispose IN_USE asset", "Must unassign first or confirm"],
+["Disposal date validation", "Future disposal date", "Error: Cannot be future date"],
+["Disposed asset in reports", "Check disposed assets report", "Shows in disposed list, not active"]
+],
+"Asset Search & Filters": [
+["Search by asset tag", "Search 'AST-001'", "Finds matching assets"],
+["Search by model/brand", "Search 'MacBook'", "Finds matching assets"],
+["Search by serial number", "Search serial", "Finds exact match"],
+["Filter by status", "Filter SPARE only", "Shows only SPARE assets"],
+["Filter by category", "Filter Electronics", "Shows only that category"],
+["Combine multiple filters", "Status + Category + Type", "Intersection of filters"],
+["Clear all filters", "Reset filters", "Shows all assets"]
+],
+"Asset Notifications & Alerts": [
+["Assignment notification", "Assign asset", "Employee receives notification"],
+["Unassignment notification", "Unassign asset", "Employee notified of removal"]
+]
+},
+"Purchase Requests": {
+"Creation": [
+["Valid request", "Title, items, submit", "Request created with reference number"],
+["Empty item list", "Submit without any items", "Error: Minimum 1 item required"],
+["Item quantity zero", "Add item with qty=0", "Validation error"],
+["Item quantity negative", "Add item with qty=-5", "Validation error"],
+["Negative unit price", "Enter -100 for unit price", "Validation error"],
+["Multi-currency items", "Items in USD, EUR, GBP", "All converted to QAR total"],
+["Subscription item", "Add monthly subscription for 12 months", "Calculates total contract value"],
+["Project cost without project", "Select PROJECT_COST, no project linked", "Validation error"],
+["Priority levels", "Test LOW, MEDIUM, HIGH, URGENT", "All priority levels work"],
+["Add then delete all items", "Add 3 items, delete all, submit", "Error: No items to submit"],
+["Budget limit exceeded", "Request exceeds department budget", "Warning shown, can proceed or block"]
+],
+"Status Workflow": [
+["Submit for review", "Create request", "Status = PENDING"],
+["Approve - single level", "Approve request", "Status = APPROVED"],
+["Approve - multi-level", "First level approves", "Status = PENDING, next notified"],
+["Reject request", "Reject with reason", "Status = REJECTED"],
+["Complete request", "Mark as completed", "Status = COMPLETED, date set"],
+["Invalid transition", "PENDING to COMPLETED directly", "Validation error"],
+["Edit submitted PR", "Try to modify PENDING request", "Error 'Cannot edit submitted request'"],
+["Delete PR with approvals", "Delete partially approved PR", "Cancels approvals, deletes"],
+["Recall during approval", "Requester recalls while L1 approving", "Race condition handled"],
+["Approve recalled PR", "Approver clicks after recall", "Error 'Request recalled'"],
+["Complete without all approvals", "Mark complete before approved", "Error or not allowed"],
+["Reopen completed PR", "Try to modify COMPLETED", "Not allowed or creates new"]
+]
+},
+"Employee Management": {
+"HR Profile": [
+["QID format - 10 digits", "Enter 10 digits", "Error 'must be 11 digits'"],
+["QID format - 11 digits", "Enter 11 digits", "Valid"],
+["Qatar mobile - 7 digits", "Enter 7 digits", "Error 'must be 8 digits'"],
+["Qatar mobile - 8 digits", "Enter 8 digits", "Valid"],
+["IBAN format", "Enter invalid IBAN", "Validation error"],
+["Passport format", "Enter <5 chars", "Error '5-20 characters'"],
+["Email format", "Enter invalid email", "Validation error"],
+["Graduation year", "Enter 1900", "Error '1950-current'"],
+["Profile completion", "Fill all fields", "Shows 100% complete"]
+],
+"Team Member Management": [
+["Invite new member", "Send invitation", "Invitation created, email sent"],
+["Accept invitation", "Click link, complete signup", "Member added to org"],
+["Expired invitation", "Use expired token", "Error 'invitation expired'"],
+["Resend invitation", "Resend to same email", "New token, old invalidated"],
+["Change role", "Change EMPLOYEE to ADMIN", "Permissions updated"],
+["Delete member", "Soft delete", "isDeleted=true, can't login"],
+["Restore member", "Restore deleted", "isDeleted=false, can login"],
+["Employee without email", "Create with internal email", "Uses generated internal email"],
+["Employee canLogin=false", "Create non-login employee", "No invitation sent, record created"],
+["Duplicate email in same org", "Create with existing email", "Error 'Email already exists'"],
+["Duplicate email different org", "Same email, different tenant", "Allowed (tenant isolation)"],
+["Employee with all optional fields empty", "Only required fields", "Created successfully"],
+["Employee with future joining date", "Joining date next month", "Created, marked as upcoming"],
+["Invalid employee code format", "Code with special characters", "Validation error"]
+],
+"Employee Status Changes": [
+["Terminate with assigned assets", "Terminate employee with 3 assets", "Prompts for asset return or blocks"],
+["Terminate with pending leaves", "Employee has approved future leave", "Cancels leaves or prompts"],
+["Terminate with pending approvals", "Employee has pending requests", "Auto-reject or reassign"],
+["Terminate with loan balance", "Employee has unpaid loan", "Deducts from final settlement"],
+["Deactivate vs Delete", "Deactivate then try delete", "Different behaviors clear"],
+["Reactivate deleted employee", "Restore soft-deleted", "Account restored, can login"],
+["Reactivate with duplicate email", "Restore, but email now taken", "Error or prompt to update email"],
+["Change probation to permanent", "Confirm after probation", "Status update, benefits change"]
+],
+"Reporting Structure": [
+["Change manager with pending approvals", "Switch reporting manager", "Pending requests reassigned or continue"],
+["Circular reporting chain", "A reports to B, B reports to A", "Validation error"],
+["Manager reports to subordinate", "Set manager's manager as subordinate", "Validation error"],
+["Delete manager with direct reports", "Delete manager who has reports", "Reports unassigned or reassigned"],
+["Self as reporting manager", "Set self as own manager", "Validation error"],
+["No manager assigned", "Employee with no reportingToId", "Skips manager level in approvals"]
+]
+},
+"Payroll": {
+"Salary Structures": [
+["Create structure", "Basic salary + allowances", "Structure created"],
+["Negative salary", "Enter negative amount", "Validation error"],
+["Max salary", "Enter 999,999,999+", "Validation error"],
+["Multiple structures", "Same employee, different dates", "Both allowed"],
+["Effective date", "Future effective date", "Active after that date"]
+],
+"Allowances": [
+["Housing allowance", "Set housing amount", "Amount saved"],
+["Transport allowance", "Set transport amount", "Amount saved"],
+["Food allowance", "Set food amount", "Amount saved"],
+["Phone allowance", "Set phone amount", "Amount saved"],
+["Other allowances", "Add custom allowance", "Amount + name saved"],
+["Multiple other allowances", "Add 3 custom allowances", "All saved as JSON"],
+["Negative allowance", "Enter negative", "Validation error"],
+["Allowance in payslip", "Generate payslip", "Allowances itemized"],
+["Total allowances", "Calculate total", "Sum of all allowances"]
+],
+"Payroll Runs": [
+["Create run", "Select month/year", "Run created, calculates totals"],
+["Duplicate run", "Same month/year", "Error 'already exists'"],
+["Submit for approval", "Submit run", "Status = SUBMITTED"],
+["Approve run", "Approve submitted", "Status = APPROVED"],
+["Process run", "Process approved", "Payslips generated"],
+["Mark paid", "Mark as paid", "Status = PAID"],
+["Cancel run", "Cancel pending run", "Status = CANCELLED"],
+["Unpaid leave deduction", "Employee has unpaid leave", "Deducted from salary"],
+["Only WPS employees", "Filter WPS employees", "Only isOnWps=true included"],
+["Exclude terminated", "Run payroll", "Terminated employees excluded"],
+["Include probation", "Run payroll", "Probation employees included"],
+["Payroll for terminated mid-month", "Employee terminated on 15th", "Pro-rated salary calculated"],
+["Payroll with no active employees", "All employees terminated", "Empty run or appropriate message"],
+["Payroll for employee without bank", "Employee has no IBAN", "Warning, can proceed or blocks"],
+["Payroll after salary change", "Salary changed mid-month", "Uses current or effective salary"],
+["Payroll during organization trial", "Org on free trial", "Works normally"],
+["Reprocess approved payroll", "Try to modify APPROVED run", "Must cancel first or error"],
+["Payroll with 0 working days", "Employee on full-month leave", "Handles correctly (0 or deduction)"]
+],
+"WPS": [
+["Generate WPS file", "Click generate WPS", "WPS file created"],
+["WPS file format", "Download file", "Correct format (SIF)"],
+["WPS employee data", "Check file contents", "All WPS employees included"],
+["WPS bank details", "Check file", "IBAN, bank name correct"],
+["WPS amounts", "Check file", "Net salary amounts correct"],
+["Non-WPS excluded", "Employee isOnWps=false", "Not in WPS file"],
+["WPS regenerate", "Regenerate same month", "New file replaces old"],
+["WPS history", "View past WPS files", "Shows all generated files"],
+["Mark WPS uploaded", "Mark as submitted", "wpsFileGenerated=true"],
+["WPS for employee without QID", "Employee missing QID number", "Warning or excluded from WPS"],
+["WPS with non-standard IBAN", "Employee has non-Qatar IBAN", "Validated or flagged"],
+["WPS for non-WPS employee", "isOnWps=false", "Excluded from WPS file"],
+["WPS file format validation", "Download and validate SIF format", "Correct format per Qatar standards"],
+["WPS for single employee", "Only 1 WPS employee in org", "Valid single-record file"]
+],
+"Loans": [
+["Create loan", "Amount, term, start date", "Loan created"],
+["Loan deduction", "Process payroll with loan", "Monthly deduction applied"],
+["Pause loan", "Pause active loan", "Deductions stop"],
+["Resume loan", "Resume paused", "Deductions continue"],
+["Write off loan", "Write off remainder", "Balance zeroed"],
+["Multiple loans exceed net salary", "3 loans total > salary", "Caps at salary or proportional"],
+["Loan deduction on unpaid leave month", "Employee on unpaid leave, has loan", "Loan deduction still applies or deferred"],
+["Mid-month loan start", "Loan starts on 15th", "Pro-rated first month or full"]
+],
+"Deductions & Calculations": [
+["Unpaid leave deduction calculation", "5 days unpaid leave", "Correct daily rate calculation"],
+["Deduction exceeds gross salary", "Deductions > gross", "Shows negative net or caps at 0"],
+["No deductions employee", "Employee with no loans/deductions", "Shows clean payslip"]
+],
+"Gratuity Calculations": [
+["Gratuity <1 year service", "Employee with 8 months", "No gratuity or shows 0"],
+["Gratuity exactly 5 years", "5.0 years service", "21 days/year rate"],
+["Gratuity >5 years", "7 years service", "21 days for first 5, 30 days for 2"],
+["Gratuity with partial year", "5 years 6 months", "Pro-rated correctly"],
+["Gratuity after salary change", "Salary changed, calculate gratuity", "Uses final basic salary"],
+["Gratuity for contract employee", "Calculate for fixed-term contract", "Same rules apply"]
+],
+"Payslip Details": [
+["View payslip", "Open payslip", "Shows all components"],
+["Basic salary shown", "Check payslip", "Basic salary displayed"],
+["Allowances itemized", "Check payslip", "Each allowance listed"],
+["Deductions itemized", "Check payslip", "Loan, unpaid leave shown"],
+["Net salary", "Check calculation", "Gross - deductions"],
+["Download PDF", "Download payslip", "PDF generated correctly"],
+["Payslip print", "Print payslip", "Formatted for printing"],
+["Payslip history", "View past payslips", "All months available"]
+]
+},
+"Employee Status & Lifecycle": {
+"Employment Status": [
+["ACTIVE status", "New employee", "Default status ACTIVE"],
+["PROBATION status", "Set probation", "Status = PROBATION"],
+["Probation end date", "Set probation period", "End date calculated"],
+["Probation to ACTIVE", "Confirm employee", "Status = ACTIVE"],
+["CONTRACT status", "Set contract employee", "Status = CONTRACT"],
+["Contract end date", "Set contract period", "End date set"],
+["TERMINATED status", "Terminate employee", "Status = TERMINATED"],
+["Terminated cannot login", "Terminate employee", "Login disabled"],
+["RESIGNED status", "Process resignation", "Status = RESIGNED"]
+],
+"Termination & Resignation": [
+["Initiate termination", "Start termination", "Termination started"],
+["Termination reason", "Enter reason", "Reason required"],
+["Termination date", "Set last day", "Date saved"],
+["Termination notice", "Generate notice", "Notice letter created"],
+["Resignation request", "Employee resigns", "Request created"],
+["Resignation notice period", "Check notice", "Notice period enforced"],
+["Accept resignation", "HR accepts", "Status = RESIGNED"],
+["Final settlement", "Calculate settlement", "Gratuity + leave encashment"],
+["Asset return", "Check assigned assets", "Prompt for asset return"],
+["Access revoked", "Complete termination", "All access removed"]
+],
+"Probation Management": [
+["Set probation period", "Enter months", "Period set"],
+["Probation alert", "15 days before end", "Alert triggered"],
+["Extend probation", "Extend period", "New end date"],
+["Confirm employment", "Confirm after probation", "Status = ACTIVE"],
+["Terminate in probation", "Terminate", "Shorter notice period"],
+["Probation report", "View probation list", "Shows all on probation"]
+],
+"Contract Management": [
+["Upload contract", "Upload PDF", "Contract saved"],
+["Contract expiry", "Set expiry date", "Date saved"],
+["Contract expiry alert", "30 days before", "Alert triggered"],
+["Renew contract", "Renew existing", "New dates set"],
+["Contract history", "View past contracts", "All contracts shown"],
+["Download contract", "Download copy", "File downloaded"]
+],
+"Visa & Work Permit": [
+["Set visa type", "Enter visa type", "Type saved"],
+["Visa expiry", "Set expiry date", "Date saved"],
+["Visa expiry alert", "60 days before", "Alert triggered"],
+["Work permit number", "Enter permit number", "Number saved"],
+["Work permit expiry", "Set expiry", "Date saved"],
+["Visa renewal", "Update after renewal", "New dates saved"]
+],
+"Department Management": [
+["Assign department", "Set employee dept", "Department saved"],
+["Filter by department", "Filter employees", "Shows dept only"],
+["Department in reports", "Generate report", "Grouped by dept"],
+["Department manager", "Set dept manager", "Manager assigned"],
+["Change department", "Transfer employee", "Department updated"],
+["Department head count", "View department", "Shows employee count"]
+]
+},
+"Subscriptions": {
+"Subscription Management": [
+["Create subscription", "All fields", "Tag format: ORG-SUB-YYMM-SEQ (e.g., BCE-SUB-2501-001)"],
+["Renewal date validation", "Renewal before purchase", "Validation error"],
+["Billing cycle", "MONTHLY, YEARLY, ONE_TIME", "All work correctly"],
+["Cancel subscription", "Cancel active", "Status = CANCELLED"],
+["Reactivate", "Reactivate cancelled", "Status = ACTIVE, new dates"],
+["Assign to member", "Assign subscription", "assignedMemberId set"],
+["Cost tracking", "Track per-subscription costs", "Calculates total cost across billing periods"],
+["Reactivate expired subscription", "Reactivate with new renewal date", "Requires new renewalDate, creates new active period"],
+["Assign to deleted employee", "Assign subscription to deleted member", "Error 'Member not found'"],
+["Unassign cancelled subscription", "Remove assignee from CANCELLED", "Works, updates record"],
+["Renewal date manual entry", "Enter renewal date manually", "User must provide renewal date (not auto-calculated)"],
+["Zero-cost subscription", "Create with cost = 0", "Validation error (cost must be positive or omitted)"],
+["Currency conversion date", "USD subscription, rate changes", "Uses current or locked rate"],
+["Mid-period cost change", "Update cost during active period", "Cost updated, affects future calculations (no pro-rating)"],
+["Multiple subscriptions same vendor", "3 subs from same supplier", "All tracked separately"]
+],
+"Subscription Filters & Search": [
+["Filter by status", "Filter ACTIVE only", "Shows only active subscriptions"],
+["Filter by category", "Filter by category", "Shows filtered results"],
+["Filter by billing cycle", "Filter MONTHLY", "Shows monthly subscriptions only"],
+["Search by service name", "Search 'Microsoft'", "Finds matching subscriptions"],
+["Search by vendor", "Search vendor name", "Finds matching subscriptions"],
+["Clear filters", "Clear all filters", "Shows all subscriptions"]
+],
+"Subscription Import/Export": [
+["Export subscriptions", "Click export button", "CSV file downloaded"],
+["Import subscriptions", "Upload valid CSV", "Subscriptions created/updated"],
+["Import with errors", "Upload invalid CSV", "Errors displayed for invalid rows"],
+["Download template", "Click template button", "CSV template downloaded"]
+]
+},
+"Suppliers": {
+"Supplier Management": [
+["Create supplier", "Name, contact info", "Created with PENDING status"],
+["No contact info", "No email AND no phone", "Validation error"],
+["Approve supplier", "Admin approves", "Status = APPROVED"],
+["Reject supplier", "Admin rejects", "Status = REJECTED"],
+["Employee view", "Employee lists suppliers", "Only sees APPROVED"],
+["Admin view", "Admin lists suppliers", "Sees all statuses"],
+["Edit supplier", "Update supplier info", "Changes saved"],
+["Delete supplier", "Remove supplier", "Supplier deleted"],
+["View supplier details", "Click supplier", "Shows detail page"]
+],
+"Supplier Categories": [
+["View categories", "Navigate to categories", "Shows category list"],
+["Create category", "Add new category", "Category created"],
+["Edit category", "Modify category", "Changes saved"],
+["Delete category", "Remove category", "Category deleted"],
+["Assign category", "Set supplier category", "Category assigned"],
+["Filter by category", "Filter supplier list", "Shows filtered"]
+],
+"Supplier Import/Export": [
+["Download template", "Click template", "CSV template downloaded"],
+["Import suppliers", "Upload CSV", "Suppliers imported"],
+["Export suppliers", "Click export", "CSV downloaded"],
+["Invalid import", "Upload bad CSV", "Errors shown"]
+],
+"Supplier Self-Registration": [
+["Registration form", "Supplier fills form", "Registration submitted"],
+["Required fields", "Leave fields empty", "Validation error"],
+["Pending status", "Submit registration", "Status = PENDING"],
+["Admin notification", "Registration submitted", "Admin notified"],
+["Approve registration", "Admin approves", "Supplier active"],
+["Reject registration", "Admin rejects", "Supplier rejected"]
+],
+"Supplier Engagements": [
+["View engagements", "Check supplier engagements", "Shows engagement list"],
+["Add engagement", "Create engagement", "Engagement added"],
+["Engagement dates", "Set start/end dates", "Dates saved"],
+["Engagement value", "Enter contract value", "Value saved"],
+["Engagement status", "Update status", "Status changed"],
+["Total engagement value", "View supplier", "Shows total value"]
+]
+},
+"Leave Calendar": {
+"Calendar View": [
+["View calendar", "Navigate to /admin/leave/calendar", "Shows calendar"],
+["Monthly view", "Select month view", "Shows month"],
+["Weekly view", "Select week view", "Shows week"],
+["Today highlight", "Check current date", "Today highlighted"],
+["Leave entries", "View with leave requests", "Shows leave on calendar"],
+["Click leave entry", "Click on leave", "Shows details"],
+["Holiday display", "View with holidays", "Holidays shown"]
+],
+"Calendar Filtering": [
+["Filter by department", "Select department", "Shows dept leave only"],
+["Filter by employee", "Select employee", "Shows employee leave"],
+["Filter by leave type", "Select type", "Shows type only"],
+["Clear filters", "Clear all", "Shows all leave"]
+],
+"Calendar Navigation": [
+["Next month", "Click next", "Shows next month"],
+["Previous month", "Click prev", "Shows previous month"],
+["Jump to date", "Select specific date", "Navigates to date"],
+["Today button", "Click today", "Returns to today"]
+]
+},
+"Roles & Permissions": {
+"Organization Roles": [
+["OWNER permissions", "Login as owner", "Full access to all features"],
+["OWNER transfer", "Transfer ownership", "New owner gets full access"],
+["OWNER cannot be deleted", "Try delete owner", "Error 'cannot delete owner'"],
+["ADMIN permissions", "Login as admin", "Access all except billing/ownership"],
+["ADMIN create users", "Admin creates user", "User created successfully"],
+["ADMIN cannot transfer ownership", "Try transfer as admin", "Permission denied"],
+["MANAGER permissions", "Login as manager", "Limited admin access"],
+["MANAGER view team", "Manager views reports", "Only sees team data"],
+["MANAGER approve team", "Manager approves team request", "Approval works"],
+["MANAGER cannot approve other team", "Approve non-team request", "Permission denied"],
+["MEMBER permissions", "Login as member", "Employee-level access only"],
+["MEMBER self-service", "Member submits request", "Can submit own requests"],
+["MEMBER cannot approve", "Member tries to approve", "Permission denied"]
+],
+"Functional Access": [
+["HR access granted", "Enable HR access", "Can view HR module"],
+["HR access revoked", "Disable HR access", "HR module hidden"],
+["HR view employees", "HR user views employees", "Full employee list"],
+["Non-HR view employees", "Non-HR tries employees", "Access denied"],
+["Finance access granted", "Enable Finance access", "Can view payroll"],
+["Finance access revoked", "Disable Finance access", "Payroll hidden"],
+["Finance run payroll", "Finance user runs payroll", "Payroll processed"],
+["Non-Finance payroll", "Non-Finance tries payroll", "Access denied"],
+["Combined access", "HR + Finance enabled", "Both modules accessible"]
+],
+"Role Changes": [
+["Upgrade MEMBER to ADMIN", "Change role", "Immediate access update"],
+["Downgrade ADMIN to MEMBER", "Change role", "Immediate access restriction"],
+["Role change notification", "Change someone's role", "User notified"],
+["Role change audit", "Change role", "Change logged in audit"],
+["Self role change", "User changes own role", "Prevented (except owner)"]
+],
+"Permission Inheritance": [
+["OWNER inherits all", "Check owner permissions", "Has all permissions"],
+["ADMIN inherits MANAGER", "Check admin permissions", "Has manager permissions"],
+["MANAGER inherits MEMBER", "Check manager permissions", "Has member permissions"],
+["Custom permissions", "Set specific permissions", "Override inheritance"]
+]
+},
+"Approval Workflows": {
+"Policy Configuration": [
+["Create policy", "Module + threshold + levels", "Policy created"],
+["Policy name required", "Leave name empty", "Validation error"],
+["Policy module required", "Leave module empty", "Validation error"],
+["Level order", "Levels 1, 2, 3", "Executed in order"],
+["Missing role", "Level requires MANAGER, no managers", "Level skipped"],
+["Threshold matching", "Request amount matches policy", "Correct policy applied"],
+["Multiple policies", "Same module, different thresholds", "Correct one selected"],
+["Policy priority", "Overlapping policies", "Highest priority used"],
+["Edit policy", "Modify existing", "Changes saved"],
+["Delete policy", "Remove policy", "Policy deleted"],
+["Delete policy with pending", "Delete policy with pending requests", "Handled gracefully"]
+],
+"Approval Levels": [
+["Add level 1", "Add first level", "Level created"],
+["Add level 2", "Add second level", "Executes after L1"],
+["Add level 3", "Add third level", "Executes after L2"],
+["Level role selection", "Set approver role", "Only that role can approve"],
+["Level specific user", "Set specific approver", "Only that user can approve"],
+["Level department", "Set department", "Only dept manager can approve"],
+["Reorder levels", "Change level order", "Order updated"],
+["Delete level", "Remove middle level", "Remaining levels reorder"]
+],
+"Multi-Level Approvals": [
+["Sequential approval", "L1 approves, L2 notified", "Works correctly"],
+["L1 pending", "Submit request", "L1 approvers notified"],
+["L1 approved", "L1 approves", "Status pending, L2 notified"],
+["L2 approved", "L2 approves", "Status pending or approved"],
+["L3 approved", "L3 approves", "Final approval"],
+["Skip to higher level", "Director approves L1 step", "L1 skipped, notes required"],
+["Rejection at L1", "L1 rejects", "Request rejected, no L2"],
+["Rejection at L2", "L2 rejects", "Request rejected"],
+["Rejection cascades", "L1 rejects", "All remaining skipped"],
+["Race condition", "Two L1 approvers click simultaneously", "Only one succeeds"],
+["Self-approval block", "Requester is also approver", "Cannot approve own"],
+["Parallel approvers", "L1 has 2 approvers", "Either can approve"],
+["All must approve", "L1 requires all", "Both must approve"]
+],
+"Approval Delegation": [
+["Delegate approvals", "Set delegate user", "Delegate can approve"],
+["Delegation period", "Set start/end dates", "Only active in period"],
+["Delegation notification", "Set delegation", "Both users notified"],
+["Delegation expired", "Past end date", "Delegate cannot approve"],
+["Remove delegation", "Cancel delegation", "Delegate loses access"],
+["Delegate chain", "Delegate delegates", "Should be prevented"],
+["Delegate to self", "Set self as delegate", "Error 'Cannot delegate to self'"],
+["Delegator approves while delegated", "Original approver returns early", "Both can approve or priority rules"],
+["Delegate deletes account", "Delegate user is deleted", "Delegation invalidated"]
+],
+"Policy Edge Cases": [
+["Overlapping policy thresholds", "Policy 1: 0-1000, Policy 2: 500-2000", "Correct policy selected"],
+["Policy with no levels", "Create policy with 0 approval levels", "Error or single-level default"],
+["Delete policy with active requests", "Delete policy, requests pending", "Requests continue with snapshot"],
+["Policy effective date future", "Policy starts next month", "Not applied until effective"],
+["Multiple policies same module", "3 leave policies, different thresholds", "Threshold matching works"]
+],
+"Notification Edge Cases": [
+["Email to invalid address", "Approver has invalid email", "Admin notified of failure"],
+["WhatsApp to user without phone", "Approver has no phone number", "Falls back to email/in-app only"],
+["Notification to deleted user", "User deleted after request created", "Skipped gracefully"],
+["Bulk approval notifications", "Approve 20 requests at once", "Rate limited, all sent"],
+["Notification preference disabled", "User disabled email notifications", "Respects preference, uses other channels"]
+],
+"Approval Escalation": [
+["Escalation timeout", "Set 48hr timeout", "Escalates after 48hr"],
+["Auto-escalate", "Timeout reached", "Next level notified"],
+["Escalation notification", "Escalation triggers", "All parties notified"],
+["No escalation level", "Last level timeout", "Admin notified"],
+["Manual escalation", "Approver escalates", "Next level takes over"]
+],
+"Approval Actions": [
+["Approve with comment", "Add approval comment", "Comment saved"],
+["Reject with reason", "Reject with reason", "Reason required"],
+["Reject without reason", "Reject no reason", "Validation error"],
+["Request more info", "Request clarification", "Requester notified"],
+["Requester responds", "Add requested info", "Approver notified"],
+["Recall request", "Requester recalls", "Request cancelled"],
+["Recall after approval", "Recall approved request", "Not allowed"]
+],
+"Approval History": [
+["View approval history", "Check request history", "Shows all actions"],
+["History timestamps", "Check times", "Accurate timestamps"],
+["History users", "Check who approved", "Shows approver names"],
+["History comments", "Check comments", "Shows all comments"],
+["Audit trail", "Check audit log", "All actions logged"]
+]
+},
+"Multi-Tenancy Security": {
+"Tenant Isolation": [
+["IDOR - Asset", "Access asset ID from other tenant", "404 Not Found"],
+["IDOR - Leave request", "Access request from other tenant", "404 Not Found"],
+["IDOR - Employee", "Access employee from other tenant", "404 Not Found"],
+["IDOR - Approval step", "Access step from other tenant", "404 Not Found"],
+["Cross-tenant list", "List assets (no filter bypass)", "Only own tenant data"],
+["Subdomain mismatch", "Access org-a with org-b account", "Redirected or blocked"],
+["API parameter tampering", "Change tenantId in API body", "Ignored, uses session tenant"],
+["Cross-tenant notification", "Trigger notif, check other tenant", "Not visible in other tenant"],
+["Subdomain access wrong org", "Authenticated to org-a, access org-b.domain", "Redirect or re-auth required"],
+["Direct API with wrong tenant header", "Forge x-tenant-id header", "Ignored, uses session"]
+],
+"Data Leakage": [
+["Error messages", "Trigger errors", "No sensitive data exposed"],
+["API responses", "Check all responses", "No other tenant data"],
+["Notifications", "Check notification content", "No cross-tenant info"]
+],
+"Organization Lifecycle": [
+["Org disabled by super admin", "Super admin disables org", "All users see 'Organization suspended'"],
+["Org deleted with active users", "Delete org with 50 users", "All users logged out, data archived"],
+["Org slug change", "Change org slug", "Old subdomain redirects or 404"],
+["Org trial expiry", "Free trial ends", "Downgrade or block based on policy"],
+["Org plan downgrade", "Pro to Free, exceeds limits", "Warning about data loss or blocks"]
+],
+"Impersonation": [
+["Impersonation token expired", "Use old impersonation token", "Error 'Token expired'"],
+["Impersonation of disabled org", "Impersonate disabled organization", "Error or shows disabled state"],
+["Impersonation with org-specific perms", "Super admin impersonates", "Has admin rights in that org"],
+["Exit impersonation clears context", "Exit impersonation", "Returns to super admin context clean"]
+]
+},
+"Validation Edge Cases": {
+"String Fields": [
+["Max length", "Asset model 256 chars", "Error (max 255)"],
+["Unicode", "Employee name in Japanese", "Should work"],
+["Emojis", "Notes field with emojis", "Should work"],
+["HTML tags", "Description with script tag", "Escaped/stripped"],
+["SQL injection", "Any text field", "Sanitized"],
+["Null bytes", "Any field with null byte", "Handled safely"]
+],
+"Numeric Fields": [
+["Max int", "Price 999999999999", "Validation error"],
+["Negative", "Leave days -5", "Validation error"],
+["Decimal", "QID 12345.5", "Error (integer only)"],
+["Scientific", "Amount 1e10", "Handled correctly"],
+["NaN", "Any number field", "Validation error"],
+["Infinity", "Any number field", "Validation error"]
+],
+"Date Fields": [
+["Invalid format", "Start date 'not-a-date'", "Validation error"],
+["Far future", "End date Year 3000", "Should work (or limit)"],
+["Far past", "DOB Year 1800", "Validation error"],
+["Timezone", "All dates in different TZ", "Qatar TZ applied"],
+["Leap year", "Feb 29, 2024", "Should work"],
+["Invalid Feb 29", "Feb 29, 2023", "Validation error"]
+],
+"Email Fields": [
+["Standard", "user@domain.com", "Valid"],
+["Subdomain", "user@sub.domain.com", "Valid"],
+["Plus addressing", "user+tag@domain.com", "Valid"],
+["No TLD", "user@domain", "Invalid"],
+["Double @", "user@@domain.com", "Invalid"],
+["Leading dot", ".user@domain.com", "Invalid"]
+],
+"API Request Validation": [
+["Extra fields in request", "Send unknown fields in body", "Ignored (stripped)"],
+["Missing optional fields", "Omit all optional fields", "Defaults applied"],
+["Wrong data types", "Send string for number field", "Validation error with clear message"],
+["Array instead of object", "Send [] where {} expected", "Validation error"],
+["Deeply nested invalid data", "Invalid field 5 levels deep", "Validation catches and reports"]
+],
+"API Response Edge Cases": [
+["Large response payload", "List 10,000 items", "Paginated or limited"],
+["Empty list response", "Query with no results", "Returns [], not error"],
+["Null vs undefined", "Check null handling in responses", "Consistent null representation"],
+["Decimal precision", "Price 123.456789", "Appropriate precision maintained"],
+["Date timezone handling", "Create in UTC, view in local", "Correct timezone conversion"]
+]
+},
+"Race Condition Tests": {
+"Concurrent Operations": [
+["Double approval", "Two users approve same step", "Only one succeeds"],
+["Simultaneous leave", "Two requests for same dates", "One gets overlap error"],
+["Asset tag collision", "Create many assets rapidly", "All get unique tags"],
+["Balance update race", "Two requests draining balance", "Second shows insufficient"],
+["Subscription cancellation", "Cancel while processing", "Transaction integrity"]
+]
+},
+"Notification System": {
+"In-App Notifications": [
+["Leave submitted", "Submit request", "Approvers get notification"],
+["Leave approved", "Approve request", "Requester gets notification"],
+["Asset assigned", "Assign asset", "Employee gets notification"],
+["Unread count", "Multiple notifications", "Count shows correctly"],
+["Mark as read", "Click notification", "isRead = true"],
+["Mark all as read", "Click mark all", "All notifications read"],
+["Notification bell", "Check bell icon", "Shows unread count badge"],
+["Notification dropdown", "Click bell", "Shows notification list"],
+["Empty notifications", "No notifications", "Shows empty state"],
+["Notification link", "Click notification", "Navigates to related item"],
+["Delete notification", "Delete single", "Notification removed"],
+["Notification timestamp", "Check time", "Shows relative time"]
+],
+"Email Notifications": [
+["Leave request email", "Submit leave", "Email sent to approvers"],
+["Approval email", "Approve leave", "Email sent to requester"],
+["Email failure", "Invalid email", "Logged, admin notified"],
+["Email formatting", "View email", "HTML renders correctly"]
+],
+"WhatsApp Notifications": [
+["Approval action link", "Receive WhatsApp", "Can approve via link"],
+["Token invalidation", "Approve in app", "WhatsApp link disabled"],
+["Expired token", "Click old link", "Error 'token expired'"]
+]
+},
+"Company Documents": {
+"Document Management": [
+["Create document", "Fill name, type, expiry", "Document created"],
+["Document name required", "Leave name empty", "Validation error"],
+["Document type required", "Leave type empty", "Validation error"],
+["Expiry date required", "Leave expiry empty", "Validation error"],
+["Upload document file", "Upload PDF/image", "File attached to document"],
+["View document details", "Click document row", "Shows document details page"],
+["Edit document", "Update fields, save", "Changes saved"],
+["Delete document", "Click delete, confirm", "Document removed"],
+["Document categories", "Filter by type", "Shows filtered list"]
+],
+"Document Expiry Tracking": [
+["Expiry alert - 30 days", "Document expiring in 30 days", "Shows warning badge"],
+["Expiry alert - 7 days", "Document expiring in 7 days", "Shows critical badge"],
+["Expired document", "Document past expiry", "Shows expired status"],
+["Expiry notification", "Document nearing expiry", "Admin notified"],
+["Bulk expiry view", "View all expiring docs", "Shows sorted by expiry"]
+]
+},
+"Reports": {
+"Report Dashboard": [
+["View reports page", "Navigate to /admin/reports", "Shows report dashboard"],
+["Asset summary report", "Select asset report", "Shows asset statistics"],
+["Leave summary report", "Select leave report", "Shows leave statistics"],
+["Employee report", "Select employee report", "Shows employee data"],
+["Date range filter", "Select custom date range", "Report filters by dates"],
+["Export to CSV", "Click export CSV", "Downloads CSV file"],
+["Export to PDF", "Click export PDF", "Downloads PDF file"]
+],
+"Report Permissions": [
+["Admin access", "Admin views reports", "Full access"],
+["Employee access", "Employee tries /admin/reports", "Access denied"],
+["HR reports", "Non-HR views HR reports", "Limited or denied"],
+["Finance reports", "Non-Finance views payroll reports", "Limited or denied"]
+]
+},
+"Activity & Audit Logs": {
+"Activity Log Viewing": [
+["View activity page", "Navigate to /admin/activity", "Shows activity log"],
+["Log entries display", "Check log list", "Shows user, action, timestamp"],
+["Filter by user", "Select user filter", "Shows only that user's actions"],
+["Filter by action type", "Select action type", "Shows only that action"],
+["Filter by date range", "Select date range", "Shows actions in range"],
+["Filter by entity", "Select entity type", "Shows related actions"],
+["Pagination", "Navigate pages", "Pages load correctly"],
+["Search logs", "Search by keyword", "Finds matching entries"]
+],
+"Audit Trail Completeness": [
+["Login logged", "User logs in", "Login action recorded"],
+["Create logged", "Create any entity", "Create action recorded"],
+["Update logged", "Update any entity", "Update action recorded"],
+["Delete logged", "Delete any entity", "Delete action recorded"],
+["Approval logged", "Approve request", "Approval action recorded"],
+["Rejection logged", "Reject request", "Rejection action recorded"],
+["Settings change logged", "Change org settings", "Settings change recorded"],
+["IP address captured", "Any action", "IP address recorded"]
+]
+},
+"Organization Settings": {
+"General Settings": [
+["View settings", "Navigate to /admin/settings", "Shows settings page"],
+["Update org name", "Change name, save", "Name updated"],
+["Update timezone", "Change timezone", "Timezone updated"],
+["Update currency", "Change currency", "Currency updated"],
+["Update logo", "Upload new logo", "Logo updated"],
+["Remove logo", "Delete logo", "Logo removed"],
+["Invalid logo format", "Upload non-image", "Error shown"]
+],
+"Approval Policy Settings": [
+["View approval policies", "Navigate to approvals settings", "Shows policies list"],
+["Create policy", "Add new policy", "Policy created"],
+["Edit policy", "Modify existing policy", "Policy updated"],
+["Delete policy", "Remove policy", "Policy deleted"],
+["Policy threshold", "Set amount threshold", "Applied to requests"],
+["Multi-level policy", "Create 3-level approval", "Chain works correctly"],
+["Policy priority", "Multiple matching policies", "Highest priority used"]
+],
+"Access Control Settings": [
+["View access control", "Navigate to access settings", "Shows access page"],
+["Grant HR access", "Enable HR for user", "User can access HR"],
+["Revoke HR access", "Disable HR for user", "User loses HR access"],
+["Grant Finance access", "Enable Finance for user", "User can access Finance"],
+["Admin role assignment", "Make user admin", "User has admin rights"],
+["Owner transfer", "Transfer ownership", "New owner set"]
+],
+"WhatsApp Settings": [
+["View WhatsApp settings", "Navigate to WhatsApp settings", "Shows config page"],
+["Enable WhatsApp", "Toggle WhatsApp on", "WhatsApp enabled"],
+["Disable WhatsApp", "Toggle WhatsApp off", "WhatsApp disabled"],
+["Configure API key", "Enter API credentials", "Credentials saved"],
+["Test connection", "Click test button", "Connection verified"],
+["Invalid credentials", "Enter wrong credentials", "Error shown"]
+],
+"AI Usage Settings": [
+["View AI usage", "Navigate to AI settings", "Shows usage stats"],
+["Enable AI features", "Toggle AI on", "AI features available"],
+["Disable AI features", "Toggle AI off", "AI features hidden"],
+["Usage limits display", "Check usage stats", "Shows current usage"]
+]
+},
+"My Approvals Dashboard": {
+"Pending Approvals": [
+["View my approvals", "Navigate to /admin/my-approvals", "Shows pending items"],
+["Leave requests shown", "Have pending leave", "Leave requests listed"],
+["Asset requests shown", "Have pending asset req", "Asset requests listed"],
+["Purchase requests shown", "Have pending PR", "Purchase requests listed"],
+["Filter by type", "Filter by request type", "Shows filtered list"],
+["Sort by date", "Sort by submission date", "Sorted correctly"],
+["Empty state", "No pending approvals", "Shows empty message"]
+],
+"Quick Actions": [
+["Approve from list", "Click approve button", "Request approved"],
+["Reject from list", "Click reject, enter reason", "Request rejected"],
+["View details", "Click request", "Opens detail page"],
+["Bulk approve", "Select multiple, approve", "All approved"],
+["Notification badge", "Have pending items", "Badge shows count"]
+]
+},
+"Employee Portal": {
+"Employee Dashboard": [
+["View dashboard", "Login as employee", "Shows employee dashboard"],
+["Quick stats", "Check dashboard cards", "Shows leave balance, assets"],
+["Recent activity", "Check recent section", "Shows recent requests"],
+["Pending requests", "Check pending section", "Shows pending items"]
+],
+"My Leave": [
+["View my leave", "Navigate to /employee/leave", "Shows leave page"],
+["Leave balances", "Check balances", "Shows all leave types"],
+["Submit leave request", "Fill form, submit", "Request created"],
+["View my requests", "Check requests list", "Shows own requests only"],
+["Cancel pending request", "Cancel own request", "Request cancelled"],
+["Cannot cancel approved", "Try cancel approved", "Error shown"]
+],
+"My Assets": [
+["View my assets", "Navigate to /employee/my-assets", "Shows assigned assets"],
+["Asset details", "Click asset", "Shows asset details"],
+["Request new asset", "Submit asset request", "Request created"],
+["Request return", "Submit return request", "Return request created"],
+["Accept assignment", "Accept offered asset", "Asset assigned"],
+["Decline assignment", "Decline offered asset", "Assignment declined"]
+],
+"My Payslips": [
+["View payslips", "Navigate to /employee/payroll/payslips", "Shows payslips list"],
+["View payslip detail", "Click payslip", "Shows payslip details"],
+["Download payslip", "Click download", "PDF downloaded"],
+["Filter by year", "Select year", "Shows filtered payslips"],
+["Only own payslips", "Check list", "Only sees own payslips"]
+],
+"My Gratuity": [
+["View gratuity", "Navigate to /employee/payroll/gratuity", "Shows gratuity calculator"],
+["Gratuity calculation", "Check calculation", "Shows estimated gratuity"],
+["Service years shown", "Check service period", "Shows correct years"],
+["Salary basis shown", "Check salary", "Shows correct salary"]
+],
+"Employee Purchase Requests": [
+["View my PRs", "Navigate to /employee/purchase-requests", "Shows own requests"],
+["Create PR", "Fill form, submit", "PR created"],
+["View PR detail", "Click PR", "Shows PR details"],
+["Track PR status", "Check status", "Shows current status"]
+]
+},
+"Super Admin": {
+"Super Admin Authentication": [
+["Super admin login", "Enter super admin credentials", "Access granted"],
+["Invalid credentials", "Enter wrong credentials", "Access denied"],
+["2FA verification", "Enter 2FA code", "Verified successfully"],
+["Invalid 2FA", "Enter wrong 2FA code", "Access denied"],
+["Session timeout", "Wait for timeout", "Logged out"]
+],
+"Organization Management": [
+["View all organizations", "Navigate to orgs list", "Shows all tenants"],
+["Search organizations", "Search by name/slug", "Finds matching orgs"],
+["View org details", "Click organization", "Shows org details"],
+["Impersonate org", "Click impersonate", "Enters org context"],
+["Exit impersonation", "Click exit", "Returns to super admin"],
+["Disable organization", "Disable org", "Org users can't login"],
+["Enable organization", "Enable org", "Org users can login"]
+],
+"User Management (Super Admin)": [
+["View all users", "Navigate to users", "Shows all platform users"],
+["Search users", "Search by email/name", "Finds matching users"],
+["View user details", "Click user", "Shows user details"],
+["Reset user password", "Reset password", "Password reset"],
+["Disable user", "Disable user account", "User can't login"],
+["Enable user", "Enable user account", "User can login"]
+],
+"Platform Analytics": [
+["View analytics", "Navigate to analytics", "Shows platform stats"],
+["User growth chart", "Check user chart", "Shows growth over time"],
+["Org growth chart", "Check org chart", "Shows org growth"],
+["Module usage", "Check module stats", "Shows module adoption"],
+["Onboarding funnel", "Check funnel", "Shows conversion rates"]
+],
+"Backup Management": [
+["View backups", "Navigate to backups", "Shows backup list"],
+["Create backup", "Trigger manual backup", "Backup created"],
+["Download backup", "Download backup file", "File downloaded"],
+["Restore backup", "Restore from backup", "Data restored"],
+["Scheduled backups", "Check cron status", "Shows last run time"]
+]
+},
+"File Upload & Storage": {
+"Document Upload": [
+["Upload PDF", "Upload PDF file", "File uploaded"],
+["Upload image", "Upload JPG/PNG", "File uploaded"],
+["Upload Word doc", "Upload .docx", "File uploaded"],
+["Upload Excel", "Upload .xlsx", "File uploaded"],
+["Invalid file type", "Upload .exe", "Error shown"],
+["File too large", "Upload >10MB file", "Error shown"],
+["Empty file", "Upload 0-byte file", "Error shown"]
+],
+"Storage Security": [
+["Tenant isolation", "Access other tenant's file", "Access denied"],
+["Signed URLs", "Get file URL", "URL is signed/temporary"],
+["URL expiry", "Use expired URL", "Access denied"],
+["Path traversal", "Try ../../../etc/passwd", "Blocked"],
+["Null byte injection", "Try file%00.pdf", "Blocked"]
+],
+"Image Handling": [
+["Profile photo upload", "Upload profile photo", "Photo saved"],
+["Logo upload", "Upload org logo", "Logo saved"],
+["Asset photo upload", "Upload asset image", "Image saved"],
+["Image preview", "View uploaded image", "Preview shown"],
+["Image deletion", "Delete uploaded image", "Image removed"]
+]
+},
+"WhatsApp Integration": {
+"WhatsApp Notifications": [
+["Leave approval notification", "Leave submitted", "Approver gets WhatsApp"],
+["Asset request notification", "Asset requested", "Admin gets WhatsApp"],
+["PR notification", "PR submitted", "Approver gets WhatsApp"],
+["Notification disabled", "WhatsApp off", "No WhatsApp sent"],
+["No phone number", "Approver has no phone", "Falls back to email/in-app"]
+],
+"WhatsApp Action Tokens": [
+["Approve via WhatsApp", "Click approve link", "Request approved"],
+["Reject via WhatsApp", "Click reject link", "Request rejected"],
+["Token expiry", "Use expired token", "Error shown"],
+["Token invalidation", "Approve in app, use token", "Token invalid"],
+["One-time use", "Use token twice", "Second use fails"],
+["Invalid token", "Use fake token", "Access denied"]
+]
+},
+"Public Holidays": {
+"Holiday Management": [
+["View holidays", "Navigate to holidays", "Shows holiday list"],
+["Create holiday", "Add new holiday", "Holiday created"],
+["Holiday name required", "Leave name empty", "Validation error"],
+["Holiday date required", "Leave date empty", "Validation error"],
+["Multi-day holiday", "Set start and end date", "Holiday spans days"],
+["Edit holiday", "Modify holiday", "Changes saved"],
+["Delete holiday", "Remove holiday", "Holiday deleted"],
+["Recurring holiday", "Mark as recurring", "Shows yearly"]
+],
+"Holiday Impact on Leave": [
+["Leave excludes holiday", "Request over holiday", "Holiday not counted"],
+["Holiday in date range", "Select range with holiday", "Shows adjusted days"],
+["Multiple holidays", "Range with 2 holidays", "Both excluded"],
+["Holiday calendar view", "View calendar", "Holidays highlighted"]
+]
+},
+"Gratuity Calculator": {
+"Gratuity Calculation": [
+["View gratuity page", "Navigate to gratuity", "Shows calculator"],
+["Calculate gratuity", "Enter service details", "Shows calculation"],
+["Under 1 year", "Less than 1 year service", "No gratuity due"],
+["1-5 years", "1-5 years service", "21 days per year"],
+["Over 5 years", "More than 5 years", "30 days per year (after 5)"],
+["Pro-rata calculation", "Partial year", "Pro-rated correctly"],
+["Salary basis", "Check calculation basis", "Uses basic salary"]
+],
+"Gratuity Reports": [
+["Employee gratuity list", "View all employees", "Shows gratuity for each"],
+["Total liability", "Check total", "Shows org total liability"],
+["Export gratuity report", "Export to CSV", "Report downloaded"]
+]
+},
+"Loans (Extended)": {
+"Loan Management": [
+["View loans", "Navigate to loans", "Shows loan list"],
+["Create loan", "Add new loan", "Loan created"],
+["Loan amount required", "Leave amount empty", "Validation error"],
+["Loan term required", "Leave term empty", "Validation error"],
+["Start date required", "Leave date empty", "Validation error"],
+["Negative amount", "Enter negative amount", "Validation error"],
+["View loan details", "Click loan", "Shows loan details"],
+["Edit loan", "Modify loan", "Changes saved"]
+],
+"Loan Repayment": [
+["Monthly deduction", "Process payroll", "Loan deducted"],
+["Deduction amount", "Check deduction", "Matches monthly amount"],
+["Balance update", "After deduction", "Balance decreases"],
+["Loan completion", "Final payment", "Loan marked complete"],
+["Pause loan", "Pause active loan", "Deductions stop"],
+["Resume loan", "Resume paused loan", "Deductions resume"],
+["Write off loan", "Write off balance", "Balance zeroed"]
+],
+"Loan in Payslip": [
+["Loan shown in payslip", "View payslip", "Shows loan deduction"],
+["Multiple loans", "Employee has 2 loans", "Both shown"],
+["No active loan", "No loan", "No deduction shown"]
+]
+},
+"Document Expiry Alerts": {
+"Employee Document Expiry": [
+["QID expiry alert", "QID expiring soon", "Alert shown"],
+["Passport expiry alert", "Passport expiring", "Alert shown"],
+["Health card expiry", "Health card expiring", "Alert shown"],
+["License expiry", "Driving license expiring", "Alert shown"],
+["Visa expiry", "Visa expiring", "Alert shown"],
+["Multiple expiring", "Several docs expiring", "All shown"]
+],
+"Expiry Dashboard": [
+["View expiry dashboard", "Navigate to document expiry", "Shows expiring docs"],
+["Filter by days", "Filter by 30/60/90 days", "Shows filtered list"],
+["Filter by type", "Filter by doc type", "Shows filtered list"],
+["Sort by expiry", "Sort by date", "Sorted correctly"],
+["Export expiry list", "Export to CSV", "List downloaded"]
+],
+"Expiry Notifications": [
+["30-day notification", "Doc expires in 30 days", "Notification sent"],
+["7-day notification", "Doc expires in 7 days", "Urgent notification"],
+["Admin notified", "Employee doc expiring", "Admin gets alert"],
+["Employee notified", "Own doc expiring", "Employee gets alert"],
+["Cron job runs", "Scheduled check", "Expiry check runs"]
+]
+},
+"User Profile": {
+"Profile Page": [
+["View profile", "Navigate to /profile", "Shows profile page"],
+["View account info", "Check account tab", "Shows email, role, dates"],
+["View HR profile", "Check HR tab", "Shows HR details"],
+["Edit name", "Change display name", "Name updated"],
+["Name validation", "Enter empty name", "Validation error"],
+["View assigned assets", "Check assets section", "Shows assigned assets"],
+["View subscriptions", "Check subscriptions", "Shows managed subscriptions"]
+],
+"Password Change": [
+["Change password", "Enter old + new password", "Password changed"],
+["Wrong old password", "Enter incorrect old password", "Error shown"],
+["Password too short", "Enter <8 char password", "Validation error"],
+["Password mismatch", "Confirm doesn't match", "Validation error"],
+["Password complexity", "Enter weak password", "Validation error"]
+],
+"HR Profile Management": [
+["Edit HR profile", "Update HR fields", "Changes saved"],
+["Profile completion", "Check completion %", "Shows accurate %"],
+["Missing fields", "View incomplete profile", "Highlights missing"],
+["Document expiry alerts", "View expiry widget", "Shows expiring docs"],
+["Resume onboarding", "Click complete profile", "Opens onboarding wizard"]
+]
+},
+"Password Reset Flow": {
+"Forgot Password": [
+["Request reset", "Enter email, submit", "Email sent message"],
+["Invalid email format", "Enter invalid email", "Validation error"],
+["Non-existent email", "Enter unknown email", "Same success message (security)"],
+["Rate limiting", "Request 5+ times quickly", "Rate limited"],
+["Email received", "Check inbox", "Reset email received"],
+["Reset link valid", "Click link", "Opens reset page"]
+],
+"Reset Password": [
+["Valid token", "Access with valid token", "Shows reset form"],
+["Expired token", "Use old token", "Error 'token expired'"],
+["Invalid token", "Use fake token", "Error 'invalid token'"],
+["Set new password", "Enter valid password", "Password reset"],
+["Password validation", "Enter weak password", "Validation error"],
+["Confirm mismatch", "Passwords don't match", "Validation error"],
+["Token single use", "Use token twice", "Second use fails"],
+["Login after reset", "Login with new password", "Login successful"]
+]
+},
+"Signup Flow": {
+"Account Registration": [
+["View signup page", "Navigate to /signup", "Shows signup form"],
+["Valid registration", "Fill form, submit", "Account created"],
+["Email required", "Leave email empty", "Validation error"],
+["Invalid email", "Enter invalid format", "Validation error"],
+["Duplicate email", "Use existing email", "Error 'email exists'"],
+["Password required", "Leave password empty", "Validation error"],
+["Password too short", "Enter <8 characters", "Validation error"],
+["Name required", "Leave name empty", "Validation error"],
+["Terms checkbox", "Don't check terms", "Cannot submit"]
+],
+"Post-Signup Flow": [
+["Email verification", "Check email", "Verification link received"],
+["Verify email", "Click verification link", "Email verified"],
+["Redirect to setup", "After verification", "Goes to org setup"],
+["Expired verification", "Use old link", "Error shown"],
+["Resend verification", "Click resend", "New email sent"]
+]
+},
+"Team Invitations": {
+"Creating Invitations": [
+["Invite team member", "Enter email, send", "Invitation created"],
+["Invalid email", "Enter invalid email", "Validation error"],
+["Duplicate invite", "Invite same email twice", "Error 'already invited'"],
+["Existing member", "Invite existing member", "Error 'already member'"],
+["Set role", "Select role for invitee", "Role saved"],
+["Bulk invite", "Invite multiple emails", "All invitations sent"],
+["View pending", "Check invitations list", "Shows pending invites"]
+],
+"Managing Invitations": [
+["Resend invitation", "Click resend", "New email sent"],
+["Revoke invitation", "Click revoke", "Invitation cancelled"],
+["Invitation expiry", "Check old invitation", "Shows expired status"],
+["Copy invite link", "Click copy", "Link copied to clipboard"]
+],
+"Accepting Invitations": [
+["Valid invite link", "Click invite link", "Opens accept page"],
+["Expired invite", "Use expired link", "Error shown"],
+["Revoked invite", "Use revoked link", "Error shown"],
+["Accept - new user", "Accept, create account", "Account + membership created"],
+["Accept - existing user", "Accept while logged in", "Added to organization"],
+["Wrong user", "Different user clicks link", "Error or prompt"],
+["Role assigned", "Accept invitation", "Has invited role"]
+]
+},
+"Asset Categories": {
+"Category Management": [
+["View categories", "Navigate to categories", "Shows category list"],
+["Create category", "Add new category", "Category created"],
+["Category name required", "Leave name empty", "Validation error"],
+["Duplicate name", "Use existing name", "Error 'name exists'"],
+["Edit category", "Modify category", "Changes saved"],
+["Delete category", "Remove category", "Category deleted"],
+["Delete with assets", "Delete used category", "Error or reassign prompt"],
+["Category icon", "Set category icon", "Icon displayed"]
+],
+"Depreciation Categories": [
+["Create depreciation category", "Add with useful life", "Category created"],
+["Set useful life years", "Enter years", "Saved correctly"],
+["Set depreciation method", "Select method", "Method saved"],
+["Link to asset category", "Associate categories", "Link created"]
+]
+},
+"Data Import & Export": {
+"Asset Import": [
+["Download template", "Click download template", "CSV template downloaded"],
+["Import valid CSV", "Upload valid file", "Assets imported"],
+["Import invalid CSV", "Upload malformed file", "Error with details"],
+["Missing required fields", "CSV missing columns", "Validation errors listed"],
+["Duplicate asset tags", "CSV has duplicates", "Duplicates flagged"],
+["Import preview", "Upload CSV", "Shows preview before import"],
+["Partial import", "Some rows invalid", "Valid rows imported, errors shown"],
+["Large file import", "Upload 1000+ rows", "Imports successfully"]
+],
+"Asset Export": [
+["Export all assets", "Click export", "CSV downloaded"],
+["Export filtered", "Filter then export", "Only filtered exported"],
+["Export columns", "Check CSV columns", "All fields included"]
+],
+"Subscription Import/Export": [
+["Download template", "Click template", "Template downloaded"],
+["Import subscriptions", "Upload CSV", "Subscriptions imported"],
+["Export subscriptions", "Click export", "CSV downloaded"],
+["Invalid data", "Upload bad data", "Errors shown"]
+],
+"Purchase Request Export": [
+["Export PRs", "Click export", "CSV/PDF downloaded"],
+["Export with filters", "Filter then export", "Filtered data exported"]
+]
+},
+"Employee Change Requests": {
+"Submitting Change Requests": [
+["Request profile change", "Submit change request", "Request created"],
+["View my requests", "Check requests list", "Shows own requests"],
+["Request field change", "Request specific field", "Field noted in request"],
+["Attach document", "Upload supporting doc", "Document attached"],
+["Cancel request", "Cancel pending request", "Request cancelled"]
+],
+"Processing Change Requests": [
+["View pending requests", "Navigate to change requests", "Shows all pending"],
+["Approve request", "Click approve", "Changes applied"],
+["Reject request", "Reject with reason", "Request rejected"],
+["Partial approval", "Approve some fields", "Only approved fields changed"],
+["Notification on decision", "Approve/reject", "Employee notified"]
+]
+},
+"Employee Celebrations": {
+"Celebrations Widget": [
+["View celebrations", "Check dashboard widget", "Shows celebrations"],
+["Today's birthdays", "Employee birthday today", "Shown in widget"],
+["Upcoming birthdays", "Birthdays this week", "Listed in widget"],
+["Work anniversaries", "Anniversary today", "Shown in widget"],
+["Upcoming anniversaries", "Anniversaries this week", "Listed in widget"],
+["No celebrations", "No events this week", "Shows empty state"],
+["Click celebration", "Click on person", "Goes to profile"]
+]
+},
+"Feedback System": {
+"Submitting Feedback": [
+["Submit feedback", "Fill form, submit", "Feedback sent"],
+["Feedback type", "Select feedback type", "Type recorded"],
+["Feedback message", "Enter message", "Message saved"],
+["Empty message", "Submit empty", "Validation error"],
+["Screenshot attach", "Attach screenshot", "Image uploaded"],
+["Success message", "Submit valid feedback", "Thank you shown"]
+],
+"Managing Feedback": [
+["View all feedback", "Navigate to feedback", "Shows all feedback"],
+["Filter by type", "Filter feedback type", "Filtered list shown"],
+["Filter by status", "Filter by status", "Filtered list shown"],
+["Mark as reviewed", "Mark feedback reviewed", "Status updated"],
+["Delete feedback", "Delete entry", "Feedback removed"]
+]
+},
+"Modules Management": {
+"Viewing Modules": [
+["View modules page", "Navigate to /admin/modules", "Shows module list"],
+["Module categories", "Check categories", "Shows Operations, HR, System"],
+["Enabled modules", "Check status", "Shows enabled state"],
+["Module descriptions", "View descriptions", "Helpful descriptions shown"]
+],
+"Enabling/Disabling Modules": [
+["Enable module", "Toggle module on", "Module enabled"],
+["Disable module", "Toggle module off", "Module disabled"],
+["Module with dependency", "Disable required module", "Error or warning"],
+["Module with data", "Disable module with data", "Warning shown"],
+["Routes blocked", "Disable then access route", "Access denied"],
+["Sidebar updated", "Enable/disable", "Menu updates"],
+["API blocked", "Disable then call API", "403 error"]
+]
+},
+"Soft Delete & Trash": {
+"Deleted Assets": [
+["View deleted assets", "Navigate to /admin/assets/deleted", "Shows deleted assets"],
+["Restore asset", "Click restore", "Asset restored"],
+["Permanent delete", "Click permanent delete", "Asset gone forever"],
+["Confirm permanent", "Confirm dialog", "Requires confirmation"],
+["Auto cleanup", "After 30 days", "Automatically purged"],
+["Search deleted", "Search in trash", "Finds deleted items"]
+],
+"Deleted Employees": [
+["View deleted employees", "Navigate to deleted", "Shows deleted employees"],
+["Restore employee", "Click restore", "Employee restored"],
+["Permanent delete", "Permanent delete", "Employee purged"],
+["Restore with assets", "Restore employee", "Assets still assigned"]
+],
+"Deleted Users": [
+["Soft delete user", "Delete user", "User soft deleted"],
+["User can't login", "Deleted user tries login", "Access denied"],
+["Restore user", "Restore deleted user", "User can login again"],
+["Cleanup cron", "After retention period", "Users purged"]
+]
+},
+"Locations Management": {
+"Location CRUD": [
+["View locations", "Navigate to locations", "Shows location list"],
+["Create location", "Add new location", "Location created"],
+["Location name required", "Leave name empty", "Validation error"],
+["Location address", "Enter address", "Address saved"],
+["Edit location", "Modify location", "Changes saved"],
+["Delete location", "Remove location", "Location deleted"],
+["Delete with assets", "Delete used location", "Error or reassign"]
+],
+"Location Assignment": [
+["Assign asset to location", "Select location", "Location assigned"],
+["Filter by location", "Filter assets by location", "Shows filtered"],
+["Location in reports", "Generate report", "Location included"]
+]
+},
+"Marketing & Public Pages": {
+"Landing Page": [
+["View landing page", "Navigate to /", "Shows landing page"],
+["Hero section", "Check hero", "Shows value proposition"],
+["Features section", "Scroll to features", "Shows feature list"],
+["CTA buttons", "Click 'Get Started'", "Goes to signup"],
+["Navigation links", "Click nav items", "Navigate correctly"],
+["Mobile responsive", "View on mobile", "Layout adapts"],
+["Logo click", "Click logo", "Returns to landing"]
+],
+"Pricing Page": [
+["View pricing", "Navigate to /pricing", "Shows pricing tiers"],
+["Free tier details", "Check free tier", "Shows limits/features"],
+["Starter tier details", "Check starter", "Shows price/features"],
+["Professional tier", "Check pro tier", "Shows price/features"],
+["Enterprise tier", "Check enterprise", "Shows 'Contact us'"],
+["Feature comparison", "View comparison table", "Clear feature matrix"],
+["CTA per tier", "Click tier CTA", "Goes to signup"]
+],
+"Legal Pages": [
+["Terms of Service", "Navigate to /terms", "Shows terms"],
+["Privacy Policy", "Navigate to /privacy", "Shows privacy policy"],
+["Cookie Policy", "Navigate to /cookies", "Shows cookie policy"],
+["Footer links", "Click footer legal links", "Navigate correctly"],
+["Last updated date", "Check date", "Shows recent date"]
+]
+},
+"Admin Dashboard": {
+"Dashboard Overview": [
+["View dashboard", "Login as admin", "Shows admin dashboard"],
+["Quick stats cards", "Check stat cards", "Shows key metrics"],
+["Asset count", "Check asset count", "Accurate count"],
+["Employee count", "Check employee count", "Accurate count"],
+["Pending approvals", "Check pending count", "Shows pending items"],
+["Recent activity", "Check activity feed", "Shows recent actions"]
+],
+"Dashboard Widgets": [
+["Expiring documents", "View widget", "Shows expiring docs"],
+["Upcoming renewals", "View subscriptions", "Shows renewals"],
+["Leave calendar", "View leave widget", "Shows team leave"],
+["Celebrations", "View celebrations", "Shows birthdays/anniversaries"],
+["Quick actions", "Click quick action", "Navigates correctly"],
+["Widget loading", "Slow connection", "Shows loading state"],
+["Widget error", "API fails", "Shows error gracefully"]
+]
+},
+"Asset Clone & Utilization": {
+"Asset Clone": [
+["Clone asset", "Click clone button", "Opens clone dialog"],
+["Clone with new tag", "Clone asset", "New tag generated"],
+["Clone copies fields", "Clone asset", "All fields copied"],
+["Clone resets assignment", "Clone assigned asset", "New asset unassigned"],
+["Clone serial number", "Clone asset with serial", "Serial cleared/new"],
+["Clone warranty", "Clone asset", "Warranty info copied"],
+["Bulk clone", "Clone multiple", "All cloned"]
+],
+"Asset Utilization": [
+["View utilization", "Check asset utilization", "Shows usage stats"],
+["Utilization percentage", "Check percentage", "Calculated correctly"],
+["Idle assets", "Filter idle assets", "Shows unassigned"],
+["Over-utilized", "Check over-used assets", "Flagged appropriately"],
+["Utilization report", "Generate report", "Shows utilization data"],
+["Utilization history", "View history", "Shows usage over time"]
+]
+},
+"Subscription Billing": {
+"Billing Periods": [
+["View billing periods", "Check subscription periods", "Shows billing history"],
+["Current period", "Check current", "Shows active period"],
+["Past periods", "View history", "Shows past periods"],
+["Period dates", "Check dates", "Correct start/end"],
+["Period cost", "Check cost", "Shows period amount"]
+],
+"Cost Tracking": [
+["Monthly cost", "Check monthly", "Shows total monthly"],
+["Annual cost", "Check yearly", "Shows annual projection"],
+["Cost by category", "Group by category", "Shows breakdown"],
+["Cost trends", "View trends", "Shows cost over time"],
+["Budget alerts", "Set budget", "Alert when exceeded"]
+],
+"Subscription Lifecycle": [
+["Cancel subscription", "Click cancel", "Status = CANCELLED"],
+["Cancel confirmation", "Cancel sub", "Requires confirmation"],
+["Reactivate subscription", "Reactivate cancelled", "Status = ACTIVE"],
+["Cannot reactivate expired", "Try reactivate expired", "Error shown"],
+["Cancellation reason", "Cancel with reason", "Reason saved"],
+["Cancellation date", "Cancel sub", "End date recorded"]
+]
+},
+"Error Handling & Edge Cases": {
+"Error Pages": [
+["404 page", "Navigate to /nonexistent", "Shows 404 page"],
+["404 has navigation", "Check 404 page", "Can navigate home"],
+["500 error", "Trigger server error", "Shows error page"],
+["Error page branding", "Check error pages", "Has app branding"],
+["Back button on error", "Click back", "Returns to previous"]
+],
+"API Error Handling": [
+["Invalid JSON", "Send malformed JSON", "400 error"],
+["Missing required field", "Omit required field", "400 with details"],
+["Invalid ID format", "Use invalid ID", "400 error"],
+["Not found", "Request missing resource", "404 error"],
+["Unauthorized", "Request without auth", "401 error"],
+["Forbidden", "Request without permission", "403 error"],
+["Rate limited", "Exceed rate limit", "429 error"],
+["Server error", "Trigger 500", "Graceful error response"]
+],
+"Loading States": [
+["Page loading", "Navigate to page", "Shows loading skeleton"],
+["Table loading", "Load data table", "Shows table skeleton"],
+["Button loading", "Submit form", "Button shows spinner"],
+["Infinite scroll", "Scroll to load more", "Loading indicator"],
+["Slow connection", "Throttle network", "Loading persists"]
+]
+},
+"Scheduled Tasks (Cron)": {
+"Cleanup Jobs": [
+["Deleted assets cleanup", "Wait 30 days", "Old deleted assets purged"],
+["Deleted users cleanup", "Wait retention", "Old users purged"],
+["Chat cleanup", "Run cleanup", "Old chats removed"],
+["Orphaned files", "Run storage cleanup", "Orphans removed"]
+],
+"Alert Jobs": [
+["Subscription renewal", "30 days before renewal", "Alert sent"],
+["Warranty expiry", "30 days before expiry", "Alert sent"],
+["Document expiry", "30 days before", "Alert sent"],
+["Employee doc expiry", "30 days before", "Alert sent"]
+],
+"Calculation Jobs": [
+["Depreciation cron", "Run monthly", "Depreciation calculated"],
+["Depreciation accuracy", "Check values", "Calculations correct"],
+["Leave accrual", "Run accrual", "Balances updated"]
+]
+},
+"Tenant Branding": {
+"Organization Branding": [
+["View org with logo", "Access org subdomain", "Logo displayed"],
+["No logo fallback", "Org without logo", "Shows initials/default"],
+["Login page branding", "View login", "Shows org branding"],
+["Email branding", "Receive email", "Has org branding"],
+["PDF branding", "Generate PDF", "Has org logo"]
+],
+"Public Branding API": [
+["Get branding by slug", "Call branding API", "Returns branding info"],
+["Invalid slug", "Unknown slug", "404 error"],
+["Branding caching", "Multiple requests", "Cached response"]
+]
+},
+"Health & Monitoring": {
+"Health Check": [
+["Health endpoint", "GET /api/health", "Returns 200 OK"],
+["Database check", "Check DB connection", "Shows DB status"],
+["Response time", "Check response", "Fast response"]
+],
+"System Alerts": [
+["View alerts", "Navigate to alerts", "Shows system alerts"],
+["Unread alerts", "Check unread count", "Count accurate"],
+["Dismiss alert", "Dismiss alert", "Alert removed"],
+["Alert severity", "Check alert levels", "Shows severity"]
+]
+},
+"User Preferences": {
+"Display Preferences": [
+["Date format", "Change date format", "Dates update throughout"],
+["Time format", "Switch 12h/24h", "Times update"],
+["Number format", "Change decimal separator", "Numbers update"],
+["Compact view", "Toggle compact", "Tables become compact"],
+["Items per page", "Change default", "Pagination updates"]
+],
+"Notification Preferences": [
+["Email notifications on", "Enable email", "Receives emails"],
+["Email notifications off", "Disable email", "No emails received"],
+["In-app notifications", "Toggle in-app", "In-app on/off"],
+["WhatsApp notifications", "Toggle WhatsApp", "WhatsApp on/off"],
+["Notification types", "Select specific types", "Only those types sent"],
+["Quiet hours", "Set quiet hours", "No notifications during"]
+]
+},
+"Data Integrity": {
+"Referential Integrity": [
+["Delete employee with assets", "Delete assigned employee", "Assets unassigned first"],
+["Delete supplier with engagements", "Delete supplier", "Engagements cascade deleted"],
+["Delete leave type with requests", "Delete type", "Prevented or handled"],
+["Delete category with assets", "Delete category", "Error or reassign"],
+["Delete user with approvals", "Delete approving user", "Approvals reassigned"]
+],
+"Data Consistency": [
+["Leave balance sync", "Approve leave", "Balance decremented"],
+["Asset status sync", "Assign asset", "Status = ASSIGNED"],
+["Approval chain sync", "Approve step", "Next step activated"],
+["Payroll calculations", "Generate payslip", "Amounts match structure"],
+["Depreciation sync", "Monthly run", "Book values updated"]
+]
+},
+"Performance Tests": {
+"Load Testing": [
+["100 concurrent users", "Simulate load", "Response < 500ms"],
+["1000 assets list", "Load large list", "Response < 1s"],
+["Large payroll run", "100 employees", "Completes successfully"],
+["Bulk import 500 assets", "Import large file", "Completes in < 30s"]
+]
+},
+"Browser Compatibility": {
+"Browser Tests": [
+["Chrome Latest", "Test in Chrome", "Works correctly"],
+["Firefox Latest", "Test in Firefox", "Works correctly"],
+["Safari Latest", "Test in Safari", "Works correctly"],
+["Edge Latest", "Test in Edge", "Works correctly"],
+["Mobile Safari iOS 15+", "Test on iPhone", "Works correctly"],
+["Mobile Chrome Android", "Test on Android", "Works correctly"]
+]
+},
+"File Upload & Storage": {
+"Upload Tests": [
+["Upload exactly at size limit", "Upload 10MB file (if limit is 10MB)", "Succeeds"],
+["Upload 1 byte over limit", "Upload 10MB + 1 byte", "Error 'File too large'"],
+["Upload zero-byte file", "Upload empty file", "Error 'Empty file'"],
+["Upload file with no extension", "Upload file without extension", "Validated by content type"],
+["Upload disguised executable", "Rename .exe to .pdf", "Blocked by content validation"],
+["Upload with special chars in name", "File name: test(1)[2]{3}.pdf", "Sanitized or allowed"],
+["Concurrent upload same file", "Upload same file twice simultaneously", "Both succeed with unique names"],
+["Upload during network interruption", "Connection drops mid-upload", "Graceful error, cleanup partial"]
+],
+"Storage Security": [
+["Path traversal attempt", "Filename: ../../../etc/passwd", "Blocked, sanitized"],
+["Null byte injection", "Filename: file%00.exe.pdf", "Blocked"],
+["Signed URL expiry", "Use URL after expiry", "Access denied"],
+["Direct bucket access", "Try to access storage directly", "Blocked, requires signed URL"],
+["File deleted, URL cached", "Delete file, use cached URL", "404 or access denied"]
+]
+},
+"Scheduled Tasks (Cron)": {
+"Cron Jobs": [
+["Cron runs during maintenance", "Deploy during cron execution", "Job completes or retries"],
+["Duplicate cron trigger", "Job triggered twice simultaneously", "Idempotent, no duplicate processing"],
+["Cron with no data to process", "Expiry check with no expiring docs", "Completes successfully, logs empty run"],
+["Cron timeout", "Job takes longer than timeout", "Handled gracefully, alerts admin"],
+["Cron auth failure", "Invalid CRON_SECRET", "401 error, logged"]
+],
+"Alert Jobs": [
+["Alert already sent", "Run expiry alert twice same day", "Doesn't duplicate notifications"],
+["Alert for deleted entity", "Document deleted before alert runs", "Skips gracefully"],
+["Alert with notification failure", "Email service down during alerts", "Retries or logs for manual review"],
+["Alert threshold edge", "Document expires in exactly 30 days", "Included in 30-day alert"]
+]
+},
+"Accessibility Tests": {
+"Accessibility": [
+["Keyboard navigation", "Tab through app", "All elements reachable"],
+["Screen reader", "Use screen reader", "Labels read correctly"],
+["Color contrast", "Check contrast", "Meets WCAG AA"],
+["Focus indicators", "Tab through", "Visible focus states"],
+["Form labels", "Check forms", "All inputs have labels"]
+]
+},
+"UI & Form Edge Cases": {
+"Form Behavior": [
+["Submit with pending validation", "Click submit while validating", "Waits for validation complete"],
+["Double submit prevention", "Click submit twice quickly", "Only one request sent"],
+["Form with stale data", "Edit form, data changes server-side", "Conflict detection or overwrites"],
+["Browser back after submit", "Submit, browser back, submit again", "Prevented or handled"],
+["Form timeout", "Fill form, wait 30 min, submit", "Session refresh or re-auth"],
+["Paste special characters", "Paste content with hidden chars", "Sanitized appropriately"]
+],
+"Navigation": [
+["Deep link to protected page", "Direct URL to /admin/assets/123", "Auth check, then show or redirect"],
+["Breadcrumb accuracy", "Navigate deep, check breadcrumbs", "Accurate path shown"],
+["Back button after delete", "Delete item, press back", "Shows deleted state or redirects"],
+["Refresh during edit", "Refresh unsaved form", "Browser warning, data preserved or lost clearly"]
+]
+}
+};
+
+let completed = JSON.parse(localStorage.getItem('durj-tests') || '{}');
+let filter = 'all', search = '';
+
+function esc(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+function id(s, ss, n) { return `${s}::${ss}::${n}`.replace(/[^a-zA-Z0-9:]/g, '_'); }
+function done(i) { return completed[i] === true; }
+function toggle(i) { completed[i] = !completed[i]; localStorage.setItem('durj-tests', JSON.stringify(completed)); update(); }
+
+function stats(sec) {
+    let t = 0, c = 0;
+    for (const ss in T[sec]) for (const test of T[sec][ss]) { t++; if (done(id(sec, ss, test[0]))) c++; }
+    return { t, c, p: t ? Math.round(c / t * 100) : 0 };
+}
+
+function total() {
+    let t = 0, c = 0;
+    for (const s in T) { const st = stats(s); t += st.t; c += st.c; }
+    return { t, c, p: t ? Math.round(c / t * 100) : 0 };
+}
+
+function update() {
+    const s = total();
+    document.getElementById('total-tests').textContent = s.t;
+    document.getElementById('completed-tests').textContent = s.c;
+    document.getElementById('remaining-tests').textContent = s.t - s.c;
+    document.getElementById('main-progress-fill').style.width = s.p + '%';
+    document.getElementById('main-progress-text').textContent = s.p + '%';
+    renderNav();
+}
+
+function renderNav() {
+    const nav = document.getElementById('sidebar-nav');
+    nav.innerHTML = '';
+    for (const sec in T) {
+        const s = stats(sec);
+        const item = document.createElement('div');
+        item.className = 'nav-item' + (s.p === 100 ? ' complete' : '');
+        item.innerHTML = `<span>${esc(sec)}</span><span class="progress-mini">${s.c}/${s.t}</span>`;
+        item.onclick = () => document.getElementById('sec-' + sec.replace(/[^a-zA-Z0-9]/g, '_')).scrollIntoView({ behavior: 'smooth' });
+        nav.appendChild(item);
+    }
+}
+
+function render() {
+    const main = document.getElementById('main-content');
+    main.innerHTML = '';
+    for (const sec in T) {
+        const s = stats(sec);
+        let hasVisible = false, subsHtml = '';
+        for (const ss in T[sec]) {
+            let testsHtml = '', count = 0;
+            for (const test of T[sec][ss]) {
+                const tid = id(sec, ss, test[0]), d = done(tid);
+                if (filter === 'completed' && !d) continue;
+                if (filter === 'pending' && d) continue;
+                if (search && !test[0].toLowerCase().includes(search) && !test[1].toLowerCase().includes(search) && !test[2].toLowerCase().includes(search)) continue;
+                count++; hasVisible = true;
+                testsHtml += `<div class="test-item ${d ? 'completed' : ''}" data-id="${tid}">
+                    <input type="checkbox" ${d ? 'checked' : ''} onchange="toggle('${tid}'); this.parentElement.classList.toggle('completed')">
+                    <div class="test-info">
+                        <div class="test-name">${esc(test[0])}</div>
+                        <div class="test-details"><span>Steps: ${esc(test[1])}</span><span>Expected: ${esc(test[2])}</span></div>
+                    </div>
+                </div>`;
+            }
+            if (count > 0) subsHtml += `<div class="subsection"><div class="subsection-header"><span>${esc(ss)}</span></div><div class="test-list">${testsHtml}</div></div>`;
+        }
+        if (!hasVisible) continue;
+        const html = `<section class="section" id="sec-${sec.replace(/[^a-zA-Z0-9]/g, '_')}">
+            <div class="section-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                <div class="section-title"><h2>${esc(sec)}</h2></div>
+                <div class="section-progress">
+                    <div class="section-progress-bar"><div class="section-progress-fill" style="width:${s.p}%"></div></div>
+                    <span class="section-progress-text">${s.c}/${s.t}</span>
+                    <svg class="collapse-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+            </div>
+            <div class="section-content">${subsHtml}</div>
+        </section>`;
+        main.innerHTML += html;
+    }
+}
+
+document.getElementById('search-input').addEventListener('input', e => { search = e.target.value.toLowerCase(); render(); });
+document.querySelectorAll('.filter-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filter = btn.dataset.filter;
+    render();
+}));
+
+function exportProgress() {
+    const data = { completed, exported: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `durj-test-progress-${new Date().toISOString().split('T')[0]}.json`; a.click();
+}
+
+function importProgress(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const r = new FileReader();
+    r.onload = ev => {
+        try {
+            const data = JSON.parse(ev.target.result);
+            completed = data.completed || data;
+            localStorage.setItem('durj-tests', JSON.stringify(completed));
+            update(); render();
+            showToast('Progress imported!');
+        } catch { showToast('Invalid file'); }
+    };
+    r.readAsText(file);
+}
+
+function resetProgress() { if (confirm('Reset ALL test progress?')) { completed = {}; localStorage.removeItem('durj-tests'); update(); render(); showToast('Progress reset'); } }
+
+function showToast(msg) {
+    const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
+update(); render();
+    </script>
+</body>
+</html>
