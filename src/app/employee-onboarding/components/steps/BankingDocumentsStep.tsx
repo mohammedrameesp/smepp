@@ -14,17 +14,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DocumentUpload, ProfilePhotoUpload } from '@/components/domains/hr/profile';
 import { QATAR_BANKS } from '@/lib/data/constants';
 
-// IBAN validation hint component - shows character count only (QA prefix is fixed)
+// IBAN validation hint component
 function IbanValidationHint({ iban }: { iban: string }) {
-  // Full IBAN includes QA prefix
-  const fullLength = iban ? iban.length + 2 : 0;
-  const isComplete = fullLength === 29;
-
   if (!iban) {
-    return <p className="text-xs text-slate-500">27 characters after QA</p>;
+    return <p className="text-xs text-slate-500">Qatar IBAN: 29 characters starting with QA</p>;
   }
 
-  if (isComplete) {
+  const isQatarIban = iban.toUpperCase().startsWith('QA');
+  const isValidLength = isQatarIban ? iban.length === 29 : iban.length >= 15 && iban.length <= 34;
+
+  if (isValidLength) {
     return (
       <p className="text-xs text-green-600 flex items-center gap-1">
         <Check className="h-3 w-3" /> Valid IBAN format
@@ -32,10 +31,17 @@ function IbanValidationHint({ iban }: { iban: string }) {
     );
   }
 
+  if (isQatarIban) {
+    return (
+      <p className="text-xs text-slate-500 flex items-center gap-1">
+        {iban.length}/29 characters
+      </p>
+    );
+  }
+
   return (
-    <p className={`text-xs flex items-center gap-1 ${isComplete ? 'text-green-600' : 'text-slate-500'}`}>
-      {isComplete ? <Check className="h-3 w-3" /> : <X className="h-3 w-3 text-slate-400" />}
-      {fullLength}/29 characters
+    <p className="text-xs text-slate-500 flex items-center gap-1">
+      {iban.length} characters (15-34 required)
     </p>
   );
 }
@@ -90,27 +96,31 @@ export function BankingDocumentsStep({ formData, updateField, errors }: BankingD
 
               <div className="space-y-2">
                 <Label>IBAN <span className="text-red-500">*</span></Label>
-                <div className="flex">
-                  <div className="flex items-center justify-center px-3 py-2 bg-slate-100 border border-r-0 rounded-l-md text-sm font-medium text-slate-700">
-                    QA
-                  </div>
-                  <Input
-                    value={((formData.iban as string) || '').replace(/^QA/i, '')}
-                    onChange={(e) => {
-                      // Remove spaces and non-alphanumeric, uppercase
-                      const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-                      // Always store with QA prefix
-                      updateField('iban', 'QA' + value);
-                    }}
-                    placeholder="00XXXX0000000000000000000"
-                    maxLength={27}
-                    className={`rounded-l-none ${errors.iban ? 'border-red-500' : ''}`}
-                  />
-                </div>
+                <Input
+                  value={(formData.iban as string) || ''}
+                  onChange={(e) => {
+                    // Remove spaces and non-alphanumeric, uppercase
+                    const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                    updateField('iban', value || null);
+                  }}
+                  onFocus={(e) => {
+                    // Pre-fill QA if empty on focus
+                    if (!formData.iban) {
+                      updateField('iban', 'QA');
+                      // Move cursor to end after QA
+                      setTimeout(() => {
+                        e.target.setSelectionRange(2, 2);
+                      }, 0);
+                    }
+                  }}
+                  placeholder="QA00XXXX0000000000000000000"
+                  maxLength={34}
+                  className={errors.iban ? 'border-red-500' : ''}
+                />
                 {errors.iban && (
                   <p className="text-sm text-red-600">{errors.iban}</p>
                 )}
-                <IbanValidationHint iban={((formData.iban as string) || '').replace(/^QA/i, '')} />
+                <IbanValidationHint iban={(formData.iban as string) || ''} />
               </div>
             </div>
           </CardContent>
