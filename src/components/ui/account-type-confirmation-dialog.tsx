@@ -108,6 +108,7 @@ export function AccountTypeConfirmationDialog({
     <Dialog open={true}>
       <DialogContent
         className="sm:max-w-[600px]"
+        hideCloseButton
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
