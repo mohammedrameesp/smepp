@@ -423,8 +423,10 @@ export function EmployeeOnboardingClient() {
         if (formData.graduationYear) {
           const year = parseInt(formData.graduationYear, 10);
           const currentYear = new Date().getFullYear();
-          if (isNaN(year) || year < 1950 || year > currentYear) {
-            newErrors.graduationYear = `Year must be between 1950 and ${currentYear}`;
+          const minYear = currentYear - 50;
+          const maxYear = currentYear + 4; // Allow future years for interns
+          if (isNaN(year) || year < minYear || year > maxYear) {
+            newErrors.graduationYear = `Year must be between ${minYear} and ${maxYear}`;
           }
         }
         break;

@@ -114,8 +114,8 @@ export function EducationSkillsStep({ formData, updateField, errors }: Education
                 <Label>Year of Graduation</Label>
                 <Input
                   type="number"
-                  min={1950}
-                  max={new Date().getFullYear()}
+                  min={new Date().getFullYear() - 50}
+                  max={new Date().getFullYear() + 4}
                   value={(formData.graduationYear as string) || ''}
                   onChange={(e) => updateField('graduationYear', e.target.value)}
                   placeholder={`e.g., ${new Date().getFullYear() - 5}`}
@@ -124,6 +124,9 @@ export function EducationSkillsStep({ formData, updateField, errors }: Education
                 {errors.graduationYear && (
                   <p className="text-sm text-red-600">{errors.graduationYear}</p>
                 )}
+                <p className="text-xs text-slate-400">
+                  {new Date().getFullYear() - 50} - {new Date().getFullYear() + 4} (future years for expected graduation)
+                </p>
               </div>
             </div>
           </CardContent>
