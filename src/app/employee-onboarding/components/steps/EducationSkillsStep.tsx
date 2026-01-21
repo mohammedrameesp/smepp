@@ -6,7 +6,7 @@
  * @module employee-onboarding/steps
  */
 
-import { GraduationCap, Car, AlertTriangle } from 'lucide-react';
+import { GraduationCap, Car, AlertTriangle, Check, X } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,6 +14,38 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MultiSelectTags, TagsInput } from '@/components/domains/hr/profile/multi-select-tags';
 import { QUALIFICATIONS, LANGUAGES } from '@/lib/data/constants';
+
+// Graduation year validation constants
+const MIN_GRAD_YEAR = new Date().getFullYear() - 50;
+const MAX_GRAD_YEAR = new Date().getFullYear() + 4;
+
+// Graduation year validation hint component
+function GraduationYearHint({ year }: { year: string }) {
+  if (!year) return null;
+
+  const yearNum = parseInt(year, 10);
+  const isValidNumber = !isNaN(yearNum);
+  const isInRange = isValidNumber && yearNum >= MIN_GRAD_YEAR && yearNum <= MAX_GRAD_YEAR;
+
+  if (isInRange) {
+    return (
+      <p className="text-xs text-green-600 flex items-center gap-1">
+        <Check className="h-3 w-3" /> Valid year
+      </p>
+    );
+  }
+
+  if (isValidNumber) {
+    return (
+      <p className="text-xs text-red-500 flex items-center gap-1">
+        <X className="h-3 w-3" />
+        Must be between {MIN_GRAD_YEAR} and {MAX_GRAD_YEAR}
+      </p>
+    );
+  }
+
+  return null;
+}
 
 // Check if a date is in the past
 function isExpired(dateStr: string | null | undefined): boolean {
@@ -114,21 +146,14 @@ export function EducationSkillsStep({ formData, updateField, errors }: Education
                 <Label>Year of Graduation</Label>
                 <Input
                   type="number"
-                  min={new Date().getFullYear() - 50}
-                  max={new Date().getFullYear() + 4}
+                  min={MIN_GRAD_YEAR}
+                  max={MAX_GRAD_YEAR}
                   value={(formData.graduationYear as string) || ''}
                   onChange={(e) => updateField('graduationYear', e.target.value)}
                   placeholder={`e.g., ${new Date().getFullYear() - 5}`}
                   className={errors.graduationYear ? 'border-red-500' : ''}
                 />
-                {errors.graduationYear && (
-                  <>
-                    <p className="text-sm text-red-600">{errors.graduationYear}</p>
-                    <p className="text-xs text-slate-400">
-                      Valid range: {new Date().getFullYear() - 50} - {new Date().getFullYear() + 4}
-                    </p>
-                  </>
-                )}
+                <GraduationYearHint year={(formData.graduationYear as string) || ''} />
               </div>
             </div>
           </CardContent>
