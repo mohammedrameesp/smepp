@@ -74,9 +74,13 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                 <Label>QID Number <span className="text-red-500">*</span></Label>
                 <Input
                   value={(formData.qidNumber as string) || ''}
-                  onChange={(e) => updateField('qidNumber', e.target.value)}
-                  placeholder="284XXXXXXXX"
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    updateField('qidNumber', value);
+                  }}
+                  placeholder="28400000000"
                   maxLength={11}
+                  inputMode="numeric"
                   className={errors.qidNumber ? 'border-red-500' : ''}
                 />
                 {errors.qidNumber && (
