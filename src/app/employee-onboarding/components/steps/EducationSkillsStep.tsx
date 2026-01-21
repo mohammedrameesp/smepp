@@ -2,15 +2,14 @@
 
 /**
  * @file EducationSkillsStep.tsx
- * @description Step 5: Education, Skills & Driving License
+ * @description Step 5: Education & Skills
  * @module employee-onboarding/steps
  */
 
-import { GraduationCap, Car, AlertTriangle, Check, X } from 'lucide-react';
+import { GraduationCap, Check, X } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DatePicker } from '@/components/ui/date-picker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MultiSelectTags, TagsInput } from '@/components/domains/hr/profile/multi-select-tags';
 import { QUALIFICATIONS, LANGUAGES } from '@/lib/data/constants';
@@ -47,30 +46,11 @@ function GraduationYearHint({ year }: { year: string }) {
   return null;
 }
 
-// Check if a date is in the past
-function isExpired(dateStr: string | null | undefined): boolean {
-  if (!dateStr) return false;
-  try {
-    const date = new Date(dateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return date < today;
-  } catch {
-    return false;
-  }
-}
-
 interface EducationSkillsStepProps {
   formData: Record<string, unknown>;
   updateField: (field: string, value: unknown) => void;
   errors: Record<string, string>;
 }
-
-const formatDateForPicker = (date: Date | string | null | undefined): string => {
-  if (!date) return '';
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toISOString().split('T')[0];
-};
 
 // Helper to parse JSON array from string
 const parseJsonArray = (value: string | null | undefined): string[] => {
@@ -191,35 +171,6 @@ export function EducationSkillsStep({ formData, updateField, errors }: Education
           </CardContent>
         </Card>
 
-        {/* Driving License Card */}
-        <Card className="border-dashed">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Car className="h-4 w-4 text-slate-500" />
-              <CardTitle className="text-base text-slate-600">Driving License (Optional)</CardTitle>
-            </div>
-            <CardDescription>Leave blank if you don&apos;t have a license</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label>License Expiry Date</Label>
-              <DatePicker
-                value={formatDateForPicker(formData.licenseExpiry as string)}
-                onChange={(val) => updateField('licenseExpiry', val)}
-                placeholder="DD/MM/YYYY"
-              />
-              {errors.licenseExpiry && (
-                <p className="text-sm text-red-600">{errors.licenseExpiry}</p>
-              )}
-              {isExpired(formData.licenseExpiry as string) && (
-                <div className="flex items-center gap-1.5 text-amber-600 text-xs mt-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  <span>License appears to be expired</span>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
