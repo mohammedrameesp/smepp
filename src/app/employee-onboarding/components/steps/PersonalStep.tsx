@@ -95,9 +95,7 @@ export function PersonalStep({ formData, updateField, errors }: PersonalStepProp
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="maritalStatus">
-              Marital Status <span className="text-red-500">*</span>
-            </Label>
+            <Label htmlFor="maritalStatus">Marital Status</Label>
             <Select
               value={(formData.maritalStatus as string) || ''}
               onValueChange={(val) => updateField('maritalStatus', val)}

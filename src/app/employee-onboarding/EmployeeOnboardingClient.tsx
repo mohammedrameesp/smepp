@@ -73,7 +73,6 @@ const MANDATORY_FIELDS: Record<number, { field: string; label: string }[]> = {
     { field: 'dateOfBirth', label: 'Date of Birth' },
     { field: 'gender', label: 'Gender' },
     { field: 'nationality', label: 'Nationality' },
-    { field: 'maritalStatus', label: 'Marital Status' },
   ],
   2: [
     { field: 'qatarMobile', label: 'Qatar Mobile' },
@@ -267,7 +266,7 @@ export function EmployeeOnboardingClient() {
           }
 
           // Check if user has previously saved any mandatory fields (returning user)
-          const mandatoryFieldKeys = ['dateOfBirth', 'gender', 'nationality', 'maritalStatus',
+          const mandatoryFieldKeys = ['dateOfBirth', 'gender', 'nationality',
             'qatarMobile', 'personalEmail', 'qatarZone', 'qidNumber', 'qidExpiry',
             'passportNumber', 'passportExpiry', 'bankName', 'iban', 'photoUrl'];
           const hasExistingData = mandatoryFieldKeys.some(key => data[key]);
