@@ -14,15 +14,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DocumentUpload, ProfilePhotoUpload } from '@/components/domains/hr/profile';
 import { QATAR_BANKS } from '@/lib/data/constants';
 
-// IBAN validation hint component
+// IBAN validation hint component - shows character count only (QA prefix is fixed)
 function IbanValidationHint({ iban }: { iban: string }) {
-  if (!iban) {
-    return <p className="text-xs text-slate-500">29 characters, starts with QA</p>;
-  }
+  // Full IBAN includes QA prefix
+  const fullLength = iban ? iban.length + 2 : 0;
+  const isComplete = fullLength === 29;
 
-  const startsWithQA = iban.startsWith('QA');
-  const isValidLength = iban.length === 29;
-  const isComplete = startsWithQA && isValidLength;
+  if (!iban) {
+    return <p className="text-xs text-slate-500">27 characters after QA</p>;
+  }
 
   if (isComplete) {
     return (
@@ -33,16 +33,10 @@ function IbanValidationHint({ iban }: { iban: string }) {
   }
 
   return (
-    <div className="space-y-0.5">
-      <p className={`text-xs flex items-center gap-1 ${startsWithQA ? 'text-green-600' : 'text-slate-500'}`}>
-        {startsWithQA ? <Check className="h-3 w-3" /> : <X className="h-3 w-3 text-slate-400" />}
-        Starts with QA
-      </p>
-      <p className={`text-xs flex items-center gap-1 ${isValidLength ? 'text-green-600' : 'text-slate-500'}`}>
-        {isValidLength ? <Check className="h-3 w-3" /> : <X className="h-3 w-3 text-slate-400" />}
-        {iban.length}/29 characters
-      </p>
-    </div>
+    <p className={`text-xs flex items-center gap-1 ${isComplete ? 'text-green-600' : 'text-slate-500'}`}>
+      {isComplete ? <Check className="h-3 w-3" /> : <X className="h-3 w-3 text-slate-400" />}
+      {fullLength}/29 characters
+    </p>
   );
 }
 
@@ -96,25 +90,27 @@ export function BankingDocumentsStep({ formData, updateField, errors }: BankingD
 
               <div className="space-y-2">
                 <Label>IBAN <span className="text-red-500">*</span></Label>
-                <Input
-                  value={(formData.iban as string) || ''}
-                  onChange={(e) => {
-                    // Remove spaces and non-alphanumeric, uppercase
-                    let value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-                    // Auto-prepend QA if user starts typing without it
-                    if (value.length > 0 && !value.startsWith('Q') && !value.startsWith('QA')) {
-                      value = 'QA' + value;
-                    }
-                    updateField('iban', value);
-                  }}
-                  placeholder="QA00XXXX0000000000000000000"
-                  maxLength={29}
-                  className={errors.iban ? 'border-red-500' : ''}
-                />
+                <div className="flex">
+                  <div className="flex items-center justify-center px-3 py-2 bg-slate-100 border border-r-0 rounded-l-md text-sm font-medium text-slate-700">
+                    QA
+                  </div>
+                  <Input
+                    value={((formData.iban as string) || '').replace(/^QA/i, '')}
+                    onChange={(e) => {
+                      // Remove spaces and non-alphanumeric, uppercase
+                      const value = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                      // Always store with QA prefix
+                      updateField('iban', 'QA' + value);
+                    }}
+                    placeholder="00XXXX0000000000000000000"
+                    maxLength={27}
+                    className={`rounded-l-none ${errors.iban ? 'border-red-500' : ''}`}
+                  />
+                </div>
                 {errors.iban && (
                   <p className="text-sm text-red-600">{errors.iban}</p>
                 )}
-                <IbanValidationHint iban={(formData.iban as string) || ''} />
+                <IbanValidationHint iban={((formData.iban as string) || '').replace(/^QA/i, '')} />
               </div>
             </div>
           </CardContent>
