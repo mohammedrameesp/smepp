@@ -7,7 +7,7 @@
  */
 
 import { useCallback } from 'react';
-import { Phone, AlertTriangle, Lock } from 'lucide-react';
+import { Phone, Lock, MapPin, Home, Mail } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -66,68 +66,30 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
       </div>
 
       <div className="space-y-6">
-        {/* Contact Information */}
+        {/* Qatar Details */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Contact Information</CardTitle>
-            <CardDescription>Your phone and email details</CardDescription>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-emerald-600" />
+              <CardTitle className="text-base">Qatar Details</CardTitle>
+            </div>
+            <CardDescription>Your contact information in Qatar</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Qatar Mobile <span className="text-red-500">*</span></Label>
-                <QatarPhoneInput
-                  value={(formData.qatarMobile as string) || ''}
-                  onChange={(val) => updateField('qatarMobile', val)}
-                  placeholder="12345678"
-                  error={errors.qatarMobile}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Other Mobile</Label>
-                <PhoneInput
-                  codeValue={(formData.otherMobileCode as string) || '+91'}
-                  numberValue={(formData.otherMobileNumber as string) || ''}
-                  onCodeChange={(val) => updateField('otherMobileCode', val)}
-                  onNumberChange={(val) => updateField('otherMobileNumber', val)}
-                  numberPlaceholder="Phone number"
-                  error={errors.otherMobileNumber}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label>Qatar Mobile <span className="text-red-500">*</span></Label>
+              <QatarPhoneInput
+                value={(formData.qatarMobile as string) || ''}
+                onChange={(val) => updateField('qatarMobile', val)}
+                placeholder="12345678"
+                error={errors.qatarMobile}
+              />
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="personalEmail">
-                  Personal Email <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="personalEmail"
-                  type="email"
-                  value={(formData.personalEmail as string) || ''}
-                  onChange={(e) => updateField('personalEmail', e.target.value)}
-                  placeholder="personal@email.com"
-                  className={errors.personalEmail ? 'border-red-500' : ''}
-                />
-                {errors.personalEmail && (
-                  <p className="text-sm text-red-600">{errors.personalEmail}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-1.5">
-                  <Lock className="h-3.5 w-3.5 text-slate-400" />
-                  Work Email
-                </Label>
-                <Input value={workEmail} disabled className="bg-slate-50" />
-                <p className="text-xs text-slate-500">Managed by your company</p>
-              </div>
-            </div>
-
-            {/* Qatar Address */}
-            <div className="pt-2">
-              <Label className="text-sm text-slate-700 mb-2 block">Qatar Address</Label>
+            <div>
+              <Label className="text-sm text-slate-700 mb-2 block">
+                Qatar Address <span className="text-red-500">*</span>
+              </Label>
               <QatarAddressSelect
                 value={addressValue}
                 onChange={handleAddressChange}
@@ -140,32 +102,10 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Home Country Address</Label>
-              <Textarea
-                value={(formData.homeCountryAddress as string) || ''}
-                onChange={(e) => updateField('homeCountryAddress', e.target.value)}
-                placeholder="Full address in home country"
-                rows={2}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Emergency Contacts */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-orange-500" />
-              <CardTitle className="text-base">Emergency Contacts</CardTitle>
-            </div>
-            <CardDescription>Local contact required, home country optional</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Local Emergency */}
-            <div className="space-y-3">
+            {/* Local Emergency Contact */}
+            <div className="space-y-3 pt-4 border-t">
               <h4 className="text-sm font-semibold text-slate-700">
-                Local (Qatar) Contact <span className="text-red-500">*</span>
+                Emergency Contact <span className="text-red-500">*</span>
               </h4>
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
@@ -204,12 +144,45 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Home Country Emergency */}
-            <div className="space-y-3 pt-3 border-t">
-              <h4 className="text-sm font-semibold text-slate-700">
-                Home Country Contact <span className="text-slate-400 font-normal">(Optional)</span>
-              </h4>
+        {/* Home Country Details */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Home className="h-4 w-4 text-blue-600" />
+              <CardTitle className="text-base">Home Country Details</CardTitle>
+              <span className="text-xs text-slate-400 font-normal">(Optional)</span>
+            </div>
+            <CardDescription>Your contact information in your home country</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Mobile</Label>
+              <PhoneInput
+                codeValue={(formData.otherMobileCode as string) || '+91'}
+                numberValue={(formData.otherMobileNumber as string) || ''}
+                onCodeChange={(val) => updateField('otherMobileCode', val)}
+                onNumberChange={(val) => updateField('otherMobileNumber', val)}
+                numberPlaceholder="Phone number"
+                error={errors.otherMobileNumber}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Address</Label>
+              <Textarea
+                value={(formData.homeCountryAddress as string) || ''}
+                onChange={(e) => updateField('homeCountryAddress', e.target.value)}
+                placeholder="Full address in home country"
+                rows={2}
+              />
+            </div>
+
+            {/* Home Country Emergency Contact */}
+            <div className="space-y-3 pt-4 border-t">
+              <h4 className="text-sm font-semibold text-slate-700">Emergency Contact</h4>
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs">Name</Label>
@@ -249,8 +222,47 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
             </div>
 
             <p className="text-xs text-slate-500 pt-3 border-t">
-              🔒 Used only for emergencies, never shared externally.
+              🔒 Emergency contacts are used only for urgent situations.
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Email */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-violet-600" />
+              <CardTitle className="text-base">Email</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="personalEmail">
+                  Personal Email <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="personalEmail"
+                  type="email"
+                  value={(formData.personalEmail as string) || ''}
+                  onChange={(e) => updateField('personalEmail', e.target.value)}
+                  placeholder="personal@email.com"
+                  className={errors.personalEmail ? 'border-red-500' : ''}
+                />
+                {errors.personalEmail && (
+                  <p className="text-sm text-red-600">{errors.personalEmail}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <Lock className="h-3.5 w-3.5 text-slate-400" />
+                  Work Email
+                </Label>
+                <Input value={workEmail} disabled className="bg-slate-50" />
+                <p className="text-xs text-slate-500">Managed by your company</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
