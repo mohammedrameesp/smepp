@@ -111,7 +111,7 @@ const T = {
 "Login Tests": [
 ["Valid email/password login", "Enter valid credentials, click Login", "Redirects to dashboard"],
 ["Invalid email format", "Enter 'notanemail', click Login", "Shows 'Invalid email' error"],
-["Wrong password", "Enter correct email, wrong password", "Shows 'Invalid credentials'"],
+["Wrong password", "Enter correct email, wrong password", "Shows 'Invalid email or password'"],
 ["Empty email field", "Leave email empty, click Login", "Shows 'Email is required'"],
 ["Empty password field", "Leave password empty, click Login", "Shows 'Password is required'"],
 ["SQL injection in email", "Enter '; DROP TABLE users;--", "Should be sanitized, show error"],
@@ -122,12 +122,16 @@ const T = {
 ["Locked account shows time remaining", "Get locked out, check message", "Shows 'Try again in X minutes'"],
 ["Login on wrong subdomain", "User in org-a logs into org-b subdomain", "Error or redirect to correct subdomain"],
 ["Multi-org user correct isolation", "User belongs to 2 orgs, login to each", "Sees only that org's data"],
-["OAuth user tries password login", "User signed up via Google, tries email/pass", "Error 'Use Google sign-in'"],
+["OAuth user tries password login", "User signed up via Google, tries email/pass", "Error 'Use Google sign-in' or allows if passwordHash exists"],
 ["Deactivated user login", "Login with canLogin=false account", "Error 'Account deactivated'"],
-["Deleted user login", "Login with soft-deleted account", "Error 'Invalid credentials'"],
+["Deleted user login", "Login with soft-deleted account", "Error 'Invalid email or password'"],
 ["Login after password change on other device", "Change password, check other session", "Other session invalidated"],
 ["Account locked then unlocked by time", "Wait for lockout to expire", "Can login again"],
-["Progressive lockout duration", "Get locked multiple times", "Duration increases (5m→15m→30m→60m)"]
+["Progressive lockout duration", "Get locked multiple times", "Duration increases (5m→15m→30m→60m)"],
+["Auth rate limiting", "Make 10+ login attempts in 15 minutes", "Returns 429 Too Many Requests"],
+["Password validation on login", "Enter password with less than 8 chars", "Client-side validation error"],
+["Lockout counter reset", "Login successfully after failed attempts", "Counter resets to 0"],
+["Max lockout duration", "Get locked 20+ times", "Locked for 60 minutes max (cap reached)"]
 ],
 "OAuth Tests": [
 ["Google OAuth", "Click 'Sign in with Google'", "Redirects to Google, returns to app"],
@@ -137,42 +141,68 @@ const T = {
 ["OAuth state tampering", "Modify state parameter in callback", "Should reject with error"],
 ["OAuth callback state mismatch", "Tamper with state parameter", "Error 'Invalid state'"],
 ["OAuth with existing email different provider", "Google user tries Microsoft with same email", "Links or shows conflict"],
-["OAuth token expired during callback", "Slow network, token expires", "Error handling, retry prompt"],
+["OAuth token expired during callback", "Slow network, token expires", "Error handling with retry prompt or clear message"],
 ["OAuth account email changed", "Change email in Google, re-login", "Handles email update"],
 ["Custom OAuth credentials invalid", "Org configures wrong OAuth keys", "Falls back or clear error"],
-["OAuth with org-specific credentials", "Org has custom Google OAuth", "Uses org credentials, not platform"]
+["OAuth with org-specific credentials", "Org has custom Google OAuth", "Uses org credentials, not platform"],
+["OAuth nonce replay attack", "Reuse OAuth state parameter after first use", "Rejected 'State already used'"],
+["OAuth domain restriction", "Sign in with non-allowed email domain", "Error 'Email domain not allowed'"],
+["OAuth auth method restricted", "Org blocks OAuth, user tries OAuth login", "Error 'Login method not allowed'"],
+["OAuth account soft-deleted", "OAuth login with deleted account (isDeleted=true)", "Error or creates new account"],
+["OAuth account locked", "OAuth login while account is locked", "Error 'Account locked'"]
 ],
-"2FA Tests": [
-["2FA token reuse", "Use same 2FA code twice", "Second attempt rejected"],
-["2FA token expired", "Wait >30 seconds, enter code", "Error 'Code expired'"],
-["2FA pending token replay", "Get pending token, use twice", "Second use rejected (JTI check)"],
-["2FA setup incomplete login", "Enable 2FA, don't complete setup", "Blocked until setup complete"],
-["2FA backup codes", "Use backup code", "Works, code invalidated"],
-["2FA on new device", "Login from new device with 2FA", "Requires 2FA verification"],
-["Disable 2FA requires verification", "Try to disable 2FA", "Must enter current 2FA code"]
+"2FA Tests (Super Admin Only)": [
+["2FA token reuse", "Use same 2FA code twice (super admin login)", "Second attempt rejected"],
+["2FA token expired", "Wait >30 seconds, enter code (super admin)", "Error 'Code expired'"],
+["2FA pending token replay", "Get pending token, use twice (super admin)", "Second use rejected (JTI check)"],
+["2FA setup incomplete login", "Enable 2FA, don't complete setup (super admin)", "Blocked until setup complete"],
+["2FA backup codes", "Use backup code (super admin)", "Works, code invalidated"],
+["2FA on new device", "Login from new device with 2FA (super admin)", "Requires 2FA verification"],
+["Disable 2FA requires verification", "Try to disable 2FA (super admin)", "Must enter current 2FA code"],
+["2FA setup generates QR code", "Start 2FA setup as super admin", "QR code and manual key displayed"],
+["2FA enable requires verification", "Enter correct 6-digit code during setup", "2FA enabled, backup codes shown"],
+["2FA backup codes count", "View backup codes after 2FA setup", "Shows 10 backup codes"],
+["2FA backup code single use", "Use same backup code twice", "Second use rejected"],
+["2FA disable requires current code", "Try to disable 2FA without code", "Must enter current TOTP code"],
+["2FA rate limiting", "5+ failed 2FA attempts in 15 minutes", "Rate limited for 15 minutes"],
+["2FA pending token expiry", "Wait 5+ min after entering credentials", "Pending token expired, must re-enter credentials"]
 ],
 "Session Tests": [
-["Session expiry", "Wait for session to expire", "Redirected to login"],
+["Session expiry", "Wait for session to expire (24 hours)", "Redirected to login"],
 ["Multiple devices", "Log in on two browsers", "Both should work independently"],
 ["Logout clears session", "Click logout", "All session data cleared"],
 ["Token refresh", "Wait near expiry, make request", "Token should auto-refresh"],
-["Remember me checked", "Check remember me", "Session lasts 30 days"],
-["Remember me unchecked", "Don't check", "Session lasts 24 hours"],
 ["Multiple tabs", "Open app in 2 tabs", "Session synced"],
 ["Logout in one tab", "Logout, check other tab", "Other tab logs out"],
 ["Session after password change", "Change password", "Forces re-login"],
-["Inactive timeout", "Leave idle for 30 min", "Session still valid"],
+["Inactive timeout", "Leave idle for 30 min", "Session still valid (no idle timeout, only 24h absolute expiry)"],
 ["Session after org deletion", "Org deleted while user logged in", "Graceful logout, clear message"],
-["Session with changed permissions", "Admin removes user's HR access", "Next request reflects new permissions"],
-["Concurrent session limit", "Login on 5+ devices", "Oldest sessions invalidated or all work"],
+["Session with changed permissions", "Admin removes user's HR access", "Permission revoked within 30 seconds"],
+["Concurrent sessions", "Login on 5+ devices", "All sessions work (no concurrent limit implemented)"],
 ["Session token in URL", "Token leaked in URL", "Should not expose token in URL"],
-["Cross-tab session sync", "Login in tab 1, check tab 2", "Tab 2 reflects login state"]
+["Cross-tab session sync", "Login in tab 1, check tab 2", "Tab 2 reflects login state"],
+["Permission refresh timing", "Admin revokes permission, user makes request", "Permission revoked within 30 seconds"],
+["Session includes tenant context", "Check session object after login", "Contains organizationId, slug, and subscriptionTier"],
+["Impersonation cookie TTL", "Super admin impersonates org", "Impersonation cookie expires in 15 minutes"],
+["Session after canLogin disabled", "Admin disables canLogin for user", "User logged out within 30 seconds"]
 ],
 "Authorization Tests": [
 ["Employee accessing admin route", "As employee, navigate to /admin/settings", "Redirected to employee portal"],
 ["Non-HR accessing HR routes", "As regular admin, access HR settings", "Access denied or limited view"],
 ["Non-Finance accessing payroll", "As regular admin, access payroll", "Access denied"],
-["Disabled module access", "Try to access disabled module route", "Shows 'Module not enabled'"]
+["Disabled module access", "Try to access disabled module route", "Shows 'Module not enabled'"],
+["Admin without HR access", "Admin without hasHRAccess accesses /admin/hr/*", "Redirected to /admin"],
+["Admin without Finance access", "Admin without hasFinanceAccess accesses /admin/payroll", "Redirected to /admin"],
+["Admin without Operations access", "Admin without hasOperationsAccess accesses /admin/assets", "Redirected to /admin"],
+["Module not installed prompt", "Admin accesses disabled module", "Redirected to /admin/modules with install prompt"],
+["Non-admin module access", "Non-admin accesses disabled module", "Redirected to /forbidden"],
+["Super admin route access", "Regular user accesses /super-admin/*", "Redirected to login or forbidden"],
+["Impersonation route protection", "Non-super-admin with impersonation URL param", "Param ignored, normal auth flow continues"]
+],
+"Note": [
+["2FA availability", "Verify 2FA option exists", "2FA is only available for Super Admins - organization users (TeamMembers) do not have 2FA"],
+["Remember Me not implemented", "Check login form", "Remember Me checkbox not present - all sessions fixed at 24 hours"],
+["Session concurrent limit", "Test multiple logins", "No concurrent session limit - all sessions work simultaneously"]
 ]
 },
 "Onboarding": {
@@ -1396,13 +1426,14 @@ const T = {
 ],
 "Reset Password": [
 ["Valid token", "Access with valid token", "Shows reset form"],
-["Expired token", "Use old token", "Error 'token expired'"],
+["Expired token", "Use old token (>1 hour)", "Error 'token expired'"],
 ["Invalid token", "Use fake token", "Error 'invalid token'"],
 ["Set new password", "Enter valid password", "Password reset"],
 ["Password validation", "Enter weak password", "Validation error"],
 ["Confirm mismatch", "Passwords don't match", "Validation error"],
 ["Token single use", "Use token twice", "Second use fails"],
-["Login after reset", "Login with new password", "Login successful"]
+["Login after reset", "Login with new password", "Login successful"],
+["Sessions invalidated after reset", "Reset password, check other logged-in sessions", "All sessions logged out"]
 ]
 },
 "Signup Flow": {
@@ -1414,6 +1445,7 @@ const T = {
 ["Duplicate email", "Use existing email", "Error 'email exists'"],
 ["Password required", "Leave password empty", "Validation error"],
 ["Password too short", "Enter <8 characters", "Validation error"],
+["Password strength meter", "Type password progressively", "Shows Weak/Fair/Good/Strong indicator"],
 ["Name required", "Leave name empty", "Validation error"],
 ["Terms checkbox", "Don't check terms", "Cannot submit"]
 ],
