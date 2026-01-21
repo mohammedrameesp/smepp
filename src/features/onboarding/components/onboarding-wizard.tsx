@@ -558,6 +558,11 @@ function FieldError({ error }: { error?: string }) {
 }
 
 function PersonalInfoStep({ formData, updateField }: StepProps) {
+  // Date constraints for DOB: must be 18+ years old, max 80 years old
+  const today = new Date();
+  const minDOB = new Date(today.getFullYear() - 80, today.getMonth(), today.getDate());
+  const maxDOB = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-600 mb-4">
@@ -572,7 +577,8 @@ function PersonalInfoStep({ formData, updateField }: StepProps) {
             value={formatDateForPicker(formData.dateOfBirth as string)}
             onChange={(val) => updateField('dateOfBirth', val)}
             placeholder="DD/MM/YYYY"
-            maxDate={new Date()}
+            minDate={minDOB}
+            maxDate={maxDOB}
           />
         </div>
 
