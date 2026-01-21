@@ -89,7 +89,7 @@ export function PhoneInput({
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
-                className="w-[100px] justify-between font-normal"
+                className="w-[130px] justify-between font-normal"
                 disabled={disabled}
                 type="button"
               >
