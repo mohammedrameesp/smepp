@@ -23,8 +23,8 @@ export interface BirthDatePickerProps {
   className?: string;
   placeholder?: string;
   required?: boolean;
-  maxDate?: Date; // Maximum selectable date (defaults to today for birth dates)
-  minDate?: Date; // Minimum selectable date (defaults to 1940)
+  maxDate?: Date; // Maximum selectable date (defaults to 18 years ago - must be 18+)
+  minDate?: Date; // Minimum selectable date (defaults to 80 years ago)
 }
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -46,9 +46,18 @@ export function BirthDatePicker({
   maxDate,
   minDate,
 }: BirthDatePickerProps) {
-  // Default maxDate to today, minDate to 1940
-  const effectiveMaxDate = React.useMemo(() => maxDate || new Date(), [maxDate]);
-  const effectiveMinDate = React.useMemo(() => minDate || new Date(1940, 0, 1), [minDate]);
+  // Default: 18-80 year age range for birth dates
+  const effectiveMaxDate = React.useMemo(() => {
+    if (maxDate) return maxDate;
+    const today = new Date();
+    return new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+  }, [maxDate]);
+
+  const effectiveMinDate = React.useMemo(() => {
+    if (minDate) return minDate;
+    const today = new Date();
+    return new Date(today.getFullYear() - 80, today.getMonth(), today.getDate());
+  }, [minDate]);
 
   const [date, setDate] = React.useState<Date | undefined>(() => {
     if (value) {

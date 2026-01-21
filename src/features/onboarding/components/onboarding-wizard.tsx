@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DatePicker } from '@/components/ui/date-picker';
+import { BirthDatePicker } from '@/components/ui/birth-date-picker';
 import { Progress } from '@/components/ui/progress';
 import { PhoneInput, QatarPhoneInput, DocumentUpload, MultiSelectTags, TagsInput } from '@/components/domains/hr/profile';
 import {
@@ -558,11 +559,6 @@ function FieldError({ error }: { error?: string }) {
 }
 
 function PersonalInfoStep({ formData, updateField }: StepProps) {
-  // Date constraints for DOB: must be 18+ years old, max 80 years old
-  const today = new Date();
-  const minDOB = new Date(today.getFullYear() - 80, today.getMonth(), today.getDate());
-  const maxDOB = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-600 mb-4">
@@ -572,13 +568,11 @@ function PersonalInfoStep({ formData, updateField }: StepProps) {
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="dateOfBirth">Date of Birth <span className="text-red-500">*</span></Label>
-          <DatePicker
+          <BirthDatePicker
             id="dateOfBirth"
             value={formatDateForPicker(formData.dateOfBirth as string)}
             onChange={(val) => updateField('dateOfBirth', val)}
             placeholder="DD/MM/YYYY"
-            minDate={minDOB}
-            maxDate={maxDOB}
           />
         </div>
 

@@ -105,11 +105,6 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
     additional: false,
   });
 
-  // Date constraints for DOB: must be 18+ years old, max 80 years old
-  const today = new Date();
-  const minDOB = new Date(today.getFullYear() - 80, today.getMonth(), today.getDate());
-  const maxDOB = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-
   const form = useForm<HRProfileInput>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(hrProfileSchema) as any,
@@ -287,8 +282,6 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
               value={watch('dateOfBirth') || ''}
               onChange={(val) => setValue('dateOfBirth', val, { shouldDirty: true })}
               placeholder="Select date of birth"
-              minDate={minDOB}
-              maxDate={maxDOB}
             />
           </div>
 
