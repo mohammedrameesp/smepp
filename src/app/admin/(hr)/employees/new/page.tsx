@@ -60,6 +60,7 @@ export default function NewEmployeePage() {
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
   const [authConfig, setAuthConfig] = useState<AuthConfig | null>(null);
   const [, setLoadingModules] = useState(true);
+  const [managers, setManagers] = useState<{ id: string; name: string | null; email: string }[]>([]);
 
   // Email availability check state
   const [emailCheckResult, setEmailCheckResult] = useState<EmailCheckResult | null>(null);
@@ -85,6 +86,7 @@ export default function NewEmployeePage() {
       probationEndDate: '',
       noticePeriodDays: 30,
       sponsorshipType: '',
+      reportingToId: '',
       isEmployee: true,
       canLogin: true,
       isOnWps: true,
@@ -161,6 +163,28 @@ export default function NewEmployeePage() {
     }
     fetchOrgSettings();
   }, [setValue]);
+
+  // Fetch managers (employees who can approve) for "Reports To" dropdown
+  useEffect(() => {
+    async function fetchManagers() {
+      try {
+        const response = await fetch('/api/employees?canApprove=true');
+        if (response.ok) {
+          const data = await response.json();
+          setManagers(
+            (data.employees || []).map((m: { id: string; name: string | null; email: string }) => ({
+              id: m.id,
+              name: m.name,
+              email: m.email,
+            }))
+          );
+        }
+      } catch (err) {
+        console.error('Failed to fetch managers:', err);
+      }
+    }
+    fetchManagers();
+  }, []);
 
   const generateNextEmployeeCode = useCallback(async () => {
     try {
@@ -522,6 +546,32 @@ export default function NewEmployeePage() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {/* Reports To - only show if there are managers */}
+                  {managers.length > 0 && (
+                    <div className="space-y-2">
+                      <Label htmlFor="reportingToId">Reports To</Label>
+                      <Select
+                        value={watch('reportingToId') || 'none'}
+                        onValueChange={(val) => setValue('reportingToId', val === 'none' ? '' : val)}
+                      >
+                        <SelectTrigger id="reportingToId">
+                          <SelectValue placeholder="Select manager" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No manager</SelectItem>
+                          {managers.map((manager) => (
+                            <SelectItem key={manager.id} value={manager.id}>
+                              {manager.name || manager.email}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-muted-foreground">
+                        Who does this person report to?
+                      </p>
+                    </div>
+                  )}
 
                   {/* WPS Checkbox - only show if payroll module is enabled */}
                   {isPayrollEnabled && (

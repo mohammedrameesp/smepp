@@ -113,6 +113,8 @@ export const createUserSchema = z.object({
   canLogin: z.boolean().default(true),
   /** Is this employee on WPS (Qatar Wage Protection System)? */
   isOnWps: z.boolean().default(true),
+  /** ID of the manager this employee reports to */
+  reportingToId: z.string().optional(),
 }).refine(
   (data) => data.canLogin ? !!data.email : true,
   { message: 'Email is required when user can login', path: ['email'] }

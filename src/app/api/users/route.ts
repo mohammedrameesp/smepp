@@ -106,7 +106,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
     isEmployee, canLogin, isOnWps,
     // Admin-only employment fields
     dateOfJoining, workLocation, probationEndDate, noticePeriodDays, sponsorshipType,
-    department,
+    department, reportingToId,
   } = validation.data;
 
   // Get permission flags from role (or use legacy isAdmin for backwards compatibility)
@@ -200,6 +200,7 @@ async function createUserHandler(request: NextRequest, context: APIContext) {
       probationEndDate: isEmployee ? parsedProbationEndDate : null,
       noticePeriodDays: isEmployee ? (noticePeriodDays ?? 30) : null,
       sponsorshipType: isEmployee ? (sponsorshipType || null) : null,
+      reportingToId: isEmployee ? (reportingToId || null) : null,
       onboardingComplete: false,
       onboardingStep: 0,
     },
