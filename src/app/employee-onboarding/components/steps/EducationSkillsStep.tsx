@@ -122,11 +122,13 @@ export function EducationSkillsStep({ formData, updateField, errors }: Education
                   className={errors.graduationYear ? 'border-red-500' : ''}
                 />
                 {errors.graduationYear && (
-                  <p className="text-sm text-red-600">{errors.graduationYear}</p>
+                  <>
+                    <p className="text-sm text-red-600">{errors.graduationYear}</p>
+                    <p className="text-xs text-slate-400">
+                      Valid range: {new Date().getFullYear() - 50} - {new Date().getFullYear() + 4}
+                    </p>
+                  </>
                 )}
-                <p className="text-xs text-slate-400">
-                  {new Date().getFullYear() - 50} - {new Date().getFullYear() + 4} (future years for expected graduation)
-                </p>
               </div>
             </div>
           </CardContent>
