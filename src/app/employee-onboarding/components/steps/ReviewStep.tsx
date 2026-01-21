@@ -111,12 +111,9 @@ export function ReviewStep({ formData, workEmail, onEdit }: ReviewStepProps) {
         <ReviewSection title="Personal Information" icon={User} step={1} onEdit={onEdit}>
           <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <Field label="Date of Birth" value={formatDate(formData.dateOfBirth)} />
-            <Field label="Date of Joining" value={formatDate(formData.dateOfJoining)} />
             <Field label="Gender" value={formData.gender} />
             <Field label="Nationality" value={formData.nationality} />
-            {formData.maritalStatus && (
-              <Field label="Marital Status" value={formData.maritalStatus} />
-            )}
+            <Field label="Marital Status" value={formData.maritalStatus} />
           </dl>
         </ReviewSection>
 
@@ -144,21 +141,19 @@ export function ReviewStep({ formData, workEmail, onEdit }: ReviewStepProps) {
               </div>
             </dl>
 
-            {(formData.qatarZone || formData.qatarStreet) && (
-              <div>
-                <dt className="text-xs text-slate-500 mb-1">Qatar Address</dt>
-                <dd className="text-sm text-slate-900">
-                  {[
-                    formData.qatarZone && `Zone ${formData.qatarZone}`,
-                    formData.qatarStreet && `Street ${formData.qatarStreet}`,
-                    formData.qatarBuilding && `Building ${formData.qatarBuilding}`,
-                    formData.qatarUnit && `Unit ${formData.qatarUnit}`,
-                  ]
-                    .filter(Boolean)
-                    .join(', ') || '-'}
-                </dd>
-              </div>
-            )}
+            <div>
+              <dt className="text-xs text-slate-500 mb-1">Qatar Address</dt>
+              <dd className="text-sm text-slate-900">
+                {[
+                  formData.qatarZone && `Zone ${formData.qatarZone}`,
+                  formData.qatarStreet && `Street ${formData.qatarStreet}`,
+                  formData.qatarBuilding && `Building ${formData.qatarBuilding}`,
+                  formData.qatarUnit && `Unit ${formData.qatarUnit}`,
+                ]
+                  .filter(Boolean)
+                  .join(', ') || '-'}
+              </dd>
+            </div>
 
             <div className="border-t pt-3">
               <h4 className="text-xs font-medium text-slate-500 mb-2">Emergency Contacts</h4>
@@ -194,17 +189,13 @@ export function ReviewStep({ formData, workEmail, onEdit }: ReviewStepProps) {
 
         {/* Identification */}
         <ReviewSection title="ID & Legal" icon={CreditCard} step={3} onEdit={onEdit}>
-          <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <Field label="QID Number" value={formData.qidNumber} />
             <Field label="QID Expiry" value={formatDate(formData.qidExpiry)} />
             <Field label="Passport Number" value={formData.passportNumber} />
             <Field label="Passport Expiry" value={formatDate(formData.passportExpiry)} />
-            {formData.healthCardExpiry && (
-              <Field label="Health Card Expiry" value={formatDate(formData.healthCardExpiry)} />
-            )}
-            {formData.sponsorshipType && (
-              <Field label="Sponsorship Type" value={formData.sponsorshipType} />
-            )}
+            <Field label="Health Card Expiry" value={formatDate(formData.healthCardExpiry)} />
+            <Field label="Driving License Expiry" value={formatDate(formData.drivingLicenseExpiry)} />
           </dl>
         </ReviewSection>
 
