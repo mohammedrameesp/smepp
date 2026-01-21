@@ -14,7 +14,6 @@ import { User, Mail, Shield, Calendar, FileText, Loader2, AlertTriangle, Buildin
 import { formatDate } from '@/lib/core/datetime';
 import { HRProfileForm } from '@/components/domains/hr/profile';
 import { EmployeeProfileViewOnly } from '@/features/employees/components';
-import { OnboardingWizard } from '@/features/onboarding/components';
 import { ExpiryAlertsWidget } from '@/components/dashboard';
 import { Progress } from '@/components/ui/progress';
 import { calculateProfileCompletion, HR_REQUIRED_FIELDS } from '@/features/employees/lib/hr-utils';
@@ -109,8 +108,6 @@ export default function ProfilePage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [onboardingMinimized, setOnboardingMinimized] = useState(false);
   const [profileImageError, setProfileImageError] = useState(false);
   const [isSwitchingAccountType, setIsSwitchingAccountType] = useState(false);
 
@@ -130,17 +127,6 @@ export default function ProfilePage() {
       fetchHRProfile();
     }
   }, [session, hasFetched]);
-
-  // Separate effect to trigger onboarding when both profile and hrProfile are loaded
-  useEffect(() => {
-    if (profile && hrProfile !== null && !isLoadingHR) {
-      // Only show onboarding for EMPLOYEES who haven't completed it
-      // Service accounts skip onboarding entirely
-      if (profile.isEmployee && !hrProfile.onboardingComplete) {
-        setShowOnboarding(true);
-      }
-    }
-  }, [profile, hrProfile, isLoadingHR]);
 
   const fetchProfile = async () => {
     try {
@@ -393,29 +379,6 @@ export default function ProfilePage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
             <p className="text-gray-600">View and manage your personal and HR information</p>
           </div>
-
-          {/* Incomplete Profile Alert - Top of page (employees only) */}
-          {profile.isEmployee && !isLoadingHR && !hrProfile?.onboardingComplete && (
-            <Alert className="mb-6 bg-orange-50 border-orange-300">
-              <AlertTriangle className="h-4 w-4 text-orange-600" />
-              <AlertDescription className="text-orange-800 flex items-center justify-between">
-                <span>
-                  <strong>Action Required:</strong> Your HR profile is incomplete. Please complete the onboarding process.
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="ml-4 border-orange-400 text-orange-700 hover:bg-orange-100"
-                  onClick={() => {
-                    setOnboardingMinimized(false);
-                    setShowOnboarding(true);
-                  }}
-                >
-                  Complete Now
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
 
           {error && (
             <Alert variant="error" className="mb-6">
@@ -747,7 +710,7 @@ export default function ProfilePage() {
                   workEmail={profile.email}
                 />
               ) : (
-                // Employees without completed onboarding
+                // Employees without completed onboarding - redirect to onboarding page
                 <Card>
                   <CardContent className="py-12">
                     <div className="text-center">
@@ -758,7 +721,7 @@ export default function ProfilePage() {
                       <p className="text-gray-600 mb-6">
                         Please complete your HR profile onboarding to view your information.
                       </p>
-                      <Button onClick={() => setShowOnboarding(true)}>
+                      <Button onClick={() => router.push('/employee-onboarding')}>
                         Start Onboarding
                       </Button>
                     </div>
@@ -768,54 +731,8 @@ export default function ProfilePage() {
             </TabsContent>
           </Tabs>
 
-          {/* Incomplete Profile Warning Banner - Only for employees with incomplete profile */}
-          {profile.isEmployee && !isLoadingHR && !hrProfile?.onboardingComplete && !showOnboarding && (
-            <div className="fixed bottom-4 right-4 left-4 md:left-auto md:w-96 bg-orange-50 border border-orange-200 rounded-lg p-4 shadow-lg z-50">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="font-medium text-orange-800">Profile Incomplete</p>
-                  <p className="text-sm text-orange-600">
-                    {onboardingMinimized
-                      ? 'Continue your HR profile to complete onboarding.'
-                      : 'Please complete your HR profile onboarding.'}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setOnboardingMinimized(false);
-                    setShowOnboarding(true);
-                  }}
-                >
-                  {onboardingMinimized ? 'Resume' : 'Start'}
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
-
-      {/* Onboarding Wizard Modal */}
-      {showOnboarding && !onboardingMinimized && profile && (
-        <OnboardingWizard
-          initialData={(hrProfile as unknown as Record<string, unknown>) || {}}
-          workEmail={profile.email}
-          currentStep={hrProfile?.onboardingStep || 0}
-          onComplete={() => {
-            setShowOnboarding(false);
-            setOnboardingMinimized(false);
-            fetchHRProfile();
-          }}
-          onMinimize={() => {
-            setOnboardingMinimized(true);
-            setShowOnboarding(false);
-            // Re-fetch HR profile to get the latest saved data
-            fetchHRProfile();
-          }}
-        />
-      )}
-
     </div>
   );
 }
