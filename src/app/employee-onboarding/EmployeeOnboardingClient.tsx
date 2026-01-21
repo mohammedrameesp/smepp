@@ -212,6 +212,7 @@ export function EmployeeOnboardingClient() {
   const [direction, setDirection] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSkipping, setIsSkipping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -567,6 +568,7 @@ export function EmployeeOnboardingClient() {
 
   // Skip onboarding (go directly to dashboard)
   const handleSkip = () => {
+    setIsSkipping(true);
     router.push('/employee');
   };
 
@@ -692,9 +694,21 @@ export function EmployeeOnboardingClient() {
           </div>
           <button
             onClick={handleSkip}
-            className="text-sm text-slate-500 hover:text-slate-700"
+            disabled={isSkipping}
+            className={`text-sm flex items-center gap-2 transition-all duration-200 ${
+              isSkipping
+                ? 'text-slate-400 cursor-not-allowed'
+                : 'text-slate-500 hover:text-slate-700 active:scale-95'
+            }`}
           >
-            Skip for now
+            {isSkipping ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Redirecting...
+              </>
+            ) : (
+              'Skip for now'
+            )}
           </button>
         </div>
       </header>
