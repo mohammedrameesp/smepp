@@ -216,6 +216,7 @@ export function EmployeeOnboardingClient() {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [workEmail, setWorkEmail] = useState('');
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isReturningUser, setIsReturningUser] = useState(false);
   const isInitialLoad = useRef(true);
 
   // Load draft from localStorage on mount
@@ -263,6 +264,15 @@ export function EmployeeOnboardingClient() {
           if (data.onboardingComplete) {
             setIsCompleted(true);
             return;
+          }
+
+          // Check if user has previously saved any mandatory fields (returning user)
+          const mandatoryFieldKeys = ['dateOfBirth', 'gender', 'nationality', 'maritalStatus',
+            'qatarMobile', 'personalEmail', 'qatarZone', 'qidNumber', 'qidExpiry',
+            'passportNumber', 'passportExpiry', 'bankName', 'iban', 'photoUrl'];
+          const hasExistingData = mandatoryFieldKeys.some(key => data[key]);
+          if (hasExistingData) {
+            setIsReturningUser(true);
           }
 
           // Map API data to form data
@@ -412,6 +422,10 @@ export function EmployeeOnboardingClient() {
 
   // Calculate missing mandatory fields for the banner
   const missingFields = getMissingMandatoryFields(formData);
+
+  // Only show banner for returning users (those who have previously saved data)
+  // This gives first-time users a clean experience without alarming warnings
+  const showMissingFieldsBanner = missingFields.length > 0 && isReturningUser;
 
   // Save current step data
   const saveStepData = useCallback(async () => {
@@ -661,8 +675,8 @@ export function EmployeeOnboardingClient() {
         steps={STEPS}
       />
 
-      {/* Missing Fields Banner */}
-      {missingFields.length > 0 && (
+      {/* Missing Fields Banner - only shown after user starts filling or moves past step 1 */}
+      {showMissingFieldsBanner && (
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-start gap-3">
