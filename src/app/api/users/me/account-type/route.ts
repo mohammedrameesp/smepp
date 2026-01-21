@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logAction, ActivityActions } from '@/lib/core/activity';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import { TenantPrismaClient } from '@/lib/core/prisma-tenant';
+import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 import { z } from 'zod';
 
 const updateAccountTypeSchema = z.object({
@@ -88,6 +89,7 @@ async function updateAccountTypeHandler(request: NextRequest, context: APIContex
       id: true,
       isOwner: true,
       isEmployee: true,
+      employeeCode: true,
     },
   });
 
@@ -108,7 +110,7 @@ async function updateAccountTypeHandler(request: NextRequest, context: APIContex
     accountTypeConfirmed: boolean;
     accountTypeConfirmedAt: Date;
     isOnWps?: boolean;
-    employeeCode?: null;
+    employeeCode?: string | null;
   } = {
     isEmployee,
     accountTypeConfirmed: true,
@@ -119,6 +121,22 @@ async function updateAccountTypeHandler(request: NextRequest, context: APIContex
   if (!isEmployee) {
     updateData.isOnWps = false;
     updateData.employeeCode = null;
+  } else {
+    // Generate employee code if confirming as employee and don't have one yet
+    if (!currentMember.employeeCode) {
+      const codePrefix = await getOrganizationCodePrefix(tenant.tenantId);
+      const year = new Date().getFullYear();
+      const prefix = `${codePrefix}-${year}`;
+
+      const count = await db.teamMember.count({
+        where: {
+          isEmployee: true,
+          employeeCode: { startsWith: prefix },
+        },
+      });
+
+      updateData.employeeCode = `${prefix}-${String(count + 1).padStart(3, '0')}`;
+    }
   }
 
   const updatedMember = await db.teamMember.update({
@@ -130,6 +148,7 @@ async function updateAccountTypeHandler(request: NextRequest, context: APIContex
       isOwner: true,
       isEmployee: true,
       isOnWps: true,
+      employeeCode: true,
       accountTypeConfirmed: true,
       accountTypeConfirmedAt: true,
     },
