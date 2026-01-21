@@ -268,10 +268,10 @@ export function ReviewStep({ formData, workEmail, onEdit }: ReviewStepProps) {
         </ReviewSection>
       </div>
 
-      <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <p className="text-sm text-blue-800">
-          <strong>Note:</strong> After completing onboarding, your HR department will be notified
-          to review your information. You can update your profile anytime from the dashboard.
+      <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+        <p className="text-sm text-amber-800">
+          <strong>Important:</strong> After completing onboarding, you will not be able to modify this information directly.
+          If you need to update any details later (e.g., renewed ID, new passport, address change), please contact your HR department to request the changes.
         </p>
       </div>
     </div>
