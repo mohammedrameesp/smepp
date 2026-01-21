@@ -3,16 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/core/auth';
 import { prisma } from '@/lib/core/prisma';
 import logger from '@/lib/core/log';
-
-// Default rates for common currencies to primary currency (QAR)
-const DEFAULT_RATES: Record<string, string> = {
-  USD: '3.64',
-  EUR: '3.96',
-  GBP: '4.60',
-  SAR: '0.97',
-  AED: '0.99',
-  KWD: '11.85',
-};
+import { DEFAULT_RATES_TO_QAR } from '@/lib/core/currency';
 
 function getExchangeRateKey(currency: string, primaryCurrency: string): string {
   return `${currency}_TO_${primaryCurrency}_RATE`;
@@ -44,7 +35,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const rate = setting?.value || DEFAULT_RATES[currency] || '1.00';
+    const rate = setting?.value || DEFAULT_RATES_TO_QAR[currency]?.toString() || '1.00';
 
     return NextResponse.json({
       currency,
