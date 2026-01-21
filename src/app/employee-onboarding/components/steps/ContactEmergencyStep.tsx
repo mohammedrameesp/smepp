@@ -247,6 +247,10 @@ export function ContactEmergencyStep({ formData, updateField, errors, workEmail 
                 </div>
               </div>
             </div>
+
+            <p className="text-xs text-slate-500 pt-3 border-t">
+              🔒 Used only for emergencies, never shared externally.
+            </p>
           </CardContent>
         </Card>
       </div>
