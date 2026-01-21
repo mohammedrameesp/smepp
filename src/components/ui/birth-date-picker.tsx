@@ -94,17 +94,6 @@ export function BirthDatePicker({
     }
   }, [value]);
 
-  // Generate year options
-  const years = React.useMemo(() => {
-    const result: number[] = [];
-    const startYear = effectiveMinDate.getFullYear();
-    const endYear = effectiveMaxDate.getFullYear();
-    for (let y = endYear; y >= startYear; y--) {
-      result.push(y);
-    }
-    return result;
-  }, [effectiveMinDate, effectiveMaxDate]);
-
   const formatDisplayDate = (date: Date): string => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -275,23 +264,22 @@ export function BirthDatePicker({
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 z-50" align="end">
           <div className="p-3 space-y-3">
-            {/* Year and Month dropdowns */}
+            {/* Year input and Month dropdown */}
             <div className="flex gap-2">
-              <Select
-                value={displayMonth.getFullYear().toString()}
-                onValueChange={handleYearChange}
-              >
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue placeholder="Year" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[200px]">
-                  {years.map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                type="number"
+                value={displayMonth.getFullYear()}
+                onChange={(e) => {
+                  const year = parseInt(e.target.value, 10);
+                  if (!isNaN(year) && year >= effectiveMinDate.getFullYear() && year <= effectiveMaxDate.getFullYear()) {
+                    handleYearChange(year.toString());
+                  }
+                }}
+                min={effectiveMinDate.getFullYear()}
+                max={effectiveMaxDate.getFullYear()}
+                className="w-[90px] text-center"
+                placeholder="Year"
+              />
 
               <Select
                 value={displayMonth.getMonth().toString()}
@@ -310,13 +298,14 @@ export function BirthDatePicker({
               </Select>
             </div>
 
-            {/* Calendar */}
+            {/* Calendar - use buttons layout since we have custom year/month controls above */}
             <Calendar
               mode="single"
               selected={date}
               onSelect={handleSelect}
               month={displayMonth}
               onMonthChange={setDisplayMonth}
+              captionLayout="buttons"
               disabled={(day) => {
                 if (effectiveMaxDate && day > effectiveMaxDate) return true;
                 if (effectiveMinDate && day < effectiveMinDate) return true;

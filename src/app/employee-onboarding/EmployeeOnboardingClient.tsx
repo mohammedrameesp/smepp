@@ -520,12 +520,18 @@ export function EmployeeOnboardingClient() {
     setError(null);
 
     try {
+      // Check if all mandatory fields are filled (100% completion)
+      const missing = getMissingMandatoryFields(formData);
+      const isFullyComplete = missing.length === 0;
+
       const response = await fetch('/api/users/me/hr-profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          onboardingComplete: true,
+          // Only mark as complete if all mandatory fields are filled
+          // This ensures email is only sent when 100% complete
+          onboardingComplete: isFullyComplete,
         }),
       });
 
