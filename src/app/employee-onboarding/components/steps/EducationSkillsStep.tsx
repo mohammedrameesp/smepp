@@ -119,7 +119,11 @@ export function EducationSkillsStep({ formData, updateField, errors }: Education
                   value={(formData.graduationYear as string) || ''}
                   onChange={(e) => updateField('graduationYear', e.target.value)}
                   placeholder={`e.g., ${new Date().getFullYear() - 5}`}
+                  className={errors.graduationYear ? 'border-red-500' : ''}
                 />
+                {errors.graduationYear && (
+                  <p className="text-sm text-red-600">{errors.graduationYear}</p>
+                )}
               </div>
             </div>
           </CardContent>

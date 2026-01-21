@@ -414,6 +414,16 @@ export function EmployeeOnboardingClient() {
           }
         }
         break;
+      case 5:
+        // Validate graduation year if provided
+        if (formData.graduationYear) {
+          const year = parseInt(formData.graduationYear, 10);
+          const currentYear = new Date().getFullYear();
+          if (isNaN(year) || year < 1950 || year > currentYear) {
+            newErrors.graduationYear = `Year must be between 1950 and ${currentYear}`;
+          }
+        }
+        break;
     }
 
     setErrors(newErrors);
@@ -433,10 +443,19 @@ export function EmployeeOnboardingClient() {
     setError(null);
 
     try {
+      // Process form data before sending - convert empty strings to null for numeric fields
+      const processedData = { ...formData };
+      if (processedData.graduationYear === '' || processedData.graduationYear === null) {
+        processedData.graduationYear = null;
+      }
+      if (processedData.noticePeriodDays === '' || processedData.noticePeriodDays === null) {
+        processedData.noticePeriodDays = null;
+      }
+
       const response = await fetch('/api/users/me/hr-profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(processedData),
       });
 
       if (!response.ok) {
