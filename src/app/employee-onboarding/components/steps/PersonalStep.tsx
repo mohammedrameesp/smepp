@@ -25,6 +25,11 @@ const formatDateForPicker = (date: Date | string | null | undefined): string => 
 };
 
 export function PersonalStep({ formData, updateField, errors }: PersonalStepProps) {
+  // Date constraints for DOB: must be 18+ years old, max 80 years old
+  const today = new Date();
+  const minDOB = new Date(today.getFullYear() - 80, today.getMonth(), today.getDate());
+  const maxDOB = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="text-center mb-8">
@@ -48,7 +53,8 @@ export function PersonalStep({ formData, updateField, errors }: PersonalStepProp
               value={formatDateForPicker(formData.dateOfBirth as string)}
               onChange={(val) => updateField('dateOfBirth', val)}
               placeholder="DD/MM/YYYY"
-              maxDate={new Date()}
+              minDate={minDOB}
+              maxDate={maxDOB}
             />
             {errors.dateOfBirth && (
               <p className="text-sm text-red-600">{errors.dateOfBirth}</p>
