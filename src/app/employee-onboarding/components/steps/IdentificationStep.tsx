@@ -6,11 +6,43 @@
  * @module employee-onboarding/steps
  */
 
-import { CreditCard, AlertTriangle } from 'lucide-react';
+import { CreditCard, AlertTriangle, Check, X } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+// QID validation hint component
+function QidValidationHint({ qid }: { qid: string }) {
+  if (!qid) {
+    return <p className="text-xs text-slate-500">11 digits, starts with 2 or 3</p>;
+  }
+
+  const isValidLength = qid.length === 11;
+  const isValidStart = qid.startsWith('2') || qid.startsWith('3');
+  const isComplete = isValidLength && isValidStart;
+
+  if (isComplete) {
+    return (
+      <p className="text-xs text-green-600 flex items-center gap-1">
+        <Check className="h-3 w-3" /> Valid QID format
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-0.5">
+      <p className={`text-xs flex items-center gap-1 ${isValidStart ? 'text-green-600' : 'text-slate-500'}`}>
+        {isValidStart ? <Check className="h-3 w-3" /> : <X className="h-3 w-3 text-slate-400" />}
+        Starts with 2 or 3
+      </p>
+      <p className={`text-xs flex items-center gap-1 ${isValidLength ? 'text-green-600' : 'text-slate-500'}`}>
+        {isValidLength ? <Check className="h-3 w-3" /> : <X className="h-3 w-3 text-slate-400" />}
+        {qid.length}/11 digits
+      </p>
+    </div>
+  );
+}
 
 // Check if a date is in the past
 function isExpired(dateStr: string | null | undefined): boolean {
@@ -86,7 +118,7 @@ export function IdentificationStep({ formData, updateField, errors }: Identifica
                 {errors.qidNumber && (
                   <p className="text-sm text-red-600">{errors.qidNumber}</p>
                 )}
-                <p className="text-xs text-slate-500">11 digits</p>
+                <QidValidationHint qid={(formData.qidNumber as string) || ''} />
               </div>
               <div className="space-y-2">
                 <Label>Expiry Date <span className="text-red-500">*</span></Label>
