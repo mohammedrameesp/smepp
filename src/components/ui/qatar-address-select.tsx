@@ -2,11 +2,11 @@
 
 /**
  * @file qatar-address-select.tsx
- * @description Qatar Address selector with cascading dropdowns and Leaflet map preview
+ * @description Qatar Address selector with searchable cascading dropdowns and Leaflet map preview
  * @module components/ui
  *
  * Features:
- * - Three cascading Select dropdowns (Zone → Street → Building)
+ * - Three cascading searchable dropdowns (Zone → Street → Building)
  * - Unit remains a text input (optional)
  * - Loading states while fetching QNAS data
  * - Inline Leaflet map preview showing location pin when building is selected
@@ -14,11 +14,14 @@
  */
 
 import * as React from 'react';
-import { useCallback, useEffect, useState } from 'react';
-import { Loader2, MapPin, AlertCircle } from 'lucide-react';
+import { useCallback, useEffect, useState, useRef } from 'react';
+import { Loader2, MapPin, AlertCircle, ChevronDown, Search } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/core/utils';
 import type { QNASZone, QNASStreet, QNASBuilding, QNASLocation } from '@/lib/qnas/types';
 
 // Dynamic import for Leaflet to avoid SSR issues
@@ -53,6 +56,135 @@ export interface QatarAddressSelectProps {
   };
   showMap?: boolean;
   disabled?: boolean;
+}
+
+// Searchable dropdown component
+interface SearchableSelectProps<T> {
+  items: T[];
+  value: string;
+  onSelect: (value: string) => void;
+  getItemValue: (item: T) => string;
+  getItemLabel: (item: T) => string;
+  getSearchText: (item: T) => string;
+  placeholder: string;
+  searchPlaceholder: string;
+  disabled?: boolean;
+  loading?: boolean;
+  error?: string;
+}
+
+function SearchableSelect<T>({
+  items,
+  value,
+  onSelect,
+  getItemValue,
+  getItemLabel,
+  getSearchText,
+  placeholder,
+  searchPlaceholder,
+  disabled = false,
+  loading = false,
+  error,
+}: SearchableSelectProps<T>) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const selectedItem = items.find((item) => getItemValue(item) === value);
+
+  const filteredItems = search
+    ? items.filter((item) =>
+        getSearchText(item).toLowerCase().includes(search.toLowerCase())
+      )
+    : items;
+
+  useEffect(() => {
+    if (open && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 0);
+    }
+  }, [open]);
+
+  const handleSelect = (itemValue: string) => {
+    onSelect(itemValue);
+    setOpen(false);
+    setSearch('');
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn(
+            'w-full justify-between font-normal h-10',
+            error && 'border-red-500',
+            !selectedItem && 'text-muted-foreground'
+          )}
+          disabled={disabled || loading}
+          type="button"
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : selectedItem ? (
+            <span className="truncate">{getItemLabel(selectedItem)}</span>
+          ) : (
+            <span>{placeholder}</span>
+          )}
+          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[250px] p-0" align="start">
+        <div className="flex items-center border-b px-3 py-2">
+          <Search className="h-4 w-4 mr-2 opacity-50" />
+          <input
+            ref={searchInputRef}
+            type="text"
+            placeholder={searchPlaceholder}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 outline-none text-sm bg-transparent"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setOpen(false);
+                setSearch('');
+              }
+              if (e.key === 'Enter' && filteredItems.length > 0) {
+                handleSelect(getItemValue(filteredItems[0]));
+              }
+            }}
+          />
+        </div>
+        <ScrollArea className="h-[200px]">
+          {filteredItems.length === 0 ? (
+            <div className="p-4 text-sm text-gray-500 text-center">
+              No results found
+            </div>
+          ) : (
+            <div className="p-1">
+              {filteredItems.map((item) => {
+                const itemValue = getItemValue(item);
+                return (
+                  <button
+                    key={itemValue}
+                    type="button"
+                    onClick={() => handleSelect(itemValue)}
+                    className={cn(
+                      'w-full flex items-center px-2 py-1.5 text-sm rounded-sm hover:bg-gray-100 cursor-pointer text-left',
+                      value === itemValue && 'bg-gray-100 font-medium'
+                    )}
+                  >
+                    {getItemLabel(item)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export function QatarAddressSelect({
@@ -312,26 +444,19 @@ export function QatarAddressSelect({
           <Label className="text-xs text-slate-500">
             Zone <span className="text-red-500">*</span>
           </Label>
-          <Select
+          <SearchableSelect
+            items={zones}
             value={value.zone}
-            onValueChange={handleZoneChange}
-            disabled={disabled || loadingZones}
-          >
-            <SelectTrigger className={errors.zone ? 'border-red-500' : ''}>
-              {loadingZones ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <SelectValue placeholder="Select zone" />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {zones.map((zone) => (
-                <SelectItem key={zone.zone_number} value={String(zone.zone_number)}>
-                  {zone.zone_number} - {zone.zone_name_en}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onSelect={handleZoneChange}
+            getItemValue={(zone) => String(zone.zone_number)}
+            getItemLabel={(zone) => `${zone.zone_number} - ${zone.zone_name_en}`}
+            getSearchText={(zone) => `${zone.zone_number} ${zone.zone_name_en} ${zone.zone_name_ar}`}
+            placeholder="Select zone"
+            searchPlaceholder="Search zone..."
+            disabled={disabled}
+            loading={loadingZones}
+            error={errors.zone}
+          />
           {errors.zone && <p className="text-xs text-red-600">{errors.zone}</p>}
         </div>
 
@@ -340,26 +465,19 @@ export function QatarAddressSelect({
           <Label className="text-xs text-slate-500">
             Street <span className="text-red-500">*</span>
           </Label>
-          <Select
+          <SearchableSelect
+            items={streets}
             value={value.street}
-            onValueChange={handleStreetChange}
-            disabled={disabled || !value.zone || loadingStreets}
-          >
-            <SelectTrigger className={errors.street ? 'border-red-500' : ''}>
-              {loadingStreets ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <SelectValue placeholder={value.zone ? 'Select street' : 'Select zone first'} />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {streets.map((street) => (
-                <SelectItem key={street.street_number} value={String(street.street_number)}>
-                  {street.street_number} - {street.street_name_en}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onSelect={handleStreetChange}
+            getItemValue={(street) => String(street.street_number)}
+            getItemLabel={(street) => `${street.street_number} - ${street.street_name_en}`}
+            getSearchText={(street) => `${street.street_number} ${street.street_name_en} ${street.street_name_ar}`}
+            placeholder={value.zone ? 'Select street' : 'Select zone first'}
+            searchPlaceholder="Search street..."
+            disabled={disabled || !value.zone}
+            loading={loadingStreets}
+            error={errors.street}
+          />
           {errors.street && <p className="text-xs text-red-600">{errors.street}</p>}
         </div>
 
@@ -368,26 +486,19 @@ export function QatarAddressSelect({
           <Label className="text-xs text-slate-500">
             Building <span className="text-red-500">*</span>
           </Label>
-          <Select
+          <SearchableSelect
+            items={buildings}
             value={value.building}
-            onValueChange={handleBuildingChange}
-            disabled={disabled || !value.street || loadingBuildings}
-          >
-            <SelectTrigger className={errors.building ? 'border-red-500' : ''}>
-              {loadingBuildings ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <SelectValue placeholder={value.street ? 'Select building' : 'Select street first'} />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {buildings.map((building) => (
-                <SelectItem key={building.building_number} value={String(building.building_number)}>
-                  {building.building_number}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onSelect={handleBuildingChange}
+            getItemValue={(building) => String(building.building_number)}
+            getItemLabel={(building) => String(building.building_number)}
+            getSearchText={(building) => String(building.building_number)}
+            placeholder={value.street ? 'Select building' : 'Select street first'}
+            searchPlaceholder="Search building..."
+            disabled={disabled || !value.street}
+            loading={loadingBuildings}
+            error={errors.building}
+          />
           {errors.building && <p className="text-xs text-red-600">{errors.building}</p>}
         </div>
 
@@ -417,7 +528,7 @@ export function QatarAddressSelect({
                 longitude={location.longitude}
                 zoom={17}
               />
-              <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs text-slate-600 flex items-center gap-1">
+              <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs text-slate-600 flex items-center gap-1 z-10">
                 <MapPin className="h-3 w-3" />
                 Zone {value.zone}, Street {value.street}, Building {value.building}
               </div>
