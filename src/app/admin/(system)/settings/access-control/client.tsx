@@ -436,14 +436,14 @@ export function AccessControlClient() {
                 <div className="h-2 w-2 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
                 <div>
                   <span className="font-medium">HR</span>
-                  <span className="text-gray-500"> - Employees, Leave, Payroll</span>
+                  <span className="text-gray-500"> - Employee management</span>
                 </div>
               </div>
               <div className="flex items-start gap-2">
                 <div className="h-2 w-2 rounded-full bg-yellow-500 mt-1.5 flex-shrink-0" />
                 <div>
                   <span className="font-medium">Finance</span>
-                  <span className="text-gray-500"> - Purchase Requests, Billing</span>
+                  <span className="text-gray-500"> - Billing & budgets</span>
                 </div>
               </div>
               <div className="flex items-start gap-2">

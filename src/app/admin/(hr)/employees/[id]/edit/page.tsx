@@ -412,7 +412,7 @@ export default function AdminEmployeeEditPage() {
                         <div className="space-y-0.5">
                           <Label htmlFor="hr-access">HR</Label>
                           <p className="text-sm text-gray-500">
-                            Employees, Leave management
+                            Employee management
                           </p>
                         </div>
                         <Switch
@@ -520,7 +520,7 @@ export default function AdminEmployeeEditPage() {
                   <div className="space-y-0.5">
                     <Label htmlFor="is-employee">Is Employee</Label>
                     <p className="text-sm text-gray-500">
-                      Employees have access to leave requests, payroll, and employee portal
+                      Access to employee portal and self-service features
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
