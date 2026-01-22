@@ -17,6 +17,7 @@ import {
 } from './approval-engine';
 import { createBulkNotifications } from '@/features/notifications/lib';
 import { sendEmail } from '@/lib/core/email';
+import { emailWrapper } from '@/lib/core/email-utils';
 import { notifyApproversViaWhatsApp } from '@/lib/whatsapp';
 import logger from '@/lib/core/log';
 
@@ -268,6 +269,14 @@ async function notifyNextLevelApprovers(params: NotifyNextLevelParams): Promise<
       return;
     }
 
+    // Fetch organization for branding
+    const org = await prisma.organization.findUnique({
+      where: { id: tenantId },
+      select: { name: true, primaryColor: true },
+    });
+    const orgName = org?.name || 'Durj';
+    const brandColor = org?.primaryColor || undefined;
+
     const context = await getNotificationContext();
     const entityLabel = getEntityLabel(entityType);
     const link = getEntityLink(entityType, entityId);
@@ -289,13 +298,27 @@ async function notifyNextLevelApprovers(params: NotifyNextLevelParams): Promise<
     }));
     await createBulkNotifications(notifications, tenantId);
 
+    // Build email content
+    const message = context.entityDescription
+      ? `${context.requesterName}'s ${entityLabel.toLowerCase()} (${context.referenceNumber}) - ${context.entityDescription} - requires your approval.`
+      : `${context.requesterName}'s ${entityLabel.toLowerCase()} (${context.referenceNumber}) requires your approval.`;
+
+    const emailContent = `
+      <p style="color: #334155; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+        ${message}
+      </p>
+      <p style="color: #334155; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+        Please review and take action on this request.
+      </p>
+    `;
+
     // Send email notifications
     for (const approver of filteredApprovers) {
       sendEmail({
         to: approver.email,
         subject: `${entityLabel} Pending: ${context.referenceNumber}`,
-        html: `<p>${context.requesterName}'s ${entityLabel.toLowerCase()} (${context.referenceNumber}) requires your approval.</p>`,
-        text: `${context.requesterName}'s ${entityLabel.toLowerCase()} (${context.referenceNumber}) requires your approval.`,
+        html: emailWrapper(emailContent, orgName, brandColor),
+        text: message,
       }).catch(err => logger.error({
         error: err instanceof Error ? err.message : 'Unknown error',
         entityType,

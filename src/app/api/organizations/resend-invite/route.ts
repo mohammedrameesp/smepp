@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
               id: true,
               name: true,
               slug: true,
+              primaryColor: true,
             },
           },
         },
@@ -120,6 +121,7 @@ export async function POST(request: NextRequest) {
               id: true,
               name: true,
               slug: true,
+              primaryColor: true,
             },
           },
         },
@@ -146,6 +148,7 @@ export async function POST(request: NextRequest) {
     const greeting = invitation.name ? `Dear ${invitation.name}` : 'Hello';
     const orgName = invitation.organization.name;
     const orgSlug = invitation.organization.slug;
+    const brandColor = invitation.organization.primaryColor || '#0f172a';
 
     // Calculate days remaining
     const daysRemaining = Math.ceil((invitation.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -168,7 +171,7 @@ export async function POST(request: NextRequest) {
       <td align="center" style="padding: 40px 20px;">
         <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border: 1px solid #e2e8f0;">
           <tr>
-            <td align="center" style="background-color: #0f172a; padding: 40px 40px 30px;">
+            <td align="center" style="background-color: ${brandColor}; padding: 40px 40px 30px;">
               <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">${orgName}</h1>
               <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0; font-size: 14px;">Here's your new sign-in link</p>
             </td>
@@ -184,7 +187,7 @@ export async function POST(request: NextRequest) {
                   <td align="center" style="padding: 10px 0 30px;">
                     <table cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td align="center" style="background-color: #0f172a; border-radius: 6px;">
+                        <td align="center" style="background-color: ${brandColor}; border-radius: 6px;">
                           <a href="${inviteUrl}" target="_blank" style="display: inline-block; padding: 16px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold;">
                             Complete Your Setup
                           </a>
