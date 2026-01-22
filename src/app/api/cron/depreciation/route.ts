@@ -47,8 +47,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const calculationDate = body.calculationDate ? new Date(body.calculationDate) : new Date();
 
-    // Get all organizations
+    // Get all organizations with depreciation enabled
     const organizations = await prisma.organization.findMany({
+      where: {
+        depreciationEnabled: true,
+      },
       select: { id: true, slug: true, name: true },
     });
 

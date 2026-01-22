@@ -28,6 +28,7 @@ import {
   MapPin,
   Lock,
   GitBranch,
+  TrendingDown,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
@@ -52,6 +53,7 @@ interface Organization {
   additionalCurrencies: string[];
   enabledModules: string[];
   hasMultipleLocations: boolean;
+  depreciationEnabled?: boolean;
   weekendDays: number[]; // Weekend days: 0=Sun, 1=Mon, ..., 5=Fri, 6=Sat
   _count: { teamMembers: number };
 }
@@ -120,6 +122,7 @@ export function OrganizationTabs({
   const [additionalCurrencies, setAdditionalCurrencies] = useState<string[]>(org.additionalCurrencies || []);
   const [enabledModules, setEnabledModules] = useState<string[]>(org.enabledModules || ['assets', 'subscriptions', 'suppliers']);
   const [hasMultipleLocations, setHasMultipleLocations] = useState(org.hasMultipleLocations || false);
+  const [depreciationEnabled, setDepreciationEnabled] = useState(org.depreciationEnabled ?? true);
   const [weekendDays, setWeekendDays] = useState<number[]>(org.weekendDays || [5, 6]);
 
   // Logo upload state
@@ -225,6 +228,20 @@ export function OrganizationTabs({
       });
       if (!res.ok) throw new Error('Failed to save');
       setOrg(prev => ({ ...prev, hasMultipleLocations: value }));
+    },
+  });
+
+  const depreciationAutoSave = useAutoSave({
+    value: depreciationEnabled,
+    enabled: isAdmin,
+    onSave: async (value) => {
+      const res = await fetch('/api/admin/organization', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ depreciationEnabled: value }),
+      });
+      if (!res.ok) throw new Error('Failed to save');
+      setOrg(prev => ({ ...prev, depreciationEnabled: value }));
     },
   });
 
@@ -678,9 +695,48 @@ export function OrganizationTabs({
                     organizationId={org.id}
                     isAdmin={isAdmin}
                   />
-                  <DepreciationCategoriesSettings
-                    isAdmin={isAdmin}
-                  />
+
+                  {/* Depreciation Toggle */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            <TrendingDown className="h-5 w-5" />
+                            Depreciation Tracking
+                          </CardTitle>
+                          <CardDescription>
+                            Enable IFRS-compliant asset depreciation tracking
+                          </CardDescription>
+                        </div>
+                        <AutoSaveIndicator status={depreciationAutoSave.status} error={depreciationAutoSave.error} />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground">
+                          Track asset depreciation using Qatar Tax Authority rates.
+                        </p>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={depreciationEnabled}
+                            onChange={() => setDepreciationEnabled(!depreciationEnabled)}
+                            disabled={!isAdmin}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Depreciation Categories - only show when enabled */}
+                  {depreciationEnabled && (
+                    <DepreciationCategoriesSettings
+                      isAdmin={isAdmin}
+                    />
+                  )}
 
                   {/* Multiple Locations Toggle */}
                   <Card>

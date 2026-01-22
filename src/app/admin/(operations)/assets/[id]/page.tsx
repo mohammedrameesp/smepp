@@ -136,6 +136,13 @@ export default async function AssetDetailPage({ params }: Props) {
     notFound();
   }
 
+  // Fetch organization's depreciation setting
+  const organization = await prisma.organization.findUnique({
+    where: { id: tenantId },
+    select: { depreciationEnabled: true },
+  });
+  const depreciationEnabled = organization?.depreciationEnabled ?? true;
+
   // Assignment date is stored directly on the asset
   // Note: Assignment APIs should always set this field
   const assignmentDate = asset.assignmentDate;
@@ -303,8 +310,8 @@ export default async function AssetDetailPage({ params }: Props) {
           {/* Asset Utilization */}
           <AssetCostBreakdown assetId={asset.id} isShared={asset.isShared} />
 
-          {/* Depreciation */}
-          <DepreciationCard assetId={asset.id} />
+          {/* Depreciation - only show when enabled */}
+          {depreciationEnabled && <DepreciationCard assetId={asset.id} />}
 
           {/* Maintenance Records */}
           <AssetMaintenanceRecords assetId={asset.id} readOnly={true} />

@@ -93,6 +93,7 @@ export default function EditAssetPage() {
   const [suggestedTag, setSuggestedTag] = useState<string>('');
   const [isTagManuallyEdited, setIsTagManuallyEdited] = useState(false);
   const [hasMultipleLocations, setHasMultipleLocations] = useState(false);
+  const [depreciationEnabled, setDepreciationEnabled] = useState(true);
   const [locations, setLocations] = useState<Location[]>([]);
   const [usingFallbackRates, setUsingFallbackRates] = useState(false);
 
@@ -213,7 +214,6 @@ export default function EditAssetPage() {
       fetchAsset(params.id as string);
     }
     fetchUsers();
-    fetchDepreciationCategories();
     fetchOrgSettings();
   }, [params?.id, fetchAsset]);
 
@@ -236,6 +236,14 @@ export default function EditAssetPage() {
 
         // Check if multiple locations is enabled
         setHasMultipleLocations(data.settings?.hasMultipleLocations || false);
+
+        // Check if depreciation is enabled
+        const depEnabled = data.settings?.depreciationEnabled ?? true;
+        setDepreciationEnabled(depEnabled);
+        // Fetch depreciation categories if enabled
+        if (depEnabled) {
+          fetchDepreciationCategories();
+        }
 
         // Fetch exchange rates for all currencies
         const rates: Record<string, number> = { ...DEFAULT_RATES_TO_QAR };
@@ -917,25 +925,27 @@ export default function EditAssetPage() {
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Additional Information</h3>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="depreciationCategoryId">Depreciation Category</Label>
-                  <Select
-                    value={watchedDepreciationCategoryId || '__none__'}
-                    onValueChange={(value) => setValue('depreciationCategoryId', value === '__none__' ? '' : value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select for value tracking..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">None</SelectItem>
-                      {depreciationCategories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name} ({cat.annualRate}% / {cat.usefulLifeYears} yrs)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {depreciationEnabled && (
+                  <div className="space-y-2">
+                    <Label htmlFor="depreciationCategoryId">Depreciation Category</Label>
+                    <Select
+                      value={watchedDepreciationCategoryId || '__none__'}
+                      onValueChange={(value) => setValue('depreciationCategoryId', value === '__none__' ? '' : value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select for value tracking..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">None</SelectItem>
+                        {depreciationCategories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name} ({cat.annualRate}% / {cat.usefulLifeYears} yrs)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="notes">Notes</Label>

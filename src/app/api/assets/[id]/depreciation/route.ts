@@ -201,6 +201,21 @@ async function assignDepreciationHandler(request: NextRequest, context: APIConte
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
+  // STEP 1.5: Check if depreciation is enabled for this organization
+  // ─────────────────────────────────────────────────────────────────────────────
+  const org = await db.organization.findUnique({
+    where: { id: tenantId },
+    select: { depreciationEnabled: true },
+  });
+
+  if (!org?.depreciationEnabled) {
+    return NextResponse.json(
+      { error: 'Depreciation tracking is disabled for this organization' },
+      { status: 403 }
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
   // STEP 2: Parse request body and validate action
   // ─────────────────────────────────────────────────────────────────────────────
   const body = await request.json();

@@ -28,8 +28,18 @@ import { withErrorHandler, APIContext } from '@/lib/http/handler';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function getHandler(_request: NextRequest, context: APIContext) {
-  const { tenant } = context;
+  const { prisma, tenant } = context;
   const tenantId = tenant!.tenantId;
+
+  // Check if depreciation is enabled for this organization
+  const org = await prisma.organization.findUnique({
+    where: { id: tenantId },
+    select: { depreciationEnabled: true },
+  });
+
+  if (!org?.depreciationEnabled) {
+    return NextResponse.json({ categories: [] });
+  }
 
   const categories = await getDepreciationCategories(tenantId);
 
@@ -52,6 +62,19 @@ async function getHandler(_request: NextRequest, context: APIContext) {
 async function postHandler(request: NextRequest, context: APIContext) {
   const { prisma, tenant } = context;
   const tenantId = tenant!.tenantId;
+
+  // Check if depreciation is enabled for this organization
+  const org = await prisma.organization.findUnique({
+    where: { id: tenantId },
+    select: { depreciationEnabled: true },
+  });
+
+  if (!org?.depreciationEnabled) {
+    return NextResponse.json(
+      { error: 'Depreciation tracking is disabled for this organization' },
+      { status: 403 }
+    );
+  }
 
   const body = await request.json();
 

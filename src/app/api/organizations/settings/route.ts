@@ -62,6 +62,7 @@ export async function GET() {
         currency: true,
         additionalCurrencies: true,
         hasMultipleLocations: true,
+        depreciationEnabled: true,
         onboardingCompleted: true,
         onboardingStep: true,
       },

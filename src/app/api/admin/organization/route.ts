@@ -46,6 +46,8 @@ export async function GET() {
         enabledModules: true,
         // Location settings
         hasMultipleLocations: true,
+        // Depreciation settings
+        depreciationEnabled: true,
         // Auth settings
         allowedAuthMethods: true,
         customGoogleClientId: true,
@@ -118,6 +120,7 @@ const updateOrgSchema = z.object({
   weekendDays: z.array(z.number().min(0).max(6)).min(1, 'At least one weekend day required').optional(),
   enabledModules: z.array(z.string()).optional(),
   hasMultipleLocations: z.boolean().optional(),
+  depreciationEnabled: z.boolean().optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -143,7 +146,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const { name, codePrefix, primaryColor, secondaryColor, website, additionalCurrencies, weekendDays, enabledModules, hasMultipleLocations } = result.data;
+    const { name, codePrefix, primaryColor, secondaryColor, website, additionalCurrencies, weekendDays, enabledModules, hasMultipleLocations, depreciationEnabled } = result.data;
 
     // Normalize colors: empty/null resets to default for primaryColor, null for secondaryColor
     const DEFAULT_PRIMARY_COLOR = '#0f172a';
@@ -165,6 +168,7 @@ export async function PATCH(request: NextRequest) {
         ...(weekendDays !== undefined && { weekendDays }),
         ...(enabledModules !== undefined && { enabledModules }),
         ...(hasMultipleLocations !== undefined && { hasMultipleLocations }),
+        ...(depreciationEnabled !== undefined && { depreciationEnabled }),
       },
       select: {
         id: true,
@@ -179,6 +183,7 @@ export async function PATCH(request: NextRequest) {
         weekendDays: true,
         enabledModules: true,
         hasMultipleLocations: true,
+        depreciationEnabled: true,
       },
     });
 

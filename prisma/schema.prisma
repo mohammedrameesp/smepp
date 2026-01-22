@@ -358,6 +358,9 @@ model Organization {
   // Location tracking (for multi-location organizations)
   hasMultipleLocations Boolean @default(false)
 
+  // Depreciation tracking (IFRS-compliant asset depreciation)
+  depreciationEnabled Boolean @default(true)
+
   // Onboarding tracking
   onboardingCompleted   Boolean   @default(false)
   onboardingCompletedAt DateTime?
