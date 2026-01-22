@@ -82,6 +82,7 @@ interface ModuleInfo {
   tier: string;
   isFree: boolean;
   requires: string[];
+  requiredBy: string[];
   isCore: boolean;
   isBeta: boolean;
   isInstalled: boolean;
@@ -132,13 +133,17 @@ export default function ModulesPage() {
     open: boolean;
     module: ModuleInfo | null;
     deleteData: boolean;
+    cascade: boolean;
     dataCounts: DataCountResponse | null;
+    cascadeDataCounts: Map<string, DataCountResponse> | null;
     loadingCounts: boolean;
   }>({
     open: false,
     module: null,
     deleteData: false,
+    cascade: false,
     dataCounts: null,
+    cascadeDataCounts: null,
     loadingCounts: false,
   });
 
@@ -236,15 +241,34 @@ export default function ModulesPage() {
       open: true,
       module: mod,
       deleteData: false,
+      cascade: false,
       dataCounts: null,
+      cascadeDataCounts: null,
       loadingCounts: true,
     });
 
-    // Fetch data counts
+    // Fetch data counts for the main module
     const counts = await fetchDataCounts(mod.id);
+
+    // Also fetch data counts for dependent modules (for cascade display)
+    const cascadeCounts = new Map<string, DataCountResponse>();
+    const installedDependents = mod.requiredBy.filter(depId =>
+      installedModules.some(m => m.id === depId)
+    );
+
+    await Promise.all(
+      installedDependents.map(async (depId) => {
+        const depCounts = await fetchDataCounts(depId);
+        if (depCounts) {
+          cascadeCounts.set(depId, depCounts);
+        }
+      })
+    );
+
     setUninstallDialog(prev => ({
       ...prev,
       dataCounts: counts,
+      cascadeDataCounts: cascadeCounts.size > 0 ? cascadeCounts : null,
       loadingCounts: false,
     }));
   }
@@ -262,6 +286,7 @@ export default function ModulesPage() {
         body: JSON.stringify({
           moduleId: modToUninstall.id,
           deleteData: uninstallDialog.deleteData,
+          cascade: uninstallDialog.cascade,
         }),
       });
 
@@ -272,7 +297,7 @@ export default function ModulesPage() {
       }
 
       toast.success(data.message);
-      setUninstallDialog({ open: false, module: null, deleteData: false, dataCounts: null, loadingCounts: false });
+      setUninstallDialog({ open: false, module: null, deleteData: false, cascade: false, dataCounts: null, cascadeDataCounts: null, loadingCounts: false });
 
       // Refresh modules list
       await fetchModules();
@@ -346,6 +371,24 @@ export default function ModulesPage() {
                   <CardDescription className="mb-4">
                     {module.description}
                   </CardDescription>
+                  {/* Show "Required by" warning for modules with installed dependents */}
+                  {module.requiredBy.length > 0 && (() => {
+                    const installedDependents = module.requiredBy.filter(depId =>
+                      installedModules.some(m => m.id === depId)
+                    );
+                    if (installedDependents.length > 0) {
+                      const dependentNames = installedDependents.map(depId =>
+                        modules.find(m => m.id === depId)?.name || depId
+                      );
+                      return (
+                        <div className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400 mb-3 p-2 bg-amber-50 dark:bg-amber-950/30 rounded border border-amber-200 dark:border-amber-800">
+                          <AlertTriangle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                          <span>Required by: {dependentNames.join(', ')}</span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center text-sm text-green-600 dark:text-green-400">
                       <Check className="h-4 w-4 mr-1" />
@@ -582,7 +625,7 @@ export default function ModulesPage() {
       <Dialog
         open={uninstallDialog.open}
         onOpenChange={(open) => {
-          if (!open) setUninstallDialog({ open: false, module: null, deleteData: false, dataCounts: null, loadingCounts: false });
+          if (!open) setUninstallDialog({ open: false, module: null, deleteData: false, cascade: false, dataCounts: null, cascadeDataCounts: null, loadingCounts: false });
         }}
       >
         <DialogContent>
@@ -594,91 +637,168 @@ export default function ModulesPage() {
           </DialogHeader>
 
           <div className="py-4 space-y-4">
+            {/* Cascade uninstall option - show when module has installed dependents */}
+            {uninstallDialog.module && (() => {
+              const installedDependents = uninstallDialog.module.requiredBy.filter(depId =>
+                installedModules.some(m => m.id === depId)
+              );
+              if (installedDependents.length > 0) {
+                const dependentNames = installedDependents.map(depId =>
+                  modules.find(m => m.id === depId)?.name || depId
+                );
+                return (
+                  <>
+                    <Alert variant="warning">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        The following modules depend on {uninstallDialog.module.name}: <strong>{dependentNames.join(', ')}</strong>
+                      </AlertDescription>
+                    </Alert>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="cascade"
+                        checked={uninstallDialog.cascade}
+                        onCheckedChange={(checked) =>
+                          setUninstallDialog({
+                            ...uninstallDialog,
+                            cascade: checked === true,
+                          })
+                        }
+                      />
+                      <label
+                        htmlFor="cascade"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Also uninstall: {dependentNames.join(', ')}
+                      </label>
+                    </div>
+                  </>
+                );
+              }
+              return null;
+            })()}
+
             {/* Data counts section */}
             {uninstallDialog.loadingCounts ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Checking existing data...
               </div>
-            ) : uninstallDialog.dataCounts?.hasData ? (
-              <div className="rounded-lg border p-4 bg-muted/50">
-                <div className="flex items-center gap-2 mb-3">
-                  <Database className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Existing Data</span>
-                  <Badge variant="secondary" className="ml-auto">
-                    {uninstallDialog.dataCounts.totalRecords.toLocaleString()} records
-                  </Badge>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  {uninstallDialog.dataCounts.counts.filter(c => c.count > 0).map(count => (
-                    <div key={count.entity} className="flex justify-between">
-                      <span className="text-muted-foreground">{count.label}</span>
-                      <span className="font-medium">{count.count.toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  No data exists for this module.
-                </AlertDescription>
-              </Alert>
-            )}
+            ) : (() => {
+              // Calculate total records including cascade modules when enabled
+              const mainRecords = uninstallDialog.dataCounts?.totalRecords || 0;
+              const cascadeRecords = uninstallDialog.cascade && uninstallDialog.cascadeDataCounts
+                ? Array.from(uninstallDialog.cascadeDataCounts.values()).reduce((sum, c) => sum + c.totalRecords, 0)
+                : 0;
+              const totalRecords = mainRecords + cascadeRecords;
+              const hasAnyData = totalRecords > 0;
 
-            {/* Delete data checkbox */}
-            {uninstallDialog.dataCounts?.hasData && (
-              <>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="deleteData"
-                    checked={uninstallDialog.deleteData}
-                    onCheckedChange={(checked) =>
-                      setUninstallDialog({
-                        ...uninstallDialog,
-                        deleteData: checked === true,
-                      })
-                    }
-                  />
-                  <label
-                    htmlFor="deleteData"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Also delete all data for this module
-                  </label>
-                </div>
-
-                {uninstallDialog.deleteData ? (
-                  <Alert variant="error">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      <strong>Warning:</strong> This will permanently delete {uninstallDialog.dataCounts.totalRecords.toLocaleString()} records. This action cannot be undone.
-                    </AlertDescription>
-                  </Alert>
-                ) : (
+              if (!hasAnyData) {
+                return (
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>Data will be preserved.</strong> Your {uninstallDialog.dataCounts.totalRecords.toLocaleString()} records will remain in the database and will be accessible if you reinstall the module.
+                      No data exists for {uninstallDialog.cascade ? 'these modules' : 'this module'}.
                     </AlertDescription>
                   </Alert>
-                )}
-              </>
-            )}
+                );
+              }
+
+              return (
+                <>
+                  <div className="rounded-lg border p-4 bg-muted/50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Database className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Existing Data</span>
+                      <Badge variant="secondary" className="ml-auto">
+                        {totalRecords.toLocaleString()} records{uninstallDialog.cascade && cascadeRecords > 0 ? ' total' : ''}
+                      </Badge>
+                    </div>
+                    {/* Main module data */}
+                    {uninstallDialog.dataCounts?.hasData && (
+                      <div className="mb-2">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">{uninstallDialog.module?.name}</p>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          {uninstallDialog.dataCounts.counts.filter(c => c.count > 0).map(count => (
+                            <div key={count.entity} className="flex justify-between">
+                              <span className="text-muted-foreground">{count.label}</span>
+                              <span className="font-medium">{count.count.toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Cascade module data */}
+                    {uninstallDialog.cascade && uninstallDialog.cascadeDataCounts && Array.from(uninstallDialog.cascadeDataCounts.entries()).map(([modId, counts]) => {
+                      if (!counts.hasData) return null;
+                      const modName = modules.find(m => m.id === modId)?.name || modId;
+                      return (
+                        <div key={modId} className="mt-2 pt-2 border-t">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">{modName}</p>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            {counts.counts.filter(c => c.count > 0).map(count => (
+                              <div key={`${modId}-${count.entity}`} className="flex justify-between">
+                                <span className="text-muted-foreground">{count.label}</span>
+                                <span className="font-medium">{count.count.toLocaleString()}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Delete data checkbox */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="deleteData"
+                      checked={uninstallDialog.deleteData}
+                      onCheckedChange={(checked) =>
+                        setUninstallDialog({
+                          ...uninstallDialog,
+                          deleteData: checked === true,
+                        })
+                      }
+                    />
+                    <label
+                      htmlFor="deleteData"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Also delete all data{uninstallDialog.cascade ? ' from all modules' : ''}
+                    </label>
+                  </div>
+
+                  {uninstallDialog.deleteData ? (
+                    <Alert variant="error">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Warning:</strong> This will permanently delete {totalRecords.toLocaleString()} records. This action cannot be undone.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Data will be preserved.</strong> Your {totalRecords.toLocaleString()} records will remain in the database and will be accessible if you reinstall the module{uninstallDialog.cascade ? 's' : ''}.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setUninstallDialog({ open: false, module: null, deleteData: false, dataCounts: null, loadingCounts: false })}
+              onClick={() => setUninstallDialog({ open: false, module: null, deleteData: false, cascade: false, dataCounts: null, cascadeDataCounts: null, loadingCounts: false })}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={handleUninstallConfirm}
-              disabled={actionLoading === uninstallDialog.module?.id}
+              disabled={actionLoading === uninstallDialog.module?.id || (!uninstallDialog.module?.canUninstall && !uninstallDialog.cascade)}
             >
               {actionLoading === uninstallDialog.module?.id ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />

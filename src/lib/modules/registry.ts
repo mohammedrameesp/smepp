@@ -10,6 +10,7 @@ import {
   Package,
   CreditCard,
   Truck,
+  Users,
   Calendar,
   DollarSign,
   ShoppingCart,
@@ -118,6 +119,25 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
   // ─────────────────────────────────────────────────────────────────────────────
   // HR MODULES (Add-on modules for HR features)
   // ─────────────────────────────────────────────────────────────────────────────
+  employees: {
+    id: 'employees',
+    name: 'Employee Management',
+    description: 'Manage employee profiles, departments, and organizational structure',
+    icon: Users,
+    iconName: 'Users',
+    category: 'hr',
+    tier: 'FREE',
+    isFree: true,
+    requires: [],
+    requiredBy: ['leave', 'payroll'],
+    adminRoutes: ['/admin/employees'],
+    employeeRoutes: [], // Note: /profile is accessible to all users, HR content is conditionally shown
+    apiRoutes: ['/api/employees'],
+    isCore: false,
+    isBeta: false,
+    isDeprecated: false,
+  },
+
   leave: {
     id: 'leave',
     name: 'Leave Management',
@@ -127,7 +147,7 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     category: 'hr',
     tier: 'FREE',
     isFree: true,
-    requires: [],
+    requires: ['employees'],
     requiredBy: [],
     adminRoutes: ['/admin/leave'],
     employeeRoutes: ['/employee/leave'],
@@ -146,7 +166,7 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     category: 'hr',
     tier: 'FREE',
     isFree: true,
-    requires: [],
+    requires: ['employees'],
     requiredBy: [],
     adminRoutes: ['/admin/payroll'],
     employeeRoutes: ['/employee/payroll'],
@@ -200,6 +220,32 @@ export const MODULE_REGISTRY: Record<string, ModuleDefinition> = {
     isDeprecated: false,
   },
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AUTO-COMPUTE REQUIRED_BY FROM REQUIRES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Automatically compute requiredBy fields from requires fields.
+ * This ensures consistency and prevents manual sync errors.
+ * Runs once when the module is loaded.
+ */
+(function computeRequiredBy() {
+  // First, clear all requiredBy arrays to recompute from scratch
+  for (const mod of Object.values(MODULE_REGISTRY)) {
+    mod.requiredBy = [];
+  }
+
+  // Then, populate requiredBy based on requires
+  for (const mod of Object.values(MODULE_REGISTRY)) {
+    for (const reqId of mod.requires) {
+      const requiredModule = MODULE_REGISTRY[reqId];
+      if (requiredModule && !requiredModule.requiredBy.includes(mod.id)) {
+        requiredModule.requiredBy.push(mod.id);
+      }
+    }
+  }
+})();
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -402,6 +448,7 @@ export interface SerializableModuleInfo {
   tier: SubscriptionTier;
   isFree: boolean;
   requires: string[];
+  requiredBy: string[];
   isCore: boolean;
   isBeta: boolean;
 }
@@ -419,6 +466,7 @@ export function getSerializableModules(): SerializableModuleInfo[] {
     tier: m.tier,
     isFree: m.isFree,
     requires: m.requires,
+    requiredBy: m.requiredBy,
     isCore: m.isCore,
     isBeta: m.isBeta,
   }));

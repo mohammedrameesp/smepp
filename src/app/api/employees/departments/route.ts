@@ -39,4 +39,4 @@ async function getDepartmentsHandler(request: NextRequest, context: APIContext) 
   return NextResponse.json({ departments });
 }
 
-export const GET = withErrorHandler(getDepartmentsHandler, { requireAuth: true });
+export const GET = withErrorHandler(getDepartmentsHandler, { requireAuth: true, requireModule: 'employees' });

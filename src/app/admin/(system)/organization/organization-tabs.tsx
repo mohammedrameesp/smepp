@@ -36,6 +36,7 @@ import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings,
 import { CurrencySelector } from '@/components/currency-selector';
 import { ApprovalWorkflowDisplay } from '@/features/approvals/components';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
+import Link from 'next/link';
 
 // Types
 interface Organization {
@@ -67,16 +68,17 @@ interface OrganizationTabsProps {
 // Constants
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN || 'localhost:3000';
 
-const AVAILABLE_MODULES = [
-  { id: 'assets', name: 'Assets', description: 'Track company assets' },
-  { id: 'subscriptions', name: 'Subscriptions', description: 'Manage subscriptions' },
-  { id: 'suppliers', name: 'Suppliers', description: 'Vendor management' },
-  { id: 'employees', name: 'Employees', description: 'HR management' },
-  { id: 'leave', name: 'Leave', description: 'Leave management' },
-  { id: 'payroll', name: 'Payroll', description: 'Salary & payslips' },
-  { id: 'purchase-requests', name: 'Purchase Requests', description: 'Procurement' },
-  { id: 'documents', name: 'Documents', description: 'Company documents' },
-];
+// Module name mapping for display
+const MODULE_NAMES: Record<string, string> = {
+  assets: 'Assets',
+  subscriptions: 'Subscriptions',
+  suppliers: 'Suppliers',
+  employees: 'Employees',
+  leave: 'Leave',
+  payroll: 'Payroll',
+  'purchase-requests': 'Purchase Requests',
+  documents: 'Documents',
+};
 
 // Placeholder component for disabled modules
 function ModuleRequiredPlaceholder({
@@ -203,20 +205,6 @@ export function OrganizationTabs({
     },
   });
 
-  const modulesAutoSave = useAutoSave({
-    value: enabledModules,
-    enabled: isAdmin,
-    onSave: async (value) => {
-      const res = await fetch('/api/admin/organization', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabledModules: value }),
-      });
-      if (!res.ok) throw new Error('Failed to save');
-      setOrg(prev => ({ ...prev, enabledModules: value }));
-    },
-  });
-
   const locationsAutoSave = useAutoSave({
     value: hasMultipleLocations,
     enabled: isAdmin,
@@ -313,12 +301,6 @@ export function OrganizationTabs({
       setUploadingLogo(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
-  }
-
-  function toggleModule(id: string) {
-    setEnabledModules(prev =>
-      prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
-    );
   }
 
   function toggleWeekendDay(day: number) {
@@ -637,48 +619,30 @@ export function OrganizationTabs({
               {/* Modules */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <LayoutGrid className="h-5 w-5" />
-                        Enabled Modules
-                      </CardTitle>
-                      <CardDescription>Select which features are available in your organization</CardDescription>
-                    </div>
-                    <AutoSaveIndicator status={modulesAutoSave.status} error={modulesAutoSave.error} />
-                  </div>
+                  <CardTitle className="flex items-center gap-2">
+                    <LayoutGrid className="h-5 w-5" />
+                    Enabled Modules
+                  </CardTitle>
+                  <CardDescription>
+                    {enabledModules.length} module{enabledModules.length !== 1 ? 's' : ''} enabled
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {AVAILABLE_MODULES.map((module) => (
-                      <label
-                        key={module.id}
-                        className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-                          enabledModules.includes(module.id)
-                            ? 'border-green-500 bg-green-50'
-                            : 'hover:bg-muted'
-                        } ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={enabledModules.includes(module.id)}
-                          onChange={() => toggleModule(module.id)}
-                          disabled={!isAdmin}
-                          className="h-4 w-4 rounded border-gray-300 mt-0.5"
-                        />
-                        <div>
-                          <p className="font-medium">{module.name}</p>
-                          <p className="text-xs text-muted-foreground">{module.description}</p>
-                        </div>
-                      </label>
+                  <div className="flex flex-wrap gap-2">
+                    {enabledModules.map((moduleId) => (
+                      <Badge key={moduleId} variant="secondary">
+                        {MODULE_NAMES[moduleId] || moduleId}
+                      </Badge>
                     ))}
+                    {enabledModules.length === 0 && (
+                      <p className="text-sm text-muted-foreground">No modules enabled</p>
+                    )}
                   </div>
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Disabling a module will hide it from navigation, but existing data is preserved.
-                    </AlertDescription>
-                  </Alert>
+                  <Button variant="outline" asChild>
+                    <Link href="/admin/modules">
+                      Manage Modules
+                    </Link>
+                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>

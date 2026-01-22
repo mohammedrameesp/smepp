@@ -74,4 +74,4 @@ function buildSearchPrefix(format: string, prefix: string, date: Date): string {
   return result;
 }
 
-export const GET = withErrorHandler(getNextCodeHandler, { requireAuth: true });
+export const GET = withErrorHandler(getNextCodeHandler, { requireAuth: true, requireModule: 'employees' });

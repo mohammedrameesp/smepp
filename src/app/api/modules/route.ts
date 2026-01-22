@@ -167,6 +167,7 @@ export async function POST(request: NextRequest) {
 const uninstallSchema = z.object({
   moduleId: z.string().min(1),
   deleteData: z.boolean().default(false), // Whether to delete associated data
+  cascade: z.boolean().default(false), // Whether to also uninstall dependent modules
 });
 
 export async function DELETE(request: NextRequest) {
@@ -191,7 +192,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const { moduleId, deleteData } = result.data;
+    const { moduleId, deleteData, cascade } = result.data;
 
     // Verify module exists
     if (!MODULE_REGISTRY[moduleId]) {
@@ -222,26 +223,79 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Check if can uninstall
-    const uninstallError = canUninstallModule(moduleId, org.enabledModules);
-    if (uninstallError) {
-      return NextResponse.json({ error: uninstallError }, { status: 400 });
-    }
-
     const mod = MODULE_REGISTRY[moduleId];
+
+    // Compute modules to uninstall (including cascade dependents)
+    let modulesToUninstall: string[] = [moduleId];
+
+    if (cascade) {
+      // Use topological sort to find the correct uninstall order
+      // Modules with no dependents (leaves) should be uninstalled first
+      const toUninstall = new Set<string>([moduleId]);
+
+      // Find all enabled modules that depend on this one (directly or transitively)
+      const collectDependents = (modId: string) => {
+        const modDef = MODULE_REGISTRY[modId];
+        if (modDef?.requiredBy) {
+          for (const depId of modDef.requiredBy) {
+            if (org.enabledModules.includes(depId) && !toUninstall.has(depId)) {
+              toUninstall.add(depId);
+              collectDependents(depId); // Recursively collect
+            }
+          }
+        }
+      };
+      collectDependents(moduleId);
+
+      // Topological sort: process modules so that dependents come before dependencies
+      // A module can only be uninstalled after all modules that depend on it are uninstalled
+      const sorted: string[] = [];
+      const visited = new Set<string>();
+
+      const visit = (modId: string) => {
+        if (visited.has(modId)) return;
+        visited.add(modId);
+
+        // First visit all modules that depend on this one (and are in our uninstall set)
+        const modDef = MODULE_REGISTRY[modId];
+        if (modDef?.requiredBy) {
+          for (const depId of modDef.requiredBy) {
+            if (toUninstall.has(depId)) {
+              visit(depId);
+            }
+          }
+        }
+
+        // Then add this module
+        sorted.push(modId);
+      };
+
+      // Start from the target module
+      visit(moduleId);
+
+      modulesToUninstall = sorted;
+    } else {
+      // Check if can uninstall (only when not cascading)
+      const uninstallError = canUninstallModule(moduleId, org.enabledModules);
+      if (uninstallError) {
+        return NextResponse.json({ error: uninstallError }, { status: 400 });
+      }
+    }
 
     // Use transaction to ensure atomicity - delete data first, then update org
     const updatedOrg = await prisma.$transaction(async (tx) => {
-      // If deleteData is true, delete associated data FIRST (inside transaction)
+      // If deleteData is true, delete associated data for all modules being uninstalled
       if (deleteData) {
-        await deleteModuleDataWithTx(tx, org.id, moduleId);
+        for (const modIdToDelete of modulesToUninstall) {
+          await deleteModuleDataWithTx(tx, org.id, modIdToDelete);
+        }
       }
 
-      // Then uninstall module
+      // Then uninstall all modules
       return tx.organization.update({
         where: { id: org.id },
         data: {
-          enabledModules: org.enabledModules.filter(m => m !== moduleId),
+          enabledModules: org.enabledModules.filter(m => !modulesToUninstall.includes(m)),
         },
         select: {
           enabledModules: true,
@@ -249,27 +303,37 @@ export async function DELETE(request: NextRequest) {
       });
     });
 
-    // Log the uninstallation action
-    await logAction(
-      org.id,
-      session.user.id,
-      ActivityActions.MODULE_UNINSTALLED,
-      'module',
-      moduleId,
-      {
-        moduleName: mod.name,
-        moduleCategory: mod.category,
-        dataDeleted: deleteData,
-      }
-    );
+    // Log the uninstallation action for each module
+    for (const uninstalledModId of modulesToUninstall) {
+      const uninstalledMod = MODULE_REGISTRY[uninstalledModId];
+      await logAction(
+        org.id,
+        session.user.id,
+        ActivityActions.MODULE_UNINSTALLED,
+        'module',
+        uninstalledModId,
+        {
+          moduleName: uninstalledMod?.name || uninstalledModId,
+          moduleCategory: uninstalledMod?.category,
+          dataDeleted: deleteData,
+          cascadeFrom: cascade ? moduleId : undefined,
+        }
+      );
+    }
 
     // Revalidate admin layout to refresh navigation
     revalidatePath('/admin', 'layout');
 
+    const uninstalledNames = modulesToUninstall.map(id => MODULE_REGISTRY[id]?.name || id);
+    const message = modulesToUninstall.length > 1
+      ? `Uninstalled: ${uninstalledNames.join(', ')}${deleteData ? ' (data deleted)' : ''}`
+      : `"${mod.name}" has been uninstalled${deleteData ? ' and data deleted' : ''}`;
+
     return NextResponse.json({
       success: true,
-      message: `"${mod.name}" has been uninstalled${deleteData ? ' and data deleted' : ''}`,
+      message,
       moduleId,
+      uninstalledModules: modulesToUninstall,
       enabledModules: updatedOrg.enabledModules,
       dataDeleted: deleteData,
     });

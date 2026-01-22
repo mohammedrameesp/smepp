@@ -203,6 +203,7 @@ export const GET = withErrorHandler(
     requireAuth: true,
     requireAdmin: true,
     requireHRAccess: true,
+    requireModule: 'employees',
     rateLimit: true,
   }
 );

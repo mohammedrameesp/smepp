@@ -199,4 +199,4 @@ async function exportEmployeesHandler(request: NextRequest, context: APIContext)
   });
 }
 
-export const GET = withErrorHandler(exportEmployeesHandler, { requireAdmin: true });
+export const GET = withErrorHandler(exportEmployeesHandler, { requireAdmin: true, requireModule: 'employees' });

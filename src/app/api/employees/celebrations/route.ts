@@ -134,4 +134,4 @@ async function getCelebrationsHandler(request: NextRequest, context: APIContext)
   });
 }
 
-export const GET = withErrorHandler(getCelebrationsHandler, { requireAuth: true });
+export const GET = withErrorHandler(getCelebrationsHandler, { requireAuth: true, requireModule: 'employees' });

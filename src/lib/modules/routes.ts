@@ -21,6 +21,9 @@ const MODULE_ROUTE_MAP: Array<{ prefix: string; moduleId: string }> = [
   // Suppliers
   { prefix: '/admin/suppliers', moduleId: 'suppliers' },
   { prefix: '/employee/suppliers', moduleId: 'suppliers' },
+  // Employees
+  { prefix: '/admin/employees', moduleId: 'employees' },
+  // Note: /profile is accessible to all users; HR content is conditionally shown based on isEmployee flag
   // Leave
   { prefix: '/admin/leave', moduleId: 'leave' },
   { prefix: '/employee/leave', moduleId: 'leave' },

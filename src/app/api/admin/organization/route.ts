@@ -118,7 +118,7 @@ const updateOrgSchema = z.object({
   website: z.string().url('Invalid URL format').nullable().optional().or(z.literal('')),
   additionalCurrencies: z.array(z.string()).optional(),
   weekendDays: z.array(z.number().min(0).max(6)).min(1, 'At least one weekend day required').optional(),
-  enabledModules: z.array(z.string()).optional(),
+  // NOTE: enabledModules removed - use /api/modules endpoint for proper validation
   hasMultipleLocations: z.boolean().optional(),
   depreciationEnabled: z.boolean().optional(),
 });
@@ -146,7 +146,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const { name, codePrefix, primaryColor, secondaryColor, website, additionalCurrencies, weekendDays, enabledModules, hasMultipleLocations, depreciationEnabled } = result.data;
+    const { name, codePrefix, primaryColor, secondaryColor, website, additionalCurrencies, weekendDays, hasMultipleLocations, depreciationEnabled } = result.data;
 
     // Normalize colors: empty/null resets to default for primaryColor, null for secondaryColor
     const DEFAULT_PRIMARY_COLOR = '#0f172a';
@@ -166,7 +166,6 @@ export async function PATCH(request: NextRequest) {
         ...(website !== undefined && { website: normalizedWebsite }),
         ...(additionalCurrencies !== undefined && { additionalCurrencies }),
         ...(weekendDays !== undefined && { weekendDays }),
-        ...(enabledModules !== undefined && { enabledModules }),
         ...(hasMultipleLocations !== undefined && { hasMultipleLocations }),
         ...(depreciationEnabled !== undefined && { depreciationEnabled }),
       },
@@ -181,7 +180,6 @@ export async function PATCH(request: NextRequest) {
         website: true,
         additionalCurrencies: true,
         weekendDays: true,
-        enabledModules: true,
         hasMultipleLocations: true,
         depreciationEnabled: true,
       },
