@@ -145,7 +145,6 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
       dateOfJoining: formatDateForPicker(initialData?.dateOfJoining),
       workLocation: initialData?.workLocation || '',
       probationEndDate: formatDateForPicker(initialData?.probationEndDate),
-      noticePeriodDays: initialData?.noticePeriodDays ?? 30,
       bankName: initialData?.bankName || '',
       iban: initialData?.iban || '',
       highestQualification: initialData?.highestQualification || '',
@@ -726,7 +725,7 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="probationEndDate">Probation End Date</Label>
+            <Label htmlFor="probationEndDate">Probation End Date (Optional Override)</Label>
             {isAdmin ? (
               <DatePicker
                 id="probationEndDate"
@@ -744,23 +743,9 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
                 <p className="text-xs text-gray-500">Admin only field</p>
               </>
             )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="noticePeriodDays">Notice Period (Days)</Label>
-            <Input
-              id="noticePeriodDays"
-              type="number"
-              min={0}
-              max={365}
-              {...register('noticePeriodDays', { valueAsNumber: true })}
-              placeholder="30"
-              disabled={!isAdmin}
-              className={!isAdmin ? 'bg-gray-50' : ''}
-            />
-            {!isAdmin && (
-              <p className="text-xs text-gray-500">Admin only field</p>
-            )}
+            <p className="text-xs text-gray-500">
+              Leave blank to use organization default. Notice period is calculated automatically based on tenure.
+            </p>
           </div>
         </div>
       </SectionCard>

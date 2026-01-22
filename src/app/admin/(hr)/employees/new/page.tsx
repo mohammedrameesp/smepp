@@ -85,7 +85,6 @@ export default function NewEmployeePage() {
       dateOfJoining: '',
       workLocation: '',
       probationEndDate: '',
-      noticePeriodDays: 30,
       sponsorshipType: '',
       reportingToId: '',
       isEmployee: true,
@@ -499,28 +498,18 @@ export default function NewEmployeePage() {
                     </div>
                   </div>
 
-                  {/* Probation & Notice Period */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="probationEndDate">Probation End Date</Label>
-                      <DatePicker
-                        id="probationEndDate"
-                        value={watch('probationEndDate') || ''}
-                        onChange={(val) => setValue('probationEndDate', val)}
-                        placeholder="DD/MM/YYYY"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="noticePeriodDays">Notice Period (Days)</Label>
-                      <Input
-                        id="noticePeriodDays"
-                        type="number"
-                        min={0}
-                        max={365}
-                        {...register('noticePeriodDays', { valueAsNumber: true })}
-                        placeholder="30"
-                      />
-                    </div>
+                  {/* Probation End Date (optional override) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="probationEndDate">Probation End Date (Optional)</Label>
+                    <DatePicker
+                      id="probationEndDate"
+                      value={watch('probationEndDate') || ''}
+                      onChange={(val) => setValue('probationEndDate', val)}
+                      placeholder="DD/MM/YYYY"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Leave blank to use organization default. Notice period is calculated automatically based on tenure.
+                    </p>
                   </div>
 
                   {/* Sponsorship Type */}

@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/core/datetime';
 import { parseJsonArray, getExpiryStatus } from '@/features/employees/lib/hr-utils';
 import { ExpiryDateDisplay, DocumentLink } from '@/components/domains/hr/profile';
+import { EmployeeNoticePeriod } from './employee-notice-period';
 import {
   User,
   Phone,
@@ -287,8 +288,16 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
             <InfoRow label="Department" value={hr.department} />
             <InfoRow label="Date of Joining" value={hr.dateOfJoining ? formatDate(hr.dateOfJoining) : null} />
             <InfoRow label="Work Location" value={hr.workLocation ? hr.workLocation.charAt(0) + hr.workLocation.slice(1).toLowerCase() : null} />
-            <InfoRow label="Probation End Date" value={hr.probationEndDate ? formatDate(hr.probationEndDate) : null} />
-            <InfoRow label="Notice Period" value={hr.noticePeriodDays ? `${hr.noticePeriodDays} days` : null} />
+            <InfoRow
+              label="Probation & Notice"
+              value={
+                hr.dateOfJoining ? (
+                  <EmployeeNoticePeriod dateOfJoining={hr.dateOfJoining} variant="detailed" />
+                ) : (
+                  <span className="text-gray-400">Date of joining not set</span>
+                )
+              }
+            />
           </dl>
         </CardContent>
       </Card>
