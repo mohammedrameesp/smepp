@@ -4,19 +4,22 @@
  *              category/type/status constants, label helpers, color mappings for UI badges,
  *              and status transition rules for the purchase request workflow.
  * @module domains/projects/purchase-requests
+ *
+ * Default Format: {PREFIX}-PR-{YYMM}-{SEQ:3}
+ * Example: ORG-PR-2412-001 (first request in December 2024)
+ * Format is configurable per organization via settings.
  */
 
 import { PrismaClient } from '@prisma/client';
-import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
+import { getOrganizationCodePrefix, getEntityFormat, applyFormat } from '@/lib/utils/code-prefix';
 
 /**
- * Generate a unique Purchase Request reference number.
- * Format: {PREFIX}-PR-YYMM-XXX
+ * Generate a unique Purchase Request reference number using configurable format.
+ * Default: {PREFIX}-PR-{YYMM}-{SEQ:3}
  * - {PREFIX}: Organization code prefix (e.g., ORG, JAS, INC)
- * - PR: Purchase Request
- * - YY: Year (2 digits)
- * - MM: Month (2 digits)
- * - XXX: Sequential number per month (padded to 3 digits)
+ * - PR: Purchase Request (configurable)
+ * - {YYMM}: Year-Month
+ * - {SEQ:3}: Sequential number per month (padded to 3 digits)
  *
  * Example: ORG-PR-2412-001 (first request in December 2024 for BeCreative)
  * Example: JAS-PR-2412-001 (first request in December 2024 for Jasira)
@@ -25,24 +28,54 @@ export async function generatePurchaseRequestNumber(
   prisma: PrismaClient,
   tenantId: string
 ): Promise<string> {
-  // Get organization's code prefix
-  const codePrefix = await getOrganizationCodePrefix(tenantId);
-
   const now = new Date();
-  const year = now.getFullYear().toString().slice(-2);
-  const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  const prefix = `${codePrefix}-PR-${year}${month}`;
 
-  // Get count of requests this month within this tenant
+  // Get organization's code prefix and format
+  const codePrefix = await getOrganizationCodePrefix(tenantId);
+  const format = await getEntityFormat(tenantId, 'purchase-requests');
+
+  // Build search prefix by applying format without sequence
+  const searchPrefix = buildSearchPrefix(format, codePrefix, now);
+
+  // Get count of requests matching this prefix within this tenant
   const count = await prisma.purchaseRequest.count({
     where: {
       tenantId,
-      referenceNumber: { startsWith: prefix }
+      referenceNumber: { startsWith: searchPrefix }
     }
   });
 
-  const sequence = (count + 1).toString().padStart(3, '0');
-  return `${prefix}-${sequence}`;
+  // Generate the complete reference number using the configurable format
+  return applyFormat(format, {
+    prefix: codePrefix,
+    sequenceNumber: count + 1,
+    date: now,
+  });
+}
+
+/**
+ * Build a search prefix from format by replacing tokens but not SEQ
+ */
+function buildSearchPrefix(format: string, prefix: string, date: Date): string {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  let result = format;
+
+  result = result.replace(/\{PREFIX\}/gi, prefix);
+  result = result.replace(/\{YYYY\}/gi, year.toString());
+  result = result.replace(/\{YY\}/gi, year.toString().slice(-2));
+  result = result.replace(/\{MM\}/gi, month.toString().padStart(2, '0'));
+  result = result.replace(/\{DD\}/gi, day.toString().padStart(2, '0'));
+  result = result.replace(/\{YYMM\}/gi, year.toString().slice(-2) + month.toString().padStart(2, '0'));
+  result = result.replace(/\{YYYYMM\}/gi, year.toString() + month.toString().padStart(2, '0'));
+  result = result.replace(/\{TYPE\}/gi, '');
+
+  // Remove SEQ token and everything after it for prefix matching
+  result = result.replace(/\{SEQ(:\d+)?\}.*$/, '');
+
+  return result;
 }
 
 /**

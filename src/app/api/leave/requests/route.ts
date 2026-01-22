@@ -27,7 +27,7 @@ import {
   validateLeaveRequestDates,
   validateNoOverlap,
 } from '@/features/leave/lib/leave-request-validation';
-import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
+import { getOrganizationCodePrefix, getEntityFormat, applyFormat } from '@/lib/utils/code-prefix';
 import { withErrorHandler, APIContext } from '@/lib/http/handler';
 import logger from '@/lib/core/log';
 
@@ -436,6 +436,10 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
 
     const year = startDate.getFullYear();
 
+    // Get code prefix and format before transaction (to avoid db calls inside transaction)
+    const codePrefix = await getOrganizationCodePrefix(tenantId!);
+    const leaveRequestFormat = await getEntityFormat(tenantId!, 'leave-requests');
+
     // Create leave request in a transaction (includes balance check to prevent race conditions)
     const leaveRequest = await prisma.$transaction(async (tx) => {
       // Get or create leave balance inside transaction to prevent race conditions
@@ -495,21 +499,17 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
         }
       }
 
-      // Get organization's code prefix
-      const codePrefix = await getOrganizationCodePrefix(tenantId!);
-
-      // Generate unique request number: {PREFIX}-LR-YYMMDD-NNN (date-based to reduce race conditions)
+      // Generate unique request number using configurable format
       const now = new Date();
-      const yearStr = now.getFullYear().toString().slice(-2);
-      const month = (now.getMonth() + 1).toString().padStart(2, '0');
-      const day = now.getDate().toString().padStart(2, '0');
-      const datePrefix = `${codePrefix}-LR-${yearStr}${month}${day}`;
 
-      // Find highest sequence for today (reduces collision window to same day)
+      // Build search prefix from format (without sequence) for finding existing requests
+      const searchPrefix = buildSearchPrefixFromFormat(leaveRequestFormat, codePrefix, now);
+
+      // Find highest sequence for this prefix (reduces collision window)
       const existingRequests = await tx.leaveRequest.findMany({
         where: {
           tenantId: tenantId!,
-          requestNumber: { startsWith: datePrefix },
+          requestNumber: { startsWith: searchPrefix },
         },
         orderBy: { requestNumber: 'desc' },
         take: 1,
@@ -518,15 +518,22 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
       let nextSequence = 1;
       if (existingRequests.length > 0) {
         const latestNumber = existingRequests[0].requestNumber;
-        const parts = latestNumber.split('-');
-        if (parts.length === 4) {
-          const currentSequence = parseInt(parts[3], 10);
+        // Extract sequence number from the end
+        const seqMatch = latestNumber.match(/(\d+)$/);
+        if (seqMatch) {
+          const currentSequence = parseInt(seqMatch[1], 10);
           if (!isNaN(currentSequence)) {
             nextSequence = currentSequence + 1;
           }
         }
       }
-      const requestNumber = `${datePrefix}-${nextSequence.toString().padStart(3, '0')}`;
+
+      // Generate the complete request number using the configurable format
+      const requestNumber = applyFormat(leaveRequestFormat, {
+        prefix: codePrefix,
+        sequenceNumber: nextSequence,
+        date: now,
+      });
 
       // Create the request
       const request = await tx.leaveRequest.create({
@@ -749,3 +756,28 @@ async function createLeaveRequestHandler(request: NextRequest, context: APIConte
 }
 
 export const POST = withErrorHandler(createLeaveRequestHandler, { requireAuth: true, requireModule: 'leave' });
+
+/**
+ * Build a search prefix from format by replacing tokens but not SEQ
+ */
+function buildSearchPrefixFromFormat(format: string, prefix: string, date: Date): string {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  let result = format;
+
+  result = result.replace(/\{PREFIX\}/gi, prefix);
+  result = result.replace(/\{YYYY\}/gi, year.toString());
+  result = result.replace(/\{YY\}/gi, year.toString().slice(-2));
+  result = result.replace(/\{MM\}/gi, month.toString().padStart(2, '0'));
+  result = result.replace(/\{DD\}/gi, day.toString().padStart(2, '0'));
+  result = result.replace(/\{YYMM\}/gi, year.toString().slice(-2) + month.toString().padStart(2, '0'));
+  result = result.replace(/\{YYYYMM\}/gi, year.toString() + month.toString().padStart(2, '0'));
+  result = result.replace(/\{TYPE\}/gi, '');
+
+  // Remove SEQ token and everything after it for prefix matching
+  result = result.replace(/\{SEQ(:\d+)?\}.*$/, '');
+
+  return result;
+}

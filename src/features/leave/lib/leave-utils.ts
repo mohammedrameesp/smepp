@@ -655,7 +655,10 @@ export function calculateWorkingDaysWithHolidays(
 
 /**
  * Generate a leave request number
- * Format: LR-XXXXX (e.g., LR-00001)
+ * @deprecated This function is deprecated. Leave request numbers are now generated
+ * using the configurable format system in the leave request route.
+ * Default format: {PREFIX}-LR-{YYMM}-{SEQ:3}
+ * This function is kept for backward compatibility with tests.
  */
 export function generateLeaveRequestNumber(existingCount: number): string {
   const nextNumber = existingCount + 1;

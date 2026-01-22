@@ -6,13 +6,13 @@
  * FEATURES:
  * - Unique subscription tag generation with collision handling
  * - Tenant-specific sequential numbering
- * - Year-month based tag formatting (ORG-SUB-YYMM-SEQ)
+ * - Configurable tag format via organization settings
  * - Retry logic for concurrent creation scenarios
  *
- * TAG FORMAT:
- * - {ORG_PREFIX}-SUB-{YYMM}-{SEQUENCE}
+ * TAG FORMAT (default, configurable):
+ * - {PREFIX}-SUB-{YYMM}-{SEQ:3}
  * - Example: ORG-SUB-2501-001 (BeCreative, Subscription, Jan 2025, sequence 001)
- * - Sequence resets each month per organization
+ * - Sequence resets each month per organization (when format includes {YYMM})
  *
  * USAGE:
  * Called when creating new subscriptions to auto-generate unique tags
@@ -25,20 +25,22 @@
  */
 
 import { prisma } from '@/lib/core/prisma';
+import { generateFormattedCode, getEntityFormat, applyFormat, getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
 
 /** Maximum retries for tag generation on collision */
 const MAX_TAG_GENERATION_RETRIES = 3;
 
 /**
- * Generate a unique subscription tag.
+ * Generate a unique subscription tag using configurable format.
  *
- * Format: {ORG_PREFIX}-SUB-{YYMM}-{SEQUENCE}
+ * Default Format: {PREFIX}-SUB-{YYMM}-{SEQ:3}
  * Example: ORG-SUB-2501-001 (BeCreative, Jan 2025, sequence 001)
  *
- * The sequence number:
- * - Is 3 digits with leading zeros (001, 002, etc.)
- * - Resets each month
- * - Is tenant-isolated (won't conflict across organizations)
+ * The format can be customized per organization via settings.
+ * The sequence number resets based on the time tokens in the format:
+ * - {YYMM} or {YYYYMM}: Resets monthly
+ * - {YYYY} or {YY}: Resets yearly
+ * - No time token: Global sequence
  *
  * CONCURRENCY HANDLING:
  * Under concurrent requests, the find-then-increment pattern could produce
@@ -60,12 +62,16 @@ export async function generateSubscriptionTag(
   orgPrefix: string,
   retryOffset: number = 0
 ): Promise<string> {
-  // Build search prefix with year-month suffix
   const now = new Date();
-  const yearMonth = `${now.getFullYear().toString().slice(-2)}${(now.getMonth() + 1).toString().padStart(2, '0')}`;
-  const searchPrefix = `${orgPrefix.toUpperCase()}-SUB-${yearMonth}-`;
 
-  // Find highest sequence number for this org/month
+  // Get the configurable format for subscriptions
+  const format = await getEntityFormat(tenantId, 'subscriptions');
+
+  // Build search prefix by applying format without sequence
+  // This determines what prefix to search for existing tags
+  const searchPrefix = buildSearchPrefix(format, orgPrefix, now);
+
+  // Find highest sequence number for this prefix
   const existingSubscriptions = await prisma.subscription.findMany({
     where: {
       tenantId,
@@ -85,11 +91,13 @@ export async function generateSubscriptionTag(
   if (existingSubscriptions.length > 0) {
     const latestTag = existingSubscriptions[0].subscriptionTag;
     if (latestTag) {
-      // Extract sequence number from tag like "ORG-SUB-2501-001"
-      const seqPart = latestTag.substring(searchPrefix.length);
-      const currentSequence = parseInt(seqPart, 10);
-      if (!isNaN(currentSequence)) {
-        nextSequence = currentSequence + 1;
+      // Extract sequence number from the end of the tag
+      const seqMatch = latestTag.match(/(\d+)$/);
+      if (seqMatch) {
+        const currentSequence = parseInt(seqMatch[1], 10);
+        if (!isNaN(currentSequence)) {
+          nextSequence = currentSequence + 1;
+        }
       }
     }
   }
@@ -97,9 +105,39 @@ export async function generateSubscriptionTag(
   // Add retry offset for collision handling
   nextSequence += retryOffset;
 
-  // Format and return the complete subscription tag
-  const sequence = nextSequence.toString().padStart(3, '0');
-  return `${searchPrefix}${sequence}`;
+  // Generate the complete tag using the configurable format
+  return applyFormat(format, {
+    prefix: orgPrefix,
+    sequenceNumber: nextSequence,
+    date: now,
+  });
+}
+
+/**
+ * Build a search prefix from format by replacing time tokens but not SEQ
+ * This creates a prefix to search for existing tags in the same period
+ */
+function buildSearchPrefix(format: string, prefix: string, date: Date): string {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  let result = format;
+
+  // Replace all tokens except SEQ
+  result = result.replace(/\{PREFIX\}/gi, prefix);
+  result = result.replace(/\{YYYY\}/gi, year.toString());
+  result = result.replace(/\{YY\}/gi, year.toString().slice(-2));
+  result = result.replace(/\{MM\}/gi, month.toString().padStart(2, '0'));
+  result = result.replace(/\{DD\}/gi, day.toString().padStart(2, '0'));
+  result = result.replace(/\{YYMM\}/gi, year.toString().slice(-2) + month.toString().padStart(2, '0'));
+  result = result.replace(/\{YYYYMM\}/gi, year.toString() + month.toString().padStart(2, '0'));
+  result = result.replace(/\{TYPE\}/gi, ''); // Subscriptions don't use TYPE
+
+  // Remove SEQ token and everything after it for prefix matching
+  result = result.replace(/\{SEQ(:\d+)?\}.*$/, '');
+
+  return result;
 }
 
 /**

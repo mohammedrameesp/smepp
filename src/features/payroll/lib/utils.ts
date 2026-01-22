@@ -3,19 +3,24 @@
  * @description Payroll utility functions for reference number generation, status management,
  *              financial calculations, and period handling
  * @module domains/hr/payroll
+ *
+ * Default Formats (configurable per organization):
+ * - Payroll Runs: {PREFIX}-PAY-{YYYYMM}-{SEQ:2}
+ * - Payslips: {PREFIX}-PS-{YYYYMM}-{SEQ:5}
+ * - Loans: {PREFIX}-LOAN-{SEQ:5}
  */
 
 import { PayrollStatus, LoanStatus } from '@prisma/client';
-import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
+import { getOrganizationCodePrefix, getEntityFormat, applyFormat } from '@/lib/utils/code-prefix';
 import Decimal from 'decimal.js';
 
 // FIN-003: Configure Decimal.js for financial precision
 Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP });
 
 /**
- * Generate payroll run reference number with organization prefix
- * Format: {PREFIX}-PAY-YYYY-MM-XXX
- * Example: ORG-PAY-2024-12-001, JAS-PAY-2024-12-001
+ * Generate payroll run reference number using configurable format.
+ * Default: {PREFIX}-PAY-{YYYYMM}-{SEQ:2}
+ * Example: ORG-PAY-202412-01, JAS-PAY-202412-01
  */
 export async function generatePayrollReferenceWithPrefix(
   tenantId: string,
@@ -24,15 +29,22 @@ export async function generatePayrollReferenceWithPrefix(
   sequence: number
 ): Promise<string> {
   const codePrefix = await getOrganizationCodePrefix(tenantId);
-  const monthStr = month.toString().padStart(2, '0');
-  const seqStr = sequence.toString().padStart(3, '0');
-  return `${codePrefix}-PAY-${year}-${monthStr}-${seqStr}`;
+  const format = await getEntityFormat(tenantId, 'payroll-runs');
+
+  // Create a date object for the pay period
+  const date = new Date(year, month - 1, 1);
+
+  return applyFormat(format, {
+    prefix: codePrefix,
+    sequenceNumber: sequence,
+    date,
+  });
 }
 
 /**
- * Generate payslip number with organization prefix
- * Format: {PREFIX}-PS-YYYY-MM-XXXXX
- * Example: ORG-PS-2024-12-00001, JAS-PS-2024-12-00001
+ * Generate payslip number using configurable format.
+ * Default: {PREFIX}-PS-{YYYYMM}-{SEQ:5}
+ * Example: ORG-PS-202412-00001, JAS-PS-202412-00001
  */
 export async function generatePayslipNumberWithPrefix(
   tenantId: string,
@@ -41,14 +53,21 @@ export async function generatePayslipNumberWithPrefix(
   sequence: number
 ): Promise<string> {
   const codePrefix = await getOrganizationCodePrefix(tenantId);
-  const monthStr = month.toString().padStart(2, '0');
-  const seqStr = sequence.toString().padStart(5, '0');
-  return `${codePrefix}-PS-${year}-${monthStr}-${seqStr}`;
+  const format = await getEntityFormat(tenantId, 'payslips');
+
+  // Create a date object for the pay period
+  const date = new Date(year, month - 1, 1);
+
+  return applyFormat(format, {
+    prefix: codePrefix,
+    sequenceNumber: sequence,
+    date,
+  });
 }
 
 /**
- * Generate loan number with organization prefix
- * Format: {PREFIX}-LOAN-XXXXX
+ * Generate loan number using configurable format.
+ * Default: {PREFIX}-LOAN-{SEQ:5}
  * Example: ORG-LOAN-00001, JAS-LOAN-00001
  */
 export async function generateLoanNumberWithPrefix(
@@ -56,7 +75,13 @@ export async function generateLoanNumberWithPrefix(
   sequence: number
 ): Promise<string> {
   const codePrefix = await getOrganizationCodePrefix(tenantId);
-  return `${codePrefix}-LOAN-${sequence.toString().padStart(5, '0')}`;
+  const format = await getEntityFormat(tenantId, 'loans');
+
+  return applyFormat(format, {
+    prefix: codePrefix,
+    sequenceNumber: sequence,
+    date: new Date(),
+  });
 }
 
 /**

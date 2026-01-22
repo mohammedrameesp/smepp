@@ -2,16 +2,20 @@
  * @file asset-request-utils.ts
  * @description Utility functions for asset request workflow - request generation, validation, and status management
  * @module domains/operations/asset-requests
+ *
+ * Default Format: {PREFIX}-AR-{YYMM}-{SEQ:3}
+ * Example: ORG-AR-2412-001, JAS-AR-2412-001
+ * Format is configurable per organization via settings.
  */
 
 import { prisma, PrismaTransactionClient } from '@/lib/core/prisma';
 import { AssetStatus, AssetRequestStatus, AssetRequestType } from '@prisma/client';
-import { getOrganizationCodePrefix } from '@/lib/utils/code-prefix';
+import { getOrganizationCodePrefix, getEntityFormat, applyFormat } from '@/lib/utils/code-prefix';
 
 /**
- * Generate a unique request number
- * Format: {PREFIX}-AR-YYMMDD-XXX
- * Example: ORG-AR-241222-001, JAS-AR-241222-001
+ * Generate a unique request number using configurable format.
+ * Default: {PREFIX}-AR-{YYMM}-{SEQ:3}
+ * Example: ORG-AR-2412-001, JAS-AR-2412-001
  * @param tenantId - Organization tenant ID
  * @param tx - Optional transaction client to use (required when called inside a transaction)
  */
@@ -20,22 +24,21 @@ export async function generateRequestNumber(
   tx?: PrismaTransactionClient
 ): Promise<string> {
   const db = tx || prisma;
-
-  // Get organization's code prefix
-  const codePrefix = await getOrganizationCodePrefix(tenantId);
-
   const now = new Date();
-  const year = now.getFullYear().toString().slice(-2);
-  const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  const day = now.getDate().toString().padStart(2, '0');
-  const datePrefix = `${codePrefix}-AR-${year}${month}${day}`;
 
-  // Find the highest sequence number for today within this tenant
+  // Get organization's code prefix and format
+  const codePrefix = await getOrganizationCodePrefix(tenantId);
+  const format = await getEntityFormat(tenantId, 'asset-requests');
+
+  // Build search prefix by applying format without sequence
+  const searchPrefix = buildSearchPrefix(format, codePrefix, now);
+
+  // Find the highest sequence number for this prefix within this tenant
   const existingRequests = await db.assetRequest.findMany({
     where: {
       tenantId,
       requestNumber: {
-        startsWith: datePrefix,
+        startsWith: searchPrefix,
       },
     },
     orderBy: {
@@ -48,18 +51,47 @@ export async function generateRequestNumber(
 
   if (existingRequests.length > 0) {
     const latestNumber = existingRequests[0].requestNumber;
-    // Extract sequence from "{PREFIX}-AR-YYMMDD-XXX"
-    const parts = latestNumber.split('-');
-    if (parts.length === 4) {
-      const currentSequence = parseInt(parts[3], 10);
+    // Extract sequence number from the end
+    const seqMatch = latestNumber.match(/(\d+)$/);
+    if (seqMatch) {
+      const currentSequence = parseInt(seqMatch[1], 10);
       if (!isNaN(currentSequence)) {
         nextSequence = currentSequence + 1;
       }
     }
   }
 
-  const sequence = nextSequence.toString().padStart(3, '0');
-  return `${datePrefix}-${sequence}`;
+  // Generate the complete request number using the configurable format
+  return applyFormat(format, {
+    prefix: codePrefix,
+    sequenceNumber: nextSequence,
+    date: now,
+  });
+}
+
+/**
+ * Build a search prefix from format by replacing tokens but not SEQ
+ */
+function buildSearchPrefix(format: string, prefix: string, date: Date): string {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  let result = format;
+
+  result = result.replace(/\{PREFIX\}/gi, prefix);
+  result = result.replace(/\{YYYY\}/gi, year.toString());
+  result = result.replace(/\{YY\}/gi, year.toString().slice(-2));
+  result = result.replace(/\{MM\}/gi, month.toString().padStart(2, '0'));
+  result = result.replace(/\{DD\}/gi, day.toString().padStart(2, '0'));
+  result = result.replace(/\{YYMM\}/gi, year.toString().slice(-2) + month.toString().padStart(2, '0'));
+  result = result.replace(/\{YYYYMM\}/gi, year.toString() + month.toString().padStart(2, '0'));
+  result = result.replace(/\{TYPE\}/gi, '');
+
+  // Remove SEQ token and everything after it for prefix matching
+  result = result.replace(/\{SEQ(:\d+)?\}.*$/, '');
+
+  return result;
 }
 
 /**

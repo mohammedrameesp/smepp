@@ -31,6 +31,7 @@ export type EntityType =
   | 'asset-requests'
   | 'leave-requests'
   | 'payroll-runs'
+  | 'payslips'
   | 'suppliers'
   | 'subscriptions';
 
@@ -42,6 +43,7 @@ export interface CodeFormatConfig {
   'asset-requests'?: string;
   'leave-requests'?: string;
   'payroll-runs'?: string;
+  payslips?: string;
   suppliers?: string;
   subscriptions?: string;
 }
@@ -55,6 +57,7 @@ export const DEFAULT_FORMATS: Required<CodeFormatConfig> = {
   'asset-requests': '{PREFIX}-AR-{YYMM}-{SEQ:3}',
   'leave-requests': '{PREFIX}-LR-{YYMM}-{SEQ:3}',
   'payroll-runs': '{PREFIX}-PAY-{YYYYMM}-{SEQ:2}',
+  payslips: '{PREFIX}-PS-{YYYYMM}-{SEQ:5}',
   suppliers: '{PREFIX}-SUP-{SEQ:4}',
   subscriptions: '{PREFIX}-SUB-{YYMM}-{SEQ:3}',
 };
@@ -68,6 +71,7 @@ export const ENTITY_LABELS: Record<EntityType, string> = {
   'asset-requests': 'Asset Request',
   'leave-requests': 'Leave Request',
   'payroll-runs': 'Payroll Run',
+  payslips: 'Payslip Number',
   suppliers: 'Supplier Code',
   subscriptions: 'Subscription Tag',
 };
@@ -82,6 +86,7 @@ export const ENTITY_TO_MODULE: Record<EntityType, string> = {
   'asset-requests': 'assets',
   loans: 'payroll',
   'payroll-runs': 'payroll',
+  payslips: 'payroll',
   subscriptions: 'subscriptions',
 };
 
