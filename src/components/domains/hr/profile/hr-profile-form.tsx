@@ -144,7 +144,6 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
       department: initialData?.department || '',
       dateOfJoining: formatDateForPicker(initialData?.dateOfJoining),
       workLocation: initialData?.workLocation || '',
-      probationEndDate: formatDateForPicker(initialData?.probationEndDate),
       bankName: initialData?.bankName || '',
       iban: initialData?.iban || '',
       highestQualification: initialData?.highestQualification || '',
@@ -722,30 +721,6 @@ export function HRProfileForm({ initialData, isAdmin = false, userId, onSave }: 
             {!isAdmin && (
               <p className="text-xs text-gray-500">Admin only field</p>
             )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="probationEndDate">Probation End Date (Optional Override)</Label>
-            {isAdmin ? (
-              <DatePicker
-                id="probationEndDate"
-                value={watch('probationEndDate') || ''}
-                onChange={(val) => setValue('probationEndDate', val, { shouldDirty: true })}
-                placeholder="DD/MM/YYYY"
-              />
-            ) : (
-              <>
-                <Input
-                  value={watch('probationEndDate') ? new Date(watch('probationEndDate')!).toLocaleDateString() : ''}
-                  disabled
-                  className="bg-gray-50"
-                />
-                <p className="text-xs text-gray-500">Admin only field</p>
-              </>
-            )}
-            <p className="text-xs text-gray-500">
-              Leave blank to use organization default. Notice period is calculated automatically based on tenure.
-            </p>
           </div>
         </div>
       </SectionCard>
