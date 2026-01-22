@@ -293,14 +293,14 @@ export function EmployeeHRViewSection({ employee }: EmployeeHRViewSectionProps) 
         </CardContent>
       </Card>
 
-      {/* Bank & Payroll */}
+      {/* Banking Information */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-gray-500" />
             <div>
-              <CardTitle>Bank & Payroll</CardTitle>
-              <CardDescription>Banking details for salary</CardDescription>
+              <CardTitle>Banking Information</CardTitle>
+              <CardDescription>Bank account details</CardDescription>
             </div>
           </div>
         </CardHeader>

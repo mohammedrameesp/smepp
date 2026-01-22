@@ -428,7 +428,7 @@ export default function AdminEmployeeEditPage() {
                         <div className="space-y-0.5">
                           <Label htmlFor="finance-access">Finance</Label>
                           <p className="text-sm text-gray-500">
-                            Payroll, Purchase Requests
+                            Purchase Requests
                           </p>
                         </div>
                         <Switch
