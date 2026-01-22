@@ -213,13 +213,13 @@ export default function LandingPage() {
                       <li>Sara Al-Mahmoud - expires Jan 22</li>
                       <li>Mohammed Ali - expires Jan 28</li>
                     </ul>
-                    <span className="ai-action">Would you like me to send them reminders?</span>
+                    <span className="ai-action">Would you also like to check health cards, contracts, or work permits?</span>
                   </div>
                 </div>
                 <div className="ai-suggestions">
-                  <span className="ai-suggestion">Show leave balances for my team</span>
-                  <span className="ai-suggestion">Assets expiring warranty</span>
-                  <span className="ai-suggestion">Pending purchase requests</span>
+                  <span className="ai-suggestion">Show leave balances for Hassan</span>
+                  <span className="ai-suggestion">What are this month's credit card charges</span>
+                  <span className="ai-suggestion">Who is using the MacBook Pro</span>
                 </div>
               </div>
               <div className="smart-card-footer">
@@ -293,11 +293,11 @@ export default function LandingPage() {
           </div>
           <div className="features-grid">
             {[
+              { icon: '📦', color: 'teal', title: 'Asset Management', desc: 'Track all your hardware and equipment with complete lifecycle management.', list: ['Assignment & request workflows', 'Warranty expiry alerts', 'Depreciation tracking'] },
+              { icon: '💳', color: 'blue', title: 'Subscription Tracking', desc: 'Stop paying for unused subscriptions. Track all your SaaS and services.', list: ['Renewal date alerts', 'Cost analysis dashboard', 'Spending trends'] },
               { icon: '👥', color: 'purple', title: 'HR & Employees', desc: 'Complete employee management with document tracking.', list: ['QID & passport expiry alerts', 'Employee self-service portal', 'Profile change requests'] },
               { icon: '🏖️', color: 'amber', title: 'Leave Management', desc: 'Complete leave request and approval workflow for your team.', list: ['Balance tracking & calendar view', 'WhatsApp approval notifications', 'Multiple leave types'] },
-              { icon: '📦', color: 'teal', title: 'Asset Management', desc: 'Track all your hardware and equipment with complete lifecycle management.', list: ['Assignment & request workflows', 'Warranty expiry alerts', 'Depreciation tracking'] },
               { icon: '🛒', color: 'cyan', title: 'Purchase Requests', desc: 'Streamline procurement with multi-level approval workflows.', list: ['Multi-level approvals', 'WhatsApp notifications', 'Full audit trail'] },
-              { icon: '📊', color: 'orange', title: 'Reports & Analytics', desc: 'Comprehensive reporting with Excel exports and activity logs.', list: ['Dashboard insights', 'Excel exports', 'Cost analysis'] },
               { icon: '💰', color: 'emerald', title: 'Payroll & WPS', desc: 'Full payroll processing with Qatar WPS compliance built-in.', list: ['WPS file generation', 'Gratuity (EOSB) calculations', 'Employee loans'], comingSoon: true },
             ].map((feature, i) => (
               <div key={i} className={`feature-card ${feature.comingSoon ? 'coming-soon' : ''}`}>
@@ -315,8 +315,8 @@ export default function LandingPage() {
             <div className="also-includes-label">Also Includes</div>
             <div className="also-includes-items">
               <div className="also-includes-item">
-                <span className="also-includes-icon">💳</span>
-                <span>Subscription Tracking</span>
+                <span className="also-includes-icon">📊</span>
+                <span>Reports & Analytics</span>
               </div>
               <div className="also-includes-item">
                 <span className="also-includes-icon">🚚</span>
@@ -344,45 +344,45 @@ export default function LandingPage() {
               </p>
               <div className="qatar-features">
                 <div className="qatar-feature">
-                  <div className="qatar-feature-icon">🏦</div>
+                  <div className="qatar-feature-icon">🛂</div>
                   <div className="qatar-feature-text">
-                    <h4>WPS Compliance</h4>
-                    <p>Generate SIF files for Wage Protection System submissions</p>
-                  </div>
-                </div>
-                <div className="qatar-feature">
-                  <div className="qatar-feature-icon">💰</div>
-                  <div className="qatar-feature-text">
-                    <h4>Gratuity Calculations</h4>
-                    <p>End of service benefits per Qatar Labor Law (3 weeks/year)</p>
+                    <h4>QID & Visa Tracking</h4>
+                    <p>Never miss a renewal - alerts for QID, visa, and residency permits</p>
                   </div>
                 </div>
                 <div className="qatar-feature">
                   <div className="qatar-feature-icon">📋</div>
                   <div className="qatar-feature-text">
-                    <h4>Document Tracking</h4>
-                    <p>QID, passport, health card, and trade license expiry alerts</p>
+                    <h4>Trade License (CR) Alerts</h4>
+                    <p>Track Commercial Registration, municipality licenses, and insurance</p>
+                  </div>
+                </div>
+                <div className="qatar-feature">
+                  <div className="qatar-feature-icon">🏥</div>
+                  <div className="qatar-feature-text">
+                    <h4>Health Card Monitoring</h4>
+                    <p>Employee health card and medical insurance expiry tracking</p>
                   </div>
                 </div>
                 <div className="qatar-feature">
                   <div className="qatar-feature-icon">🇶🇦</div>
                   <div className="qatar-feature-text">
-                    <h4>Local Compliance</h4>
-                    <p>QAR currency, Qatar timezone, and labor law leave entitlements</p>
+                    <h4>Qatar Business Context</h4>
+                    <p>QAR currency, Qatar timezone, and local holiday calendar</p>
                   </div>
                 </div>
               </div>
             </div>
             <div className="qatar-visual">
               <div className="qatar-stat-card">
-                <div className="qatar-stat-icon">🏦</div>
-                <div className="qatar-stat-value">WPS</div>
-                <div className="qatar-stat-label">Compliant</div>
+                <div className="qatar-stat-icon">🛂</div>
+                <div className="qatar-stat-value">QID</div>
+                <div className="qatar-stat-label">Tracking</div>
               </div>
               <div className="qatar-stat-card">
-                <div className="qatar-stat-icon">💰</div>
-                <div className="qatar-stat-value">EOSB</div>
-                <div className="qatar-stat-label">Gratuity</div>
+                <div className="qatar-stat-icon">📋</div>
+                <div className="qatar-stat-value">CR</div>
+                <div className="qatar-stat-label">Licenses</div>
               </div>
               <div className="qatar-stat-card">
                 <div className="qatar-stat-icon">📅</div>
