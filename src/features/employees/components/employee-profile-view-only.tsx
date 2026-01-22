@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/core/datetime';
 import { parseJsonArray } from '@/features/employees/lib/hr-utils';
 import { ExpiryDateDisplay, DocumentLink } from '@/components/domains/hr/profile';
+import { EmployeeNoticePeriod } from './employee-notice-period';
 import {
   Dialog,
   DialogContent,
@@ -374,6 +375,12 @@ export function EmployeeProfileViewOnly({ hrProfile: hr, workEmail }: EmployeePr
             <InfoRow label="Designation" value={hr.designation} />
             <InfoRow label="Date of Joining" value={hr.dateOfJoining ? formatDate(new Date(hr.dateOfJoining)) : null} />
           </dl>
+          {hr.dateOfJoining && (
+            <div className="mt-4 pt-4 border-t">
+              <dt className="text-sm font-medium text-gray-500 mb-2">Probation & Notice Period</dt>
+              <EmployeeNoticePeriod dateOfJoining={new Date(hr.dateOfJoining)} variant="detailed" />
+            </div>
+          )}
         </CardContent>
       </Card>
 
