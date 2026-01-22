@@ -134,6 +134,11 @@ html { scroll-behavior: smooth; }
 .feature-list li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--gray-600); padding: 0.25rem 0; }
 .feature-list li::before { content: "✓"; color: var(--primary); font-weight: 700; }
 
+/* Coming Soon Badge */
+.feature-card.coming-soon { position: relative; opacity: 0.85; }
+.feature-card.coming-soon::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.3) 100%); border-radius: 16px; pointer-events: none; }
+.coming-soon-badge { position: absolute; top: 1rem; right: 1rem; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-size: 0.7rem; font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4); }
+
 /* Also Includes */
 .also-includes { margin-top: 3rem; text-align: center; }
 .also-includes-label { font-size: 0.875rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }
@@ -144,6 +149,63 @@ html { scroll-behavior: smooth; }
     .also-includes { margin-top: 2rem; }
     .also-includes-items { gap: 0.75rem; }
     .also-includes-item { padding: 0.5rem 1rem; font-size: 0.85rem; }
+}
+
+/* Smart Features (AI & WhatsApp) */
+.smart-features { padding: 6rem 0; background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 50%, #f0f9ff 100%); }
+.smart-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; }
+.smart-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: var(--shadow-lg); border: 1px solid var(--gray-200); overflow: hidden; }
+.smart-card-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.smart-card-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.smart-card-icon.ai { background: linear-gradient(135deg, #8b5cf6, #6366f1); color: white; }
+.smart-card-icon.whatsapp { background: #25D366; color: white; }
+.smart-card-title { font-size: 1.25rem; font-weight: 700; color: var(--gray-900); margin-bottom: 0.25rem; }
+.smart-card-subtitle { font-size: 0.9rem; color: var(--gray-500); }
+.smart-card-footer { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--gray-100); }
+.smart-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--gray-100); color: var(--gray-600); font-size: 0.8rem; font-weight: 500; padding: 0.5rem 1rem; border-radius: 100px; }
+
+/* AI Chat Mockup */
+.ai-chat-mockup { background: var(--gray-50); border-radius: 12px; padding: 1rem; }
+.ai-message { margin-bottom: 1rem; }
+.ai-message:last-of-type { margin-bottom: 0; }
+.ai-message.user .ai-message-content { background: var(--primary); color: white; margin-left: auto; max-width: 85%; border-radius: 16px 16px 4px 16px; padding: 0.75rem 1rem; font-size: 0.9rem; }
+.ai-message.assistant .ai-message-content { background: white; color: var(--gray-800); max-width: 95%; border-radius: 16px 16px 16px 4px; padding: 1rem; font-size: 0.875rem; border: 1px solid var(--gray-200); box-shadow: var(--shadow-md); }
+.ai-message.assistant ul { margin: 0.5rem 0 0.75rem 1.25rem; padding: 0; }
+.ai-message.assistant li { margin-bottom: 0.25rem; color: var(--gray-600); }
+.ai-message.assistant strong { color: var(--gray-900); }
+.ai-action { display: block; margin-top: 0.75rem; color: var(--primary); font-weight: 500; font-size: 0.85rem; }
+.ai-suggestions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+.ai-suggestion { background: white; border: 1px solid var(--gray-200); color: var(--gray-600); font-size: 0.75rem; padding: 0.4rem 0.75rem; border-radius: 100px; cursor: pointer; transition: all 0.2s; }
+.ai-suggestion:hover { border-color: var(--primary); color: var(--primary); }
+
+/* WhatsApp Mockup */
+.whatsapp-mockup { background: #e5ddd5; border-radius: 12px; overflow: hidden; }
+.whatsapp-header { background: #075e54; color: white; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; }
+.whatsapp-avatar { width: 36px; height: 36px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; }
+.whatsapp-contact { flex: 1; }
+.whatsapp-name { font-weight: 600; font-size: 0.95rem; }
+.whatsapp-status { font-size: 0.75rem; opacity: 0.8; }
+.whatsapp-messages { padding: 1rem; min-height: 180px; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+.whatsapp-message { max-width: 90%; }
+.whatsapp-message.incoming { margin-left: 0; }
+.whatsapp-message-content { background: white; border-radius: 8px; padding: 0.75rem; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); }
+.whatsapp-message-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--gray-900); }
+.whatsapp-message-body { font-size: 0.85rem; color: var(--gray-700); line-height: 1.5; }
+.whatsapp-message-body strong { color: var(--gray-900); }
+.whatsapp-message-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--gray-100); }
+.whatsapp-btn { flex: 1; text-align: center; padding: 0.5rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.whatsapp-btn.approve { background: #dcfce7; color: #16a34a; }
+.whatsapp-btn.reject { background: #fee2e2; color: #dc2626; }
+.whatsapp-time { font-size: 0.7rem; color: var(--gray-500); text-align: right; margin-top: 0.25rem; }
+
+@media (max-width: 1024px) {
+    .smart-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+    .smart-features { padding: 3rem 0; }
+    .smart-card { padding: 1.5rem; }
+    .smart-card-header { flex-direction: column; text-align: center; }
+    .ai-suggestions { justify-content: center; }
 }
 
 /* Domains */
