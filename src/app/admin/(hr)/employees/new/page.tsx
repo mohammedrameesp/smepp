@@ -60,6 +60,7 @@ export default function NewEmployeePage() {
   const [, setNextEmployeeCode] = useState<string>('');
   const [enabledModules, setEnabledModules] = useState<string[]>([]);
   const [authConfig, setAuthConfig] = useState<AuthConfig | null>(null);
+  const [hasMultipleLocations, setHasMultipleLocations] = useState(false);
   const [, setLoadingModules] = useState(true);
   const [managers, setManagers] = useState<{ id: string; name: string | null; email: string }[]>([]);
 
@@ -84,7 +85,6 @@ export default function NewEmployeePage() {
       department: '',
       dateOfJoining: '',
       workLocation: '',
-      probationEndDate: '',
       sponsorshipType: '',
       reportingToId: '',
       isEmployee: true,
@@ -150,6 +150,7 @@ export default function NewEmployeePage() {
           const data = await response.json();
           setEnabledModules(data.organization?.enabledModules || []);
           setAuthConfig(data.authConfig || null);
+          setHasMultipleLocations(data.organization?.hasMultipleLocations || false);
           // For SSO orgs, canLogin is always true (they need to authenticate)
           if (data.authConfig?.hasSSO) {
             setValue('canLogin', true);
@@ -476,7 +477,7 @@ export default function NewEmployeePage() {
                   </div>
 
                   {/* Date of Joining & Work Location */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className={`grid grid-cols-1 ${hasMultipleLocations ? 'md:grid-cols-2' : ''} gap-4`}>
                     <div className="space-y-2">
                       <Label htmlFor="dateOfJoining">Date of Joining</Label>
                       <DatePicker
@@ -487,29 +488,17 @@ export default function NewEmployeePage() {
                         maxDate={new Date()}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="workLocation">Work Location</Label>
-                      <LocationSelect
-                        id="workLocation"
-                        value={watch('workLocation') || ''}
-                        onChange={(val) => setValue('workLocation', val)}
-                        placeholder="Select location"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Probation End Date (optional override) */}
-                  <div className="space-y-2">
-                    <Label htmlFor="probationEndDate">Probation End Date (Optional)</Label>
-                    <DatePicker
-                      id="probationEndDate"
-                      value={watch('probationEndDate') || ''}
-                      onChange={(val) => setValue('probationEndDate', val)}
-                      placeholder="DD/MM/YYYY"
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Leave blank to use organization default. Notice period is calculated automatically based on tenure.
-                    </p>
+                    {hasMultipleLocations && (
+                      <div className="space-y-2">
+                        <Label htmlFor="workLocation">Work Location</Label>
+                        <LocationSelect
+                          id="workLocation"
+                          value={watch('workLocation') || ''}
+                          onChange={(val) => setValue('workLocation', val)}
+                          placeholder="Select location"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Sponsorship Type */}
