@@ -3,6 +3,7 @@ export { EmployeeListTableClient } from './employee-list-table-client';
 export { EmployeeListTableFiltered, type EmployeeListItem } from './employee-list-table-filtered';
 export { EmployeeActions } from './employee-actions';
 export { EmployeeHRViewSection } from './employee-hr-view';
+export { EmployeeNoticePeriod, useEmploymentInfo } from './employee-notice-period';
 export { EmployeeProfileViewOnly } from './employee-profile-view-only';
 export { EmployeeLeaveSection } from './employee-leave-section';
 export { EmployeeActionsDropdown } from './employee-actions-dropdown';

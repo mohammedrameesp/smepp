@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAutoSave, AutoSaveIndicator } from '@/hooks/use-auto-save';
-import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings, LocationsSettings, ExchangeRateSettings, PayrollSettings, LeaveTypesSettings, PublicHolidaysSettings } from '@/features/settings/components';
+import { AssetCategoriesSettings, AssetTypeMappingsSettings, CodeFormatSettings, DepreciationCategoriesSettings, EmploymentDefaultsSettings, LocationsSettings, ExchangeRateSettings, PayrollSettings, LeaveTypesSettings, PublicHolidaysSettings } from '@/features/settings/components';
 import { CurrencySelector } from '@/components/currency-selector';
 import { ApprovalWorkflowDisplay } from '@/features/approvals/components';
 import type { CodeFormatConfig } from '@/lib/utils/code-prefix';
@@ -810,6 +810,11 @@ export function OrganizationTabs({
                 </CardContent>
               </Card>
 
+              {/* Employment Terms - show when employees module is enabled */}
+              {enabledModules.includes('employees') && (
+                <EmploymentDefaultsSettings />
+              )}
+
               {enabledModules.includes('leave') && (
                 <>
                   <LeaveTypesSettings />
@@ -819,9 +824,9 @@ export function OrganizationTabs({
               {enabledModules.includes('payroll') && (
                 <PayrollSettings />
               )}
-              {!enabledModules.includes('leave') && !enabledModules.includes('payroll') && (
+              {!enabledModules.includes('employees') && !enabledModules.includes('leave') && !enabledModules.includes('payroll') && (
                 <ModuleRequiredPlaceholder
-                  moduleName="Leave or Payroll"
+                  moduleName="Employees, Leave, or Payroll"
                   onEnableClick={() => setConfigTab('general')}
                 />
               )}

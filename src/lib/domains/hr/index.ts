@@ -9,4 +9,5 @@
 // - leave → @/features/leave
 // - payroll → @/features/payroll
 
-// This domain is now empty (safe to delete)
+// Employment defaults and utilities (Qatar Labor Law)
+export * from './employment-defaults';

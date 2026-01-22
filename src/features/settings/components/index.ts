@@ -4,6 +4,7 @@ export { AssetTypeMappingsSettings } from './asset-type-mappings-settings';
 export { CodeFormatSettings } from './code-format-settings';
 export { DataExportImport } from './data-export-import';
 export { DepreciationCategoriesSettings } from './depreciation-categories-settings';
+export { EmploymentDefaultsSettings } from './employment-defaults-settings';
 export { ExchangeRateSettings } from './exchange-rate-settings';
 export { LocationsSettings } from './locations-settings';
 export { PayrollSettings } from './payroll-settings';
