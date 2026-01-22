@@ -56,7 +56,6 @@ import {
   Pencil,
   Trash2,
   Loader2,
-  Download,
   Info,
 } from 'lucide-react';
 import {
@@ -85,7 +84,6 @@ export function DepreciationCategoriesSettings({
 }: DepreciationCategoriesSettingsProps) {
   const [categories, setCategories] = useState<DepreciationCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [seeding, setSeeding] = useState(false);
 
   // Create form state
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -124,6 +122,8 @@ export function DepreciationCategoriesSettings({
       }
     } catch (error) {
       console.error('Error seeding default categories:', error);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -132,53 +132,29 @@ export function DepreciationCategoriesSettings({
       const response = await fetch('/api/depreciation/categories');
       if (response.ok) {
         const data = await response.json();
-        setCategories(data.categories || []);
+        const fetchedCategories = data.categories || [];
+
+        // Auto-seed defaults if no categories exist
+        if (fetchedCategories.length === 0) {
+          await seedDefaultCategories();
+        } else {
+          setCategories(fetchedCategories);
+          setLoading(false);
+        }
       } else {
         toast.error('Failed to load depreciation categories');
+        setLoading(false);
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast.error('Failed to load depreciation categories');
-    } finally {
       setLoading(false);
     }
-  }, []);
+  }, [seedDefaultCategories]);
 
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
-
-  async function handleSeedDefaults() {
-    setSeeding(true);
-    try {
-      const response = await fetch('/api/depreciation/categories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'seed' }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const created = data.results?.filter((r: { action: string }) => r.action === 'created').length || 0;
-        const existed = data.results?.filter((r: { action: string }) => r.action === 'exists').length || 0;
-
-        if (created > 0) {
-          toast.success(`Created ${created} default categories`);
-        } else if (existed > 0) {
-          toast.info('All default categories already exist');
-        }
-        fetchCategories();
-      } else {
-        const data = await response.json();
-        toast.error(data.error || 'Failed to seed categories');
-      }
-    } catch (error) {
-      console.error('Error seeding categories:', error);
-      toast.error('Failed to seed categories');
-    } finally {
-      setSeeding(false);
-    }
-  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -367,29 +343,12 @@ export function DepreciationCategoriesSettings({
                 </CardDescription>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {isAdmin && categories.length === 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSeedDefaults}
-                  disabled={seeding}
-                >
-                  {seeding ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4 mr-2" />
-                  )}
-                  Load Defaults
-                </Button>
-              )}
-              {isAdmin && (
-                <Button size="sm" onClick={() => setShowCreateDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Category
-                </Button>
-              )}
-            </div>
+            {isAdmin && (
+              <Button size="sm" onClick={() => setShowCreateDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Category
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
