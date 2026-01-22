@@ -34,16 +34,16 @@ interface ColorStepProps {
 const PLATFORM_DEFAULT_PRIMARY = '#0f172a';
 const PLATFORM_DEFAULT_SECONDARY = '#64748b';
 
-// Curated color palette - fewer, more distinct options
+// Curated color palette - dark, professional colors
 const COLOR_PRESETS = [
-  { name: 'Slate', value: '#0f172a' },
-  { name: 'Blue', value: '#2563eb' },
-  { name: 'Indigo', value: '#4f46e5' },
-  { name: 'Purple', value: '#7c3aed' },
-  { name: 'Rose', value: '#e11d48' },
-  { name: 'Orange', value: '#ea580c' },
-  { name: 'Green', value: '#16a34a' },
-  { name: 'Teal', value: '#0d9488' },
+  { name: 'Slate', value: '#0f172a' },      // Dark slate (default)
+  { name: 'Navy', value: '#1e3a5f' },       // Deep navy blue
+  { name: 'Midnight', value: '#1e1b4b' },   // Deep indigo/midnight
+  { name: 'Charcoal', value: '#1f2937' },   // Dark gray
+  { name: 'Forest', value: '#14532d' },     // Deep forest green
+  { name: 'Burgundy', value: '#7f1d1d' },   // Deep burgundy/maroon
+  { name: 'Ocean', value: '#164e63' },      // Deep cyan/ocean
+  { name: 'Plum', value: '#581c87' },       // Deep purple/plum
 ];
 
 export function ColorStep({
