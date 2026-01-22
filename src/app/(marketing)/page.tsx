@@ -1,7 +1,12 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import './landing.css';
 
 export default function LandingPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <>
       {/* Navigation */}
@@ -11,17 +16,20 @@ export default function LandingPage() {
             <Link href="/" className="logo">
               <img src="/sme-wordmark-transparent.png" alt="Durj" className="h-8 w-auto" />
             </Link>
-            <ul className="nav-links">
-              <li><a href="#features">Features</a></li>
-              <li><a href="#domains">Modules</a></li>
-              <li><a href="#qatar">Why Qatar</a></li>
-              <li><a href="#security">Security</a></li>
-              <li><a href="#pricing">Pricing</a></li>
+            <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+              <li><a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a></li>
+              <li><a href="#qatar" onClick={() => setMobileMenuOpen(false)}>Why Qatar</a></li>
+              <li><a href="#platform" onClick={() => setMobileMenuOpen(false)}>Platform</a></li>
             </ul>
             <div className="nav-cta">
               <Link href="/get-started" className="btn btn-primary">Get Started</Link>
             </div>
-            <button className="mobile-menu-btn" aria-label="Menu">
+            <button
+              className="mobile-menu-btn"
+              aria-label="Menu"
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 12h18M3 6h18M3 18h18"/>
               </svg>
@@ -48,7 +56,7 @@ export default function LandingPage() {
               </p>
               <div className="hero-cta">
                 <Link href="/get-started" className="btn btn-primary btn-large">Start Free</Link>
-                <a href="#pricing" className="btn btn-secondary btn-large">View Pricing</a>
+                <a href="#features" className="btn btn-secondary btn-large">View Features</a>
               </div>
               <div className="hero-stats">
                 <div className="stat">
@@ -139,13 +147,9 @@ export default function LandingPage() {
             {[
               { emoji: '📋', problem: '"I forgot to renew the trade license..."', solution: 'Expiry alerts for all company documents - CR, licenses, insurance' },
               { emoji: '💻', problem: '"Which laptop does Ahmed have?"', solution: 'Asset assignment tracking with full history in one click' },
-              { emoji: '💳', problem: '"How much are we spending on software?"', solution: 'Subscription cost dashboard with renewal tracking' },
               { emoji: '🛂', problem: '"Someone\'s passport is expiring?"', solution: 'Employee document tracking - QID, passport, health card expiry alerts' },
-              { emoji: '🛒', problem: '"Who approved this purchase?"', solution: 'Simple purchase approval trail with full audit history' },
-              { emoji: '🚗', problem: '"The car registration expired!"', solution: 'Vehicle Istimara tracking with insurance reminders' },
               { emoji: '🏖️', problem: '"How many leave days does Sara have left?"', solution: 'Real-time leave balance tracking with approval workflow' },
-              { emoji: '💰', problem: '"WPS file rejected again..."', solution: 'Qatar-compliant WPS file generation, every time' },
-              { emoji: '🚚', problem: '"What was that supplier\'s contact?"', solution: 'Centralized supplier database with engagement history' },
+              { emoji: '🛒', problem: '"Who approved this purchase?"', solution: 'Multi-level approval workflows with full audit history' },
             ].map((item, i) => (
               <div key={i} className="pain-card">
                 <div className="pain-emoji">{item.emoji}</div>
@@ -175,21 +179,18 @@ export default function LandingPage() {
             </div>
             <h2 className="section-title">Everything You Need to Run Your Business</h2>
             <p className="section-description">
-              From asset tracking to payroll management, Durj provides a comprehensive suite
+              From asset tracking to leave management, Durj provides a comprehensive suite
               of tools designed specifically for SMEs in Qatar.
             </p>
           </div>
           <div className="features-grid">
             {[
-              { icon: '📦', color: 'teal', title: 'Asset Management', desc: 'Track all your hardware and equipment with complete lifecycle management.', list: ['Assignment history tracking', 'Warranty expiry alerts', 'Maintenance history', 'Location tracking', 'Depreciation calculations'] },
-              { icon: '💳', color: 'blue', title: 'Subscription Tracking', desc: 'Stop paying for unused subscriptions. Track all your SaaS and services.', list: ['Renewal date alerts', 'Cost analysis dashboard', 'Multi-currency support', 'Spending trends'] },
-              { icon: '👥', color: 'purple', title: 'HR & Employees', desc: 'Manage employee profiles with comprehensive document tracking.', list: ['QID & passport expiry alerts', 'Health card tracking', 'Employee onboarding', 'Profile management'] },
-              { icon: '🏖️', color: 'amber', title: 'Leave Management', desc: 'Complete leave request and approval workflow for your team.', list: ['Multiple leave types', 'Balance tracking', 'Team calendar view', 'Approval workflow'] },
-              { icon: '💰', color: 'emerald', title: 'Payroll Processing', desc: 'Qatar-compliant payroll with WPS file generation.', list: ['Salary structures', 'WPS file generation', 'Gratuity calculations', 'Loans & advances'] },
-              { icon: '🚚', color: 'rose', title: 'Supplier Management', desc: 'Centralized vendor database with engagement tracking.', list: ['Supplier registration', 'Performance notes', 'Engagement tracking', 'Contact management'] },
-              { icon: '🛒', color: 'cyan', title: 'Purchase Requests', desc: 'Streamline procurement with approval workflows and cost tracking.', list: ['Request submission', 'Multi-level approval', 'Cost categorization', 'Multi-currency support'] },
-              { icon: '📄', color: 'indigo', title: 'Company Documents', desc: 'Track all your business licenses and compliance documents.', list: ['Trade license (CR) tracking', 'Municipality licenses', 'Insurance policies', 'Expiry alerts'] },
-              { icon: '📊', color: 'orange', title: 'Reports & Analytics', desc: 'Comprehensive reporting with Excel exports and activity logs.', list: ['Dashboard insights', 'Excel exports', 'Activity audit trail', 'Cost analysis'] },
+              { icon: '💰', color: 'emerald', title: 'Payroll & WPS', desc: 'Full payroll processing with Qatar WPS compliance built-in.', list: ['WPS file generation', 'Gratuity (EOSB) calculations', 'Employee loans'] },
+              { icon: '👥', color: 'purple', title: 'HR & Employees', desc: 'Complete employee management with document tracking.', list: ['QID & passport expiry alerts', 'Employee self-service portal', 'Profile change requests'] },
+              { icon: '🏖️', color: 'amber', title: 'Leave Management', desc: 'Complete leave request and approval workflow for your team.', list: ['Balance tracking & calendar view', 'WhatsApp approval notifications', 'Multiple leave types'] },
+              { icon: '📦', color: 'teal', title: 'Asset Management', desc: 'Track all your hardware and equipment with complete lifecycle management.', list: ['Assignment & request workflows', 'Warranty expiry alerts', 'Depreciation tracking'] },
+              { icon: '🛒', color: 'cyan', title: 'Purchase Requests', desc: 'Streamline procurement with multi-level approval workflows.', list: ['Multi-level approvals', 'WhatsApp notifications', 'Full audit trail'] },
+              { icon: '📊', color: 'orange', title: 'Reports & Analytics', desc: 'Comprehensive reporting with Excel exports and activity logs.', list: ['Dashboard insights', 'Excel exports', 'Cost analysis'] },
             ].map((feature, i) => (
               <div key={i} className="feature-card">
                 <div className={`feature-icon ${feature.color}`}>{feature.icon}</div>
@@ -201,74 +202,20 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Domains Section */}
-      <section className="domains" id="domains">
-        <div className="container">
-          <div className="section-header">
-            <div className="section-label">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="7" height="7"/>
-                <rect x="14" y="3" width="7" height="7"/>
-                <rect x="14" y="14" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
-              </svg>
-              Organized by Domain
-            </div>
-            <h2 className="section-title">Three Integrated Business Domains</h2>
-            <p className="section-description">
-              Our modular architecture organizes features into logical business domains,
-              making it easy to find what you need.
-            </p>
-          </div>
-          <div className="domains-grid">
-            <div className="domain-card">
-              <div className="domain-header">
-                <div className="domain-icon hr">👥</div>
-                <div>
-                  <h3 className="domain-title">HR Management</h3>
-                  <p className="domain-subtitle">Human resources, leave, and payroll</p>
-                </div>
+          <div className="also-includes">
+            <div className="also-includes-label">Also Includes</div>
+            <div className="also-includes-items">
+              <div className="also-includes-item">
+                <span className="also-includes-icon">💳</span>
+                <span>Subscription Tracking</span>
               </div>
-              <div className="domain-features">
-                <div className="domain-feature"><span className="domain-feature-icon">👤</span> Employee Profiles</div>
-                <div className="domain-feature"><span className="domain-feature-icon">📋</span> Document Expiry</div>
-                <div className="domain-feature"><span className="domain-feature-icon">🏖️</span> Leave Requests</div>
-                <div className="domain-feature"><span className="domain-feature-icon">📅</span> Team Calendar</div>
-                <div className="domain-feature"><span className="domain-feature-icon">💰</span> Payroll Runs</div>
-                <div className="domain-feature"><span className="domain-feature-icon">🎁</span> Gratuity Calculator</div>
+              <div className="also-includes-item">
+                <span className="also-includes-icon">🚚</span>
+                <span>Supplier Management</span>
               </div>
-            </div>
-            <div className="domain-card">
-              <div className="domain-header">
-                <div className="domain-icon ops">📦</div>
-                <div>
-                  <h3 className="domain-title">Operations</h3>
-                  <p className="domain-subtitle">Assets, subscriptions, suppliers & procurement</p>
-                </div>
-              </div>
-              <div className="domain-features">
-                <div className="domain-feature"><span className="domain-feature-icon">💻</span> Asset Registry</div>
-                <div className="domain-feature"><span className="domain-feature-icon">💳</span> Subscriptions</div>
-                <div className="domain-feature"><span className="domain-feature-icon">🚚</span> Suppliers</div>
-                <div className="domain-feature"><span className="domain-feature-icon">🛒</span> Purchase Requests</div>
-              </div>
-            </div>
-            <div className="domain-card">
-              <div className="domain-header">
-                <div className="domain-icon system">⚙️</div>
-                <div>
-                  <h3 className="domain-title">System</h3>
-                  <p className="domain-subtitle">Administration and configuration</p>
-                </div>
-              </div>
-              <div className="domain-features">
-                <div className="domain-feature"><span className="domain-feature-icon">👥</span> User Management</div>
-                <div className="domain-feature"><span className="domain-feature-icon">📄</span> Company Documents</div>
-                <div className="domain-feature"><span className="domain-feature-icon">📈</span> Reports</div>
-                <div className="domain-feature"><span className="domain-feature-icon">📜</span> Activity Log</div>
+              <div className="also-includes-item">
+                <span className="also-includes-icon">📄</span>
+                <span>Company Documents</span>
               </div>
             </div>
           </div>
@@ -283,22 +230,22 @@ export default function LandingPage() {
               <h2>Built Specifically for Qatar</h2>
               <p>
                 Durj is designed from the ground up for businesses operating in Qatar.
-                From QAR currency handling to WPS compliance, every feature understands
+                From QAR currency handling to labor law compliance, every feature understands
                 the local business landscape.
               </p>
               <div className="qatar-features">
                 <div className="qatar-feature">
-                  <div className="qatar-feature-icon">🇶🇦</div>
+                  <div className="qatar-feature-icon">🏦</div>
                   <div className="qatar-feature-text">
-                    <h4>Qatar Labor Law Compliance</h4>
-                    <p>Gratuity calculations, leave entitlements, and WPS file generation</p>
+                    <h4>WPS Compliance</h4>
+                    <p>Generate SIF files for Wage Protection System submissions</p>
                   </div>
                 </div>
                 <div className="qatar-feature">
-                  <div className="qatar-feature-icon">💵</div>
+                  <div className="qatar-feature-icon">💰</div>
                   <div className="qatar-feature-text">
-                    <h4>QAR as Default Currency</h4>
-                    <p>Multi-currency support with automatic QAR conversion</p>
+                    <h4>Gratuity Calculations</h4>
+                    <p>End of service benefits per Qatar Labor Law (3 weeks/year)</p>
                   </div>
                 </div>
                 <div className="qatar-feature">
@@ -309,24 +256,24 @@ export default function LandingPage() {
                   </div>
                 </div>
                 <div className="qatar-feature">
-                  <div className="qatar-feature-icon">🕐</div>
+                  <div className="qatar-feature-icon">🇶🇦</div>
                   <div className="qatar-feature-text">
-                    <h4>Qatar Timezone</h4>
-                    <p>All dates display in Asia/Qatar (UTC+3) timezone</p>
+                    <h4>Local Compliance</h4>
+                    <p>QAR currency, Qatar timezone, and labor law leave entitlements</p>
                   </div>
                 </div>
               </div>
             </div>
             <div className="qatar-visual">
               <div className="qatar-stat-card">
-                <div className="qatar-stat-icon">📄</div>
+                <div className="qatar-stat-icon">🏦</div>
                 <div className="qatar-stat-value">WPS</div>
-                <div className="qatar-stat-label">File Generation</div>
+                <div className="qatar-stat-label">Compliant</div>
               </div>
               <div className="qatar-stat-card">
-                <div className="qatar-stat-icon">🎁</div>
-                <div className="qatar-stat-value">Auto</div>
-                <div className="qatar-stat-label">Gratuity Calc</div>
+                <div className="qatar-stat-icon">💰</div>
+                <div className="qatar-stat-value">EOSB</div>
+                <div className="qatar-stat-label">Gratuity</div>
               </div>
               <div className="qatar-stat-card">
                 <div className="qatar-stat-icon">📅</div>
@@ -343,25 +290,26 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Security Section */}
-      <section className="security" id="security">
+      {/* Platform Section */}
+      <section className="security" id="platform">
         <div className="container">
           <div className="security-content">
             <div className="security-visual">
               <div className="security-card">
                 <div className="security-header">
-                  <div className="security-shield">🛡️</div>
+                  <div className="security-shield">🚀</div>
                   <div>
-                    <div className="security-title">Security Status</div>
-                    <div className="security-status">● All Systems Operational</div>
+                    <div className="security-title">Platform Features</div>
+                    <div className="security-status">● Modern & Secure</div>
                   </div>
                 </div>
                 <div className="security-items">
                   {[
-                    { icon: '🔐', title: 'Azure AD Authentication', desc: 'Enterprise-grade SSO integration' },
-                    { icon: '⚡', title: 'Rate Limiting', desc: 'Token bucket algorithm protection' },
-                    { icon: '📝', title: 'Audit Trail', desc: 'Complete activity logging' },
-                    { icon: '📁', title: 'Secure File Storage', desc: 'Magic number verification' },
+                    { icon: '📱', title: 'WhatsApp Alerts', desc: 'Approval notifications sent directly to WhatsApp' },
+                    { icon: '🔐', title: 'Enterprise SSO', desc: 'Google, Microsoft Azure AD, or custom OAuth' },
+                    { icon: '🌐', title: 'Custom Domain', desc: 'Use your own domain (app.yourcompany.com)' },
+                    { icon: '✅', title: 'Multi-level Approvals', desc: 'Configurable approval workflows for your team' },
+                    { icon: '👤', title: 'Employee Self-Service', desc: 'Portal for leave, profile updates, and documents' },
                   ].map((item, i) => (
                     <div key={i} className="security-item">
                       <div className="security-item-icon">{item.icon}</div>
@@ -376,13 +324,13 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="security-text">
-              <h2>Enterprise-Grade Security</h2>
+              <h2>Built for Modern Teams</h2>
               <p>
-                Your business data deserves the highest level of protection. Durj implements
-                industry-leading security measures to keep your information safe.
+                A platform designed for how your team actually works. From WhatsApp notifications
+                to enterprise SSO — Durj fits seamlessly into your workflow.
               </p>
               <div className="security-badges">
-                {['🔒 HTTPS Encryption', '🛡️ CSRF Protection', '✅ Input Validation', '👥 Role-Based Access', '🔍 IDOR Protection', '📋 Security Headers'].map((badge, i) => (
+                {['🔒 HTTPS Encryption', '📝 Audit Trail', '✅ Role-Based Access', '📊 Activity Logs'].map((badge, i) => (
                   <div key={i} className="security-badge">
                     <span className="security-badge-icon">{badge.split(' ')[0]}</span>
                     {badge.split(' ').slice(1).join(' ')}
@@ -394,7 +342,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing Section */}
+      {/* Pricing Section - Temporarily Hidden
       <section className="pricing" id="pricing">
         <div className="container">
           <div className="section-header">
@@ -456,6 +404,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+      */}
 
       {/* CTA Section */}
       <section className="cta">
@@ -468,7 +417,7 @@ export default function LandingPage() {
               </p>
               <div className="cta-buttons">
                 <Link href="/get-started" className="btn btn-primary btn-large">Start Free</Link>
-                <a href="#pricing" className="btn btn-secondary btn-large">View Pricing</a>
+                <a href="#features" className="btn btn-secondary btn-large">View Features</a>
               </div>
             </div>
           </div>
@@ -492,8 +441,8 @@ export default function LandingPage() {
               <div className="footer-title">Product</div>
               <ul className="footer-links">
                 <li><a href="#features">Features</a></li>
-                <li><a href="#pricing">Pricing</a></li>
-                <li><a href="#security">Security</a></li>
+                {/* <li><a href="#pricing">Pricing</a></li> */}
+                <li><a href="#platform">Platform</a></li>
               </ul>
             </div>
             <div>

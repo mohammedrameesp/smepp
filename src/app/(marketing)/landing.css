@@ -134,6 +134,18 @@ html { scroll-behavior: smooth; }
 .feature-list li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--gray-600); padding: 0.25rem 0; }
 .feature-list li::before { content: "✓"; color: var(--primary); font-weight: 700; }
 
+/* Also Includes */
+.also-includes { margin-top: 3rem; text-align: center; }
+.also-includes-label { font-size: 0.875rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }
+.also-includes-items { display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; }
+.also-includes-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.25rem; background: var(--gray-100); border-radius: 100px; font-size: 0.95rem; font-weight: 500; color: var(--gray-700); }
+.also-includes-icon { font-size: 1.25rem; }
+@media (max-width: 768px) {
+    .also-includes { margin-top: 2rem; }
+    .also-includes-items { gap: 0.75rem; }
+    .also-includes-item { padding: 0.5rem 1rem; font-size: 0.85rem; }
+}
+
 /* Domains */
 .domains { padding: 6rem 0; background: var(--gray-50); }
 .domains-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; }
@@ -274,9 +286,38 @@ html { scroll-behavior: smooth; }
     .footer-grid { grid-template-columns: repeat(2, 1fr); }
     .floating-card { display: none; }
 }
+/* Mobile menu open state */
+.nav-links.mobile-open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(10px);
+    padding: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-top: 1px solid var(--gray-200);
+    gap: 0;
+    z-index: 1000;
+}
+.nav-links.mobile-open li {
+    width: 100%;
+}
+.nav-links.mobile-open a {
+    display: block;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+}
+.nav-links.mobile-open a:hover {
+    background: var(--gray-100);
+}
+
 @media (max-width: 768px) {
     .container { padding: 0 1rem; }
     .nav-links { display: none; }
+    .nav-links.mobile-open { display: flex; }
     .mobile-menu-btn { display: block; }
     .hero { padding: 6rem 0 3rem; min-height: auto; }
     .hero h1 { font-size: 2rem; }
