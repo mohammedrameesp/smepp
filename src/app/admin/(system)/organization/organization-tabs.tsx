@@ -80,6 +80,9 @@ const MODULE_NAMES: Record<string, string> = {
   documents: 'Documents',
 };
 
+// Core modules are always enabled silently - hide them from UI display
+const HIDDEN_MODULES = ['employees'];
+
 // Placeholder component for disabled modules
 function ModuleRequiredPlaceholder({
   moduleName,
@@ -624,17 +627,19 @@ export function OrganizationTabs({
                     Enabled Modules
                   </CardTitle>
                   <CardDescription>
-                    {enabledModules.length} module{enabledModules.length !== 1 ? 's' : ''} enabled
+                    {enabledModules.filter(m => !HIDDEN_MODULES.includes(m)).length} module{enabledModules.filter(m => !HIDDEN_MODULES.includes(m)).length !== 1 ? 's' : ''} enabled
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex flex-wrap gap-2">
-                    {enabledModules.map((moduleId) => (
-                      <Badge key={moduleId} variant="secondary">
-                        {MODULE_NAMES[moduleId] || moduleId}
-                      </Badge>
-                    ))}
-                    {enabledModules.length === 0 && (
+                    {enabledModules
+                      .filter((moduleId) => !HIDDEN_MODULES.includes(moduleId))
+                      .map((moduleId) => (
+                        <Badge key={moduleId} variant="secondary">
+                          {MODULE_NAMES[moduleId] || moduleId}
+                        </Badge>
+                      ))}
+                    {enabledModules.filter(m => !HIDDEN_MODULES.includes(m)).length === 0 && (
                       <p className="text-sm text-muted-foreground">No modules enabled</p>
                     )}
                   </div>

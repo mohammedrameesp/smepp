@@ -466,60 +466,145 @@
 
 // Test data
 const T = {
-    "1. Signup & Registration": {
-        "Account Creation": [
-            ["Create account with valid email", "Fill signup form with name, email, password", "Account created, verification email sent", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
-            ["Email format validation", "Enter invalid email format", "Validation error shown", "src/app/api/auth/signup/route.ts", "High", "Automated"],
-            ["Password strength validation", "Enter weak password", "Validation error with requirements", "src/lib/security/password-validation.ts", "Critical", "Automated"],
-            ["Duplicate email rejected", "Signup with existing email", "Error: email already registered", "src/app/api/auth/signup/route.ts", "Critical", "Automated"],
-            ["Terms acceptance required", "Try signup without accepting terms", "Validation error", "src/app/(auth)/signup/page.tsx", "High", "E2E"],
-            ["Google OAuth signup (new user)", "Click Google signup, complete flow", "Account created, proceed to org setup", "src/lib/oauth/google.ts", "Critical", "Manual"],
-            ["Microsoft OAuth signup (new user)", "Click Microsoft signup, complete flow", "Account created via Azure AD", "src/lib/oauth/azure.ts", "High", "Manual"]
+    "1. Self-Service Registration (/get-started)": {
+        "Get Started Page Access": [
+            ["View /get-started page", "Navigate to /get-started", "Shows 2-step registration form with progress indicator", "src/app/get-started/page.tsx", "Critical", "E2E"],
+            ["Redirect if already logged in", "Navigate to /get-started while authenticated", "Redirects to dashboard or setup", "src/middleware.ts", "High", "E2E"],
+            ["Page loads without errors", "Load /get-started page", "Step 1 (Company) form fields rendered correctly", "src/app/get-started/page.tsx", "Critical", "E2E"],
+            ["Shows 'Already have an account?' link", "View page header", "Sign in link visible and navigates to /login", "src/app/get-started/page.tsx", "Medium", "E2E"]
         ],
-        "Password Requirements": [
-            ["Minimum 8 characters required", "Enter 7 character password", "Validation error: at least 8 characters", "src/lib/security/password-validation.ts", "Critical", "Automated"],
-            ["Uppercase letter required", "Enter all lowercase password", "Validation error: requires uppercase", "src/lib/security/password-validation.ts", "Critical", "Automated"],
-            ["Lowercase letter required", "Enter all uppercase password", "Validation error: requires lowercase", "src/lib/security/password-validation.ts", "Critical", "Automated"],
-            ["Number required in password", "Enter password without numbers", "Validation error: requires number", "src/lib/security/password-validation.ts", "Critical", "Automated"],
-            ["Common password detection", "Enter 'password123'", "Detected as common, rejected", "src/lib/security/password-validation.ts", "Critical", "Automated"]
+        "Step 1: Company Information": [
+            ["Company name required", "Leave company name empty, try to continue", "Continue button disabled", "src/app/get-started/page.tsx", "Critical", "Automated"],
+            ["Company name minimum 2 characters", "Enter single character company name", "Continue button disabled", "src/app/get-started/page.tsx", "High", "Automated"],
+            ["Subdomain auto-generates from company name", "Enter 'Acme Corporation'", "Subdomain field shows 'acme-corporation'", "src/app/get-started/page.tsx", "High", "E2E"],
+            ["Subdomain minimum 3 characters", "Enter 2-char subdomain manually", "Continue button disabled", "src/app/get-started/page.tsx", "High", "Automated"],
+            ["Subdomain only lowercase alphanumeric and hyphens", "Enter 'My_Company!'", "Converted to 'mycompany'", "src/app/get-started/page.tsx", "High", "Automated"],
+            ["Reserved subdomain blocked", "Enter 'www' or 'admin' or 'api'", "Shows 'This subdomain is not available' error", "src/lib/multi-tenant/subdomain.ts", "Critical", "E2E"],
+            ["Subdomain availability check shows spinner", "Enter new subdomain", "Spinner appears during check", "src/app/get-started/page.tsx", "Medium", "E2E"],
+            ["Available subdomain shows checkmark", "Enter unique subdomain", "Green checkmark appears after check", "src/app/get-started/page.tsx", "High", "E2E"],
+            ["Unavailable subdomain shows X", "Enter existing org subdomain", "Red X appears with error message", "src/app/get-started/page.tsx", "High", "E2E"],
+            ["Manual subdomain edit stops auto-generation", "Edit subdomain manually", "Subsequent company name changes don't update subdomain", "src/app/get-started/page.tsx", "Medium", "E2E"],
+            ["Continue button disabled until valid", "Leave fields empty/invalid", "Continue button is disabled", "src/app/get-started/page.tsx", "Critical", "Automated"],
+            ["Warning: subdomain cannot be changed", "View available subdomain hint", "Shows 'Choose carefully — this cannot be changed later'", "src/app/get-started/page.tsx", "Medium", "E2E"]
+        ],
+        "Step 2: Company Details": [
+            ["Industry required", "Leave industry empty, try to submit", "Submit button disabled", "src/app/get-started/page.tsx", "Critical", "Automated"],
+            ["'Other' industry shows text input", "Select 'Other' from industry dropdown", "Custom industry text field appears", "src/app/get-started/page.tsx", "High", "E2E"],
+            ["Other industry requires 2+ chars", "Select 'Other', enter 1 character", "Submit button disabled", "src/app/get-started/page.tsx", "High", "Automated"],
+            ["Company size required", "Leave company size empty, try to submit", "Submit button disabled", "src/app/get-started/page.tsx", "Critical", "Automated"],
+            ["Email required", "Leave email empty, try to submit", "Submit button disabled", "src/app/get-started/page.tsx", "Critical", "Automated"],
+            ["Email format validation", "Enter 'invalid-email'", "Shows validation error", "src/app/get-started/page.tsx", "Critical", "Automated"],
+            ["Email availability check shows spinner", "Enter email address", "Spinner appears during check", "src/app/get-started/page.tsx", "Medium", "E2E"],
+            ["Duplicate owner email rejected", "Enter email of existing org owner", "Shows 'This email is already registered' error", "src/app/api/organizations/signup/route.ts", "Critical", "E2E"],
+            ["Admin name is optional", "Leave admin name empty, submit", "Form submits successfully", "src/app/get-started/page.tsx", "Medium", "E2E"],
+            ["Back button returns to Step 1", "Click Back button", "Returns to Step 1 with data preserved", "src/app/get-started/page.tsx", "High", "E2E"]
+        ],
+        "Form Submission (POST /api/organizations/signup)": [
+            ["Valid submission creates organization", "Fill all fields correctly, submit", "Organization created with FREE tier", "src/app/api/organizations/signup/route.ts", "Critical", "E2E"],
+            ["Creates OrganizationInvitation", "Complete registration", "Invitation token created with 7-day expiry", "src/app/api/organizations/signup/route.ts", "Critical", "E2E"],
+            ["Seeds default modules", "Complete registration", "Organization has assets, subscriptions, suppliers enabled", "src/app/api/organizations/signup/route.ts", "High", "E2E"],
+            ["Seeds default permissions", "Complete registration", "Default permissions seeded for organization", "src/app/api/organizations/signup/route.ts", "High", "E2E"],
+            ["Seeds default leave types", "Complete registration", "Default leave types created", "src/app/api/organizations/signup/route.ts", "High", "E2E"],
+            ["Seeds default asset categories", "Complete registration", "Default asset categories created", "src/app/api/organizations/signup/route.ts", "High", "E2E"],
+            ["Sends welcome email with invite link", "Complete registration", "Email sent with organization-specific invite URL", "src/app/api/organizations/signup/route.ts", "Critical", "E2E"],
+            ["Returns success response", "Complete registration", "Shows success screen (not error)", "src/app/api/organizations/signup/route.ts", "Critical", "E2E"],
+            ["Notifies super admin", "Complete registration", "Super admin receives notification email (non-blocking)", "src/app/api/organizations/signup/route.ts", "Low", "E2E"]
+        ],
+        "Success Screen": [
+            ["Shows 'Check Your Email!' message", "Complete registration", "Large checkmark icon and 'Check Your Email!' heading", "src/app/get-started/page.tsx", "Critical", "E2E"],
+            ["Shows email address", "Complete registration", "Admin email displayed in message", "src/app/get-started/page.tsx", "High", "E2E"],
+            ["Shows organization name", "Complete registration", "Organization name shown in details", "src/app/get-started/page.tsx", "High", "E2E"],
+            ["Shows portal URL", "Complete registration", "Subdomain.domain displayed (e.g., 'acme.durj.com')", "src/app/get-started/page.tsx", "High", "E2E"],
+            ["Shows 7-day expiry notice", "Complete registration", "Message indicates link expires in 7 days", "src/app/get-started/page.tsx", "Medium", "E2E"],
+            ["Resend email button works", "Click 'Resend email'", "POST to /api/organizations/resend-invite, shows loading state", "src/app/get-started/page.tsx", "High", "E2E"],
+            ["Change email button works", "Click 'Change email address'", "Returns to Step 2 with only email field editable", "src/app/get-started/page.tsx", "High", "E2E"],
+            ["Change email updates invitation", "Change email and submit", "New email receives invite link", "src/app/api/organizations/resend-invite/route.ts", "High", "E2E"],
+            ["Go to Homepage link works", "Click 'Go to Homepage'", "Navigates to /", "src/app/get-started/page.tsx", "Medium", "E2E"]
+        ],
+        "Email Invitation Flow (/invite/[token])": [
+            ["Valid token shows invitation page", "Navigate to /invite/[valid-token]", "Shows organization name and invitation details", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
+            ["Shows organization logo if set", "Org has logo, view invitation", "Logo displayed in invitation", "src/app/invite/[token]/page.tsx", "Medium", "E2E"],
+            ["Expired token shows error", "Navigate to /invite/[expired-token]", "Shows 'Invitation has expired' message", "src/app/api/invitations/[token]/route.ts", "Critical", "E2E"],
+            ["Already accepted token shows error", "Navigate to /invite/[used-token]", "Shows 'This invitation has already been used' message", "src/app/api/invitations/[token]/route.ts", "Critical", "E2E"],
+            ["Invalid token shows error", "Navigate to /invite/[fake-token]", "Shows 'Invitation not found' message", "src/app/api/invitations/[token]/route.ts", "Critical", "E2E"],
+            ["Not logged in: shows two options", "View invitation while logged out", "Shows 'Create Account & Join' and 'Sign in' buttons", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
+            ["'Create Account' redirects to signup", "Click 'Create Account & Join'", "Redirects to /signup?email=...&invite=...", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
+            ["'Sign in' redirects to login", "Click 'Sign in'", "Redirects to /login?callbackUrl=/invite/[token]", "src/app/invite/[token]/page.tsx", "High", "E2E"],
+            ["Email mismatch warning shown", "Logged in with different email", "Warning about email mismatch displayed", "src/app/invite/[token]/page.tsx", "High", "E2E"],
+            ["Shows custom OAuth options if configured", "Org has custom Google OAuth", "Google button shown with org branding", "src/app/invite/[token]/page.tsx", "Medium", "E2E"]
+        ],
+        "Account Creation (from invite)": [
+            ["Signup pre-fills email from invite", "Navigate from invitation to /signup", "Email field pre-populated and read-only", "src/app/(auth)/signup/page.tsx", "Critical", "E2E"],
+            ["Password requirements enforced", "Enter weak password", "Shows password requirements error", "src/lib/security/password-validation.ts", "Critical", "Automated"],
+            ["Successful signup returns to invite", "Complete signup", "Redirects back to /invite/[token]", "src/app/(auth)/signup/page.tsx", "Critical", "E2E"],
+            ["OAuth signup works from invite", "Use Google/Microsoft OAuth", "Account created, returns to /invite/[token]", "src/lib/oauth/google.ts", "High", "E2E"]
+        ],
+        "Invitation Acceptance (POST /api/invitations/[token])": [
+            ["Accept button visible when logged in", "View invitation while authenticated", "Shows 'Accept Invitation' or 'Join Organization' button", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
+            ["Accept creates TeamMember record", "Click accept invitation", "TeamMember created in database", "src/app/api/invitations/[token]/route.ts", "Critical", "E2E"],
+            ["First user becomes owner", "Accept first invitation for org", "isOwner=true, isAdmin=true on TeamMember", "src/app/api/invitations/[token]/route.ts", "Critical", "E2E"],
+            ["Employee code generated if isEmployee", "Accept as employee", "Employee code generated (ORG-YYYY-NNN format)", "src/app/api/invitations/[token]/route.ts", "High", "E2E"],
+            ["Invitation marked as accepted", "Accept invitation", "acceptedAt timestamp set on invitation", "src/app/api/invitations/[token]/route.ts", "High", "E2E"],
+            ["Email mismatch rejected", "Logged in as different email", "Returns 403 error", "src/app/api/invitations/[token]/route.ts", "Critical", "E2E"],
+            ["Already member handled gracefully", "Accept when already a member", "Returns success with alreadyMember=true", "src/app/api/invitations/[token]/route.ts", "High", "E2E"],
+            ["Concurrent acceptance prevented", "Two users accept simultaneously", "Only one succeeds, other gets 410", "src/app/api/invitations/[token]/route.ts", "High", "E2E"]
+        ],
+        "Post-Acceptance Redirect": [
+            ["Redirects to org subdomain", "Accept invitation", "Redirects to https://{slug}.{domain}/admin", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
+            ["New org goes to setup wizard", "First login to new org", "Redirected to /setup if setup incomplete", "src/middleware.ts", "Critical", "E2E"],
+            ["Existing org goes to dashboard", "Accept invite to configured org", "Redirected to /admin dashboard", "src/middleware.ts", "High", "E2E"],
+            ["Session includes organizationId", "Accept and check session", "Session updated with new organizationId", "src/lib/core/auth.ts", "Critical", "E2E"]
         ]
     },
-    "2. Email Verification": {
-        "Verification Email": [
-            ["Verification email sent on signup", "Complete signup form", "Email received with verification link", "src/app/api/auth/signup/route.ts", "Critical", "E2E"],
-            ["Verification link format correct", "Check email link", "Contains valid token, correct URL", "src/app/api/auth/verify/route.ts", "High", "Manual"],
-            ["Click verification link", "Click link in email", "Account verified, redirected to login", "src/app/api/auth/verify/route.ts", "Critical", "E2E"],
-            ["Email verification required before login", "Try login before verifying", "Error: email not verified", "src/lib/core/auth.ts", "Critical", "E2E"]
+    "2. Password Setup & Account Activation": {
+        "Setup Token Validation": [
+            ["Valid setup token shows form", "Navigate to /set-password?token=valid", "Shows password setup form", "src/app/set-password/[token]/page.tsx", "Critical", "E2E"],
+            ["Expired token (>7 days) shows error", "Navigate to /set-password?token=expired", "Shows 'Token expired' error with contact admin message", "src/app/api/auth/set-password/route.ts", "Critical", "E2E"],
+            ["Already-used token shows error", "Navigate to /set-password?token=used", "Shows 'Password already set' message", "src/app/api/auth/set-password/route.ts", "Critical", "E2E"],
+            ["Invalid/fake token shows error", "Navigate to /set-password?token=fake", "Shows 'Invalid token' error", "src/app/api/auth/set-password/route.ts", "Critical", "E2E"]
         ],
-        "Resend Verification": [
-            ["Resend verification email", "Click resend verification link", "New verification email sent", "src/app/api/auth/resend-verification/route.ts", "High", "E2E"],
-            ["Rate limit on resend", "Resend verification 5+ times", "Rate limited after threshold", "src/lib/security/rateLimit.ts", "High", "Automated"],
-            ["Old verification link invalidated", "Use old link after resend", "Error: token invalid", "src/app/api/auth/verify/route.ts", "High", "Automated"]
+        "Password Setup Form": [
+            ["Set password with valid token", "Enter valid password, submit", "Password saved, emailVerified set to true", "src/app/api/auth/set-password/route.ts", "Critical", "E2E"],
+            ["Password must meet complexity requirements", "Enter weak password", "Shows validation error with requirements", "src/lib/security/password-validation.ts", "Critical", "Automated"],
+            ["Confirm password must match", "Enter different confirm password", "Shows 'Passwords do not match' error", "src/app/set-password/[token]/page.tsx", "Critical", "Automated"],
+            ["After successful setup redirects to login", "Complete password setup", "Redirected to /login with success message", "src/app/set-password/[token]/page.tsx", "Critical", "E2E"]
         ],
-        "Verification Expiry": [
-            ["Verification link expires after 24 hours", "Use old verification link", "Error: verification expired", "src/app/api/auth/verify/route.ts", "High", "Automated"],
-            ["Expired link shows resend option", "Click expired link", "Shows option to resend verification", "src/app/(auth)/verify/page.tsx", "Medium", "E2E"]
+        "Admin Resend Setup Email": [
+            ["Admin can resend setup email", "Click resend in team management", "New setup email sent to user", "src/app/api/admin/team/[memberId]/resend/route.ts", "High", "E2E"],
+            ["New token generated on resend", "Resend setup email", "New token created, old token invalidated", "src/app/api/admin/team/[memberId]/resend/route.ts", "High", "Automated"],
+            ["Only admins can resend", "Non-admin tries to resend", "Permission denied error", "src/app/api/admin/team/[memberId]/resend/route.ts", "High", "Automated"]
+        ],
+        "Admin-Initiated Team Invitations": [
+            ["Admin sends team invitation", "Admin adds member from team settings", "Invitation created and email sent", "src/app/api/admin/team/invitations/route.ts", "Critical", "E2E"],
+            ["Invited member receives email", "Check invited user email", "Contains invite link to /invite/[token]", "src/lib/core/email.ts", "Critical", "E2E"],
+            ["Member invite uses same token flow", "Member clicks invite link", "Goes to /invite/[token] page", "src/app/invite/[token]/page.tsx", "Critical", "E2E"],
+            ["Admin can cancel pending invitation", "Delete invitation from team settings", "Invitation deleted, token invalidated", "src/app/api/admin/team/invitations/[id]/route.ts", "High", "E2E"],
+            ["Admin can view pending invitations", "View team invitations page", "List of pending invites shown", "src/app/admin/(system)/team/invitations/page.tsx", "High", "E2E"]
         ]
     },
     "3. Organization Setup": {
-        "Create Organization": [
-            ["Redirected to setup after verification", "Verify email, login", "Redirected to /setup wizard", "src/middleware.ts", "Critical", "E2E"],
-            ["Organization name required", "Try to create without name", "Validation error", "src/app/api/organizations/route.ts", "Critical", "E2E"],
-            ["Slug auto-generated from name", "Enter org name", "Slug generated (lowercase, hyphens)", "src/lib/multi-tenant/subdomain.ts", "High", "Automated"],
-            ["Unique slug enforced", "Create org with existing slug", "Counter suffix added", "src/lib/multi-tenant/subdomain.ts", "High", "Automated"]
+        "Setup Wizard Access": [
+            ["Owner redirected to setup after accepting invitation", "Accept invite for new org, get redirected", "Redirected to /setup wizard on org subdomain", "src/middleware.ts", "Critical", "E2E"],
+            ["Setup triggered by incomplete OrganizationSetupProgress", "Accept invite, check setupProgress.profileComplete=false", "Redirected to /setup", "src/middleware.ts", "Critical", "E2E"],
+            ["Incomplete setup blocks dashboard access", "Try to access /admin before completing setup", "Redirected back to /setup", "src/middleware.ts", "Critical", "E2E"],
+            ["Non-owner cannot access /setup", "Member tries to access /setup", "Redirected to dashboard", "src/middleware.ts", "High", "E2E"],
+            ["Setup only accessible on org subdomain", "Try to access /setup on main domain", "Redirected to login", "src/middleware.ts", "High", "E2E"]
         ],
         "Setup Wizard Steps": [
-            ["Organization name step", "Enter org name and code prefix", "Validated and saved", "src/app/setup/components/steps/OrgNameStep.tsx", "High", "E2E"],
-            ["Currency step", "Select primary and additional currencies", "Currencies configured", "src/app/setup/components/steps/CurrencyStep.tsx", "Medium", "E2E"],
-            ["Logo upload step", "Upload company logo", "Logo saved", "src/app/setup/components/steps/LogoStep.tsx", "Medium", "E2E"],
-            ["Brand colors step", "Select primary and secondary colors", "Colors saved", "src/app/setup/components/steps/ColorStep.tsx", "Medium", "E2E"],
-            ["Module selection step", "Select enabled modules", "Modules enabled for org", "src/app/setup/components/steps/ModuleStep.tsx", "High", "E2E"],
-            ["Complete setup", "Finish all steps", "Redirected to org subdomain dashboard", "src/app/setup/components/SetupWizardClient.tsx", "Critical", "E2E"],
-            ["Skip setup entirely", "Click skip setup link", "Redirected to admin dashboard with defaults", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"]
+            ["Step 1: Organization Name & Code Prefix", "Enter org name and code prefix", "Name and prefix validated and saved", "src/app/setup/components/steps/OrgNameStep.tsx", "High", "E2E"],
+            ["Step 2: Currencies", "Select primary and additional currencies", "Currencies configured for org", "src/app/setup/components/steps/CurrencyStep.tsx", "Medium", "E2E"],
+            ["Step 3: Logo Upload", "Upload company logo image", "Logo saved to storage, URL stored in org", "src/app/setup/components/steps/LogoStep.tsx", "Medium", "E2E"],
+            ["Step 4: Brand Colors", "Select primary and secondary colors", "Colors saved to organization settings", "src/app/setup/components/steps/ColorStep.tsx", "Medium", "E2E"],
+            ["Step 5: Module Selection", "Select which modules to enable", "Selected modules enabled for org", "src/app/setup/components/steps/ModuleStep.tsx", "High", "E2E"],
+            ["Step 6: Complete", "Click complete/finish", "profileComplete=true, redirected to /admin", "src/app/setup/components/SetupWizardClient.tsx", "Critical", "E2E"],
+            ["Skip setup entirely", "Click skip setup link", "Defaults applied, redirected to /admin dashboard", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"],
+            ["Step progress indicator", "View setup wizard", "Shows current step number and total steps", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"],
+            ["Back button between steps", "Click back on step 3", "Returns to step 2 with data preserved", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"]
         ],
         "Resume Setup": [
-            ["Resume incomplete setup", "Login with incomplete setup", "Redirected to setup wizard", "src/middleware.ts", "High", "E2E"],
-            ["Track setup progress", "Complete some steps, return later", "Starts from last completed step", "src/app/api/organizations/setup-progress/route.ts", "Medium", "E2E"]
+            ["Resume incomplete setup on login", "Login to org with incomplete setup", "Redirected to setup wizard", "src/middleware.ts", "High", "E2E"],
+            ["Track setup progress in database", "Complete some steps, return later", "OrganizationSetupProgress tracks completion", "src/app/api/organizations/setup-progress/route.ts", "Medium", "E2E"],
+            ["Resume starts from last incomplete step", "Complete steps 1-3, logout, login", "Wizard opens at step 4", "src/app/setup/components/SetupWizardClient.tsx", "Medium", "E2E"]
         ]
     },
     "4. Authentication & Session": {
@@ -2810,26 +2895,7 @@ const T = {
             ["Sessions invalidated after reset", "Reset password, check other logged-in sessions", "All sessions logged out", "src/app", "Medium", "Manual"]
         ]
     },
-    "62. Signup Flow": {
-        "Account Registration": [
-            ["View signup page", "Navigate to /signup", "Shows signup form", "src/app", "Medium", "Manual"],
-            ["Valid registration", "Fill form, submit", "Account created", "src/app", "Medium", "Manual"],
-            ["Email required", "Leave email empty", "Validation error", "src/app", "Medium", "Manual"],
-            ["Invalid email", "Enter invalid format", "Validation error", "src/app", "Medium", "Manual"],
-            ["Duplicate email", "Use existing email", "Error 'email exists'", "src/app", "Medium", "Manual"],
-            ["Password required", "Leave password empty", "Validation error", "src/app", "Medium", "Manual"],
-            ["Password strength meter", "Type password progressively", "Shows Weak/Fair/Good/Strong indicator", "src/app", "Medium", "Manual"],
-            ["Terms checkbox", "Don't check terms", "Cannot submit", "src/app", "Medium", "Manual"]
-        ],
-        "Post-Signup Flow": [
-            ["Email verification", "Check email", "Verification link received", "src/app", "Medium", "Manual"],
-            ["Verify email", "Click verification link", "Email verified", "src/app", "Medium", "Manual"],
-            ["Redirect to setup", "After verification", "Goes to org setup", "src/app", "Medium", "Manual"],
-            ["Expired verification", "Use old link", "Error shown", "src/app", "Medium", "Manual"],
-            ["Resend verification", "Click resend", "New email sent", "src/app", "Medium", "Manual"]
-        ]
-    },
-    "63. Team Invitations": {
+    "62. Team Invitations": {
         "Creating Invitations": [
             ["Invite team member", "Enter email, send", "Invitation created", "src/app", "Medium", "Manual"],
             ["Duplicate invite", "Invite same email twice", "Error 'already invited'", "src/app", "Medium", "Manual"],
@@ -2851,7 +2917,7 @@ const T = {
             ["Role assigned", "Accept invitation", "Has invited role", "src/app", "Medium", "Manual"]
         ]
     },
-    "64. Asset Categories": {
+    "63. Asset Categories": {
         "Category Management": [
             ["Category name required", "Leave name empty", "Validation error", "src/app", "Medium", "Manual"],
             ["Duplicate name", "Use existing name", "Error 'name exists'", "src/app", "Medium", "Manual"],
@@ -2862,7 +2928,7 @@ const T = {
             ["Set useful life years", "Enter years", "Saved correctly", "src/app", "Medium", "Manual"]
         ]
     },
-    "65. Data Import & Export": {
+    "64. Data Import & Export": {
         "Asset Import": [
             ["Import valid CSV", "Upload valid file", "Assets imported", "src/app", "Medium", "Manual"],
             ["Import invalid CSV", "Upload malformed file", "Error with details", "src/app", "Medium", "Manual"],
@@ -2885,7 +2951,7 @@ const T = {
             ["Export with filters", "Filter then export", "Filtered data exported", "src/app", "Medium", "Manual"]
         ]
     },
-    "66. Employee Change Requests": {
+    "65. Employee Change Requests": {
         "Submitting Change Requests": [
             ["Request profile change", "Submit change request", "Request created", "src/app", "Medium", "Manual"],
             ["Request field change", "Request specific field", "Field noted in request", "src/app", "Medium", "Manual"],
@@ -2899,7 +2965,7 @@ const T = {
             ["Notification on decision", "Approve/reject", "Employee notified", "src/app", "Medium", "Manual"]
         ]
     },
-    "67. Employee Celebrations": {
+    "66. Employee Celebrations": {
         "Celebrations Widget": [
             ["View celebrations", "Check dashboard widget", "Shows celebrations", "src/app", "Medium", "Manual"],
             ["Today's birthdays", "Employee birthday today", "Shown in widget", "src/app", "Medium", "Manual"],
@@ -2910,7 +2976,7 @@ const T = {
             ["Click celebration", "Click on person", "Goes to profile", "src/app", "Medium", "Manual"]
         ]
     },
-    "68. Feedback System": {
+    "67. Feedback System": {
         "Submitting Feedback": [
             ["Submit feedback", "Fill form, submit", "Feedback sent", "src/app", "Medium", "Manual"],
             ["Feedback type", "Select feedback type", "Type recorded", "src/app", "Medium", "Manual"],
@@ -2925,7 +2991,7 @@ const T = {
             ["Delete feedback", "Delete entry", "Feedback removed", "src/app", "Medium", "Manual"]
         ]
     },
-    "69. Modules Management": {
+    "68. Modules Management": {
         "Viewing Modules": [
             ["View modules page", "Navigate to /admin/modules", "Shows module list", "src/app", "Medium", "Manual"],
             ["Module categories", "Check categories", "Shows Operations, HR, System", "src/app", "Medium", "Manual"],
@@ -2942,7 +3008,7 @@ const T = {
             ["API blocked", "Disable then call API", "403 error", "src/app", "Medium", "Manual"]
         ]
     },
-    "70. Soft Delete & Trash": {
+    "69. Soft Delete & Trash": {
         "Deleted Assets": [
             ["View deleted assets", "Navigate to /admin/assets/deleted", "Shows deleted assets", "src/app", "Medium", "Manual"],
             ["Restore asset", "Click restore", "Asset restored", "src/app", "Medium", "Manual"],
@@ -2963,7 +3029,7 @@ const T = {
             ["Cleanup cron", "After retention period", "Users purged", "src/app", "Medium", "Manual"]
         ]
     },
-    "71. Locations Management": {
+    "70. Locations Management": {
         "Location CRUD": [
             ["View locations", "Navigate to locations", "Shows location list", "src/app", "Medium", "Manual"],
             ["Location name required", "Leave name empty", "Validation error", "src/app", "Medium", "Manual"],
@@ -2977,12 +3043,12 @@ const T = {
             ["Location in reports", "Generate report", "Location included", "src/app", "Medium", "Manual"]
         ]
     },
-    "72. Marketing & Public Pages": {
+    "71. Marketing & Public Pages": {
         "Landing Page": [
             ["View landing page", "Navigate to /", "Shows landing page", "src/app", "Medium", "Manual"],
             ["Hero section", "Check hero", "Shows value proposition", "src/app", "Medium", "Manual"],
             ["Features section", "Scroll to features", "Shows feature list", "src/app", "Medium", "Manual"],
-            ["CTA buttons", "Click 'Get Started'", "Goes to signup", "src/app", "Medium", "Manual"],
+            ["CTA buttons", "Click 'Get Started'", "Goes to /get-started", "src/app", "Medium", "Manual"],
             ["Navigation links", "Click nav items", "Navigate correctly", "src/app", "Medium", "Manual"],
             ["Mobile responsive", "View on mobile", "Layout adapts", "src/app", "Medium", "Manual"],
             ["Logo click", "Click logo", "Returns to landing", "src/app", "Medium", "Manual"]
@@ -2994,7 +3060,7 @@ const T = {
             ["Professional tier", "Check pro tier", "Shows price/features", "src/app", "Medium", "Manual"],
             ["Enterprise tier", "Check enterprise", "Shows 'Contact us'", "src/app", "Medium", "Manual"],
             ["Feature comparison", "View comparison table", "Clear feature matrix", "src/app", "Medium", "Manual"],
-            ["CTA per tier", "Click tier CTA", "Goes to signup", "src/app", "Medium", "Manual"]
+            ["CTA per tier", "Click tier CTA", "Goes to /get-started", "src/app", "Medium", "Manual"]
         ],
         "Legal Pages": [
             ["Terms of Service", "Navigate to /terms", "Shows terms", "src/app", "Medium", "Manual"],
@@ -3004,7 +3070,7 @@ const T = {
             ["Last updated date", "Check date", "Shows recent date", "src/app", "Medium", "Manual"]
         ]
     },
-    "73. Admin Dashboard": {
+    "72. Admin Dashboard": {
         "Dashboard Overview": [
             ["Quick stats cards", "Check stat cards", "Shows key metrics", "src/app", "Medium", "Manual"],
             ["Asset count", "Check asset count", "Accurate count", "src/app", "Medium", "Manual"],
@@ -3021,7 +3087,7 @@ const T = {
             ["Widget error", "API fails", "Shows error gracefully", "src/app", "Medium", "Manual"]
         ]
     },
-    "74. Asset Clone & Utilization": {
+    "73. Asset Clone & Utilization": {
         "Asset Clone": [
             ["Clone asset", "Click clone button", "Opens clone dialog", "src/app", "Medium", "Manual"],
             ["Clone with new tag", "Clone asset", "New tag generated", "src/app", "Medium", "Manual"],
@@ -3040,7 +3106,7 @@ const T = {
             ["Utilization history", "View history", "Shows usage over time", "src/app", "Medium", "Manual"]
         ]
     },
-    "75. Subscription Billing": {
+    "74. Subscription Billing": {
         "Billing Periods": [
             ["View billing periods", "Check subscription periods", "Shows billing history", "src/app", "Medium", "Manual"],
             ["Current period", "Check current", "Shows active period", "src/app", "Medium", "Manual"],
@@ -3063,7 +3129,7 @@ const T = {
             ["Cancellation date", "Cancel sub", "End date recorded", "src/app", "Medium", "Manual"]
         ]
     },
-    "76. Error Handling & Edge Cases": {
+    "75. Error Handling & Edge Cases": {
         "Error Pages": [
             ["404 page", "Navigate to /nonexistent", "Shows 404 page", "src/app", "Medium", "Manual"],
             ["404 has navigation", "Check 404 page", "Can navigate home", "src/app", "Medium", "Manual"],
@@ -3089,7 +3155,7 @@ const T = {
             ["Slow connection", "Throttle network", "Loading persists", "src/app", "Medium", "Manual"]
         ]
     },
-    "77. Scheduled Tasks (Cron)": {
+    "76. Scheduled Tasks (Cron)": {
         "Cron Jobs": [
             ["Cron runs during maintenance", "Deploy during cron execution", "Job completes or retries", "src/app", "Medium", "Manual"],
             ["Duplicate cron trigger", "Job triggered twice simultaneously", "Idempotent, no duplicate processing", "src/app", "Medium", "Manual"],
@@ -3104,7 +3170,7 @@ const T = {
             ["Alert threshold edge", "Document expires in exactly 30 days", "Included in 30-day alert", "src/app", "Medium", "Manual"]
         ]
     },
-    "78. Tenant Branding": {
+    "77. Tenant Branding": {
         "Organization Branding": [
             ["View org with logo", "Access org subdomain", "Logo displayed", "src/app", "Medium", "Manual"],
             ["No logo fallback", "Org without logo", "Shows initials/default", "src/app", "Medium", "Manual"],
@@ -3118,7 +3184,7 @@ const T = {
             ["Branding caching", "Multiple requests", "Cached response", "src/app", "Medium", "Manual"]
         ]
     },
-    "79. Health & Monitoring": {
+    "78. Health & Monitoring": {
         "Health Check": [
             ["Health endpoint", "GET /api/health", "Returns 200 OK", "src/app", "Medium", "Manual"],
             ["Database check", "Check DB connection", "Shows DB status", "src/app", "Medium", "Manual"],
@@ -3131,7 +3197,7 @@ const T = {
             ["Alert severity", "Check alert levels", "Shows severity", "src/app", "Medium", "Manual"]
         ]
     },
-    "80. User Preferences": {
+    "79. User Preferences": {
         "Display Preferences": [
             ["Date format", "Change date format", "Dates update throughout", "src/app", "Medium", "Manual"],
             ["Time format", "Switch 12h/24h", "Times update", "src/app", "Medium", "Manual"],
@@ -3148,7 +3214,7 @@ const T = {
             ["Quiet hours", "Set quiet hours", "No notifications during", "src/app", "Medium", "Manual"]
         ]
     },
-    "81. Data Integrity": {
+    "80. Data Integrity": {
         "Referential Integrity": [
             ["Delete employee with assets", "Delete assigned employee", "Assets unassigned first", "src/app", "Medium", "Manual"],
             ["Delete supplier with engagements", "Delete supplier", "Engagements cascade deleted", "src/app", "Medium", "Manual"],
@@ -3164,14 +3230,14 @@ const T = {
             ["Depreciation sync", "Monthly run", "Book values updated", "src/app", "Medium", "Manual"]
         ]
     },
-    "82. Performance Tests": {
+    "81. Performance Tests": {
         "Load Testing": [
             ["100 concurrent users", "Simulate load", "Response < 500ms", "src/app", "Medium", "Manual"],
             ["1000 assets list", "Load large list", "Response < 1s", "src/app", "Medium", "Manual"],
             ["Large payroll run", "100 employees", "Completes successfully", "src/app", "Medium", "Manual"]
         ]
     },
-    "83. Browser Compatibility": {
+    "82. Browser Compatibility": {
         "Browser Tests": [
             ["Chrome Latest", "Test in Chrome", "Works correctly", "src/app", "Medium", "Manual"],
             ["Firefox Latest", "Test in Firefox", "Works correctly", "src/app", "Medium", "Manual"],
@@ -3179,7 +3245,7 @@ const T = {
             ["Edge Latest", "Test in Edge", "Works correctly", "src/app", "Medium", "Manual"]
         ]
     },
-    "84. Accessibility Tests": {
+    "83. Accessibility Tests": {
         "Accessibility": [
             ["Screen reader", "Use screen reader", "Labels read correctly", "src/app", "Medium", "Manual"],
             ["Color contrast", "Check contrast", "Meets WCAG AA", "src/app", "Medium", "Manual"],
@@ -3187,7 +3253,7 @@ const T = {
             ["Form labels", "Check forms", "All inputs have labels", "src/app", "Medium", "Manual"]
         ]
     },
-    "85. UI & Form Edge Cases": {
+    "84. UI & Form Edge Cases": {
         "Form Behavior": [
             ["Submit with pending validation", "Click submit while validating", "Waits for validation complete", "src/app", "Medium", "Manual"],
             ["Form with stale data", "Edit form, data changes server-side", "Conflict detection or overwrites", "src/app", "Medium", "Manual"],

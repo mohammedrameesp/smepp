@@ -43,10 +43,7 @@ interface Section {
   isCore?: boolean; // Core modules can't be toggled
 }
 
-// Core module: always enabled, can't be disabled
-const CORE_MODULES: Module[] = [
-  { id: 'employees', name: 'Employees', description: 'Employee profiles & organization structure', icon: Users },
-];
+// Core modules (like 'employees') are always enabled silently - not shown in UI
 
 // Default modules: pre-selected for new organizations
 const DEFAULT_MODULES: Module[] = [
@@ -65,13 +62,6 @@ const ADDON_MODULES: Module[] = [
 
 const SECTIONS: Section[] = [
   {
-    title: 'Core Module',
-    subtitle: 'Always enabled for all organizations',
-    color: '#6366f1',
-    modules: CORE_MODULES,
-    isCore: true,
-  },
-  {
     title: 'Default Modules',
     subtitle: 'Essential modules to get started. Recommended for most organizations.',
     color: '#3b82f6',
@@ -89,9 +79,6 @@ const ALL_TOGGLEABLE_MODULES = [...DEFAULT_MODULES, ...ADDON_MODULES];
 
 export function ModuleStep({ selected, onChange }: ModuleStepProps) {
   const toggleModule = (id: string) => {
-    // Don't allow toggling core modules
-    if (CORE_MODULES.some(m => m.id === id)) return;
-
     onChange(
       selected.includes(id)
         ? selected.filter((m) => m !== id)
@@ -100,10 +87,9 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
   };
 
   const selectAll = () => {
-    // Include core modules + all toggleable modules
-    const coreIds = CORE_MODULES.map(m => m.id);
-    const toggleableIds = ALL_TOGGLEABLE_MODULES.map(m => m.id);
-    onChange([...coreIds, ...toggleableIds]);
+    // Select all available modules
+    const allIds = ALL_TOGGLEABLE_MODULES.map(m => m.id);
+    onChange(allIds);
   };
 
   return (
@@ -212,7 +198,7 @@ export function ModuleStep({ selected, onChange }: ModuleStepProps) {
             </span>
             <span className="text-sm text-slate-600 ml-1">
               {selected
-                .map((id) => [...CORE_MODULES, ...ALL_TOGGLEABLE_MODULES].find((m) => m.id === id)?.name)
+                .map((id) => ALL_TOGGLEABLE_MODULES.find((m) => m.id === id)?.name)
                 .filter(Boolean)
                 .slice(0, 3)
                 .join(', ')}
